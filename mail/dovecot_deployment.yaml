@@ -1,0 +1,190 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: mail
+  name: mail-nfs
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mail
+  name: dovecot-tls
+  labels:
+    tier: mail
+spec:
+  selector:
+    app: dovecot
+    tier: mail
+  ports:
+    - protocol: TCP
+      port: 993
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mail
+  name: dovecot-lmtp
+  labels:
+    tier: mail
+spec:
+  selector:
+    app: dovecot
+    tier: mail
+  ports:
+    - protocol: TCP
+      port: 24
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mail
+  name: dovecot-sasl
+  labels:
+    tier: mail
+spec:
+  selector:
+    app: dovecot
+    tier: mail
+  ports:
+    - protocol: TCP
+      port: 1234
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mail
+  name: dovecot
+  labels:
+    tier: mail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dovecot
+      tier: mail
+  template:
+    metadata:
+      labels:
+        app: dovecot
+        tier: mail
+    spec:
+      volumes:
+        - name: mail-certs
+          secret:
+            secretName: letsencrypt-prod
+        - name: dovecot-cf
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: config
+                path: dovecot.conf
+        - name: 10-auth
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 10-auth
+                path: 10-auth.conf
+        - name: 10-mail
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 10-mail
+                path: 10-mail.conf
+        - name: 10-master
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 10-master
+                path: 10-master.conf
+        - name: 10-ssl
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 10-ssl
+                path: 10-ssl.conf
+        - name: 15-lda
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 15-lda
+                path: 15-lda.conf
+        - name: 20-lmtp
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 20-lmtp
+                path: 20-lmtp.conf
+        - name: 20-managesieve
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 20-managesieve
+                path: 20-managesieve.conf
+        - name: passwd
+          #configMap:
+          secret:
+            secretName: passwd
+            #name: dovecot-cf
+            items:
+              - key: passwd
+                path: passwd
+        - name: mail-nfs
+          persistentVolumeClaim:
+            claimName: mail-nfs
+      containers:
+        - name: dovecot-mail
+          image: registry.andreybondarenko.com/dovecot:latest
+          ports:
+            - containerPort: 24
+            - containerPort: 1234
+            - containerPort: 993
+          volumeMounts:
+            - name: mail-nfs
+              mountPath: /var/mail
+            - name: mail-certs
+              mountPath: "/var/certs"
+              readOnly: true
+            - name: dovecot-cf
+              mountPath: /etc/dovecot/dovecot.conf
+              subPath: dovecot.conf
+            - name: 10-auth
+              mountPath: /etc/dovecot/conf.d/10-auth.conf
+              subPath: 10-auth.conf
+            - name: 10-mail
+              mountPath: /etc/dovecot/conf.d/10-mail.conf
+              subPath: 10-mail.conf
+            - name: 10-master
+              mountPath: /etc/dovecot/conf.d/10-master.conf
+              subPath: 10-master.conf
+            - name: 10-ssl
+              mountPath: /etc/dovecot/conf.d/10-ssl.conf
+              subPath: 10-ssl.conf
+            - name: 15-lda
+              mountPath: /etc/dovecot/conf.d/15-lda.conf
+              subPath: 15-lda.conf
+            - name: 20-lmtp
+              mountPath: /etc/dovecot/conf.d/20-lmtp.conf
+              subPath: 20-lmtp.conf
+            - name: 20-managesieve
+              mountPath: /etc/dovecot/conf.d/20-managesieve.conf
+              subPath: 20-managesieve.conf
+            - name: passwd
+              mountPath: /etc/dovecot/passwd
+              subPath: passwd
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "296Mi"
+            limits:
+              memory: "296Mi"
+      imagePullSecrets:
+        - name: my-private-registry

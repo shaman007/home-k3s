@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: logging
+  name: rsyslog-ds
+  labels:
+    tier: rsyslog
+data:
+  config: |
+    module(load="imfile" PollingInterval="10")  # Load the imfile module
+      input(type="imfile"
+      File="/var/log/containers/*.log"           # Path to log files
+      Tag="apps"                          # Tag for forwarded logs
+      StateFile="/var/spool/rsyslog/apps.state"  # State file for tracking
+    )
+    *.* @@rsyslog:514

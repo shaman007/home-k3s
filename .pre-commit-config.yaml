@@ -1,0 +1,34 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+#repos:
+#-   repo: https://github.com/pre-commit/pre-commit-hooks
+#    rev: v3.2.0
+#    hooks:
+#    -   id: trailing-whitespace
+#    -   id: end-of-file-fixer
+#  -   id: check-yaml
+#  -   id: check-added-large-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-case-conflict
+      - id: check-yaml
+        args:
+          - --allow-multiple-documents
+            #      - id: check-json
+      - id: check-symlinks
+      - id: check-added-large-files
+        #      - id: detect-private-key
+      - id: forbid-submodules
+        #      - id: pretty-format-json
+        #  - repo: https://github.com/tarioch/flux-check-hook
+        #    rev: v0.3.0
+        #    hooks:
+        #      - id: check-flux-helm-values
+        #  - repo: https://github.com/gitleaks/gitleaks
+        #    rev: v8.16.1
+        #    hooks:
+        #      - id: gitleaks

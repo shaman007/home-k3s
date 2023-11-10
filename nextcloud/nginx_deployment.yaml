@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: nextcloud
+  name: nginx-nextcloud
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-nextcloud
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: nginx-nextcloud
+        tier: backend
+    spec:
+      volumes:
+        - name: nextcloud-nfs
+          persistentVolumeClaim:
+            claimName: nextcloud-nfs
+        - name: nextcloud-config
+          configMap:
+            name: nextcloud-config
+            items:
+              - key: config
+                path: nextcloud.conf
+      containers:
+        - name: nextcloud-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nextcloud-nfs
+              mountPath: /nextcloud
+            - name: nextcloud-config
+              mountPath: /etc/nginx/conf.d
+          resources:
+            requests:
+              cpu: "25m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"

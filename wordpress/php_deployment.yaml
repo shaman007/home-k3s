@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: wordpress
+  name: code-nfs
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: wordpress
+  name: php
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: php
+        tier: backend
+    spec:
+      volumes:
+        - name: code-nfs
+          persistentVolumeClaim:
+            claimName: code-nfs
+      containers:
+        - name: php
+          image: registry.andreybondarenko.com/php-fpm:latest
+          volumeMounts:
+            - name: code-nfs
+              mountPath: /code
+          resources:
+            requests:
+              cpu: "66m"
+              memory: "126Mi"
+            limits:
+              memory: "126Mi"
+      imagePullSecrets:
+        - name: my-private-registry

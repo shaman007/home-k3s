@@ -1,0 +1,12 @@
+write-kubeconfig-mode: "0644"
+tls-san:
+  - "mster.k8s.my.lan"
+  - "localhost"
+cluster-cidr: "10.42.0.0/16"
+cluster-cidr-ipv6: "2001:cafe:42:0::/56"
+service-cidr: "10.43.0.0/16"
+service-cidr-ipv6: "2001:cafe:42:1::/112"
+flannel-backend-type: "vxlan"
+flannel-ipv6-masq: true
+no-deploy:
+  - traefik

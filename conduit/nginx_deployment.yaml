@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: matrix
+  name: nginx-matrix
+  labels:
+    tier: matrix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix
+      tier: matrix
+  template:
+    metadata:
+      labels:
+        app: matrix
+        tier: matrix
+    spec:
+      volumes:
+        - name: config-matrix
+          configMap:
+            name: config-matrix
+            items:
+              - key: config
+                path: site.conf
+      containers:
+        - name: matrix-nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config-matrix
+              mountPath: /etc/nginx/conf.d
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"

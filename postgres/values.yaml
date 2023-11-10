@@ -1,0 +1,7 @@
+primary:
+  resources:
+    requests:
+      cpu: "24m"
+      memory: "100Mi"
+    limits:
+      memory: "100Mi"

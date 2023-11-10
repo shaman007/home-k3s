@@ -1,0 +1,24 @@
+env:
+- name: TTRSS_DB_PASS
+  valueFrom:
+    secretKeyRef:
+      name: postfix-password
+      key: password
+- name: TTRSS_SELF_URL_PATH
+  value: "https://tt-rss.andreybondarenko.com"
+- name: TTRSS_DB_HOST
+  value: "postgres-postgresql.db.svc.cluster.local"
+- name: TTRSS_DB_USER
+  value: "postgres"
+- name: TTRSS_DB_NAME
+  value: "ttrss"
+
+postgresql:
+  # -- By default uses an internal postgress. Dissable if you use your own Postgres.
+  enabled: false
+resources:
+  requests:
+    cpu: "24m"
+    memory: "100Mi"
+  limits:
+    memory: "100Mi"

@@ -1,0 +1,211 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: mail
+  name: mail-nfs
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: mail
+  name: rspamd-local
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 500Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mail
+  name: postfix-tls
+  labels:
+    tier: mail
+spec:
+  selector:
+    app: postfix
+    tier: mail
+  ports:
+    - protocol: TCP
+      port: 587
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mail
+  name: postfix
+  labels:
+    tier: mail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postfix
+      tier: mail
+  template:
+    metadata:
+      labels:
+        app: postfix
+        tier: mail
+    spec:
+      volumes:
+        - name: mail-certs
+          secret:
+            secretName: letsencrypt-prod
+        - name: main-cf
+          configMap:
+            name: main-cf
+            items:
+              - key: config
+                path: main.cf
+        - name: master-cf
+          configMap:
+            name: main-cf
+            items:
+              - key: master
+                path: master.cf
+        - name: sender-access
+          configMap:
+            name: main-cf
+            items:
+              - key: access
+                path: sender_access
+        - name: rspamd-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: logging
+                path: logging.inc
+        - name: redis-cf
+          secret:
+            secretName: rspamd-redis
+            items:
+              - key: redis.conf
+                path: redis.conf
+        - name: history-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: history
+                path: history_redis.conf
+        - name: greylist-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: greylist
+                path: greylist.conf
+        - name: neural-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: neural
+                path: neural.conf
+        - name: statistics-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: statistics
+                path: statistics.conf
+        - name: dkimsigning-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: dkim_signing
+                path: dkim_signing.conf
+        - name: privater-cf
+          secret:
+            secretName: andreybondarenko.key
+            items:
+              - key: andreybondarenko.key
+                path: andreybondarenko.key
+        - name: mail-nfs
+          persistentVolumeClaim:
+            claimName: mail-nfs
+        - name: rspamd-local
+          persistentVolumeClaim:
+            claimName: rspamd-local
+      containers:
+        - name: rspamd
+          image: registry.andreybondarenko.com/rspamd:latest
+          ports:
+            - containerPort: 11333
+            - containerPort: 11334
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-password
+                  key: password
+          volumeMounts:
+            - name: rspamd-cf
+              mountPath: /etc/rspamd/local.d/logging.inc
+              subPath: logging.inc
+            - name: redis-cf
+              mountPath: /etc/rspamd/modules.d/redis.conf
+              readOnly: true
+              subPath: redis.conf
+            - name: history-cf
+              mountPath: /etc/rspamd/modules.d/history_redis.conf
+              subPath: history_redis.conf
+            - name: greylist-cf
+              mountPath: /etc/rspamd/modules.d/greylist.conf
+              subPath: greylist.conf
+            - name: neural-cf
+              mountPath: /etc/rspamd/modules.d/neural.conf
+              subPath: neural.conf
+            - name: statistics-cf
+              mountPath: /etc/rspamd/statistics.conf
+              subPath: statistics.conf
+            - name: dkimsigning-cf
+              mountPath: /etc/rspamd/modules.d/dkim_signing.conf
+              subPath: dkim_signing.conf
+            - name: privater-cf
+              mountPath: /var/lib/rspamd/dkim/andreybondarenko.key
+              subPath: andreybondarenko.key
+              readOnly: true
+            - name: rspamd-local
+              mountPath: /var/lib/rspamd
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "256Mi"
+            limits:
+              memory: "256Mi"
+        - name: postfix-mail
+          image: registry.andreybondarenko.com/postfix:latest
+          ports:
+            - containerPort: 587
+          volumeMounts:
+            - name: mail-nfs
+              mountPath: /var/mail
+            - name: mail-certs
+              mountPath: "/var/certs"
+            - name: main-cf
+              mountPath: /etc/postfix/main.cf
+              subPath: main.cf
+            - name: master-cf
+              mountPath: /etc/postfix/master.cf
+              subPath: master.cf
+            - name: sender-access
+              mountPath: /etc/postfix/sender_access
+              subPath: sender_access
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "128Mi"
+            limits:
+              memory: "128Mi"
+      imagePullSecrets:
+        - name: my-private-registry

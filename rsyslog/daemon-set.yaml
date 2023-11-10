@@ -1,0 +1,57 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  namespace: logging
+  name: logging-rsyslog
+spec:
+  selector:
+    matchLabels:
+      name: logging-rsyslog
+  template:
+    metadata:
+      labels:
+        name: logging-rsyslog
+    spec:
+      containers:
+        - name: rsyslog-ds
+          image: registry.andreybondarenko.com/rsyslog:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: host-container-logs-k8s
+              mountPath: /var/log/containers
+            - name: host-container-logs-docker
+              mountPath: /var/log/pods
+            - name: rsyslog-state-dir
+              mountPath: /var/lib/rsyslog
+            - name: host-timezone
+              mountPath: /etc/localtime
+            - name: rsyslog-ds
+              mountPath: /etc/rsyslog.conf
+              subPath: rsyslog.conf
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"
+      volumes:
+        - name: host-container-logs-k8s
+          hostPath:
+            path: /var/log/containers
+        - name: host-container-logs-docker
+          hostPath:
+            path: /var/log/pods/
+        - name: rsyslog-state-dir
+          hostPath:
+            path: /var/lib/rsyslog
+        - name: host-timezone
+          hostPath:
+            path: /etc/localtime
+        - name: rsyslog-ds
+          configMap:
+            name: rsyslog-ds
+            items:
+              - key: config
+                path: rsyslog.conf
+      imagePullSecrets:
+        - name: my-private-registry

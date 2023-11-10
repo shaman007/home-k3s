@@ -1,0 +1,13 @@
+autoscaling:
+  enabled: false
+  maxReplicas: 2
+  minReplicas: 1
+collabora:
+  server_name: office.andreybondarenko.com:443
+  extra_params: --o:ssl.enable=false --o:ssl.termination=true
+resources:
+  requests:
+    cpu: "10m"
+    memory: "512Mi"
+  limits:
+    memory: "512Mi"

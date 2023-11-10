@@ -1,0 +1,196 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: nextcloud
+  name: php-fpm-config
+data:
+  www.conf: |
+    [www]
+    user = daemon
+    group = daemon
+    ;listen = 9000
+    ;pm = ondemand
+    ;pm.max_children = 10
+    ;pm.start_servers = 4
+    ;pm.min_spare_servers = 1
+    ;pm.max_spare_servers = 3
+    ;php_value[memory_limit] = 612M
+    ;php_value[upload_max_filesize] = 2048M
+    ;listen.owner=daemon
+    ;listen.group=daemon
+    ;env[PATH] = $PATH
+  php-fpm.conf: |
+    [global]
+    error_log = /tmp/php-fpm.log
+    log_level = warning
+    [www]
+    user = daemon
+    group = daemon
+    listen = 9000
+    pm = ondemand
+    pm.max_children = 10
+    pm.start_servers = 4
+    pm.min_spare_servers = 1
+    pm.max_spare_servers = 3
+    php_value[memory_limit] = 612M
+    php_value[upload_max_filesize] = 2048M
+    listen.owner=daemon
+    listen.group=daemon
+    env[PATH] = $PATH
+  php.ini: |
+    [PHP]
+    engine = On
+    short_open_tag = Off
+    precision = 14
+    output_buffering = 4096
+    zlib.output_compression = Off
+    implicit_flush = Off
+    unserialize_callback_func =
+    serialize_precision = -1
+    disable_functions =
+    disable_classes =
+    zend.enable_gc = On
+    zend.exception_ignore_args = On
+    zend.exception_string_param_max_len = 0
+    expose_php = On
+    max_execution_time = 30
+    max_input_time = 60
+    memory_limit = 612M
+    error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+    display_errors = Off
+    display_startup_errors = Off
+    log_errors = On
+    ignore_repeated_errors = Off
+    ignore_repeated_source = Off
+    report_memleaks = On
+    variables_order = "GPCS"
+    request_order = "GP"
+    register_argc_argv = Off
+    auto_globals_jit = On
+    post_max_size = 2048M
+    auto_prepend_file =
+    auto_append_file =
+    default_mimetype = "text/html"
+    default_charset = "UTF-8"
+    doc_root =
+    user_dir =
+    ;extension_dir = /opt/bitnami/php/lib/php/extensions
+    ;extension_dir = /opt/bitnami/php/lib/php/extensions
+    enable_dl = Off
+    file_uploads = On
+    upload_max_filesize = 2048M
+    max_file_uploads = 20
+    allow_url_fopen = On
+    allow_url_include = Off
+    default_socket_timeout = 60
+    ; zend_extension = opcache
+    [CLI Server]
+    cli_server.color = On
+    [Date]
+    date.timezone = UTC
+    ;[imagik]
+    ;extension=/opt/bitnami/php/lib/php/extensions/imagick.so
+    ;[apcu]
+    ;extension=/opt/bitnami/php/lib/php/extensions/apcu.so
+    ;apc.enable_cli = 1
+
+    [filter]
+    [iconv]
+    [imap]
+    [intl]
+    [sqlite3]
+    [Pcre]
+    [Pdo]
+    [Pdo_mysql]
+    pdo_mysql.default_socket=
+    [Phar]
+    [mail function]
+    SMTP = localhost
+    smtp_port = 25
+    mail.add_x_header = Off
+    mail.mixed_lf_and_crlf = Off
+    [ODBC]
+    odbc.allow_persistent = On
+    odbc.check_persistent = On
+    odbc.max_persistent = -1
+    odbc.max_links = -1
+    odbc.defaultlrl = 4096
+    odbc.defaultbinmode = 1
+    [MySQLi]
+    mysqli.max_persistent = -1
+    mysqli.allow_persistent = On
+    mysqli.max_links = -1
+    mysqli.default_port = 3306
+    mysqli.default_socket =
+    mysqli.default_host =
+    mysqli.default_user =
+    mysqli.default_pw =
+    mysqli.reconnect = Off
+    [mysqlnd]
+    mysqlnd.collect_statistics = On
+    mysqlnd.collect_memory_statistics = Off
+    [OCI8]
+    [PostgreSQL]
+    pgsql.allow_persistent = On
+    pgsql.auto_reset_persistent = Off
+    pgsql.max_persistent = -1
+    pgsql.max_links = -1
+    pgsql.ignore_notice = 0
+    pgsql.log_notice = 0
+    [bcmath]
+    bcmath.scale = 0
+    [browscap]
+    [Session]
+    session.save_handler = files
+    session.use_strict_mode = 0
+    session.use_cookies = 1
+    session.use_only_cookies = 1
+    session.name = PHPSESSID
+    session.auto_start = 0
+    session.cookie_lifetime = 0
+    session.cookie_path = /
+    session.cookie_domain =
+    session.cookie_httponly =
+    session.cookie_samesite =
+    session.serialize_handler = php
+    session.gc_probability = 1
+    session.gc_divisor = 1000
+    session.gc_maxlifetime = 1440
+    session.referer_check =
+    session.cache_limiter = nocache
+    session.cache_expire = 180
+    session.use_trans_sid = 0
+    session.sid_length = 26
+    session.trans_sid_tags = "a=href,area=href,frame=src,form="
+    session.sid_bits_per_character = 5
+    [Assertion]
+    zend.assertions = -1
+    [COM]
+    [mbstring]
+    [gd]
+    [exif]
+    [Tidy]
+    tidy.clean_output = Off
+    [soap]
+    soap.wsdl_cache_enabled=1
+    soap.wsdl_cache_dir="/tmp"
+    soap.wsdl_cache_ttl=86400
+    soap.wsdl_cache_limit = 5
+    [sysvshm]
+    [ldap]
+    ldap.max_links = -1
+    [dba]
+    ;[opcache]
+    ;zend_extension=opcache.so
+    ;opcache.enable = 1
+    ;opcache.enable_cli = 1
+    ;opcache.memory_consumption = 128
+    ;opcache.interned_strings_buffer = 32
+    ;opcache.max_accelerated_files = 4000
+    ;opcache.revalidate_freq = 60
+    [curl]
+    [openssl]
+    [ffi]
+    opcache.fast_shutdown = 1
+    memory_limit = 612M
+    upload_max_filesize = 2048M

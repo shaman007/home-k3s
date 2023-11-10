@@ -1,0 +1,158 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: mail
+  name: rspamd-cf
+  labels:
+    tier: mail
+data:
+  logging: |
+    type = file;
+    filename = "/var/log/mail.log"
+  history: |
+    history_redis {
+      servers = "redis-master.redis.svc.cluster.local:6379";
+      #write_servers = "redis-master.redis.svc.cluster.local:6379";
+      .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
+      key_prefix = "rs_history"; # Default key name
+      nrows = 200000; # Default rows limit
+      compress = true; # Use zstd compression when storing data in redis
+      subject_privacy = false; # subject privacy is off
+      .include(try=true,priority=5) "${DBDIR}/dynamic/history_redis.conf"
+      .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/history_redis.conf"
+      .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/history_redis.conf"
+    }
+  greylist: |
+    greylist {
+      enabled = true;
+      # Search "example.com" and "mail.example.com" for "mx.out.mail.example.com":
+      whitelist_domains_url = [
+      "$LOCAL_CONFDIR/local.d/greylist-whitelist-domains.inc",
+      "$LOCAL_CONFDIR/local.d/maps.d/greylist-whitelist-domains.inc",
+      ];
+      expire = 365d; # 1 day by default
+      timeout = 5min; # 5 minutes by default
+      key_prefix = "rg"; # default hash name
+      max_data_len = 10k; # default data limit to hash
+      message = "Try again later"; # default greylisted message
+      #symbol = "GREYLIST"; # Symbol to insert
+      action = "soft reject"; # default greylisted action
+      ipv4_mask = 19; # Mask bits for ipv4
+      ipv6_mask = 64; # Mask bits for ipv6
+      servers = "redis-master.redis.svc.cluster.local:6379";
+      write_servers = "redis-master.redis.svc.cluster.local:6379";
+      .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
+      .include(try=true,priority=5) "${DBDIR}/dynamic/greylist.conf"
+      .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/greylist.conf"
+      .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/greylist.conf"
+    }
+  neural: |
+    neural {
+      #servers = 127.0.0.1:6379; # Redis server to store learning data and ANN
+      enabled = true
+      servers = "redis-master.redis.svc.cluster.local:6379";
+      write_servers = "redis-master.redis.svc.cluster.local:6379";
+      .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
+      train {
+        max_trains = 1k; # Number of trains per epoch
+        max_usages = 20; # Number of learn iterations while ANN data is valid
+        learning_rate = 0.01; # Rate of learning (Torch only)
+        max_iterations = 25; # Maximum iterations of learning (Torch only)
+      }
+      timeout = 20; # Increase redis timeout
+      # Legacy support
+      .include(try=true,priority=5) "${DBDIR}/dynamic/fann_redis.conf"
+      .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/fann_redis.conf"
+      .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/fann_redis.conf"
+      .include(try=true,priority=5) "${DBDIR}/dynamic/neural.conf"
+      .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/neural.conf"
+      .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/neural.conf"
+      }
+  statistics: |
+    classifier "bayes" {
+     tokenizer {
+       name = "osb";
+     }
+    cache {
+    }
+    new_schema = true; # Always use new schema
+    store_tokens = false; # Redefine if storing of tokens is desired
+    signatures = false; # Store learn signatures
+    #per_user = true; # Enable per user classifier
+    min_tokens = 11;
+    backend = "redis";
+    servers = "redis-master.redis.svc.cluster.local:6379";
+    write_servers = "redis-master.redis.svc.cluster.local:6379";
+    .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
+    min_learns = 10;
+
+    statfile {
+      symbol = "BAYES_HAM";
+      spam = false;
+    }
+    statfile {
+      symbol = "BAYES_SPAM";
+      spam = true;
+    }
+    learn_condition = 'return require("lua_bayes_learn").can_learn';
+
+    # Autolearn sample
+     autolearn {
+      spam_threshold = 6.0; # When to learn spam (score >= threshold and action is reject)
+      junk_threshold = 4.0; # When to learn spam (score >= threshold and action is rewrite subject or add header, and has two or more positive results)
+      ham_threshold = -0.5; # When to learn ham (score <= threshold and action is no action, and score is negative or has three or more negative results)
+      check_balance = true; # Check spam and ham balance
+      min_balance = 0.9; # Keep diff for spam/ham learns for at least this value
+    }
+
+    .include(try=true; priority=1) "$LOCAL_CONFDIR/local.d/classifier-bayes.conf"
+    .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/classifier-bayes.conf"
+    }
+
+    .include(try=true; priority=1) "$LOCAL_CONFDIR/local.d/statistic.conf"
+    .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/statistic.conf"
+  dkim_signing: |
+    dkim_signing {
+    enabled = true;
+    # If false, messages with empty envelope from are not signed
+    allow_envfrom_empty = true;
+    # If true, envelope/header domain mismatch is ignored
+    allow_hdrfrom_mismatch = true;
+    # If true, multiple from headers are allowed (but only first is used)
+    allow_hdrfrom_multiple = false;
+    # If true, username does not need to contain matching domain
+    allow_username_mismatch = true;
+    # Default path to key, can include '$domain' and '$selector' variables
+    #path = "/var/lib/rspamd/dkim/$domain.$selector.key";
+    # Default selector to use
+    selector = "mail";
+    # If false, messages from authenticated users are not selected for signing
+    sign_authenticated = true;
+    # If false, messages from local networks are not selected for signing
+    sign_local = true;
+    # Symbol to add when message is signed
+    symbol = "DKIM_SIGNED";
+    # Whether to fallback to global config
+    try_fallback = true;
+    # Domain to use for DKIM signing: can be "header" or "envelope"
+    use_domain = "header";
+    # Whether to normalise domains to eSLD
+    use_esld = true;
+    # Whether to get keys from Redis
+    use_redis = false;
+    # Hash for DKIM keys in Redis
+    key_prefix = "DKIM_KEYS";
+
+    # Domain specific settings
+    domain {
+      andreybondarenko.com {
+        selectors [
+          { # Private key path
+          path = "/var/lib/rspamd/dkim/andreybondarenko.key";
+          # Selector
+          selector = "mail";
+          }
+        ]
+     }
+    }
+          }

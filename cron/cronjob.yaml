@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup
+  namespace: db
+spec:
+  schedule: "5 2 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: ubuntu:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - /nextcloud/backup.sh
+              volumeMounts:
+                - name: application-code
+                  mountPath: /nextcloud
+          volumes:
+            - name: application-code
+              persistentVolumeClaim:
+                claimName: mysql-pv-claim
+          restartPolicy: Never

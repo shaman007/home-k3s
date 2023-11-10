@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: nextcloud
+  name: nextcloud-nfs
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-nextcloud
+  namespace: nextcloud
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-nextcloud
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: php-nextcloud
+        tier: backend
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: php-fpm-config
+        - name: nextcloud-nfs
+          persistentVolumeClaim:
+            claimName: nextcloud-nfs
+      containers:
+        - name: php-nextcloud
+          image: registry.andreybondarenko.com/php-fpm:latest
+          volumeMounts:
+            - name: nextcloud-nfs
+              mountPath: /nextcloud
+          resources:
+            requests:
+              cpu: "1.104"
+              memory: "3165Mi"
+            limits:
+              memory: "3165Mi"
+      imagePullSecrets:
+        - name: my-private-registry
+      nodeSelector:
+        kubernetes.io/hostname: worker-04.k8s.my.lan

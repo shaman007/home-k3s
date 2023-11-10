@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rsyslog.conf
+  namespace: mail
+  labels:
+    tier: rsyslog
+data:
+  config: |
+    module(load="imuxsock")
+    $FileOwner root
+    $FileGroup adm
+    $FileCreateMode 0640
+    $DirCreateMode 0755
+    $Umask 0022
+    *.* @@rsyslog.logging.svc.cluster.local:514

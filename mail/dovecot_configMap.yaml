@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dovecot-cf
+  namespace: mail
+  labels:
+    tier: mail
+data:
+  config: |
+    protocols = imap lmtp
+      dict {
+      }
+    service stats {
+      unix_listener stats-reader {
+        user = dovecot
+        group = mail
+        mode = 0666
+      }
+    unix_listener stats-writer {
+      user = dovecot
+      group = mail
+      mode = 0666
+      }
+    }
+    log_path = /var/log/mail.log
+    # If not set, use the value from log_path
+    info_log_path = /var/log/mail.log
+    # If not set, use the value from info_log_path
+    debug_log_path = /var/log/mail.log
+    !include conf.d/*.conf
+    !include_try local.conf
+  10-auth: |
+    auth_username_format = %n
+    auth_mechanisms = plain
+    passdb {
+      driver = passwd-file
+      args = /etc/dovecot/passwd
+    }
+    userdb {
+        driver = passwd
+    }
+  passwd: |
+    shaman007:{SHA256-CRYPT}$5$3rwR/eRL3qPgCa9P$.nWgpt0KP2PNGbOtjCBRpKTdu1iq4h7N8NgtKPUA0T3::::::
+  10-mail: |
+    mail_location = mbox:/var/mail/boxes/%u:INBOX=/var/mail/%u
+    namespace inbox {
+      inbox = yes
+    }
+    mbox_write_locks = fcntl
+    mbox_write_locks = fcntl
+  10-master: |
+    service imap-login {
+      inet_listener imap {
+      }
+      inet_listener imaps {
+      }
+    }
+    service pop3-login {
+      inet_listener pop3 {
+      }
+      inet_listener pop3s {
+      }
+    }
+    service lmtp {
+        inet_listener lmtp {
+        address = *
+        port = 24
+        }
+    }
+    service imap {
+    }
+    service pop3 {
+    }
+    service auth {
+        unix_listener auth-userdb {
+      }
+
+      inet_listener auth {
+      address = *
+      port = 1234
+      }
+    }
+    service auth-worker {
+    }
+
+    service dict {
+      unix_listener dict {
+      }
+    }
+  10-ssl: |
+    ssl = required
+    ssl_cert = </var/certs/tls.crt
+    ssl_key = </var/certs/tls.key
+  15-lda: |
+    protocol lda {
+      mail_plugins = $mail_plugins sieve
+    }
+  20-lmtp: |
+    protocol lmtp {
+      mail_plugins = $mail_plugins sieve
+    }
+  20-managesieve: |
+    protocol sieve {
+      mail_max_userip_connections = 128
+    }

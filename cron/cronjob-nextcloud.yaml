@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: previews
+  namespace: nextcloud
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+            - name: previews
+              image: registry.andreybondarenko.com/php-fpm:latest
+              command:
+                - /bin/sh
+                - /nextcloud/pr.sh
+              volumeMounts:
+                - name: application-code
+                  mountPath: /nextcloud
+          volumes:
+            - name: application-code
+              persistentVolumeClaim:
+                claimName: nextcloud-nfs
+            - name: config-volume
+              configMap:
+                name: php-fpm-config
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: my-private-registry

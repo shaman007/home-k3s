@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: minecraft
+  name: minecraft-nfs
+  labels:
+    storage.k8s.io/name: nfs
+    storage.k8s.io/part-of: kubernetes-complete-reference
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: minecraft
+  name: minecraft
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: minecraft
+        tier: backend
+    spec:
+      volumes:
+        - name: minecraft-nfs
+          persistentVolumeClaim:
+            claimName: minecraft-nfs
+      containers:
+        - name: mnecraft
+          image: itzg/minecraft-server
+          env:
+            - name: EULA
+              value: "TRUE"
+          ports:
+            - containerPort: 25565
+          volumeMounts:
+            - name: minecraft-nfs
+              mountPath: /data
+          resources:
+            requests:
+              cpu: "702m"
+              memory: "1812Mi"
+            limits:
+              memory: "1812Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: minecraft
+  name: minecraft
+  labels:
+    tier: backend
+spec:
+  selector:
+    app: minecraft
+    tier: backend
+  ports:
+    - protocol: TCP
+      port: 25565

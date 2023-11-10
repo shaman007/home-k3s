@@ -1,0 +1,14 @@
+master:
+  resources:
+    requests:
+      cpu: "61m"
+      memory: "100Mi"
+    limits:
+      memory: "100Mi"
+replica:
+  resources:
+    requests:
+      cpu: "81m"
+      memory: "100Mi"
+    limits:
+      memory: "100Mi"

@@ -1,0 +1,160 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: mail
+  name: main-cf
+  labels:
+    tier: mail
+data:
+  config: |
+    biff = no
+    append_dot_mydomain = no
+    mydomain = andreybondarenko.com
+    myorigin = andreybondarenko.com
+    myhostname = $mydomain
+    mydestination = localhost localhost.localdomain andreybondarenko.com shaman007.com
+    mynetworks = 127.0.0.1/32
+    #10.0.0.0/8
+    smtpd_banner = $myhostname ESMTP $mail_name
+    alias_maps = lmdb:/etc/postfix/aliases
+    alias_database = lmdb:/etc/postfix/aliases
+    mailbox_size_limit = 0
+    message_size_limit = 20480000
+    maillog_file = /var/log/mail.log
+    smtputf8_enable = no
+    strict_mailbox_ownership = no
+    relay_domains = $mydestination
+    smtpd_sasl_type = dovecot
+    broken_sasl_auth_clients = yes
+    smtpd_sasl_path = inet:dovecot-sasl.mail.svc.cluster.local:1234
+    smtpd_sasl_auth_enable = yes
+    smtpd_sasl_security_options = noanonymous
+    smtpd_use_tls = yes
+    smtpd_tls_security_level = may
+    smtpd_tls_auth_only = yes
+    smtpd_tls_key_file = /var/certs/tls.key
+    smtpd_tls_cert_file = /var/certs/tls.crt
+    smtpd_tls_loglevel = 1
+    milter_default_action = accept
+    #milter_protocol = 6
+    smtpd_milters = inet:127.0.0.1:11332
+    non_smtpd_milters = inet:127.0.0.1:11332
+    smtpd_relay_restrictions = permit_sasl_authenticated, reject_unauth_destination
+    smtpd_data_restrictions = reject_unauth_pipelining
+    #smtpd_client_restrictions = permit_sasl_authenticated, reject_invalid_hostname, reject_unauth_destination, reject_unknown_client, permit
+    smtpd_client_restrictions = permit_sasl_authenticated, reject_unauth_destination, permit
+    #smtpd_tls_received_header = yes
+    #smtpd_tls_session_cache_timeout = 3600s
+    #    virtual_mailbox_domains = andreybondarenko.cm
+    #virtual_mailbox_maps = lmdb:/etc/postfix/vmailbox
+    #virtual_alias_maps = lmdb:/etc/postfix/virtual
+    inet_interfaces = all
+    inet_protocols = ipv4
+    #    smtpd_helo_required = yes
+    #smtpd_recipient_restrictions =
+    #    check_sender_access lmdb:/etc/postfix/sender_access,
+    #    reject_unauth_destination,
+    #    permit
+    mailbox_transport = lmtp:inet:dovecot-lmtp.mail.svc.cluster.local:24
+    #relayhost = smtp.faster.cz:25
+  access: |
+    andreybondarenko.com OK
+  master: |
+    #127.0.0.1:submission inet n -   n       -       -       smtpd
+    submission inet n       -       n       -       -       smtpd
+    #  -o syslog_name=postfix/submission
+    #  -o smtpd_tls_security_level=encrypt
+    #  -o smtpd_sasl_auth_enable=yes
+    #  -o smtpd_tls_auth_only=yes
+    #  -o smtpd_reject_unlisted_recipient=no
+    #     Instead of specifying complex smtpd_<xxx>_restrictions here,
+    #     specify "smtpd_<xxx>_restrictions=$mua_<xxx>_restrictions"
+    #     here, and specify mua_<xxx>_restrictions in main.cf (where
+    #     "<xxx>" is "client", "helo", "sender", "relay", or "recipient").
+    #  -o smtpd_client_restrictions=
+    #  -o smtpd_helo_restrictions=
+    #  -o smtpd_sender_restrictions=
+    #  -o smtpd_relay_restrictions=
+    #  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+    #  -o milter_macro_daemon_name=ORIGINATING
+    # Choose one: enable submissions for loopback clients only, or for any client.
+    #127.0.0.1:submissions inet n  -       n       -       -       smtpd
+    #submissions     inet  n       -       n       -       -       smtpd
+    #  -o syslog_name=postfix/submissions
+    #  -o smtpd_tls_wrappermode=yes
+    #  -o smtpd_sasl_auth_enable=yes
+    #  -o smtpd_reject_unlisted_recipient=no
+    #     Instead of specifying complex smtpd_<xxx>_restrictions here,
+    #     specify "smtpd_<xxx>_restrictions=$mua_<xxx>_restrictions"
+    #     here, and specify mua_<xxx>_restrictions in main.cf (where
+    #     "<xxx>" is "client", "helo", "sender", "relay", or "recipient").
+    #  -o smtpd_client_restrictions=
+    #  -o smtpd_helo_restrictions=
+    #  -o smtpd_sender_restrictions=
+    #  -o smtpd_relay_restrictions=
+    #  -o smtpd_recipient_restrictions=permit_sasl_authenticated,reject
+    #  -o milter_macro_daemon_name=ORIGINATING
+    #628       inet  n       -       n       -       -       qmqpd
+    pickup    unix  n       -       n       60      1       pickup
+    cleanup   unix  n       -       n       -       0       cleanup
+    qmgr      unix  n       -       n       300     1       qmgr
+    #qmgr     unix  n       -       n       300     1       oqmgr
+    tlsmgr    unix  -       -       n       1000?   1       tlsmgr
+    rewrite   unix  -       -       n       -       -       trivial-rewrite
+    bounce    unix  -       -       n       -       0       bounce
+    defer     unix  -       -       n       -       0       bounce
+    trace     unix  -       -       n       -       0       bounce
+    verify    unix  -       -       n       -       1       verify
+    flush     unix  n       -       n       1000?   0       flush
+    proxymap  unix  -       -       n       -       -       proxymap
+    proxywrite unix -       -       n       -       1       proxymap
+    smtp      unix  -       -       n       -       -       smtp
+    relay     unix  -       -       n       -       -       smtp
+    #        -o syslog_name=postfix/$service_name
+    #       -o smtp_helo_timeout=5 -o smtp_connect_timeout=5
+    showq     unix  n       -       n       -       -       showq
+    error     unix  -       -       n       -       -       error
+    retry     unix  -       -       n       -       -       error
+    discard   unix  -       -       n       -       -       discard
+    local     unix  -       n       n       -       -       local
+    virtual   unix  -       n       n       -       -       virtual
+    lmtp      unix  -       -       n       -       -       lmtp
+    anvil     unix  -       -       n       -       1       anvil
+    scache    unix  -       -       n       -       1       scache
+    postlog   unix-dgram n  -       n       -       1       postlogd
+    #
+    # = ===================================================================
+    # Interfaces to non-Postfix software. Be sure to examine the manual
+    # pages of the non-Postfix software to find out what options it wants.
+    #
+    # Many of the following services use the Postfix pipe(8) delivery
+    # agent.  See the pipe(8) man page for information about ${recipient}
+    # and other message envelope options.
+    # ====================================================================
+    #
+    # maildrop. See the Postfix MAILDROP_README file for details.
+    # Also specify in main.cf: maildrop_destination_recipient_limit=1
+    #
+    #maildrop  unix  -       n       n       -       -       pipe
+    #  flags=DRXhu user=vmail argv=/usr/bin/maildrop -d ${recipient}
+    #
+    # ====================================================================
+    #
+    # Recent Cyrus versions can use the existing "lmtp" master.cf entry.
+    #
+    # Specify in cyrus.conf:
+    #   lmtp    cmd="lmtpd -a" listen="localhost:lmtp" proto=tcp4
+    #
+    # Specify in main.cf one or more of the following:
+    #  mailbox_transport = lmtp:inet:localhost
+    #  virtual_transport = lmtp:inet:localhost
+    #
+    # ====================================================================
+    #
+    # Cyrus 2.1.5 (Amos Gouaux)
+    # Also specify in main.cf: cyrus_destination_recipient_limit=1
+    #
+    #cyrus     unix  -       n       n       -       -       pipe
+    #  flags=DRX user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
+    #
+    # ====================================================================
