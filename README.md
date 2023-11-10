@@ -1,7 +1,25 @@
 # k3s-local
 
+Here is my pet-project of home/small-office cluster that can handle everything you purchase as a service from the Google or Microsoft, but with significantly more pain and fun. On the other hand, this would be enough for 20-30 employees at 1000 USD setup and easy to scale. K3S is used because it's much simplier to install and I don't really need all that cloud provider's drivers since the goal was to be self-sustainable.
 
-Here are notes not to forget how it is installed.
+## Works
+
+* Mail with Dovecot + Postfix + Rspamd. SIEVE is not automated, because Mozilla is too lazy to fix Thunderbird plugin
+* Tiny-Tiny RSS for old skulls
+* Minecraft for resource consumption
+* Nextcloud with Collabora and everything needed for the quality life with various photo-related extensions of the Nextcloud
+* Cluster-related things like trivial log aggregation and metrics collection
+* Matrix message server that actually works
+* Infrastructure things like Redis, MySQL, PostgresQL
+* Storage is NFS and it surprisingly reliable
+  
+## ToDo
+* Mozilla sync instance
+* Bitwarden instance
+* Mastodon
+* Proper backup of the mail and databases
+
+Here are some notes so you don'to forget how it is installed.
 
 Sysct:
 
