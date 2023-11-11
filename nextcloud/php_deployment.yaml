@@ -41,7 +41,7 @@ spec:
             claimName: nextcloud-nfs
       containers:
         - name: php-nextcloud
-          image: registry.andreybondarenko.com/php-fpm:latest
+          image: registry.andreybondarenko.com/php:latest
           volumeMounts:
             - name: nextcloud-nfs
               mountPath: /nextcloud

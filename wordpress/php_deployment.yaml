@@ -38,7 +38,7 @@ spec:
             claimName: code-nfs
       containers:
         - name: php
-          image: registry.andreybondarenko.com/php-fpm:latest
+          image: registry.andreybondarenko.com/php:latest
           volumeMounts:
             - name: code-nfs
               mountPath: /code

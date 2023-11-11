@@ -11,8 +11,8 @@ spec:
       template:
         spec:
           containers:
-            - name: previews
-              image: registry.andreybondarenko.com/php-fpm:latest
+            - name: previewsa
+              image: registry.andreybondarenko.com/php:latest
               command:
                 - /bin/sh
                 - /nextcloud/pr.sh
