@@ -12,12 +12,14 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Matrix message server that actually works
 * Infrastructure things like Redis, MySQL, PostgresQL
 * Storage is NFS and it surprisingly reliable
-  
+* Backup of mail, databases and redis  
+
 ## ToDo
 * Mozilla sync instance
 * Bitwarden instance
 * Mastodon
-* Proper backup of the mail and databases
+* Minecraft backup
+ 
 
 Here are some notes so you don'to forget how it is installed.
 
