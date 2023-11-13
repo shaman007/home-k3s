@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: db
+  name: backup
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-postgres
+  namespace: db
+spec:
+  schedule: "5 4 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: registry.andreybondarenko.com/postgres-cli:latest
+              imagePullPolicy: Always
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "/usr/local/bin/backup"
+              volumeMounts:
+                - name: backup
+                  mountPath: /data
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-password
+                      key: password
+                - name: PGHOST
+                  value: "postgres-postgresql.db.svc.cluster.local"
+                - name: PGUSER
+                  value: "postgres"
+                - name: PGPORT
+                  value: "5432"
+                - name: PGDATABASE
+                  value: "ttrss"
+                - name: OUTPUT_DIR
+                  value: "/data"
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: backup
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: my-private-registry

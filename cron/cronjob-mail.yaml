@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: mail
+  name: backup
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup
+  namespace: mail
+spec:
+  schedule: "5 5 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+            - name: backup-mail
+              image: ubuntu:latest
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "/usr/bin/tar -czvf /backup/mail_backup`/usr/bin/date +'%Y%m%d%H%M%S'`.tar.gz /mail"
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: mail-nfs
+                  mountPath: /mail
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: backup
+            - name: mail-nfs
+              persistentVolumeClaim:
+                claimName: mail-nfs
+          restartPolicy: Never

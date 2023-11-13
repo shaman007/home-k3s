@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: db
+  name: backup
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-mysql
+  namespace: db
+spec:
+  schedule: "5 2 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: registry.andreybondarenko.com/mysql-cli:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - /usr/local/bin/backup
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+              env:
+                - name: OUTPUT_DIR
+                  value: "/backup"
+                - name: MYSQLHOST
+                  value: "mysql.db.svc.cluster.local"
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: backup
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: my-private-registry
