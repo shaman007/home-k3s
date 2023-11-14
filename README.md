@@ -5,6 +5,7 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 ## Works
 
 * Mail with Dovecot + Postfix + Rspamd. SIEVE is not automated, because Mozilla is too lazy to fix Thunderbird plugin
+* Bitwarden self-hosted. Beware of extreme memory usage!
 * Tiny-Tiny RSS for old skulls
 * Minecraft for resource consumption
 * Nextcloud with Collabora and everything needed for the quality life with various photo-related extensions of the Nextcloud
@@ -15,8 +16,6 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Backup of mail, databases and redis  
 
 ## ToDo
-* Mozilla sync instance
-* Bitwarden instance
 * Mastodon
 * Minecraft backup
  

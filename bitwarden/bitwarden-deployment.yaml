@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: bitwarden
+  labels:
+    service: bitwarden
+  name: bitwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: bitwarden
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+      creationTimestamp: null
+      labels:
+        service: bitwarden
+    spec:
+      containers:
+        - env:
+            - name: BW_DOMAIN
+              value: "bitwarden.andreybondarenko.com"
+            - name: BW_INSTALLATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: id
+                  key: id
+            - name: BW_INSTALLATION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: key
+                  key: key
+            - name: BW_DB_PROVIDER
+              value: mysql
+            - name: BW_DB_SERVER
+              value: "mysql.db.svc.cluster.local"
+            - name: BW_DB_DATABASE
+              value: "bw"
+            - name: BW_DB_USERNAME
+              value: "root"
+            - name: BW_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+            - name: globalSettings__mail__smtp__host
+              value: "andreybondarenko.com"
+            - name: globalSettings__mail__smtp__port
+              value: "587"
+            - name: globalSettings__mail__smtp__ssl
+              value: "false"
+          image: bitwarden/self-host:beta
+          name: bitwarden
+          ports:
+            - containerPort: 8080
+          resources: {}
+          volumeMounts:
+            - mountPath: /etc/bitwarden
+              name: bitwarden
+            - mountPath: /var/log/bitwarden
+              name: logs
+      volumes:
+        - name: bitwarden
+          persistentVolumeClaim:
+            claimName: data
+        - name: logs
+          persistentVolumeClaim:
+            claimName: logs
