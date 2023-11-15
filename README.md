@@ -2,6 +2,9 @@
 
 Here is my pet-project of home/small-office cluster that can handle everything you purchase as a service from the Google or Microsoft, but with significantly more pain and fun. On the other hand, this would be enough for 20-30 employees at 1000 USD setup and easy to scale. K3S is used because it's much simplier to install and I don't really need all that cloud provider's drivers since the goal was to be self-sustainable.
 
+![alt arm based k3s cluster of 4 orangePI 4LTS nodes with power supply]( https://andreybondarenko.com/wp-content/uploads/2023/07/image-1536x1152.png "My ARM65 cluster made of 4 OrangePI LTS")
+
+
 ## Works
 
 * Mail with Dovecot + Postfix + Rspamd. SIEVE is not automated, because Mozilla is too lazy to fix Thunderbird plugin
