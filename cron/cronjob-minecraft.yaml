@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: minecraft
+  name: backup
+  labels:
+    storage.k8s.io/name: nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup
+  namespace: minecraft
+spec:
+  schedule: "5 8 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          containers:
+            - env:
+                - name: RCON_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: password
+                      key: password
+              name: backup-minecraft
+              image: registry.andreybondarenko.com/minecraft-cli:latest
+              command:
+                - "/bin/sh"
+                - "-c"
+                - "/usr/local/bin/backup.sh -c -i /data/world -o /backup -s rcon.minecraft.svc.cluster.local:25575:$RCON_PASSWORD -w rcon"
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: minecraft-nfs
+                  mountPath: /data
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: backup
+            - name: minecraft-nfs
+              persistentVolumeClaim:
+                claimName: minecraft-nfs
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: my-private-registry
