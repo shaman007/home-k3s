@@ -19,7 +19,7 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Mastodon
 * Spotify stats application
 * Languagetool local instance
- 
+* Ubiquity controller instance 
 
 Here are some notes so you don'to forget how it is installed.
 
