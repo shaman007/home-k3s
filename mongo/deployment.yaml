@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        selector: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.0.8
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+          - name: mongodb-configmap
+            mountPath: /config
+            readOnly: true
+          - name: mongodb-data
+            mountPath: /data/db
+      volumes:
+      - name: mongodb-configmap
+        configMap:
+          name: mongodb-configmap
+          items:
+          - key: mongo.conf
+            path: mongo.conf
+      - name: mongodb-data
+        persistentVolumeClaim:
+          claimName: mongo-nfs

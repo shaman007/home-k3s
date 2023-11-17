@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-configmap
+  namespace: db
+data:
+  mongo.conf: |
+    storage:
+      dbPath: /data/db
