@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  labels:
+  name: web
+  namespace: spotify
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: web
+        tier: backend
+    spec:
+      containers:
+        - env:
+            - name: API_ENDPOINT
+              value: https://spt-server.andreybondarenko.com
+          image: yooooomi/your_spotify_client
+          name: web
+          ports:
+            - containerPort: 3000
+              protocol: TCP

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: spotify
+  labels:
+    app: server
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: server
+        tier: backend
+    spec:
+      containers:
+        - env:
+            - name: API_ENDPOINT
+              value: https://spt-server.andreybondarenko.com
+            - name: CLIENT_ENDPOINT
+              value: https://spt.andreybondarenko.com
+            - name: SPOTIFY_PUBLIC
+              valueFrom:
+                secretKeyRef:
+                  name: spotify
+                  key: SPOTIFY_PUBLIC
+            - name: SPOTIFY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: spotify
+                  key: SPOTIFY_SECRET
+            - name: MONGO_ENDPOINT
+              value: mongodb://mongodb.db.svc.cluster.local:27017/your_spotify
+            - name: CORS
+              value: https://spt.andreybondarenko.com
+          image: yooooomi/your_spotify_server
+          name: server
+          ports:
+            - containerPort: 8080
+              hostPort: 8080
+              protocol: TCP
