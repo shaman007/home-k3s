@@ -1,1 +1,25 @@
+# CHANGELOG
 
+- Update README.md
+- Cleanup
+- Local spotify statistics app - add Readme
+- Local spotify statistics app - add Readme
+- Local spotify statistics app
+- Trivial MongoDB deploy
+- Cleanup
+- README update
+- README update
+- README update
+- README update
+- Minecraft backup
+- Bitwarden self-hosted instance
+- cleanup
+- README update
+- cleanup
+- Mail, Matrix, MySQL, Postgres and Redis backup to NFS PVC
+- Use my own PHP image
+- Forgor a secret there! (not an important one)
+- Cleanup
+- Update README.md
+- Initial commit
+- Initial commit

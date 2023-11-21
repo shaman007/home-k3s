@@ -31,7 +31,7 @@ Here are some notes so you don'to forget how it is installed.
 
 Sysct сhanges. The swap is incompatible with the K8S, we need to turn on IP forwarding.
 
-```
+```bash
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1
 net.ipv6.conf.all.accept_ra = 2
@@ -40,13 +40,13 @@ vm.swappiness = 100
 
 On master node options are:
 
-```
+```bash
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 --flannel-ipv6-masq --disable traefik" sh -s -
 ```
 
 These would result the config:
 
-```
+```bash
 write-kubeconfig-mode: "0644"
 tls-san:
   - "mster.k8s.my.lan"
@@ -63,21 +63,21 @@ no-deploy:
 
 Getting token, and then using it on the worker nodes:
 
-```
+```bash
 cat /var/lib/rancher/k3s/server/node-token
 curl -sfL https://get.k3s.io | K3S_URL=https://master.k8s.my.lan:6443  K3S_TOKEN=K10e::server:1397 sh -
 ```
 
 To make helm functional:
 
-```
+```bash
 cat /etc/rancher/k3s/k3s.yaml > ~/.kube/config
 chmod 600 ~/.kube/config
 ```
 
 Installation of the NFS volume provisioner. NFS server hostname and exported path is needed:
 
-```
+```bash
 helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
 helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --create-namespace \
@@ -88,13 +88,13 @@ helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs
 
 Letsencrypt deployment:
 
-```
+```bash
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
 ```
 
 NGINX ingress deployment instaed of the Traefik:
 
-```
+```bash
 helm upgrade --install ingress-nginx ingress-nginx \
     --repo https://kubernetes.github.io/ingress-nginx \
     --namespace ingress-nginx --create-namespace
@@ -102,7 +102,7 @@ helm upgrade --install ingress-nginx ingress-nginx \
 
 Dashboard deployment is optional. I use Mirantis Lens, still, anyway:
 
-```
+```bash
 GITHUB_URL=https://github.com/kubernetes/dashboard/releases
 VERSION_KUBE_DASHBOARD=$(curl -w '%{url_effective}' -I -L -s -S ${GITHUB_URL}/latest -o /dev/null | sed -e 's|.*/||')
 sudo k3s kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/${VERSION_KUBE_DASHBOARD}/aio/deploy/recommended.yaml
@@ -110,51 +110,51 @@ sudo k3s kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboar
 
 Postgres deployment from the Helm chart:
 
-```
+```bash
 helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql
 ```
 
 TT-RSS deployment from the Helm chart
 
-```
+```bash
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
 helm install --create-namespace --namespace tt-rss may-tt-rss k8s-at-home/tt-rss -f ./values.yaml
 ```
 
 Collabora deployment from the Helm chart:
 
-```
+```bash
 helm repo add collabora https://collaboraonline.github.io/online/
 helm install --create-namespace --namespace collabora collabora-online collabora/collabora-online -f my_values.yaml
 ```
 
 Registry deployment from the Helm chart:
 
-```
+```bash
 upgrade registry twuni/docker-registry -f ./values.yaml  --namespace=registry
 ```
 
 Mail-related ports forwarding:
 
-```
+```bash
 kubectl expose service postfix-tls --port=587 --target-port=587  --name=my-mail --type=LoadBalancer --namespace=mail
 kubectl expose service dovecot-tls --port=993 --target-port=993  --name=imap-tls --type=LoadBalancer --namespce=mail
 ```
 
 This would copy TLS certificates from the wordpress namespace to the mail namespace, so it would be used by the Postfix and Dovecot:
 
-```
+```bash
 kubectl get secret letsencrypt-prod --namespace=default -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
 ```
 
 Docker clenup:
 
-```
+```bash
 docker system prune -a
 ```
 
 Rancher cleanup:
 
-```
+```bash
 crictl rmi --prune
 ```
