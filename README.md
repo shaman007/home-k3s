@@ -4,7 +4,6 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 
 ![alt arm based k3s cluster of 4 orangePI 4LTS nodes with power supply]( https://andreybondarenko.com/wp-content/uploads/2023/07/image-1536x1152.png "My ARM65 cluster made of 4 OrangePI LTS")
 
-
 ## Works
 
 * Mail with Dovecot + Postfix + Rspamd. SIEVE is not automated, because Mozilla is too lazy to fix Thunderbird plugin
@@ -21,9 +20,10 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Spotify stats application
 
 ## ToDo
+
 * Mastodon
 * Languagetool local instance
-* Ubiquity controller instance 
+* Ubiquity controller instance
 
 Here are some notes so you don'to forget how it is installed.
 
@@ -147,13 +147,11 @@ This would copy TLS certificates from the wordpress namespace to the mail namesp
 kubectl get secret letsencrypt-prod --namespace=default -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
 ```
 
-
 Docker clenup:
 
 ```
 docker system prune -a
 ```
-
 
 Rancher cleanup:
 
