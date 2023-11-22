@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: previews
+  name: nextcloud
   namespace: nextcloud
 spec:
   schedule: "*/5 * * * *"
@@ -15,7 +15,9 @@ spec:
               image: registry.andreybondarenko.com/php:latest
               command:
                 - /bin/sh
-                - /nextcloud/pr.sh
+                - -c
+                - "sudo -u www-data php /nextcloud/cron.php"
+                #/nextcloud/pr.sh
               volumeMounts:
                 - name: application-code
                   mountPath: /nextcloud

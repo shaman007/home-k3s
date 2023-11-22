@@ -9,6 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/proxy-body-size: 1000m
+    nginx.ingress.kubernetes.io/more_set_headers: "X-Forwarded-For $http_x_forwarded_for"
 spec:
   tls:
     - hosts:

@@ -130,10 +130,8 @@ spec:
               - key: 20-managesieve
                 path: 20-managesieve.conf
         - name: passwd
-          #configMap:
           secret:
             secretName: passwd
-            #name: dovecot-cf
             items:
               - key: passwd
                 path: passwd

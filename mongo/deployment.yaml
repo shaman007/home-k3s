@@ -4,6 +4,7 @@ metadata:
   name: mongodb
   namespace: db
 spec:
+  serviceName: mongodb
   replicas: 1
   selector:
     matchLabels:
