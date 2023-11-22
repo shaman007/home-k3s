@@ -37,8 +37,14 @@ spec:
             - name: MONGO_ENDPOINT
               value: mongodb://mongodb.db.svc.cluster.local:27017/your_spotify
             - name: CORS
-              value: https://spt.andreybondarenko.com
+              value: "https://spt.andreybondarenko.com, https://spt-server.andreybondarenko.com"
           image: yooooomi/your_spotify_server
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"
           name: server
           ports:
             - containerPort: 8080

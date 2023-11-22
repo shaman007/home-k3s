@@ -44,6 +44,12 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
+          resources:
+            requests:
+              cpu: 727m
+              memory: 3000M
+            limits:
+              memory: 3000M
       volumes:
         - name: prometheus-config-volume
           configMap:
@@ -105,11 +111,10 @@ spec:
               containerPort: 9093
           resources:
             requests:
-              cpu: 500m
-              memory: 500M
+              cpu: 10m
+              memory: 100M
             limits:
-              cpu: 1
-              memory: 1Gi
+              memory: 100M
           volumeMounts:
             - name: config-volume
               mountPath: /etc/alertmanager

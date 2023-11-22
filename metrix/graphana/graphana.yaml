@@ -59,8 +59,10 @@ spec:
             timeoutSeconds: 1
           resources:
             requests:
-              cpu: 250m
-              memory: 750Mi
+              cpu: 15m
+              memory: 210Mi
+            limits:
+              memory: 210Mi
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv

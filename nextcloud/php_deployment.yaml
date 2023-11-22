@@ -47,11 +47,9 @@ spec:
               mountPath: /nextcloud
           resources:
             requests:
-              cpu: "1.104"
-              memory: "3165Mi"
+              cpu: "107m"
+              memory: "2145Mi"
             limits:
-              memory: "3165Mi"
+              memory: "2145Mi"
       imagePullSecrets:
         - name: my-private-registry
-      nodeSelector:
-        kubernetes.io/hostname: worker-04.k8s.my.lan

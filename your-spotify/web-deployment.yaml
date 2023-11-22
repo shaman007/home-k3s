@@ -1,8 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
   labels:
+    app:  web
+    tier: frontend
   name: web
   namespace: spotify
 spec:
@@ -23,6 +24,12 @@ spec:
               value: https://spt-server.andreybondarenko.com
           image: yooooomi/your_spotify_client
           name: web
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "50Mi"
+            limits:
+              memory: "50Mi"
           ports:
             - containerPort: 3000
               protocol: TCP

@@ -32,10 +32,10 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 250m
-              memory: 180Mi
+              memory: 100Mi
             requests:
-              memory: 180Mi
+              cpu: 50m
+              memory: 100Mi
           volumeMounts:
             - mountPath: /host/sys
               mountPropagation: HostToContainer
