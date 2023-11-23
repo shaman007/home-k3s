@@ -1,14 +1,16 @@
 apiVersion: v1
-kind: Service
+kind: PersistentVolumeClaim
 metadata:
   namespace: minecraft
-  name: rcon
+  name: minecraft-nfs
   labels:
-    tier: backend
+    storage.k8s.io/name: nfs
+    storage.k8s.io/part-of: kubernetes-complete-reference
 spec:
-  selector:
-    app: minecraft
-    tier: backend
-  ports:
-    - protocol: TCP
-      port: 25575
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 500Gi
+      
