@@ -60,16 +60,3 @@ spec:
               path: clamd.conf
       imagePullSecrets:
         - name: my-private-registry
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  namespace: clamav
-  name: avdata
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 500Mi

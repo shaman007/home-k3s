@@ -53,17 +53,4 @@ spec:
             claimName: rsyslog-nfs
       imagePullSecrets:
         - name: my-private-registry
----
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: logging
-  name: "rsyslog"
-spec:
-  ports:
-    - port: 514
-      targetPort: 514
-      protocol: TCP
-  type: NodePort
-  selector:
-    app: "rsyslog"
+

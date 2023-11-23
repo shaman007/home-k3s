@@ -14,7 +14,6 @@ spec:
     type: Recreate
   template:
     metadata:
-      annotations:
       labels:
         service: bitwarden
     spec:

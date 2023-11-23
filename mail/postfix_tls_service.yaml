@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mail
+  name: postfix-tls
+  labels:
+    tier: mail
+spec:
+  selector:
+    app: postfix
+    tier: mail
+  ports:
+    - protocol: TCP
+      port: 587

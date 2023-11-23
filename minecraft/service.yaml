@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: minecraft
+  name: minecraft
+  labels:
+    tier: backend
+spec:
+  selector:
+    app: minecraft
+    tier: backend
+  ports:
+    - protocol: TCP
+      port: 25565

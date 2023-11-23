@@ -20,6 +20,12 @@ spec:
         image: mongo:4.0.8
         ports:
           - containerPort: 27017
+        resources:
+          requests:
+            cpu: "10m"
+            memory: "300Mi"
+          limits:
+            memory: "300Mi"
         volumeMounts:
           - name: mongodb-configmap
             mountPath: /config
