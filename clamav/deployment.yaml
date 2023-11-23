@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clamav
+  namespace: clamav
+  labels:
+    app: clamav
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clamav
+  template:
+    metadata:
+      labels:
+        app: clamav
+    spec:
+      containers:
+      - name: clamd
+        image: registry.andreybondarenko.com/clamav:latest
+        ports:
+        - containerPort: 3200
+          name: api
+          protocol: TCP
+        volumeMounts:
+          - mountPath: /var/lib/clamav
+            name: avdata
+          - mountPath: /etc/clamav/clamd.conf
+            name: clamav
+            subPath: clamd.conf
+        resources:
+          requests:
+            cpu: "10m"
+            memory: "200Mi"
+          limits:
+            memory: "200Mi"
+      - name: fresclam
+        image: registry.andreybondarenko.com/clamav:latest
+        env:
+        - name: UPDATE
+          value: "true"
+        volumeMounts:
+          - mountPath: /var/lib/clamav
+            name: avdata
+        resources:
+          requests:
+            cpu: "10m"
+            memory: "100Mi"
+          limits:
+            memory: "100Mi"
+      volumes:
+        - name: avdata
+          persistentVolumeClaim:
+            claimName: avdata
+        - name: clamav
+          configMap:
+            name: clamav
+            items:
+            - key: clamd.conf
+              path: clamd.conf
+      imagePullSecrets:
+        - name: my-private-registry
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: clamav
+  name: avdata
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 500Mi
