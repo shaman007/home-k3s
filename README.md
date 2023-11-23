@@ -18,7 +18,7 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Backup of mail, databases, Minecraft and redis
 * Mongodb without auth, is needed for Spotify stats application
 * Spotify stats application
-* Clamav that sits on clamav.clamav.csv.cluseter.local:3200/TCP
+* Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
 
 ## ToDo
 
