@@ -1,19 +1,3 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: prometheus-nfs
-  namespace: monitoring
-  labels:
-    storage.k8s.io/name: nfs
-    storage.k8s.io/part-of: kubernetes-complete-reference
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 500Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,6 +33,7 @@ spec:
               cpu: 727m
               memory: 3000M
             limits:
+              cpu: 2000m
               memory: 3000M
       volumes:
         - name: prometheus-config-volume
@@ -58,76 +43,3 @@ spec:
         - name: prometheus-storage-volume
           persistentVolumeClaim:
             claimName: prometheus-nfs
----
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  config.yml: |-
-    global:
-    templates:
-    - '/etc/alertmanager/*.tmpl'
-    route:
-      receiver: alert-emailer
-      group_by: ['alertname', 'priority']
-      group_wait: 10s
-      repeat_interval: 30m
-
-    receivers:
-    - name: alert-emailer
-      email_configs:
-      - to: me@andreybondarenko.com
-        send_resolved: false
-        from: alert@andreybondarenko.com
-        smarthost: andreybondarenko.com:25
-        require_tls: false
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: alertmanager
-  namespace: monitoring
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: alertmanager
-  template:
-    metadata:
-      name: alertmanager
-      labels:
-        app: alertmanager
-    spec:
-      containers:
-        - name: alertmanager
-          image: prom/alertmanager:latest
-          args:
-            - "--config.file=/etc/alertmanager/config.yml"
-            - "--storage.path=/alertmanager"
-          ports:
-            - name: alertmanager
-              containerPort: 9093
-          resources:
-            requests:
-              cpu: 10m
-              memory: 100M
-            limits:
-              memory: 100M
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/alertmanager
-            - name: templates-volume
-              mountPath: /etc/alertmanager-templates
-            - name: alertmanager
-              mountPath: /alertmanager
-      volumes:
-        - name: config-volume
-          configMap:
-            name: alertmanager-config
-        - name: templates-volume
-          configMap:
-            name: alertmanager-templates
-        - name: alertmanager
-          emptyDir: {}
