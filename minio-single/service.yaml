@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    name: minio
+spec:
+  ports:
+    - port: 9000
+      protocol: TCP
+  selector:
+    app: minio

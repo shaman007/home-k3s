@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+        selector: minio
+    spec:
+      containers:
+      - name: minio
+        image: registry.andreybondarenko.com/minio-single:latest
+        env:
+          - name: MINIO_DRIVE
+            value: "/data"
+          - name: MINIO_ROOT_USER
+            value: myminioadmin
+          - name: MINIO_ROOT_PASSWORD
+            value: minio-secret-key-change-me
+          - name: MINIO_VOLUMES
+            value: "/data"
+        ports:
+          - containerPort: 9000
+          - containerPort: 9090
+        volumeMounts:
+          - name: minio-data
+            mountPath: /data/
+        resources:
+          requests:
+            cpu: "10m"
+            memory: "300Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1000Mi"
+      volumes:
+      - name: minio-data
+        persistentVolumeClaim:
+          claimName: minio-nfs
+      imagePullSecrets:
+        - name: my-private-registry
