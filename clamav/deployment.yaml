@@ -31,9 +31,10 @@ spec:
         resources:
           requests:
             cpu: "10m"
-            memory: "200Mi"
+            memory: "100Mi"
           limits:
-            memory: "200Mi"
+            cpu: "2000m"
+            memory: "2048Mi"
       - name: fresclam
         image: registry.andreybondarenko.com/clamav:latest
         env:
@@ -42,12 +43,16 @@ spec:
         volumeMounts:
           - mountPath: /var/lib/clamav
             name: avdata
+          - mountPath: /etc/clamav/clamd.conf
+            name: clamav
+            subPath: clamd.conf
         resources:
           requests:
             cpu: "10m"
             memory: "100Mi"
           limits:
-            memory: "100Mi"
+            cpu: "2000m"
+            memory: "1500Mi"
       volumes:
         - name: avdata
           persistentVolumeClaim:

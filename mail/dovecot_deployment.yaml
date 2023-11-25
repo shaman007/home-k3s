@@ -123,6 +123,7 @@ spec:
               cpu: "10m"
               memory: "296Mi"
             limits:
+              cpu: "300m"
               memory: "296Mi"
       imagePullSecrets:
         - name: my-private-registry

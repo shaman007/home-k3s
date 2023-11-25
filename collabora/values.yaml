@@ -1,3 +1,5 @@
+image:
+  tag: latest
 autoscaling:
   enabled: false
   maxReplicas: 2
@@ -10,4 +12,5 @@ resources:
     cpu: "10m"
     memory: "512Mi"
   limits:
+    cpu: "1000m"
     memory: "512Mi"

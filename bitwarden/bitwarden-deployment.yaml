@@ -59,6 +59,7 @@ spec:
               cpu: "10m"
               memory: "1344Mi"
             limits:
+              cpu: "1000m"
               memory: "1344Mi"
           volumeMounts:
             - mountPath: /etc/bitwarden

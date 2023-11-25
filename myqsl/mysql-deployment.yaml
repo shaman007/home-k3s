@@ -38,6 +38,7 @@ spec:
               cpu: "10m"
               memory: "800Mi"
             limits:
+              cpu: "2000m"
               memory: "800Mi"
           volumeMounts:
             - name: mysql-persistent-storage

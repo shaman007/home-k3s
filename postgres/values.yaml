@@ -1,7 +1,10 @@
+images:
+  tag: 15
 primary:
   resources:
     requests:
       cpu: "24m"
       memory: "100Mi"
     limits:
+      cpu: "300m"
       memory: "100Mi"

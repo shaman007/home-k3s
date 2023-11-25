@@ -44,6 +44,13 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsUser: 65534
+          resources:
+            requests:
+              cpu: 10m
+              memory: 80Mi
+            limits:
+              cpu: "1000m"
+              memory: 80Mi
       nodeSelector:
         kubernetes.io/os: linux
       serviceAccountName: kube-state-metrics

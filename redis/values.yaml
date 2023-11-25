@@ -4,6 +4,7 @@ master:
       cpu: "61m"
       memory: "100Mi"
     limits:
+      cpu: 300m
       memory: "100Mi"
 replica:
   resources:
@@ -11,4 +12,5 @@ replica:
       cpu: "81m"
       memory: "100Mi"
     limits:
+      cpu: 300m
       memory: "100Mi"
