@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-cli
+  namespace: db
+spec:
+  selector:
+    matchLabels:
+      app: postgres-cli
+  template:
+    metadata:
+      labels:
+        app: postgres-cli
+    spec:
+      containers:
+      - name: postgres-cli
+        image: registry.andreybondarenko.com/postgres-cli:latest
+        volumeMounts:
+          - name: backup
+            mountPath: /data
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-password
+                key: password
+          - name: PGHOST
+            value: "postgres-postgresql.db.svc.cluster.local"
+          - name: PGUSER
+            value: "postgres"
+          - name: PGPORT
+            value: "5432"
+          - name: PGDATABASE
+            value: "ttrss"
+          - name: OUTPUT_DIR
+            value: "/data"
+      volumes:
+        - name: backup
+          persistentVolumeClaim:
+            claimName: backup
+      imagePullSecrets:
+        - name: my-private-registry
