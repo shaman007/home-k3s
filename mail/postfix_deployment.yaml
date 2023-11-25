@@ -63,6 +63,12 @@ spec:
             items:
               - key: greylist
                 path: greylist.conf
+        - name: antivirus-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: antivirus
+                path: antivirus.conf                
         - name: neural-cf
           configMap:
             name: rspamd-cf
@@ -122,6 +128,9 @@ spec:
             - name: neural-cf
               mountPath: /etc/rspamd/modules.d/neural.conf
               subPath: neural.conf
+            - name: antivirus-cf
+              mountPath: /etc/rspamd/modules.d/antivirus.conf
+              subPath: antivirus.conf              
             - name: statistics-cf
               mountPath: /etc/rspamd/statistics.conf
               subPath: statistics.conf
@@ -134,11 +143,14 @@ spec:
               readOnly: true
             - name: rspamd-local
               mountPath: /var/lib/rspamd
+            - name: mail-nfs
+              mountPath: /mail
           resources:
             requests:
               cpu: "10m"
               memory: "256Mi"
             limits:
+              cpu: "2000m"
               memory: "256Mi"
         - name: postfix-mail
           image: registry.andreybondarenko.com/postfix:latest
@@ -163,6 +175,7 @@ spec:
               cpu: "10m"
               memory: "128Mi"
             limits:
+              cpu: "300m"
               memory: "128Mi"
       imagePullSecrets:
         - name: my-private-registry
