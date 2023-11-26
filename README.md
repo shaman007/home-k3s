@@ -20,11 +20,6 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Spotify stats application
 * Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
 
-## ToDo
-
-* Mastodon
-* Ubiquity controller instance
-
 ## Dokerfiles
 
 Here are [Dockerfiles](https://github.com/shaman007/Dockerfiles) that I am using on my cluster. Usually the main reason fot the own Dockerfile is that the official one either has no aarch64 support or lack some features I want.
