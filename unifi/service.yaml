@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi
+  namespace: "unifi"
+  labels:
+    name: unifi
+spec:
+  ports:
+    - port: 8443
+      name: unifi-8443
+      protocol: TCP
+    - port: 3478
+      name: unifi-3478
+      protocol: UDP
+    - port: 10001
+      protocol: UDP
+      name: unifi-10001
+    - port: 8080
+      name: unifi-8080
+      protocol: TCP
+    - port: 1900
+      name: unifi-1900
+      protocol: UDP
+    - port: 8843
+      name: unifi-8843
+      protocol: TCP
+    - port: 8880
+      name: unifi-8880
+      protocol: TCP
+    - port: 6789
+      name: unifi-6789
+      protocol: TCP
+    - port: 5514
+      name: unifi-5514
+      protocol: UDP
+  externalIPs:
+    - 192.168.1.102
+
+  #type: LoadBalancer
+  selector:
+    app: unifi
