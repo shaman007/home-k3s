@@ -15,10 +15,13 @@ spec:
       containers:
       - name: unifi
         image: lscr.io/linuxserver/unifi-network-application:latest
-        resources: {}
-        #  limits:
-        #    memory: "2048Mi"
-        #    cpu: "2500m"
+        resources: 
+          requests:
+            cpu: "100m"
+            memory: 500Mi
+          limits:
+            memory: "2048Mi"
+            cpu: "2500m"
         ports:
         - containerPort: 8443
         - containerPort: 3478 #udp
@@ -51,4 +54,5 @@ spec:
         - name: unifi-data
           persistentVolumeClaim:
             claimName: unifi-nfs
+      nodeName: worker-01.k8s.my.lan
             

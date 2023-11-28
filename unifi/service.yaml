@@ -37,6 +37,5 @@ spec:
   externalIPs:
     - 192.168.1.102
 
-  #type: LoadBalancer
   selector:
     app: unifi
