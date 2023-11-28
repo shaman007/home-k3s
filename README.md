@@ -131,13 +131,6 @@ Registry deployment from the Helm chart:
 upgrade registry twuni/docker-registry -f ./values.yaml  --namespace=registry
 ```
 
-Mail-related ports forwarding:
-
-```bash
-kubectl expose service postfix-tls --port=587 --target-port=587  --name=my-mail --type=LoadBalancer --namespace=mail
-kubectl expose service dovecot-tls --port=993 --target-port=993  --name=imap-tls --type=LoadBalancer --namespce=mail
-```
-
 This would copy TLS certificates from the wordpress namespace to the mail namespace, so it would be used by the Postfix and Dovecot:
 
 ```bash
