@@ -1,8 +1,9 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app:  web
+    app: web
     tier: frontend
   name: web
   namespace: spotify

@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,4 +43,5 @@ spec:
               cpu: "10m"
               memory: "100Mi"
             limits:
+              cpu: "300m"
               memory: "100Mi"

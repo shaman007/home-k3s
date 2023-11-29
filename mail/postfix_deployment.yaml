@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -68,7 +69,7 @@ spec:
             name: rspamd-cf
             items:
               - key: antivirus
-                path: antivirus.conf                
+                path: antivirus.conf
         - name: neural-cf
           configMap:
             name: rspamd-cf
@@ -130,7 +131,7 @@ spec:
               subPath: neural.conf
             - name: antivirus-cf
               mountPath: /etc/rspamd/modules.d/antivirus.conf
-              subPath: antivirus.conf              
+              subPath: antivirus.conf
             - name: statistics-cf
               mountPath: /etc/rspamd/statistics.conf
               subPath: statistics.conf

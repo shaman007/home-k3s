@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -31,7 +32,8 @@ spec:
               command:
                 - "/bin/sh"
                 - "-c"
-                - "/usr/bin/tar -czvf /backup/mail_backup`/usr/bin/date +'%Y%m%d%H%M%S'`.tar.gz /mail"
+                - "/usr/bin/tar -czvf /backup/mail_backup`/usr/bin/date \
+                  +'%Y%m%d%H%M%S'`.tar.gz /mail"
               volumeMounts:
                 - name: backup
                   mountPath: /backup

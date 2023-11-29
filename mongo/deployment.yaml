@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -16,31 +17,31 @@ spec:
         selector: mongodb
     spec:
       containers:
-      - name: mongodb
-        image: mongo:4.4.0
-        ports:
-          - containerPort: 27017
-        resources:
-          requests:
-            cpu: "10m"
-            memory: "300Mi"
-          limits:
-            cpu: "1000m"
-            memory: "300Mi"
-        volumeMounts:
-          - name: mongodb-configmap
-            mountPath: /config
-            readOnly: true
-          - name: mongodb-data
-            mountPath: /data/db
+        - name: mongodb
+          image: mongo:4.4.0
+          ports:
+            - containerPort: 27017
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "300Mi"
+            limits:
+              cpu: "1000m"
+              memory: "300Mi"
+          volumeMounts:
+            - name: mongodb-configmap
+              mountPath: /config
+              readOnly: true
+            - name: mongodb-data
+              mountPath: /data/db
       volumes:
-      - name: mongodb-configmap
-        configMap:
-          name: mongodb-configmap
-          items:
-          - key: mongo.conf
-            path: mongo.conf
-      - name: mongodb-data
-        persistentVolumeClaim:
-          claimName: mongo-nfs
+        - name: mongodb-configmap
+          configMap:
+            name: mongodb-configmap
+            items:
+              - key: mongo.conf
+                path: mongo.conf
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: mongo-nfs
       nodeName: worker-04.k8s.my.lan

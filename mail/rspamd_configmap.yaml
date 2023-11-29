@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -166,5 +167,4 @@ data:
         log_clean = true;
         servers = "clamav.clamav.svc.cluster.local:3200";
       }
-    }    
-    
+    }

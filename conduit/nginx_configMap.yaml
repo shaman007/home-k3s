@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,12 +12,14 @@ data:
 
     location /.well-known/matrix/server {
         default_type application/json;
-        return 200 '{"m.server": "matrix.andreybondarenko.com:6167"}';
+        return 200 '{"m.server": \
+          "matrix.andreybondarenko.com:6167"}';
     }
 
     location /.well-known/matrix/client {
         default_type application/json;
-        return 200 '{"m.homeserver":{"base_url": "https://matrix.andreybondarenko.com"}}';
+        return 200 '{"m.homeserver":{"base_url": \
+          "https://matrix.andreybondarenko.com"}}';
     }
 
     }

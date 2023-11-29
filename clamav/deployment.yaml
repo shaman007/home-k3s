@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,43 +17,43 @@ spec:
         app: clamav
     spec:
       containers:
-      - name: clamd
-        image: registry.andreybondarenko.com/clamav:latest
-        ports:
-        - containerPort: 3200
-          name: api
-          protocol: TCP
-        volumeMounts:
-          - mountPath: /var/lib/clamav
-            name: avdata
-          - mountPath: /etc/clamav/clamd.conf
-            name: clamav
-            subPath: clamd.conf
-        resources:
-          requests:
-            cpu: "10m"
-            memory: "100Mi"
-          limits:
-            cpu: "2000m"
-            memory: "2048Mi"
-      - name: fresclam
-        image: registry.andreybondarenko.com/clamav:latest
-        env:
-        - name: UPDATE
-          value: "true"
-        volumeMounts:
-          - mountPath: /var/lib/clamav
-            name: avdata
-          - mountPath: /etc/clamav/clamd.conf
-            name: clamav
-            subPath: clamd.conf
-        resources:
-          requests:
-            cpu: "10m"
-            memory: "100Mi"
-          limits:
-            cpu: "2000m"
-            memory: "1500Mi"
+        - name: clamd
+          image: registry.andreybondarenko.com/clamav:latest
+          ports:
+            - containerPort: 3200
+              name: api
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/clamav
+              name: avdata
+            - mountPath: /etc/clamav/clamd.conf
+              name: clamav
+              subPath: clamd.conf
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2048Mi"
+        - name: fresclam
+          image: registry.andreybondarenko.com/clamav:latest
+          env:
+            - name: UPDATE
+              value: "true"
+          volumeMounts:
+            - mountPath: /var/lib/clamav
+              name: avdata
+            - mountPath: /etc/clamav/clamd.conf
+              name: clamav
+              subPath: clamd.conf
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              cpu: "2000m"
+              memory: "1500Mi"
       volumes:
         - name: avdata
           persistentVolumeClaim:
@@ -61,7 +62,7 @@ spec:
           configMap:
             name: clamav
             items:
-            - key: clamd.conf
-              path: clamd.conf
+              - key: clamd.conf
+                path: clamd.conf
       imagePullSecrets:
         - name: my-private-registry

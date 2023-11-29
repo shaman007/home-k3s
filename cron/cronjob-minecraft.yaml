@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -37,7 +38,8 @@ spec:
               command:
                 - "/bin/sh"
                 - "-c"
-                - "/usr/local/bin/backup.sh -c -i /data/world -o /backup -s rcon.minecraft.svc.cluster.local:25575:$RCON_PASSWORD -w rcon"
+                - "/usr/local/bin/backup.sh -c -i /data/world -o /backup \
+                  -s rcon.minecraft.svc.cluster.local:25575:$RCON_PASSWORD -w rcon"
               volumeMounts:
                 - name: backup
                   mountPath: /backup

@@ -1,3 +1,4 @@
+---
 write-kubeconfig-mode: "0644"
 tls-san:
   - "mster.k8s.my.lan"

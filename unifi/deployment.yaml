@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,46 +14,45 @@ spec:
         app: unifi
     spec:
       containers:
-      - name: unifi
-        image: lscr.io/linuxserver/unifi-network-application:latest
-        resources: 
-          requests:
-            cpu: "100m"
-            memory: 500Mi
-          limits:
-            memory: "2048Mi"
-            cpu: "2500m"
-        ports:
-        - containerPort: 8443
-        - containerPort: 3478 #udp
-          protocol: UDP
-        - containerPort: 10001 #udp
-          protocol: UDP
-        - containerPort: 8080
-        - containerPort: 1900 #optional
-          protocol: UDP
-        - containerPort: 8843 #optional
-        - containerPort: 8880 #optional
-        - containerPort: 6789 #optional
-        - containerPort: 5514 #optional
-          protocol: UDP
-        env:
-          - name: "MONGO_HOST"
-            value: "mongodb.db.svc.cluster.local"
-          - name: "MONGO_PORT"
-            value: "27017"
-          - name: "MONGO_DBNAME"
-            value: "unifi"
-          - name: "MONGO_USER"
-            value: "unifi"
-          - name: "MONGO_PASS"
-            value: "pass"
-        volumeMounts:
-          - name: unifi-data
-            mountPath: /config      
+        - name: unifi
+          image: lscr.io/linuxserver/unifi-network-application:latest
+          resources:
+            requests:
+              cpu: "100m"
+              memory: 500Mi
+            limits:
+              memory: "2048Mi"
+              cpu: "2500m"
+          ports:
+            - containerPort: 8443
+            - containerPort: 3478  # udp
+              protocol: UDP
+            - containerPort: 10001  # udp
+              protocol: UDP
+            - containerPort: 8080
+            - containerPort: 1900  # optional
+              protocol: UDP
+            - containerPort: 8843  # optional
+            - containerPort: 8880  # optional
+            - containerPort: 6789  # optional
+            - containerPort: 5514  # optional
+              protocol: UDP
+          env:
+            - name: "MONGO_HOST"
+              value: "mongodb.db.svc.cluster.local"
+            - name: "MONGO_PORT"
+              value: "27017"
+            - name: "MONGO_DBNAME"
+              value: "unifi"
+            - name: "MONGO_USER"
+              value: "unifi"
+            - name: "MONGO_PASS"
+              value: "pass"
+          volumeMounts:
+            - name: unifi-data
+              mountPath: /config
       volumes:
         - name: unifi-data
           persistentVolumeClaim:
             claimName: unifi-nfs
       nodeName: worker-01.k8s.my.lan
-            
