@@ -1,9 +1,8 @@
----
 apiVersion: v1
 kind: Service
 metadata:
   namespace: mail
-  name: dovecot-lmtp
+  name: dovecot-sasl
   labels:
     tier: mail
 spec:
@@ -12,4 +11,4 @@ spec:
     tier: mail
   ports:
     - protocol: TCP
-      port: 24
+      port: 1234

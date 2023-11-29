@@ -1,19 +1,4 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  namespace: matrix
-  name: backup
-  labels:
-    storage.k8s.io/name: nfs
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: nfs-client
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: batch/v1
 kind: CronJob
 metadata:
