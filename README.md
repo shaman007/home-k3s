@@ -19,6 +19,13 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Mongodb without auth, is needed for Spotify stats application
 * Spotify stats application
 * Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
+* UniFi console
+* Minio single drive, for future experiments
+* Elasticsearch, for future expefiments
+
+## ToDo
+
+* Mastodon
 
 ## Dokerfiles
 
