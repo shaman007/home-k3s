@@ -22,14 +22,14 @@ spec:
         - name: config-volume
           configMap:
             name: php-fpm-config
-        - name: nextcloud-nfs
+        - name: nextcloud-lh
           persistentVolumeClaim:
-            claimName: nextcloud-nfs
+            claimName: nextcloud-lh
       containers:
         - name: php-nextcloud
           image: registry.andreybondarenko.com/php:latest
           volumeMounts:
-            - name: nextcloud-nfs
+            - name: nextcloud-lh
               mountPath: /nextcloud
           resources:
             requests:

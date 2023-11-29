@@ -64,13 +64,13 @@ spec:
               memory: "1344Mi"
           volumeMounts:
             - mountPath: /etc/bitwarden
-              name: bitwarden
+              name: bitwarden-lh
             - mountPath: /var/log/bitwarden
-              name: logs
+              name: logs-lh
       volumes:
-        - name: bitwarden
+        - name: bitwarden-lh
           persistentVolumeClaim:
-            claimName: data
-        - name: logs
+            claimName: data-lh
+        - name: logs-lh
           persistentVolumeClaim:
-            claimName: logs
+            claimName: logs-lh

@@ -17,16 +17,16 @@ spec:
         tier: backend
     spec:
       volumes:
-        - name: matrix
+        - name: matrix-lh
           persistentVolumeClaim:
-            claimName: matrix
+            claimName: matrix-lh
       containers:
         - name: conduit
           image: matrixconduit/matrix-conduit:latest
           ports:
             - containerPort: 6167
           volumeMounts:
-            - name: matrix
+            - name: matrix-lh
               mountPath: /var/lib/matrix-conduit/
           env:
             - name: CONDUIT_SERVER_NAME

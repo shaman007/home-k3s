@@ -94,9 +94,9 @@ spec:
             items:
               - key: andreybondarenko.key
                 path: andreybondarenko.key
-        - name: mail-nfs
+        - name: mail-lh
           persistentVolumeClaim:
-            claimName: mail-nfs
+            claimName: mail-lh
         - name: rspamd-local
           persistentVolumeClaim:
             claimName: rspamd-local
@@ -144,7 +144,7 @@ spec:
               readOnly: true
             - name: rspamd-local
               mountPath: /var/lib/rspamd
-            - name: mail-nfs
+            - name: mail-lh
               mountPath: /mail
           resources:
             requests:
@@ -158,7 +158,7 @@ spec:
           ports:
             - containerPort: 587
           volumeMounts:
-            - name: mail-nfs
+            - name: mail-lh
               mountPath: /var/mail
             - name: mail-certs
               mountPath: "/var/certs"

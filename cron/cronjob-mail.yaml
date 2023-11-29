@@ -22,13 +22,13 @@ spec:
               volumeMounts:
                 - name: backup
                   mountPath: /backup
-                - name: mail-nfs
+                - name: mail-lh
                   mountPath: /mail
           volumes:
             - name: backup
               persistentVolumeClaim:
                 claimName: backup
-            - name: mail-nfs
+            - name: mail-lh
               persistentVolumeClaim:
-                claimName: mail-nfs
+                claimName: mail-lh
           restartPolicy: Never

@@ -22,13 +22,13 @@ spec:
               volumeMounts:
                 - name: backup
                   mountPath: /backup
-                - name: matrix
+                - name: matrix-lh
                   mountPath: /matrix
           volumes:
             - name: backup
               persistentVolumeClaim:
                 claimName: backup
-            - name: matrix
+            - name: matrix-lh
               persistentVolumeClaim:
-                claimName: matrix
+                claimName: matrix-lh
           restartPolicy: Never

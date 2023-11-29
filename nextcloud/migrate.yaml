@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migrate
+  namespace: nextcloud
+spec:
+  containers:
+  - name: volume-migrate
+    image: nginx:stable-alpine
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: volv1
+      mountPath: /from
+    - name: volv
+      mountPath: /to
+    ports:
+    - containerPort: 80
+  volumes:
+  - name: volv1
+    persistentVolumeClaim:
+      claimName: nextcloud-nfs
+  - name: volv
+    persistentVolumeClaim:
+      claimName: nextcloud-lh

@@ -19,9 +19,9 @@ spec:
         tier: backend
     spec:
       volumes:
-        - name: nextcloud-nfs
+        - name: nextcloud-lh
           persistentVolumeClaim:
-            claimName: nextcloud-nfs
+            claimName: nextcloud-lh
         - name: nextcloud-config
           configMap:
             name: nextcloud-config
@@ -34,7 +34,7 @@ spec:
           ports:
             - containerPort: 80
           volumeMounts:
-            - name: nextcloud-nfs
+            - name: nextcloud-lh
               mountPath: /nextcloud
             - name: nextcloud-config
               mountPath: /etc/nginx/conf.d

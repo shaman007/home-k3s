@@ -76,9 +76,9 @@ spec:
             items:
               - key: passwd
                 path: passwd
-        - name: mail-nfs
+        - name: mail-lh
           persistentVolumeClaim:
-            claimName: mail-nfs
+            claimName: mail-lh
       containers:
         - name: dovecot-mail
           image: registry.andreybondarenko.com/dovecot:latest
@@ -87,7 +87,7 @@ spec:
             - containerPort: 1234
             - containerPort: 993
           volumeMounts:
-            - name: mail-nfs
+            - name: mail-lh
               mountPath: /var/mail
             - name: mail-certs
               mountPath: "/var/certs"

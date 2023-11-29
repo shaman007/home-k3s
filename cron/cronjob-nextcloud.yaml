@@ -24,7 +24,7 @@ spec:
           volumes:
             - name: application-code
               persistentVolumeClaim:
-                claimName: nextcloud-nfs
+                claimName: nextcloud-lh
             - name: config-volume
               configMap:
                 name: php-fpm-config

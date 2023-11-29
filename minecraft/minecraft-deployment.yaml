@@ -19,9 +19,9 @@ spec:
         tier: backend
     spec:
       volumes:
-        - name: minecraft-nfs
+        - name: minecraft-lh
           persistentVolumeClaim:
-            claimName: minecraft-nfs
+            claimName: minecraft-lh
       containers:
         - name: mnecraft
           image: itzg/minecraft-server
@@ -39,7 +39,7 @@ spec:
             - containerPort: 25565
             - containerPort: 25575
           volumeMounts:
-            - name: minecraft-nfs
+            - name: minecraft-lh
               mountPath: /data
           resources:
             requests:
