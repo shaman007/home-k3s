@@ -14,7 +14,7 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Cluster-related things like trivial log aggregation and metrics collection
 * Matrix message server that actually works
 * Infrastructure things like Redis, MySQL, PostgresQL
-* Storage is NFS and it surprisingly reliable
+* Storage is Longhorn with the NFS as a backup
 * Backup of mail, databases, Minecraft and redis
 * Mongodb without auth, is needed for Spotify stats application
 * Spotify stats application
