@@ -19,9 +19,9 @@ spec:
         tier: backend
     spec:
       volumes:
-        - name: code-nfs
+        - name: wordpress-lh
           persistentVolumeClaim:
-            claimName: code-nfs
+            claimName: wordpress-lh
         - name: config
           configMap:
             name: nginx-config
@@ -34,7 +34,7 @@ spec:
           ports:
             - containerPort: 80
           volumeMounts:
-            - name: code-nfs
+            - name: wordpress-lh
               mountPath: /code
             - name: config
               mountPath: /etc/nginx/conf.d

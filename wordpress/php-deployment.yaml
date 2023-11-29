@@ -19,14 +19,14 @@ spec:
         tier: backend
     spec:
       volumes:
-        - name: code-nfs
+        - name: wordpress-lh
           persistentVolumeClaim:
-            claimName: code-nfs
+            claimName: wordpress-lh
       containers:
         - name: php
           image: registry.andreybondarenko.com/php:latest
           volumeMounts:
-            - name: code-nfs
+            - name: wordpress-lh
               mountPath: /code
           resources:
             requests:

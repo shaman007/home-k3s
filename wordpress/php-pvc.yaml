@@ -3,13 +3,13 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   namespace: wordpress
-  name: code-nfs
+  name: wordpress-lh
   labels:
-    storage.k8s.io/name: nfs
+    storage.k8s.io/name: longhorn
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: nfs-client
+  storageClassName: longhorn
   resources:
     requests:
       storage: 1Gi
