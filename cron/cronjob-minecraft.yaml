@@ -28,15 +28,15 @@ spec:
               volumeMounts:
                 - name: backup
                   mountPath: /backup
-                - name: minecraft-nfs
+                - name: minecraft-lh
                   mountPath: /data
           volumes:
             - name: backup
               persistentVolumeClaim:
                 claimName: backup
-            - name: minecraft-nfs
+            - name: minecraft-lh
               persistentVolumeClaim:
-                claimName: minecraft-nfs
+                claimName: minecraft-lh
           restartPolicy: Never
           imagePullSecrets:
             - name: my-private-registry
