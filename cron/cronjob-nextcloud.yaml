@@ -5,7 +5,7 @@ metadata:
   name: nextcloud
   namespace: nextcloud
 spec:
-  schedule: "*/5 * * * *"
+  schedule: "*/15 * * * *"
   jobTemplate:
     spec:
       backoffLimit: 0

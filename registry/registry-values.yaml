@@ -42,8 +42,8 @@ resources:
 persistence:
   accessMode: 'ReadWriteOnce'
   enabled: true
-  size: 100Gi
-  storageClass: 'nfs-client'
+  size: 4Gi
+  storageClass: 'longhorn'
 storage: filesystem
 secrets:
   haSharedSecret: ""

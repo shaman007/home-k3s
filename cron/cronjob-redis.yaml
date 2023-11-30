@@ -35,7 +35,7 @@ spec:
           volumes:
             - name: data
               persistentVolumeClaim:
-                claimName: backup
+                claimName: backup-lh
           restartPolicy: Never
           imagePullSecrets:
             - name: my-private-registry

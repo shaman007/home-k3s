@@ -19,9 +19,12 @@ spec:
         tier: backend
     spec:
       volumes:
-        - name: config-volume
+        - name: phpini
           configMap:
             name: php-fpm-config
+            items:
+              - key: php.ini
+                path: php.ini
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
@@ -29,6 +32,9 @@ spec:
         - name: php-nextcloud
           image: registry.andreybondarenko.com/php:latest
           volumeMounts:
+            - name: phpini
+              mountPath: /etc/php/8.2/fpm/php.ini
+              subPath: php.ini
             - name: nextcloud-lh
               mountPath: /nextcloud
           resources:

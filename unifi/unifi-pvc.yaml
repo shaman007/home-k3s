@@ -2,12 +2,14 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: unifi-nfs
   namespace: unifi
+  name: unifi-lh
+  labels:
+    storage.k8s.io/name: longhorn
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs-client
+    - ReadWriteMany
+  storageClassName: longhorn
   resources:
     requests:
-      storage: 5Gi
+      storage: 100Mi

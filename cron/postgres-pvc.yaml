@@ -2,14 +2,14 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  namespace: redis
-  name: backup-lh
+  namespace: db
+  name: backup
   labels:
-    storage.k8s.io/name: longhorn
+    storage.k8s.io/name: nfs
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: longhorn
+  storageClassName: nfs-client
   resources:
     requests:
       storage: 1Gi

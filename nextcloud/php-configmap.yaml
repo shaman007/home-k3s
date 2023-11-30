@@ -43,7 +43,6 @@ data:
     engine = On
     short_open_tag = Off
     precision = 14
-    output_buffering = 4096
     zlib.output_compression = Off
     implicit_flush = Off
     unserialize_callback_func =
@@ -85,6 +84,7 @@ data:
     allow_url_include = Off
     default_socket_timeout = 60
     ; zend_extension = opcache
+    output_buffering = Off
     [CLI Server]
     cli_server.color = On
     [Date]
@@ -94,6 +94,7 @@ data:
     ;[apcu]
     ;extension=/opt/bitnami/php/lib/php/extensions/apcu.so
     ;apc.enable_cli = 1
+    
 
     [filter]
     [iconv]

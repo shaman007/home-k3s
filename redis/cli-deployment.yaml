@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-cli
+  namespace: redis
+spec:
+  selector:
+    matchLabels:
+      app: redis-cli
+  template:
+    metadata:
+      labels:
+        app: redis-cli
+    spec:
+      containers:
+      - name: redis-cli
+        image: registry.andreybondarenko.com/redis-cli:latest
+        volumeMounts:
+          - name: data
+            mountPath: /data
+        env:
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-password
+                key: password
+          - name: REDIS_HOST
+            value: "redis-master.redis.svc.cluster.local"
+          - name: OUTPUT_DIR
+            value: "/data"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: backup-lh
+      imagePullSecrets:
+        - name: my-private-registry
