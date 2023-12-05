@@ -46,3 +46,4 @@ spec:
               memory: "2145Mi"
       imagePullSecrets:
         - name: my-private-registry
+      nodeName: worker-04.k8s.my.lan
