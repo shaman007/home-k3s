@@ -35,12 +35,12 @@ ingress:
 resources:
   limits:
     cpu: 100m
-    memory: 128Mi
+    memory: 1024Mi
   requests:
     cpu: 100m
     memory: 128Mi
 persistence:
-  accessMode: 'ReadWriteOnce'
+  accessMode: 'ReadWriteMany'
   enabled: true
   size: 4Gi
   storageClass: 'longhorn'
