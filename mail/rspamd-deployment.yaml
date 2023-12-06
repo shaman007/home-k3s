@@ -1,0 +1,144 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rspamd
+  namespace: mail
+  labels:
+    tier: mail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rspamd
+      tier: mail
+  template:
+    metadata:
+      labels:
+        app: rspamd
+        tier: mail
+    spec:
+      volumes:
+        - name: rspamd-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: logging
+                path: logging.inc
+        - name: redis-cf
+          secret:
+            secretName: rspamd-redis
+            items:
+              - key: redis.conf
+                path: redis.conf
+        - name: history-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: history
+                path: history_redis.conf
+        - name: greylist-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: greylist
+                path: greylist.conf
+        - name: antivirus-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: antivirus
+                path: antivirus.conf
+        - name: neural-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: neural
+                path: neural.conf
+        - name: statistics-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: statistics
+                path: statistics.conf
+        - name: rspamd
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: rspamd
+                path: rspamd.conf
+        - name: dkimsigning-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: dkim_signing
+                path: dkim_signing.conf
+        - name: privater-cf
+          secret:
+            secretName: andreybondarenko.key
+            items:
+              - key: andreybondarenko.key
+                path: andreybondarenko.key
+        - name: mail-lh
+          persistentVolumeClaim:
+            claimName: mail-lh
+        - name: rspamd-local
+          persistentVolumeClaim:
+            claimName: rspamd-local
+      containers:
+        - name: rspamd
+          image: registry.andreybondarenko.com/rspamd:latest
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "256Mi"
+            limits:
+              memory: "512Mi"
+              cpu: "2000m"
+          ports:
+            - containerPort: 11333
+            - containerPort: 11334
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-password
+                  key: password
+          volumeMounts:
+            - name: rspamd-cf
+              mountPath: /etc/rspamd/local.d/logging.inc
+              subPath: logging.inc
+            - name: redis-cf
+              mountPath: /etc/rspamd/modules.d/redis.conf
+              readOnly: true
+              subPath: redis.conf
+            - name: history-cf
+              mountPath: /etc/rspamd/modules.d/history_redis.conf
+              subPath: history_redis.conf
+            - name: greylist-cf
+              mountPath: /etc/rspamd/modules.d/greylist.conf
+              subPath: greylist.conf
+            - name: neural-cf
+              mountPath: /etc/rspamd/modules.d/neural.conf
+              subPath: neural.conf
+            - name: antivirus-cf
+              mountPath: /etc/rspamd/modules.d/antivirus.conf
+              subPath: antivirus.conf
+            - name: statistics-cf
+              mountPath: /etc/rspamd/statistics.conf
+            - name: rspamd
+              mountPath: /etc/rspamd/rspamd.conf
+              subPath: rspamd.conf
+            - name: dkimsigning-cf
+              mountPath: /etc/rspamd/modules.d/dkim_signing.conf
+              subPath: dkim_signing.conf
+            - name: privater-cf
+              mountPath: /var/lib/rspamd/dkim/andreybondarenko.key
+              subPath: andreybondarenko.key
+              readOnly: true
+            - name: rspamd-local
+              mountPath: /var/lib/rspamd
+            - name: mail-lh
+              mountPath: /mail
+      imagePullSecrets:
+        - name: my-private-registry

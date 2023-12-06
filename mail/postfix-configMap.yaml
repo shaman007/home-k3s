@@ -38,8 +38,8 @@ data:
     smtpd_tls_loglevel = 1
     milter_default_action = accept
     #milter_protocol = 6
-    smtpd_milters = inet:127.0.0.1:11332
-    non_smtpd_milters = inet:127.0.0.1:11332
+    smtpd_milters = inet:rspamd.mail.svc.cluster.local:11332
+    non_smtpd_milters = inet:rspamd.mail.svc.cluster.local:11332
     smtpd_relay_restrictions = permit_sasl_authenticated, reject_unauth_destination
     smtpd_data_restrictions = reject_unauth_pipelining
     #smtpd_client_restrictions = permit_sasl_authenticated, reject_invalid_hostname, reject_unauth_destination, reject_unknown_client, permit

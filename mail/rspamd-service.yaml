@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: mail
+  name: rspamd
+  labels:
+    tier: mail
+spec:
+  selector:
+    app: rspamd
+    tier: mail
+  ports:
+    - protocol: TCP
+      port: 11332
+      name: rspamd-proxy
+    - protocol: TCP
+      port: 11333
+      name: rspamd
+    - protocol: TCP
+      port: 11334
+      name: rspamd-web
+    - protocol: TCP
+      port: 11335
+      name: rspamd-fuzzy
