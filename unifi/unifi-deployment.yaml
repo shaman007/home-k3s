@@ -5,6 +5,7 @@ metadata:
   name: unifi
   namespace: unifi
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: unifi
