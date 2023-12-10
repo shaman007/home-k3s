@@ -22,6 +22,7 @@ spec:
           args:
             - "--config.file=/etc/prometheus/prometheus.yml"
             - "--storage.tsdb.path=/prometheus/"
+            - "--web.external-url=http://master.k8s.my.lan:9090"          
           ports:
             - containerPort: 9090
           volumeMounts:
