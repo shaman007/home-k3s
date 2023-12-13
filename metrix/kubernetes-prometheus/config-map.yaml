@@ -12,28 +12,28 @@ data:
     - name: alerts
       rules:
       - alert: High Node Memory
-        expr: ((node_memory_MemTotal_bytes{kubernetes_node=~".+"} - node_memory_MemFree_bytes - node_memory_Cached_bytes)/node_memory_MemTotal_bytes)*100 > 75
+        expr: ((node_memory_MemTotal_bytes{kubernetes_node=~".+"} - node_memory_MemFree_bytes - node_memory_Cached_bytes)/node_memory_MemTotal_bytes)*100 > 85
         for: 1m
         labels:
           severity: mail
         annotations:
           summary: High Memory Usage
       - alert: High Swap Usage
-        expr: ((node_memory_SwapTotal_bytes{kubernetes_node=~".+"} - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes)*100 > 75
+        expr: ((node_memory_SwapTotal_bytes{kubernetes_node=~".+"} - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes)*100 > 85
         for: 1m
         labels:
           severity: mail
         annotations:
           summary: High Swap Usage
       - alert: High Load Avarage
-        expr: node_load5{kubernetes_node=~".+"} > 5
+        expr: node_load5{kubernetes_node=~".+"} > 6
         for: 1m
         labels:
           severity: mail
         annotations:
           summary: High Load Avarage
       - alert: High Filesystem Usage
-        expr: ((node_filesystem_size_bytes{mountpoint="/", kubernetes_node=~".+"} - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 75
+        expr: ((node_filesystem_size_bytes{mountpoint="/", kubernetes_node=~".+"} - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 85
         for: 1m
         labels:
           severity: mail
