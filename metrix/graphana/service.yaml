@@ -13,3 +13,5 @@ spec:
     app: grafana
   sessionAffinity: None
   type: LoadBalancer
+  externalIPs:
+    - 192.168.1.101
