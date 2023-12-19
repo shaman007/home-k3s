@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysqld-exporter
+  namespace: db
+spec:
+  selector:
+    matchLabels:
+      app: mysqld-exporter
+  template:
+    metadata:
+      labels:
+        app: mysqld-exporter
+    spec:
+      containers:
+      - name: mysqld-exporter
+        image: quay.io/prometheus/mysqld-exporter:main
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-pass
+                key: password
+          - name: DATA_SOURCE_NAME
+            value: exporter:secret1!D@(mysql.db.svc.cluster.local:3306)/
+        ports:
+          - containerPort: 9104
+            name: mysqld-exporter
+        volumeMounts:
+          - name: mysqld-exporter-cf
+            mountPath: /.my.cnf
+            subPath: .my.cnf
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+      volumes:        
+        - name: mysqld-exporter-cf
+          configMap:
+            name: mysqld-exporter
+            items:
+              - key: .my.cnf
+                path: .my.cnf

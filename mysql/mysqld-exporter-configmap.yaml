@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysqld-exporter
+  namespace: db
+data:
+  .my.cnf: |-
+    [client]
+    user = exporter
+    password = secret1!D
+    host = mysql.db.svc.cluster.local
