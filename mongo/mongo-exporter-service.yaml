@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-exporter
+  namespace: db
+  labels:
+    app: mongo-exporter
+spec:
+  ports:
+    - port: 9216
+  selector:
+    app: mongo-exporter
