@@ -196,6 +196,7 @@ data:
     }
     
     worker "controller" {
+        secure_ip = "0.0.0.0/0";
         bind_socket = "*:11334";
         .include "$CONFDIR/worker-controller.inc"
         .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/worker-controller.inc"
