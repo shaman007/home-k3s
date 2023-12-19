@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-poller
+  namespace: unifi
+  labels:
+    app: unifi-poller
+spec:
+  ports:
+    - port: 9130
+  selector:
+    app: unifi-poller

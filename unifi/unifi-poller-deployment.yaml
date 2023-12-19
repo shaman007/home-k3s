@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-poller
+  namespace: unifi
+spec:
+  selector:
+    matchLabels:
+      app: unifi-poller
+
+  template:
+    metadata:
+      labels:
+        app: unifi-poller
+  
+    spec:
+      containers:
+      - name: unifi-poller
+        image: ghcr.io/unpoller/unpoller:latest
+        env:
+          - name: UP_UNIFI_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: unifi-password
+                key: password
+          - name: UP_UNIFI_DEFAULT_URL
+            value: https://192.168.1.102:8443
+          - name: UP_UNIFI_DEFAULT_USER
+            value: shaman007
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 9130
