@@ -1,6 +1,4 @@
 ---
-images:
-  tag: 15
 primary:
   resources:
     requests:
@@ -9,3 +7,11 @@ primary:
     limits:
       cpu: "300m"
       memory: "100Mi"
+auth:
+  username: "postgresql"
+  database: "ttrss"
+persistence:
+   storageClass: "longhorn"
+   size: 1Gi
+metrics:
+  enabled: true
