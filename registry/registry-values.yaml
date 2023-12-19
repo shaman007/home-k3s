@@ -55,10 +55,11 @@ proxy:
   password: ""
   secretRef: ""
 metrics:
-  enabled: false
+  enabled: true
   port: 5001
+  path: /metrics
   serviceMonitor:
-    enabled: false
+    enabled: true
     labels: {}
   prometheusRule:
     enabled: false
@@ -79,7 +80,7 @@ configData:
     debug:
       addr: :5001
       prometheus:
-        enabled: false
+        enabled: true
         path: /metrics
   health:
     storagedriver:
