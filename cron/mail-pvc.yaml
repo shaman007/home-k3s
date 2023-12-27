@@ -5,11 +5,11 @@ metadata:
   namespace: mail
   name: backup
   labels:
-    storage.k8s.io/name: nfs
+    storage.k8s.io/name: longhorn
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: nfs-client
+  storageClassName: longhorn
   resources:
     requests:
       storage: 1Gi
