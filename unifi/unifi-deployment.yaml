@@ -56,4 +56,4 @@ spec:
         - name: unifi-data
           persistentVolumeClaim:
             claimName: unifi-lh
-      nodeName: worker-01.k8s.my.lan
+      nodeName: m.k8s.my.lan

@@ -44,4 +44,3 @@ spec:
         - name: mongodb-data
           persistentVolumeClaim:
             claimName: mongo-lh
-      nodeName: worker-04.k8s.my.lan
