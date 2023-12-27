@@ -1,0 +1,34 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-exporter
+  namespace: db
+spec:
+  selector:
+    matchLabels:
+      app: postgres-exporter
+  template:
+    metadata:
+      labels:
+        app: postgres-exporter
+    spec:
+      containers:
+        - name: postgres-exporter
+          image: quay.io/prometheuscommunity/postgres-exporter:latest
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          env:
+            - name: PGPASSWORD
+              value: "postgres"
+            - name: PGHOST
+              value: "192.168.1.111"
+            - name: PGUSER
+              value: "postgres"
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://postgres:postgres@192.168.1.111:5432/postgres?sslmode=disable"
+          ports:
+            - containerPort: 9187
+              name: pmetrics
