@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: minio
-          image: registry.andreybondarenko.com/minio-single:latest
+          image: registry.andreybondarenko.com/minio-single
           env:
             - name: MINIO_DRIVE
               value: "/data"
@@ -38,11 +38,11 @@ spec:
               cpu: "10m"
               memory: "300Mi"
             limits:
-              cpu: "1000m"
+              cpu: "3000m"
               memory: "2000Mi"
       volumes:
         - name: minio-data
           persistentVolumeClaim:
-            claimName: minio-nfs
+            claimName: minio-lh
       imagePullSecrets:
         - name: my-private-registry
