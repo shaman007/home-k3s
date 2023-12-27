@@ -22,10 +22,12 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * UniFi console
 * Minio single drive, for future experiments
 * Elasticsearch, for future expefiments
+* Mastodon
+* Prometheus operator
 
 ## ToDo
 
-* Mastodon
+* Move secrets that I was too lazy to move to K8S secrets to K8S secrets
 
 ## Dokerfiles
 

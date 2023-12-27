@@ -22,13 +22,16 @@ spec:
               cpu: "500m"
           env:
             - name: PGPASSWORD
-              value: "postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: pg-pass
+                  key: password
             - name: PGHOST
               value: "192.168.1.111"
             - name: PGUSER
               value: "postgres"
             - name: DATA_SOURCE_NAME
-              value: "postgresql://postgres:postgres@192.168.1.111:5432/postgres?sslmode=disable"
+              value: "postgresql://$PGUSER:$PGPASSWORD@$PGHOST:5432/postgres?sslmode=disable"
           ports:
             - containerPort: 9187
               name: pmetrics
