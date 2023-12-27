@@ -25,6 +25,8 @@ spec:
             items:
               - key: php.ini
                 path: php.ini
+              - key: www.conf
+                path: www.conf
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
@@ -35,6 +37,9 @@ spec:
             - name: phpini
               mountPath: /etc/php/8.2/fpm/php.ini
               subPath: php.ini
+            - name: phpini
+              mountPath: /etc/php/8.2/fpm/pool.d/www.conf
+              subPath: www.conf
             - name: nextcloud-lh
               mountPath: /nextcloud
           resources:
@@ -43,7 +48,6 @@ spec:
               memory: "2145Mi"
             limits:
               cpu: "6000m"
-              memory: "2145Mi"
+              memory: "6145Mi"
       imagePullSecrets:
         - name: my-private-registry
-      nodeName: worker-04.k8s.my.lan

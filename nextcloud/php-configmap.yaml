@@ -7,19 +7,27 @@ metadata:
 data:
   www.conf: |
     [www]
-    user = daemon
-    group = daemon
-    ;listen = 9000
-    ;pm = ondemand
-    ;pm.max_children = 10
-    ;pm.start_servers = 4
-    ;pm.min_spare_servers = 1
-    ;pm.max_spare_servers = 3
-    ;php_value[memory_limit] = 612M
-    ;php_value[upload_max_filesize] = 2048M
+    user = www-data
+    group = www-data
+    listen = 9000
+    pm = dynamic
+    pm.max_children = 240
+    pm.start_servers = 24
+    pm.min_spare_servers = 12
+    pm.max_spare_servers = 36
+    php_value[memory_limit] = -1
+    php_value[upload_max_filesize] = 2048M
     ;listen.owner=daemon
     ;listen.group=daemon
     ;env[PATH] = $PATH
+    pm.status_path = /status
+    ping.path = /health
+    ping.response = OK
+    request_terminate_timeout = 360
+    rlimit_files = 131072
+    rlimit_core = unlimited
+    catch_workers_output = yes
+    clear_env = no
   php-fpm.conf: |
     [global]
     error_log = /tmp/php-fpm.log
@@ -29,11 +37,11 @@ data:
     group = daemon
     listen = 9000
     pm = ondemand
-    pm.max_children = 10
+    pm.max_children = 16
     pm.start_servers = 4
     pm.min_spare_servers = 1
     pm.max_spare_servers = 3
-    php_value[memory_limit] = 612M
+    php_value[memory_limit] = -1
     php_value[upload_max_filesize] = 2048M
     listen.owner=daemon
     listen.group=daemon
@@ -55,7 +63,7 @@ data:
     expose_php = On
     max_execution_time = 30
     max_input_time = 60
-    memory_limit = 612M
+    memory_limit = -1
     error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
     display_errors = Off
     display_startup_errors = Off
@@ -83,7 +91,7 @@ data:
     allow_url_fopen = On
     allow_url_include = Off
     default_socket_timeout = 60
-    ; zend_extension = opcache
+    zend_extension = opcache.so
     output_buffering = Off
     [CLI Server]
     cli_server.color = On
@@ -182,17 +190,18 @@ data:
     [ldap]
     ldap.max_links = -1
     [dba]
-    ;[opcache]
-    ;zend_extension=opcache.so
-    ;opcache.enable = 1
-    ;opcache.enable_cli = 1
-    ;opcache.memory_consumption = 128
-    ;opcache.interned_strings_buffer = 32
-    ;opcache.max_accelerated_files = 4000
-    ;opcache.revalidate_freq = 60
+    [opcache]
+    zend_extension=opcache.so
+    opcache.enable = 1
+    opcache.enable_cli = 1
+    opcache.memory_consumption = 256
+    opcache.interned_strings_buffer = 32
+    opcache.max_accelerated_files = 4000
+    opcache.revalidate_freq = 60
+    jit_buffer_size = 128M
     [curl]
     [openssl]
     [ffi]
     opcache.fast_shutdown = 1
-    memory_limit = 612M
+    memory_limit = -1
     upload_max_filesize = 2048M
