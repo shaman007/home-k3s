@@ -20,14 +20,11 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Spotify stats application
 * Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
 * UniFi console
-* Minio single drive, for future experiments
-* Elasticsearch, for future expefiments
+* Minio single drive
+* Elasticsearch
 * Mastodon
 * Prometheus operator
-
-## ToDo
-
-* Move secrets that I was too lazy to move to K8S secrets to K8S secrets
+* Prometheus Thanos
 
 ## Dokerfiles
 
