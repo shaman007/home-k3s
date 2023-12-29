@@ -22,7 +22,7 @@ spec:
                 name: mysql-pass
                 key: password
           - name: DATA_SOURCE_NAME
-            value: exporter:secret1!D@(mysql.db.svc.cluster.local:3306)/
+            value: exporter:$MYSQL_ROOT_PASSWORD@(mysql.db.svc.cluster.local:3306)/
         ports:
           - containerPort: 9104
             name: mysqld-exporter
