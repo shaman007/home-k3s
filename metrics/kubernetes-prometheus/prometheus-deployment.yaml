@@ -20,9 +20,14 @@ spec:
         - name: prometheus
           image: prom/prometheus
           args:
-            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--config.file=/etc/prometheus-shared/prometheus.yaml"
             - "--storage.tsdb.path=/prometheus/"
-            - "--web.external-url=http://master.k8s.my.lan:9090"          
+            - "--web.enable-lifecycle"
+            - "--storage.tsdb.no-lockfile"
+            - "--web.external-url=http://master.k8s.my.lan:9090"
+            - "--storage.tsdb.min-block-duration=2h"
+            - "--storage.tsdb.max-block-duration=2h"
+            - "--storage.tsdb.retention.time=3d"
           ports:
             - containerPort: 9090
           volumeMounts:
@@ -30,10 +35,45 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
+            - name: prometheus-config-shared
+              mountPath: /etc/prometheus-shared/
           resources:
             requests:
               cpu: 727m
+              memory: 300M
+            limits:
+              cpu: 2000m
               memory: 3000M
+        - name: thanos
+          image:  quay.io/thanos/thanos:v0.31.0
+          args:
+            - "sidecar"
+            #- "--log.level=debug"
+            - "--tsdb.path=/prometheus"
+            - "--prometheus.url=http://127.0.0.1:9090"
+            - "--objstore.config-file=/etc/thanos/objstore.yml"
+            #- "--objstore.config={type: S3, config: {bucket: thanos, endpoint: 192.168.1.112:9000, access_key: skj53U8uLrvMj5prAnvw, insecure: true, secret_key: 4HotqYVVBjr51gSzNPOPv81SvfaiPU9nPdm6JWsy}}"
+            - "--reloader.config-file=/etc/prometheus/prometheus.yaml.tmpl"
+            - "--reloader.config-envsubst-file=/etc/prometheus-shared/prometheus.yaml"
+            - "--reloader.rule-dir=/etc/prometheus/"
+          ports:
+            - name: http-sidecar
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/
+            - name: prometheus-storage-volume
+              mountPath: /prometheus/ 
+            - name: prometheus-config-shared
+              mountPath: /etc/prometheus-shared/
+            - name: objstoreyml
+              mountPath: /etc/thanos/              
+          resources:
+            requests:
+              cpu: 727m
+              memory: 300M
             limits:
               cpu: 2000m
               memory: 3000M
@@ -44,4 +84,9 @@ spec:
             name: prometheus-server-conf
         - name: prometheus-storage-volume
           persistentVolumeClaim:
-            claimName: prometheus-nfs
+            claimName: prometheus-lh
+        - name: prometheus-config-shared
+          emptyDir: {}
+        - name: objstoreyml
+          secret:
+            secretName: thanos-objstore-secret

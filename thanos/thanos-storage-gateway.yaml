@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-store-gateway
+  namespace: monitoring
+  labels:
+    app: thanos-store-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-store-gateway
+  template:
+    metadata:
+      labels:
+        app: thanos-store-gateway
+        thanos-store-api: "true"
+    spec:
+      containers:
+        - name: thanos
+          image: quay.io/thanos/thanos:v0.30.0
+          args:
+          - "store"
+          - "--log.level=debug"
+          - "--data-dir=/data"
+          - "--objstore.config-file=/etc/thanos/objstore.yml"
+          - "--index-cache-size=500MB"
+          - "--chunk-pool-size=500MB"
+          ports:
+          - name: http
+            containerPort: 10902
+          - name: grpc
+            containerPort: 10901
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              cpu: 2000m
+              memory: "2000Mi"
+          livenessProbe:
+            httpGet:
+              port: 10902
+              path: /-/healthy
+          readinessProbe:
+            httpGet:
+              port: 10902
+              path: /-/ready
+          volumeMounts:
+            - name: objstoreyml
+              mountPath: /etc/thanos/
+            - name: data
+              mountPath: /data/
+      volumes:
+        - name: objstoreyml
+          secret:
+            secretName: thanos-objstore-secret
+        - name: data
+          persistentVolumeClaim:
+            claimName: storagegw-lh

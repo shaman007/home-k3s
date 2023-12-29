@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-compactor
+  namespace: monitoring
+  labels:
+    app: thanos-compactor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-compactor
+  template:
+    metadata:
+      labels:
+        app: thanos-compactor
+        thanos-store-api: "true"
+    spec:
+      containers:
+        - name: thanos
+          image: quay.io/thanos/thanos:v0.30.0
+          args:
+          - "compact"
+          - "--log.level=debug"
+          - "--data-dir=/data"
+          - "--objstore.config-file=/etc/thanos/objstore.yml"
+          - --retention.resolution-raw=3d
+          - --retention.resolution-5m=15d
+          - --retention.resolution-1h=365d
+          - "--wait"
+          ports:
+          - name: http
+            containerPort: 10902
+          - name: grpc
+            containerPort: 10901
+          livenessProbe:
+            httpGet:
+              port: 10902
+              path: /-/healthy
+          readinessProbe:
+            httpGet:
+              port: 10902
+              path: /-/ready
+          volumeMounts:
+            - name: objstoreyml
+              mountPath: /etc/thanos/
+            - name: data
+              mountPath: /data/
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              cpu: 2000m
+              memory: "2000Mi"
+      volumes:
+        - name: objstoreyml
+          secret:
+            secretName: thanos-objstore-secret
+        - name: data
+          persistentVolumeClaim:
+            claimName: compactor-lh
