@@ -12,33 +12,61 @@ data:
     - name: alerts
       rules:
       - alert: High Node Memory
-        expr: ((node_memory_MemTotal_bytes{kubernetes_node=~".+"} - node_memory_MemFree_bytes - node_memory_Cached_bytes)/node_memory_MemTotal_bytes)*100 > 85
-        for: 10m
+        expr: ((node_memory_MemTotal_bytes{kubernetes_node=~".+"} - node_memory_MemFree_bytes - node_memory_Cached_bytes)/node_memory_MemTotal_bytes)*100 > 80
+        for: 3m
         labels:
           severity: mail
         annotations:
           summary: High Memory Usage
       - alert: High Swap Usage
-        expr: ((node_memory_SwapTotal_bytes{kubernetes_node=~".+"} - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes)*100 > 85
-        for: 10m
+        expr: ((node_memory_SwapTotal_bytes{kubernetes_node=~".+"} - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes)*100 > 5
+        for: 3m
         labels:
           severity: mail
         annotations:
           summary: High Swap Usage
       - alert: High Load Avarage
         expr: node_load5{kubernetes_node=~".+"} > 10
-        for: 10m
+        for: 3m
         labels:
           severity: mail
         annotations:
           summary: High Load Avarage
       - alert: High Filesystem Usage
-        expr: ((node_filesystem_size_bytes{mountpoint="/", kubernetes_node=~".+"} - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 85
-        for: 10m
+        expr: ((node_filesystem_size_bytes{mountpoint="/", kubernetes_node=~".+"} - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 75
+        for: 3m
         labels:
           severity: mail
         annotations:
           summary: High Filesystem Usage
+      - alert: Mongo is down
+        expr: mongodb_up < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Mongo is down
+      - alert: Mysql is down
+        expr: mysql_up < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Mysql is down
+      - alert: Postgresql-k8s is down
+        expr: pg_up{instance="postgres-exporter.db.svc.cluster.local:9187", job="postgres-local"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Postgresql-k8s is down
+      - alert: Postgresql-apps is down
+        expr: pg_up{instance="postgres-postgresql-metrics.db.svc.cluster.local:9187", job="postgres"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Postgresql-apps is down                   
   prometheus.yaml.tmpl: |-
     global:
       scrape_interval: 5s
