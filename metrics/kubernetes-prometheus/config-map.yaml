@@ -109,6 +109,27 @@ data:
           severity: mail
         annotations:
           summary: Pod has been in a non-ready state for more than 15 minutes.
+      - alert: KubeNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"} == 0
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Node is not ready.
+      - alert: KubeNodeUnreachable
+        expr: (kube_node_spec_taint{effect="NoSchedule",job="kube-state-metrics",key="node.kubernetes.io/unreachable"} unless ignoring (key, value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Node is unreachable.
+      - alert: TargetDown
+        expr: 100 * (count by (cluster, job, namespace, service) (up == 0) / count by (cluster, job, namespace, service) (up)) > 10
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: One or more targets are unreachable.
   prometheus.yaml.tmpl: |-
     global:
       scrape_interval: 5s
