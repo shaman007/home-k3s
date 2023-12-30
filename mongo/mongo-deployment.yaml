@@ -27,7 +27,7 @@ spec:
               memory: "300Mi"
             limits:
               cpu: "1000m"
-              memory: "300Mi"
+              memory: "600Mi"
           volumeMounts:
             - name: mongodb-configmap
               mountPath: /config
