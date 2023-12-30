@@ -39,7 +39,7 @@ spec:
               memory: "800Mi"
             limits:
               cpu: "2000m"
-              memory: "800Mi"
+              memory: "1200Mi"
           volumeMounts:
             - name: mysql-persistent-storage
               mountPath: /var/lib/mysql
