@@ -66,7 +66,49 @@ data:
         labels:
           severity: mail
         annotations:
-          summary: Postgresql-apps is down                   
+          summary: Postgresql-apps is down
+      - alert: KubeJobFailed
+        expr: kube_job_failed{job="kube-state-metrics",namespace=~".*"} > 0
+        for: 10m
+        labels:
+          severity: mail
+        annotations:
+          summary: Job failed to complete.
+      - alert: CPUThrottlingHigh
+        expr: sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) / sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_periods_total[5m])) > (25 / 100)
+        for: 5m
+        labels:
+          severity: mail
+        annotations:
+          summary: Processes experience elevated CPU throttling.
+      - alert: KubePersistentVolumeFillingUp
+        expr: (kubelet_volume_stats_available_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"} / kubelet_volume_stats_capacity_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}) < 0.03 and kubelet_volume_stats_used_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"} > 0 unless on (namespace, persistentvolumeclaim) kube_persistentvolumeclaim_access_mode{access_mode="ReadOnlyMany"} == 1 unless on (namespace, persistentvolumeclaim) kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: PersistentVolume is filling up.
+      - alert: KubePersistentVolumeFillingUp
+        expr: (kubelet_volume_stats_available_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"} / kubelet_volume_stats_capacity_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}) < 0.15 and kubelet_volume_stats_used_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"} > 0 and predict_linear(kubelet_volume_stats_available_bytes{job="kubelet",metrics_path="/metrics",namespace=~".*"}[6h], 4 * 24 * 3600) < 0 unless on (namespace, persistentvolumeclaim) kube_persistentvolumeclaim_access_mode{access_mode="ReadOnlyMany"} == 1 unless on (namespace, persistentvolumeclaim) kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: PersistentVolume is filling up in 4 days.
+      - alert: KubePodCrashLooping
+        expr: max_over_time(kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace=~".*",reason="CrashLoopBackOff"}[5m]) >= 1
+        for: 5m
+        labels:
+          severity: mail
+        annotations:
+          summary: Pod is crash looping.
+      - alert: KubePodNotReady
+        expr: sum by (namespace, pod, cluster) (max by (namespace, pod, cluster) (kube_pod_status_phase{job="kube-state-metrics",namespace=~".*",phase=~"Pending|Unknown|Failed"}) * on (namespace, pod, cluster) group_left (owner_kind) topk by (namespace, pod, cluster) (1, max by (namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"}))) > 0
+        for: 15m
+        labels:
+          severity: mail
+        annotations:
+          summary: Pod has been in a non-ready state for more than 15 minutes.
   prometheus.yaml.tmpl: |-
     global:
       scrape_interval: 5s
