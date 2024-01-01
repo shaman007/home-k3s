@@ -24,7 +24,7 @@ spec:
                 name: unifi-password
                 key: password
           - name: UP_UNIFI_DEFAULT_URL
-            value: https://192.168.1.102:8443
+            value: https://192.168.1.111:8443
           - name: UP_UNIFI_DEFAULT_USER
             value: shaman007
         resources:
