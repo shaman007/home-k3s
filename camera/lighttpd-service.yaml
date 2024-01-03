@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: camera
+  name: camera
+spec:
+  selector:
+    app: camera
+  ports:
+    - protocol: TCP
+      port: 80

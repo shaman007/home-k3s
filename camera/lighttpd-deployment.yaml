@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: camera
+  namespace: camera
+spec:
+  selector:
+    matchLabels:
+      app: camera
+  template:
+    metadata:
+      labels:
+        app: camera
+    spec:
+      containers:
+      - name: camera
+        image: registry.andreybondarenko.com/camera:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "4000m"
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+
+        env:
+            - name: USER
+              value: "shaman007"
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: camera
+                  key: PASSWORD
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+        - name: my-private-registry
