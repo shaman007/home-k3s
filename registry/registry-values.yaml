@@ -34,7 +34,7 @@ ingress:
         - registry.andreybondarenko.com
 resources:
   limits:
-    cpu: 100m
+    cpu: 1000m
     memory: 1024Mi
   requests:
     cpu: 100m
@@ -42,7 +42,7 @@ resources:
 persistence:
   accessMode: 'ReadWriteMany'
   enabled: true
-  size: 4Gi
+  size: 10Gi
   storageClass: 'longhorn'
 storage: filesystem
 secrets:
