@@ -11,7 +11,6 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Tiny-Tiny RSS for old skulls
 * Minecraft for resource consumption
 * Nextcloud with Collabora and everything needed for the quality life with various photo-related extensions of the Nextcloud
-* Cluster-related things like trivial log aggregation and metrics collection
 * Matrix message server that actually works
 * Infrastructure things like Redis, MySQL, PostgresQL
 * Storage is Longhorn with the NFS as a backup
@@ -25,6 +24,8 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Mastodon
 * Prometheus operator
 * Prometheus Thanos
+* Prometheus Loki for log aggregation
+* Promtail for logs delivery
 
 ## Dokerfiles
 
