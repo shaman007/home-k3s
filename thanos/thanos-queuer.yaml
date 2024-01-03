@@ -44,19 +44,3 @@ spec:
           limits:
             cpu: 2000m
             memory: "2000Mi"
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: thanos-querier
-  name: thanos-querier
-  namespace: monitoring
-spec:
-  ports:
-  - port: 9090
-    protocol: TCP
-    targetPort: http
-    name: http
-  selector:
-    app: thanos-querier
