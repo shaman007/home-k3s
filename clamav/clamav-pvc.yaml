@@ -6,7 +6,7 @@ metadata:
   name: avdata
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   storageClassName: longhorn
   resources:
     requests:

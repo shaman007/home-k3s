@@ -31,9 +31,12 @@ spec:
             mountPath: /.my.cnf
             subPath: .my.cnf
         resources:
-          limits:
+          requests:
             memory: "128Mi"
-            cpu: "500m"
+            cpu: "100m"
+          limits:
+            memory: "328Mi"
+            cpu: "1000m"
       volumes:        
         - name: mysqld-exporter-cf
           configMap:

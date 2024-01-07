@@ -15,7 +15,7 @@ mastodon:
   # have to be reset
   createAdmin:
     # @ignored
-    enabled: true
+    enabled: false
     # @ignored
     username: shaman007
     # @ignored
@@ -56,11 +56,13 @@ mastodon:
       resources:
         requests:
           storage: 10Gi
+          StorageClassName: "longhorn"
     system:
       accessMode: ReadWriteMany
       resources:
         requests:
           storage: 100Gi
+          StorageClassName: "longhorn"
   s3:
     enabled: false
     access_key: ""

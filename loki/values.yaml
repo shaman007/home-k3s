@@ -9,4 +9,4 @@ singleBinary:
 table_manager:
   enabled: true
   retention_deletes_enabled: true
-  retention_period: 744h
+  retention_period: 372h

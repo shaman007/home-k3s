@@ -16,9 +16,9 @@ spec:
       containers:
         - name: postgres-cli
           image: registry.andreybondarenko.com/postgres-cli:latest
-          volumeMounts:
-            - name: backup
-              mountPath: /data
+          #volumeMounts:
+          #  - name: backup
+          #    mountPath: /data
           resources:
             limits:
               memory: "128Mi"
@@ -39,9 +39,9 @@ spec:
               value: "ttrss"
             - name: OUTPUT_DIR
               value: "/data"
-      volumes:
-        - name: backup
-          persistentVolumeClaim:
-            claimName: backup
+      #volumes:
+      #  - name: backup
+      #    persistentVolumeClaim:
+      #      claimName: backup
       imagePullSecrets:
         - name: my-private-registry

@@ -5,13 +5,14 @@ primary:
       cpu: "24m"
       memory: "100Mi"
     limits:
-      cpu: "300m"
-      memory: "100Mi"
+      cpu: "2000m"
+      memory: "1000Mi"
 auth:
-  username: "postgresql"
+  username: "postgres"
   database: "ttrss"
 persistence:
    storageClass: "longhorn"
-   size: 1Gi
+   size: 8Gi
+   existingClaim: "data-postgres-postgresql-0"
 metrics:
   enabled: true

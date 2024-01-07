@@ -19,7 +19,7 @@ spec:
       volumes:
         - name: matrix-lh
           persistentVolumeClaim:
-            claimName: matrix-lh
+            claimName: matrix1-lh
       containers:
         - name: conduit
           image: matrixconduit/matrix-conduit:latest
