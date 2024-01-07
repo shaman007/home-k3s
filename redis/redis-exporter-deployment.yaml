@@ -27,7 +27,7 @@ spec:
             value: redis://redis-master.redis.svc.cluster.local:6379
         resources:
           limits:
-            memory: "128Mi"
+            memory: "228Mi"
             cpu: "1200m"
         ports:
         - containerPort: 9121

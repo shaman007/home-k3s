@@ -31,8 +31,8 @@ spec:
             value: "/data"
         resources:
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: "228Mi"
+            cpu: "1000m"
       volumes:
         - name: data
           persistentVolumeClaim:
