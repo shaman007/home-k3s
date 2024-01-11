@@ -2,9 +2,11 @@
 
 Here is my pet-project of home/small-office cluster that can handle everything you purchase as a service from the Google or Microsoft, but with significantly more pain and fun. On the other hand, this would be enough for 20-30 employees at 1000 USD setup and easy to scale. K3S is used because it's much simplier to install and I don't really need all that cloud provider's drivers since the goal was to be self-sustainable.
 
+![alt arm based k3s cluster of 4 orangePI 5 nodes](https://andreybondarenko.com/wp-content/uploads/2024/01/413937478_7239783166042743_857868293349421697_n-1024x768.jpg "My ARM65 cluster made of 4 OrangePI 5")
+
 Old foto:
 
-![alt arm based k3s cluster of 4 orangePI 4LTS nodes with power supply]( https://andreybondarenko.com/wp-content/uploads/2023/07/image-1536x1152.png "My ARM65 cluster made of 4 OrangePI LTS")
+![alt arm based k3s cluster of 4 orangePI 4LTS nodes with power supply]( https://andreybondarenko.com/wp-content/uploads/2023/07/image-1536x1152.png "My ARM65 cluster made of 4 OrangePI 4LTS")
 
 ## Works
 
