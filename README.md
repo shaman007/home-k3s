@@ -2,6 +2,8 @@
 
 Here is my pet-project of home/small-office cluster that can handle everything you purchase as a service from the Google or Microsoft, but with significantly more pain and fun. On the other hand, this would be enough for 20-30 employees at 1000 USD setup and easy to scale. K3S is used because it's much simplier to install and I don't really need all that cloud provider's drivers since the goal was to be self-sustainable.
 
+Old foto:
+
 ![alt arm based k3s cluster of 4 orangePI 4LTS nodes with power supply]( https://andreybondarenko.com/wp-content/uploads/2023/07/image-1536x1152.png "My ARM65 cluster made of 4 OrangePI LTS")
 
 ## Works
@@ -26,6 +28,13 @@ Here is my pet-project of home/small-office cluster that can handle everything y
 * Prometheus Thanos
 * Prometheus Loki for log aggregation
 * Promtail for logs delivery
+* Live RTSP viewer for the Foscam CCTV camera
+* FTP server for the Foscam CCTV camera
+
+## TODO
+
+* Vault for secrets
+* Plex that lives on-prem at the moment
 
 ## Dokerfiles
 
