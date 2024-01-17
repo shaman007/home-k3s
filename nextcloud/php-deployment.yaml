@@ -48,6 +48,6 @@ spec:
               memory: "2145Mi"
             limits:
               cpu: "6000m"
-              memory: "6145Mi"
+              memory: "8145Mi"
       imagePullSecrets:
         - name: my-private-registry

@@ -199,6 +199,7 @@ data:
     opcache.max_accelerated_files = 4000
     opcache.revalidate_freq = 60
     jit_buffer_size = 128M
+    opcache.jit_buffer_size = 128M
     [curl]
     [openssl]
     [ffi]
