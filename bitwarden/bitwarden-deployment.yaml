@@ -33,17 +33,17 @@ spec:
                   name: key
                   key: key
             - name: BW_DB_PROVIDER
-              value: mysql
+              value: postgresql
             - name: BW_DB_SERVER
-              value: "mysql.db.svc.cluster.local"
+              value: "postgres-postgresql.db.svc.cluster.local"
             - name: BW_DB_DATABASE
               value: "bw"
             - name: BW_DB_USERNAME
-              value: "root"
+              value: "postgres"
             - name: BW_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-pass
+                  name: postgres-pass
                   key: password
             - name: globalSettings__mail__smtp__host
               value: "andreybondarenko.com"
