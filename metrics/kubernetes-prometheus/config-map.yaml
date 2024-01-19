@@ -26,8 +26,8 @@ data:
         annotations:
           summary: High Swap Usage
       - alert: High Load Avarage
-        expr: node_load5 > 12
-        for: 3m
+        expr: node_load5 > 20
+        for: 5m
         labels:
           severity: mail
         annotations:
@@ -167,14 +167,6 @@ data:
         static_configs:
         - targets:
           - postgres-exporter.db.svc.cluster.local:9187
-      - job_name: rapi-local
-        scrape_interval: 45s
-        scrape_timeout:  30s
-        metrics_path: "/metrics"
-        static_configs:
-        - targets:
-          - 192.168.1.10:9110
-        # scrape_config job
       - job_name: cert-manager
         scrape_interval: 45s
         scrape_timeout:  30s
