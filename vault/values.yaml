@@ -1,0 +1,7 @@
+containers:
+  - name: node-driver-registrar
+    resources:
+      limits:
+        cpu: 400m
+syncSecret:
+  enabled: true
