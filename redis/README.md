@@ -1,3 +1,3 @@
 # Redis
 
-just use defaul!
+just use defaults!
