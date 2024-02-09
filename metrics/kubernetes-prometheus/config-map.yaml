@@ -153,6 +153,22 @@ data:
         static_configs:
         - targets:
           - mysqld-exporter.db.svc.cluster.local:9104
+      - job_name: 'kubernetes-longhorn-manager'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: longhorn-manager
+          - source_labels: [__address__]
+            action: replace
+            target_label: __address__
+            regex: ([^:]+)(?::\d+)? 
+            replacement: $1:9500
+          - action: replace
+            target_label: __metrics_path__
+            replacement: /metrics
+    
       - job_name: postgres
         scrape_interval: 45s
         scrape_timeout:  30s
