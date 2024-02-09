@@ -24,8 +24,8 @@ spec:
           - "--log.level=debug"
           - "--data-dir=/data"
           - "--objstore.config-file=/etc/thanos/objstore.yml"
-          - --retention.resolution-raw=3d
-          - --retention.resolution-5m=15d
+          - --retention.resolution-raw=2d
+          - --retention.resolution-5m=10d
           - --retention.resolution-1h=365d
           - "--wait"
           ports:
