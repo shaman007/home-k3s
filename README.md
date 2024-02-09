@@ -24,7 +24,7 @@ Old foto:
 * Spotify stats application
 * Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
 * UniFi console
-* Minio single drive
+* Minio single drive, NFS volume as storage.
 * Elasticsearch
 * Mastodon
 * Prometheus operator
@@ -51,7 +51,7 @@ Sysct сhanges. The swap is incompatible with the K8S, we need to turn on IP for
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1
 net.ipv6.conf.all.accept_ra = 2
-vm.swappiness = 100
+vm.swappiness = 10
 ```
 
 On master node options are:
@@ -122,32 +122,6 @@ Dashboard deployment is optional. I use Mirantis Lens, still, anyway:
 GITHUB_URL=https://github.com/kubernetes/dashboard/releases
 VERSION_KUBE_DASHBOARD=$(curl -w '%{url_effective}' -I -L -s -S ${GITHUB_URL}/latest -o /dev/null | sed -e 's|.*/||')
 sudo k3s kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboard/${VERSION_KUBE_DASHBOARD}/aio/deploy/recommended.yaml
-```
-
-Postgres deployment from the Helm chart:
-
-```bash
-helm install postgres oci://registry-1.docker.io/bitnamicharts/postgresql
-```
-
-TT-RSS deployment from the Helm chart
-
-```bash
-helm repo add k8s-at-home https://k8s-at-home.com/charts/
-helm install --create-namespace --namespace tt-rss may-tt-rss k8s-at-home/tt-rss -f ./values.yaml
-```
-
-Collabora deployment from the Helm chart:
-
-```bash
-helm repo add collabora https://collaboraonline.github.io/online/
-helm install --create-namespace --namespace collabora collabora-online collabora/collabora-online -f my_values.yaml
-```
-
-Registry deployment from the Helm chart:
-
-```bash
-upgrade registry twuni/docker-registry -f ./values.yaml  --namespace=registry
 ```
 
 This would copy TLS certificates from the wordpress namespace to the mail namespace, so it would be used by the Postfix and Dovecot:
