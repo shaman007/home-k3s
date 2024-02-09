@@ -29,15 +29,15 @@ Old foto:
 * Mastodon
 * Prometheus operator
 * Prometheus Thanos
-* Prometheus Loki for log aggregation
+* Graphana Loki for log aggregation
 * Promtail for logs delivery
 * Live RTSP viewer for the Foscam CCTV camera
 * FTP server for the Foscam CCTV camera
+* Plex
 
 ## TODO
 
 * Vault for secrets
-* Plex that lives on-prem at the moment
 
 ## Dokerfiles
 
