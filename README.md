@@ -98,7 +98,7 @@ helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/
 helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --create-namespace \
     --namespace nfs-provisioner \
-    --set nfs.server=rapi.my.lan \
+    --set nfs.server=w7.k8s.my.lan \
     --set nfs.path=/storage/k8s
 ```
 
