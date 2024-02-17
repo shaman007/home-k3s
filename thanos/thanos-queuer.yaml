@@ -24,6 +24,7 @@ spec:
         - --query.replica-label=replica
         - --endpoint=thanos-store-gateway.monitoring.svc.cluster.local:10901
         - --endpoint=thanos-sidecar.monitoring.svc.cluster.local:10901
+        - --query.auto-downsampling
         ports:
         - name: http
           containerPort: 10902
