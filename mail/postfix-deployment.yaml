@@ -43,9 +43,6 @@ spec:
         - name: mail-lh
           persistentVolumeClaim:
             claimName: mail-lh
-        - name: rspamd-local
-          persistentVolumeClaim:
-            claimName: rspamd-local
       containers:
         - name: postfix-mail
           image: registry.andreybondarenko.com/postfix:latest
