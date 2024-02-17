@@ -24,9 +24,11 @@ spec:
                 name: unifi-password
                 key: password
           - name: UP_UNIFI_DEFAULT_URL
-            value: https://192.168.1.111:8443
+            value: https://192.168.1.1:443
           - name: UP_UNIFI_DEFAULT_USER
             value: shaman007
+          - name: UP_UNIFI_DEFAULT_SAVE_DPI
+            value: "true"
         resources:
           limits:
             memory: "128Mi"
