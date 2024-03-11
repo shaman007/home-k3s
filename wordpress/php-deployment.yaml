@@ -25,6 +25,8 @@ spec:
       containers:
         - name: php
           image: registry.andreybondarenko.com/php:latest
+          securityContext:
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: wordpress-lh
               mountPath: /code

@@ -31,6 +31,8 @@ spec:
       containers:
         - name: nginx
           image: nginx
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 80
           volumeMounts:
