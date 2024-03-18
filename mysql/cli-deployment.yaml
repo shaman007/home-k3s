@@ -16,11 +16,6 @@ spec:
       containers:
         - name: mysql-cli
           image: registry.andreybondarenko.com/mysql-cli:latest
-          volumeMounts:
-            - name: backup
-              mountPath: /backup
-            - name: mysql-persistent-storage
-              mountPath: /data
           resources:
             limits:
               memory: "128Mi"
@@ -31,16 +26,7 @@ spec:
                 secretKeyRef:
                   name: mysql-pass
                   key: password
-            - name: OUTPUT_DIR
-              value: "/backup"
             - name: MYSQLHOST
               value: "mysql.db.svc.cluster.local"
-      volumes:
-        - name: backup
-          persistentVolumeClaim:
-            claimName: backup
-        - name: mysql-persistent-storage
-          persistentVolumeClaim:
-            claimName: mysql-lh
       imagePullSecrets:
         - name: my-private-registry
