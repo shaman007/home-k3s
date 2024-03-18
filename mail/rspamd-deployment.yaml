@@ -98,6 +98,8 @@ spec:
           ports:
             - containerPort: 11333
             - containerPort: 11334
+          securityContext:
+            allowPrivilegeEscalation: false
           env:
             - name: REDIS_PASSWORD
               valueFrom:

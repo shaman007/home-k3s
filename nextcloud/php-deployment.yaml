@@ -42,6 +42,8 @@ spec:
               subPath: www.conf
             - name: nextcloud-lh
               mountPath: /nextcloud
+          securityContext:
+            allowPrivilegeEscalation: false
           resources:
             requests:
               cpu: "107m"

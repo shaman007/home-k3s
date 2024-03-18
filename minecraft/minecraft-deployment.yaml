@@ -42,6 +42,8 @@ spec:
           ports:
             - containerPort: 25565
             - containerPort: 25575
+          securityContext:
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: minecraft-lh
               mountPath: /data

@@ -86,6 +86,8 @@ spec:
             - containerPort: 24
             - containerPort: 1234
             - containerPort: 993
+          securityContext:
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: mail-lh
               mountPath: /var/mail

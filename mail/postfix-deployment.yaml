@@ -62,6 +62,8 @@ spec:
             - name: sender-access
               mountPath: /etc/postfix/sender_access
               subPath: sender_access
+          securityContext:
+            allowPrivilegeEscalation: false
           resources:
             requests:
               cpu: "10m"
