@@ -33,18 +33,25 @@ spec:
                   name: key
                   key: key
             - name: BW_DB_PROVIDER
-              value: postgresql
+              value: mariadb
             - name: BW_DB_SERVER
-              value: "postgres-postgresql.db.svc.cluster.local"
+              value: "mysql.db.svc.cluster.local"
             - name: BW_DB_DATABASE
               value: "bw"
             - name: BW_DB_USERNAME
-              value: "postgres"
+              value: "root"
+            - name: MARIADB_USER
+              value: "root"
             - name: BW_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: postgres-pass
+                  name: mysql-pass
                   key: password
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password                  
             - name: globalSettings__mail__smtp__host
               value: "andreybondarenko.com"
             - name: globalSettings__mail__smtp__port
@@ -55,6 +62,8 @@ spec:
           name: bitwarden
           ports:
             - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
           resources:
             requests:
               cpu: "10m"
