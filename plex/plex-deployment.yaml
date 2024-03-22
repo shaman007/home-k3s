@@ -55,9 +55,6 @@ spec:
       - name: plex-conf-lh
         persistentVolumeClaim:
           claimName: plex-conf-lh
-      - name: plex-conf-old
-        persistentVolumeClaim:
-          claimName: plex-conf-old
       - name: plex-lib-lh
         persistentVolumeClaim:
           claimName: plex-lib-lh            
