@@ -38,8 +38,8 @@ spec:
               cpu: "10m"
               memory: "300Mi"
             limits:
-              cpu: "3000m"
-              memory: "2000Mi"
+              cpu: "4000m"
+              memory: "4000Mi"
       volumes:
         - name: minio-data
           persistentVolumeClaim:

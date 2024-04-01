@@ -20,5 +20,5 @@ resources:
     cpu: "24m"
     memory: "100Mi"
   limits:
-    cpu: "800m"
+    cpu: "2000m"
     memory: "200Mi"

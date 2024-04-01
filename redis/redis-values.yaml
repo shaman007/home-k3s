@@ -5,13 +5,13 @@ master:
       cpu: "61m"
       memory: "100Mi"
     limits:
-      cpu: 300m
-      memory: "100Mi"
+      cpu: 4000m
+      memory: "2000Mi"
 replica:
   resources:
     requests:
       cpu: "81m"
       memory: "100Mi"
     limits:
-      cpu: 300m
-      memory: "100Mi"
+      cpu: "2000m"
+      memory: "1000Mi"

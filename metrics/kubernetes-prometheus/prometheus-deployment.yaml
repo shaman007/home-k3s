@@ -73,7 +73,7 @@ spec:
               cpu: 727m
               memory: 300M
             limits:
-              cpu: 2000m
+              cpu: 4000m
               memory: 3000M
       volumes:
         - name: prometheus-config-volume

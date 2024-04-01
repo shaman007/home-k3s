@@ -2,11 +2,19 @@
 primary:
   resources:
     requests:
-      cpu: "24m"
+      cpu: "300m"
       memory: "100Mi"
     limits:
-      cpu: "2000m"
-      memory: "1000Mi"
+      cpu: "4000m"
+      memory: "2000Mi"
+readReplicas:
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "100Mi"
+    limits:
+      cpu: "4000m"
+      memory: "2000Mi"
 auth:
   username: "postgres"
   database: "ttrss"
@@ -16,3 +24,10 @@ persistence:
    existingClaim: "data-postgres-postgresql-0"
 metrics:
   enabled: true
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "128Mi"
+    limits:
+      cpu: "2000m"
+      memory: "200Mi"
