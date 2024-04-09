@@ -7,16 +7,16 @@ spec:
   selector:
     matchLabels:
       app: unifi-poller
-
   template:
     metadata:
       labels:
         app: unifi-poller
-  
     spec:
       containers:
       - name: unifi-poller
         image: ghcr.io/unpoller/unpoller:latest
+        securityContext:
+          allowPrivilegeEscalation: false
         env:
           - name: UP_UNIFI_DEFAULT_PASS
             valueFrom:
@@ -30,6 +30,9 @@ spec:
           - name: UP_UNIFI_DEFAULT_SAVE_DPI
             value: "true"
         resources:
+          requests:
+            memory: "128Mi"
+            cpu: "200m"
           limits:
             memory: "128Mi"
             cpu: "2000m"

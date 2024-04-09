@@ -136,6 +136,12 @@ Redis:
 helm install redis -n redis oci://registry-1.docker.io/bitnamicharts/redis -f redis/redis-values.yaml     
 ```
 
+Elastic:
+
+```
+helm install elastic oci://registry-1.docker.io/bitnamicharts/elasticsearch --create-namespace -n elastic  
+```
+
 Docker clenup:
 
 ```bash
