@@ -17,6 +17,7 @@ spec:
         image: ghcr.io/unpoller/unpoller:latest
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
         env:
           - name: UP_UNIFI_DEFAULT_PASS
             valueFrom:

@@ -44,6 +44,7 @@ spec:
             - containerPort: 25575
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: minecraft-lh
               mountPath: /data
