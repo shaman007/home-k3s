@@ -25,6 +25,9 @@ spec:
         - name:  varrun
           emptyDir:
             sizeLimit: 10Mi
+        - name:  varlib
+          emptyDir:
+            sizeLimit: 10Mi
         - name:  run
           emptyDir:
             sizeLimit: 10Mi
@@ -46,6 +49,8 @@ spec:
               mountPath: /run
             - name: tmp
               mountPath: /tmp
+            - name: varlib
+              mountPath: /var/lib/php/sessions
           resources:
             requests:
               cpu: "66m"
