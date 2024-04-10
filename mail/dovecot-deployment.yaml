@@ -79,6 +79,12 @@ spec:
         - name: mail-lh
           persistentVolumeClaim:
             claimName: mail-lh
+        - name:  queue
+          emptyDir:
+            sizeLimit: 500Mi
+        - name:  rundir
+          emptyDir:
+            sizeLimit: 500Mi
       containers:
         - name: dovecot-mail
           image: registry.andreybondarenko.com/dovecot:latest
@@ -88,6 +94,7 @@ spec:
             - containerPort: 993
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: mail-lh
               mountPath: /var/mail
@@ -121,6 +128,10 @@ spec:
             - name: passwd
               mountPath: /etc/dovecot/passwd
               subPath: passwd
+            - name: rundir
+              mountPath: /run/dovecot
+            - name: queue
+              mountPath: /var/lib/dovecot
           resources:
             requests:
               cpu: "10m"

@@ -43,6 +43,12 @@ spec:
         - name: mail-lh
           persistentVolumeClaim:
             claimName: mail-lh
+        - name:  queue
+          emptyDir:
+            sizeLimit: 500Mi
+        - name:  spool
+          emptyDir:
+            sizeLimit: 500Mi
       containers:
         - name: postfix-mail
           image: registry.andreybondarenko.com/postfix:latest
@@ -62,8 +68,13 @@ spec:
             - name: sender-access
               mountPath: /etc/postfix/sender_access
               subPath: sender_access
+            - name: queue
+              mountPath: /var/lib/postfix
+            - name: spool
+              mountPath: /var/spool/postfix
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: "10m"
