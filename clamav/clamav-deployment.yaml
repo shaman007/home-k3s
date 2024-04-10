@@ -16,6 +16,10 @@ spec:
       labels:
         app: clamav
     spec:
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 103
+        fsGroup: 103
       containers:
         - name: clamd
           image: registry.andreybondarenko.com/clamav:latest
@@ -29,6 +33,8 @@ spec:
             - mountPath: /etc/clamav/clamd.conf
               name: clamav
               subPath: clamd.conf
+            - name: log
+              mountPath: /var/log/clamav
           resources:
             requests:
               cpu: "10m"
@@ -36,6 +42,9 @@ spec:
             limits:
               cpu: "2000m"
               memory: "4800Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
         - name: fresclam
           image: registry.andreybondarenko.com/clamav:latest
           env:
@@ -47,6 +56,11 @@ spec:
             - mountPath: /etc/clamav/clamd.conf
               name: clamav
               subPath: clamd.conf
+            - name: log
+              mountPath: /var/log/clamav
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: "10m"
@@ -64,5 +78,8 @@ spec:
             items:
               - key: clamd.conf
                 path: clamd.conf
+        - name:  log
+          emptyDir:
+            sizeLimit: 100Mi
       imagePullSecrets:
         - name: my-private-registry

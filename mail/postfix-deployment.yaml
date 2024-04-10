@@ -18,6 +18,10 @@ spec:
         app: postfix
         tier: mail
     spec:
+      securityContext:
+#        runAsUser: 100
+#        runAsGroup: 102
+#        fsGroup: 102
       volumes:
         - name: mail-certs
           secret:
