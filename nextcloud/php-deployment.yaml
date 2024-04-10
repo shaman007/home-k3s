@@ -27,6 +27,17 @@ spec:
                 path: php.ini
               - key: www.conf
                 path: www.conf
+        - name:  varrun
+          emptyDir:
+            sizeLimit: 10Mi
+        - name:  varlib
+          emptyDir:
+            sizeLimit: 10Mi
+        - name:  run
+          emptyDir:
+            sizeLimit: 10Mi
+        - name:  tmp
+          emptyDir:                
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
@@ -42,8 +53,17 @@ spec:
               subPath: www.conf
             - name: nextcloud-lh
               mountPath: /nextcloud
+            - name: varrun
+              mountPath: /var/run/php
+            - name: varlib
+              mountPath: /var/lib/php/sessions
+            - name: run
+              mountPath: /run
+            - name: tmp
+              mountPath: /tmp
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: "107m"
