@@ -25,6 +25,12 @@ spec:
             items:
               - key: config
                 path: site.conf
+        - name:  cache
+          emptyDir:
+            sizeLimit: 500Mi
+        - name:  run
+          emptyDir:
+            sizeLimit: 1Mi
       containers:
         - name: matrix-nginx
           image: nginx
@@ -33,6 +39,10 @@ spec:
           volumeMounts:
             - name: config-matrix
               mountPath: /etc/nginx/conf.d
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
           resources:
             requests:
               cpu: "10m"
@@ -40,3 +50,6 @@ spec:
             limits:
               cpu: "300m"
               memory: "100Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
