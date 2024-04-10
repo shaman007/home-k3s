@@ -22,14 +22,30 @@ spec:
         - name: wordpress-lh
           persistentVolumeClaim:
             claimName: wordpress-lh
+        - name:  varrun
+          emptyDir:
+            sizeLimit: 10Mi
+        - name:  run
+          emptyDir:
+            sizeLimit: 10Mi
+        - name:  tmp
+          emptyDir:
+            sizeLimit: 1000Mi
       containers:
         - name: php
           image: registry.andreybondarenko.com/php:latest
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: wordpress-lh
               mountPath: /code
+            - name: varrun
+              mountPath: /var/run/php
+            - name: run
+              mountPath: /run
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: "66m"

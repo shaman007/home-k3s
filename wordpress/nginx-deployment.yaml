@@ -28,11 +28,18 @@ spec:
             items:
               - key: config
                 path: site.conf
+        - name:  cache
+          emptyDir:
+            sizeLimit: 500Mi
+        - name:  run
+          emptyDir:
+            sizeLimit: 1Mi
       containers:
         - name: nginx
           image: nginx
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           ports:
             - containerPort: 80
           volumeMounts:
@@ -40,6 +47,10 @@ spec:
               mountPath: /code
             - name: config
               mountPath: /etc/nginx/conf.d
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
           resources:
             requests:
               cpu: "10m"
