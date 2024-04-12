@@ -30,8 +30,8 @@ spec:
           emptyDir:
             sizeLimit: 10Mi
         - name:  varlib
-          emptyDir:
-            sizeLimit: 10Mi
+          persistentVolumeClaim:
+            claimName: wordpress-sessions
         - name:  run
           emptyDir:
             sizeLimit: 10Mi
