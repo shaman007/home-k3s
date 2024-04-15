@@ -47,10 +47,10 @@ spec:
         - name: mail-lh
           persistentVolumeClaim:
             claimName: mail-lh
-        - name:  queue
-          emptyDir:
-            sizeLimit: 500Mi
         - name:  spool
+          persistentVolumeClaim:
+            claimName: queue-lh
+        - name:  queue
           emptyDir:
             sizeLimit: 500Mi
       containers:
