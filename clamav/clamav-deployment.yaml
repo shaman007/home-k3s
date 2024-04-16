@@ -30,6 +30,8 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/clamav
               name: avdata
+            - mountPath: /tmp
+              name: tmp
             - mountPath: /etc/clamav/clamd.conf
               name: clamav
               subPath: clamd.conf
@@ -81,5 +83,8 @@ spec:
         - name:  log
           emptyDir:
             sizeLimit: 100Mi
+        - name:  tmp
+          emptyDir:
+            sizeLimit: 600Mi            
       imagePullSecrets:
         - name: my-private-registry
