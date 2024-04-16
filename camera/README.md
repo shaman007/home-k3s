@@ -1,3 +1,4 @@
+#!!! OBSOLETE !!!
 # CCTV that does everyting I need without Foscam applicatio
 
 I have a Foscam dome camera that is cheap and decently build. At first I thought that Foscam application is required, however, the camera supports RTSP stream and can upload videos on motion detection to the FTP server.
