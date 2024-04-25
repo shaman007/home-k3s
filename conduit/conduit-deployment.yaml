@@ -20,6 +20,12 @@ spec:
         - name: matrix-lh
           persistentVolumeClaim:
             claimName: matrix1-lh
+        - name: config-conduit
+          configMap:
+            name: config-conduit
+            items:
+              - key: config
+                path: conduit.conf       
       containers:
         - name: conduit
           image: matrixconduit/matrix-conduit:latest
@@ -28,9 +34,13 @@ spec:
           volumeMounts:
             - name: matrix-lh
               mountPath: /var/lib/matrix-conduit/
+            - name: config-conduit
+              mountPath: /etc/conduit.toml
           env:
             - name: CONDUIT_SERVER_NAME
               value: matrix.andreybondarenko.com
+            - name: CONDUIT_DATABASE_PATH
+              value: /var/lib/matrix-conduit/
             - name: CONDUIT_DATABASE_BACKEND
               value: rocksdb
             - name: CONDUIT_ALLOW_REGISTRATION
@@ -47,6 +57,8 @@ spec:
               value: "200"
             - name: CONDUIT_LOG
               value: "warn,rocket=off,_=off,sled=off"
+            - name: CONDUIT_CONFIG
+              value: "/etc/conduit.toml"
           resources:
             requests:
               cpu: "10m"
