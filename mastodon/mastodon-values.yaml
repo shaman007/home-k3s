@@ -49,20 +49,23 @@ mastodon:
   limitedFederationMode: false
   persistence:
     assets:
+      # HERE WAS THE ERROR LAST TIME
       # -- ReadWriteOnce is more widely supported than ReadWriteMany, but limits
       # scalability, since it requires the Rails and Sidekiq pods to run on the
       # same node.
-      accessMode: ReadWriteMany
-      resources:
-        requests:
-          storage: 10Gi
-          StorageClassName: "longhorn"
+      #accessMode: ReadWriteMany
+      #resources:
+      ###  requests:
+      #    storage: 10Gi
+      #    StorageClassName: "longhorn"
+      existingClaim: mastodon-assets
     system:
-      accessMode: ReadWriteMany
-      resources:
-        requests:
-          storage: 100Gi
-          StorageClassName: "longhorn"
+      #accessMode: ReadWriteMany
+      #resources:
+      #  requests:
+      #    storage: 100Gi
+      #    StorageClassName: "longhorn"
+      existingClaim: mastodon-system
   s3:
     enabled: false
     access_key: ""
