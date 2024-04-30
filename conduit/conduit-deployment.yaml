@@ -63,7 +63,6 @@ spec:
               value: "6167"
             - name:  CONDUIT_ADDRESS
               value: "0.0.0.0"
-              #value: "/etc/conduit.toml"
           resources:
             requests:
               cpu: "10m"

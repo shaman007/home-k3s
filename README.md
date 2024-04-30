@@ -130,12 +130,6 @@ This would copy TLS certificates from the wordpress namespace to the mail namesp
 kubectl get secret letsencrypt-prod --namespace=default -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
 ```
 
-Redis:
-
-```
-helm install redis -n redis oci://registry-1.docker.io/bitnamicharts/redis -f redis/redis-values.yaml     
-```
-
 Elastic:
 
 ```
