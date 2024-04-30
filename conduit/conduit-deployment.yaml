@@ -40,7 +40,7 @@ spec:
             - name: CONDUIT_SERVER_NAME
               value: matrix.andreybondarenko.com
             - name: CONDUIT_DATABASE_PATH
-              value: /var/lib/matrix-conduit/
+              value: /var/lib/matrix-conduit
             - name: CONDUIT_DATABASE_BACKEND
               value: rocksdb
             - name: CONDUIT_ALLOW_REGISTRATION
@@ -58,7 +58,12 @@ spec:
             - name: CONDUIT_LOG
               value: "warn,rocket=off,_=off,sled=off"
             - name: CONDUIT_CONFIG
-              value: "/etc/conduit.toml"
+              value: ""
+            - name: CONDUIT_PORT
+              value: "6167"
+            - name:  CONDUIT_ADDRESS
+              value: "0.0.0.0"
+              #value: "/etc/conduit.toml"
           resources:
             requests:
               cpu: "10m"

@@ -23,7 +23,7 @@ spec:
       http:
         paths:
           - path: /.well-known/matrix/
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: nginx-matrix
