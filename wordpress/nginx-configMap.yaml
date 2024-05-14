@@ -8,10 +8,14 @@ metadata:
     tier: backend
 data:
   config: |
+    log_format blog '$http_x_forwarded_for - $remote_user $time_local "$request" ' 
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent"';
     server {
+      listen 80;
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
-      access_log /var/log/nginx/access.log;
+      access_log /var/log/nginx/access.log blog;
       root /code;
       client_max_body_size 200M;
       add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
