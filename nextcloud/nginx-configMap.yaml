@@ -23,8 +23,7 @@ data:
       access_log /var/log/nginx/access.log cloud;
       root /nextcloud;
       client_max_body_size 2000M;
-
-      gzip off;
+      gzip on;
       gzip_vary on;
       gzip_comp_level 4;
       gzip_min_length 256;
