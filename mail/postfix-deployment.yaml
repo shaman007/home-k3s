@@ -1,13 +1,13 @@
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   namespace: mail
   name: postfix
   labels:
     tier: mail
 spec:
-#  replicas: 1
+  replicas: 1
   selector:
     matchLabels:
       app: postfix
@@ -48,10 +48,8 @@ spec:
           persistentVolumeClaim:
             claimName: mail-lh
         - name:  spool
-#          persistentVolumeClaim:
-#            claimName: queue-lh
-          emptyDir:
-            sizeLimit: 500Mi
+          persistentVolumeClaim:
+            claimName: queue-lh
         - name:  queue
           emptyDir:
             sizeLimit: 500Mi
@@ -90,3 +88,5 @@ spec:
               memory: "256Mi"
       imagePullSecrets:
         - name: my-private-registry
+      nodeSelector:
+         kubernetes.io/hostname: m.k8s.my.lan
