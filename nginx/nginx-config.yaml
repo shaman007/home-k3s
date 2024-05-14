@@ -8,3 +8,5 @@ data:
   proxy-body-size: "2003m"
   allow-snippet-annotations: "true"
   enable-real-ip: "true"
+  use-gzip: "true"
+  gzip-level: "6"
