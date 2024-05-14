@@ -18,7 +18,7 @@ spec:
         app: postfix
         tier: mail
     spec:
-      securityContext:
+#      securityContext:
 #        runAsUser: 100
 #        runAsGroup: 102
 #        fsGroup: 102
