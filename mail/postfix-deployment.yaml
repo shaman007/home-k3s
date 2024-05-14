@@ -1,13 +1,13 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   namespace: mail
   name: postfix
   labels:
     tier: mail
 spec:
-  replicas: 1
+#  replicas: 1
   selector:
     matchLabels:
       app: postfix
@@ -48,8 +48,10 @@ spec:
           persistentVolumeClaim:
             claimName: mail-lh
         - name:  spool
-          persistentVolumeClaim:
-            claimName: queue-lh
+#          persistentVolumeClaim:
+#            claimName: queue-lh
+          emptyDir:
+            sizeLimit: 500Mi
         - name:  queue
           emptyDir:
             sizeLimit: 500Mi

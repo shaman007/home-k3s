@@ -7,6 +7,7 @@ metadata:
   labels:
     tier: mail
 spec:
+  type: NodePort
   selector:
     app: postfix
     tier: mail
@@ -15,3 +16,4 @@ spec:
       port: 587
   externalIPs:
     - 192.168.1.111
+  externalTrafficPolicy: Local
