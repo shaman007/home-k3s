@@ -5,18 +5,19 @@ metadata:
   namespace: nextcloud
   name: nginx-nextcloud
   labels:
-    tier: backend
+    app: nextcloud
+    tier: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx-nextcloud
-      tier: backend
+      app: nextcloud
+      tier: frontend
   template:
     metadata:
       labels:
-        app: nginx-nextcloud
-        tier: backend
+        app: nextcloud
+        tier: frontend
     spec:
       volumes:
         - name: nextcloud-lh
@@ -58,3 +59,13 @@ spec:
             limits:
               cpu: "3000m"
               memory: "512Mi"
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - nextcloud
+            topologyKey: kubernetes.io/hostname

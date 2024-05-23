@@ -5,17 +5,18 @@ metadata:
   name: php-nextcloud
   namespace: nextcloud
   labels:
+    app: nextcloud
     tier: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: php-nextcloud
+      app: nextcloud
       tier: backend
   template:
     metadata:
       labels:
-        app: php-nextcloud
+        app: nextcloud
         tier: backend
     spec:
       securityContext:
@@ -41,7 +42,8 @@ spec:
           emptyDir:
             sizeLimit: 10Mi
         - name:  tmp
-          emptyDir:                
+          emptyDir:
+            sizeLimit: 100Mi
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
@@ -75,5 +77,15 @@ spec:
             limits:
               cpu: "6000m"
               memory: "8145Mi"
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - nextcloud
+            topologyKey: kubernetes.io/hostname
       imagePullSecrets:
         - name: my-private-registry

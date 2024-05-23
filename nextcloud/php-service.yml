@@ -5,10 +5,11 @@ metadata:
   namespace: nextcloud
   name: nextcloud-php
   labels:
+    app: nextcloud
     tier: backend
 spec:
   selector:
-    app: php-nextcloud
+    app: nextcloud
     tier: backend
   ports:
     - protocol: TCP

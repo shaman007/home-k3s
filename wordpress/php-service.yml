@@ -5,10 +5,11 @@ metadata:
   namespace: wordpress
   name: php
   labels:
+    app: wordpress
     tier: backend
 spec:
   selector:
-    app: php
+    app: wordpress
     tier: backend
   ports:
     - protocol: TCP

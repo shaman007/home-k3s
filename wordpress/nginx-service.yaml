@@ -5,11 +5,12 @@ metadata:
   namespace: wordpress
   name: nginx
   labels:
-    tier: backend
+    app: wordpress
+    tier: frontend
 spec:
   selector:
-    app: nginx
-    tier: backend
+    app: wordpress
+    tier: frontend
   ports:
     - protocol: TCP
       port: 80

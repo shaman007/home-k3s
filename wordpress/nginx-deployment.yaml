@@ -5,18 +5,19 @@ metadata:
   namespace: wordpress
   name: nginx
   labels:
-    tier: backend
+    app: wordpress
+    tier: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx
-      tier: backend
+      app: wordpress
+      tier: frontend
   template:
     metadata:
       labels:
-        app: nginx
-        tier: backend
+        app: wordpress
+        tier: frontend
     spec:
       volumes:
         - name: wordpress-lh
@@ -58,3 +59,13 @@ spec:
             limits:
               cpu: "300m"
               memory: "300Mi"
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - wordpress
+            topologyKey: kubernetes.io/hostname

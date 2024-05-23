@@ -5,17 +5,18 @@ metadata:
   namespace: wordpress
   name: php
   labels:
+    app: wordpress
     tier: backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: php
+      app: wordpress
       tier: backend
   template:
     metadata:
       labels:
-        app: php
+        app: wordpress
         tier: backend
     spec:
       securityContext:
@@ -62,5 +63,15 @@ spec:
             limits:
               cpu: "1300m"
               memory: "1024Mi"
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - wordpress
+            topologyKey: kubernetes.io/hostname
       imagePullSecrets:
         - name: my-private-registry

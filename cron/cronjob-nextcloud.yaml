@@ -31,3 +31,13 @@ spec:
           restartPolicy: Never
           imagePullSecrets:
             - name: my-private-registry
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - nextcloud
+                topologyKey: kubernetes.io/hostname

@@ -5,11 +5,12 @@ metadata:
   namespace: nextcloud
   name: nginx-nextcloud
   labels:
-    tier: backend
+    app: nextcloud
+    tier: frontend
 spec:
   selector:
-    app: nginx-nextcloud
-    tier: backend
+    app: nextcloud
+    tier: frontend
   ports:
     - protocol: TCP
       port: 80
