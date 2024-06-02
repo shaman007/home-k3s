@@ -5,6 +5,7 @@ metadata:
   namespace: mail
   name: dovecot-lmtp
   labels:
+    app: dovecot
     tier: mail
 spec:
   selector:

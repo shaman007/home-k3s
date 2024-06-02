@@ -5,6 +5,7 @@ metadata:
   namespace: mail
   name: rspamd
   labels:
+    app: rspamd
     tier: mail
 spec:
   selector:

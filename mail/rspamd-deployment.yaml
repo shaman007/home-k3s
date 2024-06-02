@@ -5,6 +5,7 @@ metadata:
   name: rspamd
   namespace: mail
   labels:
+    app: rspamd
     tier: mail
 spec:
   replicas: 1
@@ -143,5 +144,7 @@ spec:
               mountPath: /var/lib/rspamd
             - name: mail-lh
               mountPath: /mail
+      nodeSelector:
+         kubernetes.io/hostname: m.k8s.my.lan
       imagePullSecrets:
         - name: my-private-registry

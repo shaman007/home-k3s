@@ -5,6 +5,7 @@ metadata:
   namespace: mail
   name: postfix
   labels:
+    app: postfix
     tier: mail
 spec:
   replicas: 1
