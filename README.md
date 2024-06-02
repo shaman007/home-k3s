@@ -37,6 +37,9 @@ Old foto:
 
 ## TODO
 
+* Mail, Mastodon, Mysql, Ples(lib), Docker - RWO
+* Prometheus, Thanos - non-root containers
+* Network policies that make sence
 * Vault for secrets
 
 ## Dokerfiles
