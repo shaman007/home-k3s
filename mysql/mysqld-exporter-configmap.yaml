@@ -9,3 +9,4 @@ data:
     user = exporter
     password = secret1!D
     host = mysql.db.svc.cluster.local
+    log_bin_trust_function_creators = 1
