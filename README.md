@@ -135,7 +135,7 @@ kubectl get secret letsencrypt-prod --namespace=default -o yaml| sed 's/namespac
 
 Elastic:
 
-```
+```bash
 helm install elastic oci://registry-1.docker.io/bitnamicharts/elasticsearch --create-namespace -n elastic  
 ```
 
