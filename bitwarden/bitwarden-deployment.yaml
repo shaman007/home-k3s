@@ -48,7 +48,7 @@ spec:
             - name: globalSettings__mail__smtp__host
               value: "andreybondarenko.com"
             - name: globalSettings__mail__smtp__port
-              value: "587"
+              value: "25"
             - name: globalSettings__mail__smtp__ssl
               value: "false"
           image: bitwarden/self-host:beta
