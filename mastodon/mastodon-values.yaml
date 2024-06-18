@@ -74,7 +74,7 @@ mastodon:
     # with keys AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
     #existingSecret: "mastodon"
     bucket: "mastodon"
-    endpoint: "minio.minio.svc.cluster.local"
+    endpoint: "192.168.1.112:9000"
     hostname: "minio.minio.svc.cluster.local"
     region: ""
     permission: ""
