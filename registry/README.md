@@ -1,7 +1,7 @@
 # Registry deployment from the Helm chart
 
 ```bash
-upgrade registry twuni/docker-registry -f ./registry-values.yaml  --namespace=registry --create-namespace
+helm upgrade registry twuni/docker-registry -f ./registry-values.yaml  --namespace=registry --create-namespace
 ```
 
 * be sure to give it enough memory and CPU to handle large layers
