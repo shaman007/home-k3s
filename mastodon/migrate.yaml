@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migrate
+  namespace: mastodon
+spec:
+  containers:
+  - name: migrate
+    image: nginx:stable-alpine
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: volv1
+      mountPath: /from
+  volumes:
+  - name: volv1
+    persistentVolumeClaim:
+      claimName: mastodon-system
