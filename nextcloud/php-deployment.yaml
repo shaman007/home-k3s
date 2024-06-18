@@ -76,7 +76,7 @@ spec:
               memory: "2145Mi"
             limits:
               cpu: "6000m"
-              memory: "8145Mi"
+              memory: "9145Mi"
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
