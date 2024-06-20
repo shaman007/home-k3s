@@ -59,27 +59,27 @@ mastodon:
           storage: 10Gi
           StorageClassName: "longhorn"
       existingClaim: mastodon-assets
-    system:
-      accessMode: ReadWriteMany
-      resources:
-        requests:
-          storage: 100Gi
-          StorageClassName: "longhorn"
-      existingClaim: mastodon-system
+    #system:
+    #  accessMode: ReadWriteMany
+    #  resources:
+    ##    requests:
+    #      storage: 100Gi
+    #      StorageClassName: "longhorn"
+    #  existingClaim: mastodon-system
   s3:
-    enabled: false
-    access_key: ""
-    access_secret: ""
+    enabled: true
+    #access_key: ""
+    #access_secret: ""
     # -- you can also specify the name of an existing Secret
     # with keys AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-    #existingSecret: "mastodon"
+    existingSecret: "mastodon"
     bucket: "mastodon"
-    endpoint: "192.168.1.112:9000"
-    hostname: "minio.minio.svc.cluster.local"
+    endpoint: "https://s3.andreybondarenko.com"
+    hostname: ""
     region: ""
     permission: ""
     # -- If you have a caching proxy, enter its base URL here.
-    alias_host: ""
+    alias_host: "s3.andreybondarenko.com/mastodon"
   deepl:
     enabled: false
     plan:
