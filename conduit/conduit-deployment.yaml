@@ -58,7 +58,7 @@ spec:
             - name: CONDUIT_LOG
               value: "warn,rocket=off,_=off,sled=off"
             - name: CONDUIT_CONFIG
-              value: ""
+              value: "/etc/conduit.toml"
             - name: CONDUIT_PORT
               value: "6167"
             - name:  CONDUIT_ADDRESS
