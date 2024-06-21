@@ -37,7 +37,6 @@ Old foto:
 
 ## TODO
 
-* Mastodon, Docker registry - RWO if possible (Help deployment)
 * Prometheus, Thanos - non-root containers
 * Network policies that make sence
 * Vault for secrets
