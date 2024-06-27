@@ -19,6 +19,10 @@ spec:
         app: wordpress
         tier: frontend
     spec:
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 33
       volumes:
         - name: wordpress-lh
           persistentVolumeClaim:
