@@ -6,13 +6,14 @@ metadata:
   name: nextcloud-lh
   labels:
     storage.k8s.io/name: longhorn
+    app.kubernetes.io/instance: nextcloud
 spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: longhorn
   resources:
     requests:
-      storage: 100Gi
+      storage: 200Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
