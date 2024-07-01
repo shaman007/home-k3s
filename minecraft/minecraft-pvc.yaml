@@ -8,7 +8,7 @@ metadata:
     storage.k8s.io/name: longhorn
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   storageClassName: longhorn
   resources:
     requests:
