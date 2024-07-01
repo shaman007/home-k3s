@@ -17,7 +17,7 @@ data:
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log blog;
       root /code;
-      client_max_body_size 200M;
+      client_max_body_size 250M;
       add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
       location / {
           try_files $uri $uri/ /index.php?$query_string;
