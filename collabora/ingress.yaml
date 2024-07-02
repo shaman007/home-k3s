@@ -24,6 +24,6 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: collabora-online
+                name: collabora-collabora-online
                 port:
                   number: 9980
