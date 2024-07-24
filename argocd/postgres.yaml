@@ -1,0 +1,22 @@
+project: default
+source:
+  repoURL: registry-1.docker.io/bitnamicharts
+  targetRevision: 15.5.19
+  helm:
+    parameters:
+      - name: auth.database
+        value: ttrss
+      - name: auth.username
+        value: postgres
+      - name: metrics.enabled
+        value: 'true'
+      - name: primary.persistence.storageClass
+        value: longhorn
+      - name: primary.persistence.existingClaim
+        value: data-postgres-postgresql-0
+  chart: postgresql
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: db
+syncPolicy:
+  automated: {}
