@@ -1,0 +1,8 @@
+project: default
+source:
+  repoURL: registry-1.docker.io/bitnamicharts
+  targetRevision: 21.0.1
+  chart: elasticsearch
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: elastic

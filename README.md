@@ -93,12 +93,6 @@ cat /etc/rancher/k3s/k3s.yaml > ~/.kube/config
 chmod 600 ~/.kube/config
 ```
 
-Letsencrypt deployment:
-
-```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
-```
-
 Dashboard deployment is optional. I use Mirantis Lens, still, anyway:
 
 ```bash
@@ -111,12 +105,6 @@ This would copy TLS certificates from the wordpress namespace to the mail namesp
 
 ```bash
 kubectl get secret letsencrypt-prod --namespace=default -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
-```
-
-Elastic:
-
-```bash
-helm install elastic oci://registry-1.docker.io/bitnamicharts/elasticsearch --create-namespace -n elastic  
 ```
 
 Docker clenup:
