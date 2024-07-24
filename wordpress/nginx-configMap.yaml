@@ -13,6 +13,7 @@ data:
                       '"$http_user_agent"';
     server {
       listen 80;
+      gzip on;
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log blog;
