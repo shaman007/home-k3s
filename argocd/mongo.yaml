@@ -1,0 +1,9 @@
+project: default
+source:
+  repoURL: 'https://github.com/shaman007/home-k3s.git'
+  path: mongo
+  targetRevision: HEAD
+destination:
+  server: 'https://kubernetes.default.svc'
+syncPolicy:
+  automated: {}

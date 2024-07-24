@@ -110,14 +110,6 @@ Letsencrypt deployment:
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
 ```
 
-NGINX ingress deployment instaed of the Traefik:
-
-```bash
-helm upgrade --install ingress-nginx ingress-nginx \
-    --repo https://kubernetes.github.io/ingress-nginx \
-    --namespace ingress-nginx --create-namespace
-```
-
 Dashboard deployment is optional. I use Mirantis Lens, still, anyway:
 
 ```bash

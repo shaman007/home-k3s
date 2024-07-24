@@ -1,0 +1,10 @@
+project: default
+source:
+  repoURL: 'https://github.com/shaman007/home-k3s.git'
+  path: mail
+  targetRevision: HEAD
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: mail
+syncPolicy:
+  automated: {}
