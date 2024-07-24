@@ -15,7 +15,6 @@ Here we have some of services managed by the Argocd. If something is not here, t
 * Loki
 * Postgres
 * Redis
-* exporters for postgres, etc.
 
 ## Repos
 
