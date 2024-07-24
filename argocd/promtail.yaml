@@ -1,0 +1,10 @@
+project: default
+source:
+  repoURL: 'https://github.com/shaman007/home-k3s.git'
+  path: loki/promtail
+  targetRevision: HEAD
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: loki
+syncPolicy:
+  automated: {}
