@@ -1,0 +1,16 @@
+project: default
+source:
+  repoURL: 'https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/'
+  targetRevision: 4.0.18
+  helm:
+    parameters:
+      - name: nfs.path
+        value: /storage/k8s
+      - name: nfs.server
+        value: w7.k8s.my.lan
+  chart: nfs-subdir-external-provisioner
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: nfs-provisioner
+syncPolicy:
+  automated: {}

@@ -93,17 +93,6 @@ cat /etc/rancher/k3s/k3s.yaml > ~/.kube/config
 chmod 600 ~/.kube/config
 ```
 
-Installation of the NFS volume provisioner. NFS server hostname and exported path is needed:
-
-```bash
-helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-helm update nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
-    --create-namespace \
-    --namespace nfs-provisioner \
-    --set nfs.server=w7.k8s.my.lan \
-    --set nfs.path=/storage/k8s
-```
-
 Letsencrypt deployment:
 
 ```bash
