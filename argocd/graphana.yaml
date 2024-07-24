@@ -1,0 +1,10 @@
+project: default
+source:
+  repoURL: 'https://github.com/shaman007/home-k3s.git'
+  path: metrics/graphana
+  targetRevision: HEAD
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: monitoring
+syncPolicy:
+  automated: {}
