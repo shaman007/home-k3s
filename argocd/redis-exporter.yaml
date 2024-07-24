@@ -1,0 +1,10 @@
+project: default
+source:
+  repoURL: 'https://github.com/shaman007/home-k3s.git'
+  path: redis/exporter
+  targetRevision: HEAD
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: redis
+syncPolicy:
+  automated: {}
