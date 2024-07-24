@@ -13,10 +13,9 @@ Here we have some of services managed by the Argocd. If something is not here, t
 ## TODO
 
 * Loki
-* Mariadb
 * Postgres
 * Redis
-* exporters for maria, postgres, etc.
+* exporters for postgres, etc.
 
 ## Repos
 
