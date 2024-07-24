@@ -13,7 +13,7 @@ Old foto:
 
 * Mail with Dovecot + Postfix + Rspamd. SIEVE is not automated, because Mozilla is too lazy to fix Thunderbird plugin
 * Bitwarden self-hosted. Beware of extreme memory usage!
-* Tiny-Tiny RSS for old skulls
+* Tiny-Tiny RSS for old skulls (OBSOTELE)
 * Minecraft for resource consumption
 * Nextcloud with Collabora and everything needed for the quality life with various photo-related extensions of the Nextcloud
 * Matrix message server that actually works
@@ -23,7 +23,7 @@ Old foto:
 * Mongodb without auth, is needed for Spotify stats application
 * Spotify stats application
 * Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
-* UniFi console
+* UniFi console (OBSOTELE)
 * Minio single drive, NFS volume as storage.
 * Elasticsearch
 * Mastodon
@@ -31,8 +31,8 @@ Old foto:
 * Prometheus Thanos
 * Graphana Loki for log aggregation
 * Promtail for logs delivery
-* Live RTSP viewer for the Foscam CCTV camera
-* FTP server for the Foscam CCTV camera
+* Live RTSP viewer for the Foscam CCTV camera (OBSOTELE)
+* FTP server for the Foscam CCTV camera (OBSOTELE)
 * Plex
 
 ## TODO

@@ -8,3 +8,20 @@ Here we have some of services managed by the Argocd. If something is not here, t
 * UniFi controller
 * TTRSS
 * Dashboard
+* Rsyslog
+
+## TODO
+
+* Loki
+* Promtail
+* Mariadb
+* Postgres
+* Redis
+* Your-Spotify
+* exporters for maria, postgres, etc.
+
+## Repos
+
+```
+argocd repo add registry-1.docker.io/bitnamicharts --type helm --name bitnami --enable-oci
+```
