@@ -1,0 +1,8 @@
+project: default
+source:
+  repoURL: registry-1.docker.io/bitnamicharts
+  targetRevision: 1.4.16
+  chart: vault
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: vault

@@ -15,9 +15,11 @@ Here we have some of services managed by the Argocd. If something is not here, t
 * Loki
 * Mastodon
 * Vault
+* Registry
 
 ## Repos
 
 ```
 argocd repo add registry-1.docker.io/bitnamicharts --type helm --name bitnami --enable-oci
+argocd repo add https://charts.external-secrets.io --type helm --name external-secrets
 ```
