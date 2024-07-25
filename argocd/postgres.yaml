@@ -14,6 +14,14 @@ source:
         value: longhorn
       - name: primary.persistence.existingClaim
         value: data-postgres-postgresql-0
+      - name: primary.resources.requests.cpu
+        value: 100m
+      - name: primary.resources.requests.memory
+        value: 100Mi
+      - name: primary.resources.limits.cpu
+        value: '1'
+      - name: primary.resources.limits.memory
+        value: 500Mi
   chart: postgresql
 destination:
   server: 'https://kubernetes.default.svc'
