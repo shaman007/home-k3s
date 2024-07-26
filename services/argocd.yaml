@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-frontend-ip
+  namespace: argocd
+  labels:
+    name: argocd-server
+    app: argocd-server
+spec:
+  ports:
+    - port: 8012
+      name: http
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: argocd-server
+  externalIPs:
+    - 192.168.1.105
