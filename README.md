@@ -34,12 +34,13 @@ Old foto:
 * Live RTSP viewer for the Foscam CCTV camera (OBSOTELE)
 * FTP server for the Foscam CCTV camera (OBSOTELE)
 * Plex
+* Vault
+* Argocd
 
 ## TODO
 
 * Prometheus, Thanos - non-root containers
 * Network policies that make sence
-* Vault for secrets
 
 ## Dokerfiles
 

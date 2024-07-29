@@ -14,7 +14,6 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 * Loki
 * Mastodon
-* Vault
 * Registry
 
 ## Repos
