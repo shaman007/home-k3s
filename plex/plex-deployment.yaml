@@ -15,7 +15,6 @@ spec:
       containers:
       - name: plex
         image: greensheep/plex-server-docker-rpi:latest
-        #image: registry.andreybondarenko.com/plex #kinda not properly work for no reason, but useful for repairs
         env:
           - name: PLEX_CLAIM #valid for 4 minutes
             value: claim-zr-4z184Z4QooAMgM12M
