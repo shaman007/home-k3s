@@ -39,7 +39,6 @@ Old foto:
 
 ## TODO
 
-* Prometheus, Thanos - non-root containers
 * Network policies that make sence
 
 ## Dokerfiles
