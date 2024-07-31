@@ -27,7 +27,6 @@ Old foto:
 * Minio single drive, NFS volume as storage.
 * Elasticsearch
 * Mastodon
-* Prometheus operator
 * Prometheus Thanos
 * Graphana Loki for log aggregation
 * Promtail for logs delivery
