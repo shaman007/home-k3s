@@ -45,7 +45,7 @@ spec:
               cpu: 2000m
               memory: 3000M
         - name: thanos
-          image:  quay.io/thanos/thanos:v0.31.0
+          image:  quay.io/thanos/thanos:v0.35.1
           args:
             - "sidecar"
             - "--tsdb.path=/prometheus"
