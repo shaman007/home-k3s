@@ -43,7 +43,7 @@ spec:
             sizeLimit: 10Mi
         - name:  tmp
           emptyDir:
-            sizeLimit: 100Mi
+            sizeLimit: 256Mi
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
