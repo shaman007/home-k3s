@@ -130,7 +130,7 @@ data:
           severity: mail
         annotations:
           summary: One or more targets are unreachable.
-  prometheus.yaml.tmpl: |-
+  prometheus.yaml: |-
     global:
       scrape_interval: 5s
       evaluation_interval: 5s

@@ -18,9 +18,9 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: prom/prometheus
+          image: prom/prometheus:latest
           args:
-            - "--config.file=/etc/prometheus-shared/prometheus.yaml"
+            - "--config.file=/etc/prometheus/prometheus.yaml"
             - "--storage.tsdb.path=/prometheus/"
             - "--web.enable-lifecycle"
             - "--storage.tsdb.no-lockfile"
@@ -51,9 +51,6 @@ spec:
             - "--tsdb.path=/prometheus"
             - "--prometheus.url=http://127.0.0.1:9090"
             - "--objstore.config-file=/etc/thanos/objstore.yml"
-            - "--reloader.config-file=/etc/prometheus/prometheus.yaml.tmpl"
-            - "--reloader.config-envsubst-file=/etc/prometheus-shared/prometheus.yaml"
-            - "--reloader.rule-dir=/etc/prometheus/"
           ports:
             - name: http-sidecar
               containerPort: 10902
@@ -84,7 +81,8 @@ spec:
           persistentVolumeClaim:
             claimName: prometheus-lh
         - name: prometheus-config-shared
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: 10Mi
         - name: objstoreyml
           secret:
             secretName: thanos-objstore-secret
