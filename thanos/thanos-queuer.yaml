@@ -17,10 +17,10 @@ spec:
     spec:
       containers:
       - name: thanos
-        image: quay.io/thanos/thanos:v0.30.0
+        image: quay.io/thanos/thanos:latest
         args:
         - query
-        - --log.level=debug
+        - --log.level=info
         - --query.replica-label=replica
         - --endpoint=thanos-store-gateway.monitoring.svc.cluster.local:10901
         - --endpoint=thanos-sidecar.monitoring.svc.cluster.local:10901

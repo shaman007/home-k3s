@@ -18,10 +18,10 @@ spec:
     spec:
       containers:
         - name: thanos
-          image: quay.io/thanos/thanos:v0.30.0
+          image: quay.io/thanos/thanos:latest
           args:
           - "store"
-          - "--log.level=debug"
+          - "--log.level=info"
           - "--data-dir=/data"
           - "--objstore.config-file=/etc/thanos/objstore.yml"
           - "--index-cache-size=500MB"
