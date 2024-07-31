@@ -108,8 +108,8 @@ kubectl get secret letsencrypt-prod --namespace=default -o yaml| sed 's/namespac
 
 Longhorn:
 
-```
-https://raw.githubusercontent.com/longhorn/longhorn/v1.6.2/deploy/longhorn.yaml 
+```bash
+kubectl apply https://raw.githubusercontent.com/longhorn/longhorn/v1.6.2/deploy/longhorn.yaml 
 ```
 
 Docker clenup:
