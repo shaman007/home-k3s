@@ -24,15 +24,18 @@ spec:
         runAsGroup: 33
         fsGroup: 33
       volumes:
+        - name: phpini
+          secret:
+            secretName: php-fpm-config
+            items:
+              - key: php.ini
+                path: php.ini
         - name: wordpress-lh
           persistentVolumeClaim:
             claimName: wordpress-lh
         - name:  varrun
           emptyDir:
             sizeLimit: 10Mi
-        - name:  varlib
-          persistentVolumeClaim:
-            claimName: wordpress-sessions
         - name:  run
           emptyDir:
             sizeLimit: 10Mi
@@ -42,10 +45,14 @@ spec:
       containers:
         - name: php
           image: registry.andreybondarenko.com/php:latest
+          imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           volumeMounts:
+            - name: phpini
+              mountPath: /etc/php/8.2/fpm/php.ini
+              subPath: php.ini
             - name: wordpress-lh
               mountPath: /code
             - name: varrun
@@ -54,8 +61,6 @@ spec:
               mountPath: /run
             - name: tmp
               mountPath: /tmp
-            - name: varlib
-              mountPath: /var/lib/php/sessions
           resources:
             requests:
               cpu: "66m"
