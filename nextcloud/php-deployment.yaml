@@ -25,19 +25,20 @@ spec:
         fsGroup: 33
       volumes:
         - name: phpini
-          configMap:
-            name: php-fpm-config
+          secret:
+            secretName: php-fpm-config
             items:
               - key: php.ini
                 path: php.ini
+        - name: wwwconf
+          configMap:
+            name: php-fpm-config-template
+            items:
               - key: www.conf
                 path: www.conf
         - name:  varrun
           emptyDir:
             sizeLimit: 10Mi
-        - name:  varlib
-          persistentVolumeClaim:
-            claimName: nextcloud-sessions
         - name:  run
           emptyDir:
             sizeLimit: 10Mi
@@ -54,15 +55,13 @@ spec:
             - name: phpini
               mountPath: /etc/php/8.2/fpm/php.ini
               subPath: php.ini
-            - name: phpini
+            - name: wwwconf
               mountPath: /etc/php/8.2/fpm/pool.d/www.conf
               subPath: www.conf
             - name: nextcloud-lh
               mountPath: /nextcloud
             - name: varrun
               mountPath: /var/run/php
-            - name: varlib
-              mountPath: /var/lib/php/sessions
             - name: run
               mountPath: /run
             - name: tmp

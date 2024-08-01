@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: nextcloud
-  name: php-fpm-config
+  name: php-fpm-config-template
 data:
   www.conf: |
     [www]
@@ -28,24 +28,6 @@ data:
     rlimit_core = unlimited
     catch_workers_output = yes
     clear_env = no
-  php-fpm.conf: |
-    [global]
-    error_log = /tmp/php-fpm.log
-    log_level = warning
-    [www]
-    user = daemon
-    group = daemon
-    listen = 9000
-    pm = ondemand
-    pm.max_children = 16
-    pm.start_servers = 4
-    pm.min_spare_servers = 1
-    pm.max_spare_servers = 3
-    php_value[memory_limit] = -1
-    php_value[upload_max_filesize] = 2048M
-    listen.owner=daemon
-    listen.group=daemon
-    env[PATH] = $PATH
   php.ini: |
     [PHP]
     engine = On
@@ -151,28 +133,8 @@ data:
     bcmath.scale = 0
     [browscap]
     [Session]
-    session.save_handler = files
-    session.use_strict_mode = 0
-    session.use_cookies = 1
-    session.use_only_cookies = 1
-    session.name = PHPSESSID
-    session.auto_start = 0
-    session.cookie_lifetime = 0
-    session.cookie_path = /
-    session.cookie_domain =
-    session.cookie_httponly =
-    session.cookie_samesite =
-    session.serialize_handler = php
-    session.gc_probability = 1
-    session.gc_divisor = 1000
-    session.gc_maxlifetime = 1440
-    session.referer_check =
-    session.cache_limiter = nocache
-    session.cache_expire = 180
-    session.use_trans_sid = 0
-    session.sid_length = 26
-    session.trans_sid_tags = "a=href,area=href,frame=src,form="
-    session.sid_bits_per_character = 5
+    session.save_handler = redis
+    session.save_path = "tcp://redis-master.redis.svc.cluster.local:6379/?auth={{ .password }}"
     [Assertion]
     zend.assertions = -1
     [COM]
