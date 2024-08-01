@@ -51,7 +51,11 @@ spec:
       containers:
         - name: php-nextcloud
           image: registry.andreybondarenko.com/php:latest
+          imagePullPolicy: Always
           volumeMounts:
+            - name: phpini
+              mountPath: /etc/php/8.2/fpm/pool.d/php.ini
+              subPath: php.ini
             - name: phpini
               mountPath: /etc/php/8.2/fpm/php.ini
               subPath: php.ini

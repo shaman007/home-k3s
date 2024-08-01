@@ -28,6 +28,7 @@ data:
     rlimit_core = unlimited
     catch_workers_output = yes
     clear_env = no
+ 
   php.ini: |
     [PHP]
     engine = On
@@ -84,8 +85,6 @@ data:
     ;[apcu]
     ;extension=/opt/bitnami/php/lib/php/extensions/apcu.so
     ;apc.enable_cli = 1
-    
-
     [filter]
     [iconv]
     [imap]
@@ -132,9 +131,14 @@ data:
     [bcmath]
     bcmath.scale = 0
     [browscap]
+    [redis]
+    host = redis-master.redis.svc.cluster.local
+    port = 6379
+    persistent = 1
+    timeout = 2.5
     [Session]
     session.save_handler = redis
-    session.save_path = "tcp://redis-master.redis.svc.cluster.local:6379/?auth={{ .password }}"
+    session.save_path = "tcp://redis-master.redis.svc.cluster.local:6379/?auth[]={{ .password }}&prefix=nextcloud_PHPREDIS_SESSION:"
     [Assertion]
     zend.assertions = -1
     [COM]
