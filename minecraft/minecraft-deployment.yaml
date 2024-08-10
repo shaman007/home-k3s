@@ -26,6 +26,9 @@ spec:
         - name: minecraft-lh
           persistentVolumeClaim:
             claimName: minecraft1-lh
+        - name:  tmp
+          emptyDir:
+            sizeLimit: 100Mi
       containers:
         - name: mnecraft
           image: itzg/minecraft-server:latest
@@ -38,6 +41,8 @@ spec:
               value: CUSTOM
             - name: CUSTOM_SERVER
               value: "/data/server.jar"
+            - name: CREATE_CONSOLE_IN_PIPE
+              value: "TRUE"
             - name: RCON_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -52,6 +57,8 @@ spec:
           volumeMounts:
             - name: minecraft-lh
               mountPath: /data
+            - mountPath: /tmp
+              name: tmp
           resources:
             requests:
               cpu: "702m"
