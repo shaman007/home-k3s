@@ -1,0 +1,5 @@
+extends: default
+
+rules:
+  line-length:
+    max: 10000  # Disable line length checking by setting max to 0

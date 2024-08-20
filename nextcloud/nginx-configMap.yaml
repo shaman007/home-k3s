@@ -13,7 +13,7 @@ data:
       "" "";
       default "immutable";
     }
-    log_format cloud '$http_x_forwarded_for - $remote_user [$time_local] "$request" ' 
+    log_format cloud '$http_x_forwarded_for - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent"';
     server {

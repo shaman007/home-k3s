@@ -80,11 +80,11 @@ spec:
             items:
               - key: clamd.conf
                 path: clamd.conf
-        - name:  log
+        - name: log
           emptyDir:
             sizeLimit: 100Mi
-        - name:  tmp
+        - name: tmp
           emptyDir:
-            sizeLimit: 600Mi            
+            sizeLimit: 600Mi
       imagePullSecrets:
         - name: my-private-registry

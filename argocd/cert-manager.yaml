@@ -1,3 +1,4 @@
+---
 project: default
 source:
   repoURL: 'https://charts.jetstack.io'

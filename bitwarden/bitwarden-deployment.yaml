@@ -44,7 +44,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: postgres-pass
-                  key: password                 
+                  key: password
             - name: globalSettings__mail__smtp__host
               value: "andreybondarenko.com"
             - name: globalSettings__mail__smtp__port

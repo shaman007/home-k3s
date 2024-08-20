@@ -28,43 +28,43 @@ spec:
         app: vsftpd
     spec:
       volumes:
-      - name: ftp
-        persistentVolumeClaim:
-          claimName: ftp
+        - name: ftp
+          persistentVolumeClaim:
+            claimName: ftp
       containers:
-      - name: vsftpd
-        image: registry.andreybondarenko.com/docker-vsftpd:latest
-        env:
-          - name: PASV_ADDRESS
-            value: 192.168.1.111
-          - name: LOG_STDOUT
-            value: "true"
-          - name: FTP_USER
-            value: camera
-          - name: PASV_MIN_PORT
-            value: "21110"
-          - name: PASV_MAX_PORT
-            value: "21111"
-          - name: FTP_PASS
-            valueFrom:
-              secretKeyRef:
-                name: camera
-                key: PASSWORD
-        resources:
-          limits:
-            memory: "512Mi"
-            cpu: "400m"
-          requests:
-            memory: "100Mi"
-            cpu: "100m"
-        ports:
-        - containerPort: 21
-        - containerPort: 20
-        - containerPort: 21110
-        - containerPort: 21111
-        volumeMounts:
-        - mountPath: "/home/vsftpd"
-          name: ftp
+        - name: vsftpd
+          image: registry.andreybondarenko.com/docker-vsftpd:latest
+          env:
+            - name: PASV_ADDRESS
+              value: 192.168.1.111
+            - name: LOG_STDOUT
+              value: "true"
+            - name: FTP_USER
+              value: camera
+            - name: PASV_MIN_PORT
+              value: "21110"
+            - name: PASV_MAX_PORT
+              value: "21111"
+            - name: FTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: camera
+                  key: PASSWORD
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+          ports:
+            - containerPort: 21
+            - containerPort: 20
+            - containerPort: 21110
+            - containerPort: 21111
+          volumeMounts:
+            - mountPath: "/home/vsftpd"
+              name: ftp
       imagePullSecrets:
         - name: my-private-registry
 ---
@@ -90,7 +90,6 @@ spec:
       port: 21110
     - protocol: TCP
       name: passv1
-      port: 21111 
+      port: 21111
   externalIPs:
     - 192.168.1.111
-

@@ -19,10 +19,6 @@ spec:
         app: postfix
         tier: mail
     spec:
-#      securityContext:
-#        runAsUser: 100
-#        runAsGroup: 102
-#        fsGroup: 102
       volumes:
         - name: mail-certs
           secret:
@@ -48,10 +44,10 @@ spec:
         - name: mail-lh
           persistentVolumeClaim:
             claimName: mail-lh
-        - name:  spool
+        - name: spool
           persistentVolumeClaim:
             claimName: queue-lh
-        - name:  queue
+        - name: queue
           emptyDir:
             sizeLimit: 500Mi
       containers:
@@ -90,4 +86,4 @@ spec:
       imagePullSecrets:
         - name: my-private-registry
       nodeSelector:
-         kubernetes.io/hostname: m.k8s.my.lan
+        kubernetes.io/hostname: m.k8s.my.lan

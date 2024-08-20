@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,29 +14,29 @@ spec:
         app: unifi-poller
     spec:
       containers:
-      - name: unifi-poller
-        image: ghcr.io/unpoller/unpoller:latest
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-        env:
-          - name: UP_UNIFI_DEFAULT_PASS
-            valueFrom:
-              secretKeyRef:
-                name: unifi-password
-                key: password
-          - name: UP_UNIFI_DEFAULT_URL
-            value: https://192.168.1.1:443
-          - name: UP_UNIFI_DEFAULT_USER
-            value: shaman007
-          - name: UP_UNIFI_DEFAULT_SAVE_DPI
-            value: "true"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "200m"
-          limits:
-            memory: "128Mi"
-            cpu: "2000m"
-        ports:
-        - containerPort: 9130
+        - name: unifi-poller
+          image: ghcr.io/unpoller/unpoller:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          env:
+            - name: UP_UNIFI_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-password
+                  key: password
+            - name: UP_UNIFI_DEFAULT_URL
+              value: https://192.168.1.1:443
+            - name: UP_UNIFI_DEFAULT_USER
+              value: shaman007
+            - name: UP_UNIFI_DEFAULT_SAVE_DPI
+              value: "true"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "128Mi"
+              cpu: "2000m"
+          ports:
+            - containerPort: 9130

@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,27 +8,25 @@ spec:
   selector:
     matchLabels:
       app: redis-exporter
-
   template:
     metadata:
       labels:
         app: redis-exporter
-  
     spec:
       containers:
-      - name: redis-exporter
-        image: oliver006/redis_exporter
-        env:
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: redis-password
-                key: password
-          - name: REDIS_ADDR
-            value: redis://redis-master.redis.svc.cluster.local:6379
-        resources:
-          limits:
-            memory: "228Mi"
-            cpu: "1200m"
-        ports:
-        - containerPort: 9121
+        - name: redis-exporter
+          image: oliver006/redis_exporter
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-password
+                  key: password
+            - name: REDIS_ADDR
+              value: redis://redis-master.redis.svc.cluster.local:6379
+          resources:
+            limits:
+              memory: "228Mi"
+              cpu: "1200m"
+          ports:
+            - containerPort: 9121

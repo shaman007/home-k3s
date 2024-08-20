@@ -26,7 +26,7 @@ spec:
         - name: minecraft-lh
           persistentVolumeClaim:
             claimName: minecraft1-lh
-        - name:  tmp
+        - name: tmp
           emptyDir:
             sizeLimit: 100Mi
       containers:

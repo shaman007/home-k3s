@@ -36,13 +36,13 @@ spec:
             items:
               - key: www.conf
                 path: www.conf
-        - name:  varrun
+        - name: varrun
           emptyDir:
             sizeLimit: 10Mi
-        - name:  run
+        - name: run
           emptyDir:
             sizeLimit: 10Mi
-        - name:  tmp
+        - name: tmp
           emptyDir:
             sizeLimit: 256Mi
         - name: nextcloud-lh
@@ -83,12 +83,12 @@ spec:
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - nextcloud
-            topologyKey: kubernetes.io/hostname
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - nextcloud
+              topologyKey: kubernetes.io/hostname
       imagePullSecrets:
         - name: my-private-registry

@@ -25,7 +25,7 @@ spec:
             name: config-conduit
             items:
               - key: config
-                path: conduit.conf       
+                path: conduit.conf
       containers:
         - name: conduit
           image: matrixconduit/matrix-conduit:latest
@@ -61,7 +61,7 @@ spec:
               value: "/etc/conduit.toml"
             - name: CONDUIT_PORT
               value: "6167"
-            - name:  CONDUIT_ADDRESS
+            - name: CONDUIT_ADDRESS
               value: "0.0.0.0"
           resources:
             requests:

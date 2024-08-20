@@ -39,13 +39,13 @@ spec:
         - name: wordpress-lh
           persistentVolumeClaim:
             claimName: wordpress-lh
-        - name:  varrun
+        - name: varrun
           emptyDir:
             sizeLimit: 10Mi
-        - name:  run
+        - name: run
           emptyDir:
             sizeLimit: 10Mi
-        - name:  tmp
+        - name: tmp
           emptyDir:
             sizeLimit: 1000Mi
       containers:
@@ -83,12 +83,12 @@ spec:
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - wordpress
-            topologyKey: kubernetes.io/hostname
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - wordpress
+              topologyKey: kubernetes.io/hostname
       imagePullSecrets:
         - name: my-private-registry

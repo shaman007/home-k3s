@@ -1,3 +1,4 @@
+---
 image:
   repository: ghcr.io/mastodon/mastodon
   # https://github.com/mastodon/mastodon/pkgs/container/mastodon
@@ -26,7 +27,7 @@ mastodon:
     assetsPrecompile:
       enabled: true
   # Custom labels to add to kubernetes resources
-  #labels:
+  # labels:
   cron:
     # -- run `tootctl media remove` every week
     removeMedia:
@@ -59,17 +60,17 @@ mastodon:
           storage: 10Gi
           StorageClassName: "longhorn"
       existingClaim: mastodon-assets
-    #system:
-    #  accessMode: ReadWriteMany
-    #  resources:
-    ##    requests:
-    #      storage: 100Gi
-    #      StorageClassName: "longhorn"
-    #  existingClaim: mastodon-system
+  #  system:
+  #    accessMode: ReadWriteMany
+  #    resources:
+  #    requests:
+  #      storage: 100Gi
+  #      StorageClassName: "longhorn"
+  #  existingClaim: mastodon-system
   s3:
     enabled: true
-    #access_key: ""
-    #access_secret: ""
+    # access_key: ""
+    # access_secret: ""
     # -- you can also specify the name of an existing Secret
     # with keys AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
     existingSecret: "mastodon"
@@ -115,51 +116,35 @@ mastodon:
     #   cpu: 250m
     #   memory: 512Mi
     workers:
-    - name: all-queues
-      # -- Number of threads / parallel sidekiq jobs that are executed per Pod
-      concurrency: 25
-      # -- Number of Pod replicas deployed by the Deployment
-      replicas: 1
-      # -- Resources for this specific deployment to allow optimised scaling, overwrites .Values.mastodon.sidekiq.resources
-      resources: {}
-      # -- Affinity for this specific deployment, overwrites .Values.affinity and .Values.mastodon.sidekiq.affinity
-      affinity: {}
-      # -- Topology spread constraints for this specific deployment, overwrites .Values.topologySpreadConstraints and .Values.mastodon.sidekiq.topologySpreadConstraints
-      topologySpreadConstraints: {}
-      # -- Sidekiq queues for Mastodon that are handled by this worker. See https://docs.joinmastodon.org/admin/scaling/#concurrency
-      # See https://github.com/mperham/sidekiq/wiki/Advanced-Options#queues for how to weight queues as argument
-      queues:
-        - default,8
-        - push,6
-        - ingress,4
-        - mailers,2
-        - pull
-        - scheduler # Make sure the scheduler queue only exists once and with a worker that has 1 replica.
-      image:
-        repository:
-        tag:
-      # allows you to mount a custom database.yml from a configmap
-      customDatabaseConfigYml:
-        configMapRef:
-          name:
-          key:
-    #- name: push-pull
-    #  concurrency: 50
-    #  resources: {}
-    #  replicas: 2
-    #  queues:
-    #    - push
-    #    - pull
-    #- name: mailers
-    #  concurrency: 25
-    #  replicas: 2
-    #  queues:
-    #    - mailers
-    #- name: default
-    #  concurrency: 25
-    #  replicas: 2
-    #  queues:
-    #    - default
+      - name: all-queues
+        # -- Number of threads / parallel sidekiq jobs that are executed per Pod
+        concurrency: 25
+        # -- Number of Pod replicas deployed by the Deployment
+        replicas: 1
+        # -- Resources for this specific deployment to allow optimised scaling, overwrites .Values.mastodon.sidekiq.resources
+        resources: {}
+        # -- Affinity for this specific deployment, overwrites .Values.affinity and .Values.mastodon.sidekiq.affinity
+        affinity: {}
+        # -- Topology spread constraints for this specific deployment, overwrites .Values.topologySpreadConstraints and .Values.mastodon.sidekiq.topologySpreadConstraints
+        topologySpreadConstraints: {}
+        # -- Sidekiq queues for Mastodon that are handled by this worker. See https://docs.joinmastodon.org/admin/scaling/#concurrency
+        # See https://github.com/mperham/sidekiq/wiki/Advanced-Options#queues for how to weight queues as argument
+        queues:
+          - default,8
+          - push,6
+          - ingress,4
+          - mailers,2
+          - pull
+          # Make sure the scheduler queue only exists once and with a worker that has 1 replica.
+          - scheduler
+        image:
+          repository:
+          tag:
+        # allows you to mount a custom database.yml from a configmap
+        customDatabaseConfigYml:
+          configMapRef:
+            name:
+            key:
   smtp:
     auth_method: plain
     ca_file: /etc/ssl/certs/ca-certificates.crt
@@ -261,18 +246,18 @@ mastodon:
 ingress:
   enabled: false
   annotations:
-    # For choosing an ingress ingressClassName is preferred over annotations
-    # kubernetes.io/ingress.class: nginx
-    #
-    # To automatically request TLS certificates use one of the following
-    # kubernetes.io/tls-acme: "true"
-    # cert-manager.io/cluster-issuer: "letsencrypt"
-    #
-    # ensure that NGINX's upload size matches Mastodon's
-    #   for the K8s ingress controller:
-    # nginx.ingress.kubernetes.io/proxy-body-size: 40m
-    #   for the NGINX ingress controller:
-    # nginx.org/client-max-body-size: 40m
+  # For choosing an ingress ingressClassName is preferred over annotations
+  # kubernetes.io/ingress.class: nginx
+  #
+  # To automatically request TLS certificates use one of the following
+  # kubernetes.io/tls-acme: "true"
+  # cert-manager.io/cluster-issuer: "letsencrypt"
+  #
+  # ensure that NGINX's upload size matches Mastodon's
+  #   for the K8s ingress controller:
+  # nginx.ingress.kubernetes.io/proxy-body-size: 40m
+  #   for the NGINX ingress controller:
+  # nginx.org/client-max-body-size: 40m
   # -- you can specify the ingressClassName if it differs from the default
   ingressClassName:
   hosts:
@@ -282,8 +267,7 @@ ingress:
   tls:
     - secretName: mastodon-tls
       hosts:
-        - mastodon. 
-
+        - mastodon.
   # This allows you to have a separate ingress for streaming
   # When enabled, the main ingress will no longer handle streaming requests.
   # You will also need to configure mastodon.streaming.base_url accordingly
@@ -355,12 +339,12 @@ redis:
   hostname: "redis-master.redis.svc.cluster.local"
   port: 6379
   auth:
-    # -- you must set a password; the password generated by the redis chart will be
-    # rotated on each upgrade:
-    #password: ""
-    # you can also specify the name of an existing Secret
-    # with a key of redis-password set to the password you want
-    existingSecret: "redis-password"
+  # -- you must set a password; the password generated by the redis chart will be
+  # rotated on each upgrade:
+  # password: ""
+  # you can also specify the name of an existing Secret
+  # with a key of redis-password set to the password you want
+  existingSecret: "redis-password"
 
 # @ignored
 service:
@@ -506,16 +490,16 @@ jobAnnotations: {}
 
 # -- Default resources for all Deployments and jobs unless overwritten
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+# limits:
+#   cpu: 100m
+#   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi
 
 # @ignored
 nodeSelector: {}

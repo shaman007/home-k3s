@@ -14,25 +14,25 @@ spec:
         app: redis-cli
     spec:
       containers:
-      - name: redis-cli
-        image: registry.andreybondarenko.com/redis-cli:latest
-        volumeMounts:
-          - name: data
-            mountPath: /data
-        env:
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: redis-password
-                key: password
-          - name: REDIS_HOST
-            value: "redis-master.redis.svc.cluster.local"
-          - name: OUTPUT_DIR
-            value: "/data"
-        resources:
-          limits:
-            memory: "228Mi"
-            cpu: "1000m"
+        - name: redis-cli
+          image: registry.andreybondarenko.com/redis-cli:latest
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-password
+                  key: password
+            - name: REDIS_HOST
+              value: "redis-master.redis.svc.cluster.local"
+            - name: OUTPUT_DIR
+              value: "/data"
+          resources:
+            limits:
+              memory: "228Mi"
+              cpu: "1000m"
       volumes:
         - name: data
           persistentVolumeClaim:

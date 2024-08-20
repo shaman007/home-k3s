@@ -1,3 +1,4 @@
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -9,8 +10,8 @@ spec:
   selector:
     matchLabels:
       app: longhorn-manager
-  namespaceSelector:
-    matchNames:
+namespaceSelector:
+  matchNames:
     - longhorn-system
-  endpoints:
+endpoints:
   - port: manager

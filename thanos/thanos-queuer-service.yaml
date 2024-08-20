@@ -8,10 +8,10 @@ metadata:
   namespace: monitoring
 spec:
   ports:
-  - port: 9090
-    protocol: TCP
-    targetPort: http
-    name: http
+    - port: 9090
+      protocol: TCP
+      targetPort: http
+      name: http
   selector:
     app: thanos-querier
   externalIPs:

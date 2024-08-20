@@ -1,3 +1,4 @@
+---
 project: default
 source:
   repoURL: 'https://kubernetes.github.io/ingress-nginx'

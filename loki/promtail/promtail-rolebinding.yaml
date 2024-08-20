@@ -5,10 +5,10 @@ metadata:
   name: promtail-clusterrolebinding
   namespace: loki
 subjects:
-    - kind: ServiceAccount
-      name: promtail-serviceaccount
-      namespace: loki
+  - kind: ServiceAccount
+    name: promtail-serviceaccount
+    namespace: loki
 roleRef:
-    kind: ClusterRole
-    name: promtail-clusterrole
-    apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promtail-clusterrole
+  apiGroup: rbac.authorization.k8s.io

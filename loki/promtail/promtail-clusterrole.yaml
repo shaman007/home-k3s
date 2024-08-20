@@ -8,6 +8,6 @@ rules:
   - apiGroups: [""]
     resources: ["*"]
     verbs:
-    - get
-    - watch
-    - list
+      - get
+      - watch
+      - list

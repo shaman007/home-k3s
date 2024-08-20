@@ -145,6 +145,6 @@ spec:
             - name: mail-lh
               mountPath: /mail
       nodeSelector:
-         kubernetes.io/hostname: m.k8s.my.lan
+        kubernetes.io/hostname: m.k8s.my.lan
       imagePullSecrets:
         - name: my-private-registry

@@ -28,7 +28,6 @@ data:
     rlimit_core = unlimited
     catch_workers_output = yes
     clear_env = no
- 
   php.ini: |
     [PHP]
     engine = On

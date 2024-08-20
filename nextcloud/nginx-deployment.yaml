@@ -33,10 +33,10 @@ spec:
             items:
               - key: config
                 path: nextcloud.conf
-        - name:  cache
+        - name: cache
           emptyDir:
             sizeLimit: 500Mi
-        - name:  run
+        - name: run
           emptyDir:
             sizeLimit: 1Mi
       containers:
@@ -66,10 +66,10 @@ spec:
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - nextcloud
-            topologyKey: kubernetes.io/hostname
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - nextcloud
+              topologyKey: kubernetes.io/hostname

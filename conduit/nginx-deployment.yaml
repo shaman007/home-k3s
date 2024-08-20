@@ -25,10 +25,10 @@ spec:
             items:
               - key: config
                 path: site.conf
-        - name:  cache
+        - name: cache
           emptyDir:
             sizeLimit: 500Mi
-        - name:  run
+        - name: run
           emptyDir:
             sizeLimit: 1Mi
       containers:

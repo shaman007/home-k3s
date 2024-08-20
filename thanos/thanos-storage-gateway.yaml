@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,23 +22,23 @@ spec:
           image: busybox
           command: ["sh", "-c", "chown -R 1001:1001 /data"]
           volumeMounts:
-          - name: data
-            mountPath: /data
+            - name: data
+              mountPath: /data
       containers:
         - name: thanos
           image: quay.io/thanos/thanos:v0.35.1
           args:
-          - "store"
-          - "--log.level=info"
-          - "--data-dir=/data"
-          - "--objstore.config-file=/etc/thanos/objstore.yml"
-          - "--index-cache-size=500MB"
-          - "--chunk-pool-size=500MB"
+            - "store"
+            - "--log.level=info"
+            - "--data-dir=/data"
+            - "--objstore.config-file=/etc/thanos/objstore.yml"
+            - "--index-cache-size=500MB"
+            - "--chunk-pool-size=500MB"
           ports:
-          - name: http
-            containerPort: 10902
-          - name: grpc
-            containerPort: 10901
+            - name: http
+              containerPort: 10902
+            - name: grpc
+              containerPort: 10901
           resources:
             requests:
               cpu: "10m"

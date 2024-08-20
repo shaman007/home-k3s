@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,18 +13,17 @@ spec:
     metadata:
       labels:
         app: mongo-exporter
-  
     spec:
       containers:
-      - name: mongo-exporter
-        image: percona/mongodb_exporter:0.40
-        args:
-          - --mongodb.uri=mongodb://mongodb.db.svc.cluster.local:27017
-          - --collector.profile
-          - --compatible-mode
-        resources:
-          limits:
-            memory: "256Mi"
-            cpu: "2000m"
-        ports:
-        - containerPort: 9216
+        - name: mongo-exporter
+          image: percona/mongodb_exporter:0.40
+          args:
+            - --mongodb.uri=mongodb://mongodb.db.svc.cluster.local:27017
+            - --collector.profile
+            - --compatible-mode
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "2000m"
+          ports:
+            - containerPort: 9216

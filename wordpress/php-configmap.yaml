@@ -28,7 +28,7 @@ data:
     rlimit_core = unlimited
     catch_workers_output = yes
     clear_env = no
- 
+
   php.ini: |
     [PHP]
     engine = On
@@ -85,7 +85,6 @@ data:
     ;[apcu]
     ;extension=/opt/bitnami/php/lib/php/extensions/apcu.so
     ;apc.enable_cli = 1
-    
 
     [filter]
     [iconv]

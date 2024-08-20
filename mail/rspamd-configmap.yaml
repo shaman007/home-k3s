@@ -169,17 +169,14 @@ data:
     }
   rspamd: |
     .include "$CONFDIR/common.conf"
-    
     options {
         pidfile = "$RUNDIR/rspamd.pid";
         .include "$CONFDIR/options.inc"
         .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/options.inc"
         .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/options.inc"
     }
-    
     .include(try=true; duplicate=merge) "$CONFDIR/cgp.inc"
     .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/cgp.inc"
-    
     logging {
         type = "file";
         filename = "$LOGDIR/rspamd.log";
@@ -187,14 +184,12 @@ data:
         .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/logging.inc"
         .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/logging.inc"
     }
-    
     worker "normal" {
         bind_socket = "*:11333";
         .include "$CONFDIR/worker-normal.inc"
         .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/worker-normal.inc"
         .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/worker-normal.inc"
     }
-    
     worker "controller" {
         secure_ip = "0.0.0.0/0";
         bind_socket = "*:11334";
@@ -202,16 +197,13 @@ data:
         .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/worker-controller.inc"
         .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/worker-controller.inc"
     }
-    
     worker "rspamd_proxy" {
         bind_socket = "*:11332";
         .include "$CONFDIR/worker-proxy.inc"
         .include(try=true; priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/worker-proxy.inc"
         .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/worker-proxy.inc"
     }
-    
     # Local fuzzy storage is disabled by default
-    
     worker "fuzzy" {
         bind_socket = "*:11335";
         count = -1; # Disable by default
