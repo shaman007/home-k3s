@@ -18,17 +18,9 @@ repos:
       - id: check-yaml
         args:
           - --allow-multiple-documents
-            #      - id: check-json
-      - id: check-symlinks
       - id: check-added-large-files
-        #      - id: detect-private-key
-      - id: forbid-submodules
-        #      - id: pretty-format-json
-        #  - repo: https://github.com/tarioch/flux-check-hook
-        #    rev: v0.3.0
-        #    hooks:
-        #      - id: check-flux-helm-values
-        #  - repo: https://github.com/gitleaks/gitleaks
-        #    rev: v8.16.1
-        #    hooks:
-        #      - id: gitleaks
+      - id: detect-private-key
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.16.1
+    hooks:
+      - id: gitleaks
