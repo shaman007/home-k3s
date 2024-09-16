@@ -14,18 +14,3 @@ spec:
   resources:
     requests:
       storage: 200Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  namespace: nextcloud
-  name: nextcloud-sessions
-  labels:
-    storage.k8s.io/name: longhorn
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 10Mi
