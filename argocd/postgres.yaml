@@ -30,7 +30,7 @@ source:
       - name: metrics.resources.requests.cpu
         value: 100m
       - name: metrics.resources.limits.cpu
-        value: 500m
+        value: 1000m
   chart: postgresql
 destination:
   server: 'https://kubernetes.default.svc'
