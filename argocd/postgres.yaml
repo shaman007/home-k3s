@@ -9,6 +9,10 @@ source:
         value: ttrss
       - name: auth.username
         value: postgres
+      - name: auth.existingSecret
+        value: postgres-password
+      - name: auth.secretKeys.adminPasswordKey
+        value: password
       - name: metrics.enabled
         value: 'true'
       - name: primary.persistence.storageClass
@@ -22,7 +26,11 @@ source:
       - name: primary.resources.limits.cpu
         value: '4'
       - name: primary.resources.limits.memory
-        value: 500Mi
+        value: 1500Mi
+      - name: metrics.resources.requests.cpu
+        value: 100m
+      - name: metrics.resources.limits.cpu
+        value: 500m
   chart: postgresql
 destination:
   server: 'https://kubernetes.default.svc'
