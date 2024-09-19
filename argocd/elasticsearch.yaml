@@ -2,7 +2,25 @@
 project: default
 source:
   repoURL: registry-1.docker.io/bitnamicharts
-  targetRevision: 21.0.1
+  targetRevision: 21.3.17
+  helm:
+    parameters:
+      - name: coordinating.resources.requests.cpu
+        value: 500m
+      - name: coordinating.resources.limits.cpu
+        value: 6000m
+      - name: master.resources.requests.cpu
+        value: 500m
+      - name: master.resources.limits.cpu
+        value: 6000m
+      - name: data.resources.requests.cpu
+        value: 500m
+      - name: data.resources.limits.cpu
+        value: 2500m
+      - name: ingest.resources.requests.cpu
+        value: 500m
+      - name: ingest.resources.limits.cpu
+        value: 2500m
   chart: elasticsearch
 destination:
   server: 'https://kubernetes.default.svc'
