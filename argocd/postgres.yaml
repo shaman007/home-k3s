@@ -18,9 +18,9 @@ source:
       - name: primary.resources.requests.cpu
         value: 100m
       - name: primary.resources.requests.memory
-        value: 100Mi
+        value: 150Mi
       - name: primary.resources.limits.cpu
-        value: '2'
+        value: '4'
       - name: primary.resources.limits.memory
         value: 500Mi
   chart: postgresql
