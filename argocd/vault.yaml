@@ -3,6 +3,18 @@ project: default
 source:
   repoURL: registry-1.docker.io/bitnamicharts
   targetRevision: 1.4.22
+  helm:
+    parameters:
+      - name: server.replicaCount
+        value: '1'
+      - name: server.resources.requests.cpu
+        value: 400m
+      - name: server.resources.limits.cpu
+        value: 4000m
+      - name: injector.resources.requests.cpu
+        value: 400m
+      - name: injector.resources.limits.cpu
+        value: 2000m
   chart: vault
 destination:
   server: 'https://kubernetes.default.svc'
