@@ -80,15 +80,5 @@ spec:
             limits:
               cpu: "4000m"
               memory: "1024Mi"
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - wordpress
-              topologyKey: kubernetes.io/hostname
       imagePullSecrets:
         - name: my-private-registry

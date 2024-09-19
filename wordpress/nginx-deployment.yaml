@@ -63,13 +63,3 @@ spec:
             limits:
               cpu: "300m"
               memory: "300Mi"
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - wordpress
-              topologyKey: kubernetes.io/hostname
