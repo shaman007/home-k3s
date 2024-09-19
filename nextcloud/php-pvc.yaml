@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: nextcloud
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   storageClassName: longhorn
   resources:
     requests:
