@@ -2,7 +2,7 @@
 project: default
 source:
   repoURL: registry-1.docker.io/bitnamicharts
-  targetRevision: 1.17.2
+  targetRevision: 1.4.22
   chart: vault
 destination:
   server: 'https://kubernetes.default.svc'
