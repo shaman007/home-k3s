@@ -9,6 +9,14 @@ source:
         value: redis
       - name: auth.existingSecretPasswordKey
         value: redis-password
+      - name: master.resources.requests.cpu
+        value: 400m
+      - name: master.resources.limits.cpu
+        value: 4000m
+      - name: replica.resources.requests.cpu
+        value: 400m
+      - name: replica.resources.limits.cpu
+        value: 4000m
   chart: redis
 destination:
   server: 'https://kubernetes.default.svc'
