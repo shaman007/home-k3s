@@ -13,5 +13,5 @@ replica:
       cpu: "81m"
       memory: "100Mi"
     limits:
-      cpu: "2000m"
+      cpu: "4000m"
       memory: "1000Mi"
