@@ -1,3 +1,4 @@
+---
 project: default
 source:
   repoURL: 'https://github.com/shaman007/home-k3s.git'
