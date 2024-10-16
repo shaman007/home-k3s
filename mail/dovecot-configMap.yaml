@@ -102,3 +102,7 @@ data:
     protocol sieve {
       mail_max_userip_connections = 128
     }
+  90-sieve: |
+    plugin {
+      sieve = file:~/sieve;active=/var/mail/sieve/%u/.dovecot.sieve
+    }

@@ -71,6 +71,12 @@ spec:
             items:
               - key: 20-managesieve
                 path: 20-managesieve.conf
+        - name: 90-sieve
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: 90-sieve
+                path: 90-sieve.conf
         - name: passwd
           secret:
             secretName: passwd
@@ -126,6 +132,9 @@ spec:
             - name: 20-managesieve
               mountPath: /etc/dovecot/conf.d/20-managesieve.conf
               subPath: 20-managesieve.conf
+            - name: 90-sieve
+              mountPath: /etc/dovecot/conf.d/90-sieve.conf
+              subPath: 90-sieve.conf
             - name: passwd
               mountPath: /etc/dovecot/passwd
               subPath: passwd
