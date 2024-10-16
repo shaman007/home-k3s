@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: rancher
+  name: rancher
+  labels:
+    storage.k8s.io/name: longhorn
+    app.kubernetes.io/instance: rancher
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
