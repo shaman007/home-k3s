@@ -1,0 +1,97 @@
+---
+project: default
+source:
+  repoURL: 'https://helm.twun.io'
+  targetRevision: 2.2.3
+  helm:
+    values: |-
+      ---
+      replicaCount: 1
+      image:
+        repository: registry
+        tag: 2.8.1
+        pullPolicy: IfNotPresent
+      service:
+        name: registry
+        type: ClusterIP
+        port: 5000
+      ingress:
+        enabled: true
+        className: nginx
+        path: /
+        hosts:
+          - registry.andreybondarenko.com
+        annotations:
+          kubernetes.io/ingress.class: nginx
+          kubernetes.io/tls-acme: "true"
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          nginx.ingress.kubernetes.io/proxy-body-size: 1000m
+        tls:
+          - secretName: registly-tls
+            hosts:
+              - registry.andreybondarenko.com
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      persistence:
+        accessMode: 'ReadWriteOnce'
+        enabled: true
+        size: 10Gi
+        storageClass: 'longhorn'
+      storage: filesystem
+      secrets:
+        haSharedSecret: ""
+        htpasswd: "user:$2y$05$zqxqjoVOv/DEKigN5PiSJOnrv0f9uhkP7xJUQJ2/CgnYLkvlE40ZC"
+      metrics:
+        enabled: true
+        port: 5001
+        path: /metrics
+        serviceMonitor:
+          enabled: true
+          labels: {}
+      configData:
+        version: 0.1
+        log:
+          fields:
+            service: registry
+        storage:
+          cache:
+            blobdescriptor: inmemory
+        http:
+          addr: :5000
+          headers:
+            X-Content-Type-Options: [nosniff]
+          debug:
+            addr: :5001
+            prometheus:
+              enabled: true
+              path: /metrics
+        health:
+          storagedriver:
+            enabled: true
+            interval: 10s
+            threshold: 3
+      securityContext:
+        enabled: true
+        runAsUser: 1000
+        fsGroup: 1000
+      priorityClassName: ""
+      podDisruptionBudget: {}
+      autoscaling:
+        enabled: false
+        minReplicas: 1
+        maxReplicas: 2
+        targetCPUUtilizationPercentage: 60
+        targetMemoryUtilizationPercentage: 60
+      garbageCollect:
+        enabled: true
+        deleteUntagged: true
+        schedule: "0 1 * * *"
+  chart: docker-registry
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: registry
