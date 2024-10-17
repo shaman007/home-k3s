@@ -1,0 +1,40 @@
+---
+project: default
+source:
+  repoURL: 'https://grafana.github.io/helm-charts'
+  targetRevision: 6.18.0
+  helm:
+    values: |
+      deploymentMode: SingleBinary
+      loki:
+        mode: SingleBinary
+        commonConfig:
+          replication_factor: 1
+        storage:
+          type: 'filesystem'
+        auth_enabled: false
+        schemaConfig:
+          configs:
+          - from: "2024-01-01"
+            store: tsdb
+            index:
+              prefix: loki_index_
+              period: 24h
+            object_store: filesystem
+            schema: v13
+      singleBinary:
+        replicas: 1
+      table_manager:
+        enabled: true
+        retention_deletes_enabled: true
+        retention_period: 372h
+      read:
+        replicas: 0
+      backend:
+        replicas: 0
+      write:
+        replicas: 0
+  chart: loki
+destination:
+  server: 'https://kubernetes.default.svc'
+  namespace: loki
