@@ -19,3 +19,8 @@ source:
 destination:
   server: 'https://kubernetes.default.svc'
   namespace: vault
+ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    jsonPointers:
+      - /webhooks
