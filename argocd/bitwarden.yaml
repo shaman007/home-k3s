@@ -1,10 +1,16 @@
 ---
-project: default
-source:
-  repoURL: 'https://github.com/shaman007/home-k3s.git'
-  path: bitwarden
-  targetRevision: HEAD
-destination:
-  server: 'https://kubernetes.default.svc'
-syncPolicy:
-  automated: {}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bitwarden
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/shaman007/home-k3s.git'
+    path: bitwarden
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+    automated: {}

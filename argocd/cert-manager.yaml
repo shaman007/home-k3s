@@ -1,18 +1,24 @@
 ---
-project: default
-source:
-  repoURL: 'https://charts.jetstack.io'
-  targetRevision: v1.15.1
-  helm:
-    parameters:
-      - name: prometheus.servicemonitor.enabled
-        value: 'true'
-      - name: crds.enabled
-        value: 'true'
-  chart: cert-manager
-destination:
-  server: 'https://kubernetes.default.svc'
-  namespace: cert-manager
-syncPolicy:
-  automated:
-    prune: true
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://charts.jetstack.io'
+    targetRevision: v1.15.1
+    helm:
+      parameters:
+        - name: prometheus.servicemonitor.enabled
+          value: 'true'
+        - name: crds.enabled
+          value: 'true'
+    chart: cert-manager
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true

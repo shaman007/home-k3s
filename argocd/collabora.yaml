@@ -1,20 +1,26 @@
 ---
-project: default
-source:
-  repoURL: 'https://collaboraonline.github.io/online/'
-  targetRevision: 1.1.20
-  helm:
-    parameters:
-      - name: collabora.server_name
-        value: 'office.andreybondarenko.com:443'
-      - name: collabora.extra_params
-        value: '--o:ssl.enable=false --o:ssl.termination=true'
-      - name: autoscaling.enabled
-        value: 'false'
-  chart: collabora-online
-destination:
-  server: 'https://kubernetes.default.svc'
-  namespace: collabora
-syncPolicy:
-  syncOptions:
-    - CreateNamespace=true
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: collabora
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://collaboraonline.github.io/online/'
+    targetRevision: 1.1.20
+    helm:
+      parameters:
+        - name: collabora.server_name
+          value: 'office.andreybondarenko.com:443'
+        - name: collabora.extra_params
+          value: '--o:ssl.enable=false --o:ssl.termination=true'
+        - name: autoscaling.enabled
+          value: 'false'
+    chart: collabora-online
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: collabora
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

@@ -12,7 +12,7 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 ## TODO
 
-* Mastodon
+* Mastodon. It has horrible helm chart. I am waiting for the new one that can use 'helm repo' command.
 
 ## Repos
 
