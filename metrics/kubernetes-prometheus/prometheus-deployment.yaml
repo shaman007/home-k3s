@@ -43,7 +43,7 @@ spec:
               memory: 300M
             limits:
               cpu: 2000m
-              memory: 3000M
+              memory: 5000M
         - name: thanos
           image: quay.io/thanos/thanos:v0.35.1
           args:
