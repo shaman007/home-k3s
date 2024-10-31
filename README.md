@@ -106,12 +106,6 @@ This would copy TLS certificates from the wordpress namespace to the mail namesp
 kubectl get secret letsencrypt-prod --namespace=mail -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
 ```
 
-Longhorn:
-
-```bash
-kubectl apply https://raw.githubusercontent.com/longhorn/longhorn/v1.6.2/deploy/longhorn.yaml 
-```
-
 Docker clenup:
 
 ```bash
