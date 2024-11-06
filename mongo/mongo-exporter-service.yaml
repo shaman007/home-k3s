@@ -5,9 +5,9 @@ metadata:
   name: mongo-exporter
   namespace: db
   labels:
-    app: mongo-exporter
+    app: mongodb
 spec:
   ports:
     - port: 9216
   selector:
-    app: mongo-exporter
+    app: mongodb
