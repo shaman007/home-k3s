@@ -65,6 +65,9 @@ spec:
               mountPath: /etc/prometheus-shared/
             - name: objstoreyml
               mountPath: /etc/thanos/
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
           resources:
             requests:
               cpu: 727m
