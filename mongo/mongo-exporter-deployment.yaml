@@ -7,11 +7,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: mongodb
+      app: mongo-exporter
   template:
     metadata:
       labels:
-        app: mongodb
+        app: mongo-exporter
     spec:
       containers:
         - name: mongo-exporter
