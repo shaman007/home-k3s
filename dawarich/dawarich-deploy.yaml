@@ -46,7 +46,7 @@ spec:
             - name: APPLICATION_HOST
               value: localhost
             - name: APPLICATION_HOSTS
-              value: localhost
+              value: "dawarich.andreybondarenko.com, localhost"
             - name: APPLICATION_PROTOCOL
               value: http
             - name: DISTANCE_UNIT
@@ -59,7 +59,7 @@ spec:
               value: "5"
             - name: RAILS_MAX_THREADS
               value: "10"              
-          image: freikin/dawarich:0.16.3
+          image: freikin/dawarich:0.16.4
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_app
@@ -73,9 +73,12 @@ spec:
           args:
             - "bin/rails server -p 3000 -b 0.0.0.0"
           resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
             limits:
-              memory: "3Gi"
-              cpu: "1500m"
+              memory: "3.5Gi"
+              cpu: "2000m"
           ports:
           - containerPort: 3000
         - name: dawarich-sidekiq
@@ -103,15 +106,15 @@ spec:
             - name: DATABASE_NAME
               value: dawarich_development
             - name: RAILS_MIN_THREADS
-              value: "1"
+              value: "5"
             - name: RAILS_MAX_THREADS
-              value: "1" 
+              value: "10" 
             - name: BACKGROUND_PROCESSING_CONCURRENCY
-              value: "2"
+              value: "10"
             - name: APPLICATION_HOST
               value: localhost
             - name: APPLICATION_HOSTS
-              value: localhost
+              value: "dawarich.andreybondarenko.com, localhost"
             - name: APPLICATION_PROTOCOL
               value: http
             - name: DISTANCE_UNIT
@@ -120,7 +123,7 @@ spec:
               value: photon.komoot.io
             - name: PHOTON_API_USE_HTTPS
               value: "true"
-          image: freikin/dawarich:0.16.3
+          image: freikin/dawarich:0.16.4
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_sidekiq
@@ -134,6 +137,9 @@ spec:
           args:
             - "sidekiq"
           resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
             limits:
               memory: "3Gi"
               cpu: "1500m"
