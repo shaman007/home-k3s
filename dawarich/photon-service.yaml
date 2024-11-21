@@ -9,7 +9,7 @@ metadata:
 spec:
   ports:
     - protocol: TCP
-      port: 2322
+      port: 80
       targetPort: 2322
   selector:
     app: photon

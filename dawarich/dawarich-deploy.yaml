@@ -52,14 +52,14 @@ spec:
             - name: DISTANCE_UNIT
               value: km
             - name: PHOTON_API_HOST
-              value: photon.komoot.io
+              value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
-              value: "true"
+              value: "false"
             - name: RAILS_MIN_THREADS
               value: "5"
             - name: RAILS_MAX_THREADS
               value: "10"              
-          image: freikin/dawarich:0.16.4
+          image: freikin/dawarich:0.16.8
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_app
@@ -106,9 +106,9 @@ spec:
             - name: DATABASE_NAME
               value: dawarich_development
             - name: RAILS_MIN_THREADS
-              value: "5"
+              value: "1"
             - name: RAILS_MAX_THREADS
-              value: "10" 
+              value: "1" 
             - name: BACKGROUND_PROCESSING_CONCURRENCY
               value: "10"
             - name: APPLICATION_HOST
@@ -120,10 +120,10 @@ spec:
             - name: DISTANCE_UNIT
               value: km
             - name: PHOTON_API_HOST
-              value: photon.komoot.io
+              value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
-              value: "true"
-          image: freikin/dawarich:0.16.4
+              value: "false"
+          image: freikin/dawarich:0.16.8
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_sidekiq
@@ -141,7 +141,7 @@ spec:
               memory: "1Gi"
               cpu: "250m"
             limits:
-              memory: "3Gi"
+              memory: "4Gi"
               cpu: "1500m"
       volumes:
         - name: gem-cache
