@@ -6,6 +6,8 @@ metadata:
   labels:
     app: dawarich
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: dawarich
@@ -22,7 +24,7 @@ spec:
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
-              value: redis://:@redis-master.redis.svc.cluster.local:6379/10
+              value: redis://:.redis.svc.cluster.local:6379/10
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -59,7 +61,7 @@ spec:
               value: "5"
             - name: RAILS_MAX_THREADS
               value: "10"              
-          image: freikin/dawarich:0.16.8
+          image: freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_app
@@ -86,7 +88,7 @@ spec:
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
-              value: redis://:@redis-master.redis.svc.cluster.local:6379/10
+              value: redis://:p@redis-master.redis.svc.cluster.local:6379/10
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -123,7 +125,7 @@ spec:
               value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
               value: "false"
-          image: freikin/dawarich:0.16.8
+          image: freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_sidekiq
