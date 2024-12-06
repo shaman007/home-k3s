@@ -15,6 +15,8 @@ spec:
           value: 'true'
         - name: controller.service.externalTrafficPolicy
           value: Local
+        - name: controller.metrics.enabled
+          value: 'true'
     chart: ingress-nginx
   destination:
     server: 'https://kubernetes.default.svc'

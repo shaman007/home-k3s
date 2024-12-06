@@ -196,6 +196,13 @@ data:
         static_configs:
         - targets:
           - rspamd.mail.svc.cluster.local:11334
+      - job_name: ingress-nginx
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - nginx-ingress-ingress-nginx-controller-metrics.ingress-nginx.svc.cluster.local:10254
       - job_name: registry
         scrape_interval: 45s
         scrape_timeout:  30s
