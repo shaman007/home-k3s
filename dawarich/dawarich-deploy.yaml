@@ -60,7 +60,7 @@ spec:
             - name: RAILS_MIN_THREADS
               value: "5"
             - name: RAILS_MAX_THREADS
-              value: "10"              
+              value: "10"
           image: freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
@@ -110,7 +110,7 @@ spec:
             - name: RAILS_MIN_THREADS
               value: "1"
             - name: RAILS_MAX_THREADS
-              value: "1" 
+              value: "1"
             - name: BACKGROUND_PROCESSING_CONCURRENCY
               value: "10"
             - name: APPLICATION_HOST
