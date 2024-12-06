@@ -1,25 +1,31 @@
 ---
-project: default
-source:
-  repoURL: registry-1.docker.io/bitnamicharts
-  targetRevision: '20.3.0'
-  helm:
-    parameters:
-      - name: auth.existingSecret
-        value: redis
-      - name: auth.existingSecretPasswordKey
-        value: redis-password
-      - name: master.resources.requests.cpu
-        value: 400m
-      - name: master.resources.limits.cpu
-        value: 4000m
-      - name: replica.resources.requests.cpu
-        value: 400m
-      - name: replica.resources.limits.cpu
-        value: 4000m
-  chart: redis
-destination:
-  server: 'https://kubernetes.default.svc'
-  namespace: redis
-syncPolicy:
-  automated: {}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: registry-1.docker.io/bitnamicharts
+    targetRevision: '20.3.0'
+    helm:
+      parameters:
+        - name: auth.existingSecret
+          value: redis
+        - name: auth.existingSecretPasswordKey
+          value: redis-password
+        - name: master.resources.requests.cpu
+          value: 400m
+        - name: master.resources.limits.cpu
+          value: 4000m
+        - name: replica.resources.requests.cpu
+          value: 400m
+        - name: replica.resources.limits.cpu
+          value: 4000m
+    chart: redis
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: redis
+  syncPolicy:
+    automated: {}

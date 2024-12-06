@@ -1,39 +1,45 @@
 ---
-project: default
-source:
-  repoURL: registry-1.docker.io/bitnamicharts
-  targetRevision: 15.5.19
-  helm:
-    parameters:
-      - name: auth.database
-        value: ttrss
-      - name: auth.username
-        value: postgres
-      - name: auth.existingSecret
-        value: postgres-password
-      - name: auth.secretKeys.adminPasswordKey
-        value: password
-      - name: metrics.enabled
-        value: 'true'
-      - name: primary.persistence.storageClass
-        value: longhorn
-      - name: primary.persistence.existingClaim
-        value: data-postgres-postgresql-0
-      - name: primary.resources.requests.cpu
-        value: 100m
-      - name: primary.resources.requests.memory
-        value: 150Mi
-      - name: primary.resources.limits.cpu
-        value: '4'
-      - name: primary.resources.limits.memory
-        value: 1500Mi
-      - name: metrics.resources.requests.cpu
-        value: 100m
-      - name: metrics.resources.limits.cpu
-        value: 1000m
-  chart: postgresql
-destination:
-  server: 'https://kubernetes.default.svc'
-  namespace: db
-syncPolicy:
-  automated: {}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: registry-1.docker.io/bitnamicharts
+    targetRevision: 15.5.19
+    helm:
+      parameters:
+        - name: auth.database
+          value: ttrss
+        - name: auth.username
+          value: postgres
+        - name: auth.existingSecret
+          value: postgres-password
+        - name: auth.secretKeys.adminPasswordKey
+          value: password
+        - name: metrics.enabled
+          value: 'true'
+        - name: primary.persistence.storageClass
+          value: longhorn
+        - name: primary.persistence.existingClaim
+          value: data-postgres-postgresql-0
+        - name: primary.resources.requests.cpu
+          value: 100m
+        - name: primary.resources.requests.memory
+          value: 150Mi
+        - name: primary.resources.limits.cpu
+          value: '4'
+        - name: primary.resources.limits.memory
+          value: 1500Mi
+        - name: metrics.resources.requests.cpu
+          value: 100m
+        - name: metrics.resources.limits.cpu
+          value: 1000m
+    chart: postgresql
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: db
+  syncPolicy:
+    automated: {}

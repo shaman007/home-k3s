@@ -1,11 +1,18 @@
 ---
-project: default
-source:
-  repoURL: 'https://github.com/shaman007/home-k3s.git'
-  path: your-spotify
-  targetRevision: HEAD
-destination:
-  server: 'https://kubernetes.default.svc'
-  namespace: spotify
-syncPolicy:
-  automated: {}
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: your-spotify
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/shaman007/home-k3s.git'
+    path: your-spotify
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: spotify
+  syncPolicy:
+    automated: {}
