@@ -7,6 +7,8 @@ metadata:
   labels:
     app: thanos-compactor
 spec:
+  strategy:
+    type: Recreate
   replicas: 1
   selector:
     matchLabels:
@@ -26,7 +28,7 @@ spec:
               mountPath: /data
       containers:
         - name: thanos
-          image: quay.io/thanos/thanos:v0.36.1
+          image: quay.io/thanos/thanos:v0.37.1
           args:
             - "compact"
             - "--log.level=info"

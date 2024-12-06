@@ -7,6 +7,8 @@ metadata:
   labels:
     app: thanos-querier
 spec:
+  strategy:
+    type: Recreate
   replicas: 1
   selector:
     matchLabels:
@@ -18,7 +20,7 @@ spec:
     spec:
       containers:
         - name: thanos
-          image: quay.io/thanos/thanos:v0.36.1
+          image: quay.io/thanos/thanos:v0.37.1
           args:
             - query
             - --log.level=info
