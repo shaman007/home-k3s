@@ -24,7 +24,10 @@ spec:
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
-              value: redis://:.redis.svc.cluster.local:6379/10
+              valueFrom:
+                secretKeyRef:
+                  name: redis-uri
+                  key: redis-uri
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -88,7 +91,10 @@ spec:
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
-              value: redis://:p@redis-master.redis.svc.cluster.local:6379/10
+              valueFrom:
+                secretKeyRef:
+                  name: redis-uri
+                  key: redis-uri
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
