@@ -64,7 +64,7 @@ spec:
               value: "5"
             - name: RAILS_MAX_THREADS
               value: "10"
-          image: freikin/dawarich:0.19.5
+          image: freikin/dawarich:0.19.6
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_app
@@ -131,7 +131,7 @@ spec:
               value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
               value: "false"
-          image: freikin/dawarich:0.19.5
+          image: freikin/dawarich:0.19.6
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /usr/local/bundle/gems_sidekiq
