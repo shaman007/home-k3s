@@ -8,7 +8,7 @@ metadata:
     app: nextcloud
     tier: frontend
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: nextcloud
@@ -39,6 +39,25 @@ spec:
         - name: run
           emptyDir:
             sizeLimit: 1Mi
+      affinity:
+        # Prevent scheduling on a specific node
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - w4.k8s.my.lan
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - photon
+              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: nextcloud-nginx
           image: nginx

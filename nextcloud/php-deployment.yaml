@@ -8,7 +8,7 @@ metadata:
     app: nextcloud
     tier: backend
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: nextcloud
@@ -48,6 +48,25 @@ spec:
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
+      affinity:
+        # Prevent scheduling on a specific node
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - w4.k8s.my.lan
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - photon
+              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: php-nextcloud
           image: registry.andreybondarenko.com/php:latest
