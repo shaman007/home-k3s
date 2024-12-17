@@ -103,7 +103,7 @@ sudo k3s kubectl create -f https://raw.githubusercontent.com/kubernetes/dashboar
 This would copy TLS certificates from the wordpress namespace to the mail namespace, so it would be used by the Postfix and Dovecot:
 
 ```bash
-kubectl get secret letsencrypt-prod --namespace=mail -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
+kubectl get secret letsencrypt-prod --namespace=wordpress -o yaml| sed 's/namespace: .*/namespace: mail/'|kubectl apply -f -
 ```
 
 Docker clenup:
