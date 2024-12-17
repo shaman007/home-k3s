@@ -65,10 +65,10 @@ spec:
             readOnlyRootFilesystem: true
           resources:
             requests:
-              cpu: "10m"
+              cpu: "500m"
               memory: "100Mi"
             limits:
-              cpu: "2000m"
+              cpu: "4000m"
               memory: "1500Mi"
       volumes:
         - name: avdata
