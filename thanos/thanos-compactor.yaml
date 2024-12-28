@@ -37,6 +37,7 @@ spec:
             - --retention.resolution-raw=14d
             - --retention.resolution-5m=30d
             - --retention.resolution-1h=10950d
+            - --delete-delay=24h
             - "--wait"
           ports:
             - name: http
