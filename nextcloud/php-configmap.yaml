@@ -170,4 +170,4 @@ data:
     [ffi]
     opcache.fast_shutdown = 1
     memory_limit = -1
-    upload_max_filesize = 2048M
+    upload_max_filesize = 8048M

@@ -23,7 +23,7 @@ data:
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log cloud;
       root /nextcloud;
-      client_max_body_size 2000M;
+      client_max_body_size 10000M;
       client_body_buffer_size 512k;
       add_header Referrer-Policy                    "no-referrer"   always;
       add_header X-Content-Type-Options             "nosniff"       always;
