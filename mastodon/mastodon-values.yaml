@@ -344,7 +344,7 @@ redis:
   # password: ""
   # you can also specify the name of an existing Secret
   # with a key of redis-password set to the password you want
-  existingSecret: "redis-password"
+    existingSecret: "redis-password"
 
 # @ignored
 service:
