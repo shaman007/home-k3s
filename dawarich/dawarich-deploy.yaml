@@ -67,14 +67,12 @@ spec:
           image: freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
-            - mountPath: /usr/local/bundle/gems_app
-              name: gem-cache
             - mountPath: /var/app/public
               name: public
             - mountPath: /var/app/tmp/imports/watched
               name: watched
           command:
-            - "dev-entrypoint.sh"
+            - "web-entrypoint.sh"
           args:
             - "bin/rails server -p 3000 -b 0.0.0.0"
           resources:
@@ -134,16 +132,14 @@ spec:
           image: freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
-            - mountPath: /usr/local/bundle/gems_sidekiq
-              name: gem-sidekiq
             - mountPath: /var/app/public
               name: public
             - mountPath: /var/app/tmp/imports/watched
               name: watched
           command:
-            - "dev-entrypoint.sh"
+            - "sidekiq-entrypoint.sh"
           args:
-            - "sidekiq"
+            - "bundle exec sidekiq"
           resources:
             requests:
               memory: "1Gi"
@@ -152,12 +148,6 @@ spec:
               memory: "4Gi"
               cpu: "1500m"
       volumes:
-        - name: gem-cache
-          persistentVolumeClaim:
-            claimName: gem-cache
-        - name: gem-sidekiq
-          persistentVolumeClaim:
-            claimName: gem-sidekiq
         - name: public
           persistentVolumeClaim:
             claimName: public
