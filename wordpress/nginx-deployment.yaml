@@ -65,7 +65,7 @@ spec:
               memory: "300Mi"
           livenessProbe:
             httpGet:
-              path: /
+              path: /wp-json/wp-site-health/v1
               port: 80
             initialDelaySeconds: 30
             periodSeconds: 10
