@@ -224,6 +224,13 @@ data:
         static_configs:
         - targets:
           - mongo-exporter.db.svc.cluster.local:9216
+      - job_name: trivy
+        scrape_interval: 60s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - trivy-operator.trivy-system.svc.cluster.local:8080
       - job_name: unifi
         scrape_interval: 45s
         scrape_timeout:  30s
