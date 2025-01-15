@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trivy-system
+  namespace: trivy-system
+data:
+  OPERATOR_PRIVATE_REGISTRY_SCAN_SECRETS_NAMES: |
+    {"nextcloud":"my-private-registry", "mail":"my-private-registry", "wordpress":"my-private-registry", "clamav":"my-private-registry", "minecraft":"my-private-registry", "unify":"my-private-registry", "db":"my-private-registry", "redis":"my-private-registry", "minio":"my-private-registry", "dawarich":"my-private-registry"}

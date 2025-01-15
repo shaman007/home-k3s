@@ -5,6 +5,8 @@ metadata:
   name: plex
   namespace: plex
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: plex
@@ -15,7 +17,7 @@ spec:
     spec:
       containers:
         - name: plex
-          image: greensheep/plex-server-docker-rpi:latest
+          image: linuxserver/plex:latest
           env:
             # valid for 4 minutes
             - name: PLEX_CLAIM
