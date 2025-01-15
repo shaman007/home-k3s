@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: thanos
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/aquasecurity/trivy-operator
+    path: deploy/helm
+    helm:
+      parameters:
+        - name: serviceMonitor.enabled
+          value: 'true'
+        - name: trivy.ignoreUnfixed
+          value: 'true'
+        - name: trivy.resources.limits.cpu
+          value: 1500m
+        - name: trivy.server.resources.limits.cpu
+          value: '2'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trivy-system
