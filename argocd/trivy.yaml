@@ -11,14 +11,26 @@ spec:
     path: deploy/helm
     helm:
       parameters:
-        - name: serviceMonitor.enabled
-          value: 'true'
-        - name: trivy.ignoreUnfixed
-          value: 'true'
-        - name: trivy.resources.limits.cpu
-          value: 1500m
-        - name: trivy.server.resources.limits.cpu
-          value: '2'
+      - name: serviceMonitor.enabled
+        value: 'true'
+      - name: trivy.ignoreUnfixed
+        value: 'true'
+      - name: trivy.resources.limits.cpu
+        value: 5500m
+      - name: trivy.server.resources.limits.cpu
+        value: '3'
+      - name: operator.scanJobTimeout
+        value: 125m
+      - name: trivy.timeout
+        value: 125m
+      - name: operator.valuesFromConfigMap
+        value: trivy-system
+      - name: trivy.resources.limits.memory
+        value: 2500M
+      - name: operator.scanJobsConcurrentLimit
+        value: '5'
+      - name: trivy.server.resources.limits.memory
+        value: 3Gi
   destination:
     server: https://kubernetes.default.svc
     namespace: trivy-system
