@@ -31,6 +31,8 @@ spec:
         value: '5'
       - name: trivy.server.resources.limits.memory
         value: 3Gi
+      - name: operator.scannerReportTTL
+        value: 128h
   destination:
     server: https://kubernetes.default.svc
     namespace: trivy-system
