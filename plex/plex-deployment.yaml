@@ -35,7 +35,7 @@ spec:
           volumeMounts:
             - name: plex-lib-lh
               mountPath: /data
-            - name: plex-conf-lh
+            - name: plex-conf-lh2
               mountPath: /config
           ports:
             - containerPort: 32400
@@ -54,9 +54,9 @@ spec:
               protocol: UDP
             - containerPort: 32469
       volumes:
-        - name: plex-conf-lh
+        - name: plex-conf-lh2
           persistentVolumeClaim:
-            claimName: plex-conf-lh
+            claimName: plex-conf-lh2
         - name: plex-lib-lh
           persistentVolumeClaim:
             claimName: plex-lib-lh
