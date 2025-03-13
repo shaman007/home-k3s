@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: 'https://charts.jetstack.io'
-    targetRevision: v1.15.1
+    targetRevision: v1.17.1
     helm:
       parameters:
         - name: prometheus.servicemonitor.enabled
