@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: registry-1.docker.io/bitnamicharts
-    targetRevision: 21.3.17
+    targetRevision: 21.4.8
     helm:
       parameters:
         - name: coordinating.resources.requests.cpu
