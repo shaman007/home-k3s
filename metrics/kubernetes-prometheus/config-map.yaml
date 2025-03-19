@@ -130,6 +130,13 @@ data:
           severity: mail
         annotations:
           summary: One or more targets are unreachable.
+      - alert: PVC is full!
+        expr: longhorn_volume_actual_size_bytes/longhorn_volume_capacity_bytes > 0.85
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: One or more PVC is >85% utilized.
   prometheus.yaml: |-
     global:
       scrape_interval: 5s
