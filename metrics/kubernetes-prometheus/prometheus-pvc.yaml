@@ -13,4 +13,4 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: '161061273600'
+      storage: '182536110080'
