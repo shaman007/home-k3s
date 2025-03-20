@@ -101,3 +101,8 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: registry
+  ignoreDifferences:
+    - name: registry-docker-registry-secret
+      kind: Secret
+      data:
+        - haSharedSecret
