@@ -44,7 +44,7 @@ spec:
             - name: CONDUIT_DATABASE_BACKEND
               value: rocksdb
             - name: CONDUIT_ALLOW_REGISTRATION
-              value: "false"
+              value: "true"
             - name: CONDUIT_ALLOW_FEDERATION
               value: "true"
             - name: CONDUUT_ALLOW_CHECK_FOR_UPDATES
@@ -72,4 +72,4 @@ spec:
               memory: "200Mi"
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false
