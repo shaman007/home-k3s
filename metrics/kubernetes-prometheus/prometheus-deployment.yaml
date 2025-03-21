@@ -39,6 +39,9 @@ spec:
               mountPath: /prometheus/
             - name: prometheus-config-shared
               mountPath: /etc/prometheus-shared/
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
           resources:
             requests:
               cpu: 727m
@@ -47,7 +50,7 @@ spec:
               cpu: 2000m
               memory: 5000M
         - name: thanos
-          image: quay.io/thanos/thanos:v0.37.1
+          image: quay.io/thanos/thanos:v0.37.2
           args:
             - "sidecar"
             - "--tsdb.path=/prometheus"
@@ -77,6 +80,13 @@ spec:
             limits:
               cpu: 4000m
               memory: 3000M
+      initContainers:
+        - name: fix-perms
+          image: busybox
+          command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
+          volumeMounts:
+            - name: prometheus-storage-volume
+              mountPath: /prometheus
       volumes:
         - name: prometheus-config-volume
           configMap:
