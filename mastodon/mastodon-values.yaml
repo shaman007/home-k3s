@@ -302,6 +302,7 @@ elasticsearch:
   # and whether the cluster uses TLS.
   hostname: elastic-elasticsearch.elastic.svc.cluster.local
   port: 9200
+  preset: small_node_cluster
   tls: false
 
   # This is optional, use it if you ES cluster requires authentication
