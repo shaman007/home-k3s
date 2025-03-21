@@ -55,8 +55,6 @@ spec:
               value: "[\"matrix.org\"]"
             - name: CONDUIT_MAX_CONCURRENT_REQUESTS
               value: "200"
-            - name: CONDUIT_LOG
-              value: "warn,rocket=off,_=off,sled=off"
             - name: CONDUIT_CONFIG
               value: "/etc/conduit.toml"
             - name: CONDUIT_PORT
