@@ -16,10 +16,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - matrix.andreybondarenko.com
+        - shaman007.com
       secretName: letsencrypt-matrix-prod
   rules:
-    - host: matrix.andreybondarenko.com
+    - host: shaman007.com
       http:
         paths:
           - path: /.well-known/matrix/

@@ -9,16 +9,29 @@ metadata:
 data:
   config: |
     server {
-    server_name matrix.andreybondarenko.com;
+        server_name shaman007.com;
 
-    location /.well-known/matrix/server {
-        default_type application/json;
-        return 200 '{"m.server": "matrix.andreybondarenko.com:6167"}';
-    }
-
-    location /.well-known/matrix/client {
-        default_type application/json;
-        return 200 '{"m.homeserver":{"base_url": "https://matrix.andreybondarenko.com"}}';
-    }
-
+        # Well-known paths
+        location /.well-known/matrix/server {
+            default_type application/json;
+            return 200 '{"m.server": "shaman007.com:443"}';
+        }
+        location /.well-known/matrix/client {
+            default_type application/json;
+            return 200 '{"m.homeserver":{"base_url":"https://shaman007.com"}}';
+        }
+        location ~ ^(/_matrix|/_synapse)/ {
+            proxy_pass http://matrix.matrix.svc.cluster.local:6167;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "";
+            # critical for /sync!
+            proxy_buffering off;
+            proxy_cache off;
+            chunked_transfer_encoding on;
+        }
     }
