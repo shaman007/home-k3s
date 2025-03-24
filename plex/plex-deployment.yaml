@@ -15,6 +15,16 @@ spec:
       labels:
         app: plex
     spec:
+      affinity:
+        # Prevent scheduling on a specific node
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - w4.k8s.my.lan
       containers:
         - name: plex
           image: linuxserver/plex:latest
