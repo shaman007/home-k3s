@@ -67,12 +67,7 @@ spec:
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
-            - mountPath: /var/log/bitwarden
-              name: logs-lh
       volumes:
         - name: bitwarden-lh
           persistentVolumeClaim:
             claimName: data-lh
-        - name: logs-lh
-          persistentVolumeClaim:
-            claimName: logs-lh
