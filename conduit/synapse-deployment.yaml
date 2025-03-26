@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: matrix
+  name: matrix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matrix
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: matrix
+        tier: backend
+    spec:
+      volumes:
+        - name: matrix-lh
+          persistentVolumeClaim:
+            claimName: matrix-lh
+        - name: synapse-config
+          configMap:
+            name: config-synapse
+      containers:
+        - name: synapse
+          image: docker.io/matrixdotorg/synapse:latest
+          ports:
+            - containerPort: 6167
+          volumeMounts:
+            - name: matrix-lh
+              mountPath: /data
+            - name: synapse-config
+              mountPath: /data/config.yaml
+              subPath: config.yaml
+          env:
+            - name: SYNAPSE_CONFIG_PATH
+              value: /data/config.yaml
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "200Mi"
+            limits:
+              cpu: "6000m"
+              memory: "2Gi"
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chown -R 991:991 /data"]
+          volumeMounts:
+            - name: matrix-lh
+              mountPath: /data
