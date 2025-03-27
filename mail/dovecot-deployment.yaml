@@ -148,7 +148,7 @@ spec:
               memory: "296Mi"
             limits:
               cpu: "2000m"
-              memory: "521Mi"
+              memory: "296Mi"
       nodeSelector:
         kubernetes.io/hostname: m.k8s.my.lan
       imagePullSecrets:

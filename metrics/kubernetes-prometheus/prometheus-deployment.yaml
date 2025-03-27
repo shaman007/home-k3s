@@ -76,10 +76,10 @@ spec:
           resources:
             requests:
               cpu: 727m
-              memory: 300M
+              memory: 3000M
             limits:
               cpu: 4000m
-              memory: 3000M
+              memory: 3500M
       initContainers:
         - name: fix-perms
           image: busybox

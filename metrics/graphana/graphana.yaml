@@ -48,10 +48,10 @@ spec:
           resources:
             requests:
               cpu: 150m
-              memory: 210Mi
+              memory: 200Mi
             limits:
               cpu: "4000m"
-              memory: 400Mi
+              memory: 200Mi
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv

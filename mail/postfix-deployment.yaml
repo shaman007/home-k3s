@@ -82,7 +82,7 @@ spec:
               memory: "128Mi"
             limits:
               cpu: "2000m"
-              memory: "256Mi"
+              memory: "128Mi"
       imagePullSecrets:
         - name: my-private-registry
       nodeSelector:

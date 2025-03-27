@@ -77,10 +77,10 @@ spec:
             - "bin/rails server -p 3000 -b 0.0.0.0"
           resources:
             requests:
-              memory: "3.5Gi"
+              memory: "1.5Gi"
               cpu: "250m"
             limits:
-              memory: "4Gi"
+              memory: "2Gi"
               cpu: "2000m"
           ports:
           - containerPort: 3000
