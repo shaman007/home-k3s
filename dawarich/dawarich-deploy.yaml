@@ -74,6 +74,8 @@ spec:
               name: public
             - mountPath: /var/app/tmp/imports/watched
               name: watched
+            - mountPath: /var/app/storage
+              name: storage
           command:
             - "web-entrypoint.sh"
           args:
@@ -139,6 +141,8 @@ spec:
               name: public
             - mountPath: /var/app/tmp/imports/watched
               name: watched
+            - mountPath: /var/app/storage
+              name: storage
           command:
             - "sidekiq-entrypoint.sh"
           args:
@@ -173,3 +177,6 @@ spec:
         - name: watched
           persistentVolumeClaim:
             claimName: watched
+        - name: storage
+          persistentVolumeClaim:
+            claimName: storage
