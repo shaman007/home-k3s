@@ -22,6 +22,8 @@ spec:
         - env:
             - name: BW_DOMAIN
               value: "bitwarden.andreybondarenko.com"
+            - name: DOTNET_DataProtection__PersistKeysToFileSystem
+              value: "/etc/bitwarden/data-protection"
             - name: BW_INSTALLATION_ID
               valueFrom:
                 secretKeyRef:
@@ -67,7 +69,37 @@ spec:
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
+            - mountPath: /app/Notifications/.aspnet
+              name: keys-lh
+            - name: logs
+              mountPath: /var/log/bitwarden
+        - name: promtail
+          image: grafana/promtail:latest
+          args:
+            - -config.file=/etc/promtail/promtail.yaml
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              cpu: "1000m"
+              memory: "200Mi"
+          volumeMounts:
+            - name: promtail-config
+              mountPath: /etc/promtail
+            - mountPath: /etc/bitwarden
+              name: bitwarden-lh
+            - name: logs
+              mountPath: /var/log/bitwarden
       volumes:
         - name: bitwarden-lh
           persistentVolumeClaim:
             claimName: data-lh
+        - name: keys-lh
+          persistentVolumeClaim:
+            claimName: keys-lh
+        - name: promtail-config
+          configMap:
+            name: promtail-config
+        - name: logs
+          emptyDir: {}

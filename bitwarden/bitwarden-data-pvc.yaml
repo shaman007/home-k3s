@@ -13,3 +13,18 @@ spec:
   resources:
     requests:
       storage: 300Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: bitwarden
+  name: keys-lh
+  labels:
+    storage.k8s.io/name: longhorn
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 300Mi
