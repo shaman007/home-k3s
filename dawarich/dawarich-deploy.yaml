@@ -67,6 +67,8 @@ spec:
               value: "5"
             - name: RAILS_MAX_THREADS
               value: "10"
+            - name: SELF_HOSTED
+              value: "true"
           image: freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
@@ -93,6 +95,8 @@ spec:
           env:
             - name: RAILS_ENV
               value: development
+            - name: SELF_HOSTED
+              value: "true"
             - name: REDIS_URL
               valueFrom:
                 secretKeyRef:
