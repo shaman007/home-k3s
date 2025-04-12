@@ -50,7 +50,7 @@ spec:
             sizeLimit: 1000Mi
       containers:
         - name: php
-          image: registry.andreybondarenko.com/php:latest
+          image: harbor.andreybondarenko.com/library/php:latest
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

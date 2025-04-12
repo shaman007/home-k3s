@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: minio
-          image: registry.andreybondarenko.com/minio-single
+          image: harbor.andreybondarenko.com/library/minio-single
           env:
             - name: MINIO_DRIVE
               value: "/data"

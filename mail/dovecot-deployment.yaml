@@ -94,14 +94,14 @@ spec:
             sizeLimit: 500Mi
       containers:
         - name: dovecot-mail
-          image: registry.andreybondarenko.com/dovecot:latest
+          image: harbor.andreybondarenko.com/library/dovecot:latest
           ports:
             - containerPort: 24
             - containerPort: 1234
             - containerPort: 993
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            readOnlyRootFilesystem: false
           volumeMounts:
             - name: mail-lh
               mountPath: /var/mail

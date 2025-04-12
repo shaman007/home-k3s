@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: rsyslog
-          image: registry.andreybondarenko.com/rsyslog:latest
+          image: harbor.andreybondarenko.com/library/rsyslog:latest
           ports:
             - containerPort: 514
           volumeMounts:

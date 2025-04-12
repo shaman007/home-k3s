@@ -33,7 +33,7 @@ spec:
             claimName: ftp
       containers:
         - name: vsftpd
-          image: registry.andreybondarenko.com/docker-vsftpd:latest
+          image: harbor.andreybondarenko.com/library/docker-vsftpd:latest
           env:
             - name: PASV_ADDRESS
               value: 192.168.1.111

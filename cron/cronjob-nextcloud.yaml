@@ -13,7 +13,7 @@ spec:
         spec:
           containers:
             - name: previewsa
-              image: registry.andreybondarenko.com/php:latest
+              image: harbor.andreybondarenko.com/library/php:latest
               command:
                 - /bin/sh
                 - -c

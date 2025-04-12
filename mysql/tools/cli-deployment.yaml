@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: mysql-cli
-          image: registry.andreybondarenko.com/mysql-cli:latest
+          image: harbor.andreybondarenko.com/library/mysql-cli:latest
           resources:
             limits:
               memory: "128Mi"

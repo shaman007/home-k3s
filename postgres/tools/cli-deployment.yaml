@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: postgres-cli
-          image: registry.andreybondarenko.com/postgres-cli:latest
+          image: harbor.andreybondarenko.com/library/postgres-cli:latest
           resources:
             limits:
               memory: "128Mi"

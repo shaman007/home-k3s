@@ -22,7 +22,7 @@ spec:
         fsGroup: 103
       containers:
         - name: clamd
-          image: registry.andreybondarenko.com/clamav:latest
+          image: harbor.andreybondarenko.com/library/clamav:latest
           ports:
             - containerPort: 3200
               name: api
@@ -48,7 +48,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
         - name: fresclam
-          image: registry.andreybondarenko.com/clamav:latest
+          image: harbor.andreybondarenko.com/library/clamav:latest
           env:
             - name: UPDATE
               value: "true"

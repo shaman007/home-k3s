@@ -13,7 +13,7 @@ spec:
         spec:
           containers:
             - name: backup
-              image: registry.andreybondarenko.com/postgres-cli:latest
+              image: harbor.andreybondarenko.com/library/postgres-cli:latest
               imagePullPolicy: Always
               command:
                 - "/bin/sh"

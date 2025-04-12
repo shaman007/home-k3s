@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: redis-cli
-          image: registry.andreybondarenko.com/redis-cli:latest
+          image: harbor.andreybondarenko.com/library/redis-cli:latest
           volumeMounts:
             - name: data
               mountPath: /data

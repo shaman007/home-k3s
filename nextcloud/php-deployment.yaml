@@ -69,7 +69,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
         - name: php-nextcloud
-          image: registry.andreybondarenko.com/php:latest
+          image: harbor.andreybondarenko.com/library/php:latest
           imagePullPolicy: Always
           volumeMounts:
             - name: phpini

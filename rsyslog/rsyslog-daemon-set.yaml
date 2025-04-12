@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: rsyslog-ds
-          image: registry.andreybondarenko.com/rsyslog:latest
+          image: harbor.andreybondarenko.com/library/rsyslog:latest
           imagePullPolicy: Always
           volumeMounts:
             - name: host-container-logs-k8s

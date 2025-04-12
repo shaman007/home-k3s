@@ -23,11 +23,11 @@ data:
       mode = 0666
       }
     }
-    log_path = /var/lib/dovecot/mail.log
+    log_path = /var/log/maillog
     # If not set, use the value from log_path
-    info_log_path = /var/lib/dovecot/mail.log
+    info_log_path = /var/log/maillog
     # If not set, use the value from info_log_path
-    debug_log_path = /var/lib/dovecot/mail.log
+    debug_log_path = /var/log/maillog
     !include conf.d/*.conf
     !include_try local.conf
   10-auth: |

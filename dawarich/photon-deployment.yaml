@@ -38,7 +38,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
         - name: photon
-          image: registry.andreybondarenko.com/photon:latest
+          image: harbor.andreybondarenko.com/library/photon:latest
           ports:
             - containerPort: 2322
           volumeMounts:

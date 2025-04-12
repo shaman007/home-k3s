@@ -52,7 +52,7 @@ spec:
             sizeLimit: 500Mi
       containers:
         - name: postfix-mail
-          image: registry.andreybondarenko.com/postfix:latest
+          image: harbor.andreybondarenko.com/library/postfix:latest
           ports:
             - containerPort: 587
           volumeMounts:

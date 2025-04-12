@@ -1,0 +1,48 @@
+core:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+database:
+  internal:
+    nodeSelector:
+      kubernetes.io/hostname: w386.k8s.my.lan
+exporter:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+jobservice:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+nginx:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+portal:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+redis:
+  internal:
+    nodeSelector:
+      kubernetes.io/hostname: w386.k8s.my.lan
+registry:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+trivy:
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+notary:
+  enabled: false  # disable notary
+  nodeSelector:
+    kubernetes.io/hostname: w386.k8s.my.lan
+
+externalURL: https://harbor.andreybondarenko.com
+harborAdminPassword: Harbor12345
+
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: auto
+  ingress:
+    hosts:
+      core: harbor.andreybondarenko.com
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      cert-manager.io/cluster-issuer: letsencrypt-prod

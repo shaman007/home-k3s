@@ -19,7 +19,7 @@ spec:
                       name: password
                       key: password
               name: backup-minecraft
-              image: registry.andreybondarenko.com/minecraft-cli:latest
+              image: harbor.andreybondarenko.com/library/minecraft-cli:latest
               command:
                 - "/bin/sh"
                 - "-c"

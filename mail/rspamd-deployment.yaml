@@ -88,7 +88,7 @@ spec:
             claimName: rspamd-local
       containers:
         - name: rspamd
-          image: registry.andreybondarenko.com/rspamd:latest
+          image: harbor.andreybondarenko.com/library/rspamd:latest
           resources:
             requests:
               cpu: "10m"
