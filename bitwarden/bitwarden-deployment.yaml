@@ -103,3 +103,5 @@ spec:
             name: promtail-config
         - name: logs
           emptyDir: {}
+      imagePullSecrets:
+        - name: my-private-registry
