@@ -37,6 +37,10 @@ spec:
           value: 100m
         - name: metrics.resources.limits.cpu
           value: 1000m
+        - name: image.repository
+          value: harbor.andreybondarenko.com/dockerhub
+        - name: image.pullSecrets[0].name
+          value: my-private-registry
     chart: postgresql
   destination:
     server: 'https://kubernetes.default.svc'
