@@ -27,7 +27,7 @@ spec:
                       - w4.k8s.my.lan
       containers:
         - name: plex
-          image: linuxserver/plex:latest
+          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:latest
           env:
             # valid for 4 minutes
             - name: PLEX_CLAIM
@@ -70,3 +70,5 @@ spec:
         - name: plex-lib-lh
           persistentVolumeClaim:
             claimName: plex-lib-lh
+      imagePullSecrets:
+        - name: my-private-registry
