@@ -25,7 +25,7 @@ spec:
             name: config-synapse
       containers:
         - name: synapse
-          image: docker.io/matrixdotorg/synapse:latest
+          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:latest
           ports:
             - containerPort: 6167
           volumeMounts:
@@ -51,3 +51,5 @@ spec:
           volumeMounts:
             - name: matrix-lh
               mountPath: /data
+      imagePullSecrets:
+        - name: my-private-registry

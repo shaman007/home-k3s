@@ -33,7 +33,7 @@ spec:
             sizeLimit: 1Mi
       containers:
         - name: matrix-nginx
-          image: nginx
+          image: harbor.andreybondarenko.com/dockerhub/nginx:latest
           ports:
             - containerPort: 80
           volumeMounts:
@@ -53,3 +53,5 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+      imagePullSecrets:
+        - name: my-private-registry
