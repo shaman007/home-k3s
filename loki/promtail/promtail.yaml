@@ -16,7 +16,7 @@ spec:
       serviceAccount: promtail-serviceaccount
       containers:
         - name: promtail-container
-          image: grafana/promtail
+          image: harbor.andreybondarenko.com/dockerhub/grafana/promtail
           args:
             - -config.file=/etc/promtail/promtail.yaml
           env:
@@ -42,3 +42,5 @@ spec:
         - name: promtail-config
           configMap:
             name: promtail-config
+      imagePullSecrets:
+        - name: my-private-registry
