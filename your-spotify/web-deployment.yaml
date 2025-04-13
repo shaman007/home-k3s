@@ -23,7 +23,7 @@ spec:
         - env:
             - name: API_ENDPOINT
               value: https://spt-server.andreybondarenko.com
-          image: yooooomi/your_spotify_client
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_client
           name: web
           resources:
             requests:
@@ -35,3 +35,5 @@ spec:
           ports:
             - containerPort: 3000
               protocol: TCP
+      imagePullSecrets:
+        - name: my-private-registry

@@ -40,7 +40,7 @@ spec:
             - name: CORS
               value: "https://spt.andreybondarenko.com, \
                 https://spt-server.andreybondarenko.com"
-          image: yooooomi/your_spotify_server
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server
           resources:
             requests:
               cpu: "10m"
@@ -53,3 +53,5 @@ spec:
             - containerPort: 8080
               hostPort: 8080
               protocol: TCP
+      imagePullSecrets:
+        - name: my-private-registry
