@@ -28,7 +28,7 @@ spec:
               mountPath: /data
       containers:
         - name: thanos
-          image: quay.io/thanos/thanos:v0.37.1
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.37.1
           args:
             - "store"
             - "--log.level=info"
@@ -68,3 +68,5 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: storagegw-lh
+      imagePullSecrets:
+        - name: my-private-registry
