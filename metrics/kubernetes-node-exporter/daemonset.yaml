@@ -27,7 +27,7 @@ spec:
             - --collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/pods/.+)($|/)
             - --collector.netclass.ignored-devices=^(veth.*)$
           name: node-exporter
-          image: prom/node-exporter
+          image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter
           ports:
             - containerPort: 9100
               protocol: TCP
@@ -54,3 +54,5 @@ spec:
         - hostPath:
             path: /
           name: root
+      imagePullSecrets:
+        - name: my-private-registry
