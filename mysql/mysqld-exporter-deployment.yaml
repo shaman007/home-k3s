@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: mysqld-exporter
-          image: quay.io/prometheus/mysqld-exporter:main
+          image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:main
           env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
@@ -45,3 +45,5 @@ spec:
             items:
               - key: .my.cnf
                 path: .my.cnf
+      imagePullSecrets:
+        - name: my-private-registry
