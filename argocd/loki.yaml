@@ -7,27 +7,45 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://grafana.github.io/helm-charts'
+    repoURL: https://grafana.github.io/helm-charts
     targetRevision: 6.28.0
     helm:
+      parameters:
+        - name: memcachedExporter.image.repository
+          value: harbor.andreybondarenko.com/dockerhub/prom/memcached-exporter
+        - name: memcached.image.repository
+          value: ' harbor.andreybondarenko.com/dockerhub/memcached'
       values: |
         deploymentMode: SingleBinary
+        chunksCache:
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+        gateway:
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+        lokiCanary:
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
         loki:
           mode: SingleBinary
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+          auth_enabled: false
           commonConfig:
             replication_factor: 1
           storage:
-            type: 'filesystem'
-          auth_enabled: false
+            type: filesystem
           schemaConfig:
             configs:
-            - from: "2024-01-01"
-              store: tsdb
-              index:
-                prefix: loki_index_
-                period: 24h
-              object_store: filesystem
-              schema: v13
+              - from: "2024-01-01"
+                store: tsdb
+                index:
+                  prefix: loki_index_
+                  period: 24h
+                object_store: filesystem
+                schema: v13
+        imagePullSecrets:
+          - name: my-private-registry
         singleBinary:
           replicas: 1
         table_manager:
@@ -36,11 +54,11 @@ spec:
           retention_period: 372h
         read:
           replicas: 0
-        backend:
-          replicas: 0
         write:
+          replicas: 0
+        backend:
           replicas: 0
     chart: loki
   destination:
-    server: 'https://kubernetes.default.svc'
+    server: https://kubernetes.default.svc
     namespace: loki
