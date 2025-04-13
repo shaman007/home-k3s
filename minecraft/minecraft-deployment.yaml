@@ -31,7 +31,7 @@ spec:
             sizeLimit: 100Mi
       containers:
         - name: mnecraft
-          image: itzg/minecraft-server:latest
+          image: harbor.andreybondarenko.com/dockerhub/itzg/minecraft-server:latest
           env:
             - name: EULA
               value: "TRUE"
@@ -66,3 +66,5 @@ spec:
             limits:
               cpu: "4000m"
               memory: "1512Mi"
+      imagePullSecrets:
+        - name: my-private-registry
