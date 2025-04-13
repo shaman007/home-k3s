@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: redis-exporter
-          image: oliver006/redis_exporter
+          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter
           env:
             - name: REDIS_PASSWORD
               valueFrom:
@@ -30,3 +30,5 @@ spec:
               cpu: "1200m"
           ports:
             - containerPort: 9121
+      imagePullSecrets:
+        - name: my-private-registry
