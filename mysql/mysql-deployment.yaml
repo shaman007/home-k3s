@@ -19,7 +19,7 @@ spec:
         tier: mysql
     spec:
       containers:
-        - image: mysql:8.0
+        - image: harbor.andreybondarenko.com/dockerhub/mysql:latest
           name: mysql
           env:
             - name: MYSQL_ROOT_PASSWORD
@@ -47,3 +47,5 @@ spec:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
             claimName: mysql-lh
+      imagePullSecrets:
+        - name: my-private-registry
