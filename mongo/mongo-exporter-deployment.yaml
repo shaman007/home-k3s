@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
         - name: mongo-exporter
-          image: percona/mongodb_exporter:0.42
+          image:  harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:latest
+          imagePullPolicy: Always
           args:
             - --mongodb.uri=mongodb://mongodb.db.svc.cluster.local:27017
             - --collector.profile
@@ -26,3 +27,5 @@ spec:
               cpu: "2000m"
           ports:
             - containerPort: 9216
+      imagePullSecrets:
+        - name: my-private-registry
