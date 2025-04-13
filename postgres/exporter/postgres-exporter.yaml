@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: postgres-exporter
-          image: quay.io/prometheuscommunity/postgres-exporter:latest
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
           resources:
             limits:
               memory: "128Mi"
@@ -29,3 +29,5 @@ spec:
           ports:
             - containerPort: 9187
               name: pmetrics
+      imagePullSecrets:
+        - name: my-private-registry
