@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: prometheus
-          image: prom/prometheus:latest
+          image:  harbor.andreybondarenko.com/dockerhub/prom/prometheus:latest
           args:
             - "--config.file=/etc/prometheus/prometheus.yaml"
             - "--storage.tsdb.path=/prometheus/"
@@ -50,7 +50,7 @@ spec:
               cpu: 2000m
               memory: 5000M
         - name: thanos
-          image: quay.io/thanos/thanos:v0.37.2
+          image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.37.2
           args:
             - "sidecar"
             - "--tsdb.path=/prometheus"
@@ -82,7 +82,7 @@ spec:
               memory: 3500M
       initContainers:
         - name: fix-perms
-          image: busybox
+          image:  harbor.andreybondarenko.com/dockerhub/busybox
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:
             - name: prometheus-storage-volume
@@ -101,3 +101,5 @@ spec:
         - name: objstoreyml
           secret:
             secretName: thanos-objstore-secret
+      imagePullSecrets:
+        - name: my-private-registry

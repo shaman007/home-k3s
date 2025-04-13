@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: alertmanager
-          image: prom/alertmanager:latest
+          image:  harbor.andreybondarenko.com/dockerhub/prom/alertmanager:latest
           args:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"
@@ -48,3 +48,5 @@ spec:
             name: alertmanager-templates
         - name: alertmanager
           emptyDir: {}
+      imagePullSecrets:
+        - name: my-private-registry
