@@ -19,7 +19,7 @@ spec:
         tier: mysql
     spec:
       containers:
-        - image: harbor.andreybondarenko.com/dockerhub/mysql:latest
+        - image: harbor.andreybondarenko.com/dockerhub/mysql:8.0.41
           name: mysql
           env:
             - name: MYSQL_ROOT_PASSWORD
