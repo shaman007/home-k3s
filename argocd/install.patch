@@ -1,0 +1,61 @@
+24596c24596
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+24625a24626,24627
+>       imagePullSecrets:
+>       - name: my-private-registry
+24704c24706
+<         image: ghcr.io/dexidp/dex:v2.41.1
+---
+>         image: harbor.andreybondarenko.com/github/dexidp/dex:v2.41.1
+24733c24735
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+24749a24752,24753
+>       imagePullSecrets:
+>       - name: my-private-registry
+24823c24827
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+24840a24845,24846
+>       imagePullSecrets:
+>       - name: my-private-registry
+24909c24915
+<         image: redis:7.0.15-alpine
+---
+>         image: harbor.andreybondarenko.com/dockerhub/redis:7.0.15-alpine
+24925c24931
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+24936a24943,24944
+>       imagePullSecrets:
+>       - name: my-private-registry
+25186c25194
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+25238c25246
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+25251a25260,25261
+>       imagePullSecrets:
+>       - name: my-private-registry
+25598c25608
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+25640a25651,25652
+>       imagePullSecrets:
+>       - name: my-private-registry
+25952c25964
+<         image: quay.io/argoproj/argocd:v2.14.6
+---
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
+25981a25994,25995
+>       imagePullSecrets:
+>       - name: my-private-registry
