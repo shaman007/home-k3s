@@ -26,6 +26,9 @@ spec:
         lokiCanary:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
+        sidecar:
+          image:
+            repository: harbor.andreybondarenko.com/dockerhub/kiwigrid/k8s-sidecar
         loki:
           mode: SingleBinary
           image:
