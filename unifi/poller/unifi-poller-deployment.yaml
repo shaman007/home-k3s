@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: unifi-poller
-          image: harbor.andreybondarenko.com/github/unpoller/unpoller
+          image: harbor.andreybondarenko.com/github/unpoller/unpoller:latest
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
