@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: unifi-poller
-          image: ghcr.io/unpoller/unpoller:latest
+          image: harbor.andreybondarenko.com/github/unpoller/unpoller:latest
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -40,3 +40,5 @@ spec:
               cpu: "2500m"
           ports:
             - containerPort: 9130
+      imagePullSecrets:
+        - name: my-private-registry

@@ -17,6 +17,9 @@ spec:
         - name: postgres-exporter
           image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
           resources:
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
             limits:
               memory: "128Mi"
               cpu: "2000m"
