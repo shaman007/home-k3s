@@ -1,6 +1,6 @@
 ---
 image:
-  repository: ghcr.io/mastodon/mastodon
+  repository: harbor.andreybondarenko.com/github/mastodon/mastodon
   # https://github.com/mastodon/mastodon/pkgs/container/mastodon
   #
   # alternatively, use `latest` for the latest release or `edge` for the image
@@ -163,7 +163,7 @@ mastodon:
     existingSecret: "mail"
   streaming:
     image:
-      repository: ghcr.io/mastodon/mastodon-streaming
+      repository: harbor.andreybondarenko.com/github/mastodon/mastodon-streaming
       tag: latest
     port: 4000
     # -- this should be set manually since os.cpus() returns the number of CPUs on
