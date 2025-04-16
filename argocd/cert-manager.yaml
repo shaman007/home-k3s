@@ -19,22 +19,6 @@ spec:
           value: 'true'
         - name: crds.enabled
           value: 'true'
-        - name: image.repository
-          value: harbor.andreybondarenko.com/quay/jetstack/cert-manager-controller
-        - name: image.tag
-          value: v1.17.1
-        - name: cainjector.image.repository
-          value: harbor.andreybondarenko.com/quay/jetstack/cert-manager-cainjector
-        - name: cainjector.image.tag
-          value: v1.17.1
-        - name: webhook.image.repository
-          value: harbor.andreybondarenko.com/quay/jetstack/cert-manager-webhook
-        - name: webhook.image.tag
-          value: v1.17.1
-        - name: startupapicheck.image.repository
-          value: harbor.andreybondarenko.com/quay/jetstack/cert-manager-startupapicheck
-        - name: startupapicheck.image.tag
-          value: v1.17.1
     chart: cert-manager
   destination:
     server: 'https://kubernetes.default.svc'

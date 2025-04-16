@@ -47,5 +47,3 @@ spec:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
             claimName: mysql-lh
-      imagePullSecrets:
-        - name: my-private-registry
