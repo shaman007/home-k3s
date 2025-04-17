@@ -300,7 +300,7 @@ elasticsearch:
 
   # If you are using an external ES cluster, use `enabled: false` and set the hostname, port,
   # and whether the cluster uses TLS.
-  hostname: elastic-elasticsearch.elastic.svc.cluster.local
+  hostname: elasticsearch.elastic.svc.cluster.local
   port: 9200
   preset: small_node_cluster
   tls: false
