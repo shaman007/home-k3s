@@ -8,7 +8,7 @@ metadata:
     app: nextcloud
     tier: backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: nextcloud
@@ -55,9 +55,9 @@ spec:
             nodeSelectorTerms:
               - matchExpressions:
                   - key: kubernetes.io/hostname
-                    operator: NotIn
+                    operator: In
                     values:
-                      - w4.k8s.my.lan
+                      - w386.k8s.my.lan
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
