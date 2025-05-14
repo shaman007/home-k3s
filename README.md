@@ -35,10 +35,12 @@ Old foto:
 * Plex
 * Vault
 * Argocd
+* Dawarich to replace Google Maps Timeline
 
 ## TODO
 
 * Network policies that make sence
+* Decide if I want separate DB's for separate applications or not, finally.
 
 ## Dokerfiles
 
