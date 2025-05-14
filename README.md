@@ -36,11 +36,13 @@ Old foto:
 * Vault
 * Argocd
 * Dawarich to replace Google Maps Timeline
+* Harbor as image registry
 
 ## TODO
 
 * Network policies that make sence
-* Decide if I want separate DB's for separate applications or not, finally.
+* Decide if I want separate DB's for separate applications or not, finally
+* Move to Graphana Alloy
 
 ## Dokerfiles
 
