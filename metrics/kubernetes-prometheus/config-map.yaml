@@ -203,6 +203,12 @@ data:
         static_configs:
         - targets:
           - rspamd.mail.svc.cluster.local:11334
+      - job_name: connectivity-exporter
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        static_configs:
+          - targets:
+            - connectivity-exporter.connectivity-exporter.svc.cluster.local:9090
       - job_name: ingress-nginx
         scrape_interval: 45s
         scrape_timeout:  30s

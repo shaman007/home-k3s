@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: connectivity-exporter
+  namespace: connectivity-exporter
+spec:
+  selector:
+    app: connectivity-exporter
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090

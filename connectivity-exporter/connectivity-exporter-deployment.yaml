@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connectivity-exporter
+  namespace: connectivity-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: connectivity-exporter
+  template:
+    metadata:
+      labels:
+        app: connectivity-exporter
+    spec:
+      containers:
+      - name: exporter
+        image: harbor.andreybondarenko.com/library/connectivity-exporter:latest
+        ports:
+        - containerPort: 9090
+        env:
+        - name: CONFIG
+          value: /config/config.yaml
+        - name: INTERVAL
+          value: "45"
+        - name: PORT
+          value: "9090"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /config
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: connectivity-exporter-config

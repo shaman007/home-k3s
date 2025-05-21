@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connectivity-exporter-config
+  namespace: connectivity-exporter
+data:
+  config.yaml: |
+    endpoints:
+      - url: https://google.com/generate_204
+        expect: 204
+      - url: http://cp.cloudflare.com/generate_204
+        expect: 204
+      - url: http://edge-http.microsoft.com/captiveportal/generate_204
+        expect: 204
+      - url: http://connectivity-check.ubuntu.com
+        expect: 204
+      - url: http://connect.rom.miui.com/generate_204
+        expect: 204
+      - url: http://www.gstatic.com/generate_204
+        expect: 204
+      - url: http://www.apple.com/library/test/success.html
+        expect: 200
+      - url: http://spectrum.s3.amazonaws.com/kindle-wifi/wifistub.html
+        expect: 200
+      - url: http://detectportal.firefox.com/success.txt
+        expect: 200
+      - url: http://www.msftncsi.com/ncsi.txt
+        expect: 200
+      - url: http://network-test.debian.org/nm
+        expect: 200
+      - url:  http://nmcheck.gnome.org/check_network_status.txt
+        expect: 200
