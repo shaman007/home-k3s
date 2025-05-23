@@ -1,0 +1,35 @@
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karakeep
+  namespace: karakeep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: karakeep
+  template:
+    metadata:
+      labels:
+        app: karakeep
+    spec:
+      containers:
+      - name: web
+        image: ghcr.io/karakeep-app/karakeep:release
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: karakeep-env
+        - secretRef:
+            name: karakeep-secret-env
+        volumeMounts:
+        - name: karakeep-data
+          mountPath: /data
+      volumes:
+      - name: karakeep-data
+        persistentVolumeClaim:
+          claimName: karakeep-data

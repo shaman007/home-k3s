@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karakeep-env
+  namespace: karakeep
+data:
+  MEILI_ADDR: http://meilisearch.karakeep.svc.cluster.local:7700
+  BROWSER_WEB_URL: http://chrome.karakeep.svc.cluster.local:9222
+  DATA_DIR: /data
+  NEXTAUTH_URL: http://localhost:3000
+  KARAKEEP_VERSION: release
