@@ -43,6 +43,8 @@ Old foto:
 * Argocd
 * Dawarich to replace Google Maps Timeline
 * Harbor as image registry
+* Karakeep for bookmarks
+* Connectivity checker
 
 ## TODO
 
