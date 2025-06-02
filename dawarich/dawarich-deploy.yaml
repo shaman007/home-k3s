@@ -66,6 +66,12 @@ spec:
               value: "10"
             - name: SELF_HOSTED
               value: "true"
+            - name: QUEUE_DATABASE_PATH
+              value: /dawarich_db_data/dawarich_development_queue.sqlite3
+            - name: CACHE_DATABASE_PATH
+              value: /dawarich_db_data/dawarich_development_cache.sqlite3
+            - name: CABLE_DATABASE_PATH
+              value: /dawarich_db_data/dawarich_development_cable.sqlite3
           image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
@@ -75,6 +81,8 @@ spec:
               name: watched
             - mountPath: /var/app/storage
               name: storage
+            - mountPath: /dawarich_db_data
+              name: dawarich-db-data
           command:
             - "web-entrypoint.sh"
           args:
@@ -181,5 +189,8 @@ spec:
         - name: storage
           persistentVolumeClaim:
             claimName: storage
+        - name: dawarich-db-data
+          persistentVolumeClaim:
+            claimName: dawarich-db-data
       imagePullSecrets:
         - name: my-private-registry

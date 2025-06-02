@@ -73,3 +73,18 @@ spec:
   resources:
     requests:
       storage: 15Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: dawarich
+  name: dawarich-db-data
+  labels:
+    storage.k8s.io/name: longhorn
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 15Gi
