@@ -5,6 +5,7 @@
 ![Longhorn](https://img.shields.io/badge/Longhorn-storage-orange?logo=longhorn&style=flat-square)
 ![Prometheus](https://img.shields.io/badge/Prometheus-monitoring-orange?logo=prometheus&style=flat-square)
 ![Grafana](https://img.shields.io/badge/Grafana-visualization-yellow?logo=grafana&style=flat-square)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fshaman007%2Fhome-k3s.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fshaman007%2Fhome-k3s?ref=badge_shield)
 
 Here is my pet-project of home/small-office cluster that can handle everything you purchase as a service from the Google or Microsoft, but with significantly more pain and fun. On the other hand, this would be enough for 20-30 employees at 1000 USD setup and easy to scale. K3S is used because it's much simplier to install and I don't really need all that cloud provider's drivers since the goal was to be self-sustainable.
 
@@ -129,3 +130,7 @@ Rancher cleanup:
 ```bash
 crictl rmi --prune
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fshaman007%2Fhome-k3s.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fshaman007%2Fhome-k3s?ref=badge_large)
