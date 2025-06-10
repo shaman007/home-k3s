@@ -12,7 +12,7 @@ spec:
     helm:
       parameters:
         - name: collabora.server_name
-          value: 'office.andreybondarenko.com:443'
+          value: 'office.andreybondarenko.com'
         - name: collabora.extra_params
           value: '--o:ssl.enable=false --o:ssl.termination=true'
         - name: autoscaling.enabled
