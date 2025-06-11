@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: ghcr.io/karakeep-app/karakeep:release
+        image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:release
         ports:
         - containerPort: 3000
         envFrom:
