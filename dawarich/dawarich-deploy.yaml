@@ -23,7 +23,16 @@ spec:
               value: "Europe/Prague"
             - name: RAILS_ENV
               value: development
-
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-uri
+                  key: redis-uri
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-password
+                  key: redis-password
             - name: DATABASE_HOST
               value: postgres-postgresql.db.svc.cluster.local
             - name: DATABASE_PORT
@@ -51,14 +60,12 @@ spec:
               value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
               value: "false"
+            - name: RAILS_MIN_THREADS
+              value: "5"
+            - name: RAILS_MAX_THREADS
+              value: "10"
             - name: SELF_HOSTED
               value: "true"
-            - name: QUEUE_DATABASE_PATH
-              value: /dawarich_db_data/dawarich_development_queue.sqlite3
-            - name: CACHE_DATABASE_PATH
-              value: /dawarich_db_data/dawarich_development_cache.sqlite3
-            - name: CABLE_DATABASE_PATH
-              value: /dawarich_db_data/dawarich_development_cable.sqlite3
           image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
@@ -68,8 +75,6 @@ spec:
               name: watched
             - mountPath: /var/app/storage
               name: storage
-            - mountPath: /dawarich_db_data
-              name: dawarich-db-data
           command:
             - "web-entrypoint.sh"
           args:
@@ -79,10 +84,79 @@ spec:
               memory: "2Gi"
               cpu: "250m"
             limits:
-              memory: "4Gi"
+              memory: "2Gi"
               cpu: "2000m"
           ports:
           - containerPort: 3000
+        - name: dawarich-sidekiq
+          env:
+            - name: RAILS_ENV
+              value: development
+            - name: SELF_HOSTED
+              value: "true"
+            - name: STORE_GEODATA
+              value: "true"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-uri
+                  key: redis-uri
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-password
+                  key: redis-password
+            - name: DATABASE_HOST
+              value: postgres-postgresql.db.svc.cluster.local
+            - name: DATABASE_PORT
+              value: "5432"
+            - name: DATABASE_USERNAME
+              value: postgres
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+            - name: DATABASE_NAME
+              value: dawarich_development
+            - name: RAILS_MIN_THREADS
+              value: "1"
+            - name: RAILS_MAX_THREADS
+              value: "1"
+            - name: BACKGROUND_PROCESSING_CONCURRENCY
+              value: "10"
+            - name: APPLICATION_HOST
+              value: localhost
+            - name: APPLICATION_HOSTS
+              value: "dawarich.andreybondarenko.com, localhost"
+            - name: APPLICATION_PROTOCOL
+              value: http
+            - name: DISTANCE_UNIT
+              value: km
+            - name: PHOTON_API_HOST
+              value: photon.dawarich.svc.cluster.local
+            - name: PHOTON_API_USE_HTTPS
+              value: "false"
+          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /var/app/public
+              name: public
+            - mountPath: /var/app/tmp/imports/watched
+              name: watched
+            - mountPath: /var/app/storage
+              name: storage
+          command:
+            - "sidekiq-entrypoint.sh"
+          args:
+            - "bsidekiq"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
+            limits:
+              memory: "4Gi"
+              cpu: "1500m"
           livenessProbe:
             httpGet:
               path: /api/v1/health
@@ -109,8 +183,5 @@ spec:
         - name: storage
           persistentVolumeClaim:
             claimName: storage
-        - name: dawarich-db-data
-          persistentVolumeClaim:
-            claimName: dawarich-db-data
       imagePullSecrets:
         - name: my-private-registry
