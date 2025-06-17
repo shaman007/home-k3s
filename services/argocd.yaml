@@ -16,4 +16,4 @@ spec:
   selector:
     app.kubernetes.io/name: argocd-server
   externalIPs:
-    - 192.168.1.105
+    - 192.168.1.111
