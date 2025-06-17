@@ -84,7 +84,7 @@ spec:
               memory: "2Gi"
               cpu: "250m"
             limits:
-              memory: "2Gi"
+              memory: "20Gi"
               cpu: "2000m"
           ports:
           - containerPort: 3000
@@ -155,7 +155,7 @@ spec:
               memory: "1Gi"
               cpu: "250m"
             limits:
-              memory: "4Gi"
+              memory: "8Gi"
               cpu: "1500m"
           livenessProbe:
             httpGet:
