@@ -230,6 +230,13 @@ data:
         static_configs:
         - targets:
           - mongo-exporter.db.svc.cluster.local:9216
+      - job_name: external
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - backup.andreybondarenko.com:9090
       - job_name: unifi
         scrape_interval: 45s
         scrape_timeout:  30s
