@@ -44,10 +44,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "100Mi"
+              memory: "2288Mi"
             limits:
-              cpu: 2000m
-              memory: "2000Mi"
+              memory: "2288Mi"
           livenessProbe:
             httpGet:
               port: 10902

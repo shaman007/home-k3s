@@ -92,10 +92,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "256Mi"
+              memory: "550Mi"
             limits:
-              memory: "512Mi"
-              cpu: "2000m"
+              memory: "550Mi"
           ports:
             - containerPort: 11333
             - containerPort: 11334

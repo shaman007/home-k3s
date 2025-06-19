@@ -94,10 +94,9 @@ spec:
             readOnlyRootFilesystem: true
           resources:
             requests:
-              cpu: "107m"
-              memory: "2145Mi"
+              cpu: "27m"
+              memory: "6306Mi"
             limits:
-              cpu: "6000m"
-              memory: "9145Mi"
+              memory: "6306Mi"
       imagePullSecrets:
         - name: my-private-registry

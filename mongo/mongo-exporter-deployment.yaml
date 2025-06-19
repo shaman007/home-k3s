@@ -22,9 +22,11 @@ spec:
             - --collector.profile
             - --compatible-mode
           resources:
-            limits:
-              memory: "256Mi"
-              cpu: "2000m"
+               requests:
+                 cpu: 10m
+                 memory: 100Mi
+               limits:
+                 memory: 100Mi
           ports:
             - containerPort: 9216
       imagePullSecrets:

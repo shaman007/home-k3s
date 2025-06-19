@@ -77,10 +77,9 @@ spec:
               mountPath: /var/run
           resources:
             requests:
-              cpu: "25m"
+              cpu: "10m"
               memory: "100Mi"
             limits:
-              cpu: "3000m"
-              memory: "512Mi"
+              memory: "100Mi"
       imagePullSecrets:
         - name: my-private-registry

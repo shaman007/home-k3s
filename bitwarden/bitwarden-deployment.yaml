@@ -62,10 +62,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "1344Mi"
+              memory: "1000Mi"
             limits:
-              cpu: "1000m"
-              memory: "1344Mi"
+              memory: "1000Mi"
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
@@ -82,8 +81,7 @@ spec:
               cpu: "10m"
               memory: "100Mi"
             limits:
-              cpu: "1000m"
-              memory: "200Mi"
+              memory: "100Mi"
           volumeMounts:
             - name: promtail-config
               mountPath: /etc/promtail

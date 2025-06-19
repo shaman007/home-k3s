@@ -37,11 +37,10 @@ spec:
               value: "http://192.168.1.111:32400/"
           resources:
             requests:
-              memory: "1500Mi"
-              cpu: "1"
+              memory: 1268Mi
+              cpu: "10m"
             limits:
-              memory: "6280Mi"
-              cpu: "8"
+              memory: 1268Mi
           volumeMounts:
             - name: plex-lib-lh
               mountPath: /data

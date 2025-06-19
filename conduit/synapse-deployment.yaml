@@ -40,10 +40,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "200Mi"
+              memory: "166Mi"
             limits:
-              cpu: "6000m"
-              memory: "2Gi"
+              memory: "166Mi"
       initContainers:
         - name: fix-permissions
           image: busybox

@@ -44,11 +44,10 @@ spec:
             runAsGroup: 65534
           resources:
             requests:
-              cpu: 727m
-              memory: 2000M
+              cpu: 348m
+              memory: 2550Mi
             limits:
-              cpu: 2000m
-              memory: 5000M
+              memory: 2550Mi
         - name: thanos
           image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.37.2
           args:
@@ -75,11 +74,10 @@ spec:
             runAsGroup: 65534
           resources:
             requests:
-              cpu: 727m
-              memory: 3000M
+              cpu: 10m
+              memory: 239Mi
             limits:
-              cpu: 4000m
-              memory: 3500M
+              memory: 239Mi
       initContainers:
         - name: fix-perms
           image:  harbor.andreybondarenko.com/dockerhub/busybox

@@ -145,10 +145,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "296Mi"
+              memory: "238Mi"
             limits:
-              cpu: "2000m"
-              memory: "296Mi"
+              memory: "238Mi"
       nodeSelector:
         kubernetes.io/hostname: m.k8s.my.lan
       imagePullSecrets:

@@ -81,11 +81,10 @@ spec:
             - "bin/rails server -p 3000 -b 0.0.0.0"
           resources:
             requests:
-              memory: "2Gi"
-              cpu: "250m"
+              memory: "2405Mi"
+              cpu: "201m"
             limits:
-              memory: "20Gi"
-              cpu: "2000m"
+              memory: "2405Mi"
           ports:
           - containerPort: 3000
         - name: dawarich-sidekiq
@@ -152,11 +151,10 @@ spec:
             - "bsidekiq"
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "250m"
+              memory: "542Mi"
+              cpu: "51m"
             limits:
-              memory: "8Gi"
-              cpu: "1500m"
+              memory: "542Mi"
           livenessProbe:
             httpGet:
               path: /api/v1/health

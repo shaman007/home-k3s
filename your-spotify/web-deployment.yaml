@@ -28,10 +28,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "50Mi"
+              memory: "100Mi"
             limits:
-              cpu: "1000m"
-              memory: "50Mi"
+              memory: "100Mi"
           ports:
             - containerPort: 3000
               protocol: TCP

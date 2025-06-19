@@ -79,10 +79,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "128Mi"
+              memory: "100Mi"
             limits:
-              cpu: "2000m"
-              memory: "128Mi"
+              memory: "100Mi"
       imagePullSecrets:
         - name: my-private-registry
       nodeSelector:

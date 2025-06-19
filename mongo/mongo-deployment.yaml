@@ -23,11 +23,10 @@ spec:
             - containerPort: 27017
           resources:
             requests:
-              cpu: "10m"
-              memory: "200Mi"
+              cpu: "12m"
+              memory: "286Mi"
             limits:
-              cpu: "2000m"
-              memory: "2000Mi"
+              memory: "286Mi"
           volumeMounts:
             - name: mongodb-configmap
               mountPath: /config

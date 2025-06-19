@@ -61,10 +61,9 @@ spec:
               name: tmp
           resources:
             requests:
-              cpu: "702m"
-              memory: "1512Mi"
+              cpu: "1235m"
+              memory: "1990Mi"
             limits:
-              cpu: "4000m"
-              memory: "3512Mi"
+              memory: "1990Mi"
       imagePullSecrets:
         - name: my-private-registry

@@ -28,6 +28,12 @@ spec:
         volumeMounts:
         - name: meili-data
           mountPath: /meili_data
+      resources:
+        requests:
+          cpu: 10m
+          memory: 182Mi
+        limits:
+          memory: 182Mi
       volumes:
       - name: meili-data
         persistentVolumeClaim:

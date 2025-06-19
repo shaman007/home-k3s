@@ -32,6 +32,12 @@ spec:
             - name: containers
               mountPath: /var/lib/docker/containers
               readOnly: true
+          resources:
+            requests:
+              cpu: 49m
+              memory: 315Mi
+            limits:
+              memory: 315Mi
       volumes:
         - name: config
           configMap:

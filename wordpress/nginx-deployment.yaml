@@ -59,10 +59,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "200Mi"
+              memory: "100Mi"
             limits:
-              cpu: "300m"
-              memory: "300Mi"
+              memory: "100Mi"
           livenessProbe:
             httpGet:
               path: /wp-json/wp-site-health/v1
