@@ -26,7 +26,7 @@ for ns in $namespaces; do
   if ! kubectl get externalsecret my-private-registry -n "$ns" &> /dev/null; then
     echo "  Creating ExternalSecret in $ns"
     cat <<EOF | kubectl apply -n "$ns" -f -
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: my-private-registry
@@ -57,7 +57,7 @@ EOF
   if ! kubectl get secretstore vault-secret-store-registry -n "$ns" &> /dev/null; then
     echo "  Creating SecretStore in $ns"
     cat <<EOF | kubectl apply -n "$ns" -f -
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: SecretStore
 metadata:
   name: vault-secret-store-registry
