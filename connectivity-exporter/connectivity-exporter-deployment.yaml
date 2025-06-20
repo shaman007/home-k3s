@@ -29,6 +29,12 @@ spec:
         - name: config-volume
           mountPath: /config
           readOnly: true
+        resources:
+          requests:
+            cpu: "10m"
+            memory: "100Mi"
+          limits:
+            memory: "100Mi"
       volumes:
       - name: config-volume
         configMap:

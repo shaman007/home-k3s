@@ -16,10 +16,18 @@ spec:
       containers:
         - name: postgres-exporter
           image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           resources:
             requests:
               memory: "100Mi"
-              cpu: "100m"
+              cpu: "10m"
             limits:
               memory: "100Mi"
           env:

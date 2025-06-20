@@ -31,10 +31,10 @@ spec:
           mountPath: /data
         resources:
           requests:
-            cpu: 10m
-            memory: 641Mi
+            cpu: 93m
+            memory: 3238Mi
           limits:
-            memory: 641Mi
+            memory: 3238Mi
       volumes:
       - name: karakeep-data
         persistentVolumeClaim:

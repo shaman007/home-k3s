@@ -16,13 +16,17 @@ spec:
         - name: auth.existingSecretPasswordKey
           value: redis-password
         - name: master.resources.requests.cpu
-          value: 400m
-        - name: master.resources.limits.cpu
-          value: 4000m
+          value: 54m
+        - name: master.resources.requests.memory
+          value: 100Mi
+        - name: master.resources.limits.memory
+          value: 100Mi
+        - name: replica.resources.requests.memory
+          value: 100Mi
+        - name: replica.resources.limits.memory
+          value: 100Mi
         - name: replica.resources.requests.cpu
-          value: 400m
-        - name: replica.resources.limits.cpu
-          value: 4000m
+          value: 46m
         - name: image.registry
           value: harbor.andreybondarenko.com/dockerhub
     chart: redis

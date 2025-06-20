@@ -44,8 +44,8 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "652Mi"
+              memory: "700Mi"
             limits:
-              memory: "652Mi"
+              memory: "700Mi"
       imagePullSecrets:
         - name: my-private-registry

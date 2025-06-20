@@ -35,10 +35,9 @@ spec:
               port: 3306
           resources:
             requests:
-              cpu: "10m"
+              cpu: "18m"
               memory: "1600Mi"
             limits:
-              cpu: "2000m"
               memory: "1600Mi"
           volumeMounts:
             - name: mysql-persistent-storage

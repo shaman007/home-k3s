@@ -1,36 +1,91 @@
 core:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 113Mi
+      cpu: 10m
+    limits:
+      memory: 113Mi
 database:
   internal:
     nodeSelector:
       kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 113Mi
+      cpu: 10m
+    limits:
+      memory: 113Mi
 exporter:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
 jobservice:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 10m
+    limits:
+      memory: 100Mi
 nginx:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 10m
+    limits:
+      memory: 100Mi
 portal:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 10m
+    limits:
+      memory: 100Mi
 redis:
   internal:
     nodeSelector:
       kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 113Mi
+      cpu: 10m
+    limits:
+      memory: 113Mi
 registry:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 10m
+    limits:
+      memory: 100Mi
 trivy:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+  resources:
+    requests:
+      memory: 201Mi
+      cpu: 10m
+    limits:
+      memory: 201Mi
 notary:
   enabled: false  # disable notary
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:
+      existingClaim: "harbor-registry"
 
 externalURL: https://harbor.andreybondarenko.com
 harborAdminPassword: Harbor12345

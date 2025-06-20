@@ -26,9 +26,9 @@ spec:
           - --hide-scrollbars
         ports:
         - containerPort: 9222
-      resources:
-        requests:
-          cpu: 10m
-          memory: 266Mi
-        limits:
-          memory: 266Mi
+        resources:
+          requests:
+            cpu: 17m
+            memory: 304Mi
+          limits:
+            memory: 304Mi

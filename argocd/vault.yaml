@@ -14,13 +14,17 @@ spec:
         - name: server.replicaCount
           value: '5'
         - name: server.resources.requests.cpu
-          value: 400m
-        - name: server.resources.limits.cpu
-          value: 4000m
+          value: 90m
+        - name: server.resources.requests.memory
+          value: 399Mi
+        - name: server.resources.limits.memory
+          value: 399Mi
         - name: injector.resources.requests.cpu
-          value: 400m
-        - name: injector.resources.limits.cpu
-          value: 2000m
+          value: 10m
+        - name: injector.resources.requests.memory
+          value: 100Mi
+        - name: injector.resources.limits.memory
+          value: 100Mi
     chart: vault
   destination:
     server: 'https://kubernetes.default.svc'

@@ -18,21 +18,29 @@ spec:
         - name: global.security.allowInsecureImages
           value: 'true'
         - name: coordinating.resources.requests.cpu
-          value: 500m
-        - name: coordinating.resources.limits.cpu
-          value: 6000m
+          value: 52m
+        - name: coordinating.resources.requests.memory
+          value: 779Mi
+        - name: coordinating.resources.limits.memory
+          value: 779Mi
         - name: master.resources.requests.cpu
-          value: 500m
-        - name: master.resources.limits.cpu
-          value: 6000m
+          value: 45m
+        - name: master.resources.requests.memory
+          value: 793Mi
+        - name: master.resources.limits.memory
+          value: 793Mi
         - name: data.resources.requests.cpu
-          value: 500m
-        - name: data.resources.limits.cpu
-          value: 2500m
+          value: 25m
+        - name: data.resources.requests.memory
+          value: 2213Mi
+        - name: data.resources.limits.memory
+          value: 2213Mi
         - name: ingest.resources.requests.cpu
-          value: 500m
-        - name: ingest.resources.limits.cpu
-          value: 2500m
+          value: 50m
+        - name: ingest.resources.requests.memory
+          value: 817Mi
+        - name: ingest.resources.limits.memory
+          value: 817Mi
     chart: elasticsearch
   destination:
     server: 'https://kubernetes.default.svc'

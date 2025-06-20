@@ -26,17 +26,17 @@ spec:
         - name: primary.persistence.existingClaim
           value: data-postgres-postgresql-0
         - name: primary.resources.requests.cpu
-          value: 100m
+          value: 163m
         - name: primary.resources.requests.memory
-          value: 150Mi
-        - name: primary.resources.limits.cpu
-          value: '4'
+          value: 1634Mi
         - name: primary.resources.limits.memory
-          value: 1500Mi
+          value: 1634Mi
         - name: metrics.resources.requests.cpu
-          value: 100m
-        - name: metrics.resources.limits.cpu
-          value: 1000m
+          value: 10m
+        - name: metrics.resources.requests.memory
+          value: 100Mi
+        - name: metrics.resources.limits.memory
+          value: 100Mi
         - name: image.repository
           value: harbor.andreybondarenko.com/dockerhub
         - name: image.pullSecrets[0].name
