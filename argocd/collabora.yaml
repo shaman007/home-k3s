@@ -17,7 +17,7 @@ spec:
           extra_params: --o:ssl.enable=false --o:ssl.termination=true
         resources:
           requests:
-            cpu: "10m"
+            cpu: "171m"
             memory: "1015Mi"
           limits:
             memory: "1015Mi"
