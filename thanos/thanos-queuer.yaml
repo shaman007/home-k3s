@@ -43,9 +43,9 @@ spec:
               path: /-/ready
           resources:
             requests:
-              cpu: "10m"
-              memory: "700Mi"
+              cpu: "854m"
+              memory: "905Mi"
             limits:
-              memory: "700Mi"
+              memory: "905Mi"
       imagePullSecrets:
         - name: my-private-registry

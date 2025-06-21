@@ -61,10 +61,10 @@ spec:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: "10m"
-              memory: "1000Mi"
+              cpu: "288m"
+              memory: "1150Mi"
             limits:
-              memory: "1000Mi"
+              memory: "1150Mi"
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
@@ -78,10 +78,10 @@ spec:
             - -config.file=/etc/promtail/promtail.yaml
           resources:
             requests:
-              cpu: "10m"
-              memory: "100Mi"
+              cpu: "177m"
+              memory: "107Mi"
             limits:
-              memory: "100Mi"
+              memory: "107Mi"
           volumeMounts:
             - name: promtail-config
               mountPath: /etc/promtail

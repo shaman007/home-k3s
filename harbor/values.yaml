@@ -11,12 +11,12 @@ database:
   internal:
     nodeSelector:
       kubernetes.io/hostname: w386.k8s.my.lan
-  resources:
-    requests:
-      memory: 113Mi
-      cpu: 10m
-    limits:
-      memory: 113Mi
+    resources:
+      requests:
+        memory: 250Mi
+        cpu: 10m
+      limits:
+        memory: 250Mi
 exporter:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
@@ -51,21 +51,31 @@ redis:
   internal:
     nodeSelector:
       kubernetes.io/hostname: w386.k8s.my.lan
-  resources:
-    requests:
-      memory: 113Mi
-      cpu: 10m
-    limits:
-      memory: 113Mi
+    resources:
+      requests:
+        memory: 113Mi
+        cpu: 10m
+      limits:
+        memory: 113Mi
 registry:
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
-  resources:
-    requests:
-      memory: 100Mi
-      cpu: 10m
-    limits:
-      memory: 100Mi
+    nodeSelector:
+      kubernetes.io/hostname: w386.k8s.my.lan
+    registry:
+      nodeSelector:
+        kubernetes.io/hostname: w386.k8s.my.lan
+      resources:
+        requests:
+          memory: 100Mi
+          cpu: 124m
+        limits:
+          memory: 100Mi
+    controller:
+      resources:
+        requests:
+          memory: 100Mi
+          cpu: 10m
+        limits:
+          memory: 100Mi
 trivy:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
