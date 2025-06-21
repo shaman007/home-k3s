@@ -45,9 +45,9 @@ spec:
           resources:
             requests:
               cpu: 348m
-              memory: 2550Mi
+              memory: 2864Mi
             limits:
-              memory: 2550Mi
+              memory: 2864Mi
         - name: thanos
           image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.37.2
           args:

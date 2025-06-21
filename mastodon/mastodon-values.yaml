@@ -108,17 +108,16 @@ mastodon:
     # -- (Sidekiq Container) Security Context for all Pods, overwrites .Values.securityContext
     securityContext: {}
     # -- Resources for all Sidekiq Deployments unless overwritten
-    resources: {}
+    resources:
+      limits:
+        memory: 1052Mi
+      requests:
+        cpu: 192m
+        memory: 1052Mi
     # -- Affinity for all Sidekiq Deployments unless overwritten, overwrites .Values.affinity
     affinity: {}
     # -- Topology spread constraints for Sidekiq Pods, overwrites .Values.topologySpreadConstraints
     topologySpreadConstraints: {}
-    # limits:
-    #   cpu: "1"
-    #   memory: 768Mi
-    # requests:
-    #   cpu: 250m
-    #   memory: 512Mi
     workers:
       - name: all-queues
         # -- Number of threads / parallel sidekiq jobs that are executed per Pod
@@ -188,13 +187,12 @@ mastodon:
     # -- (Streaming Container) Security Context for Streaming Pods, overwrites .Values.securityContext
     securityContext: {}
     # -- (Streaming Container) Resources for Streaming Pods, overwrites .Values.resources
-    resources: {}
-    # limits:
-    #   cpu: "500m"
-    #   memory: 512Mi
-    # requests:
-    #   cpu: 250m
-    #   memory: 128Mi
+    resources:
+      limits:
+        memory: 110Mi
+      requests:
+        cpu: 37m
+        memory: 110Mi
   web:
     port: 3000
     # -- Number of Web Pods running
@@ -208,13 +206,12 @@ mastodon:
     # -- (Web Container) Security Context for Web Pods, overwrites .Values.securityContext
     securityContext: {}
     # -- (Web Container) Resources for Web Pods, overwrites .Values.resources
-    resources: {}
-    # limits:
-    #   cpu: "1"
-    #   memory: 1280Mi
-    # requests:
-    #   cpu: 250m
-    #   memory: 768Mi
+    resources:
+      limits:
+        memory: 4115Mi
+      requests:
+        cpu: "1.27"
+        memory: 4115Mi
     # -- Puma-specific options. Below values are based on default behavior in
     # config/puma.rb when no custom values are provided.
     minThreads: "5"
@@ -494,7 +491,12 @@ revisionPodAnnotation: true
 jobAnnotations: {}
 
 # -- Default resources for all Deployments and jobs unless overwritten
-resources: {}
+resources:
+  limits:
+    memory: 100Mi
+  requests:
+    cpu: 10m
+    memory: 100Mi
 # We usually recommend not to specify default resources and to leave this as a conscious
 # choice for the user. This also increases chances charts run on environments with little
 # resources, such as Minikube. If you do want to specify resources, uncomment the following

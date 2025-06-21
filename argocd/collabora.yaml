@@ -9,19 +9,24 @@ spec:
   source:
     repoURL: 'https://collaboraonline.github.io/online/'
     targetRevision: 1.1.36
-    helm:
-      parameters:
-        - name: collabora.server_name
-          value: 'office.andreybondarenko.com'
-        - name: collabora.extra_params
-          value: '--o:ssl.enable=false --o:ssl.termination=true'
-        - name: autoscaling.enabled
-          value: 'false'
-        - name: image.repository
-          value: harbor.andreybondarenko.com/dockerhub/collabora/code
-        - name: image.pullSecrets[0].name
-          value: my-image-registry
     chart: collabora-online
+    helm:
+      values: |
+        collabora:
+          server_name: office.andreybondarenko.com
+          extra_params: --o:ssl.enable=false --o:ssl.termination=true
+        resources:
+          requests:
+            cpu: "10m"
+            memory: "1015Mi"
+          limits:
+            memory: "1015Mi"
+        autoscaling:
+          enabled: false
+        image:
+          repository: harbor.andreybondarenko.com/dockerhub/collabora/code
+          pullSecrets:
+            - name: my-image-registry
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: collabora
