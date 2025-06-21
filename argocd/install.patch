@@ -1,61 +1,92 @@
-24596c24596
-<         image: quay.io/argoproj/argocd:v2.14.6
+25040c25040
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-24625a24626,24627
->       imagePullSecrets:
->       - name: my-private-registry
-24704c24706
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+25042a25043,25048
+>         resources:
+>           requests:
+>             cpu: 10m
+>             memory: 100Mi
+>           limits:
+>             memory: 100Mi
+25154c25160
 <         image: ghcr.io/dexidp/dex:v2.41.1
 ---
 >         image: harbor.andreybondarenko.com/github/dexidp/dex:v2.41.1
-24733c24735
-<         image: quay.io/argoproj/argocd:v2.14.6
+25156a25163,25168
+>         resources:
+>           requests:
+>             cpu: 10m
+>             memory: 121Mi
+>           limits:
+>             memory: 121Mi
+25183c25195
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-24749a24752,24753
->       imagePullSecrets:
->       - name: my-private-registry
-24823c24827
-<         image: quay.io/argoproj/argocd:v2.14.6
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+25279c25291
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-24840a24845,24846
->       imagePullSecrets:
->       - name: my-private-registry
-24909c24915
-<         image: redis:7.0.15-alpine
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+25284a25297,25302
+>         resources:
+>           requests:
+>             cpu: 10m
+>             memory: 100Mi
+>           limits:
+>             memory: 100Mi
+25367a25386,25391
+>         resources:
+>           requests:
+>             cpu: 10m
+>             memory: 100Mi
+>           limits:
+>             memory: 100Mi
+25381c25405
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/dockerhub/redis:7.0.15-alpine
-24925c24931
-<         image: quay.io/argoproj/argocd:v2.14.6
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+25383a25408,25413
+>         resources:
+>           requests:
+>             cpu: 10m
+>             memory: 100Mi
+>           limits:
+>             memory: 100Mi
+25654c25684
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-24936a24943,24944
->       imagePullSecrets:
->       - name: my-private-registry
-25186c25194
-<         image: quay.io/argoproj/argocd:v2.14.6
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+25664a25695,25700
+>         resources:
+>           requests:
+>             cpu: 127m
+>             memory: 151Mi
+>           limits:
+>             memory: 151Mi
+25706c25742
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-25238c25246
-<         image: quay.io/argoproj/argocd:v2.14.6
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+26078c26114
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-25251a25260,25261
->       imagePullSecrets:
->       - name: my-private-registry
-25598c25608
-<         image: quay.io/argoproj/argocd:v2.14.6
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+26120a26157,26162
+>         resources:
+>           requests:
+>             cpu: 10m
+>             memory: 142Mi
+>           limits:
+>             memory: 142Mi
+26450c26492
+<         image: quay.io/argoproj/argocd:v3.0.6
 ---
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-25640a25651,25652
->       imagePullSecrets:
->       - name: my-private-registry
-25952c25964
-<         image: quay.io/argoproj/argocd:v2.14.6
----
->         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v2.14.6
-25981a25994,25995
->       imagePullSecrets:
->       - name: my-private-registry
+>         image: harbor.andreybondarenko.com/quay/argoproj/argocd:v3.0.6
+26452a26495,26500
+>         resources:
+>           requests:
+>             cpu: 67m
+>             memory: 537Mi
+>           limits:
+>             memory: 537Mi
