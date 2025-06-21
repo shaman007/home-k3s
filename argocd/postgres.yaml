@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: registry-1.docker.io/bitnamicharts
-    targetRevision: 15.5.19
+    targetRevision: '16.6.3 '
     helm:
       parameters:
         - name: auth.database
