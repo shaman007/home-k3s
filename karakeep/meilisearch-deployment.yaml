@@ -31,9 +31,9 @@ spec:
         resources:
           requests:
             cpu: 10m
-            memory: 245Mi
+            memory: 750Mi
           limits:
-            memory: 245Mi
+            memory: 750Mi
       volumes:
       - name: meili-data
         persistentVolumeClaim:
