@@ -22,9 +22,9 @@ spec:
             nodeSelectorTerms:
               - matchExpressions:
                   - key: kubernetes.io/hostname
-                    operator: NotIn
+                    operator: In
                     values:
-                      - w4.k8s.my.lan
+                      - w386.k8s.my.lan
       containers:
         - name: plex
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:latest
