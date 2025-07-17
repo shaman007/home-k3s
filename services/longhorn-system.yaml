@@ -5,7 +5,7 @@ metadata:
   name: longhorn-frontend-ip
   namespace: longhorn-system
   labels:
-    name: longhorn
+    app.kubernetes.io/name: longhorn
     app: longhorn-ui
 spec:
   ports:
@@ -16,4 +16,4 @@ spec:
   selector:
     app: longhorn-ui
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.105
