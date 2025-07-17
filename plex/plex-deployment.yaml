@@ -42,7 +42,7 @@ spec:
             limits:
               memory: 1268Mi
           volumeMounts:
-            - name: plex-lib-lh
+            - name: plex-lib
               mountPath: /data
             - name: plex-conf-lh2
               mountPath: /config
@@ -66,8 +66,8 @@ spec:
         - name: plex-conf-lh2
           persistentVolumeClaim:
             claimName: plex-conf-lh2
-        - name: plex-lib-lh
+        - name: plex-lib
           persistentVolumeClaim:
-            claimName: plex-lib-lh
+            claimName: plex-lib
       imagePullSecrets:
         - name: my-private-registry
