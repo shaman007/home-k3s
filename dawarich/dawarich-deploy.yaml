@@ -181,5 +181,3 @@ spec:
         - name: storage
           persistentVolumeClaim:
             claimName: storage
-      imagePullSecrets:
-        - name: my-private-registry

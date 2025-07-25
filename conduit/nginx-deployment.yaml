@@ -52,5 +52,3 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-      imagePullSecrets:
-        - name: my-private-registry

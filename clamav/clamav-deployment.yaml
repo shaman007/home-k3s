@@ -84,5 +84,3 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 600Mi
-      imagePullSecrets:
-        - name: my-private-registry

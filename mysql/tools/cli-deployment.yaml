@@ -28,5 +28,3 @@ spec:
                   key: password
             - name: MYSQLHOST
               value: "mysql.db.svc.cluster.local"
-      imagePullSecrets:
-        - name: my-private-registry

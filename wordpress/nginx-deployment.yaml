@@ -78,5 +78,3 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
-      imagePullSecrets:
-        - name: my-private-registry

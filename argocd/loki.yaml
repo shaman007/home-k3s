@@ -50,8 +50,6 @@ spec:
                   period: 24h
                 object_store: filesystem
                 schema: v13
-        imagePullSecrets:
-          - name: my-private-registry
         singleBinary:
           replicas: 1
         table_manager:

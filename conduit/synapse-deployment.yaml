@@ -50,5 +50,3 @@ spec:
           volumeMounts:
             - name: matrix-lh
               mountPath: /data
-      imagePullSecrets:
-        - name: my-private-registry

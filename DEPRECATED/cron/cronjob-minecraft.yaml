@@ -38,5 +38,3 @@ spec:
               persistentVolumeClaim:
                 claimName: minecraft-lh
           restartPolicy: Never
-          imagePullSecrets:
-            - name: my-private-registry

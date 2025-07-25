@@ -53,5 +53,3 @@ spec:
         - hostPath:
             path: /
           name: root
-      imagePullSecrets:
-        - name: my-private-registry

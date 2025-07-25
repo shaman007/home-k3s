@@ -37,5 +37,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: backup-lh
-      imagePullSecrets:
-        - name: my-private-registry

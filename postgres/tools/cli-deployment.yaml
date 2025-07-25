@@ -36,5 +36,3 @@ spec:
               value: "ttrss"
             - name: OUTPUT_DIR
               value: "/data"
-      imagePullSecrets:
-        - name: my-private-registry

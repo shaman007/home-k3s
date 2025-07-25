@@ -43,5 +43,3 @@ spec:
         - name: mongodb-data
           persistentVolumeClaim:
             claimName: mongo-lh
-      imagePullSecrets:
-        - name: my-private-registry

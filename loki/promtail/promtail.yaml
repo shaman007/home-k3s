@@ -42,5 +42,3 @@ spec:
         - name: promtail-config
           configMap:
             name: promtail-config
-      imagePullSecrets:
-        - name: my-private-registry

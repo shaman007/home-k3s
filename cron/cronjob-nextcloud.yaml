@@ -29,8 +29,6 @@ spec:
               configMap:
                 name: php-fpm-config
           restartPolicy: Never
-          imagePullSecrets:
-            - name: my-private-registry
           affinity:
             podAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:

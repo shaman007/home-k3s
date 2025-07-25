@@ -69,5 +69,3 @@ spec:
         - name: plex-lib
           persistentVolumeClaim:
             claimName: plex-lib
-      imagePullSecrets:
-        - name: my-private-registry

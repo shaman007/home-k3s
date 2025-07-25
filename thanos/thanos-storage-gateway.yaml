@@ -67,5 +67,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: storagegw-lh
-      imagePullSecrets:
-        - name: my-private-registry

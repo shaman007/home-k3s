@@ -43,5 +43,3 @@ spec:
               persistentVolumeClaim:
                 claimName: backup
           restartPolicy: Never
-          imagePullSecrets:
-            - name: my-private-registry

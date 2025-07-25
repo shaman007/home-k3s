@@ -58,5 +58,3 @@ spec:
         - name: grafana-pv
           persistentVolumeClaim:
             claimName: grafana-pvc
-      imagePullSecrets:
-        - name: my-private-registry

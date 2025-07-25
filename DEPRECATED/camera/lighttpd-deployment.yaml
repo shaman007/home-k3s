@@ -33,5 +33,3 @@ spec:
                   key: PASSWORD
           ports:
             - containerPort: 80
-      imagePullSecrets:
-        - name: my-private-registry

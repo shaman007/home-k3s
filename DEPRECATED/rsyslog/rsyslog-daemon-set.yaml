@@ -55,5 +55,3 @@ spec:
             items:
               - key: config
                 path: rsyslog.conf
-      imagePullSecrets:
-        - name: my-private-registry

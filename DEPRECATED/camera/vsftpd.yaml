@@ -65,8 +65,6 @@ spec:
           volumeMounts:
             - mountPath: "/home/vsftpd"
               name: ftp
-      imagePullSecrets:
-        - name: my-private-registry
 ---
 apiVersion: v1
 kind: Service

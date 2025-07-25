@@ -39,5 +39,3 @@ spec:
           ports:
             - containerPort: 9187
               name: pmetrics
-      imagePullSecrets:
-        - name: my-private-registry

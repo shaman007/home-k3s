@@ -99,5 +99,3 @@ spec:
         - name: objstoreyml
           secret:
             secretName: thanos-objstore-secret
-      imagePullSecrets:
-        - name: my-private-registry

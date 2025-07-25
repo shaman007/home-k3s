@@ -13,8 +13,6 @@ spec:
       parameters:
         - name: global.imageRegistry
           value: harbor.andreybondarenko.com/dockerhub
-        - name: image.pullSecrets[0].name
-          value: my-private-registry
         - name: global.security.allowInsecureImages
           value: 'true'
         - name: coordinating.resources.requests.cpu

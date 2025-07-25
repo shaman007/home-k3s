@@ -82,7 +82,5 @@ spec:
               memory: "100Mi"
             limits:
               memory: "100Mi"
-      imagePullSecrets:
-        - name: my-private-registry
       nodeSelector:
         kubernetes.io/hostname: m.k8s.my.lan

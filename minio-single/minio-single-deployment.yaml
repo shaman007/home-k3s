@@ -53,5 +53,3 @@ spec:
         - name: minio-data
           persistentVolumeClaim:
             claimName: minio-lh
-      imagePullSecrets:
-        - name: my-private-registry

@@ -47,5 +47,3 @@ spec:
             name: alertmanager-templates
         - name: alertmanager
           emptyDir: {}
-      imagePullSecrets:
-        - name: my-private-registry

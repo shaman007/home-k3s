@@ -145,5 +145,3 @@ spec:
               mountPath: /mail
       nodeSelector:
         kubernetes.io/hostname: m.k8s.my.lan
-      imagePullSecrets:
-        - name: my-private-registry

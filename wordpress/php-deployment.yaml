@@ -79,5 +79,3 @@ spec:
               memory: "587Mi"
             limits:
               memory: "587Mi"
-      imagePullSecrets:
-        - name: my-private-registry

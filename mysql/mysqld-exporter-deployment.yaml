@@ -44,5 +44,3 @@ spec:
             items:
               - key: .my.cnf
                 path: .my.cnf
-      imagePullSecrets:
-        - name: my-private-registry

@@ -29,5 +29,3 @@ spec:
                  memory: 100Mi
           ports:
             - containerPort: 9216
-      imagePullSecrets:
-        - name: my-private-registry

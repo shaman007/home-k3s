@@ -70,5 +70,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: compactor-lh
-      imagePullSecrets:
-        - name: my-private-registry

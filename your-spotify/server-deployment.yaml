@@ -52,5 +52,3 @@ spec:
             - containerPort: 8080
               hostPort: 8080
               protocol: TCP
-      imagePullSecrets:
-        - name: my-private-registry

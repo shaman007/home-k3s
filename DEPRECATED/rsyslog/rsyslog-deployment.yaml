@@ -37,5 +37,3 @@ spec:
         - name: rsyslog-nfs
           persistentVolumeClaim:
             claimName: rsyslog-nfs
-      imagePullSecrets:
-        - name: my-private-registry
