@@ -75,9 +75,9 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 239Mi
+              memory: 439Mi
             limits:
-              memory: 239Mi
+              memory: 439Mi
       initContainers:
         - name: fix-perms
           image:  harbor.andreybondarenko.com/dockerhub/busybox

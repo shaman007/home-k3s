@@ -151,10 +151,10 @@ spec:
             - "bsidekiq"
           resources:
             requests:
-              memory: "542Mi"
+              memory: "842Mi"
               cpu: "51m"
             limits:
-              memory: "542Mi"
+              memory: "842Mi"
           livenessProbe:
             httpGet:
               path: /api/v1/health
