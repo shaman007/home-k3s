@@ -1,0 +1,14 @@
+{
+    "yaml.schemas": {
+        "file:///c%3A/Users/me/.vscode/extensions/ibm.zopeneditor-5.5.0/resources/zapp-schema-1.4.0.json": [
+            "zapp.yaml"
+        ],
+        "file:///c%3A/Users/me/.vscode/extensions/ibm.zopeneditor-5.5.0/resources/zcodeformat-schema-0.0.1.json": [
+            "zcodeformat.yaml"
+        ],
+        "kubernetes://schema/apps/v1@deployment": [
+            "file:///c%3A/Users/me/Documents/GitHub/home-k3s/dawarich/dawarich-deploy.yaml",
+            "file:///c%3A/Users/me/Documents/GitHub/home-k3s/dawarich/dawarich-external-secrets.yaml"
+        ]
+    }
+}
