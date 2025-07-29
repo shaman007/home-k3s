@@ -11,58 +11,50 @@ data:
     type = file;
     filename = "/var/log/mail.log"
   history: |
-    history_redis {
-      servers = "redis-master.redis.svc.cluster.local:6379";
-      #write_servers = "redis-master.redis.svc.cluster.local:6379";
-      .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
-      key_prefix = "rs_history"; # Default key name
-      nrows = 200000; # Default rows limit
-      compress = true; # Use zstd compression when storing data in redis
-      subject_privacy = false; # subject privacy is off
-      .include(try=true,priority=5) "${DBDIR}/dynamic/history_redis.conf"
-      .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/history_redis.conf"
-      .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/history_redis.conf"
-    }
+    servers = "redis-master.redis.svc.cluster.local:6379";
+    #write_servers = "redis-master.redis.svc.cluster.local:6379";
+    #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
+    key_prefix = "rs_history"; # Default key name
+    nrows = 200000; # Default rows limit
+    compress = true; # Use zstd compression when storing data in redis
+    subject_privacy = false; # subject privacy is off
+    .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/history_redis.conf"
+
   greylist: |
-    greylist {
-      enabled = true;
-      # Search "example.com" and "mail.example.com" for "mx.out.mail.example.com":
-      whitelist_domains_url = [
-      "$LOCAL_CONFDIR/local.d/greylist-whitelist-domains.inc",
-      "$LOCAL_CONFDIR/local.d/maps.d/greylist-whitelist-domains.inc",
-      ];
-      expire = 365d; # 1 day by default
-      timeout = 5min; # 5 minutes by default
-      key_prefix = "rg"; # default hash name
-      max_data_len = 10k; # default data limit to hash
-      message = "Try again later"; # default greylisted message
-      #symbol = "GREYLIST"; # Symbol to insert
-      action = "soft reject"; # default greylisted action
-      ipv4_mask = 19; # Mask bits for ipv4
-      ipv6_mask = 64; # Mask bits for ipv6
-      servers = "redis-master.redis.svc.cluster.local:6379";
-      write_servers = "redis-master.redis.svc.cluster.local:6379";
-      .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
-    }
+    enabled = true;
+    # Search "example.com" and "mail.example.com" for "mx.out.mail.example.com":
+    whitelist_domains_url = [
+    "$LOCAL_CONFDIR/local.d/greylist-whitelist-domains.inc",
+    "$LOCAL_CONFDIR/local.d/maps.d/greylist-whitelist-domains.inc",
+    ];
+    expire = 365d; # 1 day by default
+    timeout = 5min; # 5 minutes by default
+    key_prefix = "rg"; # default hash name
+    max_data_len = 10k; # default data limit to hash
+    message = "Try again later"; # default greylisted message
+    #symbol = "GREYLIST"; # Symbol to insert
+    action = "soft reject"; # default greylisted action
+    ipv4_mask = 19; # Mask bits for ipv4
+    ipv6_mask = 64; # Mask bits for ipv6
+    servers = "redis-master.redis.svc.cluster.local:6379";
+    write_servers = "redis-master.redis.svc.cluster.local:6379";
   neural: |
-    neural {
-      #servers = 127.0.0.1:6379; # Redis server to store learning data and ANN
-      enabled = true
-      servers = "redis-master.redis.svc.cluster.local:6379";
-      write_servers = "redis-master.redis.svc.cluster.local:6379";
-      .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
-      train {
-        max_trains = 1k; # Number of trains per epoch
-        max_usages = 20; # Number of learn iterations while ANN data is valid
-        learning_rate = 0.01; # Rate of learning (Torch only)
-        max_iterations = 25; # Maximum iterations of learning (Torch only)
-      }
-      timeout = 20; # Increase redis timeout
-      # Legacy support
-      .include(try=true,priority=5) "${DBDIR}/dynamic/fann_redis.conf"
-      .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/fann_redis.conf"
-      .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/fann_redis.conf"
-      }
+    #servers = 127.0.0.1:6379; # Redis server to store learning data and ANN
+    enabled = true
+    servers = "redis-master.redis.svc.cluster.local:6379";
+    write_servers = "redis-master.redis.svc.cluster.local:6379";
+    #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
+    train {
+      max_trains = 1k; # Number of trains per epoch
+      max_usages = 20; # Number of learn iterations while ANN data is valid
+      learning_rate = 0.01; # Rate of learning (Torch only)
+      max_iterations = 25; # Maximum iterations of learning (Torch only)
+    }
+    timeout = 20; # Increase redis timeout
+    # Legacy support
+    .include(try=true,priority=5) "${DBDIR}/dynamic/fann_redis.conf"
+    .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/fann_redis.conf"
+    .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/fann_redis.conf"
   statistics: |
     classifier "bayes" {
      tokenizer {
@@ -78,7 +70,7 @@ data:
     backend = "redis";
     servers = "redis-master.redis.svc.cluster.local:6379";
     write_servers = "redis-master.redis.svc.cluster.local:6379";
-    .include(try=true,priority=1) "/etc/rspamd/modules.d/redis.conf"
+    #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
     min_learns = 10;
 
     statfile {
@@ -107,7 +99,6 @@ data:
     .include(try=true; priority=1) "$LOCAL_CONFDIR/local.d/statistic.conf"
     .include(try=true; priority=10) "$LOCAL_CONFDIR/override.d/statistic.conf"
   dkim_signing: |
-    dkim_signing {
     enabled = true;
     # If false, messages with empty envelope from are not signed
     allow_envfrom_empty = true;
@@ -150,9 +141,7 @@ data:
         ]
      }
     }
-          }
   antivirus: |
-    antivirus {
     enabled = true;
       clamav {
         action = "reject";
@@ -166,7 +155,6 @@ data:
         log_clean = true;
         servers = "clamav.clamav.svc.cluster.local:3200";
       }
-    }
   rspamd: |
     .include "$CONFDIR/common.conf"
     options {
