@@ -27,10 +27,10 @@ spec:
               - key: logging
                 path: logging.inc
         - name: worker-cf
-          configMap:
-            name: rspamd-cf
+          secret:
+            secretName: workercontroller
             items:
-              - key: worker-controller
+              - key: workercontroller
                 path: worker-controller.inc
         - name: redis-cf
           secret:
