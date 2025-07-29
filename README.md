@@ -50,8 +50,6 @@ Old foto:
 ## TODO
 
 * Network policies that make sence
-* Decide if I want separate DB's for separate applications or not, finally
-* Move to Graphana Alloy
 
 ## Dokerfiles
 
