@@ -1,0 +1,99 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: config-synapse
+  namespace: matrix
+  labels:
+    tier: matrix
+spec:
+  refreshInterval: "15m"
+  secretStoreRef:
+    name: vault-secret-store
+    kind: SecretStore
+  target:
+    name: config-synapse
+    template:
+      engineVersion: v2
+      data:
+        config.yaml: |
+          server_name: "shaman007.com"
+          public_baseurl: "https://shaman007.com"
+          data_dir: /data
+          signing_key_path: /data/shaman007.com.signing.key
+          media_store_path: /data/media_store
+          uploads_path: /data/uploads
+          pid_file: /data/homeserver.pid
+
+          enable_registration: true
+          enable_registration_without_verification: true
+          #registration:
+          #  enabled: true
+          #  registration_requires_token: false
+          #  enable_registration_without_verification: true
+
+          #registration_shared_secret: "{{ .registration_shared_secret }}"
+          allow_public_rooms_over_federation: true
+
+          experimental_features:
+            msc3861_enabled: true
+            msc3886_enabled: true
+            msc2965_enabled: true
+            msc3814_enabled: true
+            msc3890_enabled: true
+            msc2815_enabled: true
+            msc2697_enabled: false
+            msc3391_enabled: true
+            msc3030_enabled: true  # optional, for fallback keys
+            msc3202_device_name_changes: true  # optional
+          trusted_key_servers:
+            - server_name: "matrix.org"
+
+          listeners:
+            - port: 6167
+              bind_addresses: ["0.0.0.0"]
+              type: http
+              tls: false
+              x_forwarded: true
+              resources:
+                - names: [client, federation]
+
+          database:
+            name: sqlite3
+            args:
+              database: /data/homeserver.db
+            #name: psycopg2
+            #args:
+            #  user: postgres
+            #  password: azcx4jVrFN
+            #  database: synapse
+            #  host: postgres-postgresql.db.svc.cluster.local
+            #  cp_min: 5
+            #  cp_max: 10
+
+          macaroon_secret_key: "{{ .macaroon_secret_key }}"
+          form_secret: "{{ .form_secret }}"
+          report_stats: false
+
+          app_service_config_files: []
+
+          loggers:
+            synapse.storage:
+              level: DEBUG
+            synapse.handlers.device:
+              level: DEBUG
+            synapse.crypto:
+              level: DEBUG
+  data:
+    - secretKey: registration_shared_secret
+      remoteRef:
+        key: synapse
+        property: registration_shared_secret
+    - secretKey: macaroon_secret_key
+      remoteRef:
+        key: synapse
+        property: macaroon_secret_key
+    - secretKey: form_secret
+      remoteRef:
+        key: synapse
+        property: form_secret
