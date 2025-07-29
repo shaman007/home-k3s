@@ -26,6 +26,12 @@ spec:
             items:
               - key: logging
                 path: logging.inc
+        - name: worker-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: worker-controller
+                path: worker-controller.inc
         - name: redis-cf
           secret:
             secretName: rspamd-redis
@@ -86,9 +92,11 @@ spec:
         - name: rspamd-local
           persistentVolumeClaim:
             claimName: rspamd-local
+        - name: logs
+          emptyDir: {}
       containers:
         - name: rspamd
-          image: harbor.andreybondarenko.com/library/rspamd:latest
+          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:latest
           resources:
             requests:
               cpu: "10m"
@@ -99,8 +107,8 @@ spec:
             - containerPort: 11333
             - containerPort: 11334
           securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
           env:
             - name: REDIS_PASSWORD
               valueFrom:
@@ -111,21 +119,24 @@ spec:
             - name: rspamd-cf
               mountPath: /etc/rspamd/local.d/logging.inc
               subPath: logging.inc
+            - name: worker-cf
+              mountPath: /etc/rspamd/local.d/worker-controller.inc
+              subPath: worker-controller.inc
             - name: redis-cf
-              mountPath: /etc/rspamd/modules.d/redis.conf
+              mountPath: /etc/rspamd/local.d/redis.conf
               readOnly: true
               subPath: redis.conf
             - name: history-cf
-              mountPath: /etc/rspamd/modules.d/history_redis.conf
+              mountPath: /etc/rspamd/local.d/history_redis.conf
               subPath: history_redis.conf
             - name: greylist-cf
-              mountPath: /etc/rspamd/modules.d/greylist.conf
+              mountPath: /etc/rspamd/local.d/greylist.conf
               subPath: greylist.conf
             - name: neural-cf
-              mountPath: /etc/rspamd/modules.d/neural.conf
+              mountPath: /etc/rspamd/local.d/neural.conf
               subPath: neural.conf
             - name: antivirus-cf
-              mountPath: /etc/rspamd/modules.d/antivirus.conf
+              mountPath: /etc/rspamd/local.d/antivirus.conf
               subPath: antivirus.conf
             - name: statistics-cf
               mountPath: /etc/rspamd/statistics.conf
@@ -133,7 +144,7 @@ spec:
               mountPath: /etc/rspamd/rspamd.conf
               subPath: rspamd.conf
             - name: dkimsigning-cf
-              mountPath: /etc/rspamd/modules.d/dkim_signing.conf
+              mountPath: /etc/rspamd/local.d/dkim_signing.conf
               subPath: dkim_signing.conf
             - name: privater-cf
               mountPath: /var/lib/rspamd/dkim/andreybondarenko.key
@@ -143,5 +154,14 @@ spec:
               mountPath: /var/lib/rspamd
             - name: mail-lh
               mountPath: /mail
+            - name: logs
+              mountPath: /var/log/
+      initContainers:
+        - name: fix-perms
+          image: busybox
+          command: ["sh", "-c", "chown -R 11333:11333 /var/lib/rspamd && chmod 755 /var/lib/rspamd"]
+          volumeMounts:
+            - name: rspamd-local
+              mountPath: /var/lib/rspamd
       nodeSelector:
         kubernetes.io/hostname: m.k8s.my.lan
