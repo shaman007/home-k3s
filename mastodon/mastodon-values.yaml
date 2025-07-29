@@ -138,6 +138,7 @@ mastodon:
           - ingress,4
           - mailers,2
           - pull
+          - fasp
           # Make sure the scheduler queue only exists once and with a worker that has 1 replica.
           - scheduler
         image:
