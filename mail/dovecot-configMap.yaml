@@ -8,9 +8,9 @@ metadata:
     tier: mail
 data:
   config: |
+    dovecot_config_version = 2.4.0
+    dovecot_storage_version = 2.4.0
     protocols = imap lmtp
-      dict {
-      }
     service stats {
       unix_listener stats-reader {
         user = dovecot
@@ -31,78 +31,106 @@ data:
     !include conf.d/*.conf
     !include_try local.conf
   10-auth: |
-    auth_username_format = %n
-    auth_mechanisms = plain
-    passdb {
-      driver = passwd-file
-      args = /etc/dovecot/passwd
+    auth_username_format = %{user | username}
+    auth_mechanisms = PLAIN
+
+    passdb passwd-file {
+      passwd_file_path = /etc/dovecot/passwd
     }
-    userdb {
-        driver = passwd
+    userdb passwd {
+      # optional overrides here
     }
   10-mail: |
-    mail_location = mbox:/var/mail/boxes/%u:INBOX=/var/mail/%u
-    namespace inbox {
-      inbox = yes
-    }
-    mbox_write_locks = fcntl
-    mbox_write_locks = fcntl
+   # Dovecot 2.4+
+   mail_driver = mbox
+   mail_path = /var/mail/boxes/%{user | username}
+   mail_inbox_path = /var/mail/%{user | username}
+
+   namespace inbox {
+     inbox = yes
+   }
+
+   # keep one line only (you had it twice)
+   mbox_write_locks = fcntl
+
   10-master: |
-    service imap-login {
-      inet_listener imap {
-      }
-      inet_listener imaps {
-      }
-    }
-    service pop3-login {
-      inet_listener pop3 {
-      }
-      inet_listener pop3s {
-      }
-    }
-    service lmtp {
-        inet_listener lmtp {
-        address = *
-        port = 24
-        }
-    }
-    service imap {
-    }
-    service pop3 {
-    }
-    service auth {
-        unix_listener auth-userdb {
-      }
+   ## 10-master.conf — Dovecot 2.4
 
-      inet_listener auth {
-      address = *
-      port = 1234
-      }
-    }
-    service auth-worker {
-    }
+   service imap-login {
+     inet_listener imap {
+       port = 143
+     }
+     inet_listener imaps {
+       port = 993
+       ssl = yes
+     }
+   }
 
-    service dict {
-      unix_listener dict {
-      }
-    }
+   service pop3-login {
+     inet_listener pop3 {
+       port = 110
+     }
+     inet_listener pop3s {
+       port = 995
+       ssl = yes
+     }
+   }
+
+   service lmtp {
+     inet_listener lmtp {
+       port = 24
+     }
+   }
+
+   service imap {
+   }
+
+   service pop3 {
+   }
+
+   service auth {
+     unix_listener auth-userdb {
+       mode = 0600
+     }
+     inet_listener auth {
+       port = 1234
+     }
+   }
+
+   service auth-worker {
+   }
+
+   service dict {
+     unix_listener dict {
+       mode = 0600
+     }
+   }
+
+
   10-ssl: |
     ssl = required
-    ssl_cert = </var/certs/tls.crt
-    ssl_key = </var/certs/tls.key
+    ssl_server_cert_file = /var/certs/tls.crt
+    ssl_server_key_file  = /var/certs/tls.key
   15-lda: |
     protocol lda {
-      mail_plugins = $mail_plugins sieve
+      mail_plugins {
+        sieve = yes
+      }
     }
+
   20-lmtp: |
     protocol lmtp {
-      mail_plugins = $mail_plugins sieve
+      mail_plugins {
+        sieve = yes
+      }
     }
   20-managesieve: |
     protocol sieve {
       mail_max_userip_connections = 128
     }
   90-sieve: |
-    plugin {
-      sieve = file:~/sieve;active=/var/mail/sieve/%u/.dovecot.sieve
+    sieve_script personal {
+      driver = file
+      path = ~/sieve
+      active_path = /var/mail/sieve/%{user}/.dovecot.sieve
     }
