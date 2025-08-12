@@ -18,7 +18,7 @@ Old foto:
 
 ## Works
 
-* Mail with Dovecot + Postfix + Rspamd. SIEVE is not automated, because Mozilla is too lazy to fix Thunderbird plugin
+* Mail with Dovecot + Postfix + Rspamd. ManageSieve is enabled.
 * Bitwarden self-hosted. Beware of extreme memory usage!
 * Tiny-Tiny RSS for old skulls (OBSOTELE)
 * Minecraft for resource consumption
