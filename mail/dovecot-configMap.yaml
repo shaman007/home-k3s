@@ -10,7 +10,9 @@ data:
   config: |
     dovecot_config_version = 2.4.0
     dovecot_storage_version = 2.4.0
-    protocols = imap lmtp
+    protocols = imap lmtp sieve
+    ssl = yes
+    auth_allow_cleartext = yes
     service stats {
       unix_listener stats-reader {
         user = dovecot
@@ -108,7 +110,7 @@ data:
 
 
   10-ssl: |
-    ssl = required
+    ssl = yes
     ssl_server_cert_file = /var/certs/tls.crt
     ssl_server_key_file  = /var/certs/tls.key
   15-lda: |
@@ -125,12 +127,19 @@ data:
       }
     }
   20-managesieve: |
+    service managesieve-login {
+      inet_listener sieve {
+      port = 4190
+      }
+    }
+    service managesieve {
+    }
     protocol sieve {
       mail_max_userip_connections = 128
     }
   90-sieve: |
     sieve_script personal {
       driver = file
-      path = ~/sieve
+      path = /var/mail/sieve/%{user}
       active_path = /var/mail/sieve/%{user}/.dovecot.sieve
     }

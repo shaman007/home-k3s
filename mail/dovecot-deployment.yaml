@@ -99,6 +99,7 @@ spec:
             - containerPort: 24
             - containerPort: 1234
             - containerPort: 993
+            - containerPort: 4190
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
