@@ -23,11 +23,11 @@ data:
       mode = 0666
       }
     }
-    log_path = /var/log/maillog
+    log_path = /dev/stdout
     # If not set, use the value from log_path
-    info_log_path = /var/log/maillog
+    info_log_path = /dev/stdout
     # If not set, use the value from info_log_path
-    debug_log_path = /var/log/maillog
+    debug_log_path = /dev/stdout
     !include conf.d/*.conf
     !include_try local.conf
   10-auth: |
