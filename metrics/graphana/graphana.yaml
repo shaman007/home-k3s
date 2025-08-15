@@ -51,6 +51,11 @@ spec:
               memory: 198Mi
             limits:
               memory: 198Mi
+          env:
+            - name: GF_SERVER_ROOT_URL
+              value: "http://m.k8s.my.lan:3000"
+            - name: GF_AUTH_GENERIC_OAUTH_ENABLED
+              value: "true"
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
