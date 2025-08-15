@@ -40,7 +40,7 @@ metadata:
 spec:
   serviceName: keycloak-discovery
   # Run with one replica to save resources, or with two replicas to allow for rolling updates for configuration changes
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: keycloak
