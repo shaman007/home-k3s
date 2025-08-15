@@ -37,10 +37,11 @@ spec:
           value: 100Mi
         - name: metrics.resources.limits.memory
           value: 100Mi
-        - name: image.repository
-          value: harbor.andreybondarenko.com/dockerhub
-        - name: metrics.image.registry
-          value: harbor.andreybondarenko.com/dockerhub
+        # it's broken
+        #- name: image.repository
+        #  value: harbor.andreybondarenko.com/dockerhub
+        #- name: metrics.image.registry
+        #  value: harbor.andreybondarenko.com/dockerhub
     chart: postgresql
   destination:
     server: 'https://kubernetes.default.svc'
