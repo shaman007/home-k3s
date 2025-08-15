@@ -56,6 +56,10 @@ spec:
               value: "http://m.k8s.my.lan:3000"
             - name: GF_AUTH_GENERIC_OAUTH_ENABLED
               value: "true"
+            - name: GF_AUTH_OAUTH_ALLOW_INSECURE_EMAIL_LOOKUP
+              value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
+              value: "true"
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
