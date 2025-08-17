@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: 'https://kubernetes.github.io/ingress-nginx'
-    targetRevision: 4.12.3
+    targetRevision: 4.13.1
     helm:
       parameters:
         - name: controller.allowSnippetAnnotations
@@ -23,6 +23,8 @@ spec:
           value: 229Mi
         - name: controller.resources.limits.memory
           value: 229Mi
+        - name: controller.config.strict-validate-path-type
+          value: 'false'
     chart: ingress-nginx
   destination:
     server: 'https://kubernetes.default.svc'
