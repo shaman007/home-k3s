@@ -42,6 +42,9 @@ spec:
         - name: run
           emptyDir:
             sizeLimit: 10Mi
+        - name: sessions
+          emptyDir:
+            sizeLimit: 10Mi
         - name: tmp
           emptyDir:
             sizeLimit: 1512Mi
@@ -85,6 +88,8 @@ spec:
               mountPath: /nextcloud
             - name: varrun
               mountPath: /var/run/php
+            - name: sessions
+              mountPath: /var/lib/php/sessions
             - name: run
               mountPath: /run
             - name: tmp
