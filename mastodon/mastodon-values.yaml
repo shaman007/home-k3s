@@ -24,8 +24,6 @@ mastodon:
   hooks:
     dbMigrate:
       enabled: true
-    assetsPrecompile:
-      enabled: true
   # Custom labels to add to kubernetes resources
   # labels:
   cron:
