@@ -20,9 +20,9 @@ spec:
         - name: controller.resources.requests.cpu
           value: 70m
         - name: controller.resources.requests.memory
-          value: 229Mi
+          value: 350Mi
         - name: controller.resources.limits.memory
-          value: 229Mi
+          value: 350Mi
         - name: controller.config.strict-validate-path-type
           value: 'false'
     chart: ingress-nginx
