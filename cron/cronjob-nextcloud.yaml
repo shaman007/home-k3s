@@ -12,7 +12,7 @@ spec:
       template:
         spec:
           containers:
-            - name: previewsa
+            - name: previews
               image: harbor.andreybondarenko.com/library/php:latest
               command:
                 - /bin/sh
