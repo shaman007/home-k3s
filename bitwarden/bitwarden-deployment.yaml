@@ -53,7 +53,7 @@ spec:
               value: "25"
             - name: globalSettings__mail__smtp__ssl
               value: "false"
-          image: harbor.andreybondarenko.com/dockerhub/bitwarden/self-host:beta
+          image: harbor.andreybondarenko.com/github/bitwarden/self-host:beta
           name: bitwarden
           ports:
             - containerPort: 8080
@@ -72,23 +72,23 @@ spec:
               name: keys-lh
             - name: logs
               mountPath: /var/log/bitwarden
-        - name: promtail
-          image: harbor.andreybondarenko.com/dockerhub/grafana/promtail:latest
-          args:
-            - -config.file=/etc/promtail/promtail.yaml
-          resources:
-            requests:
-              cpu: "177m"
-              memory: "107Mi"
-            limits:
-              memory: "107Mi"
-          volumeMounts:
-            - name: promtail-config
-              mountPath: /etc/promtail
-            - mountPath: /etc/bitwarden
-              name: bitwarden-lh
-            - name: logs
-              mountPath: /var/log/bitwarden
+        #- name: promtail
+        #  image: harbor.andreybondarenko.com/dockerhub/grafana/promtail:latest
+        #  args:
+        #    - -config.file=/etc/promtail/promtail.yaml
+        #  resources:
+        #    requests:
+        #      cpu: "177m"
+        #      memory: "107Mi"
+        #    limits:
+        #      memory: "107Mi"
+        #  volumeMounts:
+        #    - name: promtail-config
+        #      mountPath: /etc/promtail
+        #    - mountPath: /etc/bitwarden
+        #      name: bitwarden-lh
+        #    - name: logs
+        #      mountPath: /var/log/bitwarden
       volumes:
         - name: bitwarden-lh
           persistentVolumeClaim:
