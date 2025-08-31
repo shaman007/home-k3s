@@ -36,11 +36,18 @@ spec:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
           auth_enabled: false
+          limits_config:
+            retention_period: 336h
+            max_label_names_per_series: 30
+          compactor:
+            working_directory: /var/loki/compactor
+            retention_enabled: true
+            delete_request_store: filesystem
+            compaction_interval: 10m
           commonConfig:
             replication_factor: 1
           storage:
             type: filesystem
-
           schemaConfig:
             configs:
               - from: "2024-01-01"
@@ -53,9 +60,7 @@ spec:
         singleBinary:
           replicas: 1
         table_manager:
-          enabled: true
-          retention_deletes_enabled: true
-          retention_period: 372h
+          enabled: false
         read:
           replicas: 0
         write:
