@@ -47,7 +47,7 @@ mastodon:
   # -- Enables "Limited Federation Mode" for more detauls see: https://docs.joinmastodon.org/admin/config/#limited_federation_mode
   limitedFederationMode: false
   assets:
-    precompile: false
+    precompile: true
     env:
       RAILS_ENV: production
       NODE_ENV: production
