@@ -31,7 +31,7 @@ spec:
           env:
             # valid for 4 minutes
             - name: PLEX_CLAIM
-              value: claim-zr-4z184Z4QooAMgM12M
+              value: claim-_UXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
             # DOES NOTHING
             - name: ADVERTISE_IP
               value: "http://192.168.1.111:32400/"
@@ -46,6 +46,9 @@ spec:
               mountPath: /data
             - name: plex-conf-lh2
               mountPath: /config
+            - name: dev-dri
+              mountPath: /dev/dri
+              readOnly: false
           ports:
             - containerPort: 32400
             - containerPort: 1900
@@ -69,3 +72,7 @@ spec:
         - name: plex-lib
           persistentVolumeClaim:
             claimName: plex-lib
+        - name: dev-dri
+          hostPath:
+            path: /dev/dri
+            type: Directory
