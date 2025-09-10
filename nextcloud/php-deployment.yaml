@@ -51,6 +51,10 @@ spec:
         - name: nextcloud-lh
           persistentVolumeClaim:
             claimName: nextcloud-lh
+        - name: dev-dri
+          hostPath:
+            path: /dev/dri
+            type: Directory
       affinity:
         # Prevent scheduling on a specific node
         nodeAffinity:
@@ -94,6 +98,9 @@ spec:
               mountPath: /run
             - name: tmp
               mountPath: /tmp
+            - name: dev-dri
+              mountPath: /dev/dri
+              readOnly: false
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
