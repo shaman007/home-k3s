@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.37.1
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:latest
           args:
             - query
             - --log.level=info
