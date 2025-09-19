@@ -23,6 +23,8 @@ spec:
         runAsUser: 33
         runAsGroup: 33
         fsGroup: 33
+        supplementalGroups:
+          - 993
       volumes:
         - name: phpini
           secret:
@@ -104,6 +106,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            capabilities:
+              add: ["SYS_ADMIN"]
           resources:
             requests:
               cpu: "27m"
