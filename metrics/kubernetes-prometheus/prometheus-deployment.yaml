@@ -49,7 +49,7 @@ spec:
             limits:
               memory: 2864Mi
         - name: thanos
-          image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.37.2
+          image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.39.1
           args:
             - "sidecar"
             - "--tsdb.path=/prometheus"
