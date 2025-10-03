@@ -29,6 +29,8 @@ spec:
           value: 46m
         - name: image.registry
           value: harbor.andreybondarenko.com/dockerhub
+        - name: replica.replicaCount
+          value: '1'
     chart: redis
   destination:
     server: 'https://kubernetes.default.svc'
