@@ -59,13 +59,13 @@ spec:
             - containerPort: 9000
           volumeMounts:
             - name: phpini
-              mountPath: /etc/php/8.2/fpm/pool.d/php.ini
+              mountPath: /etc/php/8.4/fpm/pool.d/php.ini
               subPath: php.ini
             - name: phpini
-              mountPath: /etc/php/8.2/fpm/php.ini
+              mountPath: /etc/php/8.4/fpm/php.ini
               subPath: php.ini
             - name: wwwconf
-              mountPath: /etc/php/8.2/fpm/pool.d/www.conf
+              mountPath: /etc/php/8.4/fpm/pool.d/www.conf
               subPath: www.conf
             - name: wordpress-lh
               mountPath: /code
