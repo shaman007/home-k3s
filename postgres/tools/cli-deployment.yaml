@@ -36,3 +36,10 @@ spec:
               value: "ttrss"
             - name: OUTPUT_DIR
               value: "/data"
+          volumeMounts:
+            - name: data-export
+              mountPath: "/data"
+      volumes:
+        - name: data-export
+          persistentVolumeClaim:
+            claimName: data-postgres-postgresql-0
