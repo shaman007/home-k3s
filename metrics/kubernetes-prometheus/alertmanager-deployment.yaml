@@ -21,7 +21,7 @@ spec:
           args:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"
-            - "--web.external-url=http://m.k8s.my.lan:9093"
+            - "--web.external-url=http://w386.k8s.my.lan:9093"
           ports:
             - name: alertmanager
               containerPort: 9093

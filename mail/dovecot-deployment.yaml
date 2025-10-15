@@ -150,4 +150,4 @@ spec:
             limits:
               memory: "238Mi"
       nodeSelector:
-        kubernetes.io/hostname: m.k8s.my.lan
+        kubernetes.io/hostname: w386.k8s.my.lan

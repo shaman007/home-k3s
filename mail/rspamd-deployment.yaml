@@ -164,4 +164,4 @@ spec:
             - name: rspamd-local
               mountPath: /var/lib/rspamd
       nodeSelector:
-        kubernetes.io/hostname: m.k8s.my.lan
+        kubernetes.io/hostname: w386.k8s.my.lan
