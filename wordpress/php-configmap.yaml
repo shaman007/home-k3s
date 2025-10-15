@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: wordpress
-  name: php-fpm-config-template
+  name: php-fpm-config
 data:
   www.conf: |
     [www]

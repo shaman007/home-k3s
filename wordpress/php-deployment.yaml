@@ -25,17 +25,8 @@ spec:
         fsGroup: 33
       volumes:
         - name: phpini
-          secret:
-            secretName: php-fpm-config
-            items:
-              - key: php.ini
-                path: php.ini
-        - name: wwwconf
           configMap:
-            name: php-fpm-config-template
-            items:
-              - key: www.conf
-                path: www.conf
+            name: php-fpm-config
         - name: wordpress-lh
           persistentVolumeClaim:
             claimName: wordpress-lh
@@ -64,7 +55,7 @@ spec:
             - name: phpini
               mountPath: /etc/php/8.4/fpm/php.ini
               subPath: php.ini
-            - name: wwwconf
+            - name: phpini
               mountPath: /etc/php/8.4/fpm/pool.d/www.conf
               subPath: www.conf
             - name: wordpress-lh
