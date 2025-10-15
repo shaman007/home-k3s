@@ -12,4 +12,4 @@ spec:
     - protocol: TCP
       port: 9093
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.209
