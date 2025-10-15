@@ -17,4 +17,4 @@ spec:
   selector:
     app: minio
   externalIPs:
-    - 192.168.1.112
+    - 192.168.1.209
