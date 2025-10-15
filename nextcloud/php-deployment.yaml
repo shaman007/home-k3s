@@ -19,25 +19,16 @@ spec:
         app: nextcloud
         tier: backend
     spec:
-      securityContext:
-        runAsUser: 33
-        runAsGroup: 33
-        fsGroup: 33
-        supplementalGroups:
-          - 993
+      #securityContext:
+      #  runAsUser: 33
+      #  runAsGroup: 33
+      #  fsGroup: 33
+      #  supplementalGroups:
+      #    - 993
       volumes:
         - name: phpini
-          secret:
-            secretName: php-fpm-config
-            items:
-              - key: php.ini
-                path: php.ini
-        - name: wwwconf
           configMap:
-            name: php-fpm-config-template
-            items:
-              - key: www.conf
-                path: www.conf
+            name: php-fpm-config
         - name: varrun
           emptyDir:
             sizeLimit: 10Mi
@@ -87,7 +78,7 @@ spec:
             - name: phpini
               mountPath: /etc/php/8.4/fpm/php.ini
               subPath: php.ini
-            - name: wwwconf
+            - name: phpini
               mountPath: /etc/php/8.4/fpm/pool.d/www.conf
               subPath: www.conf
             - name: nextcloud-lh
@@ -103,11 +94,11 @@ spec:
             - name: dev-dri
               mountPath: /dev/dri
               readOnly: false
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              add: ["SYS_ADMIN"]
+          #securityContext:
+          #  allowPrivilegeEscalation: false
+          #  readOnlyRootFilesystem: true
+          #  capabilities:
+          #    add: ["SYS_ADMIN"]
           resources:
             requests:
               cpu: "27m"
