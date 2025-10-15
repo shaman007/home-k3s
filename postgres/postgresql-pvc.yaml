@@ -3,7 +3,22 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   namespace: db
-  name: data-postgres-postgresql-0
+  name: data-postgres
+  labels:
+    storage.k8s.io/name: longhorn
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 25Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: db
+  name: data-export
   labels:
     storage.k8s.io/name: longhorn
 spec:
