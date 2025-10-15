@@ -34,7 +34,7 @@ spec:
               value: claim-_UXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
             # DOES NOTHING
             - name: ADVERTISE_IP
-              value: "http://192.168.1.111:32400/"
+              value: "http://192.168.1.209:32400/"
           resources:
             requests:
               memory: 2600Mi
