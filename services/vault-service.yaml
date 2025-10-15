@@ -15,9 +15,9 @@ spec:
       name: http-internal
       protocol: TCP
   selector:
-    app.kubernetes.io/component: server
+    component: server
     app.kubernetes.io/instance: vault
     app.kubernetes.io/name: vault
-    app.kubernetes.io/part-of: vault
+    #app.kubernetes.io/part-of: vault
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.209
