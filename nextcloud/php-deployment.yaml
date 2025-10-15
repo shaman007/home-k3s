@@ -19,12 +19,12 @@ spec:
         app: nextcloud
         tier: backend
     spec:
-      #securityContext:
-      #  runAsUser: 33
-      #  runAsGroup: 33
-      #  fsGroup: 33
-      #  supplementalGroups:
-      #    - 993
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 33
+        supplementalGroups:
+          - 993
       volumes:
         - name: phpini
           configMap:
@@ -94,11 +94,11 @@ spec:
             - name: dev-dri
               mountPath: /dev/dri
               readOnly: false
-          #securityContext:
-          #  allowPrivilegeEscalation: false
-          #  readOnlyRootFilesystem: true
-          #  capabilities:
-          #    add: ["SYS_ADMIN"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              add: ["SYS_ADMIN"]
           resources:
             requests:
               cpu: "27m"
