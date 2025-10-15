@@ -25,4 +25,4 @@ spec:
       port: 11335
       name: rspamd-fuzzy
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.209

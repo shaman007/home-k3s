@@ -14,4 +14,4 @@ spec:
   sessionAffinity: None
   type: LoadBalancer
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.209

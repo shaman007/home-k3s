@@ -36,7 +36,7 @@ spec:
       name: unifi-5514
       protocol: UDP
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.209
 
   selector:
     app: unifi
