@@ -131,13 +131,13 @@ data:
     bcmath.scale = 0
     [browscap]
     [redis]
-    host = redis-master.redis.svc.cluster.local
+    host = redis.nextcloud.svc.cluster.local
     port = 6379
     persistent = 1
     timeout = 2.5
     [Session]
     session.save_handler = redis
-    session.save_path = "tcp://redis-master.redis.svc.cluster.local:6379/?auth[]={{ .password }}&prefix=nextcloud_PHPREDIS_SESSION:"
+    session.save_path = "tcp://redis.nextcloud.svc.cluster.local:6379"
     [Assertion]
     zend.assertions = -1
     [COM]
