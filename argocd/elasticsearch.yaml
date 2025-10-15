@@ -1,45 +1,107 @@
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: elasticsearch
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: registry-1.docker.io/bitnamicharts
-    targetRevision: 21.4.8
-    helm:
-      parameters:
-        - name: global.imageRegistry
-          value: harbor.andreybondarenko.com/dockerhub
-        - name: global.security.allowInsecureImages
-          value: 'true'
-        - name: coordinating.resources.requests.cpu
-          value: 52m
-        - name: coordinating.resources.requests.memory
-          value: 779Mi
-        - name: coordinating.resources.limits.memory
-          value: 779Mi
-        - name: master.resources.requests.cpu
-          value: 45m
-        - name: master.resources.requests.memory
-          value: 793Mi
-        - name: master.resources.limits.memory
-          value: 793Mi
-        - name: data.resources.requests.cpu
-          value: 25m
-        - name: data.resources.requests.memory
-          value: 2213Mi
-        - name: data.resources.limits.memory
-          value: 2213Mi
-        - name: ingest.resources.requests.cpu
-          value: 50m
-        - name: ingest.resources.requests.memory
-          value: 817Mi
-        - name: ingest.resources.limits.memory
-          value: 817Mi
-    chart: elasticsearch
-  destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: elastic
+#DEPRECATED - Using Bitnami chart for Elasticsearch is deprecated, it's no more maintained.
+
+
+# repo
+#helm repo add elastic https://helm.elastic.co
+#helm repo update
+#
+## install ECK operator (installs CRDs)
+#kubectl create ns elastic-system
+#helm install eck-operator elastic/eck-operator -n elastic-system
+#
+## wait for CRDs
+#kubectl get crds | grep elasticsearch.k8s.elastic.co
+#
+## now your stack
+#kubectl create ns elastic-stack
+#helm install es-quickstart elastic/eck-stack -n elastic-stack --set eck-kibana.enabled=false
+#
+#
+## namespace for your ES cluster
+#kubectl create ns elastic-stack
+#
+#
+#
+## create a 1-node dev cluster (edit storageClassName/resources as needed)
+#cat <<'YAML' | kubectl apply -n elastic-stack -f -
+#apiVersion: elasticsearch.k8s.elastic.co/v1
+#kind: Elasticsearch
+#metadata:
+#  name: es
+#spec:
+#  version: 8.15.0         # pick your desired 8.x
+#  nodeSets:
+#    - name: default
+#      count: 1
+#      config:
+#        node.roles: ["master","data","ingest","transform","ml"]
+#      podTemplate:
+#        spec:
+#          containers:
+#            - name: elasticsearch
+#              resources:
+#                requests: { cpu: "500m", memory: "2Gi" }
+#                limits:   { memory: "4Gi" }
+#      volumeClaimTemplates:
+#        - metadata:
+#            name: elasticsearch-data
+#          spec:
+#            accessModes: ["ReadWriteOnce"]
+#            storageClassName: longhorn   # <-- change to your StorageClass
+#            resources:
+#              requests:
+#                storage: 20Gi
+#YAML
+#
+## watch it come up
+#kubectl -n elastic-stack get pods -w
+#
+#
+#kubectl -n elastic-stack patch elasticsearch es --type=merge -p \
+#'{"spec":{"http":{"tls":{"selfSignedCertificate":{"disabled":true}}}}}'
+#---
+#apiVersion: argoproj.io/v1alpha1
+#kind: Application
+#metadata:
+#  name: elasticsearch
+#  namespace: argocd
+#spec:
+#  project: default
+#  source:
+#    repoURL: registry-1.docker.io/bitnamicharts
+#    targetRevision: 21.4.8
+#    helm:
+#      parameters:
+#        - name: global.imageRegistry
+#          value: harbor.andreybondarenko.com/dockerhub
+#        - name: global.security.allowInsecureImages
+#          value: 'true'
+#        - name: coordinating.resources.requests.cpu
+#          value: 52m
+#        - name: coordinating.resources.requests.memory
+#          value: 779Mi
+#        - name: coordinating.resources.limits.memory
+#          value: 779Mi
+#        - name: master.resources.requests.cpu
+#          value: 45m
+#        - name: master.resources.requests.memory
+#          value: 793Mi
+#        - name: master.resources.limits.memory
+#          value: 793Mi
+#        - name: data.resources.requests.cpu
+#          value: 25m
+#        - name: data.resources.requests.memory
+#          value: 2213Mi
+#        - name: data.resources.limits.memory
+#          value: 2213Mi
+#        - name: ingest.resources.requests.cpu
+#          value: 50m
+#        - name: ingest.resources.requests.memory
+#          value: 817Mi
+#        - name: ingest.resources.limits.memory
+#          value: 817Mi
+#    chart: elasticsearch
+#  destination:
+#    server: 'https://kubernetes.default.svc'
+#    namespace: elastic
+#
