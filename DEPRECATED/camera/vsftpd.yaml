@@ -36,7 +36,7 @@ spec:
           image: harbor.andreybondarenko.com/library/docker-vsftpd:latest
           env:
             - name: PASV_ADDRESS
-              value: 192.168.1.111
+              value: 192.168.1.209
             - name: LOG_STDOUT
               value: "true"
             - name: FTP_USER
@@ -90,4 +90,4 @@ spec:
       name: passv1
       port: 21111
   externalIPs:
-    - 192.168.1.111
+    - 192.168.1.209
