@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: chrome
-        image: harbor.andreybondarenko.com/google/zenika-hub/alpine-chrome:123
+        image: harbor.andreybondarenko.com/google/zenika-hub/alpine-chrome:124
         args:
           - --no-sandbox
           - --disable-gpu
@@ -24,11 +24,20 @@ spec:
           - --remote-debugging-address=0.0.0.0
           - --remote-debugging-port=9222
           - --hide-scrollbars
+          - --headless=new
+        volumeMounts:
+          - name: dshm
+            mountPath: /dev/shm
         ports:
         - containerPort: 9222
         resources:
           requests:
             cpu: 17m
-            memory: 304Mi
+            memory: 504Mi
           limits:
-            memory: 304Mi
+            memory: 504Mi
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
