@@ -40,9 +40,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "3202Mi"
+              memory: "3300Mi"
             limits:
-              memory: "3202Mi"
+              memory: "3309Mi"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -65,9 +65,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "989Mi"
+              memory: "1016Mi"
             limits:
-              memory: "989Mi"
+              memory: "1016Mi"
       volumes:
         - name: avdata
           persistentVolumeClaim:

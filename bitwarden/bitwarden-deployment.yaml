@@ -62,9 +62,9 @@ spec:
           resources:
             requests:
               cpu: "288m"
-              memory: "1350Mi"
+              memory: "1447Mi"
             limits:
-              memory: "1350Mi"
+              memory: "1447Mi"
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
