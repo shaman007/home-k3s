@@ -24,15 +24,7 @@ spec:
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: redis-uri
-                  key: redis-uri
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: redis-password
-                  key: redis-password
+              value: redis://redis-dawarich.dawarich.svc.cluster.local:6379
             - name: DATABASE_HOST
               value: postgres-postgresql.db.svc.cluster.local
             - name: DATABASE_PORT
