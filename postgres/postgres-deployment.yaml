@@ -65,17 +65,17 @@ spec:
           #  - "-c max_connections=200"
           #  - "-c shared_buffers=512MB"
           #  - "-c wal_level=replica"
-          #readinessProbe:
-          #  exec:
-          #    command: ["pg_isready","-U","$(POSTGRES_USER)"]
-          #  initialDelaySeconds: 5
-          #  periodSeconds: 5
-          #livenessProbe:
-          #  exec:
-          #    command: ["pg_isready","-U","$(POSTGRES_USER)"]
-          #  initialDelaySeconds: 30
-          #  periodSeconds: 10
-          #  failureThreshold: 6
+          readinessProbe:
+            exec:
+              command: ["pg_isready","-U","$(POSTGRES_USER)"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready","-U","$(POSTGRES_USER)"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
           resources:
             requests:
               cpu: "200m"
@@ -88,6 +88,33 @@ spec:
               subPath: data
             - name: backup
               mountPath: /backup
+        - name: postgres-exporter
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "100Mi"
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://postgres:$POSTGRES_PASSWORD@localhost:5432/?sslmode=disable"
+          ports:
+            - containerPort: 9187
+              name: pmetrics
       volumes:
         - name: data
           persistentVolumeClaim:

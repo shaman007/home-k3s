@@ -11,3 +11,16 @@ spec:
     - port: 5432
   selector:
     app: postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-postgresql-metrics
+  namespace: db
+  labels:
+    app: wordpress
+spec:
+  ports:
+    - port: 9187
+  selector:
+    app: postgres
