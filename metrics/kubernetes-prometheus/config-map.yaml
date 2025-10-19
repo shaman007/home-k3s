@@ -216,13 +216,34 @@ data:
         static_configs:
         - targets:
           - ingress-nginx-controller-metrics.ingress-nginx.svc.cluster.local:10254
-      - job_name: redis
+      - job_name: redis-mail
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - redis-exporter.redis.svc.cluster.local:9121
+          - redis.mail.svc.cluster.local:9121
+      - job_name: redis-nextcloud
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - redis.nextcloud.svc.cluster.local:9121
+      - job_name: redis-mastodon
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - redis.mastodon.svc.cluster.local:9121
+      - job_name: redis-dawarich
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - redis-dawarich.dawarich.svc.cluster.local:9121
       - job_name: mongodb
         scrape_interval: 45s
         scrape_timeout:  30s
