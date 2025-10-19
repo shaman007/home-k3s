@@ -1,0 +1,16 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: karakeep
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/shaman007/home-k3s.git'
+    path: karakeep
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+    automated: {}
