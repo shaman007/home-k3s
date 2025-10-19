@@ -7,6 +7,9 @@ metadata:
   labels:
     tier: mail
 data:
+  redis.conf: |
+    servers = "redis.mail.svc.cluster.local:6379";
+    write_servers = "redis.mail.svc.cluster.local:6379";
   logging: |
     type = file;
     filename = "/var/log/mail.log"

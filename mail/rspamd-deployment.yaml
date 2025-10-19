@@ -33,8 +33,8 @@ spec:
               - key: workercontroller
                 path: worker-controller.inc
         - name: redis-cf
-          secret:
-            secretName: rspamd-redis
+          configMap:
+            name: rspamd-cf
             items:
               - key: redis.conf
                 path: redis.conf
@@ -109,12 +109,6 @@ spec:
           securityContext:
             allowPrivilegeEscalation: true
             readOnlyRootFilesystem: false
-          env:
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: redis-password
-                  key: password
           volumeMounts:
             - name: rspamd-cf
               mountPath: /etc/rspamd/local.d/logging.inc
