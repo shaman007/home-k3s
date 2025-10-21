@@ -25,6 +25,10 @@ spec:
           value: 350Mi
         - name: controller.config.strict-validate-path-type
           value: 'false'
+        - name: controller.config.use-gzip
+          value: 'true'
+        - name: controller.gzip-proxid
+          value: 'true'
     chart: ingress-nginx
   destination:
     server: 'https://kubernetes.default.svc'
