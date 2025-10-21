@@ -27,8 +27,12 @@ spec:
           value: 'false'
         - name: controller.config.use-gzip
           value: 'true'
-        - name: controller.gzip-proxid
+        - name: controller.config.gzip-proxied
           value: 'true'
+        - name: controller.config.gzip-comp-level
+          value: '5'
+        - name: controller.config.gzip-min-length
+          value: '1024'
     chart: ingress-nginx
   destination:
     server: 'https://kubernetes.default.svc'
