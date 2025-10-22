@@ -1,0 +1,69 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: seaweedfs
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedfs-s3
+  namespace: seaweedfs
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: seaweedfs-s3}
+  template:
+    metadata:
+      labels: {app: seaweedfs-s3}
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: "w386.k8s.my.lan"
+      containers:
+        - name: weed
+          image: chrislusf/seaweedfs:latest
+          args:
+            # single-binary: master + volume + filer + s3
+            - "server"
+            - "-dir=/data"           # volume + filer metadata live here
+            - "-s3"                  # enable S3 gateway (default :8333)
+            - "-s3.port=8333"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: {secretKeyRef: {name: s3-admin, key: AWS_ACCESS_KEY_ID}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: s3-admin, key: AWS_SECRET_ACCESS_KEY}}
+          ports:
+            - name: s3
+              containerPort: 8333
+            - name: master
+              containerPort: 9333
+            - name: volume
+              containerPort: 8080
+            - name: filer
+              containerPort: 8888
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests: {cpu: "200m", memory: "256Mi"}
+            limits: {cpu: "2", memory: "4Gi"}
+      volumes:
+        - name: data
+          hostPath:
+            path: /storage/k8s/seaweedfs
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3
+  namespace: seaweedfs
+spec:
+  type: NodePort
+  selector: {app: seaweedfs-s3}
+  ports:
+    - name: s3
+      port: 8333
+      targetPort: 8333
+      nodePort: 31833
