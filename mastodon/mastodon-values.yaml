@@ -357,6 +357,12 @@ service:
   type: ClusterIP
   port: 80
 
+
+#kubectl create secret generic redis-password \
+#  --from-literal=redis-password="" \
+#  --from-literal=mastodon-redis="" \
+#  -n mastodon
+
 externalAuth:
   oidc:
     # -- OpenID Connect support is proposed in PR #16221 and awaiting merge.
