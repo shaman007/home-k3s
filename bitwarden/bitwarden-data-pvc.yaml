@@ -6,6 +6,10 @@ metadata:
   name: data-lh
   labels:
     storage.k8s.io/name: longhorn
+    app.kubernetes.io/name: bitwarden
+    app.kubernetes.io/instance: bitwarden
+    app.kubernetes.io/part-of: bitwarden
+    app.kubernetes.io/managed-by: argo-cd
 spec:
   accessModes:
     - ReadWriteOnce
@@ -21,6 +25,10 @@ metadata:
   name: keys-lh
   labels:
     storage.k8s.io/name: longhorn
+    app.kubernetes.io/name: bitwarden
+    app.kubernetes.io/instance: bitwarden
+    app.kubernetes.io/part-of: bitwarden
+    app.kubernetes.io/managed-by: argo-cd
 spec:
   accessModes:
     - ReadWriteOnce

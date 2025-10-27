@@ -5,6 +5,10 @@ metadata:
   namespace: bitwarden
   labels:
     service: bitwarden
+    app.kubernetes.io/name: bitwarden
+    app.kubernetes.io/instance: bitwarden
+    app.kubernetes.io/part-of: bitwarden
+    app.kubernetes.io/managed-by: argo-cd
   name: bitwarden
 spec:
   ports:

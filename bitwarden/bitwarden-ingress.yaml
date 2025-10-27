@@ -4,6 +4,13 @@ kind: Ingress
 metadata:
   namespace: bitwarden
   name: bitwarden-ingress
+  labels:
+    app: bitwarden
+    service: bitwarden
+    app.kubernetes.io/name: bitwarden
+    app.kubernetes.io/instance: bitwarden
+    app.kubernetes.io/part-of: bitwarden
+    app.kubernetes.io/managed-by: argo-cd
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
