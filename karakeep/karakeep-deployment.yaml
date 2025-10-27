@@ -6,6 +6,8 @@ kind: Deployment
 metadata:
   name: karakeep
   namespace: karakeep
+  labels:
+    app: karakeep
 spec:
   replicas: 1
   selector:

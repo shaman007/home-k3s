@@ -4,6 +4,8 @@ kind: CronJob
 metadata:
   name: nextcloud
   namespace: nextcloud
+  labels:
+    app: nextcloud
 spec:
   schedule: "15 * * * *"
   jobTemplate:

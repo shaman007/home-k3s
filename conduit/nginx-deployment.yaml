@@ -6,6 +6,7 @@ metadata:
   name: nginx-matrix
   labels:
     tier: matrix
+    app: matrix
 spec:
   replicas: 1
   selector:

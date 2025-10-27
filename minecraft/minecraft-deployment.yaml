@@ -6,6 +6,7 @@ metadata:
   name: minecraft
   labels:
     tier: backend
+    app: minecraft
 spec:
   replicas: 1
   selector:

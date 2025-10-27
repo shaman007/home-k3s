@@ -4,6 +4,7 @@ kind: Deployment
 metadata:
   namespace: bitwarden
   labels:
+    app: bitwarden
     service: bitwarden
   name: bitwarden
 spec:
