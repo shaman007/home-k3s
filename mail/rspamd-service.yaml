@@ -7,6 +7,10 @@ metadata:
   labels:
     app: rspamd
     tier: mail
+    app.kubernetes.io/name: rspamd
+    app.kubernetes.io/instance: rspamd
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     app: rspamd

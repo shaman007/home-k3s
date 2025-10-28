@@ -6,6 +6,10 @@ metadata:
   namespace: clamav
   labels:
     app: clamav
+    app.kubernetes.io/name: clamav
+    app.kubernetes.io/instance: clamav
+    app.kubernetes.io/part-of: clamav
+    app.kubernetes.io/managed-by: argo-cd
 spec:
   replicas: 1
   selector:
