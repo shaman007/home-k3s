@@ -7,6 +7,9 @@ metadata:
   labels:
     app: server
     tier: backend
+    app.kubernetes.io/name: your-spotify
+    app.kubernetes.io/instance: your-spotify
+    app.kubernetes.io/version: "latest"
 spec:
   replicas: 1
   selector:

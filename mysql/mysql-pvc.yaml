@@ -6,6 +6,12 @@ metadata:
   name: mysql-lh
   labels:
     storage.k8s.io/name: longhorn
+    tier: backend
+    app: mysql
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: mysql
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
     - ReadWriteOnce

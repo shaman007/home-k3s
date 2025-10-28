@@ -6,6 +6,11 @@ metadata:
   namespace: db
   labels:
     name: mongodb
+    app: mongodb
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: mongodb
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   ports:
     - port: 27017

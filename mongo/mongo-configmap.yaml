@@ -4,6 +4,12 @@ kind: ConfigMap
 metadata:
   name: mongodb-configmap
   namespace: db
+  labels:
+    app: mongodb
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: mongodb
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   mongo.conf: |
     storage:

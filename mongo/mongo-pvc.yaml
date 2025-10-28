@@ -6,6 +6,12 @@ metadata:
   name: mongo-lh
   labels:
     storage.k8s.io/name: longhorn
+    tier: backend
+    app: mongodb
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: mongodb
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
     - ReadWriteOnce

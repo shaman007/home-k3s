@@ -7,6 +7,10 @@ metadata:
   labels:
     app: wordpress
     tier: frontend
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     app: wordpress

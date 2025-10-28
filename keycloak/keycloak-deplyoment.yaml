@@ -5,6 +5,10 @@ metadata:
   namespace: keycloak
   labels:
     app: keycloak
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   ports:
     - protocol: TCP
@@ -21,6 +25,10 @@ metadata:
   namespace: keycloak
   labels:
     app: keycloak
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
   name: keycloak-discovery
 spec:
   selector:
@@ -37,6 +45,10 @@ metadata:
   namespace: keycloak
   labels:
     app: keycloak
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: keycloak-discovery
   # Run with one replica to save resources, or with two replicas to allow for rolling updates for configuration changes

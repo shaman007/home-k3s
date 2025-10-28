@@ -6,6 +6,11 @@ metadata:
   name: rspamd-cf
   labels:
     tier: mail
+    app: rspamd
+    app.kubernetes.io/name: rspamd
+    app.kubernetes.io/instance: rspamd
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   redis.conf: |
     servers = "redis.mail.svc.cluster.local:6379";

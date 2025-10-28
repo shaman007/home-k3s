@@ -6,6 +6,12 @@ metadata:
   name: minecraft1-lh
   labels:
     storage.k8s.io/name: longhorn
+    tier: backend
+    app: minecraft
+    app.kubernetes.io/name: minecraft
+    app.kubernetes.io/instance: minecraft
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
     - ReadWriteOnce

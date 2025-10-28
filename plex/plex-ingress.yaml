@@ -10,6 +10,12 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/proxy-body-size: 1000m
+  labels:
+    app: plex
+    app.kubernetes.io/name: plex
+    app.kubernetes.io/instance: plex
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   tls:
     - hosts:

@@ -4,6 +4,12 @@ kind: Service
 metadata:
   name: karakeep
   namespace: karakeep
+  labels:
+    app: karakeep
+    app.kubernetes.io/name: karakeep
+    app.kubernetes.io/instance: karakeep
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   type: ClusterIP
   selector:

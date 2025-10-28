@@ -2,20 +2,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mysql
+  name: v
   namespace: db
   labels:
-    app: wordpress
+    app: mysql
+    tier: mysql
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: mysql
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: mysql
   selector:
     matchLabels:
-      app: wordpress
+      app: mysql
       tier: mysql
   template:
     metadata:
       labels:
-        app: wordpress
+        app: mysql
         tier: mysql
     spec:
       containers:

@@ -9,6 +9,12 @@ kind: Deployment
 metadata:
   name: seaweedfs-s3
   namespace: seaweedfs
+  labels:
+    app: seaweedfs-s3
+    app.kubernetes.io/name: seaweedfs-s3
+    app.kubernetes.io/instance: seaweedfs-s3
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

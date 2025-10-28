@@ -6,6 +6,10 @@ metadata:
   namespace: karakeep
   labels:
     app: karakeep
+    app.kubernetes.io/name: meilisearch
+    app.kubernetes.io/instance: meilisearch
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

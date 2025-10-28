@@ -4,6 +4,12 @@ kind: Deployment
 metadata:
   name: postgres-exporter
   namespace: db
+  labels:
+    app: postgres-exporter
+    app.kubernetes.io/name: postgres-exporter
+    app.kubernetes.io/instance: postgres-exporter
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

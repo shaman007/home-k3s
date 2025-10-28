@@ -6,6 +6,11 @@ metadata:
   name: nginx-config
   labels:
     tier: backend
+    app: wordpress
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   config: |
     log_format blog '$http_x_forwarded_for - $remote_user $time_local "$request" '

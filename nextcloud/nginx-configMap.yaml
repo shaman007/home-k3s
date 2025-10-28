@@ -6,6 +6,11 @@ metadata:
   name: nextcloud-config
   labels:
     tier: backend
+    app: nextcloud
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   config: |
     # Set the `immutable` cache control options only for assets with a cache busting `v` argument

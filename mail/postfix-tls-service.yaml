@@ -6,6 +6,11 @@ metadata:
   name: postfix-tls
   labels:
     tier: mail
+    app: postfix
+    app.kubernetes.io/name: postfix
+    app.kubernetes.io/instance: postfix
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   type: NodePort
   selector:

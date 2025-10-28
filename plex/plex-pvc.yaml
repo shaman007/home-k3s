@@ -4,6 +4,12 @@ kind: PersistentVolume
 metadata:
   name: local-storage
   namespace: plex
+  labels:
+    app: plex
+    app.kubernetes.io/name: plex
+    app.kubernetes.io/instance: plex
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   capacity:
     storage: 15Ti

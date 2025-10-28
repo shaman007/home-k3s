@@ -5,11 +5,16 @@ metadata:
   name: mysql
   namespace: db
   labels:
-    app: wordpress
+    app: mysql
+    tier: mysql
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: mysql
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   ports:
     - port: 3306
   selector:
-    app: wordpress
+    app: mysql
     tier: mysql
   clusterIP: None

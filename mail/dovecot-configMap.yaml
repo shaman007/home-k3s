@@ -6,6 +6,11 @@ metadata:
   namespace: mail
   labels:
     tier: mail
+    app: dovecot
+    app.kubernetes.io/name: dovecot
+    app.kubernetes.io/instance: dovecot
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   config: |
     dovecot_config_version = 2.4.0

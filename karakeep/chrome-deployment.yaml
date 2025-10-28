@@ -5,7 +5,11 @@ metadata:
   name: chrome
   namespace: karakeep
   labels:
-    app: karakeep
+    app: chrome
+    app.kubernetes.io/name: chrome
+    app.kubernetes.io/instance: chrome
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

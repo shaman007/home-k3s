@@ -5,6 +5,10 @@ metadata:
   namespace: monitoring
   labels:
     app: alloy
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

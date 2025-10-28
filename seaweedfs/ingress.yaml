@@ -8,6 +8,12 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  labels:
+    app: seaweedfs-s3
+    app.kubernetes.io/name: seaweedfs-s3
+    app.kubernetes.io/instance: seaweedfs-s3
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   tls:
     - hosts:

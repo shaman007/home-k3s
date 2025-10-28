@@ -4,6 +4,12 @@ kind: Deployment
 metadata:
   name: mongo-exporter
   namespace: db
+  labels:
+    app: mongo-exporter
+    app.kubernetes.io/name: mongo-exporter
+    app.kubernetes.io/instance: mongo-exporter
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

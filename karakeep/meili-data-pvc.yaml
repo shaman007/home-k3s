@@ -4,6 +4,12 @@ kind: PersistentVolumeClaim
 metadata:
   name: meili-data
   namespace: karakeep
+  labels:
+    app: meilisearch
+    app.kubernetes.io/name: meilisearch
+    app.kubernetes.io/instance: meilisearch
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   storageClassName: longhorn
   accessModes:

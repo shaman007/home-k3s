@@ -4,6 +4,12 @@ kind: ConfigMap
 metadata:
   namespace: wordpress
   name: php-fpm-config
+  labels:
+    app: wordpress
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   www.conf: |
     [www]

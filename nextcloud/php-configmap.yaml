@@ -4,6 +4,12 @@ kind: ConfigMap
 metadata:
   namespace: nextcloud
   name: php-fpm-config
+  labels:
+    app: nextcloud
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   www.conf: |
     [www]

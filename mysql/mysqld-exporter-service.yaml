@@ -6,6 +6,10 @@ metadata:
   namespace: db
   labels:
     app: mysqld-exporter
+    app.kubernetes.io/name: mysqld-exporter
+    app.kubernetes.io/instance: mysqld-exporter
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   ports:
     - port: 9104

@@ -3,6 +3,12 @@ kind: ConfigMap
 metadata:
   name: alloy-config
   namespace: monitoring
+  labels:
+    app: loki
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/instance: loki
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 data:
   config.alloy: |
     livedebugging {

@@ -12,6 +12,12 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: 10000m
     nginx.ingress.kubernetes.io/more_set_headers: \
       "X-Forwarded-For $http_x_forwarded_for"
+  labels:
+    app: nextcloud
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   tls:
     - hosts:

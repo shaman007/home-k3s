@@ -6,6 +6,10 @@ metadata:
   namespace: "plex"
   labels:
     name: plex
+    app.kubernetes.io/name: plex
+    app.kubernetes.io/instance: plex
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   ports:
     - port: 32400

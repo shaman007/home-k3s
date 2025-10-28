@@ -6,6 +6,12 @@ metadata:
   name: mail-lh
   labels:
     storage.k8s.io/name: longhorn
+    app: dovecot
+    tier: mail
+    app.kubernetes.io/name: dovecot
+    app.kubernetes.io/instance: dovecot
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
     - ReadWriteOnce

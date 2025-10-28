@@ -6,6 +6,12 @@ metadata:
   name: queue-lh
   labels:
     storage.k8s.io/name: longhorn
+    app: postfix
+    tier: mail
+    app.kubernetes.io/name: postfix
+    app.kubernetes.io/instance: postfix
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
     - ReadWriteOnce

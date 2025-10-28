@@ -7,6 +7,9 @@ metadata:
   labels:
     storage.k8s.io/name: longhorn
     app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
     - ReadWriteMany
