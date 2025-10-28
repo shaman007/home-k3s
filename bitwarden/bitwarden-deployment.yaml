@@ -77,23 +77,23 @@ spec:
               name: keys-lh
             - name: logs
               mountPath: /var/log/bitwarden
-        #- name: promtail
-        #  image: harbor.andreybondarenko.com/dockerhub/grafana/promtail:latest
-        #  args:
-        #    - -config.file=/etc/promtail/promtail.yaml
-        #  resources:
-        #    requests:
-        #      cpu: "177m"
-        #      memory: "107Mi"
-        #    limits:
-        #      memory: "107Mi"
-        #  volumeMounts:
-        #    - name: promtail-config
-        #      mountPath: /etc/promtail
-        #    - mountPath: /etc/bitwarden
-        #      name: bitwarden-lh
-        #    - name: logs
-        #      mountPath: /var/log/bitwarden
+        - name: promtail
+          image: harbor.andreybondarenko.com/dockerhub/grafana/promtail:latest
+          args:
+            - -config.file=/etc/promtail/promtail.yaml
+          resources:
+            requests:
+              cpu: "177m"
+              memory: "107Mi"
+            limits:
+              memory: "107Mi"
+          volumeMounts:
+            - name: promtail-config
+              mountPath: /etc/promtail
+            - mountPath: /etc/bitwarden
+              name: bitwarden-lh
+            - name: logs
+              mountPath: /var/log/bitwarden
       volumes:
         - name: bitwarden-lh
           persistentVolumeClaim:
