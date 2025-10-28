@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: v
+  name: mysql
   namespace: db
   labels:
     app: mysql
