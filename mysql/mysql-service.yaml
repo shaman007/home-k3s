@@ -6,7 +6,6 @@ metadata:
   namespace: db
   labels:
     app: mysql
-    tier: mysql
     app.kubernetes.io/name: mysql
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/version: "latest"
@@ -16,5 +15,4 @@ spec:
     - port: 3306
   selector:
     app: mysql
-    tier: mysql
   clusterIP: None
