@@ -113,10 +113,10 @@ mastodon:
     # -- Resources for all Sidekiq Deployments unless overwritten
     resources:
       limits:
-        memory: 1052Mi
+        memory: 2052Mi
       requests:
         cpu: 192m
-        memory: 1052Mi
+        memory: 2052Mi
     # -- Affinity for all Sidekiq Deployments unless overwritten, overwrites .Values.affinity
     affinity: {}
     # -- Topology spread constraints for Sidekiq Pods, overwrites .Values.topologySpreadConstraints
