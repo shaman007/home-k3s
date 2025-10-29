@@ -4,6 +4,12 @@ kind: Service
 metadata:
   name: chrome
   namespace: karakeep
+  labels:
+    app: chrome
+    app.kubernetes.io/name: chrome
+    app.kubernetes.io/instance: chrome
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   type: ClusterIP
   selector:
