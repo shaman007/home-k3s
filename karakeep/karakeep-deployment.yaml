@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:latest
+        image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.27.1
         ports:
         - containerPort: 3000
         envFrom:
@@ -39,7 +39,42 @@ spec:
             memory: 5238Mi
           limits:
             memory: 5238Mi
+      - name: chrome
+        image: harbor.andreybondarenko.com/library/alpine-chrome:latest
+        imagePullPolicy: Always
+        command: ["/usr/bin/chromium-browser"]   # override ENTRYPOINT
+        args:
+          - --no-sandbox
+          - --headless
+          - --remote-debugging-address=0.0.0.0
+          - --remote-debugging-port=9222
+          - --user-data-dir=/data/profile
+          - --no-first-run
+          - --no-default-browser-check
+          - --disable-gpu
+          - --disable-vulkan
+          - --use-angle=swiftshader
+          - --use-gl=swiftshader
+          - --disable-features=MediaRouter,Translate,OnDeviceModel,OptimizationHints,OptimizationGuideModelDownloading
+        env:
+          - { name: DBUS_SYSTEM_BUS_ADDRESS, value: "disabled:" }
+          - { name: DBUS_SESSION_BUS_ADDRESS, value: "disabled:" }
+        volumeMounts:
+          - { name: dshm, mountPath: /dev/shm }
+          - { name: chrome-data, mountPath: /data }
+        ports:
+          - { containerPort: 9222 }
+        resources:
+          requests:
+            cpu: 17m
+            memory: 1504Mi
+          limits:
+            memory: 1504Mi
       volumes:
-      - name: karakeep-data
-        persistentVolumeClaim:
-          claimName: karakeep-data
+        - name: dshm
+          emptyDir: { medium: Memory, sizeLimit: 512Mi }
+        - name: chrome-data
+          emptyDir: {}
+        - name: karakeep-data
+          persistentVolumeClaim:
+            claimName: karakeep-data
