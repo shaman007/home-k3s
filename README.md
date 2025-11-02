@@ -31,7 +31,7 @@ Old foto:
 * Spotify stats application
 * Clamav that sits on  clamav.clamav.svc.cluster.local:3200/TCP
 * UniFi console (OBSOTELE)
-* Minio single drive, NFS volume as storage.
+* SeaweedFS as S3 object storage
 * Elasticsearch
 * Mastodon
 * Prometheus Thanos
