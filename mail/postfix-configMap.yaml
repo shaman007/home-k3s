@@ -35,7 +35,6 @@ data:
     smtpd_sasl_path = inet:dovecot-sasl.mail.svc.cluster.local:1234
     smtpd_sasl_auth_enable = yes
     smtpd_sasl_security_options = noanonymous
-    smtpd_use_tls = yes
     smtpd_tls_security_level = may
     smtpd_tls_auth_only = yes
     smtpd_tls_key_file = /var/certs/tls.key
