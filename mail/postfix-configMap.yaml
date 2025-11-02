@@ -41,6 +41,8 @@ data:
     smtpd_tls_key_file = /var/certs/tls.key
     smtpd_tls_cert_file = /var/certs/tls.crt
     smtpd_tls_loglevel = 1
+    smtp_tls_note_starttls_offer = yes
+    smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
     milter_default_action = accept
     milter_protocol = 6
     smtpd_milters = inet:rspamd.mail.svc.cluster.local:11332
