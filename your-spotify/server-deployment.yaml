@@ -47,9 +47,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "106Mi"
+              memory: "3060Mi"
             limits:
-              memory: "106Mi"
+              memory: "3060Mi"
           name: server
           ports:
             - containerPort: 8080
