@@ -30,9 +30,9 @@ spec:
           resources:
             requests:
               cpu: "12m"
-              memory: "286Mi"
+              memory: "586Mi"
             limits:
-              memory: "286Mi"
+              memory: "586Mi"
           volumeMounts:
             - name: mongodb-configmap
               mountPath: /config
