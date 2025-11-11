@@ -23,6 +23,11 @@ spec:
     metadata:
       labels: {app: seaweedfs-s3}
     spec:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+        fsGroupChangePolicy: "OnRootMismatch"
       nodeSelector:
         kubernetes.io/hostname: "w386.k8s.my.lan"
       containers:
