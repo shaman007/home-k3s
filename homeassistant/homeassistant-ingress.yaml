@@ -3,19 +3,18 @@ kind: Namespace
 metadata:
   name: homeassistant
 ---
-# Service without selector (normal ClusterIP)
 apiVersion: v1
 kind: Service
 metadata:
   name: ha-external
   namespace: homeassistant
 spec:
+  type: ClusterIP
   ports:
     - name: http
       port: 8123
       targetPort: 8123
 ---
-# Endpoints to the LAN host
 apiVersion: v1
 kind: Endpoints
 metadata:
@@ -25,53 +24,18 @@ subsets:
   - addresses:
       - ip: 192.168.1.247
     ports:
-      - port: 8123
----
-#apiVersion: networking.k8s.io/v1
-#kind: Ingress
-#metadata:
-#  name: ha-ingress
-#  namespace: homeassistant
-#  annotations:
-#    kubernetes.io/ingress.class: "nginx"
-#    # enable long-lived WS connections
-#    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-#    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-#    nginx.ingress.kubernetes.io/proxy-buffering: "off"
-#    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-#    # If using cert-manager, keep this and set secretName below
-#    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-#spec:
-#  tls:
-#    - hosts: [ha.andreybondarenko.com]
-#      secretName: ha-andreybondarenko-tls
-#  rules:
-#    - host: ha.andreybondarenko.com
-#      http:
-#        paths:
-#          - path: /
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: ha-external
-#                port:
-#                  number: 8123
+      - name: http
+        port: 8123
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   namespace: homeassistant
-  name: andreybondarenko-ingress
+  name: ha-andreybondarenko
   annotations:
-    # Traefik router on HTTPS entrypoint
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-
-    # Use Traefik's ACME resolver
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-
-    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
-    # so no per-ingress redirect annotation is needed.
   labels:
     app: homeassistant
     app.kubernetes.io/name: homeassistant
@@ -80,7 +44,10 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
-
+  tls:
+    - hosts:
+        - ha.andreybondarenko.com
+      secretName: ha-andreybondarenko-tls
   rules:
     - host: ha.andreybondarenko.com
       http:
