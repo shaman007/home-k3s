@@ -99,21 +99,3 @@ persistence:
 
 externalURL: https://harbor.andreybondarenko.com
 harborAdminPassword: Harbor12345
-
-expose:
-  type: ingress
-  tls:
-    enabled: true
-    certSource: secret
-    secret:
-      secretName: harbor-tls   # cert-manager will fill this
-  ingress:
-    hosts:
-      core: harbor.andreybondarenko.com
-    annotations:
-      kubernetes.io/ingress.class: "nginx"
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    tls:
-      - hosts:
-          - harbor.andreybondarenko.com
-        secretName: harbor-tls

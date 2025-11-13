@@ -189,13 +189,6 @@ data:
         static_configs:
         - targets:
           - postgres-exporter.db.svc.cluster.local:9187
-      - job_name: cert-manager
-        scrape_interval: 45s
-        scrape_timeout:  30s
-        metrics_path: "/metrics"
-        static_configs:
-        - targets:
-          - cert-manager.cert-manager.svc.cluster.local:9402
       - job_name: rspamd
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -209,13 +202,6 @@ data:
         static_configs:
           - targets:
             - connectivity-exporter.connectivity-exporter.svc.cluster.local:9090
-      - job_name: ingress-nginx
-        scrape_interval: 45s
-        scrape_timeout:  30s
-        metrics_path: "/metrics"
-        static_configs:
-        - targets:
-          - ingress-nginx-controller-metrics.ingress-nginx.svc.cluster.local:10254
       - job_name: redis-mail
         scrape_interval: 45s
         scrape_timeout:  30s
