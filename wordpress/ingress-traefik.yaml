@@ -1,0 +1,36 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: wordpress
+  name: andreybondarenko-ingress
+  annotations:
+    # Traefik router on HTTPS entrypoint
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+    # Use Traefik's ACME resolver
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+
+    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
+    # so no per-ingress redirect annotation is needed.
+  labels:
+    app: wordpress
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+
+  rules:
+    - host: andreybondarenko.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
