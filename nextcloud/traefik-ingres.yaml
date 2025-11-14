@@ -39,7 +39,7 @@ metadata:
   namespace: nextcloud
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-nextcloud-large-upload@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-large-upload@kubernetescrd
 spec:
   rules:
     - host: cloud.andreybondarenko.com
