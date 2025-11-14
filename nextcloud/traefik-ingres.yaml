@@ -1,33 +1,51 @@
 ---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: large-upload
+  namespace: nextcloud
+spec:
+  buffering:
+    # Max request size in bytes (here ~5 GiB)
+    maxRequestBodyBytes: 5000000000
+
+    # How much to keep in RAM before spilling to disk
+    memRequestBodyBytes: 20000000
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: nextcloud-ui
   namespace: nextcloud
-  name: andreybondarenko-ingress
   annotations:
-    # Traefik router on HTTPS entrypoint
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-
-    # Use Traefik's ACME resolver
-    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-
-    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
-    # so no per-ingress redirect annotation is needed.
-  labels:
-    app: nextcloud
-    app.kubernetes.io/name: nextcloud
-    app.kubernetes.io/instance: nextcloud
-    app.kubernetes.io/version: "latest"
-    app.kubernetes.io/managed-by: argoCD
+    kubernetes.io/ingress.class: traefik
 spec:
-  ingressClassName: traefik
-
   rules:
     - host: cloud.andreybondarenko.com
       http:
         paths:
           - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-nextcloud
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextcloud-uploads
+  namespace: nextcloud
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-nextcloud-large-upload@kubernetescrd
+spec:
+  rules:
+    - host: cloud.andreybondarenko.com
+      http:
+        paths:
+          - path: /remote.php/dav
             pathType: Prefix
             backend:
               service:
