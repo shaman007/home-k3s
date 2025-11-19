@@ -1,40 +1,27 @@
-#DEPRECATED - Using Bitnami chart for Vault is deprecated, it's no more maintained.
-# Please use the  official HashiCorp chart
-
-#---
-#apiVersion: argoproj.io/v1alpha1
-#kind: Application
-#metadata:
-#  name: vault
-#  namespace: argocd
-#spec:
-#  project: default
-#  source:
-#    repoURL: harbor.andreybondarenko.com/dockerhub/bitnamicharts
-#    targetRevision: 1.9.0
-#    helm:
-#      parameters:
-#        - name: server.replicaCount
-#          value: '5'
-#        - name: server.resources.requests.cpu
-#          value: 90m
-#        - name: server.resources.requests.memory
-#          value: 399Mi
-#        - name: server.resources.limits.memory
-#          value: 399Mi
-#        - name: injector.resources.requests.cpu
-#          value: 10m
-#        - name: injector.resources.requests.memory
-#          value: 100Mi
-#        - name: injector.resources.limits.memory
-#          value: 100Mi
-#    chart: vault
-#  destination:
-#    server: 'https://kubernetes.default.svc'
-#    namespace: vault
-#  ignoreDifferences:
-#    - group: admissionregistration.k8s.io
-#      kind: MutatingWebhookConfiguration
-#      jsonPointers:
-#        - /webhooks
-#
+DEPRECATED - Using Bitnami chart for Vault is deprecated, it's no more maintained.
+ Please use the  official HashiCorp chart
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    targetRevision: 0.31.0
+    helm:
+      parameters:
+        - name: injector.enabled
+          value: 'false'
+        - name: server.ha.enabled
+          value: 'true'
+        - name: server.ha.raft.enabled
+          value: 'true'
+        - name: server.ha.replicas
+          value: '2'
+    chart: vault
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault
