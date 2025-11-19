@@ -1,4 +1,16 @@
 ---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: hsts
+  namespace: seaweedfs
+spec:
+  headers:
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+    stsPreload: true
+
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -11,6 +23,8 @@ metadata:
 
     # Use Traefik's ACME resolver
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    # Apply HSTS middleware
+    traefik.ingress.kubernetes.io/router.middlewares: seaweedfs-hsts@kubernetescrd
 
     # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
     # so no per-ingress redirect annotation is needed.

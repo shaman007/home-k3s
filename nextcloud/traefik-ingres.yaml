@@ -8,9 +8,30 @@ spec:
   buffering:
     # Max request size in bytes (here ~5 GiB)
     maxRequestBodyBytes: 5000000000
-
     # How much to keep in RAM before spilling to disk
     memRequestBodyBytes: 20000000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: hsts
+  namespace: nextcloud
+spec:
+  headers:
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+    stsPreload: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: chain
+  namespace: nextcloud
+spec:
+  chain:
+    middlewares:
+      - name: hsts
+      - name: large-upload
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -19,6 +40,7 @@ metadata:
   namespace: nextcloud
   annotations:
     kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-hsts@kubernetescrd
 spec:
   rules:
     - host: cloud.andreybondarenko.com
@@ -39,7 +61,7 @@ metadata:
   namespace: nextcloud
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-large-upload@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-chain@kubernetescrd
 spec:
   rules:
     - host: cloud.andreybondarenko.com
