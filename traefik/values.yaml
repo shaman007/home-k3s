@@ -60,6 +60,6 @@ persistence:
 # Enable simple access logs
 logs:
   general:
-    level: DEBUG
+    level: INFO
   access:
     enabled: true
