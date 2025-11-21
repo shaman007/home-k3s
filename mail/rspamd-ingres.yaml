@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rspamd-ingress
+  namespace: mail
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  tls:
+    - hosts:
+        - rspamd.w386.k8s.my.lan
+      secretName: rspamd-tls
+  rules:
+    - host: rspamd.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rspamd
+                port:
+                  number: 11334
