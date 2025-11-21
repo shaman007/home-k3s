@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-ingress
+  namespace: longhorn-system
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  tls:
+    - hosts:
+        - longhorn.w386.k8s.my.lan
+      secretName: longhorn-tls
+  rules:
+    - host: longhorn.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: longhorn-frontend
+                port:
+                  number: 80

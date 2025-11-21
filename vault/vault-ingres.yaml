@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-ingress
+  namespace: vault
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+spec:
+  tls:
+    - hosts:
+        - vault.w386.k8s.my.lan
+      secretName: vault-tls
+  rules:
+    - host: vault.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vault-server-ip
+                port:
+                  number: 8200
