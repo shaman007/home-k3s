@@ -26,7 +26,7 @@ spec:
             - "--storage.tsdb.path=/prometheus/"
             - "--web.enable-lifecycle"
             - "--storage.tsdb.no-lockfile"
-            - "--web.external-url=http://w386.k8s.my.lan:9090"
+            - "--web.external-url=https://prometheus.w386.k8s.my.lan"
             - "--storage.tsdb.min-block-duration=2h"
             - "--storage.tsdb.max-block-duration=2h"
             - "--storage.tsdb.retention.time=3d"
