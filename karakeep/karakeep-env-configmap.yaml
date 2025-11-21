@@ -14,5 +14,10 @@ data:
   MEILI_ADDR: http://meilisearch.karakeep.svc.cluster.local:7700
   BROWSER_WEB_URL: http://127.0.0.1:9222
   DATA_DIR: /data
-  NEXTAUTH_URL: http://localhost:3000
   KARAKEEP_VERSION: release
+  NEXTAUTH_URL: https://keep.andreybondarenko.com
+  OAUTH_WELLKNOWN_URL: https://sso.andreybondarenko.com/realms/master/.well-known/openid-configuration
+  OAUTH_CLIENT_ID: karakeep
+  OAUTH_PROVIDER_NAME: Keycloak
+  OAUTH_SCOPE: "openid email profile"
+  OAUTH_ALLOW_DANGEROUS_EMAIL_ACCOUNT_LINKING: "true"
