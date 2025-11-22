@@ -244,9 +244,10 @@ mastodon:
 
   # Sets the PREPARED_STATEMENTS environment variable: https://docs.joinmastodon.org/admin/config/#prepared_statements
   preparedStatements: true
-
-  # Additional env vars defined in all pods
-  extraEnvVars: {}
+#
+  ## Additional env vars defined in all pods
+  extraEnvVars:
+    ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
 ingress:
   enabled: false
@@ -365,17 +366,20 @@ service:
 
 externalAuth:
   oidc:
-    # -- OpenID Connect support is proposed in PR #16221 and awaiting merge.
-    enabled: false
-    # display_name: "example-label"
-    # issuer: https://login.example.space/auth/realms/example-space
-    # discovery: true
-    # scope: "openid,profile"
-    # uid_field: uid
-    # client_id: mastodon
-    # client_secret: SECRETKEY
-    # redirect_uri: https://example.com/auth/auth/openid_connect/callback
-    # assume_email_is_verified: true
+    # -- OpenID Connect support is proposed in   and awaiting merge.
+    enabled: true
+    display_name: "Login via SSO"
+    issuer: https://sso.andreybondarenko.com/realms/master
+    discovery: true
+    scope: "openid,email,profile"
+    uid_field: uid
+    email_field: email
+    name_field: name
+    nickname_field: username
+    client_id: mastodon
+    client_secret:
+    redirect_uri: https://mastodon.andreybondarenko.com/auth/auth/openid_connect/callback
+    assume_email_is_verified: true
     # client_auth_method:
     # response_type:
     # response_mode:
