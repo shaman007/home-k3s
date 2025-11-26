@@ -15,27 +15,6 @@ spec:
       labels:
         app: photon
     spec:
-      affinity:
-        # Prevent scheduling on a specific node
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: NotIn
-                    values:
-                      - w4.k8s.my.lan
-        # Prevent scheduling on nodes with php-nextcloud and nginx-nextcloud
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - php-nextcloud
-                      - nginx-nextcloud
-              topologyKey: "kubernetes.io/hostname"
       containers:
         - name: photon
           image: harbor.andreybondarenko.com/library/photon:latest
