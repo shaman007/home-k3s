@@ -82,9 +82,10 @@ trivy:
   resources:
     requests:
       memory: 401Mi
-      cpu: 10m
+      cpu: 100m
     limits:
       memory: 401Mi
+      cpu: 3
 notary:
   enabled: false  # disable notary
   nodeSelector:
