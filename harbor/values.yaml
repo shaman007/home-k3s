@@ -13,10 +13,10 @@ database:
       kubernetes.io/hostname: w386.k8s.my.lan
     resources:
       requests:
-        memory: 250Mi
+        memory: 1250Mi
         cpu: 10m
       limits:
-        memory: 250Mi
+        memory: 1250Mi
 exporter:
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
