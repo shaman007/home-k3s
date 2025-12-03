@@ -377,7 +377,7 @@ externalAuth:
     name_field: name
     nickname_field: username
     client_id: mastodon
-    client_secret:
+    client_secret: ""
     redirect_uri: https://mastodon.andreybondarenko.com/auth/auth/openid_connect/callback
     assume_email_is_verified: true
     # client_auth_method:

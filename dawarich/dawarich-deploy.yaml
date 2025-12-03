@@ -58,6 +58,17 @@ spec:
               value: "10"
             - name: SELF_HOSTED
               value: "true"
+            - name: OIDC_CLIENT_ID
+              value: "dawarich"
+            - name: OIDC_CLIENT_SECRET
+              value: ""
+            - name: OIDC_ISSUER
+              value: "https://sso.andreybondarenko.com/realms/master"
+            - name: OIDC_REDIRECT_URI
+              value: "https://dawarich.andreybondarenko.com/users/auth/openid_connect/callback"
+           #OIDC_AUTO_REGISTER=true # optional, default is false
+           #OIDC_PROVIDER_NAME=YourProviderName # optional, default is OpenID Connect
+           #ALLOW_EMAIL_PASSWORD_REGISTRATION=false # optional, default is true
           image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:latest
           imagePullPolicy: Always
           volumeMounts:
