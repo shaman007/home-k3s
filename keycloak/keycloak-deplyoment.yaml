@@ -106,7 +106,7 @@ spec:
             - name: 'KC_DB_PASSWORD'
               valueFrom:
                 secretKeyRef:
-                  name: postgres-pass
+                  name: postgres-password
                   key: password
             - name: 'KC_DB_USERNAME'
               value: 'postgres'
