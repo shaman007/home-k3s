@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:latest
+        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:1.24.0
         env:
         - name: MEILI_NO_ANALYTICS
           value: "true"
