@@ -1,4 +1,4 @@
-To revive index, do:
+## To revive index, do
 
 ```
 curl -X PUT 'http://meilisearch.karakeep.svc.cluster.local:7700/indexes/bookmarks/settings/filterable-attributes' \
@@ -11,3 +11,7 @@ curl -X PUT 'http://meilisearch.karakeep.svc.cluster.local:7700/indexes/bookmark
   -H 'Content-Type: application/json' \
 --data-binary '["tags","createdAt"]'
 ```
+
+# TODO
+
+* Metrics + Dashboard

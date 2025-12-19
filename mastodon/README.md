@@ -1,4 +1,4 @@
-Install chart:
+## Install chart:
 
 add
 
@@ -15,3 +15,6 @@ cd Chart
 helm dependency build
 helm install --namespace mastodon mastodon ./ -f ../mastodon-values.yaml
 ```
+# TODO
+
+* Metrics + Dashboard

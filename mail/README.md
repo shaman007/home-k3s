@@ -1,0 +1,3 @@
+# TODO
+
+* Harden authentication
