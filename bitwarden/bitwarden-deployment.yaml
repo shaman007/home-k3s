@@ -77,10 +77,12 @@ spec:
               name: keys-lh
             - name: logs
               mountPath: /var/log/bitwarden
-        - name: promtail
-          image: harbor.andreybondarenko.com/dockerhub/grafana/promtail:latest
+        - name: alloy
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:latest
           args:
-            - -config.file=/etc/promtail/promtail.yaml
+            - run
+            - /etc/alloy/config.alloy
+            - --server.http.listen-addr=0.0.0.0:12345
           resources:
             requests:
               cpu: "177m"
@@ -88,8 +90,11 @@ spec:
             limits:
               memory: "107Mi"
           volumeMounts:
-            - name: promtail-config
-              mountPath: /etc/promtail
+            - name: alloy-config
+              mountPath: /etc/alloy
+              readOnly: true
+            - name: alloy-run
+              mountPath: /run/alloy
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
             - name: logs
@@ -101,8 +106,10 @@ spec:
         - name: keys-lh
           persistentVolumeClaim:
             claimName: keys-lh
-        - name: promtail-config
+        - name: alloy-config
           configMap:
-            name: promtail-config
+            name: alloy-bitwarden-config
+        - name: alloy-run
+          emptyDir: {}
         - name: logs
           emptyDir: {}
