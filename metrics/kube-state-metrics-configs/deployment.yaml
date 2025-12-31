@@ -21,20 +21,28 @@ spec:
         app.kubernetes.io/version: 2.17.0
     spec:
       automountServiceAccountToken: true
+      serviceAccountName: kube-state-metrics
+      nodeSelector:
+        kubernetes.io/os: linux
       containers:
-        - image: k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.17.0
+        - name: kube-state-metrics
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0
+
+          # 🔧 Fix: don't watch deprecated v1 Endpoints; use EndpointSlice instead.
+          args:
+            - --resources=pods,nodes,namespaces,services,endpointslices,deployments,replicasets,statefulsets,daemonsets,jobs,cronjobs,horizontalpodautoscalers,poddisruptionbudgets
+
+          ports:
+            - containerPort: 8080
+              name: http-metrics
+            - containerPort: 8081
+              name: telemetry
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8080
             initialDelaySeconds: 5
             timeoutSeconds: 5
-          name: kube-state-metrics
-          ports:
-            - containerPort: 8080
-              name: http-metrics
-            - containerPort: 8081
-              name: telemetry
           readinessProbe:
             httpGet:
               path: /
@@ -52,6 +60,3 @@ spec:
             limits:
               cpu: "1000m"
               memory: 80Mi
-      nodeSelector:
-        kubernetes.io/os: linux
-      serviceAccountName: kube-state-metrics
