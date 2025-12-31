@@ -270,7 +270,13 @@ data:
         static_configs:
         - targets:
           - unifi-poller.unifi.svc.cluster.local:9130
-
+      - job_name: grafana
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - grafana.monitoring.svc.cluster.local:3000
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
