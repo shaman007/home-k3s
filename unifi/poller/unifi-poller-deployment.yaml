@@ -31,6 +31,14 @@ spec:
               value: shaman007
             - name: UP_UNIFI_DEFAULT_SAVE_DPI
               value: "true"
+            - name: UP_INFLUXDB_DISABLE
+              value: "true"
+            - name: UP_LOKI_DISABLE
+              value: "false"
+            - name: UP_LOKI_URI
+              value: "http://loki.monitoring.svc.cluster.local:3100"
+            - name: UP_LOKI_VERIFY_SSL
+              value: "false"
           resources:
             requests:
               memory: "100Mi"
