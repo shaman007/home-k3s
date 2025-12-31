@@ -60,6 +60,14 @@ spec:
               value: "true"
             - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
               value: "true"
+            - name: GF_METRICS_ENABLED
+              value: "true"
+            - name: GF_METRICS_DISABLE_TOTAL_STATS
+              value: "false"
+            - name: GF_METRICS_BASIC_AUTH_USERNAME
+              value: ""
+            - name: GF_METRICS_BASIC_AUTH_PASSWORD
+              value: ""
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
