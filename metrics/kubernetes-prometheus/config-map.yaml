@@ -277,6 +277,34 @@ data:
         static_configs:
         - targets:
           - grafana.monitoring.svc.cluster.local:3000
+      - job_name: prometheus
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - prometheus-service.monitoring.svc.cluster.local:9090
+      - job_name: thanos-querier
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - thanos-querier.monitoring.svc.cluster.local:9090
+      - job_name: thanos-store-gateway
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - thanos-store-gateway.monitoring.svc.cluster.local:10902
+      - job_name: thanos-compactor
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - thanos-compactor.monitoring.svc.cluster.local:10902
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
