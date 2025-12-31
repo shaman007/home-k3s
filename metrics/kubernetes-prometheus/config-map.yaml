@@ -1,4 +1,3 @@
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -137,6 +136,7 @@ data:
           severity: mail
         annotations:
           summary: One or more PVC is >85% utilized.
+
   prometheus.yaml: |-
     global:
       scrape_interval: 5s
@@ -152,7 +152,6 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
-        # scrape_config job
       - job_name: mysql-staging
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -160,6 +159,7 @@ data:
         static_configs:
         - targets:
           - mysqld-exporter.db.svc.cluster.local:9104
+
       - job_name: 'kubernetes-longhorn-manager'
         kubernetes_sd_configs:
           - role: pod
@@ -175,6 +175,7 @@ data:
           - action: replace
             target_label: __metrics_path__
             replacement: /metrics
+
       - job_name: postgres
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -182,6 +183,7 @@ data:
         static_configs:
         - targets:
           - postgres-postgresql-metrics.db.svc.cluster.local:9187
+
       - job_name: postgres-local
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -189,6 +191,7 @@ data:
         static_configs:
         - targets:
           - postgres-exporter.db.svc.cluster.local:9187
+
       - job_name: rspamd
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -196,12 +199,14 @@ data:
         static_configs:
         - targets:
           - rspamd.mail.svc.cluster.local:11334
+
       - job_name: connectivity-exporter
         scrape_interval: 45s
         scrape_timeout:  30s
         static_configs:
           - targets:
             - connectivity-exporter.connectivity-exporter.svc.cluster.local:9090
+
       - job_name: redis-mail
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -209,6 +214,7 @@ data:
         static_configs:
         - targets:
           - redis.mail.svc.cluster.local:9121
+
       - job_name: redis-nextcloud
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -216,6 +222,7 @@ data:
         static_configs:
         - targets:
           - redis.nextcloud.svc.cluster.local:9121
+
       - job_name: traefik
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -223,6 +230,7 @@ data:
         static_configs:
         - targets:
           - traefik.traefik.svc.cluster.local:9100
+
       - job_name: redis-mastodon
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -230,6 +238,7 @@ data:
         static_configs:
         - targets:
           - redis.mastodon.svc.cluster.local:9121
+
       - job_name: redis-dawarich
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -237,6 +246,7 @@ data:
         static_configs:
         - targets:
           - redis-dawarich.dawarich.svc.cluster.local:9121
+
       - job_name: mongodb
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -244,6 +254,7 @@ data:
         static_configs:
         - targets:
           - mongo-exporter.db.svc.cluster.local:9216
+
       - job_name: external
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -251,6 +262,7 @@ data:
         static_configs:
         - targets:
           - backup.andreybondarenko.com:9090
+
       - job_name: unifi
         scrape_interval: 45s
         scrape_timeout:  30s
@@ -258,11 +270,13 @@ data:
         static_configs:
         - targets:
           - unifi-poller.unifi.svc.cluster.local:9130
+
+      # FIXED: endpoints -> endpointslice
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
-          - role: endpoints
+          - role: endpointslice
         relabel_configs:
-        - source_labels: [__meta_kubernetes_endpoints_name]
+        - source_labels: [__meta_kubernetes_endpointslice_service_name]
           regex: 'node-exporter'
           action: keep
         - source_labels: [__meta_kubernetes_pod_node_name]
@@ -270,17 +284,19 @@ data:
           regex: (.*)
           replacement: $1
           target_label: kubernetes_node
+
       - job_name: 'kubernetes-apiservers'
         kubernetes_sd_configs:
-        - role: endpoints
+        - role: endpointslice
         scheme: https
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
         relabel_configs:
-        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_endpointslice_service_name, __meta_kubernetes_endpointslice_port_name]
           action: keep
           regex: default;kubernetes;https
+
       - job_name: 'kubernetes-nodes'
         scheme: https
         tls_config:
@@ -297,6 +313,7 @@ data:
           target_label: __metrics_path__
           regex: (.+)
           replacement: /api/v1/nodes/${1}/proxy/metrics
+
       - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
         - role: pod
@@ -321,9 +338,11 @@ data:
         - source_labels: [__meta_kubernetes_pod_name]
           action: replace
           target_label: kubernetes_pod_name
+
       - job_name: 'kube-state-metrics'
         static_configs:
           - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
+
       - job_name: 'kubernetes-cadvisor'
         scheme: https
         tls_config:
@@ -340,9 +359,10 @@ data:
           regex: (.+)
           target_label: __metrics_path__
           replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
       - job_name: 'kubernetes-service-endpoints'
         kubernetes_sd_configs:
-        - role: endpoints
+        - role: endpointslice
         relabel_configs:
         - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
           action: keep
@@ -365,6 +385,6 @@ data:
         - source_labels: [__meta_kubernetes_namespace]
           action: replace
           target_label: kubernetes_namespace
-        - source_labels: [__meta_kubernetes_service_name]
+        - source_labels: [__meta_kubernetes_endpointslice_service_name]
           action: replace
           target_label: kubernetes_name

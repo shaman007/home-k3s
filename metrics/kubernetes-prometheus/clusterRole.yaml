@@ -1,4 +1,3 @@
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -12,11 +11,19 @@ rules:
       - endpoints
       - pods
     verbs: ["get", "list", "watch"]
-  - apiGroups:
-      - extensions
-    resources:
-      - ingresses
+
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
     verbs: ["get", "list", "watch"]
+
+  - apiGroups: ["extensions"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+
   - nonResourceURLs: ["/metrics"]
     verbs: ["get"]
 ---
