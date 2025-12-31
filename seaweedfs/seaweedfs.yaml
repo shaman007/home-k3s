@@ -58,7 +58,7 @@ spec:
               mountPath: /data
           resources:
             requests: {cpu: "200m", memory: "256Mi"}
-            limits: {cpu: "2", memory: "4Gi"}
+            limits: {cpu: "4", memory: "4Gi"}
       volumes:
         - name: data
           hostPath:
