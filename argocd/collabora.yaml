@@ -14,7 +14,7 @@ spec:
       values: |
         collabora:
           server_name: office.andreybondarenko.com
-          extra_params: --o:ssl.enable=false --o:ssl.termination=true
+          extra_params: --o:ssl.enable=false --o:ssl.termination=true -o:security.enable_metrics_unauthenticated=true
         resources:
           requests:
             cpu: "171m"

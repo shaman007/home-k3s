@@ -35,7 +35,6 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
-
   rules:
     - host: office.andreybondarenko.com
       http:
