@@ -4,6 +4,14 @@ kind: Deployment
 metadata:
   namespace: matrix
   name: matrix
+  labels:
+    app: matrix
+    tier: backend
+    app.kubernetes.io/name: synapse
+    app.kubernetes.io/instance: matrix
+    app.kubernetes.io/managed-by: argo-cd
+    app.kubernetes.io/part-of: matrix
+    app.kubernetes.io/component: synapse
 spec:
   replicas: 1
   selector:
