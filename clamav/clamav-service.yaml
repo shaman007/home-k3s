@@ -16,3 +16,7 @@ spec:
   ports:
     - protocol: TCP
       port: 3200
+      name: api
+    - protocol: TCP
+      port: 9906
+      name: metrics

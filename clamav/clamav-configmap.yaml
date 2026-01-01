@@ -25,8 +25,8 @@ data:
     LogSyslog false
     LogRotate true
     LogFacility LOG_LOCAL6
-    LogClean false
-    LogVerbose false
+    LogClean true
+    LogVerbose true
     PreludeEnable no
     PreludeAnalyzerName ClamAV
     DatabaseDirectory /var/lib/clamav
