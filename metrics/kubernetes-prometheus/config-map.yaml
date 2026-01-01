@@ -319,6 +319,27 @@ data:
         static_configs:
         - targets:
           - collabora-collabora-online.collabora.svc.cluster.local:9980
+      - job_name: argocd-metrics
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - argocd-metrics.argocd.svc.cluster.local:8082
+      - job_name: argocd-server-metrics
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - argocd-server-metrics.argocd.svc.cluster.local:8083
+      - job_name: argocd-applicationset-controller
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - argocd-applicationset-controller.argocd.svc.cluster.local:8080
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
