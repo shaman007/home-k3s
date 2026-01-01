@@ -340,6 +340,13 @@ data:
         static_configs:
         - targets:
           - argocd-applicationset-controller.argocd.svc.cluster.local:8080
+      - job_name: keycloak
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - keycloak.keycloak.svc.cluster.local:9000
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
