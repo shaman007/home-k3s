@@ -312,6 +312,13 @@ data:
         static_configs:
         - targets:
           - clamav.clamav.svc.cluster.local:9906
+      - job_name: collabora
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/cool/getMetrics"
+        static_configs:
+        - targets:
+          - collabora-collabora-online.collabora.svc.cluster.local:9980
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
