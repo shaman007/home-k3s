@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-nextcloud-config
+  namespace: nextcloud
+data:
+  config.alloy: |
+    livedebugging { enabled = true }
+
+    // Match the same two globs you had in promtail.yaml
+    local.file_match "nextcloud" {
+      path_targets = [
+        {
+          __path__ = "/nextcloud/data/*.log",
+          job      = "nextcloud",
+        },
+      ]
+    }
+
+    loki.process "nextcloud" {
+      forward_to = [loki.write.default.receiver]
+
+      stage.decolorize { }
+
+      // Optional: drop noisy endpoints
+      stage.drop {
+        expression = ".*(\\/health|\\/metrics|\\/ping).*"
+      }
+    }
+
+    loki.source.file "nextcloud" {
+      targets    = local.file_match.nextcloud.targets
+      forward_to = [loki.process.nextcloud.receiver]
+
+      // positions in a writable place
+      legacy_positions_file = "/run/alloy/positions.yaml"
+    }
+
+    loki.write "default" {
+      endpoint {
+        url = "http://loki.loki.svc.cluster.local:3100/loki/api/v1/push"
+      }
+    }

@@ -52,6 +52,13 @@ spec:
           hostPath:
             path: /dev/dri
             type: Directory
+        - name: alloy-config
+          configMap:
+            name: alloy-nextcloud-config
+        - name: alloy-run
+          emptyDir: {}
+        - name: alloy-data
+          emptyDir: {}
       affinity:
         # Prevent scheduling on a specific node
         nodeAffinity:
@@ -109,3 +116,28 @@ spec:
               memory: "6306Mi"
             limits:
               memory: "6306Mi"
+        - name: alloy
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:latest
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+          resources:
+            requests:
+              cpu: "177m"
+              memory: "107Mi"
+            limits:
+              memory: "107Mi"
+          volumeMounts:
+            - name: alloy-config
+              mountPath: /etc/alloy
+              readOnly: true
+            - name: alloy-run
+              mountPath: /run/alloy
+            - name: nextcloud-lh
+              mountPath: /nextcloud
+            - name: alloy-data
+              mountPath: /data-alloy
