@@ -6,7 +6,9 @@
 
 # TODO
 
-* Logs collection -> move to alloy
-* Metrics + Graphana Dashboard
 * R/O filesystem
 * Make it run not from root (own Dockerfile?)
+
+# Observability
+
+There are no metrics to export/collect.
