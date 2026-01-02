@@ -148,6 +148,7 @@ spec:
             - "-ip.bind=0.0.0.0"
             - "-port=8333"
             - "-filer=127.0.0.1:8888"
+            - "-metricsPort=9094"
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -162,12 +163,14 @@ spec:
           ports:
             - name: s3
               containerPort: 8333
-          #readinessProbe:
-          #  httpGet:
-          #    path: /
-          #    port: 8333
-          #  initialDelaySeconds: 5
-          #  periodSeconds: 10
+            - name: metrics-s3
+              containerPort: 9094
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8333
+            initialDelaySeconds: 5
+            periodSeconds: 10
 
       volumes:
         - name: data
@@ -215,3 +218,5 @@ spec:
     - name: filer-metrics
       port: 9093
       targetPort: filer-metrics
+    - name: s3-metrics
+      port: 9094

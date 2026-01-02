@@ -381,21 +381,28 @@ data:
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - seaweedfs-metrics-master.seaweedfs.harbor.svc.cluster.local:9091
+          - seaweedfs-metrics.seaweedfs.svc.cluster.local:9091
       - job_name: seaweedfs-metrics-volume
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - seaweedfs-metrics-master.seaweedfs.harbor.svc.cluster.local:9092
+          - seaweedfs-metrics.seaweedfs.svc.cluster.local:9092
       - job_name: seaweedfs-metrics-filer
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - seaweedfs-metrics-master.seaweedfs.harbor.svc.cluster.local:9093
+          - seaweedfs-metrics.seaweedfs.svc.cluster.local:9093
+      - job_name: seaweedfs-metrics-s3
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - seaweedfs-metrics.seaweedfs.svc.cluster.local:9094
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
