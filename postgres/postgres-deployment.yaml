@@ -20,9 +20,6 @@ spec:
       labels:
         app: postgres
     spec:
-      # Uncomment to use your Harbor cache
-      # imagePullSecrets:
-      #   - name: my-private-revistry
       securityContext:
         fsGroup: 999
         runAsUser: 999
@@ -67,10 +64,6 @@ spec:
               value: "ttrss"
             - name: PGDATA
               value: /var/lib/postgresql/data
-          #args:
-          #  - "-c max_connections=200"
-          #  - "-c shared_buffers=512MB"
-          #  - "-c wal_level=replica"
           readinessProbe:
             exec:
               command: ["pg_isready","-U","$(POSTGRES_USER)"]
@@ -92,8 +85,8 @@ spec:
             - name: data
               mountPath: /var/lib/postgresql/data
               subPath: data
-            - name: backup
-              mountPath: /backup
+            #- name: backup
+            #  mountPath: /backup
         - name: postgres-exporter
           image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
           securityContext:
@@ -125,6 +118,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: data-postgres-postgresql-0
-        - name: backup
-          persistentVolumeClaim:
-            claimName: data-export
+        #- name: backup
+        #  persistentVolumeClaim:
+        #    claimName: data-export
