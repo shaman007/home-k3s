@@ -21,12 +21,11 @@ spec:
     spec:
       containers:
         - name: mongo-exporter
-          image:  harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.44.0
+          image:  harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.47.2
           imagePullPolicy: Always
           args:
             - --mongodb.uri=mongodb://mongodb.db.svc.cluster.local:27017
             - --collector.profile
-            - --compatible-mode
           resources:
                requests:
                  cpu: 10m
