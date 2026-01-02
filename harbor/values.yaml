@@ -18,6 +18,7 @@ database:
       limits:
         memory: 1250Mi
 exporter:
+  replicas: 1
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
 jobservice:
@@ -85,11 +86,26 @@ trivy:
       cpu: 100m
     limits:
       memory: 401Mi
-      cpu: 3
+      cpu: 12
 notary:
   enabled: false  # disable notary
   nodeSelector:
     kubernetes.io/hostname: w386.k8s.my.lan
+
+metrics:
+  enabled: true
+  core:
+    path: /metrics
+    port: 8001
+  registry:
+    path: /metrics
+    port: 8001
+  jobservice:
+    path: /metrics
+    port: 8001
+  exporter:
+    path: /metrics
+    port: 8001
 
 persistence:
   enabled: true

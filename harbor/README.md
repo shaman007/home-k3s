@@ -1,3 +1,3 @@
-# TODO
+# Harbor
 
-* Metrics + Dashboard
+Managed by Helm.
