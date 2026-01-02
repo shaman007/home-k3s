@@ -1,3 +1,3 @@
-# TODO
+# SeaweedFS
 
-* Metrics + Dashboard
+Controlled by ArgoCD

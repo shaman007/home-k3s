@@ -9,7 +9,6 @@ spec:
     stsSeconds: 31536000
     stsIncludeSubdomains: true
     stsPreload: true
-
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -17,22 +16,11 @@ metadata:
   namespace: seaweedfs
   name: andreybondarenko-ingress
   annotations:
-    # Traefik router on HTTPS entrypoint
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-
-    # Use Traefik's ACME resolver
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    # Apply HSTS middleware
-    traefik.ingress.kubernetes.io/router.middlewares: seaweedfs-hsts@kubernetescrd
-
-    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
-    # so no per-ingress redirect annotation is needed.
   labels:
-    app: seaweedfs
-    app.kubernetes.io/name: seaweedfs
-    app.kubernetes.io/instance: seaweedfs
-    app.kubernetes.io/version: "latest"
+    app: seaweedfs-s3
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
