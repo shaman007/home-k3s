@@ -403,6 +403,41 @@ data:
         static_configs:
         - targets:
           - seaweedfs-metrics.seaweedfs.svc.cluster.local:9094
+      - job_name: loki
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - loki.loki.svc.cluster.local:3100
+      - job_name: loki-canary
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - loki-canary.loki.svc.cluster.local:3500
+      - job_name: loki-chunks-cache
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - loki-chunks-cache.loki.svc.cluster.local:9150
+      - job_name: loki-results-cache
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - loki-results-cache.loki.svc.cluster.local:9150
+      - job_name: loki-headless
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - loki-headless.loki.svc.cluster.local:3100
       - job_name: 'node-exporter'
         kubernetes_sd_configs:
           - role: endpointslice
