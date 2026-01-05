@@ -22,8 +22,11 @@ spec:
     spec:
       containers:
       - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:latest
+        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.31.0
         env:
+        # Use for upgrading
+        #- name: MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
+        #  value: "true"
         - name: MEILI_NO_ANALYTICS
           value: "true"
         - name: MEILI_MASTER_KEY
