@@ -25,6 +25,9 @@ spec:
         image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.30.0
         ports:
         - containerPort: 3000
+        env:
+          - name: CRAWLER_STORE_PDF
+            value: "true"
         envFrom:
         - configMapRef:
             name: karakeep-env
