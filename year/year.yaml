@@ -1,0 +1,108 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: year
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: year
+  namespace: year
+  labels:
+    app: year
+    name.kubernetes.io/instance: year
+    app.kubernetes.io/name: year
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: year
+  template:
+    metadata:
+      labels:
+        app: year
+    spec:
+      containers:
+        - name: year
+          image: harbor.andreybondarenko.com/library/year:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: year-data
+              mountPath: /tmp
+            - name: app-cache
+              mountPath: /app/node_modules/.cache
+            - name: npm-logs
+              mountPath: /root/.npm/_logs
+      volumes:
+        - name: year-data
+          emptyDir: {}
+        - name: app-cache
+          emptyDir: {}
+        - name: npm-logs
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: year
+  namespace: year
+  labels:
+    app: year
+spec:
+  selector:
+    app: year
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: year
+  namespace: year
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: year.andreybondarenko.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: year
+                port:
+                  number: 3000
