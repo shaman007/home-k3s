@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sync-letsencrypt-prod
+  namespace: mail
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sync-le-tls
+          restartPolicy: OnFailure
+          containers:
+            - name: sync
+              image: harbor.andreybondarenko.com/library/sync:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: DOMAIN
+                  value: "andreybondarenko.com"
+                - name: SECRET_NAME
+                  value: "letsencrypt-prod"
+                - name: TRAEFIK_NS
+                  value: "traefik"
+                - name: TRAEFIK_LABEL
+                  value: "app.kubernetes.io/name=traefik"
+                - name: ACME_PATH
+                  value: "/data/acme.json"
+              args:
+                - |
+                  set -euo pipefail
+
+                  POD="$(kubectl -n "$TRAEFIK_NS" get pod -l "$TRAEFIK_LABEL" -o jsonpath='{.items[0].metadata.name}')"
+                  kubectl -n "$TRAEFIK_NS" exec "$POD" -- cat "$ACME_PATH" > /tmp/acme.json
+
+                  jq -r --arg d "$DOMAIN" '
+                    .. | objects | select(has("Certificates")) | .Certificates[]
+                    | select(.domain.main==$d or ((.domain.sans // []) | index($d)))
+                    | .certificate
+                  ' /tmp/acme.json | head -n1 | base64 -d > /tmp/tls.crt
+
+                  jq -r --arg d "$DOMAIN" '
+                    .. | objects | select(has("Certificates")) | .Certificates[]
+                    | select(.domain.main==$d or ((.domain.sans // []) | index($d)))
+                    | .key
+                  ' /tmp/acme.json | head -n1 | base64 -d > /tmp/tls.key
+
+                  # optional: only update when <7 days left
+                  openssl x509 -in /tmp/tls.crt -noout -checkend $((7*24*3600)) \
+                    || echo "Cert expiring soon / already expired -> updating secret"
+
+                  kubectl -n mail create secret tls "$SECRET_NAME" \
+                    --cert=/tmp/tls.crt --key=/tmp/tls.key \
+                    --dry-run=client -o yaml | kubectl apply -f -
