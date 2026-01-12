@@ -163,6 +163,11 @@ data:
         log_clean = true;
         servers = "clamav.clamav.svc.cluster.local:3200";
       }
+  surbl: |
+    enabled = true;
+    whitelist = "/var/lib/rspamd/surbl-whitelist.inc.local";
+  options: |
+    url_tld = "/var/lib/rspamd/effective_tld_names.local.dat";
   rspamd: |
     .include "$CONFDIR/common.conf"
     options {

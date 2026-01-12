@@ -84,6 +84,18 @@ spec:
             items:
               - key: dkim_signing
                 path: dkim_signing.conf
+        - name: surbl-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: surbl
+                path: surbl.conf
+        - name: options-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: options
+                path: options.inc
         - name: privater-cf
           secret:
             secretName: andreybondarenko.key
@@ -154,6 +166,12 @@ spec:
               mountPath: /mail
             - name: logs
               mountPath: /var/log/
+            - name: surbl-cf
+              mountPath: /etc/rspamd/local.d/surbl.conf
+              subPath: surbl.conf
+            - name: options-cf
+              mountPath: /etc/rspamd/local.d/options.inc
+              subPath: options.inc
       initContainers:
         - name: fix-perms
           image: busybox
