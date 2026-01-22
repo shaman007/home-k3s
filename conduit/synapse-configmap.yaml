@@ -34,6 +34,7 @@ spec:
 
           #registration_shared_secret: "{{ .registration_shared_secret }}"
           allow_public_rooms_over_federation: true
+          enable_metrics: true
 
           experimental_features:
             msc3861_enabled: true
