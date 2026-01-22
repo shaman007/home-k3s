@@ -367,7 +367,7 @@ data:
         metrics_path: "/_synapse/metrics"
         static_configs:
         - targets:
-          - metrics.matrics.svc.cluster.local:8008
+          - metrics.matrix.svc.cluster.local:8008
       - job_name: harbor-registry
         scrape_interval: 45s
         scrape_timeout:  30s
