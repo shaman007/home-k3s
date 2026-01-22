@@ -29,8 +29,11 @@ spec:
           persistentVolumeClaim:
             claimName: matrix-lh
         - name: synapse-config
-          configMap:
-            name: config-synapse
+          secret:
+            secretName: config-synapse
+            items:
+              - key: config.yaml
+                path: config.yaml
       containers:
         - name: synapse
           image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:latest

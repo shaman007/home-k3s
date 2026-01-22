@@ -56,8 +56,13 @@ spec:
               type: http
               tls: false
               x_forwarded: true
+            - port: 8008
+              tls: false
+              type: http
+              x_forwarded: true
+              bind_addresses: ['0.0.0.0']
               resources:
-                - names: [client, federation]
+                - names: [client, federation, metrics]
 
           database:
             name: sqlite3
