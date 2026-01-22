@@ -36,6 +36,9 @@ spec:
           image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:latest
           ports:
             - containerPort: 6167
+              name: federation
+            - containerPort: 8008
+              name: metrics
           volumeMounts:
             - name: matrix-lh
               mountPath: /data
