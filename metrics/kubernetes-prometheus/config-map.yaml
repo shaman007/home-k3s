@@ -361,6 +361,13 @@ data:
         static_configs:
         - targets:
           - harbor-jobservice.harbor.svc.cluster.local:8001
+      - job_name: conduit
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/_synapse/metrics"
+        static_configs:
+        - targets:
+          - metrics.matrics.svc.cluster.local:8008
       - job_name: harbor-registry
         scrape_interval: 45s
         scrape_timeout:  30s

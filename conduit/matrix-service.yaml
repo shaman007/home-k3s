@@ -19,3 +19,21 @@ spec:
   externalIPs:
     - 192.168.1.209
   externalTrafficPolicy: Local
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: matrix
+  name: metrics
+  labels:
+    tier: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: matrix
+    tier: backend
+  ports:
+    - port: 8008
+      targetPort: 8008
+      protocol: TCP
+      name: metrics
