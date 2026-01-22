@@ -46,6 +46,8 @@ Old foto:
 * Harbor as image registry
 * Karakeep for bookmarks
 * Connectivity checker
+* Keycloak OIDC provider
+* Vas3k year calendar
 
 ## TODO
 
