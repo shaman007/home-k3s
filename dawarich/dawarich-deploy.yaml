@@ -61,7 +61,10 @@ spec:
             - name: OIDC_CLIENT_ID
               value: "dawarich"
             - name: OIDC_CLIENT_SECRET
-              value: ""
+              valueFrom:
+                secretKeyRef:
+                  name: oidc-client-secret
+                  key: OIDC_CLIENT_SECRET
             - name: OIDC_ISSUER
               value: "https://sso.andreybondarenko.com/realms/master"
             - name: OIDC_REDIRECT_URI
