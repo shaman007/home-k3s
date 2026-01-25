@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
-    path: conduit
+    path: synapse
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
