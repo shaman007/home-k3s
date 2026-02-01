@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stirling-pdf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stirling-pdf-configs
+  namespace: stirling-pdf
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stirling-pdf
+  namespace: stirling-pdf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stirling-pdf
+  template:
+    metadata:
+      labels:
+        app: stirling-pdf
+    spec:
+      containers:
+        - name: stirling-pdf
+          image: stirlingtools/stirling-pdf:latest-fat
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: configs
+              mountPath: /configs
+      volumes:
+        - name: configs
+          persistentVolumeClaim:
+            claimName: stirling-pdf-configs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stirling-pdf
+  namespace: stirling-pdf
+spec:
+  type: ClusterIP
+  selector:
+    app: stirling-pdf
+  ports:
+    - port: 8080
+      targetPort: 8080
