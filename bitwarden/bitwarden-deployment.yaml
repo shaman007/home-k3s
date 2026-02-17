@@ -58,6 +58,16 @@ spec:
               value: "25"
             - name: globalSettings__mail__smtp__ssl
               value: "false"
+            - name: globalsettings__yubico__clientId
+              valueFrom:
+                secretKeyRef:
+                  name: yubico-client-id
+                  key: client-id
+            - name: globalsettings__yubico__key
+              valueFrom:
+                secretKeyRef:
+                  name: yubico-secret-key
+                  key: secret-key
           image: harbor.andreybondarenko.com/github/bitwarden/self-host:beta
           name: bitwarden
           ports:
