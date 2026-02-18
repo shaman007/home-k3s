@@ -25,8 +25,8 @@ spec:
           uploads_path: /data/uploads
           pid_file: /data/homeserver.pid
 
-          enable_registration: true
-          enable_registration_without_verification: true
+          enable_registration: false
+          enable_registration_without_verification: false
           #registration:
           #  enabled: true
           #  registration_requires_token: false
@@ -70,14 +70,6 @@ spec:
             name: sqlite3
             args:
               database: /data/homeserver.db
-            #name: psycopg2
-            #args:
-            #  user: postgres
-            #  password: azcx4jVrFN
-            #  database: synapse
-            #  host: postgres-postgresql.db.svc.cluster.local
-            #  cp_min: 5
-            #  cp_max: 10
 
           macaroon_secret_key: "{{ .macaroon_secret_key }}"
           form_secret: "{{ .form_secret }}"
