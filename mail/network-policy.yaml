@@ -201,6 +201,13 @@ spec:
           port: 11333
         - protocol: TCP
           port: 11335
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 11334
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
