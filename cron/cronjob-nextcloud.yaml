@@ -30,7 +30,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - "sudo -u www-data php /nextcloud/cron.php"
+                - "sleep 120; sudo -u www-data php /nextcloud/cron.php"
               volumeMounts:
                 - name: application-code
                   mountPath: /nextcloud
