@@ -6,12 +6,23 @@ metadata:
   namespace: nextcloud
   labels:
     app: nextcloud
+    tier: backend
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
 spec:
   schedule: "15 * * * *"
   jobTemplate:
     spec:
       backoffLimit: 0
       template:
+        metadata:
+          labels:
+            app: nextcloud
+            tier: backend
+            app.kubernetes.io/name: nextcloud
+            app.kubernetes.io/instance: nextcloud
         spec:
           containers:
             - name: previews
