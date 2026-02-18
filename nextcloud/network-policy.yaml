@@ -90,6 +90,18 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchExpressions:
+              - key: k8s-app
+                operator: In
+                values: ["kube-dns", "coredns"]
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: coredns
       ports:
         - protocol: UDP
           port: 53
@@ -113,6 +125,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: db
+          podSelector:
+            matchLabels:
+              app: mysql
       ports:
         - protocol: TCP
           port: 3306
@@ -120,6 +135,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: nextcloud
+          podSelector:
+            matchLabels:
+              app: redis
       ports:
         - protocol: TCP
           port: 6379
