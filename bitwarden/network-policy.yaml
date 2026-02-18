@@ -1,0 +1,118 @@
+---
+# Baseline network policy for Bitwarden pods.
+# This enforces least privilege while keeping required integrations reachable.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-default-deny
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-allow-ingress-from-traefik
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-allow-dns-egress
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-allow-postgres-egress
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: db
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-allow-loki-egress
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: loki
+      ports:
+        - protocol: TCP
+          port: 3100
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-allow-external-egress
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 25
+        - protocol: TCP
+          port: 443
