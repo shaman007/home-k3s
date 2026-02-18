@@ -116,19 +116,10 @@ spec:
       ports:
         - protocol: TCP
           port: 3306
-        - protocol: TCP
-          port: 5432
     - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: nextcloud
-      ports:
-        - protocol: TCP
-          port: 6379
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: redis
       ports:
         - protocol: TCP
           port: 6379
