@@ -1,0 +1,62 @@
+---
+# Restrict ingress to Postgres pods while allowing known client namespaces.
+# Add another namespaceSelector entry when a new app needs DB access.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-restrict-ingress
+  namespace: db
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    # Local namespace access (admin tools, jobs in db namespace)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: db
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # Application namespaces that use postgres-postgresql.db.svc.cluster.local
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bitwarden
+      ports:
+        - protocol: TCP
+          port: 5432
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keycloak
+      ports:
+        - protocol: TCP
+          port: 5432
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: dawarich
+      ports:
+        - protocol: TCP
+          port: 5432
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mastodon
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # Monitoring namespace can scrape postgres-exporter sidecar metrics.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9187
