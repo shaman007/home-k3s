@@ -1,0 +1,82 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: matrix-synapse-default-deny
+  namespace: matrix
+spec:
+  podSelector:
+    matchLabels:
+      app: matrix
+      tier: backend
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: matrix-synapse-allow-ingress-from-traefik
+  namespace: matrix
+spec:
+  podSelector:
+    matchLabels:
+      app: matrix
+      tier: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 6167
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: matrix-synapse-allow-dns-egress
+  namespace: matrix
+spec:
+  podSelector:
+    matchLabels:
+      app: matrix
+      tier: backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: matrix-synapse-allow-federation-egress
+  namespace: matrix
+spec:
+  podSelector:
+    matchLabels:
+      app: matrix
+      tier: backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 8448
+        - protocol: TCP
+          port: 80
