@@ -1,0 +1,88 @@
+---
+# Network policy for connectivity-exporter in namespace connectivity-exporter.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: connectivity-exporter-default-deny
+  namespace: connectivity-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app: connectivity-exporter
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: connectivity-exporter-allow-ingress-prometheus
+  namespace: connectivity-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app: connectivity-exporter
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: connectivity-exporter
+      ports:
+        - protocol: TCP
+          port: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: connectivity-exporter-allow-egress-dns
+  namespace: connectivity-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app: connectivity-exporter
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: connectivity-exporter-allow-egress-web
+  namespace: connectivity-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app: connectivity-exporter
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
