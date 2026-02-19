@@ -148,6 +148,7 @@ spec:
       ports:
         - protocol: TCP
           port: 3200
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -168,6 +169,13 @@ spec:
       ports:
         - protocol: TCP
           port: 6379
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9121
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
