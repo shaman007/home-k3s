@@ -15,6 +15,7 @@ spec:
       labels:
         app: alertmanager
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: alertmanager
           image:  harbor.andreybondarenko.com/dockerhub/prom/alertmanager:latest

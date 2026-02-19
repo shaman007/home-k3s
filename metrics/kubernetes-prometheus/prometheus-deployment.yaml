@@ -18,6 +18,8 @@ spec:
       labels:
         app: prometheus-server
     spec:
+      serviceAccountName: prometheus-server
+      automountServiceAccountToken: true
       containers:
         - name: prometheus
           image:  harbor.andreybondarenko.com/dockerhub/prom/prometheus:latest
