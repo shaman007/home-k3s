@@ -165,12 +165,12 @@ spec:
               containerPort: 8333
             - name: metrics-s3
               containerPort: 9094
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8333
-            initialDelaySeconds: 5
-            periodSeconds: 10
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: 8333
+          #  initialDelaySeconds: 5
+          #  periodSeconds: 10
 
       volumes:
         - name: data
