@@ -32,7 +32,7 @@ spec:
                   set -euo pipefail
 
                   POD="$(kubectl -n "$TRAEFIK_NS" get pod -l "$TRAEFIK_LABEL" -o jsonpath='{.items[0].metadata.name}')"
-                  kubectl -n "$TRAEFIK_NS" exec "$POD" -- cat "$ACME_PATH" > /tmp/acme.json
+                  kubectl -n "$TRAEFIK_NS" exec -c traefik "$POD" -- cat "$ACME_PATH" > /tmp/acme.json
 
                   jq -r --arg d "$DOMAIN" '
                     .. | objects | select(has("Certificates")) | .Certificates[]
