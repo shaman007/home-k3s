@@ -12,6 +12,4 @@ spec:
   selector:
     app: grafana
   sessionAffinity: None
-  type: LoadBalancer
-  externalIPs:
-    - 192.168.1.209
+  type: ClusterIP

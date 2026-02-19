@@ -10,9 +10,7 @@ metadata:
 spec:
   selector:
     app: prometheus-server
-  type: NodePort
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 9090
-  externalIPs:
-    - 192.168.1.209
