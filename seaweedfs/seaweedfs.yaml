@@ -187,14 +187,12 @@ metadata:
   labels:
     app: seaweedfs-s3
 spec:
-  type: NodePort
   selector:
     app: seaweedfs-s3
   ports:
     - name: s3
       port: 8333
       targetPort: 8333
-      nodePort: 31833
 
 ---
 apiVersion: v1

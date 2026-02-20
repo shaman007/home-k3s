@@ -7,7 +7,6 @@ metadata:
   labels:
     tier: backend
 spec:
-  type: LoadBalancer
   selector:
     app: matrix
     tier: backend
@@ -16,9 +15,6 @@ spec:
       targetPort: 6167
       protocol: TCP
       name: federation
-  externalIPs:
-    - 192.168.1.209
-  externalTrafficPolicy: Local
 ---
 apiVersion: v1
 kind: Service

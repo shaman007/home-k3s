@@ -14,5 +14,3 @@ spec:
       name: http
   selector:
     app: thanos-querier
-  externalIPs:
-    - 192.168.1.100
