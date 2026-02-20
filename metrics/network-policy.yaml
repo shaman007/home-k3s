@@ -39,7 +39,15 @@ metadata:
   name: monitoring-allow-ingress-from-monitoring
   namespace: monitoring
 spec:
-  podSelector: {}
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: NotIn
+        values:
+          - prometheus-server
+          - thanos-querier
+          - thanos-store-gateway
+          - thanos-compactor
   policyTypes:
     - Ingress
   ingress:
@@ -54,7 +62,15 @@ metadata:
   name: monitoring-allow-egress-intra-namespace
   namespace: monitoring
 spec:
-  podSelector: {}
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: NotIn
+        values:
+          - prometheus-server
+          - thanos-querier
+          - thanos-store-gateway
+          - thanos-compactor
   policyTypes:
     - Egress
   egress:
@@ -316,3 +332,135 @@ spec:
       ports:
         - protocol: TCP
           port: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-grafana-loki
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: loki
+      ports:
+        - protocol: TCP
+          port: 3100
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-grafana-https
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-ingress-thanos-prometheus
+  namespace: monitoring
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - prometheus-server
+          - thanos-querier
+          - thanos-store-gateway
+          - thanos-compactor
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 10901
+        - protocol: TCP
+          port: 10902
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-thanos-querier
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: thanos-querier
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus-server
+      ports:
+        - protocol: TCP
+          port: 10901
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app: thanos-store-gateway
+      ports:
+        - protocol: TCP
+          port: 10901
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-thanos-s3
+  namespace: monitoring
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - prometheus-server
+          - thanos-store-gateway
+          - thanos-compactor
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 81.19.4.105/32
+      ports:
+        - protocol: TCP
+          port: 443
