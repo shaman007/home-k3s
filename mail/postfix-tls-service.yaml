@@ -12,13 +12,10 @@ metadata:
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
 spec:
-  type: NodePort
   selector:
     app: postfix
     tier: mail
   ports:
     - protocol: TCP
       port: 587
-  externalIPs:
-    - 192.168.1.209
-  externalTrafficPolicy: Local
+      targetPort: 587

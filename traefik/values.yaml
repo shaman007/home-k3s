@@ -13,7 +13,11 @@ deployment:
 podSecurityContext:
   fsGroup: 1000
   fsGroupChangePolicy: "OnRootMismatch"
-# Expose via LoadBalancer; or change to NodePort if you don’t have LB
+nodeSelector:
+  # Keep Traefik on the node that owns the Service external IP (192.168.1.209)
+  # so k3s servicelb does not SNAT across nodes before traffic reaches Traefik.
+  kubernetes.io/hostname: w386.k8s.my.lan
+# Expose via LoadBalancer; or change to NodePort if you don't have LB
 service:
   type: LoadBalancer
   spec:
@@ -29,6 +33,31 @@ ports:
     exposedPort: 443
     tls:
       enabled: true
+  # TCP entrypoints for non-HTTP workloads.
+  submission:
+    port: 587
+    exposedPort: 587
+    expose:
+      default: true
+    protocol: TCP
+  imaps:
+    port: 993
+    exposedPort: 993
+    expose:
+      default: true
+    protocol: TCP
+  managesieve:
+    port: 4190
+    exposedPort: 4190
+    expose:
+      default: true
+    protocol: TCP
+  minecraft:
+    port: 25565
+    exposedPort: 25565
+    expose:
+      default: true
+    protocol: TCP
 
 # Enable Kubernetes CRDs/Providers
 providers:

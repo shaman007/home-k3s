@@ -71,6 +71,7 @@ data:
   master: |
     #127.0.0.1:submission inet n -   n       -       -       smtpd
     submission inet n       -       n       -       -       smtpd
+      -o smtpd_upstream_proxy_protocol=haproxy
     #  -o syslog_name=postfix/submission
     #  -o smtpd_tls_security_level=encrypt
     #  -o smtpd_sasl_auth_enable=yes

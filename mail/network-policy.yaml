@@ -27,7 +27,11 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    - ports:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
         - protocol: TCP
           port: 587
 ---
