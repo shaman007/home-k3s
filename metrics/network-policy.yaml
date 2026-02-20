@@ -163,6 +163,8 @@ spec:
               kubernetes.io/metadata.name: db
       ports:
         - protocol: TCP
+          port: 27017
+        - protocol: TCP
           port: 9104
         - protocol: TCP
           port: 9187

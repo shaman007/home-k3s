@@ -1,0 +1,96 @@
+---
+# Network policy for ConvertX in namespace convertx.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-default-deny
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-allow-ingress-from-traefik
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-allow-ingress-intra-namespace
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: convertx
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-allow-egress-intra-namespace
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: convertx
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-allow-egress-dns
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
