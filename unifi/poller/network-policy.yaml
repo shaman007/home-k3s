@@ -1,0 +1,115 @@
+---
+# Network policy for Unifi poller in namespace unifi.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-poller-default-deny
+  namespace: unifi
+spec:
+  podSelector:
+    matchLabels:
+      app: unifi-poller
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-poller-allow-ingress-from-monitoring
+  namespace: unifi
+spec:
+  podSelector:
+    matchLabels:
+      app: unifi-poller
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9130
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-poller-allow-ingress-intra-namespace
+  namespace: unifi
+spec:
+  podSelector:
+    matchLabels:
+      app: unifi-poller
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: unifi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-poller-allow-egress-dns
+  namespace: unifi
+spec:
+  podSelector:
+    matchLabels:
+      app: unifi-poller
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-poller-allow-egress-to-prometheus
+  namespace: unifi
+spec:
+  podSelector:
+    matchLabels:
+      app: unifi-poller
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 3100
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: unifi-poller-allow-egress-to-unifi-controller
+  namespace: unifi
+spec:
+  podSelector:
+    matchLabels:
+      app: unifi-poller
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.1/32
+      ports:
+        - protocol: TCP
+          port: 443
