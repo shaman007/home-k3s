@@ -103,7 +103,7 @@ spec:
             - name: 'KC_DB_URL_DATABASE'
               value: 'keycloak'
             - name: 'KC_DB_URL_HOST'
-              value: 'postgres-postgresql.db.svc.cluster.local'
+              value: 'keycloak-postgres.keycloak.svc.cluster.local'
             - name: 'KC_DB'
               value: 'postgres'
             # In a production environment, use a secret to store username and password to the database

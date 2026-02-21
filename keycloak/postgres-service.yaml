@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-postgres
+  namespace: keycloak
+  labels:
+    app: keycloak-postgres
+    app.kubernetes.io/name: keycloak-postgres
+    app.kubernetes.io/instance: keycloak-postgres
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ports:
+    - name: tcp-postgres
+      port: 5432
+      targetPort: tcp-postgres
+  selector:
+    app: keycloak-postgres
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-postgres-metrics
+  namespace: keycloak
+  labels:
+    app: keycloak-postgres
+    app.kubernetes.io/name: keycloak-postgres
+    app.kubernetes.io/instance: keycloak-postgres
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ports:
+    - name: pmetrics
+      port: 9187
+      targetPort: pmetrics
+  selector:
+    app: keycloak-postgres

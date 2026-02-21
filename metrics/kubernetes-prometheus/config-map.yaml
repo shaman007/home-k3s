@@ -73,6 +73,13 @@ data:
           severity: mail
         annotations:
           summary: Postgresql-bitwarden is down
+      - alert: Postgresql-keycloak is down
+        expr: pg_up{instance="keycloak-postgres-metrics.keycloak.svc.cluster.local:9187", job="postgres-keycloak"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Postgresql-keycloak is down
       - alert: KubeJobFailed
         expr: kube_job_failed{job="kube-state-metrics",namespace=~".*"} > 0
         for: 10m
@@ -215,6 +222,14 @@ data:
         static_configs:
         - targets:
           - bitwarden-postgres-metrics.bitwarden.svc.cluster.local:9187
+
+      - job_name: postgres-keycloak
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - keycloak-postgres-metrics.keycloak.svc.cluster.local:9187
 
       - job_name: rspamd
         scrape_interval: 45s

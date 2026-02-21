@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: keycloak
+  name: data-keycloak-postgres-lh
+  labels:
+    storage.k8s.io/name: longhorn
+    app.kubernetes.io/name: keycloak-postgres
+    app.kubernetes.io/instance: keycloak-postgres
+    app.kubernetes.io/part-of: keycloak
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 8Gi
