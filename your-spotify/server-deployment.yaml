@@ -39,7 +39,7 @@ spec:
                   name: spotify
                   key: SPOTIFY_SECRET
             - name: MONGO_ENDPOINT
-              value: mongodb://mongodb.db.svc.cluster.local:27017/your_spotify
+              value: mongodb://mongodb.spotify.svc.cluster.local:27017/your_spotify
             - name: CORS
               value: "https://spt.andreybondarenko.com, \
                 https://spt-server.andreybondarenko.com"

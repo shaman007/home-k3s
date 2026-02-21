@@ -12,5 +12,6 @@ spec:
      targetRevision: HEAD
    destination:
      server: 'https://kubernetes.default.svc'
+     namespace: spotify
    syncPolicy:
      automated: {}

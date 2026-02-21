@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongodb
-  namespace: db
+  namespace: spotify
   labels:
     app: mongodb
     app.kubernetes.io/name: mongodb
@@ -39,6 +39,20 @@ spec:
               readOnly: true
             - name: mongodb-data
               mountPath: /data/db
+        - name: mongo-exporter
+          image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.47.2
+          imagePullPolicy: Always
+          args:
+            - --mongodb.uri=mongodb://127.0.0.1:27017
+            - --collector.profile
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"
+          ports:
+            - containerPort: 9216
       volumes:
         - name: mongodb-configmap
           configMap:

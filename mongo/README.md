@@ -1,3 +1,0 @@
-# MongoDV
-
-Managed by AgroCD

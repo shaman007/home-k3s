@@ -179,11 +179,14 @@ spec:
               kubernetes.io/metadata.name: db
       ports:
         - protocol: TCP
-          port: 27017
-        - protocol: TCP
           port: 9104
         - protocol: TCP
           port: 9187
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: spotify
+      ports:
         - protocol: TCP
           port: 9216
     - to:

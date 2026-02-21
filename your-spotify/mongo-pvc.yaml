@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  namespace: db
+  namespace: spotify
   name: mongo-lh
   labels:
     storage.k8s.io/name: longhorn

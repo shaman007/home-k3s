@@ -117,7 +117,7 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: db
+              kubernetes.io/metadata.name: spotify
       ports:
         - protocol: TCP
           port: 27017
@@ -148,3 +148,44 @@ spec:
           port: 80
         - protocol: TCP
           port: 443
+---
+# Namespace-level default deny for ingress in spotify namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongo-default-deny-ingress
+  namespace: spotify
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Allow MongoDB access only from required namespaces.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongodb-allow-required-ingress
+  namespace: spotify
+spec:
+  podSelector:
+    matchLabels:
+      app: mongodb
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: spotify
+      ports:
+        - protocol: TCP
+          port: 27017
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 27017
+        - protocol: TCP
+          port: 9216
