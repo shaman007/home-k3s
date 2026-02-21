@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: dawarich
+  name: data-dawarich-postgres-lh
+  labels:
+    storage.k8s.io/name: longhorn
+    app.kubernetes.io/name: dawarich-postgres
+    app.kubernetes.io/instance: dawarich-postgres
+    app.kubernetes.io/part-of: dawarich
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 8Gi

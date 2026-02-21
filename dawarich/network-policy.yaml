@@ -124,6 +124,13 @@ spec:
   policyTypes:
     - Egress
   egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: dawarich-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
     # Required for DATABASE_HOST=postgres-postgresql.db.svc.cluster.local
     - to:
         - namespaceSelector:
