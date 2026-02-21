@@ -49,17 +49,16 @@ spec:
         - protocol: TCP
           port: 3306
 ---
-# Restrict MySQL exporter scrape endpoint.
-# Keep monitoring access explicit so metrics remain available.
+# Allow monitoring to scrape mysqld-exporter sidecar on mysql pods.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: mysqld-exporter-allow-monitoring
+  name: mysql-allow-monitoring-scrape-sidecar
   namespace: db
 spec:
   podSelector:
     matchLabels:
-      app: mysqld-exporter
+      app: mysql
   policyTypes:
     - Ingress
   ingress:
