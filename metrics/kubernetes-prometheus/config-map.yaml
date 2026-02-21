@@ -80,6 +80,20 @@ data:
           severity: mail
         annotations:
           summary: Postgresql-keycloak is down
+      - alert: Postgresql-dawarich is down
+        expr: pg_up{instance="dawarich-postgres-metrics.dawarich.svc.cluster.local:9187", job="postgres-dawarich"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Postgresql-dawarich is down
+      - alert: Postgresql-mastodon is down
+        expr: pg_up{instance="mastodon-postgres-metrics.mastodon.svc.cluster.local:9187", job="postgres-mastodon"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Postgresql-mastodon is down
       - alert: KubeJobFailed
         expr: kube_job_failed{job="kube-state-metrics",namespace=~".*"} > 0
         for: 10m
@@ -230,6 +244,22 @@ data:
         static_configs:
         - targets:
           - keycloak-postgres-metrics.keycloak.svc.cluster.local:9187
+
+      - job_name: postgres-dawarich
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - dawarich-postgres-metrics.dawarich.svc.cluster.local:9187
+
+      - job_name: postgres-mastodon
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - mastodon-postgres-metrics.mastodon.svc.cluster.local:9187
 
       - job_name: rspamd
         scrape_interval: 45s

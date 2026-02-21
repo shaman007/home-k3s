@@ -1,0 +1,120 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mastodon-postgres
+  namespace: mastodon
+  labels:
+    app: mastodon-postgres
+    app.kubernetes.io/name: mastodon-postgres
+    app.kubernetes.io/instance: mastodon-postgres
+    app.kubernetes.io/part-of: mastodon
+    app.kubernetes.io/version: "18"
+    app.kubernetes.io/managed-by: helm
+spec:
+  serviceName: mastodon-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mastodon-postgres
+  template:
+    metadata:
+      labels:
+        app: mastodon-postgres
+    spec:
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      initContainers:
+        - name: volume-permissions
+          image: busybox:1.36
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              set -eux
+              mkdir -p /var/lib/postgresql/data /var/run/postgresql
+              chown -R 999:999 /var/lib/postgresql/data
+              chown -R 999:999 /var/run/postgresql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: data
+      containers:
+        - name: postgres
+          image: harbor.andreybondarenko.com/dockerhub/postgres:18
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              name: tcp-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "mastodon_production"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: PGDATA
+              value: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "mastodon_production"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "mastodon_production"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "1Gi"
+            limits:
+              memory: "6Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: data
+        - name: postgres-exporter
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "100Mi"
+          env:
+            - name: DATA_SOURCE_URI
+              value: "localhost:5432/mastodon_production?sslmode=disable"
+            - name: DATA_SOURCE_USER
+              value: "postgres"
+            - name: DATA_SOURCE_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+          ports:
+            - containerPort: 9187
+              name: pmetrics
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-mastodon-postgres-lh

@@ -321,7 +321,7 @@ postgresql:
   # -- disable if you want to use an existing db; in which case the values below
   # must match those of that external postgres instance
   enabled: false
-  postgresqlHostname: postgres-postgresql.db.svc.cluster.local
+  postgresqlHostname: mastodon-postgres.mastodon.svc.cluster.local
   postgresqlPort: 5432
   auth:
     database: mastodon_production

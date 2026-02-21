@@ -1,0 +1,77 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mastodon-postgres-migrate
+  namespace: mastodon
+  annotations:
+    argocd.argoproj.io/hook: Skip
+  labels:
+    app: mastodon-postgres-migrate
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: mastodon-postgres-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: harbor.andreybondarenko.com/library/postgres-cli:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SOURCE_PGHOST
+              value: "postgres-postgresql.db.svc.cluster.local"
+            - name: TARGET_PGHOST
+              value: "mastodon-postgres.mastodon.svc.cluster.local"
+            - name: PGPORT
+              value: "5432"
+            - name: PGUSER
+              value: "postgres"
+            - name: DB_NAME
+              value: "mastodon_production"
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+          command:
+            - sh
+            - -c
+          args:
+            - |
+              set -euo pipefail
+
+              echo "Sleeping 15s to allow NetworkPolicy reconciliation..."
+              sleep 15
+
+              echo "Waiting for source and target PostgreSQL..."
+              pg_isready -h "$SOURCE_PGHOST" -p "$PGPORT" -U "$PGUSER"
+              pg_isready -h "$TARGET_PGHOST" -p "$PGPORT" -U "$PGUSER"
+
+              echo "Recreating target database ${DB_NAME}..."
+              psql -h "$TARGET_PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -v ON_ERROR_STOP=1 \
+                -c "DROP DATABASE IF EXISTS \"${DB_NAME}\";"
+              psql -h "$TARGET_PGHOST" -p "$PGPORT" -U "$PGUSER" -d postgres -v ON_ERROR_STOP=1 \
+                -c "CREATE DATABASE \"${DB_NAME}\" OWNER \"${PGUSER}\";"
+
+              echo "Dumping ${DB_NAME} from source and restoring to target..."
+              pg_dump \
+                -h "$SOURCE_PGHOST" \
+                -p "$PGPORT" \
+                -U "$PGUSER" \
+                -d "$DB_NAME" \
+                --format=plain \
+                --encoding=UTF8 \
+                --no-owner \
+                --no-privileges \
+              | psql \
+                -h "$TARGET_PGHOST" \
+                -p "$PGPORT" \
+                -U "$PGUSER" \
+                -d "$DB_NAME" \
+                -v ON_ERROR_STOP=1
+
+              echo "Migration completed."
