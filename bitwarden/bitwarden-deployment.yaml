@@ -22,6 +22,7 @@ spec:
     metadata:
       labels:
         service: bitwarden
+        db-client: bitwarden-postgres
     spec:
       containers:
         - env:
@@ -42,7 +43,7 @@ spec:
             - name: BW_DB_PROVIDER
               value: postgresql
             - name: BW_DB_SERVER
-              value: "postgres-postgresql.db.svc.cluster.local"
+              value: "bitwarden-postgres.bitwarden.svc.cluster.local"
             - name: BW_DB_DATABASE
               value: "bw"
             - name: BW_DB_USERNAME

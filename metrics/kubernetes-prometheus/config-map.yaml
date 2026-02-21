@@ -66,6 +66,13 @@ data:
           severity: mail
         annotations:
           summary: Postgresql-apps is down
+      - alert: Postgresql-bitwarden is down
+        expr: pg_up{instance="bitwarden-postgres-metrics.bitwarden.svc.cluster.local:9187", job="postgres-bitwarden"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Postgresql-bitwarden is down
       - alert: KubeJobFailed
         expr: kube_job_failed{job="kube-state-metrics",namespace=~".*"} > 0
         for: 10m
@@ -200,6 +207,14 @@ data:
         static_configs:
         - targets:
           - postgres-exporter.db.svc.cluster.local:9187
+
+      - job_name: postgres-bitwarden
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - bitwarden-postgres-metrics.bitwarden.svc.cluster.local:9187
 
       - job_name: rspamd
         scrape_interval: 45s
