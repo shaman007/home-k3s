@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-nextcloud
+  namespace: nextcloud
+  labels:
+    app: mysql-nextcloud
+    tier: mysql
+spec:
+  selector:
+    app: mysql-nextcloud
+    tier: mysql
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
