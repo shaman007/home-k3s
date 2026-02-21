@@ -162,54 +162,13 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: wordpress-allow-egress-from-mysqld-exporter-to-mysql-wordpress
-  namespace: wordpress
-spec:
-  podSelector:
-    matchLabels:
-      app: mysqld-exporter
-  policyTypes:
-    - Egress
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: mysql-wordpress
-              tier: mysql
-      ports:
-        - protocol: TCP
-          port: 3306
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: wordpress-allow-ingress-to-mysql-wordpress-from-mysqld-exporter
+  name: wordpress-allow-ingress-to-mysql-wordpress-sidecar-from-monitoring
   namespace: wordpress
 spec:
   podSelector:
     matchLabels:
       app: mysql-wordpress
       tier: mysql
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: mysqld-exporter
-      ports:
-        - protocol: TCP
-          port: 3306
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: wordpress-allow-ingress-to-mysqld-exporter-from-monitoring
-  namespace: wordpress
-spec:
-  podSelector:
-    matchLabels:
-      app: mysqld-exporter
   policyTypes:
     - Ingress
   ingress:

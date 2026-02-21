@@ -152,13 +152,22 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
-      - job_name: mysql-staging
+
+      - job_name: mysql-wordpress
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - mysqld-exporter.db.svc.cluster.local:9104
+          - mysql-wordpress.wordpress.svc.cluster.local:9104
+
+      - job_name: mysql-nextcloud
+        scrape_interval: 45s
+        scrape_timeout:  30s
+        metrics_path: "/metrics"
+        static_configs:
+        - targets:
+          - mysql-nextcloud.nextcloud.svc.cluster.local:9104
 
       - job_name: 'kubernetes-longhorn-manager'
         kubernetes_sd_configs:

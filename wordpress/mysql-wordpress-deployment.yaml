@@ -49,6 +49,34 @@ spec:
           volumeMounts:
             - name: mysql-wordpress-lh
               mountPath: /var/lib/mysql
+        - name: mysqld-exporter
+          image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:main
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              cat > /tmp/.my.cnf <<EOF
+              [client]
+              user = root
+              password = ${MYSQL_ROOT_PASSWORD}
+              host = 127.0.0.1
+              EOF
+              exec /bin/mysqld_exporter --config.my-cnf=/tmp/.my.cnf
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-wordpress-auth
+                  key: password
+          ports:
+            - containerPort: 9104
+              name: mysqld-exporter
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "100Mi"
       volumes:
         - name: mysql-wordpress-lh
           persistentVolumeClaim:

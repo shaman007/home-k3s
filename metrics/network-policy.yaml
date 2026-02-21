@@ -271,6 +271,8 @@ spec:
               kubernetes.io/metadata.name: nextcloud
       ports:
         - protocol: TCP
+          port: 9104
+        - protocol: TCP
           port: 9121
     - to:
         - namespaceSelector:
@@ -304,6 +306,8 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: wordpress
       ports:
+        - protocol: TCP
+          port: 9104
         - protocol: TCP
           port: 9121
 ---
