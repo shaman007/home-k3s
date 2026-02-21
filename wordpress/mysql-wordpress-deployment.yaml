@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-wordpress
+  namespace: wordpress
+  labels:
+    app: mysql-wordpress
+    tier: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql-wordpress
+      tier: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql-wordpress
+        tier: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: harbor.andreybondarenko.com/dockerhub/mysql:8.0.41
+          imagePullPolicy: IfNotPresent
+          env:
+            # Create this secret manually in-cluster; do not commit credentials.
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-wordpress-auth
+                  key: password
+            - name: MYSQL_DATABASE
+              value: wordpress
+          ports:
+            - containerPort: 3306
+              name: mysql
+          readinessProbe:
+            tcpSocket:
+              port: 3306
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "20m"
+              memory: "512Mi"
+            limits:
+              memory: "1200Mi"
+          volumeMounts:
+            - name: mysql-wordpress-lh
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-wordpress-lh
+          persistentVolumeClaim:
+            claimName: mysql-wordpress-lh

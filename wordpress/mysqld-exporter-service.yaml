@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysqld-exporter
+  namespace: wordpress
+  labels:
+    app: mysqld-exporter
+    app.kubernetes.io/name: mysqld-exporter
+    app.kubernetes.io/instance: mysqld-exporter
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ports:
+    - port: 9104
+      targetPort: 9104
+      protocol: TCP
+      name: mysqld-exporter
+  selector:
+    app: mysqld-exporter
