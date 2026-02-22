@@ -1,0 +1,17 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ca-scanner
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/shaman007/home-k3s.git'
+    path: canitiser
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: ca-scanner
+  syncPolicy:
+    automated: {}
