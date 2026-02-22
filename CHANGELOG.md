@@ -5350,3 +5350,3218 @@ No breaking changes identified.
 ## 2025-07-29 – `4b74173` by Andrey Bondarenko
 - **Documentation Updates**
   - Removed TODO items regarding database separation and migration to Grafana Alloy from `README.md`.
+
+## 2025-07-29 – `00585e8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Expand and update CHANGELOG.md with detailed history
+
+Replaced the previous brief changelog with a comprehensive, chronological log of commits, including detailed descriptions of features, configuration changes, resource updates, breaking changes, and documentation improvements across the project. This provides full historical context and traceability for all major changes.
+```
+- **Files Changed (1):**
+  - `CHANGELOG.md`
+
+## 2025-08-11 – `12e47fe` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory allocation for bsidekiq container
+
+Raised both memory requests and limits from 842Mi to 1242Mi for the bsidekiq container in dawarich-deploy.yaml to accommodate higher resource usage.
+```
+- **Files Changed (1):**
+  - `dawarich/dawarich-deploy.yaml`
+
+## 2025-08-11 – `ee0a2cb` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Dovecot config for version 2.4 compatibility
+
+Refactored Dovecot configuration to align with 2.4+ syntax and best practices. Updated authentication, mail, master, and SSL sections for improved clarity and maintainability. Adjusted variable usage, listener ports, and plugin configuration to match new standards.
+```
+- **Files Changed (1):**
+  - `mail/dovecot-configMap.yaml`
+
+## 2025-08-12 – `69b4e32` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable ManageSieve support in Dovecot deployment
+
+Added ManageSieve protocol to Dovecot configuration, exposed port 4190 in the deployment, and introduced a new service for ManageSieve. This allows users to manage Sieve scripts via the standard protocol and port. Port must is not be exposed to the internet, no TLS!
+```
+- **Files Changed (3):**
+  - `mail/dovecot-configMap.yaml`
+  - `mail/dovecot-deployment.yaml`
+  - `mail/dovecot-manageseive-service.yaml`
+
+## 2025-08-12 – `ff06932` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update mail setup description in README
+
+Clarifies that ManageSieve is enabled for mail instead of previous note about SIEVE automation and Thunderbird plugin.
+```
+- **Files Changed (1):**
+  - `README.md`
+
+## 2025-08-12 – `2cc09b6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Dovecot config to require SSL
+
+Changed SSL setting from 'yes' to 'required' and removed duplicate 'ssl' and 'auth_allow_cleartext' options from the main config. This enforces stricter SSL usage and cleans up redundant configuration. Now managesieve can be exposed.
+```
+- **Files Changed (1):**
+  - `mail/dovecot-configMap.yaml`
+
+## 2025-08-12 – `e45c7df` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Redirect Dovecot logs to stdout in configMap
+
+Updated log_path, info_log_path, and debug_log_path in dovecot-configMap.yaml to use /dev/stdout instead of /var/log/maillog. This change facilitates log collection in containerized environments.
+```
+- **Files Changed (1):**
+  - `mail/dovecot-configMap.yaml`
+
+## 2025-08-15 – `3dcd738` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Keycloak deployment, ingress, and secret store
+
+Introduces Kubernetes manifests for Keycloak deployment, including StatefulSet, services, ingress configuration for external access, and a SecretStore for managing Postgres credentials via Vault. These resources enable secure and scalable Keycloak setup in the cluster.
+```
+- **Files Changed (3):**
+  - `keycloak/keycloak-deplyoment.yaml`
+  - `keycloak/keycloak-ingress.yaml`
+  - `keycloak/secret-store-postgres.yaml`
+
+## 2025-08-15 – `65d0ae5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Grafana environment variables for OAuth and root URL
+
+Configured GF_SERVER_ROOT_URL and enabled generic OAuth authentication in the Grafana deployment by adding relevant environment variables to the container spec.
+```
+- **Files Changed (1):**
+  - `metrics/graphana/graphana.yaml`
+
+## 2025-08-15 – `3237674` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Reduce Keycloak deployment replicas to 1
+
+Changed the number of replicas in keycloak-deplyoment.yaml from 2 to 1 to save resources. This may impact rolling update capabilities but optimizes for lower resource usage.
+```
+- **Files Changed (1):**
+  - `keycloak/keycloak-deplyoment.yaml`
+
+## 2025-08-15 – `2d24427` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable OAuth sign-up and insecure email lookup in Grafana
+
+Added environment variables to allow insecure email lookup and enable sign-up via generic OAuth in the Grafana deployment configuration. It's fine since Grafana is not available from the Internet.
+```
+- **Files Changed (1):**
+  - `metrics/graphana/graphana.yaml`
+
+## 2025-08-15 – `8fed4f7` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Comment out broken image repository settings
+
+The image.repository and metrics.image.registry values in postgres.yaml were commented out due to issues with their configuration.
+```
+- **Files Changed (1):**
+  - `argocd/postgres.yaml`
+
+## 2025-08-15 – `611274e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase Prometheus PVC storage allocation
+
+Updated the storage request for the Prometheus persistent volume claim from 50Gi to 139586437120 bytes to accommodate increased storage requirements.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/prometheus-pvc.yaml`
+
+## 2025-08-17 – `3ed7180` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Helm chart versions for core services
+
+Bumped chart versions for Collabora Online, Ingress NGINX, Loki, and Longhorn to their latest releases. Added 'controller.config.strict-validate-path-type' parameter to Ingress NGINX for improved configuration flexibility.
+```
+- **Files Changed (4):**
+  - `argocd/collabora.yaml`
+  - `argocd/ingress-nginx.yaml`
+  - `argocd/loki.yaml`
+  - `argocd/longhorn.yaml`
+
+## 2025-08-18 – `853939e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update PHP FPM config paths to version 8.4
+
+Changed volume mount paths in php-deployment.yaml from PHP 8.2 to 8.4 to support the newer PHP version. Ensures configuration files are correctly mapped for PHP 8.4 FPM.
+```
+- **Files Changed (1):**
+  - `nextcloud/php-deployment.yaml`
+
+## 2025-08-18 – `7ce7ae9` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add sessions volume to Nextcloud PHP deployment
+
+Introduces a new 'sessions' emptyDir volume with a 10Mi size limit and mounts it at /var/lib/php/sessions. This change helps isolate PHP session storage for improved reliability and separation.
+```
+- **Files Changed (1):**
+  - `nextcloud/php-deployment.yaml`
+
+## 2025-08-18 – `8aaac72` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove assetsPrecompile hook from values.yaml
+
+The assetsPrecompile hook configuration was removed from mastodon-values.yaml, likely because it is no longer needed or handled elsewhere.
+```
+- **Files Changed (1):**
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-08-21 – `05b93d7` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update external IP for Longhorn UI service
+
+Changed the external IP in longhorn-system.yaml from 192.168.1.105 to 192.168.1.111
+```
+- **Files Changed (1):**
+  - `services/longhorn-system.yaml`
+
+## 2025-08-26 – `f49635e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory requests and limits for ingress-nginx
+
+Updated the memory requests and limits for the ingress-nginx controller from 229Mi to 350Mi.
+```
+- **Files Changed (1):**
+  - `argocd/ingress-nginx.yaml`
+
+## 2025-08-26 – `ddd3797` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Fix typo in container name in Nextcloud cronjob
+
+Renamed the container from 'previewsa' to 'previews' in cronjob-nextcloud.yaml to correct a naming error.
+```
+- **Files Changed (1):**
+  - `cron/cronjob-nextcloud.yaml`
+
+## 2025-08-27 – `a0d2bbb` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Bitwarden image and disable Promtail sidecar
+
+Changed Bitwarden container image source from DockerHub to GitHub registry. Commented out the Promtail sidecar configuration, disabling log forwarding logs for this deployment.
+```
+- **Files Changed (1):**
+  - `bitwarden/bitwarden-deployment.yaml`
+
+## 2025-08-31 – `97d170e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Loki config for retention and compactor settings
+
+Added limits_config and compactor sections to enable log retention and compaction. Disabled table_manager and moved retention settings to compactor and limits_config for improved log management.
+```
+- **Files Changed (1):**
+  - `argocd/loki.yaml`
+
+## 2025-09-03 – `188d041` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add asset precompile settings to Mastodon config
+
+Introduces asset precompile options and environment variables (RAILS_ENV and NODE_ENV set to production) in mastodon-values.yaml to disable precompiled assets for now.
+```
+- **Files Changed (1):**
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-09-09 – `fdfdbda` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add PVC for Mastodon assets and enable asset precompile
+
+Introduces a PersistentVolumeClaim for Mastodon assets using Longhorn storage and updates the values file to enable asset precompilation.
+```
+- **Files Changed (2):**
+  - `mastodon/mastodon-pvc.yaml`
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-09-09 – `97a16ac` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add /dev/dri volume to Plex deployment
+
+Mounts the /dev/dri directory into the Plex container to enable hardware accelerated transcoding. Also updates the PLEX_CLAIM environment variable to a placeholder value.
+```
+- **Files Changed (1):**
+  - `plex/plex-deployment.yaml`
+
+## 2025-09-10 – `afd5f19` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add /dev/dri hostPath volume to deployment
+
+Introduced a new hostPath volume for /dev/dri and mounted it in the container. This enables access to GPU devices, which may be required for hardware acceleration or related features.
+```
+- **Files Changed (1):**
+  - `nextcloud/php-deployment.yaml`
+
+## 2025-09-19 – `2e2827e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Thanos images to use latest tag
+
+Changed the image tag for Thanos in compactor, queuer, and storage gateway YAML files from v0.37.1 to latest to ensure deployments use the most recent version.
+```
+- **Files Changed (3):**
+  - `thanos/thanos-compactor.yaml`
+  - `thanos/thanos-queuer.yaml`
+  - `thanos/thanos-storage-gateway.yaml`
+
+## 2025-09-19 – `beb5cd8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Pin Thanos image version to v0.39.1 in YAML configs
+
+Updated thanos-compactor.yaml, thanos-queuer.yaml, and thanos-storage-gateway.yaml to use a specific Thanos image version (v0.39.1) instead of 'latest' for improved stability and reproducibility.
+```
+- **Files Changed (3):**
+  - `thanos/thanos-compactor.yaml`
+  - `thanos/thanos-queuer.yaml`
+  - `thanos/thanos-storage-gateway.yaml`
+
+## 2025-09-19 – `94a9ccb` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Thanos sidecar image to v0.39.1
+
+Bumps the Thanos sidecar container image from v0.37.2 to v0.39.1 in the Prometheus deployment for improved features and bug fixes.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/prometheus-deployment.yaml`
+
+## 2025-09-19 – `4f2dbbd` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add security context to Nextcloud PHP deployment
+
+Added supplemental group 993 to the pod security context and granted SYS_ADMIN capability to the php-nextcloud container. These changes enhance permissions and capabilities required for the container's operation.
+```
+- **Files Changed (1):**
+  - `nextcloud/php-deployment.yaml`
+
+## 2025-09-24 – `745bb14` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory limits and update TLS config
+
+Raised memory requests and limits for Harbor core, Trivy, and MinIO deployments to improve performance. Updated Harbor ingress TLS configuration to use a pre-existing secret instead of auto-generated certificates, specifying the secret name and related settings.
+```
+- **Files Changed (2):**
+  - `harbor/values.yaml`
+  - `minio-single/minio-single-deployment.yaml`
+
+## 2025-09-24 – `532f8ca` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase Plex container memory allocation
+
+Updated the memory requests and limits for the Plex deployment from 1268Mi to 2600Mi to provide more resources for the container.
+```
+- **Files Changed (1):**
+  - `plex/plex-deployment.yaml`
+
+## 2025-09-24 – `e351dd0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory allocation for rspamd container
+
+Raised both memory requests and limits from 550Mi to 850Mi in the rspamd deployment to accommodate higher memory usage.
+```
+- **Files Changed (1):**
+  - `mail/rspamd-deployment.yaml`
+
+## 2025-10-03 – `5791846` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update cert-manager and redis-dawarich ArgoCD configs
+
+Bump cert-manager Helm chart version to v1.18.2. Add replicaCount parameter to redis-dawarich and make minor syncPolicy formatting adjustment.
+```
+- **Files Changed (2):**
+  - `argocd/cert-manager.yaml`
+  - `argocd/redis-dawarich.yaml`
+
+## 2025-10-11 – `3b6c24f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Longhorn Helm chart to v1.10.0
+
+Bumps the Longhorn Helm chart version from v1.9.1 to v1.10.0 in the ArgoCD configuration to use the latest features and fixes.
+```
+- **Files Changed (1):**
+  - `argocd/longhorn.yaml`
+
+## 2025-10-14 – `25fc613` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Reduce replicas and add port to deployments
+
+Scaled down nginx and php deployments from 3 to 1 replica for resource optimization. Added container port 9000 to the php deployment for proper service exposure.
+```
+- **Files Changed (2):**
+  - `wordpress/nginx-deployment.yaml`
+  - `wordpress/php-deployment.yaml`
+
+## 2025-10-14 – `65872bc` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update PHP FPM listen address and version paths
+
+Changed PHP FPM listen address to 0.0.0.0:9000 in php-configmap.yaml for readability. Updated mount paths in php-deployment.yaml from PHP 8.2 to 8.4 to reflect version upgrade.
+```
+- **Files Changed (2):**
+  - `wordpress/php-configmap.yaml`
+  - `wordpress/php-deployment.yaml`
+
+## 2025-10-15 – `74ec75e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Redis host configuration in php-configmap
+
+Changed Redis host references from redis-master.redis.svc.cluster.local to redis.nextcloud.svc.cluster.local in the PHP configmap to reflect updated service naming and connection details.
+```
+- **Files Changed (1):**
+  - `nextcloud/php-configmap.yaml`
+
+## 2025-10-15 – `997e24b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server IPs in secret-store and service configs
+
+Changed Vault server addresses from 192.168.1.111 to 192.168.1.209 or 192.168.1.109 in multiple secret-store YAML files and updated the external IP for longhorn-system service. This aligns configuration with new infrastructure or server migration.
+```
+- **Files Changed (5):**
+  - `redis/secret-store.yaml`
+  - `services/longhorn-system.yaml`
+  - `unifi/poller/secret-store.yaml`
+  - `wordpress/secret-store.yaml`
+  - `your-spotify/secret-store.yaml`
+
+## 2025-10-15 – `d7f1c11` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update externalIPs to 192.168.1.209 in service files
+
+Changed the externalIPs field from 192.168.1.111 to 192.168.1.209 across multiple Kubernetes service YAML files to reflect a new external IP address for service exposure.
+```
+- **Files Changed (8):**
+  - `DEPRECATED/unifi/unifi-service.yaml`
+  - `mail/dovecot-manageseive-service.yaml`
+  - `mail/dovecot-tls-service.yaml`
+  - `mail/postfix-tls-service.yaml`
+  - `mail/rspamd-service.yaml`
+  - `metrics/graphana/service.yaml`
+  - `plex/plex-service.yaml`
+  - `services/argocd.yaml`
+
+## 2025-10-15 – `96b708b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update external IPs and add Postgres service
+
+Changed external IPs from 192.168.1.111 to 192.168.1.209 in matrix, minecraft, and vault service YAMLs. Updated selector in vault-service.yaml. Added new postgres-service.yaml for WordPress in the db namespace.
+```
+- **Files Changed (4):**
+  - `conduit/matrix-service.yaml`
+  - `minecraft/minecraft-service.yaml`
+  - `postgres/postgres-service.yaml`
+  - `services/vault-service.yaml`
+
+## 2025-10-15 – `9d84159` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update MinIO service external IP address
+
+Changed the external IP in minio-single-service.yaml from 192.168.1.112 to 192.168.1.209 to reflect the new network configuration.
+```
+- **Files Changed (1):**
+  - `minio-single/minio-single-service.yaml`
+
+## 2025-10-15 – `b395401` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update external IPs for service YAMLs
+
+Changed the external IP addresses for Alertmanager, Prometheus, and Thanos Queuer services to reflect new network assignments.
+```
+- **Files Changed (3):**
+  - `metrics/kubernetes-prometheus/alertmanager-service.yaml`
+  - `metrics/kubernetes-prometheus/prometheus-service.yaml`
+  - `thanos/thanos-queuer-service.yaml`
+
+## 2025-10-15 – `2971831` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update hostname references to w386.k8s.my.lan
+
+Changed nodeSelector and external URL values from m.k8s.my.lan to w386.k8s.my.lan in mail and metrics deployment YAMLs to reflect new host configuration.
+```
+- **Files Changed (6):**
+  - `mail/dovecot-deployment.yaml`
+  - `mail/postfix-deployment.yaml`
+  - `mail/rspamd-deployment.yaml`
+  - `metrics/graphana/graphana.yaml`
+  - `metrics/kubernetes-prometheus/alertmanager-deployment.yaml`
+  - `metrics/kubernetes-prometheus/prometheus-deployment.yaml`
+
+## 2025-10-15 – `7db983e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server address in secret store config
+
+Changed the Vault server address from 192.168.1.111 to 192.168.1.209 in dawarich-secret-store.yaml to reflect the new server location.
+```
+- **Files Changed (1):**
+  - `dawarich/dawarich-secret-store.yaml`
+
+## 2025-10-15 – `1058d63` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server address in secret store configs
+
+Changed the Vault server address from 192.168.1.111 to 192.168.1.209 in both secret-store-postgres.yaml and secret-store.yaml to reflect the new server location.
+```
+- **Files Changed (2):**
+  - `bitwarden/secret-store.yaml`
+  - `bitwarden/secret-store-postgres.yaml`
+
+## 2025-10-15 – `9c7d544` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update ADVERTISE_IP in Plex deployment config
+
+Changed the ADVERTISE_IP environment variable in plex-deployment.yaml from 192.168.1.111 to 192.168.1.209 to reflect the new advertised IP address for the Plex server.
+```
+- **Files Changed (1):**
+  - `plex/plex-deployment.yaml`
+
+## 2025-10-15 – `ede71b4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Elasticsearch and Redis configuration
+
+Changed Elasticsearch hostname, enabled authentication, and specified existing secret for password. Updated Redis hostname and password configuration, and commented out existingSecret reference. These changes improve integration with external services.
+```
+- **Files Changed (1):**
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-10-15 – `65fa3ba` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add PostgreSQL StatefulSet and update PVCs
+
+Introduces a new StatefulSet deployment for PostgreSQL with custom user/group and volume permissions. Updates the main PVC name and adds a new PVC for backups to support the deployment.
+```
+- **Files Changed (2):**
+  - `postgres/postgres-deployment.yaml`
+  - `postgres/postgresql-pvc.yaml`
+
+## 2025-10-15 – `a6be8d0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add persistent volume to CLI deployment
+
+Mounts a persistent volume claim to /data in the CLI deployment for postgres tools, enabling data export to a durable storage location.
+```
+- **Files Changed (1):**
+  - `postgres/tools/cli-deployment.yaml`
+
+## 2025-10-15 – `e9e3395` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update PHP config and deployment for Nextcloud
+
+Renamed ConfigMap to 'php-fpm-config' and updated references in deployment YAML. Commented out securityContext settings and consolidated volume mounts for PHP configuration files. To hold local to the namespace redis.
+```
+- **Files Changed (2):**
+  - `nextcloud/php-configmap.yaml`
+  - `nextcloud/php-deployment.yaml`
+
+## 2025-10-15 – `ef0e160` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable securityContext in PHP deployment YAML
+
+Uncommented and activated securityContext settings for both pod and container specifications in nextcloud/php-deployment.yaml. This enforces user/group IDs, filesystem group, supplemental groups, and container security options for improved security and compliance.
+```
+- **Files Changed (1):**
+  - `nextcloud/php-deployment.yaml`
+
+## 2025-10-15 – `2586cc3` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+DEPRECATION
+```
+- **Files Changed (2):**
+  - `argocd/elasticsearch.yaml`
+  - `argocd/vault.yaml`
+
+## 2025-10-15 – `47df8fc` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Redis session save path in PHP config
+
+Changed the session.save_path in php-configmap.yaml to use the redis.wordpress.svc.cluster.local address without authentication parameters. This aligns the configuration with the current Redis service setup.
+```
+- **Files Changed (1):**
+  - `wordpress/php-configmap.yaml`
+
+## 2025-10-15 – `85d3b58` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update PHP config and deployment for WordPress
+
+Renamed the ConfigMap from 'php-fpm-config-template' to 'php-fpm-config' and updated the deployment to use the new ConfigMap name. Consolidated volume definitions and mount paths to simplify configuration management.
+```
+- **Files Changed (2):**
+  - `wordpress/php-configmap.yaml`
+  - `wordpress/php-deployment.yaml`
+
+## 2025-10-16 – `98c87fa` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server IP and Meilisearch image tag
+
+Changed Vault server IP from 192.168.1.111 to 192.168.1.209 across multiple secret-store YAML files for consistency. Updated Meilisearch deployment to use the 'latest' image tag. Also updated FTP server and external IP in vsftpd.yaml to match the new IP.
+```
+- **Files Changed (9):**
+  - `DEPRECATED/camera/vsftpd.yaml`
+  - `karakeep/meilisearch-deployment.yaml`
+  - `keycloak/secret-store-postgres.yaml`
+  - `mail/secret-store.yaml`
+  - `mastodon/secret-store.yaml`
+  - `metrics/secret-store.yaml`
+  - `minecraft/secret-store.yaml`
+  - `mysql/secret-store.yaml`
+  - `nextcloud/secret-store.yaml`
+
+## 2025-10-16 – `5424ecd` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Redis server addresses in rspamd config
+
+Changed all Redis server references from 'redis-master.redis.svc.cluster.local:6379' to 'redis.mail.svc.cluster.local:6379' in rspamd-configmap.yaml to reflect updated service deployment changes.
+```
+- **Files Changed (1):**
+  - `mail/rspamd-configmap.yaml`
+
+## 2025-10-16 – `fc235b5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Chrome deployment image and resources
+
+Bumped alpine-chrome image version to 124, added --headless=new argument, configured /dev/shm volume for improved Chrome stability, and increased memory requests and limits to 504Mi.
+```
+- **Files Changed (2):**
+  - `karakeep/chrome-deployment.yaml`
+  - `mail/mail-secret.yaml`
+
+## 2025-10-16 – `7a94aa6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server address in secret-store config
+
+Changed the Vault server address from 192.168.1.111 to 192.168.1.209 in conduit/secret-store.yaml to reflect the new server location.
+```
+- **Files Changed (1):**
+  - `conduit/secret-store.yaml`
+
+## 2025-10-16 – `dbe03da` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move legacy ArgoCD manifests to DEPRECATED folder
+
+Renamed nfs-provisioner.yaml, postgres.yaml, redis-dawarich.yaml, and redis.yaml from argocd/ to DEPRECATED/argocd/ to indicate these manifests are no longer actively maintained.
+```
+- **Files Changed (4):**
+  - `DEPRECATED/argocd/nfs-provisioner.yaml`
+  - `DEPRECATED/argocd/postgres.yaml`
+  - `DEPRECATED/argocd/redis.yaml`
+  - `DEPRECATED/argocd/redis-dawarich.yaml`
+
+## 2025-10-18 – `d62b28e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move loki.yaml to DEPRECATED directory
+
+Renamed argocd/loki.yaml to DEPRECATED/argocd/loki.yaml to indicate deprecation of this configuration file.
+```
+- **Files Changed (1):**
+  - `DEPRECATED/argocd/loki.yaml`
+
+## 2025-10-18 – `aa10d56` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable milter protocol and macros in Postfix config
+
+Uncommented milter_protocol and added milter_mail_macros and milter_rcpt_macros to enhance mail filtering capabilities in the Postfix configuration.
+```
+- **Files Changed (1):**
+  - `mail/postfix-configMap.yaml`
+
+## 2025-10-18 – `9e7829b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory allocation for bsidekiq container
+
+Updated the memory requests and limits for the bsidekiq container from 1242Mi to 1542Mi in dawarich-deploy.yaml to accommodate higher resource usage.
+```
+- **Files Changed (1):**
+  - `dawarich/dawarich-deploy.yaml`
+
+## 2025-10-18 – `cce8106` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory allocation for thanos-queuer
+
+Updated the memory requests and limits from 905Mi to 1100Mi in thanos-queuer.yaml to provide more resources for the container.
+```
+- **Files Changed (1):**
+  - `thanos/thanos-queuer.yaml`
+
+## 2025-10-18 – `35478bc` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory requests and limits for Bitwarden and ClamAV
+
+Updated memory resource requests and limits in Bitwarden and ClamAV deployment YAML files to allocate more memory for each container. This change aims to improve application stability and performance under higher load.
+```
+- **Files Changed (2):**
+  - `bitwarden/bitwarden-deployment.yaml`
+  - `clamav/clamav-deployment.yaml`
+
+## 2025-10-19 – `f84fe3b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add postgres-exporter and metrics service for monitoring
+
+Enabled readiness and liveness probes in the Postgres deployment and added a postgres-exporter sidecar for Prometheus metrics. Introduced a new Service to expose the exporter metrics on port 9187 for monitoring purposes.
+```
+- **Files Changed (2):**
+  - `postgres/postgres-deployment.yaml`
+  - `postgres/postgres-service.yaml`
+
+## 2025-10-19 – `195cca1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add separate Prometheus jobs for Redis instances
+
+Split the Redis metrics job into individual jobs for redis-mail, redis-nextcloud, redis-mastodon, and redis-dawarich. This allows for more granular monitoring of each Redis instance in Prometheus.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2025-10-19 – `4cae7e8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move redis-exporter.yaml to DEPRECATED directory
+
+The redis-exporter.yaml file was relocated from argocd/ to DEPRECATED/argocd/ to indicate its deprecated status.
+```
+- **Files Changed (1):**
+  - `DEPRECATED/argocd/redis-exporter.yaml`
+
+## 2025-10-19 – `a8a6886` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move elasticsearch.yaml to DEPRECATED directory
+
+Renamed argocd/elasticsearch.yaml to DEPRECATED/argocd/elasticsearch.yaml to indicate deprecation.
+```
+- **Files Changed (1):**
+  - `DEPRECATED/argocd/elasticsearch.yaml`
+
+## 2025-10-19 – `18ae970` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD app manifest and update PVC storage
+
+Introduces argocd/karakeep.yaml to define the Karakeep ArgoCD application. Updates meili-data-pvc.yaml to specify storage size.
+```
+- **Files Changed (2):**
+  - `argocd/karakeep.yaml`
+  - `karakeep/meili-data-pvc.yaml`
+
+## 2025-10-19 – `a43f833` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD application manifest for Postgres
+
+Introduces postgres.yaml defining an ArgoCD Application resource for deploying Postgres from the specified GitHub repository.
+```
+- **Files Changed (1):**
+  - `argocd/postgres.yaml`
+
+## 2025-10-19 – `32dfea7` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Swap storage requests in PVC YAML files
+
+Updated karakeep-data-pvc.yaml to request 5368709120 bytes and meili-data-pvc.yaml to request 3Gi. This change corrects the storage size configuration for each PersistentVolumeClaim.
+```
+- **Files Changed (2):**
+  - `karakeep/karakeep-data-pvc.yaml`
+  - `karakeep/meili-data-pvc.yaml`
+
+## 2025-10-19 – `b579e95` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase storage for rspamd PVC
+
+Updated the PersistentVolumeClaim for rspamd to request 1Gi of storage instead of 500Mi to accommodate increased storage requirements.
+```
+- **Files Changed (1):**
+  - `mail/rspamd-pvc.yaml`
+
+## 2025-10-19 – `2dda1d1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server address in secret-store config
+
+Changed the Vault server address from 192.168.1.109 to 192.168.1.209 in secret-store.yaml to reflect the new server location.
+```
+- **Files Changed (1):**
+  - `your-spotify/secret-store.yaml`
+
+## 2025-10-19 – `e739568` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove Redis secrets and update deployment config
+
+Deleted Redis-related ExternalSecret and SecretStore resources from both conduit and dawarich directories. Updated dawarich deployment to use a static Redis URL instead of referencing secrets, and removed associated secret references from the deployment and external secrets configuration.
+```
+- **Files Changed (5):**
+  - `conduit/redis-secret.yaml`
+  - `conduit/secret-store.yaml`
+  - `dawarich/dawarich-deploy.yaml`
+  - `dawarich/dawarich-external-secrets.yaml`
+  - `dawarich/dawarich-secret-store.yaml`
+
+## 2025-10-19 – `5871947` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Refactor Redis secret management for mail and mastodon
+
+Removed redis-related ExternalSecret and SecretStore resources from mail, mastodon, and nextcloud. Redis configuration for rspamd is now provided via ConfigMap instead of secrets, and related environment variables and volume mounts were updated accordingly.
+```
+- **Files Changed (7):**
+  - `mail/mail-secret.yaml`
+  - `mail/rspamd-configmap.yaml`
+  - `mail/rspamd-deployment.yaml`
+  - `mail/secret-store.yaml`
+  - `mastodon/redis-secret.yaml`
+  - `mastodon/secret-store.yaml`
+  - `nextcloud/secret-store.yaml`
+
+## 2025-10-19 – `9c01f82` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Revert Vault SecretStore configuration
+
+Revert SecretStore
+```
+- **Files Changed (1):**
+  - `conduit/secret-store.yaml`
+
+## 2025-10-20 – `7226168` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove ArgoCD install patch file
+
+Deleted the install.patch file for ArgoCD, which contained custom image references and resource requests/limits. This cleanup may be part of reverting to default manifests or removing obsolete configuration.
+```
+- **Files Changed (1):**
+  - `argocd/install.patch`
+
+## 2025-10-20 – `26a1b27` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD application manifest for Alloy
+
+Introduces alloy.yaml to define an ArgoCD Application resource for deploying Alloy from the specified GitHub repository. This enables automated synchronization of the Alloy component in the Kubernetes cluster.
+```
+- **Files Changed (1):**
+  - `argocd/alloy.yaml`
+
+## 2025-10-21 – `7282bc3` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable gzip compression in ingress-nginx config
+
+Added controller.config.use-gzip and controller.gzip-proxid settings to activate gzip compression for ingress-nginx, improving response efficiency.
+```
+- **Files Changed (1):**
+  - `argocd/ingress-nginx.yaml`
+
+## 2025-10-21 – `9eab075` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Redis connection config in deploy YAML
+
+Replaces Redis URL and password secret references with a direct Redis URL value in the deployment configuration.
+```
+- **Files Changed (1):**
+  - `dawarich/dawarich-deploy.yaml`
+
+## 2025-10-21 – `62c2a71` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update ingress-nginx gzip configuration options
+
+Corrects the gzip-proxied config key and adds gzip compression level and minimum length settings to improve response compression in ingress-nginx.
+```
+- **Files Changed (1):**
+  - `argocd/ingress-nginx.yaml`
+
+## 2025-10-22 – `a924c2f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add SeaweedFS S3 deployment YAML
+
+Introduces a Kubernetes manifest for deploying SeaweedFS with S3 gateway, including namespace, deployment, and service definitions. Configures environment variables from secrets, persistent storage, resource limits, and exposes S3 via NodePort.
+```
+- **Files Changed (1):**
+  - `seaweedfs/seaweedfs.yaml`
+
+## 2025-10-23 – `f4b0549` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Ingress resource for SeaweedFS S3 service
+
+Introduces a Kubernetes Ingress configuration for the SeaweedFS S3 service, enabling HTTPS access via nginx and cert-manager with TLS termination for s3.andreybondarenko.com.
+```
+- **Files Changed (1):**
+  - `seaweedfs/ingress.yaml`
+
+## 2025-10-24 – `9ea09ae` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Deprecate minio-single manifests and remove ingress
+
+Moved minio-single deployment, PVC, and service manifests to the DEPRECATED directory to indicate they are no longer maintained.
+```
+- **Files Changed (4):**
+  - `DEPRECATED/minio-single/minio-single-deployment.yaml`
+  - `DEPRECATED/minio-single/minio-single-pvc.yaml`
+  - `DEPRECATED/minio-single/minio-single-service.yaml`
+  - `minio-single/minio-ingress.yaml`
+
+## 2025-10-24 – `a394cbf` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+This should be fixed in future
+```
+- **Files Changed (1):**
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-10-27 – `c6259d4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory allocation for bsidekiq container
+
+Updated the memory requests and limits for the bsidekiq container from 1542Mi to 1742Mi in the deployment YAML to accommodate higher resource usage.
+```
+- **Files Changed (1):**
+  - `dawarich/dawarich-deploy.yaml`
+
+## 2025-10-27 – `35a873a` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add app labels to all deployment manifests
+
+Introduced 'app' labels to the metadata of all deployment and cronjob YAML files for improved resource identification and management within Kubernetes. This change standardizes labeling across services and facilitates easier selection and filtering.
+```
+- **Files Changed (8):**
+  - `bitwarden/bitwarden-deployment.yaml`
+  - `conduit/nginx-deployment.yaml`
+  - `connectivity-exporter/connectivity-exporter-deployment.yaml`
+  - `cron/cronjob-nextcloud.yaml`
+  - `karakeep/chrome-deployment.yaml`
+  - `karakeep/karakeep-deployment.yaml`
+  - `karakeep/meilisearch-deployment.yaml`
+  - `minecraft/minecraft-deployment.yaml`
+
+## 2025-10-27 – `82f8865` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Kubernetes recommended labels to deployment
+
+Added standard app.kubernetes.io labels to bitwarden deployment for improved resource identification and management, including instance, part-of, and managed-by labels.
+```
+- **Files Changed (1):**
+  - `bitwarden/bitwarden-deployment.yaml`
+
+## 2025-10-27 – `98b927e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add standard Kubernetes labels to Bitwarden manifests
+
+Added recommended app.kubernetes.io labels and Argo CD management label to Bitwarden PVC, Ingress, Secret, and Service manifests for improved resource identification, management, and compatibility with GitOps workflows.
+```
+- **Files Changed (4):**
+  - `bitwarden/bitwarden-data-pvc.yaml`
+  - `bitwarden/bitwarden-ingress.yaml`
+  - `bitwarden/bitwarden-secret.yaml`
+  - `bitwarden/bitwarden-service.yaml`
+
+## 2025-10-27 – `a53a8a1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add standard labels to SecretStore manifests
+
+Added Kubernetes recommended labels to both secret-store and secret-store-postgres manifests for improved resource management and Argo CD compatibility.
+```
+- **Files Changed (2):**
+  - `bitwarden/secret-store.yaml`
+  - `bitwarden/secret-store-postgres.yaml`
+
+## 2025-10-28 – `63c6b63` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add standard Kubernetes labels to ClamAV and Rspamd manifests
+
+Added recommended app.kubernetes.io and management labels to ClamAV and Rspamd ConfigMap, Deployment, PVC, and Service manifests for improved resource identification and management, and to support Argo CD integration.
+```
+- **Files Changed (7):**
+  - `clamav/clamav-configmap.yaml`
+  - `clamav/clamav-deployment.yaml`
+  - `clamav/clamav-pvc.yaml`
+  - `clamav/clamav-service.yaml`
+  - `mail/rspamd-deployment.yaml`
+  - `mail/rspamd-pvc.yaml`
+  - `mail/rspamd-service.yaml`
+
+## 2025-10-28 – `ff2de5c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable promtail sidecar in Bitwarden deployment
+
+Uncommented and activated the promtail container configuration in the Bitwarden deployment YAML to enable log shipping. This adds log collection and forwarding capabilities to the Bitwarden pod.
+```
+- **Files Changed (1):**
+  - `bitwarden/bitwarden-deployment.yaml`
+
+## 2025-10-28 – `2d2d3a1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add standard Kubernetes labels to all manifests
+
+Added recommended Kubernetes labels (app.kubernetes.io/* and managed-by: argoCD) to all deployment, service, PVC, config, and secret manifests across all services for improved resource identification and management. Also removed the obsolete loki/promtail/promtail.yaml file and fixed some label inconsistencies in MySQL and Postgres manifests.
+```
+- **Files Changed (78):**
+  - `karakeep/chrome-deployment.yaml`
+  - `karakeep/karakeep-data-pvc.yaml`
+  - `karakeep/karakeep-deployment.yaml`
+  - `karakeep/karakeep-env-configmap.yaml`
+  - `karakeep/karakeep-ingres.yaml`
+  - `karakeep/karakeep-service.yaml`
+  - `karakeep/meili-data-pvc.yaml`
+  - `karakeep/meilisearch-deployment.yaml`
+  - `karakeep/meilisearch-service.yaml`
+  - `keycloak/keycloak-deplyoment.yaml`
+  - `keycloak/keycloak-ingress.yaml`
+  - `keycloak/secret-store-postgres.yaml`
+  - `loki/alloy/alloy-configmap.yaml`
+  - `loki/alloy/alloy-daemonset.yaml`
+  - `loki/alloy/alloy-serviceaccount.yaml`
+  - `loki/promtail/promtail.yaml`
+  - `mail/dovecot-configMap.yaml`
+  - `mail/dovecot-deployment.yaml`
+  - `mail/dovecot-lmtp-service.yaml`
+  - `mail/dovecot-manageseive-service.yaml`
+  - `mail/dovecot-pvc.yaml`
+  - `mail/dovecot-sasl-service.yaml`
+  - `mail/dovecot-tls-service.yaml`
+  - `mail/mail-secret.yaml`
+  - `mail/postfix-configMap.yaml`
+  - `mail/postfix-deployment.yaml`
+  - `mail/postfix-pvc.yaml`
+  - `mail/postfix-tls-service.yaml`
+  - `mail/rspamd-configmap.yaml`
+  - `mail/secret-store.yaml`
+  - `minecraft/minecraft-deployment.yaml`
+  - `minecraft/minecraft-pvc.yaml`
+  - `minecraft/minecraft-secret.yaml`
+  - `minecraft/minecraft-service.yaml`
+  - `mongo/mongo-configmap.yaml`
+  - `mongo/mongo-deployment.yaml`
+  - `mongo/mongo-exporter-deployment.yaml`
+  - `mongo/mongo-exporter-service.yaml`
+  - `mongo/mongo-pvc.yaml`
+  - `mongo/mongo-service.yaml`
+  - `mysql/mysql-deployment.yaml`
+  - `mysql/mysqld-exporter-configmap.yaml`
+  - `mysql/mysqld-exporter-deployment.yaml`
+  - `mysql/mysqld-exporter-service.yaml`
+  - `mysql/mysql-pvc.yaml`
+  - `mysql/mysql-secret.yaml`
+  - `mysql/mysql-service.yaml`
+  - `mysql/secret-store.yaml`
+  - `nextcloud/nginx-configMap.yaml`
+  - `nextcloud/nginx-deployment.yaml`
+  - `nextcloud/nginx-ingress.yaml`
+  - `nextcloud/nginx-service.yaml`
+  - `nextcloud/php-configmap.yaml`
+  - `nextcloud/php-deployment.yaml`
+  - `nextcloud/php-pvc.yaml`
+  - `nextcloud/php-secret.yaml`
+  - `nextcloud/php-service.yml`
+  - `plex/plex-deployment.yaml`
+  - `plex/plex-ingress.yaml`
+  - `plex/plex-pvc.yaml`
+  - `plex/plex-service.yaml`
+  - `postgres/exporter/postgres-exporter.yaml`
+  - `postgres/postgres-deployment.yaml`
+  - `postgres/postgres-secret.yaml`
+  - `postgres/postgres-service.yaml`
+  - `seaweedfs/ingress.yaml`
+  - `seaweedfs/seaweedfs.yaml`
+  - `wordpress/nginx-configMap.yaml`
+  - `wordpress/nginx-deployment.yaml`
+  - `wordpress/nginx-ingress.yaml`
+  - `wordpress/nginx-service.yaml`
+  - `wordpress/php-configmap.yaml`
+  - `your-spotify/server-deployment.yaml`
+  - `your-spotify/server-ingress.yaml`
+  - `your-spotify/server-service.yaml`
+  - `your-spotify/web-deployment.yaml`
+  - `your-spotify/web-ingress.yaml`
+  - `your-spotify/web-service.yaml`
+
+## 2025-10-28 – `bdd6a5e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move promtail manifests to DEPRECATED directory
+
+Renamed promtail-related Kubernetes manifests from loki/promtail/ to DEPRECATED/promtail/ and added promtail.yaml to indicate deprecation. This helps clarify the status of these manifests and organizes deprecated resources separately.
+```
+- **Files Changed (7):**
+  - `DEPRECATED/promtail/longhorn/longhorn-encryption.yaml`
+  - `DEPRECATED/promtail/longhorn/longhorn-service-monitor.yaml`
+  - `DEPRECATED/promtail/promtail.yaml`
+  - `DEPRECATED/promtail/promtail-clusterrole.yaml`
+  - `DEPRECATED/promtail/promtail-configmap.yaml`
+  - `DEPRECATED/promtail/promtail-rolebinding.yaml`
+  - `DEPRECATED/promtail/promtail-serviceaccount.yaml`
+
+## 2025-10-28 – `8c9ae0b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update StatefulSet name to 'mysql' in deployment
+
+Changed the StatefulSet metadata name from 'v' to 'mysql' in mysql-deployment.yaml, fix typo
+```
+- **Files Changed (1):**
+  - `mysql/mysql-deployment.yaml`
+
+## 2025-10-28 – `345e573` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move promtail manifests to loki directory
+
+Renamed and relocated promtail-related Kubernetes manifests from the DEPRECATED/promtail directory to loki/promtail. This change helps organize promtail resources under the loki structure.
+```
+- **Files Changed (7):**
+  - `loki/promtail/longhorn/longhorn-encryption.yaml`
+  - `loki/promtail/longhorn/longhorn-service-monitor.yaml`
+  - `loki/promtail/promtail.yaml`
+  - `loki/promtail/promtail-clusterrole.yaml`
+  - `loki/promtail/promtail-configmap.yaml`
+  - `loki/promtail/promtail-rolebinding.yaml`
+  - `loki/promtail/promtail-serviceaccount.yaml`
+
+## 2025-10-28 – `83993b0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Kubernetes service labels for MySQL and WordPress
+
+Removed the 'tier' label from the MySQL service and added standardized Kubernetes labels to the WordPress PHP service for improved resource identification and management.
+```
+- **Files Changed (2):**
+  - `mysql/mysql-service.yaml`
+  - `wordpress/php-service.yml`
+
+## 2025-10-29 – `29b746f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase memory allocation for bsidekiq container
+
+Updated the memory requests and limits for the bsidekiq container from 1742Mi to 2048Mi to provide more resources and improve stability.
+```
+- **Files Changed (1):**
+  - `dawarich/dawarich-deploy.yaml`
+
+## 2025-10-29 – `e462322` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add labels to chrome service and clean deployment YAML
+
+Added standard Kubernetes labels to the chrome-service.yaml for better resource identification and management. Also removed unnecessary blank lines at the top of karakeep-deployment.yaml for improved formatting.
+```
+- **Files Changed (2):**
+  - `karakeep/chrome-service.yaml`
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2025-10-29 – `f5d154e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Integrate Chrome container into karakeep deployment
+
+Removed standalone Chrome deployment and service, and added Chrome as a sidecar container within the karakeep deployment. Updated the karakeep image version and adjusted the BROWSER_WEB_URL to use localhost, reflecting the new sidecar architecture.
+```
+- **Files Changed (4):**
+  - `karakeep/chrome-deployment.yaml`
+  - `karakeep/chrome-service.yaml`
+  - `karakeep/karakeep-deployment.yaml`
+  - `karakeep/karakeep-env-configmap.yaml`
+
+## 2025-10-29 – `d63ac52` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase Sidekiq memory limits and requests
+
+Updated the memory limits and requests for all Sidekiq deployments from 1052Mi to 2052Mi in mastodon-values.yaml to accommodate higher resource requirements.
+```
+- **Files Changed (1):**
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-10-29 – `aaa767f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase Meilisearch memory requests and limits
+
+Updated the memory requests and limits for the Meilisearch deployment from 750Mi to 1250Mi to accommodate higher memory usage.
+```
+- **Files Changed (1):**
+  - `karakeep/meilisearch-deployment.yaml`
+
+## 2025-11-02 – `33ec4a1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update object storage info in README
+
+Replaced reference to Minio with SeaweedFS as the S3 object storage solution in the project documentation.
+```
+- **Files Changed (1):**
+  - `README.md`
+
+## 2025-11-02 – `014c869` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add TLS config options to Postfix ConfigMap
+
+Enabled smtp_tls_note_starttls_offer and specified smtp_tls_CAfile in the Postfix configuration to improve TLS handling and certificate verification.
+```
+- **Files Changed (1):**
+  - `mail/postfix-configMap.yaml`
+
+## 2025-11-02 – `d0fc6a8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove smtpd_use_tls from Postfix configMap
+
+The smtpd_use_tls option was removed from the Postfix ConfigMap. TLS settings are now managed via smtpd_tls_security_level and related parameters.
+```
+- **Files Changed (1):**
+  - `mail/postfix-configMap.yaml`
+
+## 2025-11-05 – `43c91fd` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update MongoDB image tag to version 7
+
+Changed the MongoDB container image tag from 'latest' to '7' in the deployment YAML to ensure consistent versioning and avoid unexpected updates.
+```
+- **Files Changed (1):**
+  - `mongo/mongo-deployment.yaml`
+
+## 2025-11-06 – `d61de58` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Home Assistant ingress configuration
+
+Introduces a Kubernetes manifest for Home Assistant, including a namespace, ClusterIP service, endpoints for LAN host, and an NGINX ingress with TLS and WebSocket support.
+```
+- **Files Changed (1):**
+  - `homeassistant/homeassistant-ingress.yaml`
+
+## 2025-11-07 – `3362da4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase server memory allocation in deployment
+
+Updated the server-deployment.yaml to request and limit 3060Mi of memory instead of 106Mi for the server container, allowing for higher memory usage.
+```
+- **Files Changed (1):**
+  - `your-spotify/server-deployment.yaml`
+
+## 2025-11-07 – `a429d95` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase MongoDB memory requests and limits
+
+Updated the memory requests and limits for the MongoDB deployment from 286Mi to 586Mi to accommodate higher resource requirements.
+```
+- **Files Changed (1):**
+  - `mongo/mongo-deployment.yaml`
+
+## 2025-11-11 – `62ba1d6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add securityContext to SeaweedFS S3 deployment
+
+Configured the SeaweedFS S3 deployment to run as root user and group, set fsGroup to 0, and specified fsGroupChangePolicy as OnRootMismatch. FIXME
+```
+- **Files Changed (1):**
+  - `seaweedfs/seaweedfs.yaml`
+
+## 2025-11-13 – `01aeb99` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Migrate ingress resources to Traefik for multiple apps
+
+Added Traefik ingress YAMLs for Bitwarden, Collabora, Dawarich, Karakeep, Nextcloud, Plex, SeaweedFS, and WordPress. Updated Home Assistant and Harbor ingress configurations to use Traefik annotations and settings instead of NGINX. Introduced Traefik Helm values file for deployment and certificate management. This migration standardizes ingress management across services using Traefik and enables automated TLS via Let's Encrypt.
+```
+- **Files Changed (10):**
+  - `bitwarden/traefik-ingres.yaml`
+  - `collabora/traefik-ingres.yaml`
+  - `dawarich/traefik-ingres.yaml`
+  - `homeassistant/homeassistant-ingress.yaml`
+  - `karakeep/traefik-ingres.yaml`
+  - `nextcloud/traefik-ingres.yaml`
+  - `plex/traefik-ingres.yaml`
+  - `seaweedfs/traefik-ingres.yaml`
+  - `traefik/values.yaml`
+  - `wordpress/ingress-traefik.yaml`
+
+## 2025-11-13 – `98beae6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Traefik ingress for Keycloak and Spotify, update Home Assistant ingress
+
+Added new Traefik ingress resources for Keycloak and Your Spotify services to enable HTTPS routing via Traefik. Updated the Home Assistant ingress to use Traefik, added TLS configuration, and cleaned up legacy and commented-out configuration. These changes standardize ingress management across services and improve security with TLS.
+```
+- **Files Changed (3):**
+  - `homeassistant/homeassistant-ingress.yaml`
+  - `keycloak/traefik-ingres.yaml`
+  - `your-spotify/traefik-ingres.yaml`
+
+## 2025-11-13 – `6c31532` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move cert-manager and ingress-nginx to DEPRECATED
+
+Renamed cert-manager.yaml and ingress-nginx.yaml from the argocd directory to the DEPRECATED directory, indicating these manifests are no longer actively maintained or recommended for use.
+```
+- **Files Changed (2):**
+  - `DEPRECATED/cert-manager.yaml`
+  - `DEPRECATED/ingress-nginx.yaml`
+
+## 2025-11-13 – `9b80a1f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Deprecate cert-manager configs and remove ingress files
+
+Moved cert-manager configuration files to a DEPRECATED directory and deleted ingress YAML files for multiple services. This likely reflects a migration away from these ingress resources and deprecation of the cert-manager setup.
+```
+- **Files Changed (14):**
+  - `bitwarden/bitwarden-ingress.yaml`
+  - `collabora/ingress.yaml`
+  - `dawarich/dawarich-ingress.yaml`
+  - `DEPRECATED/cert-manager/cluster-issuer.yaml`
+  - `DEPRECATED/cert-manager/namespance.yaml`
+  - `DEPRECATED/cert-manager/README.md`
+  - `karakeep/karakeep-ingres.yaml`
+  - `keycloak/keycloak-ingress.yaml`
+  - `nextcloud/nginx-ingress.yaml`
+  - `plex/plex-ingress.yaml`
+  - `seaweedfs/ingress.yaml`
+  - `wordpress/nginx-ingress.yaml`
+  - `your-spotify/server-ingress.yaml`
+  - `your-spotify/web-ingress.yaml`
+
+## 2025-11-13 – `7fd33e5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Switch ingress from NGINX to Traefik for Matrix
+
+Replaces the NGINX-based matrix-ingress.yaml with a new Traefik-based traefik-ingres.yaml. Updates annotations and configuration to use Traefik's entrypoints, TLS, and ACME resolver, and changes the backend service port for 'matrix' from 6167 to 8448.
+```
+- **Files Changed (2):**
+  - `conduit/matrix-ingress.yaml`
+  - `conduit/traefik-ingres.yaml`
+
+## 2025-11-13 – `b65edb3` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Switch ingress from nginx to Traefik for Harbor and Mastodon
+
+Replaces nginx ingress resources with Traefik ingress for both Harbor and Mastodon, updating annotations and backend services accordingly. Removes nginx-specific configuration from values.yaml and deletes the old Mastodon nginx ingress file. Also removes Prometheus scrape configs for cert-manager and ingress-nginx from the monitoring config.
+```
+- **Files Changed (5):**
+  - `harbor/traefik-ingres.yaml`
+  - `harbor/values.yaml`
+  - `mastodon/mastodon-ingress.yaml`
+  - `mastodon/nginx-ingress.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2025-11-14 – `f1fcf35` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Prometheus scrape config for Traefik
+
+Introduces a new scrape job for Traefik in the Prometheus config map, targeting traefik.traefik.svc.cluster.local:9100 with a 45s interval and 30s timeout.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2025-11-14 – `464703f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Traefik middleware for large Nextcloud uploads
+
+Introduces a Traefik Middleware to support large file uploads (up to ~5 GiB) for Nextcloud by buffering requests. Splits the Ingress into two resources: one for general UI and another for upload paths, applying the middleware to the upload Ingress.
+```
+- **Files Changed (1):**
+  - `nextcloud/traefik-ingres.yaml`
+
+## 2025-11-14 – `df20b04` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Fix Traefik middleware annotation in ingress
+
+Corrected the middleware annotation key from 'nextcloud-nextcloud-large-upload@kubernetescrd' to 'nextcloud-large-upload@kubernetescrd' to ensure the correct middleware is applied for the Nextcloud ingress.
+```
+- **Files Changed (1):**
+  - `nextcloud/traefik-ingres.yaml`
+
+## 2025-11-19 – `84ac412` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Change Traefik log level from DEBUG to INFO
+
+Updated the log level in traefik/values.yaml to INFO to reduce verbosity in general logs.
+```
+- **Files Changed (1):**
+  - `traefik/values.yaml`
+
+## 2025-11-19 – `821e030` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add HSTS middleware to all Traefik ingress resources
+
+Introduced a Traefik Middleware for HTTP Strict Transport Security (HSTS) in each service's namespace and updated ingress annotations to apply the middleware. This enhances security by enforcing HTTPS and enabling HSTS preload and subdomain coverage. For Nextcloud, a middleware chain was also created to combine HSTS with large upload support.
+```
+- **Files Changed (14):**
+  - `bitwarden/traefik-ingres.yaml`
+  - `collabora/traefik-ingres.yaml`
+  - `conduit/traefik-ingres.yaml`
+  - `dawarich/traefik-ingres.yaml`
+  - `harbor/traefik-ingres.yaml`
+  - `homeassistant/homeassistant-ingress.yaml`
+  - `karakeep/traefik-ingres.yaml`
+  - `keycloak/traefik-ingres.yaml`
+  - `mastodon/mastodon-ingress.yaml`
+  - `nextcloud/traefik-ingres.yaml`
+  - `plex/traefik-ingres.yaml`
+  - `seaweedfs/traefik-ingres.yaml`
+  - `wordpress/ingress-traefik.yaml`
+  - `your-spotify/traefik-ingres.yaml`
+
+## 2025-11-19 – `3cf84de` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Switch Vault ArgoCD app to official HashiCorp chart
+
+Replaces the deprecated Bitnami Vault chart configuration with the official HashiCorp Helm chart in argocd/vault.yaml. Updates chart source, version, and parameters to align with current best practices.
+```
+- **Files Changed (1):**
+  - `argocd/vault.yaml`
+
+## 2025-11-21 – `a70851b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Vault server URL in secret-store configs
+
+Replaces the hardcoded Vault server IP address with the DNS name 'vault.w386.k8s.my.lan' across all secret-store YAML files for consistency and maintainability.
+```
+- **Files Changed (14):**
+  - `bitwarden/secret-store.yaml`
+  - `bitwarden/secret-store-postgres.yaml`
+  - `conduit/secret-store.yaml`
+  - `dawarich/dawarich-secret-store.yaml`
+  - `keycloak/secret-store-postgres.yaml`
+  - `mail/secret-store.yaml`
+  - `mastodon/secret-store.yaml`
+  - `metrics/secret-store.yaml`
+  - `minecraft/secret-store.yaml`
+  - `mysql/secret-store.yaml`
+  - `redis/secret-store.yaml`
+  - `unifi/poller/secret-store.yaml`
+  - `wordpress/secret-store.yaml`
+  - `your-spotify/secret-store.yaml`
+
+## 2025-11-21 – `92f6321` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ingress for Longhorn and Vault, update services
+
+Introduces Ingress resources for Longhorn and Vault to enable external access via Traefik with TLS. Removes external IP-based services and migrates vault-service.yaml to the vault directory, cleaning up unused externalIPs.
+```
+- **Files Changed (4):**
+  - `longhorn/longhorn-ingress.yaml`
+  - `services/longhorn-system.yaml`
+  - `vault/vault-ingres.yaml`
+  - `vault/vault-service.yaml`
+
+## 2025-11-21 – `9f19584` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Ingress for rspamd and alertmanager, update external URL
+
+Added Ingress resources for rspamd in the mail namespace and alertmanager in the monitoring namespace, both using Traefik and TLS. Updated alertmanager deployment to use the new HTTPS external URL matching the Ingress host.
+```
+- **Files Changed (3):**
+  - `mail/rspamd-ingres.yaml`
+  - `metrics/alerts-ingres.yaml`
+  - `metrics/kubernetes-prometheus/alertmanager-deployment.yaml`
+
+## 2025-11-21 – `bb8554f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Prometheus ingress and update external URL
+
+Added a new Ingress resource for Prometheus with TLS support and updated the Prometheus deployment to use the new HTTPS external URL. This enables secure external access to Prometheus via prometheus.w386.k8s.my.lan.
+```
+- **Files Changed (2):**
+  - `metrics/kubernetes-prometheus/prometheus-deployment.yaml`
+  - `metrics/prometheus-ingres.yaml`
+
+## 2025-11-21 – `9e2e815` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Grafana ingress and update root URL to HTTPS
+
+Introduces a new Ingress resource for Grafana with TLS support and updates the Grafana deployment to use the HTTPS root URL.
+```
+- **Files Changed (2):**
+  - `metrics/grafana-ingres.yaml`
+  - `metrics/graphana/graphana.yaml`
+
+## 2025-11-21 – `3d6dc05` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD ingress and remove service configs
+
+Introduces an Ingress resource for ArgoCD using Traefik and TLS, replacing the previous Service.
+```
+- **Files Changed (3):**
+  - `argocd-deploy/argocd-ingress.yaml`
+  - `services/argocd.yaml`
+  - `services/README.md`
+
+## 2025-11-21 – `ae2c38f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update deployment image and OAuth config
+
+Bumped karakeep image version to 0.28.0 in deployment. Updated NEXTAUTH_URL and added OAuth-related environment variables to support Keycloak integration in the configmap.
+```
+- **Files Changed (2):**
+  - `karakeep/karakeep-deployment.yaml`
+  - `karakeep/karakeep-env-configmap.yaml`
+
+## 2025-11-22 – `fe1b940` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Disable password authentication in config
+
+Added DISABLE_PASSWORD_AUTH: "true" to karakeep-env-configmap.yaml to disable password-based authentication, likely to enforce OAuth-only login.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-env-configmap.yaml`
+
+## 2025-11-22 – `a4f1dab` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable and configure OIDC SSO for Mastodon
+
+OpenID Connect authentication is now enabled with custom SSO provider settings, including display name, issuer, scopes, and field mappings. Also, an extra environment variable ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH is set to true for all pods.
+```
+- **Files Changed (1):**
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-11-26 – `583f894` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove affinity rules from photon deployment
+
+Deleted nodeAffinity and podAntiAffinity settings from the photon-deployment.yaml to allow more flexible pod scheduling. This change enables the photon pod to be scheduled on any node, including those previously excluded.
+```
+- **Files Changed (1):**
+  - `dawarich/photon-deployment.yaml`
+
+## 2025-11-27 – `030a1b8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Kubernetes deployment for ca-report-ui
+
+Introduces a Deployment and Service manifest for the ca-report-ui application in the ca-scanner namespace. This sets up the UI container with environment variables and exposes it via a service on port 80.
+```
+- **Files Changed (1):**
+  - `canitiser/canitiser-deploy.yaml`
+
+## 2025-11-30 – `db16ce5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update karakeep image to version 0.29.0
+
+Bumps the deployed container image from 0.28.0 to 0.29.0 in the karakeep deployment manifest to use the latest application version.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2025-11-30 – `304b0f9` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Revert karakeep image to version 0.28.0
+
+Changed the container image in karakeep-deployment.yaml from version 0.29.0 to 0.28.0.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2025-11-30 – `588961d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update karakeep image to version 0.29.0
+
+Bump the deployed container image from 0.28.0 to 0.29.0 in karakeep-deployment.yaml to use the latest application version.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2025-12-03 – `9549d75` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase database memory requests and limits
+
+Raised the memory requests and limits for the database component from 250Mi to 1250Mi in values.yaml to accommodate higher resource requirements.
+```
+- **Files Changed (1):**
+  - `harbor/values.yaml`
+
+## 2025-12-03 – `f3f0979` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase Trivy CPU resource allocation
+
+Updated Trivy's CPU requests from 10m to 100m and limits from unspecified to 3 to improve performance and resource management.
+```
+- **Files Changed (1):**
+  - `harbor/values.yaml`
+
+## 2025-12-03 – `d821f7b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Keycloak image registry in deployment YAML
+
+Changed the Keycloak container image source from quay.io to harbor.andreybondarenko.com for improved registry management or mirroring.
+```
+- **Files Changed (1):**
+  - `keycloak/keycloak-deplyoment.yaml`
+
+## 2025-12-03 – `5611c0f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD manifest for Loki deployment
+
+Introduces argocd/loki.yaml to deploy Loki via Helm with custom image registries, S3 storage configuration, and automated sync policy. This setup enables SingleBinary mode, configures retention and compaction, and integrates with a private registry and S3-compatible storage.
+```
+- **Files Changed (1):**
+  - `argocd/loki.yaml`
+
+## 2025-12-03 – `269f6a6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add OIDC config to Dawarich and update Mastodon secret
+
+Added OpenID Connect environment variables to Dawarich deployment for authentication integration. Updated Mastodon values to set client_secret to an empty string for external authentication.
+```
+- **Files Changed (2):**
+  - `dawarich/dawarich-deploy.yaml`
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-12-06 – `b673a4a` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Keycloak to use new postgres password secret
+
+Changed the secret reference in Keycloak deployment from 'postgres-pass' to 'postgres-password'. Added a new ExternalSecret definition for 'postgres-password' in the secret-store-postgres.yaml to manage the database password via external secrets.
+```
+- **Files Changed (2):**
+  - `keycloak/keycloak-deplyoment.yaml`
+  - `keycloak/secret-store-postgres.yaml`
+
+## 2025-12-06 – `701cde9` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Vault SecretStore and ExternalSecret config
+
+Introduces SecretStore and ExternalSecret resources for the karakeep namespace, enabling integration with Vault for secret management.
+```
+- **Files Changed (1):**
+  - `karakeep/secret-store.yaml`
+
+## 2025-12-06 – `da807af` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove commented options from OpenID config
+
+Cleaned up the mastodon-values.yaml file by removing unused and commented configuration options under the OpenID Connect section.
+```
+- **Files Changed (2):**
+  - `mastodon/.mastodon-values.yaml.swp`
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-12-07 – `cb3fe07` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add existingSecret to OIDC config in values.yaml
+
+Introduced the 'existingSecret' field to the OIDC configuration in mastodon-values.yaml for improved secret management. Also removed the temporary swap file.
+```
+- **Files Changed (2):**
+  - `mastodon/.mastodon-values.yaml.swp`
+  - `mastodon/mastodon-values.yaml`
+
+## 2025-12-10 – `dd45cd6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Keycloak image to version 26.4.7
+
+Bumps the Keycloak container image from 26.3.2 to 26.4.7 in the deployment YAML to use the latest version.
+```
+- **Files Changed (1):**
+  - `keycloak/keycloak-deplyoment.yaml`
+
+## 2025-12-10 – `11e79b7` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update karakeep image to version 0.29.1
+
+Bump the karakeep container image from 0.29.0 to 0.29.1 in the deployment manifest to deploy the latest application version.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2025-12-10 – `5c67bc8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD configmap for insecure server mode
+
+Introduces argocd-cmd-params-cm ConfigMap to enable insecure mode for the ArgoCD server by setting server.insecure to true.
+```
+- **Files Changed (1):**
+  - `argocd-deploy/argocd-configmap.yaml`
+
+## 2025-12-12 – `39b11a3` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update karakeep image to version 0.29.3
+
+Bump the karakeep container image from 0.29.1 to 0.29.3 in the deployment manifest to deploy the latest version.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2025-12-12 – `6bb9399` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Pin Meilisearch image to version 1.24.0
+
+Updated the Meilisearch container image tag from 'latest' to '1.24.0' in the deployment YAML to ensure consistent deployments and avoid unexpected changes from upstream.
+```
+- **Files Changed (1):**
+  - `karakeep/meilisearch-deployment.yaml`
+
+## 2025-12-12 – `3529eb9` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Meilisearch image to prototype snapshot
+
+Changed the Meilisearch container image to use the prototype-v1.24.0.s3-snapshots-5 version for testing or development purposes.
+```
+- **Files Changed (1):**
+  - `karakeep/meilisearch-deployment.yaml`
+
+## 2025-12-12 – `20b1ea4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Meilisearch image to latest tag
+
+Changed the Meilisearch container image from a specific prototype version to the 'latest' tag to ensure deployment uses the most recent build.
+```
+- **Files Changed (1):**
+  - `karakeep/meilisearch-deployment.yaml`
+
+## 2025-12-12 – `9c19142` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add instructions for reviving Meilisearch index
+
+Created README.md with curl commands to set filterable and sortable attributes for the bookmarks index in Meilisearch.
+```
+- **Files Changed (1):**
+  - `karakeep/README.md`
+
+## 2025-12-19 – `d37332b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add and update TODOs in service README files
+
+Added initial README.md files with TODO sections for several services, focusing on metrics, dashboards, and other improvements. Updated existing README.md files to include new TODOs and minor formatting changes. Clarified Redis management and noted the need to unify multiple Redis instances.
+```
+- **Files Changed (20):**
+  - `bitwarden/README.md`
+  - `clamav/README.md`
+  - `collabora/README.md`
+  - `conduit/README.md`
+  - `dawarich/README.md`
+  - `elastic/README.md`
+  - `harbor/README.md`
+  - `karakeep/README.md`
+  - `keycloak/README.md`
+  - `mail/README.md`
+  - `mastodon/README.md`
+  - `minecraft/README.md`
+  - `mongo/README.md`
+  - `nextcloud/README.md`
+  - `redis/README.md`
+  - `seaweedfs/README.md`
+  - `thanos/README.md`
+  - `traefik/README.md`
+  - `vault/README.md`
+  - `wordpress/README.md`
+
+## 2025-12-19 – `419fbbd` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Deprecate promtail manifests and update README
+
+Moved promtail-related YAML files to a DEPRECATED directory to indicate they are no longer maintained. Updated Loki README with a TODO section for metrics and dashboard.
+```
+- **Files Changed (8):**
+  - `DEPRECATED/promtail/longhorn/longhorn-encryption.yaml`
+  - `DEPRECATED/promtail/longhorn/longhorn-service-monitor.yaml`
+  - `DEPRECATED/promtail/promtail.yaml`
+  - `DEPRECATED/promtail/promtail-clusterrole.yaml`
+  - `DEPRECATED/promtail/promtail-configmap.yaml`
+  - `DEPRECATED/promtail/promtail-rolebinding.yaml`
+  - `DEPRECATED/promtail/promtail-serviceaccount.yaml`
+  - `loki/loki/README.md`
+
+## 2025-12-21 – `c50f9ea` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Replace Promtail with Alloy for log collection
+
+Removed Promtail configuration and deployment, and introduced Alloy as the new log collector for Bitwarden. Updated deployment to use Alloy image, configuration, and volumes, and added a new ConfigMap for Alloy. This change modernizes log collection and aligns with updated observability tooling.
+```
+- **Files Changed (3):**
+  - `bitwarden/alloy.yaml`
+  - `bitwarden/bitwarden-deployment.yaml`
+  - `bitwarden/promtail.yaml`
+
+## 2025-12-21 – `7c01501` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase Grafana PVC storage request
+
+Updated the storage request in the Grafana PVC from 1Gi to 2147483648.
+```
+- **Files Changed (1):**
+  - `metrics/graphana/pvc.yaml`
+
+## 2025-12-21 – `4da3f93` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update MySQL PVC storage request to bytes
+
+Changed the storage request in mysql-pvc.yaml from 25Gi to 37580963840.
+```
+- **Files Changed (1):**
+  - `mysql/mysql-pvc.yaml`
+
+## 2025-12-31 – `ccc4ba5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add 'events' resource to Alloy service account
+
+Updated the Alloy service account permissions to include access to the 'events' resource, allowing it to get, list, and watch events in addition to existing resources.
+```
+- **Files Changed (1):**
+  - `loki/alloy/alloy-serviceaccount.yaml`
+
+## 2025-12-31 – `7d721fa` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update kube-state-metrics to version 2.17.0
+
+Bump kube-state-metrics deployment from version 2.3.0 to 2.17.0 in deployment.yaml, updating labels and container image accordingly.
+```
+- **Files Changed (1):**
+  - `metrics/kube-state-metrics-configs/deployment.yaml`
+
+## 2025-12-31 – `c5347ab` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update kube-state-metrics to use EndpointSlice and clean up RBAC
+
+Replaces deprecated v1 Endpoints with EndpointSlice in both ClusterRole and Deployment configs. Updates RBAC rules for clarity and removes unnecessary permissions. Adjusts deployment to explicitly set serviceAccountName, nodeSelector, and container args to match new resource usage.
+```
+- **Files Changed (2):**
+  - `metrics/kube-state-metrics-configs/cluster-role.yaml`
+  - `metrics/kube-state-metrics-configs/deployment.yaml`
+
+## 2025-12-31 – `160ad04` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Prometheus configs for EndpointSlice support
+
+Modified ClusterRole to grant access to discovery.k8s.io EndpointSlices and updated Prometheus scrape configs to use 'endpointslice' roles instead of 'endpoints'. Adjusted relabeling to match EndpointSlice metadata, improving compatibility with newer Kubernetes service discovery.
+```
+- **Files Changed (2):**
+  - `metrics/kubernetes-prometheus/clusterRole.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2025-12-31 – `06a1da3` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase CPU limit for SeaweedFS container
+
+Raised the CPU limit from 2 to 4 in the seaweedfs.yaml resource configuration to allow the container to utilize more CPU resources.
+```
+- **Files Changed (1):**
+  - `seaweedfs/seaweedfs.yaml`
+
+## 2025-12-31 – `53bd17c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update node-exporter Prometheus scrape config
+
+Revised the relabel_configs for the node-exporter job to use service annotations and improved address/port handling. This enhances compatibility with service discovery and ensures correct target labeling.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2025-12-31 – `9d86534` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable and configure Grafana metrics in deployment
+
+Added environment variables to enable Grafana metrics and configure related authentication options in the graphana.yaml deployment file.
+```
+- **Files Changed (1):**
+  - `metrics/graphana/graphana.yaml`
+
+## 2025-12-31 – `470b7fe` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Grafana scrape config to Prometheus
+
+Introduced a new scrape job for Grafana in the Prometheus config map, enabling metrics collection from the Grafana service at 45s intervals.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2025-12-31 – `298837d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Thanos Compactor service manifest
+
+Introduces a Kubernetes Service definition for the Thanos Compactor in the monitoring namespace, exposing gRPC and HTTP ports with a headless service configuration.
+```
+- **Files Changed (1):**
+  - `thanos/thanos-compactor-service.yaml`
+
+## 2025-12-31 – `6d6b8c1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Loki and InfluxDB config to poller deployment
+
+Introduces environment variables to enable Loki integration and disable InfluxDB in the unifi-poller deployment. Configures Loki URI and disables SSL verification.
+```
+- **Files Changed (1):**
+  - `unifi/poller/unifi-poller-deployment.yaml`
+
+## 2025-12-31 – `91f578d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Prometheus and Thanos jobs to config-map
+
+Added scrape configurations for Prometheus, Thanos Querier, Thanos Store Gateway, and Thanos Compactor to the Prometheus config-map. This enables Prometheus to collect metrics from these additional monitoring components.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-01 – `a5fc84e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update README with observability section
+
+Added a new 'Observability' section to the README and clarified that there are currently no metrics to export or collect. Also updated the TODO list to remove completed or outdated items.
+```
+- **Files Changed (1):**
+  - `bitwarden/README.md`
+
+## 2026-01-01 – `62f893b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add metrics exporter and enable verbose logging for ClamAV
+
+Introduces a metrics exporter sidecar to the ClamAV deployment and exposes a metrics port in the service. Also enables verbose and clean logging in the ClamAV config, and updates resource limits for containers. Removes the completed TODO for metrics and dashboard from the README.
+```
+- **Files Changed (4):**
+  - `clamav/clamav-configmap.yaml`
+  - `clamav/clamav-deployment.yaml`
+  - `clamav/clamav-service.yaml`
+  - `clamav/README.md`
+
+## 2026-01-01 – `2fdc5bf` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add clamav-exporter scrape config to Prometheus
+
+Introduced a new scrape job for clamav-exporter in the Prometheus config map, specifying target, scrape interval, timeout, and metrics path. This enables Prometheus to collect metrics from the ClamAV exporter service.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-01 – `076d743` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Alloy log export to TODO lists
+
+Updated the TODO sections in Nextcloud and WordPress README files to include exporting application logs with Alloy.
+```
+- **Files Changed (2):**
+  - `nextcloud/README.md`
+  - `wordpress/README.md`
+
+## 2026-01-01 – `5c45a5d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable unauthenticated metrics and add admin access control
+
+Allows unauthenticated access to Collabora metrics by updating extra_params. Adds traefik middleware and ingress to restrict admin and metrics endpoints to a dummy IP so it will bee 403 always.
+```
+- **Files Changed (3):**
+  - `argocd/collabora.yaml`
+  - `collabora/traefic-deny.yaml`
+  - `collabora/traefik-ingres.yaml`
+
+## 2026-01-01 – `905f1be` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove TODO section from README.md
+
+Remove TODO section from README.md, it's done
+```
+- **Files Changed (1):**
+  - `collabora/README.md`
+
+## 2026-01-01 – `3242c28` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Prometheus scrape job for Collabora
+
+Add Prometheus scrape job for Collabora
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-01 – `9d8015b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add labels to synapse deployment metadata
+
+Introduced standard and custom labels to the synapse deployment for improved identification, management, and integration with tools like Argo CD.
+```
+- **Files Changed (1):**
+  - `conduit/synapse-deployment.yaml`
+
+## 2026-01-01 – `4f56b8c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD metrics jobs to Prometheus config
+
+Added scrape configurations for argocd-metrics, argocd-server-metrics, and argocd-applicationset-controller to the Prometheus config map. This enables Prometheus to collect metrics from ArgoCD components for improved monitoring.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-01 – `87bd733` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update README with ArgoCD management note
+
+Added a note indicating the project is managed by ArgoCD and clarified that no metrics are available. Updated the TODO section to reflect current status.
+```
+- **Files Changed (1):**
+  - `conduit/README.md`
+
+## 2026-01-01 – `c1f7722` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Integrate Alloy for Nextcloud log export
+
+Added alloy.yaml ConfigMap for Alloy configuration and updated php-deployment.yaml to deploy Alloy as a sidecar for exporting Nextcloud application logs. Removed obsolete TODO from README.md regarding log export with Alloy.
+```
+- **Files Changed (3):**
+  - `nextcloud/alloy.yaml`
+  - `nextcloud/php-deployment.yaml`
+  - `nextcloud/README.md`
+
+## 2026-01-01 – `408e753` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Wordpress README with ArgoCD info
+
+Replaces placeholder content with a brief note indicating the Wordpress project is managed by ArgoCD.
+```
+- **Files Changed (1):**
+  - `wordpress/README.md`
+
+## 2026-01-02 – `58cfdf8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable Keycloak metrics and Prometheus scraping
+
+Added metrics port and configuration to Keycloak deployment for  monitoring. Updated Prometheus config map to scrape Keycloak metrics endpoint at port 9000.
+```
+- **Files Changed (2):**
+  - `keycloak/keycloak-deplyoment.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-02 – `eb0b495` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Clean up Postgres deployment and PVC configs
+
+Commented out unused backup volume and related mounts in the Postgres deployment YAML. Removed an unused PersistentVolumeClaim definition from the PVC YAML, leaving only the data-export PVC.
+```
+- **Files Changed (2):**
+  - `postgres/postgres-deployment.yaml`
+  - `postgres/postgresql-pvc.yaml`
+
+## 2026-01-02 – `bb88137` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Increase ClamAV deployment CPU limit
+
+Updated the CPU limit for the ClamAV deployment from 1500m to 12 to allow for higher resource usage.
+```
+- **Files Changed (1):**
+  - `clamav/clamav-deployment.yaml`
+
+## 2026-01-02 – `4265ac7` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Harbor README and values for metrics and resources
+
+Renamed README title and added Helm management note. Updated values.yaml to enable metrics, set exporter replicas, and increase Trivy CPU limit. These changes improve resource allocation and enable metrics collection for Harbor components.
+```
+- **Files Changed (2):**
+  - `harbor/README.md`
+  - `harbor/values.yaml`
+
+## 2026-01-02 – `88ee082` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update MongoDB exporter version and README
+
+Upgraded mongodb_exporter image from 0.44.0 to 0.47.2 and removed the --compatible-mode argument from the deployment. Updated README with project name and ArgoCD management note.
+```
+- **Files Changed (2):**
+  - `mongo/mongo-exporter-deployment.yaml`
+  - `mongo/README.md`
+
+## 2026-01-02 – `1e596b8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Refactor SeaweedFS deployment and update docs
+
+Split SeaweedFS deployment into separate containers for master, volume, filer, and S3 gateway. Added metrics service and readiness probes for improved monitoring and reliability. Updated README to reflect ArgoCD management and cleaned up Traefik ingress annotations and labels.
+```
+- **Files Changed (3):**
+  - `seaweedfs/README.md`
+  - `seaweedfs/seaweedfs.yaml`
+  - `seaweedfs/traefik-ingres.yaml`
+
+## 2026-01-02 – `5d5d48d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove placeholder content from README files
+
+Deleted 'TODO' notes and placeholder lines from thanos and traefik README.md files.
+```
+- **Files Changed (2):**
+  - `thanos/README.md`
+  - `traefik/README.md`
+
+## 2026-01-02 – `4121809` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Harbor and SeaweedFS scrape configs to Prometheus
+
+Introduces new Prometheus job configurations for Harbor components (core, jobservice, registry, exporter) and SeaweedFS metrics (master, volume, filer). Also improves relabeling and avoids double-scraping node-exporter in the service endpoints job.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-02 – `128dba6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add S3 metrics support for SeaweedFS
+
+Updated Prometheus config to scrape S3 metrics from SeaweedFS and exposed a new metrics port (9094) in the SeaweedFS deployment and service. Also enabled readiness probe for the S3 container.
+```
+- **Files Changed (2):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+  - `seaweedfs/seaweedfs.yaml`
+
+## 2026-01-03 – `50494aa` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Prometheus scrape configs for Loki components
+
+Added new scrape jobs for loki, loki-canary, loki-chunks-cache, loki-results-cache, and loki-headless to the Prometheus config map. This enables Prometheus to collect metrics from various Loki services in the cluster.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-05 – `c6783ea` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Meilisearch image to v1.31.0
+
+Bump Meilisearch container image from 'latest' to 'v1.31.0' Also adds commented-out environment variable for experimental dumpless upgrade.
+```
+- **Files Changed (1):**
+  - `karakeep/meilisearch-deployment.yaml`
+
+## 2026-01-05 – `d9ba85d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update karakeep image to version 0.30.0
+
+Bump the karakeep container image from 0.29.3 to 0.30.0 in the deployment manifest to deploy the latest application version.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2026-01-05 – `a81b88b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add CRAWLER_STORE_PDF env variable to deployment
+
+Introduces the CRAWLER_STORE_PDF environment variable with value 'true' to the karakeep deployment, enabling PDF storage functionality for the crawler.
+```
+- **Files Changed (1):**
+  - `karakeep/karakeep-deployment.yaml`
+
+## 2026-01-07 – `895f8aa` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove outdated TODOs from README files
+
+Cleaned up the README.md files in keycloak and loki by removing obsolete TODO sections related to metrics and dashboards.
+```
+- **Files Changed (2):**
+  - `keycloak/README.md`
+  - `loki/loki/README.md`
+
+## 2026-01-07 – `3dac7d2` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Kubernetes manifests for year service
+
+Introduces a new year.yaml file containing Namespace, Deployment, Service, and Ingress resources for deploying the 'year' application in Kubernetes. Includes resource limits, probes, volume mounts, and Traefik ingress configuration.
+```
+- **Files Changed (1):**
+  - `year/year.yaml`
+
+## 2026-01-12 – `ad17c92` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add SURBL and options config to Rspamd setup
+
+Introduces SURBL and options configuration to Rspamd by updating the ConfigMap and Deployment files. This enables SURBL checks and custom TLD options, and mounts the new config files into the Rspamd container.
+```
+- **Files Changed (2):**
+  - `mail/rspamd-configmap.yaml`
+  - `mail/rspamd-deployment.yaml`
+
+## 2026-01-12 – `6bad11a` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add CronJob and RBAC for Let's Encrypt cert sync
+
+Introduces a Kubernetes CronJob to periodically sync Let's Encrypt certificates from Traefik to a secret in the mail namespace. Adds necessary ServiceAccount, Role, RoleBinding, ClusterRole, and ClusterRoleBinding resources to grant required permissions for secret management and pod exec access.
+```
+- **Files Changed (2):**
+  - `mail/certupdate.yaml`
+  - `mail/rbac.yaml`
+
+## 2026-01-22 – `ca4ecdd` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Enable metrics in Synapse config
+
+Set enable_metrics to true in synapse-configmap.yaml to allow metrics collection.
+```
+- **Files Changed (1):**
+  - `conduit/synapse-configmap.yaml`
+
+## 2026-01-22 – `1ebc25a` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add named ports to Synapse deployment
+
+Added 'federation' and 'metrics' names to container ports 6167 and 8008 in the Synapse deployment YAML for improved clarity and service targeting.
+```
+- **Files Changed (1):**
+  - `conduit/synapse-deployment.yaml`
+
+## 2026-01-22 – `a1dcb46` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Synapse config and deployment for new port and secret
+
+Added a new HTTP listener on port 8008 with metrics resource in synapse-configmap.yaml. Changed synapse-deployment.yaml to mount the configuration from a secret instead of a configMap.
+```
+- **Files Changed (2):**
+  - `conduit/synapse-configmap.yaml`
+  - `conduit/synapse-deployment.yaml`
+
+## 2026-01-22 – `7513190` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add metrics service for matrix and Prometheus scrape config
+
+Introduces a new ClusterIP service 'metrics' in the matrix namespace for exposing metrics on port 8008. Updates the Prometheus config-map to add a scrape job for the new metrics endpoint.
+```
+- **Files Changed (2):**
+  - `conduit/matrix-service.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-22 – `4682e3b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Fix typo in Prometheus config target hostname
+
+Corrected 'metrics.matrics.svc.cluster.local' to 'metrics.matrix.svc.cluster.local' in the Prometheus config map to ensure proper metrics scraping.
+```
+- **Files Changed (1):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-01-22 – `fb86eb9` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update README with new features
+
+Added Keycloak OIDC provider and Vas3k year calendar to the list of features in the README.
+```
+- **Files Changed (1):**
+  - `README.md`
+
+## 2026-01-23 – `e98e9c5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Integrate OIDC client secret via ExternalSecret
+
+Updated deployment to source OIDC_CLIENT_SECRET from a Kubernetes secret managed by ExternalSecret. Added dawarich-secret.yaml to define the ExternalSecret and secret-store.yaml to configure Vault as the secret provider.
+```
+- **Files Changed (3):**
+  - `dawarich/dawarich-deploy.yaml`
+  - `dawarich/dawarich-secret.yaml`
+  - `dawarich/secret-store.yaml`
+
+## 2026-01-25 – `c428290` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update resources in synapse-configmap.yaml
+
+Adjusted the resource names for the HTTP listeners. The first listener now includes 'client' and 'federation', while the second listener is limited to 'metrics'.
+```
+- **Files Changed (1):**
+  - `conduit/synapse-configmap.yaml`
+
+## 2026-01-25 – `8cf9937` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Rename conduit directory to synapse
+
+All files and subdirectories under 'conduit/' have been renamed to 'synapse/'.
+```
+- **Files Changed (15):**
+  - `synapse/matrix-pvc.yaml`
+  - `synapse/matrix-service.yaml`
+  - `synapse/nginx-configMap.yaml`
+  - `synapse/nginx-deployment.yaml`
+  - `synapse/nginx-service.yaml`
+  - `synapse/README.md`
+  - `synapse/secret-store.yaml`
+  - `synapse/synapse-configmap.yaml`
+  - `synapse/synapse-deployment.yaml`
+  - `synapse/tools/check.py`
+  - `synapse/tools/CREATE DATABASE synapse.sql`
+  - `synapse/tools/dehydrated.py`
+  - `synapse/tools/rehydrate.py`
+  - `synapse/tools/reset.py`
+  - `synapse/traefik-ingres.yaml`
+
+## 2026-01-25 – `cce4e30` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Rename conduit ArgoCD app to synapse
+
+Renamed the ArgoCD application manifest from conduit.yaml to synapse.yaml and updated the application path to 'synapse' to reflect the new name.
+```
+- **Files Changed (1):**
+  - `argocd/synapse.yaml`
+
+## 2026-02-01 – `304115f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update Keycloak image to version 26.5.2
+
+Bump Keycloak container image from 26.4.7 to 26.5.2 in the deployment YAML.
+```
+- **Files Changed (1):**
+  - `keycloak/keycloak-deplyoment.yaml`
+
+## 2026-02-01 – `6b5b8ff` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Kubernetes configs for Stirling PDF deployment
+
+Introduces YAML manifests for deploying Stirling PDF on Kubernetes, including namespace, persistent volume claim, deployment, service, and Traefik ingress with HSTS middleware for secure access.
+```
+- **Files Changed (2):**
+  - `stirling-pdf/ingres-trafic.yaml`
+  - `stirling-pdf/stirling-pdf.yaml`
+
+## 2026-02-01 – `b8a8bb4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Kubernetes manifests for convertx deployment
+
+Introduces a new convertx.yaml file containing Kubernetes resources for the convertx application, including Namespace, Secret, PersistentVolumeClaim, Deployment, and Service definitions. This enables deployment and management of the convertx service in a Kubernetes cluster.
+```
+- **Files Changed (1):**
+  - `convertx/convertx.yaml`
+
+## 2026-02-17 – `08f1a9c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Yubico secrets and env vars to Bitwarden
+
+Introduce two ExternalSecrets (yubico-client-id and yubico-secret-key) in the bitwarden namespace that sync client-id and secret-key from the vault-secret-store (remote key: bitwarden) with a 15m refresh interval and Owner creationPolicy. Wire these secrets into the Bitwarden Deployment by adding environment variables globalsettings__yubico__clientId and globalsettings__yubico__key which reference the synced secrets, enabling Bitwarden to read Yubico credentials from Kubernetes secrets.
+```
+- **Files Changed (2):**
+  - `bitwarden/bitwarden-deployment.yaml`
+  - `bitwarden/bitwarden-secret.yaml`
+
+## 2026-02-18 – `962db1f` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Disable registration and remove Postgres stub
+
+Turn off open user registration by setting enable_registration and enable_registration_without_verification to false to prevent unauthenticated signups. Remove the commented Postgres backend example so the ConfigMap only references the active sqlite3 database configuration. Secrets placeholders (macaroon_secret_key, form_secret) and other settings are unchanged.
+```
+- **Files Changed (1):**
+  - `synapse/synapse-configmap.yaml`
+
+## 2026-02-18 – `c4d19a2` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies and increase Synapse memory
+
+Add NetworkPolicy objects for the matrix namespace to enforce default deny on Synapse backend pods and allow required traffic: ingress from the traefik namespace (port 6167), DNS egress to kube-system (UDP/TCP 53), and federation egress to the internet (TCP 443, 8448, 80). Also bump Synapse container memory requests and limits from 166Mi to 266Mi in the deployment to provide more headroom.
+```
+- **Files Changed (2):**
+  - `synapse/network-policy.yaml`
+  - `synapse/synapse-deployment.yaml`
+
+## 2026-02-18 – `a6175a4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add NetworkPolicy to restrict Postgres ingress
+
+Introduce a NetworkPolicy (postgres-restrict-ingress) in the db namespace to limit ingress to pods labeled app=postgres. Allows TCP/5432 from specific namespaces (db, bitwarden, keycloak, dawarich, mastodon) and TCP/9187 from monitoring for postgres-exporter metrics. Keeps Postgres isolated while permitting known clients; add additional namespaceSelector entries when new apps require DB access.
+```
+- **Files Changed (1):**
+  - `postgres/network-policy.yaml`
+
+## 2026-02-18 – `383e606` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add MySQL network policies
+
+Add mysql/network-policy.yaml defining two NetworkPolicy resources in the db namespace: 'mysql-restrict-ingress' restricts ingress to pods with app=mysql to specific namespaces (db, nextcloud, wordpress) and any namespace labeled db-access/mysql-client: "true" on TCP port 3306; 'mysqld-exporter-allow-monitoring' allows scraping of pods with app=mysqld-exporter only from the monitoring namespace on TCP port 9104. Provides explicit, label-driven access control for DB and metrics.
+```
+- **Files Changed (1):**
+  - `mysql/network-policy.yaml`
+
+## 2026-02-18 – `b6d6991` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Bitwarden network policies
+
+Introduce baseline NetworkPolicy manifests for the bitwarden namespace to enforce least-privilege networking for pods labeled service=bitwarden. Adds a default deny policy and specific allow rules: ingress from the traefik namespace on TCP/8080; DNS egress to kube-system on UDP/TCP 53; Postgres egress to the db namespace on TCP/5432; Loki egress to the loki namespace on TCP/3100; and allowed external egress to 0.0.0.0/0 for SMTP (TCP/25) and HTTPS (TCP/443). These policies restrict traffic while permitting required integrations and external services.
+```
+- **Files Changed (1):**
+  - `bitwarden/network-policy.yaml`
+
+## 2026-02-18 – `e25b892` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add WordPress network policies
+
+Add wordpress/network-policy.yaml defining a baseline default-deny policy and targeted NetworkPolicy rules to enable necessary traffic: allow Traefik -> frontend nginx (80); allow frontend -> backend PHP (9000) and corresponding egress; allow PHP backend egress to MySQL (db namespace, 3306) and Redis (wordpress or redis namespaces, 6379); allow Redis ingress from PHP; allow cluster DNS egress to kube-system (53 TCP/UDP); and allow general web egress (80/443 and DNS). References namespaces: traefik, db, redis, kube-system.
+```
+- **Files Changed (1):**
+  - `wordpress/network-policy.yaml`
+
+## 2026-02-18 – `e8ef5c4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Create network-policy.yaml
+```
+- **Files Changed (1):**
+  - `clamav/network-policy.yaml`
+
+## 2026-02-18 – `02679c0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Collabora namespace network policies
+
+Introduce namespace-wide NetworkPolicy manifest for the collabora namespace. Adds a default deny policy (podSelector: {}) and separate policies to allow: ingress from the traefik and monitoring namespaces to TCP 9980; egress DNS (TCP/UDP 53) to kube-system; and general web egress (TCP 80/443) to 0.0.0.0/0. Uses podSelector {} to provide a baseline without relying on chart-specific pod labels.
+```
+- **Files Changed (1):**
+  - `collabora/network-policy.yaml`
+
+## 2026-02-18 – `f3f0f7b` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Nextcloud network policies
+
+Introduce a new nextcloud/network-policy.yaml containing a baseline default-deny NetworkPolicy for the nextcloud namespace and a set of allow rules. Policies permit: ingress from traefik to the Nextcloud frontend (nginx) on 80; frontend->backend (nginx->php) on 9000; backend egress to DB namespaces (MySQL/Postgres), Redis, and ClamAV; Redis ingress from backend pods on 6379; DNS egress to kube-system (53); logging egress to loki (3100); and general web/email egress (80,443,25,587,465). These rules scope traffic by pod/namespace selectors to lock down pod communication while enabling required external and inter-service access.
+```
+- **Files Changed (1):**
+  - `nextcloud/network-policy.yaml`
+
+## 2026-02-18 – `7e52467` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add mail NetworkPolicies for services
+
+Introduce NetworkPolicy resources in the mail namespace to enforce default-deny and allow only required traffic for Postfix, Dovecot, and Rspamd. Each service receives a default deny policy plus granular ingress/egress rules: Postfix permits SMTP submission (587), outbound SMTP (25), DNS, and specific local mail ports; Dovecot permits Postfix auth/LMTP, client ports (993, 4190) and DNS egress; Rspamd permits milter/web/worker traffic and egress for DNS, Redis, ClamAV and web (80/443). Namespace and IP selectors are used to narrowly scope allowed peers.
+```
+- **Files Changed (1):**
+  - `mail/network-policy.yaml`
+
+## 2026-02-18 – `c3a3f28` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies for ca-report-ui
+
+Add NetworkPolicy manifests for app=ca-report-ui in the ca-scanner namespace. Applies a default-deny for ingress and egress, allows ingress TCP/8080 from the same namespace and an optional traefik namespace, permits egress DNS (UDP/TCP 53) to kube-system, and allows egress to the Kubernetes API server (TCP 443) in default and kube-system namespaces.
+```
+- **Files Changed (1):**
+  - `canitiser/network-policy.yaml`
+
+## 2026-02-18 – `8a537bc` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add standard K8s labels to Nextcloud CronJob
+
+Add app and app.kubernetes.io labels to the CronJob and its pod template to improve discovery, monitoring and management. Labels added: tier=backend, app.kubernetes.io/name=nextcloud, app.kubernetes.io/instance=nextcloud, app.kubernetes.io/version="latest", and app.kubernetes.io/managed-by=argoCD. No functional changes to schedule or job spec.
+```
+- **Files Changed (1):**
+  - `cron/cronjob-nextcloud.yaml`
+
+## 2026-02-18 – `6ea8407` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Create network-policy.yaml
+```
+- **Files Changed (1):**
+  - `connectivity-exporter/network-policy.yaml`
+
+## 2026-02-18 – `c5b61b3` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update network-policy.yaml
+```
+- **Files Changed (1):**
+  - `nextcloud/network-policy.yaml`
+
+## 2026-02-18 – `b09faca` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove unused port and duplicate Redis rule
+
+Cleanup nextcloud/network-policy.yaml: remove TCP port 5432 from the egress ports and delete a duplicate egress block that allowed TCP 6379 to the redis namespace. This reduces redundant rules and avoids exposing an unnecessary Postgres port.
+```
+- **Files Changed (1):**
+  - `nextcloud/network-policy.yaml`
+
+## 2026-02-18 – `22708bd` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Refine network policies and remove mysql ClusterIP
+
+Add explicit podSelectors for kube-dns (and coredns for Nextcloud) under kube-system so DNS allowances target DNS pods rather than all pods in the namespace; remove duplicated DNS port entries across several network-policy files. Nextcloud policy also gains explicit podSelectors for MySQL (db namespace) and Redis (nextcloud namespace). Update connectivity-exporter to replace stray DNS rules with an explicit to: ipBlock ::/0 allowing TCP 80/443. Remove clusterIP: None from the mysql Service. Affected files: bitwarden, canitiser, clamav, collabora, connectivity-exporter, mail, nextcloud, wordpress, and mysql.
+```
+- **Files Changed (9):**
+  - `bitwarden/network-policy.yaml`
+  - `canitiser/network-policy.yaml`
+  - `clamav/network-policy.yaml`
+  - `collabora/network-policy.yaml`
+  - `connectivity-exporter/network-policy.yaml`
+  - `mail/network-policy.yaml`
+  - `mysql/mysql-service.yaml`
+  - `nextcloud/network-policy.yaml`
+  - `wordpress/network-policy.yaml`
+
+## 2026-02-18 – `4a94d1d` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Allow monitoring NS access to mail:11334
+
+Add a NetworkPolicy ingress rule in mail/network-policy.yaml to permit TCP traffic from the 'monitoring' namespace to port 11334. This adds a namespaceSelector matching kubernetes.io/metadata.name: monitoring so monitoring tools can reach the mail service on that port.
+```
+- **Files Changed (1):**
+  - `mail/network-policy.yaml`
+
+## 2026-02-18 – `4b0e8ee` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Delay Nextcloud cron job start by 120s
+
+Prepend a 120-second sleep to the cron command in cron/cronjob-nextcloud.yaml so the container runs "sleep 120; sudo -u www-data php /nextcloud/cron.php". This delays cron execution on startup to allow the network policy become ready and avoid race conditions.
+```
+- **Files Changed (1):**
+  - `cron/cronjob-nextcloud.yaml`
+
+## 2026-02-19 – `343c639` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies for year app
+
+Introduce Kubernetes NetworkPolicy manifests in the year namespace: a default-deny policy for pods labeled app=year, an ingress policy permitting TCP:3000 from the traefik and year namespaces, and an egress policy allowing DNS (TCP/UDP 53) to the kube-system namespace. These rules restrict inbound traffic to routed HTTP and allow DNS resolution for the application.
+```
+- **Files Changed (1):**
+  - `year/network-policy.yaml`
+
+## 2026-02-19 – `df2172e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Comment out readinessProbe in seaweedfs.yaml
+
+Temporarily disable the HTTP readinessProbe for the container (port 8333) by commenting out the readinessProbe block in seaweedfs/seaweedfs.yaml. The rest of the pod spec, including ports and volumes, remains unchanged.
+```
+- **Files Changed (1):**
+  - `seaweedfs/seaweedfs.yaml`
+
+## 2026-02-19 – `6fd53ef` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Allow monitoring namespace access to metrics ports
+
+Update NetworkPolicy for Nextcloud, Synapse and WordPress to allow ingress from the monitoring namespace. Each policy adds a namespaceSelector (kubernetes.io/metadata.name: monitoring) permitting monitoring scrapers to reach service metrics ports (Nextcloud: 9121, WordPress: 9121, Synapse: 8008). Also include a minor formatting/whitespace tweak in nextcloud/network-policy.yaml.
+```
+- **Files Changed (3):**
+  - `nextcloud/network-policy.yaml`
+  - `synapse/network-policy.yaml`
+  - `wordpress/network-policy.yaml`
+
+## 2026-02-19 – `8fc4297` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Make monitoring services ClusterIP
+
+Change Grafana, Prometheus and Alertmanager services from LoadBalancer/NodePort to ClusterIP and remove the externalIPs (192.168.1.209). This makes the monitoring components internal-only within the cluster while keeping existing ports unchanged.
+```
+- **Files Changed (3):**
+  - `metrics/graphana/service.yaml`
+  - `metrics/kubernetes-prometheus/alertmanager-service.yaml`
+  - `metrics/kubernetes-prometheus/prometheus-service.yaml`
+
+## 2026-02-19 – `03e7ea8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove UDP from mail NetworkPolicy ports
+
+Delete the UDP protocol entry in mail/network-policy.yaml.
+```
+- **Files Changed (1):**
+  - `mail/network-policy.yaml`
+
+## 2026-02-19 – `cf36220` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Use prometheus serviceAccount and adjust token mounting
+
+Create a dedicated ServiceAccount (prometheus-server) in the monitoring namespace and update RBAC to bind it to the prometheus ClusterRole. Configure the prometheus deployment to use serviceAccountName: prometheus-server and enable automountServiceAccountToken for it, and disable automountServiceAccountToken for Alertmanager to reduce token exposure. Files changed: added ServiceAccount and adjusted ClusterRoleBinding subject in clusterRole.yaml; updated prometheus-deployment.yaml and alertmanager-deployment.yaml accordingly.
+```
+- **Files Changed (3):**
+  - `metrics/kubernetes-prometheus/alertmanager-deployment.yaml`
+  - `metrics/kubernetes-prometheus/clusterRole.yaml`
+  - `metrics/kubernetes-prometheus/prometheus-deployment.yaml`
+
+## 2026-02-19 – `79529f5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Scope Traefik RBAC and use traefik container
+
+Change ClusterRole/ClusterRoleBinding to namespaced Role/RoleBinding (namespace: traefik) and update roleRef to Role to limit permissions to the traefik namespace. Also update certupdate job to exec into the traefik container (-c traefik) when reading the ACME file to ensure the correct container is targeted.
+```
+- **Files Changed (2):**
+  - `mail/certupdate.yaml`
+  - `mail/rbac.yaml`
+
+## 2026-02-20 – `c93502c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Use Traefik TCP routes; remove externalIPs
+
+Add Traefik IngressRouteTCP resources for mail and minecraft and update traefik values to expose TCP entryPoints (submission, imaps, managesieve, minecraft) and pin Traefik to a specific node via nodeSelector. Remove externalIPs/NodePort settings from multiple services (postfix, dovecot, rspamd, minecraft) and add targetPort mappings so Traefik handles TCP routing. Restrict mail submission networkPolicy to only allow traffic from the traefik namespace. Enable HAProxy proxy protocol for Postfix submission in the ConfigMap and fix minor YAML/header formatting in the dovecot managesieve service.
+```
+- **Files Changed (10):**
+  - `mail/dovecot-manageseive-service.yaml`
+  - `mail/dovecot-tls-service.yaml`
+  - `mail/network-policy.yaml`
+  - `mail/postfix-configMap.yaml`
+  - `mail/postfix-tls-service.yaml`
+  - `mail/rspamd-service.yaml`
+  - `mail/traefik-tcp-routes.yaml`
+  - `minecraft/minecraft-service.yaml`
+  - `minecraft/traefik-tcp-route.yaml`
+  - `traefik/values.yaml`
+
+## 2026-02-20 – `820e823` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove external exposure from services
+
+Remove host/external exposure settings from service manifests. Changes:
+- seaweedfs: removed type: NodePort and nodePort 31833 (now uses default ClusterIP)
+- synapse: removed type: LoadBalancer, externalIPs (192.168.1.209) and externalTrafficPolicy: Local
+- thanos: removed externalIPs (192.168.1.100)
+These changes make the services cluster-internal by default; external access should be provided via appropriate cluster ingress/load balancer configuration if needed.
+```
+- **Files Changed (3):**
+  - `seaweedfs/seaweedfs.yaml`
+  - `synapse/matrix-service.yaml`
+  - `thanos/thanos-queuer-service.yaml`
+
+## 2026-02-20 – `8fbb5ef` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Migrate Endpoints to EndpointSlice and remove TLS
+
+Replace legacy v1 Endpoints resource with discovery.k8s.io/v1 EndpointSlice (ha-external-manual) including service labels, addressType, ports/protocol and endpoint address. Also remove the tls stanza from the Traefik Ingress spec (keep ingressClassName and host rule). This migrates the manual static backend to the newer EndpointSlice API and simplifies the Ingress TLS configuration.
+```
+- **Files Changed (1):**
+  - `homeassistant/homeassistant-ingress.yaml`
+
+## 2026-02-20 – `1bd15ed` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add baseline NetworkPolicies for multiple namespaces
+
+Add new NetworkPolicy manifests for harbor, karakeep, mastodon, plex, traefik and vault. Each namespace gets a default-deny policy plus allowlists for Traefik and monitoring ingress, intra-namespace traffic, DNS egress, and service-specific ports (e.g. Plex LAN ports, Mastodon Elasticsearch/Postgres, Vault/Harbor ports). Traefik also receives explicit egress allowances to many application namespaces. These changes harden network isolation by restricting traffic to only required endpoints.
+```
+- **Files Changed (6):**
+  - `harbor/network-policy.yaml`
+  - `karakeep/network-policy.yaml`
+  - `mastodon/network-policy.yaml`
+  - `plex/network-policy.yaml`
+  - `traefik/network-policy.yaml`
+  - `vault/network-policy.yaml`
+
+## 2026-02-20 – `df393e1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies for multiple services
+
+Add Kubernetes NetworkPolicy manifests for Keycloak, Minecraft, SeaweedFS, Stirling-PDF, and Spotify namespaces. Each namespace receives a baseline default-deny policy and allow rules for: ingress from traefik (service-specific ports), ingress from monitoring (service-specific ports), intra-namespace traffic, and egress to kube-dns (TCP/UDP 53). Spotify also includes additional egress rules to the db namespace for MongoDB (27017) and outbound web traffic (80/443) for both IPv4 and IPv6.
+```
+- **Files Changed (5):**
+  - `keycloak/network-policy.yaml`
+  - `minecraft/network-policy.yaml`
+  - `seaweedfs/network-policy.yaml`
+  - `stirling-pdf/network-policy.yaml`
+  - `your-spotify/network-policy.yaml`
+
+## 2026-02-20 – `ac8979a` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add NetworkPolicy to allow egress on HTTP/HTTPS
+
+Add mastodon-allow-egress-web NetworkPolicy in the mastodon namespace. It applies to all pods (podSelector: {}) and allows Egress to IPv4 and IPv6 (0.0.0.0/0 and ::/0) on TCP ports 80 and 443 so Mastodon pods can make outbound web requests.
+```
+- **Files Changed (1):**
+  - `mastodon/network-policy.yaml`
+
+## 2026-02-20 – `8c2e1e4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add monitoring network policies
+
+Create metrics/network-policy.yaml containing NetworkPolicy resources for the monitoring namespace. Adds a baseline default-deny policy and explicit rules to allow:
+- Ingress from traefik and pods in the monitoring namespace (ports for Grafana/Prometheus/Alertmanager).
+- Egress within the monitoring namespace and DNS to kube-dns (UDP/TCP 53).
+- Prometheus-specific egress for pods labeled app=prometheus-server to the Kubernetes API (kubernetes.default.svc IP) and many scrape targets across named namespaces with required ports.
+- External Prometheus scrape egress to 0.0.0.0/0 and ::/0 on TCP 9090.
+These policies restrict traffic while permitting necessary scraping and DNS/cluster API access for monitoring workloads.
+```
+- **Files Changed (1):**
+  - `metrics/network-policy.yaml`
+
+## 2026-02-20 – `d800ee7` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies for convertx, dawarich, mongo
+
+Add namespace-specific NetworkPolicy manifests: new default-deny and allow rules for convertx (ingress/egress, Traefik, intra-namespace, DNS egress), multiple policies for dawarich/photon (default deny, Traefik ingress, intra-namespace, DNS, DB access to db namespace, and outbound web access), and DB namespace policies for MongoDB (namespace-level ingress deny; allow Mongo access from db, spotify, monitoring; and allow mongo-exporter scraping from monitoring). Also update metrics/network-policy.yaml to include TCP port 27017 so Mongo-related metrics/endpoints are allowed.
+```
+- **Files Changed (4):**
+  - `convertx/network-policy.yaml`
+  - `dawarich/network-policy.yaml`
+  - `metrics/network-policy.yaml`
+  - `mongo/network-policy.yaml`
+
+## 2026-02-20 – `33cc5a0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Restrict Elasticsearch network access
+
+Add NetworkPolicy resources in the elastic-stack namespace to restrict ingress to Elasticsearch pods (label common.k8s.elastic.co/type=elasticsearch). Creates a default deny ingress, allows Mastodon namespace traffic to port 9200, and allows intra-namespace Elasticsearch traffic on ports 9200 and 9300 for cluster communication. This tightens security by limiting external exposure of Elasticsearch.
+```
+- **Files Changed (1):**
+  - `elastic/network-policy.yaml`
+
+## 2026-02-20 – `31c12ad` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Restrict monitoring network policies
+
+Replace open podSelector: {} with matchExpressions to exclude prometheus/thanos components for ingress and intra-namespace egress. Add several NetworkPolicy resources to allow required traffic: Grafana egress to Loki and HTTPS, ingress rules for Thanos/Prometheus ports, Thanos Querier egress to Prometheus and Store Gateway, and egress to an S3 endpoint IP (81.19.4.105/32) for Prometheus/Thanos components. These changes tighten cluster network controls while permitting necessary monitoring communication.
+```
+- **Files Changed (1):**
+  - `metrics/network-policy.yaml`
+
+## 2026-02-20 – `3af5ef4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies for Loki and Unifi poller
+
+Introduce Kubernetes NetworkPolicy manifests for loki and unifi namespaces. Loki policies include a default deny, ingress allowances from monitoring/selected namespaces and intra-namespace traffic, egress allowances to kube-dns and an S3 HTTPS endpoint (81.19.4.105) for the single-binary component. Unifi poller policies add a default deny for app=unifi-poller, allow ingress from monitoring and the same namespace, and egress rules for DNS, Prometheus (monitoring namespace port 3100), and the Unifi controller IP (192.168.1.1:443).
+```
+- **Files Changed (2):**
+  - `loki/network-policy.yaml`
+  - `unifi/poller/network-policy.yaml`
+
+## 2026-02-21 – `26d57a6` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add network policies for system namespaces
+
+Add new NetworkPolicy manifests for elastic-system, external-secrets, kube-system, and ot-operators. Each file introduces a default-deny baseline and explicit ingress/egress rules required for operator/webhook traffic, monitoring, kube-apiserver access, DNS, Vault (where applicable), kubelet probes, and intra-namespace communication. These changes enforce a least-privilege network posture for managed system workloads while allowing required control-plane and service connectivity.
+```
+- **Files Changed (4):**
+  - `elastic-system/network-policy.yaml`
+  - `external-secrets/network-policy.yaml`
+  - `kube-system/network-policy.yaml`
+  - `ot-operators/network-policy.yaml`
+
+## 2026-02-21 – `efa39e8` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add MySQL DB migration scripts
+
+Introduce a reusable migrate-db.sh tool to dump, restore, or migrate a MySQL database driven entirely by environment variables. The script validates DB_NAME, checks required commands, supports --dump-only/--restore-only modes, handles SSL mode, charset/collation, GTID and column-statistics compatibility, creates the target database if missing, and writes/reads a timestamped dump file. Also add two small wrapper scripts (migrate-nextcloud-db.sh and migrate-wordpress-db.sh) that set sensible defaults for Nextcloud and WordPress deployments and invoke migrate-db.sh.
+```
+- **Files Changed (3):**
+  - `mysql/tools/migrate-db.sh`
+  - `mysql/tools/migrate-nextcloud-db.sh`
+  - `mysql/tools/migrate-wordpress-db.sh`
+
+## 2026-02-21 – `47a12df` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add MySQL deployment, PVC & services for WP
+
+Add Kubernetes manifests to provision a MySQL instance for WordPress in the "wordpress" namespace. Files added:
+
+- mysql-wordpress-deployment.yaml: Deployment using harbor.andreybondarenko.com/dockerhub/mysql:8.0.41 with a readiness probe, resource requests/limits, volume mount at /var/lib/mysql, and environment pulled from a secret (mysql-wordpress-auth). Note: create the secret in-cluster; credentials are not committed.
+- mysql-wordpress-pvc.yaml: PersistentVolumeClaim (10Gi, ReadWriteOnce) for MySQL data.
+- mysql-wordpress-service.yaml: Cluster Service exposing MySQL on port 3306.
+- mysqld-exporter-service.yaml: Service for mysqld-exporter on port 9104 with labels (including app.kubernetes.io/* and managed-by: argoCD) for Prometheus scraping/management.
+
+These manifests provide a persistent MySQL backend and monitoring endpoint for a WordPress deployment.
+```
+- **Files Changed (4):**
+  - `wordpress/mysqld-exporter-service.yaml`
+  - `wordpress/mysql-wordpress-deployment.yaml`
+  - `wordpress/mysql-wordpress-pvc.yaml`
+  - `wordpress/mysql-wordpress-service.yaml`
+
+## 2026-02-21 – `84107eb` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add MySQL Deployment and PVC for Nextcloud
+
+Add Kubernetes manifests for a MySQL instance for Nextcloud: a Deployment (mysql-nextcloud) and a matching PersistentVolumeClaim (mysql-nextcloud-lh) in the nextcloud namespace. The Deployment uses harbor.andreybondarenko.com/dockerhub/mysql:8.0.41, 1 replica, a TCP readiness probe on port 3306, resource requests/limits, and mounts /var/lib/mysql to the PVC. MYSQL_ROOT_PASSWORD is sourced from the mysql-nextcloud-auth secret (create in-cluster), and MYSQL_DATABASE is set to nextcloud. PVC requests 10Gi using the longhorn storageClass.
+```
+- **Files Changed (2):**
+  - `nextcloud/mysql-nextcloud-deployment.yaml`
+  - `nextcloud/mysql-nextcloud-pvc.yaml`
+
+## 2026-02-21 – `b16784e` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add MySQL service for Nextcloud
+
+Create a Kubernetes Service resource (mysql-nextcloud) in the nextcloud namespace to expose MySQL on port 3306. The Service selects pods with labels app=mysql-nextcloud and tier=mysql and maps port 3306 (TCP) to targetPort 3306; type is left as the ClusterIP default to allow in-cluster access.
+```
+- **Files Changed (1):**
+  - `nextcloud/mysql-nextcloud-service.yaml`
+
+## 2026-02-21 – `32eb8f2` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add MySQL and mysqld-exporter NetworkPolicies
+
+Rename and tighten PHP egress policy to target mysql-wordpress pods (use podSelector with app=mysql-wordpress,tier=mysql instead of namespaceSelector). Add NetworkPolicy resources to allow: ingress from wordpress PHP to MySQL (TCP 3306), mysqld-exporter egress to MySQL (TCP 3306), ingress from mysqld-exporter to MySQL (TCP 3306), and monitoring namespace access to mysqld-exporter (TCP 9104). These changes restrict traffic by pod labels and enable exporter/monitoring connectivity.
+```
+- **Files Changed (1):**
+  - `wordpress/network-policy.yaml`
+
+## 2026-02-21 – `7248283` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Deprecate mysql manifests; add exporter sidecar
+
+Move existing mysql manifests into DEPRECATED/ and consolidate the mysqld-exporter into the mysql Deployment as a sidecar. The change adds a mysqld-exporter container and exposes port 9104 on the mysql Service, updates the NetworkPolicy to allow monitoring scrapes against mysql pods, and removes the standalone mysqld-exporter Deployment and ConfigMap. PVC/secret/secret-store files were also relocated to DEPRECATED to mark the prior layout as deprecated.
+```
+- **Files Changed (8):**
+  - `DEPRECATED/mysql/mysql-deployment.yaml`
+  - `DEPRECATED/mysql/mysql-pvc.yaml`
+  - `DEPRECATED/mysql/mysql-secret.yaml`
+  - `DEPRECATED/mysql/mysql-service.yaml`
+  - `DEPRECATED/mysql/network-policy.yaml`
+  - `DEPRECATED/mysql/secret-store.yaml`
+  - `mysql/mysqld-exporter-configmap.yaml`
+  - `mysql/mysqld-exporter-deployment.yaml`
+
+## 2026-02-21 – `0586b00` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add mysqld-exporter sidecar and network policies
+
+Add a mysqld-exporter sidecar to the mysql-nextcloud Deployment (uses MYSQL_ROOT_PASSWORD from the mysql-nextcloud-auth secret and listens on 9104) and expose its port on the mysql-nextcloud Service. Introduce NetworkPolicies to: allow nextcloud backend pods egress to mysql (TCP 3306), allow ingress to mysql from nextcloud backend (TCP 3306), and allow ingress from the monitoring namespace to the mysqld-exporter (TCP 9104). These changes enable Prometheus scraping of MySQL metrics and tighten pod network access.
+```
+- **Files Changed (3):**
+  - `nextcloud/mysql-nextcloud-deployment.yaml`
+  - `nextcloud/mysql-nextcloud-network-policy.yaml`
+  - `nextcloud/mysql-nextcloud-service.yaml`
+
+## 2026-02-21 – `3ed8657` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove mysqld-exporter service manifests
+
+Delete the Kubernetes Service YAMLs for mysqld-exporter from the mysql and wordpress directories. This removes the Service resources that exposed port 9104 for mysqld-exporter in the db and wordpress namespaces.
+```
+- **Files Changed (2):**
+  - `mysql/mysqld-exporter-service.yaml`
+  - `wordpress/mysqld-exporter-service.yaml`
+
+## 2026-02-21 – `8fe8801` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add mysqld-exporter sidecar & Prometheus jobs
+
+Add a mysqld-exporter sidecar to the wordpress MySQL Deployment and expose it on port 9104 (service and network policy changes). The sidecar uses the MYSQL_ROOT_PASSWORD secret to create a temporary .my.cnf and runs mysqld_exporter with modest resource requests/limits.
+
+Update Prometheus scrape config: rename the old mysql-staging job to mysql-wordpress (with new DNS target) and add a new mysql-nextcloud job to scrape mysqld-exporter on nextcloud.
+
+Adjust network policies to allow TCP/9104 for Wordpress and Nextcloud metric scraping and rename/cleanup existing Wordpress network policy names/ingress rules to reflect the sidecar/monitoring access.
+```
+- **Files Changed (5):**
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+  - `metrics/network-policy.yaml`
+  - `wordpress/mysql-wordpress-deployment.yaml`
+  - `wordpress/mysql-wordpress-service.yaml`
+  - `wordpress/network-policy.yaml`
+
+## 2026-02-21 – `0ee5b41` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Move Mongo to spotify ns, add exporter & metrics
+
+Rename and relocate Mongo manifests from the mongo/ folder to your-spotify/, switching resources from namespace 'db' to 'spotify'. Remove standalone mongo-exporter Deployment/Service and instead add the mongo-exporter container as a sidecar in the Mongo StatefulSet; expose a metrics port (9216) on the mongodb Service. Update Prometheus scrape target to mongodb.spotify.svc.cluster.local:9216 and adjust network policies to allow metrics traffic from the spotify namespace. Also update ArgoCD app namespace to spotify and fix the server MONGO_ENDPOINT to point at mongodb.spotify.svc.cluster.local.
+```
+- **Files Changed (14):**
+  - `argocd/mongo.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+  - `metrics/network-policy.yaml`
+  - `mongo/mongo-exporter-deployment.yaml`
+  - `mongo/mongo-exporter-service.yaml`
+  - `mongo/network-policy.yaml`
+  - `mongo/README.md`
+  - `your-spotify/mongo-configmap.yaml`
+  - `your-spotify/mongo-deployment.yaml`
+  - `your-spotify/mongo-pvc.yaml`
+  - `your-spotify/mongo-secret.yaml`
+  - `your-spotify/mongo-service.yaml`
+  - `your-spotify/network-policy.yaml`
+  - `your-spotify/server-deployment.yaml`
+
+## 2026-02-21 – `cdb7ff4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add dedicated Bitwarden Postgres + migration
+
+Provision a dedicated Postgres for Bitwarden and related tooling: add StatefulSet (bitwarden-postgres) with postgres-exporter sidecar, PVC, Services (db + metrics), and NetworkPolicy to restrict access. Add a migration Job template (bitwarden-postgres-migrate) to copy the bw database from the old host to the new host. Update the Bitwarden Deployment to point BW_DB_SERVER to bitwarden-postgres.bitwarden.svc.cluster.local and add a db-client label for network policy selection. Update README with observability notes and step-by-step migration/cutover instructions. Add Prometheus scrape job and alert for bitwarden Postgres and extend existing network policy egress to allow DB access.
+```
+- **Files Changed (9):**
+  - `bitwarden/bitwarden-deployment.yaml`
+  - `bitwarden/network-policy.yaml`
+  - `bitwarden/postgres-deployment.yaml`
+  - `bitwarden/postgres-network-policy.yaml`
+  - `bitwarden/postgres-pvc.yaml`
+  - `bitwarden/postgres-service.yaml`
+  - `bitwarden/README.md`
+  - `bitwarden/tools/migrate-bitwarden-db-job.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-02-21 – `4627095` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Keycloak Postgres StatefulSet, svc & migration
+
+Provision a dedicated PostgreSQL for Keycloak and add migration tooling and monitoring. Adds a StatefulSet, Service(s), PVC, metrics service, and NetworkPolicies in the keycloak namespace, plus a Job to migrate the keycloak database from the existing db namespace to the new keycloak Postgres. Updates the Keycloak deployment to point to the new DB host and extends Prometheus config with scrape job and alert for the new postgres exporter. Includes a README with cutover steps and ArgoCD-friendly metadata.
+```
+- **Files Changed (9):**
+  - `keycloak/keycloak-deplyoment.yaml`
+  - `keycloak/network-policy.yaml`
+  - `keycloak/postgres-deployment.yaml`
+  - `keycloak/postgres-network-policy.yaml`
+  - `keycloak/postgres-pvc.yaml`
+  - `keycloak/postgres-service.yaml`
+  - `keycloak/README.md`
+  - `keycloak/tools/migrate-keycloak-db-job.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-02-21 – `1c419c0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add dawarich Postgres and migration job
+
+Introduce a dedicated PostGIS instance and DB migration tooling for the dawarich namespace. Added StatefulSet (postgis image), PVC, two Services (db + metrics), NetworkPolicy for ingress to Postgres and metrics and a migration Job that uses pg_dump/psql to copy dawarich_development from the existing cluster DB to the new service. Updated dawarich deployment env DATABASE_HOST to point to dawarich-postgres.dawarich.svc.cluster.local and extended the app network policy to allow egress to the new Postgres. README updated with migration steps and notes about the exporter (9187) and image choices.
+```
+- **Files Changed (8):**
+  - `dawarich/dawarich-deploy.yaml`
+  - `dawarich/network-policy.yaml`
+  - `dawarich/postgres-deployment.yaml`
+  - `dawarich/postgres-network-policy.yaml`
+  - `dawarich/postgres-pvc.yaml`
+  - `dawarich/postgres-service.yaml`
+  - `dawarich/README.md`
+  - `dawarich/tools/migrate-dawarich-db-job.yaml`
+
+## 2026-02-21 – `5362239` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add Mastodon PostgreSQL deployment & migration
+
+Introduce a dedicated PostgreSQL stack for Mastodon and migration tooling. Adds StatefulSet, Service(s), PVC, and NetworkPolicy for mastodon-postgres (Postgres image v18 plus postgres-exporter on 9187). Adds a migration Job template and an env patch to switch DB_HOST, and updates mastodon-values.yaml to point to the new mastodon-postgres host. Updates mastodon network policy egress to allow DB access and extends Prometheus config to scrape/alert for the new Mastodon (and Dawarich) Postgres targets. README updated with migration steps and cutover order.
+```
+- **Files Changed (10):**
+  - `mastodon/mastodon-values.yaml`
+  - `mastodon/network-policy.yaml`
+  - `mastodon/postgres-deployment.yaml`
+  - `mastodon/postgres-network-policy.yaml`
+  - `mastodon/postgres-pvc.yaml`
+  - `mastodon/postgres-service.yaml`
+  - `mastodon/README.md`
+  - `mastodon/tools/mastodon-env-patch.json`
+  - `mastodon/tools/migrate-mastodon-db-job.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+
+## 2026-02-22 – `0a011f1` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Deprecate ArgoCD manifests & relocate Postgres
+
+Move several ArgoCD manifests into DEPRECATED/argocd/ (minio, mongo, mysql, postgres-exporter, promtail). Remove argocd/postgres.yaml and add the original Helm-based Postgres Application under DEPRECATED/postgres/postgres.yaml. Update DEPRECATED/argocd/postgres.yaml to reference the git-backed postgres app (home-k3s repo, path: postgres). This reorganizes and deprecates legacy ArgoCD manifests while preserving both the Helm config and the repo-based ArgoCD application.
+```
+- **Files Changed (8):**
+  - `argocd/postgres.yaml`
+  - `DEPRECATED/argocd/minio.yaml`
+  - `DEPRECATED/argocd/mongo.yaml`
+  - `DEPRECATED/argocd/mysql.yaml`
+  - `DEPRECATED/argocd/postgres.yaml`
+  - `DEPRECATED/argocd/postgres-exporter.yaml`
+  - `DEPRECATED/argocd/promtail.yaml`
+  - `DEPRECATED/postgres/postgres.yaml`
+
+## 2026-02-22 – `5f0fcac` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Remove PHP ExternalSecrets and WordPress SecretStore
+
+Delete ExternalSecret manifests for php-fpm-config in nextcloud and wordpress, and remove the vault SecretStore for wordpress.
+```
+- **Files Changed (3):**
+  - `nextcloud/php-secret.yaml`
+  - `wordpress/php-secret.yaml`
+  - `wordpress/secret-store.yaml`
+
+## 2026-02-22 – `d28b5d0` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add dawarich ArgoCD app; ignore PVC size diffs
+
+Add a new Argo CD Application for `dawarich` (argocd/dawarich.yaml) pointing to the home-k3s repo path `dawarich`. Update existing `karakeep` and `nextcloud` Argo CD apps to ignore PersistentVolumeClaim storage request differences (jsonPointer /spec/resources/requests/storage) and enable the sync option `RespectIgnoreDifferences=true` so Argo CD won't treat PVC size changes as drift during automated syncs.
+```
+- **Files Changed (3):**
+  - `argocd/dawarich.yaml`
+  - `argocd/karakeep.yaml`
+  - `argocd/nextcloud.yaml`
+
+## 2026-02-22 – `19ddfed` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD apps; make traefik RBAC cluster-wide
+
+Add ArgoCD Application manifests for ca-scanner, keycloak, seaweedfs, and unifi (pointing to https://github.com/shaman007/home-k3s, automated sync, each targeted to their respective namespaces). Update mail/rbac.yaml by promoting sync-le-tls-traefik-readexec from a namespaced Role + RoleBinding to a ClusterRole + ClusterRoleBinding so the sync-le-tls ServiceAccount (in the mail namespace) can get/list and exec pods cluster-wide (no namespace-scoped role).
+```
+- **Files Changed (5):**
+  - `argocd/ca-scanner.yaml`
+  - `argocd/keycloak.yaml`
+  - `argocd/seaweedfs.yaml`
+  - `argocd/unifi.yaml`
+  - `mail/rbac.yaml`
+
+## 2026-02-22 – `c39222c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add 15s sleep before reading ACME file
+
+Insert a 15-second delay at the start of the certupdate job script in mail/certupdate.yaml.
+```
+- **Files Changed (1):**
+  - `mail/certupdate.yaml`
+
+## 2026-02-22 – `85b6f47` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD applications: convertx, stirling-pdf, year
+
+Add three ArgoCD Application manifests (argocd/convertx.yaml, argocd/stirling-pdf.yaml, argocd/year.yaml). Each points to the same GitHub repo (https://github.com/shaman007/home-k3s.git) with distinct paths (convertx, stirling-pdf, year), targets HEAD, deploys to their respective namespaces, and uses automated sync. Enables ArgoCD to manage deployment of these services.
+```
+- **Files Changed (3):**
+  - `argocd/convertx.yaml`
+  - `argocd/stirling-pdf.yaml`
+  - `argocd/year.yaml`
+
+## 2026-02-22 – `5459c0c` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD applications for cluster apps
+
+Add ArgoCD Application manifests under argocd/: deploy Traefik, Harbor, Elastic operator and stack, multiple Redis releases (nextcloud, mail, mastodon, wordpress, dawarich) and a redis-operator. Each manifest sources Helm charts with specific target revisions and enables automated sync. Several charts include custom Helm values (e.g. Traefik ACME/persistence/config, Harbor resource/nodeSelector/persistence and admin password, Redis charts enabling redisExporter, ECK stack with Kibana disabled) and target namespaces for deployment.
+```
+- **Files Changed (11):**
+  - `argocd/elastic-stack.yaml`
+  - `argocd/elastic-system.yaml`
+  - `argocd/harbor.yaml`
+  - `argocd/my-adapter.yaml`
+  - `argocd/redis.yaml`
+  - `argocd/redis-dawarich.yaml`
+  - `argocd/redis-mail.yaml`
+  - `argocd/redis-mastodon.yaml`
+  - `argocd/redis-operator.yaml`
+  - `argocd/redis-wordpress.yaml`
+  - `argocd/traefik.yaml`
+
+## 2026-02-22 – `6e5a1d4` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Update network policies and Prometheus config
+
+Allow additional monitoring ports and tidy Prometheus config.
+
+- Add monitoring ports (9121, 9187, 9104) to various NetworkPolicies so exporters can be scraped.
+- Permit direct API server access from 192.168.1.209/32:6443 to account for kube-router post-DNAT behavior.
+- Add a permissive nextcloud inter-namespace NetworkPolicy to allow ingress/egress between pods in the nextcloud namespace.
+- Remove duplicate Postgres alerts and scrape jobs (postgres, postgres-local) from the kubernetes-prometheus ConfigMap.
+- Fix relabeling rules: change address regex to (.+?)(?::\d+)?;(\d+) to better handle addresses and switch EndpointsSlice relabel key to __meta_kubernetes_service_name.
+
+These changes enable scraping of additional exporters, clean up stale Postgres monitoring entries, and correct relabeling and network access for expected traffic.
+```
+- **Files Changed (4):**
+  - `mastodon/network-policy.yaml`
+  - `metrics/kubernetes-prometheus/config-map.yaml`
+  - `metrics/network-policy.yaml`
+  - `nextcloud/network-policy.yaml`
+
+## 2026-02-22 – `a19d4b5` by Andrey Bondarenko
+- **Commit Message (full):**
+```text
+Add ArgoCD apps and pod-security labels
+
+Add three ArgoCD Application manifests to deploy network-policy resources for elastic-system, external-secrets, and ot-operators. Add pod-security warning/audit labels to several Namespace manifests (bitwarden, convertx, homeassistant, seaweedfs, stirling-pdf, year) to align with pod security recommendations and ensure consistent YAML separators and formatting.
+```
+- **Files Changed (9):**
+  - `argocd/elastic-system-network-policy.yaml`
+  - `argocd/external-secrets-network-policy.yaml`
+  - `argocd/ot-operators-network-policy.yaml`
+  - `bitwarden/bitwarden-namespace.yaml`
+  - `convertx/convertx.yaml`
+  - `homeassistant/homeassistant-ingress.yaml`
+  - `seaweedfs/seaweedfs.yaml`
+  - `stirling-pdf/stirling-pdf.yaml`
+  - `year/year.yaml`
