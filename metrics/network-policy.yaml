@@ -121,6 +121,13 @@ spec:
       ports:
         - protocol: TCP
           port: 443
+    # kube-router can enforce post-DNAT; allow direct API endpoint as well.
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.209/32
+      ports:
+        - protocol: TCP
+          port: 6443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -173,6 +180,15 @@ spec:
       ports:
         - protocol: TCP
           port: 9121
+        - protocol: TCP
+          port: 9187
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bitwarden
+      ports:
+        - protocol: TCP
+          port: 9187
     - to:
         - namespaceSelector:
             matchLabels:
@@ -203,6 +219,8 @@ spec:
       ports:
         - protocol: TCP
           port: 9000
+        - protocol: TCP
+          port: 9187
     - to:
         - namespaceSelector:
             matchLabels:
@@ -246,6 +264,8 @@ spec:
       ports:
         - protocol: TCP
           port: 9121
+        - protocol: TCP
+          port: 9187
     - to:
         - namespaceSelector:
             matchLabels:

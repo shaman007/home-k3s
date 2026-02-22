@@ -52,20 +52,6 @@ data:
           severity: mail
         annotations:
           summary: Mysql is down
-      - alert: Postgresql-k8s is down
-        expr: pg_up{instance="postgres-exporter.db.svc.cluster.local:9187", job="postgres-local"} < 1
-        for: 1m
-        labels:
-          severity: mail
-        annotations:
-          summary: Postgresql-k8s is down
-      - alert: Postgresql-apps is down
-        expr: pg_up{instance="postgres-postgresql-metrics.db.svc.cluster.local:9187", job="postgres"} < 1
-        for: 1m
-        labels:
-          severity: mail
-        annotations:
-          summary: Postgresql-apps is down
       - alert: Postgresql-bitwarden is down
         expr: pg_up{instance="bitwarden-postgres-metrics.bitwarden.svc.cluster.local:9187", job="postgres-bitwarden"} < 1
         for: 1m
@@ -212,22 +198,6 @@ data:
           - action: replace
             target_label: __metrics_path__
             replacement: /metrics
-
-      - job_name: postgres
-        scrape_interval: 45s
-        scrape_timeout:  30s
-        metrics_path: "/metrics"
-        static_configs:
-        - targets:
-          - postgres-postgresql-metrics.db.svc.cluster.local:9187
-
-      - job_name: postgres-local
-        scrape_interval: 45s
-        scrape_timeout:  30s
-        metrics_path: "/metrics"
-        static_configs:
-        - targets:
-          - postgres-exporter.db.svc.cluster.local:9187
 
       - job_name: postgres-bitwarden
         scrape_interval: 45s
@@ -527,7 +497,7 @@ data:
           - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
             action: replace
             target_label: __address__
-            regex: ([^:]+)(?::\d+)?;(\d+)
+            regex: (.+?)(?::\d+)?;(\d+)
             replacement: $1:$2
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: kubernetes_node
@@ -540,7 +510,7 @@ data:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
         relabel_configs:
-          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_endpointslice_service_name, __meta_kubernetes_endpointslice_port_name]
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpointslice_port_name]
             action: keep
             regex: default;kubernetes;https
 
@@ -574,7 +544,7 @@ data:
             regex: (.+)
           - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
             action: replace
-            regex: ([^:]+)(?::\d+)?;(\d+)
+            regex: (.+?)(?::\d+)?;(\d+)
             replacement: $1:$2
             target_label: __address__
           - action: labelmap
@@ -631,7 +601,7 @@ data:
           - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
             action: replace
             target_label: __address__
-            regex: ([^:]+)(?::\d+)?;(\d+)
+            regex: (.+?)(?::\d+)?;(\d+)
             replacement: $1:$2
           - action: labelmap
             regex: __meta_kubernetes_service_label_(.+)
