@@ -1,0 +1,21 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://ot-container-kit.github.io/helm-charts/
+    targetRevision: 0.16.6
+    chart: redis
+    helm:
+      parameters:
+      - name: redisExporter.enabled
+        value: 'true'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: nextcloud
+  syncPolicy:
+    automated: {}

@@ -1,0 +1,134 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: harbor
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://helm.goharbor.io
+    targetRevision: 1.18.0
+    chart: harbor
+    helm:
+      values: |
+        core:
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          resources:
+            requests:
+              memory: 213Mi
+              cpu: 10m
+            limits:
+              memory: 213Mi
+        database:
+          internal:
+            nodeSelector:
+              kubernetes.io/hostname: w386.k8s.my.lan
+            resources:
+              requests:
+                memory: 1250Mi
+                cpu: 10m
+              limits:
+                memory: 1250Mi
+        exporter:
+          replicas: 1
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+        jobservice:
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 10m
+            limits:
+              memory: 100Mi
+        nginx:
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 10m
+            limits:
+              memory: 100Mi
+        portal:
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 10m
+            limits:
+              memory: 100Mi
+        redis:
+          internal:
+            nodeSelector:
+              kubernetes.io/hostname: w386.k8s.my.lan
+            resources:
+              requests:
+                memory: 113Mi
+                cpu: 10m
+              limits:
+                memory: 113Mi
+        registry:
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          registry:
+            nodeSelector:
+              kubernetes.io/hostname: w386.k8s.my.lan
+            resources:
+              requests:
+                memory: 100Mi
+                cpu: 124m
+              limits:
+                memory: 100Mi
+          controller:
+            resources:
+              requests:
+                memory: 100Mi
+                cpu: 10m
+              limits:
+                memory: 100Mi
+        trivy:
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          resources:
+            requests:
+              memory: 401Mi
+              cpu: 100m
+            limits:
+              memory: 401Mi
+              cpu: 12
+        notary:
+          enabled: false
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+        metrics:
+          enabled: true
+          core:
+            path: /metrics
+            port: 8001
+          registry:
+            path: /metrics
+            port: 8001
+          jobservice:
+            path: /metrics
+            port: 8001
+          exporter:
+            path: /metrics
+            port: 8001
+        persistence:
+          enabled: true
+          resourcePolicy: keep
+          persistentVolumeClaim:
+            registry:
+              existingClaim: harbor-registry
+        externalURL: https://harbor.andreybondarenko.com
+        harborAdminPassword: Harbor12345
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: harbor
+  syncPolicy:
+    automated: {}

@@ -1,0 +1,19 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elastic-system
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://helm.elastic.co
+    targetRevision: 3.1.0
+    chart: eck-operator
+    helm:
+      releaseName: eck-operator
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: elastic-system
+  syncPolicy:
+    automated: {}

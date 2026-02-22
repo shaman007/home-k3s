@@ -1,0 +1,99 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://traefik.github.io/charts
+    targetRevision: 38.0.2
+    chart: traefik
+    helm:
+      releaseName: traefik
+      values: |
+        certificatesResolvers:
+          letsencrypt:
+            acme:
+              email: me@andreybondarenko.com
+              httpChallenge:
+                entryPoint: web
+              storage: /data/acme.json
+        deployment:
+          initContainers:
+          - command:
+            - sh
+            - -c
+            - touch /data/acme.json; chmod -v 600 /data/acme.json
+            image: busybox:latest
+            name: volume-permissions
+            volumeMounts:
+            - mountPath: /data
+              name: data
+          replicas: 1
+        ingressRoute:
+          dashboard:
+            enabled: true
+        logs:
+          access:
+            enabled: true
+          general:
+            level: INFO
+        nodeSelector:
+          kubernetes.io/hostname: w386.k8s.my.lan
+        persistence:
+          accessMode: ReadWriteOnce
+          enabled: true
+          path: /data
+          size: 1Gi
+        podSecurityContext:
+          fsGroup: 1000
+          fsGroupChangePolicy: OnRootMismatch
+        ports:
+          imaps:
+            expose:
+              default: true
+            exposedPort: 993
+            port: 993
+            protocol: TCP
+          managesieve:
+            expose:
+              default: true
+            exposedPort: 4190
+            port: 4190
+            protocol: TCP
+          minecraft:
+            expose:
+              default: true
+            exposedPort: 25565
+            port: 25565
+            protocol: TCP
+          submission:
+            expose:
+              default: true
+            exposedPort: 587
+            port: 587
+            protocol: TCP
+          web:
+            exposedPort: 80
+            port: 80
+          websecure:
+            exposedPort: 443
+            port: 443
+            tls:
+              enabled: true
+        providers:
+          kubernetesCRD:
+            enabled: true
+          kubernetesIngress:
+            enabled: true
+        service:
+          spec:
+            externalTrafficPolicy: Local
+          type: LoadBalancer
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: traefik
+  syncPolicy:
+    automated: {}
