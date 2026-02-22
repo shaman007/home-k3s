@@ -29,6 +29,7 @@ spec:
                   value: "/data/acme.json"
               args:
                 - |
+                  sleep 15
                   set -euo pipefail
 
                   POD="$(kubectl -n "$TRAEFIK_NS" get pod -l "$TRAEFIK_LABEL" -o jsonpath='{.items[0].metadata.name}')"
