@@ -12,5 +12,12 @@ spec:
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
+  ignoreDifferences:
+  - group: ""
+    kind: PersistentVolumeClaim
+    jsonPointers:
+    - /spec/resources/requests/storage
   syncPolicy:
     automated: {}
+    syncOptions:
+    - RespectIgnoreDifferences=true
