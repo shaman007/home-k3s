@@ -1,0 +1,50 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: registry-1.docker.io/bitnamicharts
+    targetRevision: '16.6.3 '
+    helm:
+      parameters:
+        - name: auth.database
+          value: ttrss
+        - name: auth.username
+          value: postgres
+        - name: auth.existingSecret
+          value: postgres-password
+        - name: auth.secretKeys.adminPasswordKey
+          value: password
+        - name: metrics.enabled
+          value: 'true'
+        - name: primary.persistence.storageClass
+          value: longhorn
+        - name: primary.persistence.existingClaim
+          value: data-postgres-postgresql-0
+        - name: primary.resources.requests.cpu
+          value: 163m
+        - name: primary.resources.requests.memory
+          value: 1634Mi
+        - name: primary.resources.limits.memory
+          value: 1634Mi
+        - name: metrics.resources.requests.cpu
+          value: 10m
+        - name: metrics.resources.requests.memory
+          value: 100Mi
+        - name: metrics.resources.limits.memory
+          value: 100Mi
+        # it's broken
+        #- name: image.repository
+        #  value: harbor.andreybondarenko.com/dockerhub
+        #- name: metrics.image.registry
+        #  value: harbor.andreybondarenko.com/dockerhub
+    chart: postgresql
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: db
+  syncPolicy:
+    automated: {}
