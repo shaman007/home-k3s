@@ -3,6 +3,11 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: year
+  labels:
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
 ---
 apiVersion: apps/v1
 kind: Deployment

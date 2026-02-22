@@ -1,0 +1,17 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ot-operators-network-policy
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: ot-operators
+    targetRevision: HEAD
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: ot-operators
+  syncPolicy:
+    automated: {}
