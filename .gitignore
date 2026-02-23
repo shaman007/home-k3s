@@ -1,2 +1,22 @@
 secret.yaml
-objstore.yml
+# Secrets
+*.key
+*.pem
+*.crt
+*.env
+secrets/
+*-secret.yaml
+*-secrets.yaml
+
+# Kubeconfig
+kubeconfig
+*.kubeconfig
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# OS
+.DS_Store
+Thumbs.dbyml
