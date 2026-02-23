@@ -21,7 +21,7 @@ spec:
     spec:
       initContainers:
         - name: volume-mount-hack
-          image: busybox
+          image: harbor.andreybondarenko.com/dockerhub/busybox
           command: ["sh", "-c", "chown -R 1001:1001 /data"]
           volumeMounts:
             - name: data

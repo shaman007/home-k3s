@@ -174,7 +174,7 @@ spec:
               subPath: options.inc
       initContainers:
         - name: fix-perms
-          image: busybox
+          image: harbor.andreybondarenko.com/dockerhub/busybox
           command: ["sh", "-c", "chown -R 11333:11333 /var/lib/rspamd && chmod 755 /var/lib/rspamd"]
           volumeMounts:
             - name: rspamd-local

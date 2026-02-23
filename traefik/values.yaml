@@ -5,7 +5,7 @@ deployment:
     # The "volume-permissions" init container is required if you run into permission issues.
     # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
     - name: volume-permissions
-      image: busybox:1.37.0
+      image: harbor.andreybondarenko.com/dockerhub/busybox:1.37.0
       command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
       volumeMounts:
        - name: data

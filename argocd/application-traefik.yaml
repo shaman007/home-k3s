@@ -26,7 +26,7 @@ spec:
             - sh
             - -c
             - touch /data/acme.json; chmod -v 600 /data/acme.json
-            image: busybox:1.37.0
+            image: harbor.andreybondarenko.com/dockerhub/busybox:1.37.0
             name: volume-permissions
             volumeMounts:
             - mountPath: /data

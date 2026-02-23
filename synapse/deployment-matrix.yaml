@@ -59,7 +59,7 @@ spec:
               memory: "266Mi"
       initContainers:
         - name: fix-permissions
-          image: busybox
+          image: harbor.andreybondarenko.com/dockerhub/busybox
           command: ["sh", "-c", "chown -R 991:991 /data"]
           volumeMounts:
             - name: matrix-lh
