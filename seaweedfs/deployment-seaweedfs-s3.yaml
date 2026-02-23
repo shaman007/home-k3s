@@ -11,6 +11,8 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: seaweedfs-s3
@@ -94,7 +96,7 @@ spec:
               mountPath: /data
           readinessProbe:
             httpGet:
-              path: /status
+              path: /healthz
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 60
@@ -136,12 +138,31 @@ spec:
         # S3 GATEWAY
         - name: s3
           image: chrislusf/seaweedfs:4.05
-          args:
-            - "s3"
-            - "-ip.bind=0.0.0.0"
-            - "-port=8333"
-            - "-filer=127.0.0.1:8888"
-            - "-metricsPort=9094"
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              # Wait for master+filer, then enforce S3 identities before serving traffic.
+              for i in $(seq 1 60); do
+                if printf 'cluster.status\nexit\n' | weed shell -master=127.0.0.1:9333 -filer=127.0.0.1:8888 >/dev/null 2>&1; then
+                  break
+                fi
+                if [ "${i}" -eq 60 ]; then
+                  echo "master/filer did not become ready in time"
+                  exit 1
+                fi
+                sleep 5
+              done
+
+              printf 's3.configure -user=admin -actions=Read,Write,List,Tagging,Admin -access_key=%s -secret_key=%s -apply\ns3.configure -user=anonymous -actions=Read -buckets=mastodon -apply\nexit\n' \
+                "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}" \
+                | weed shell -master=127.0.0.1:9333 -filer=127.0.0.1:8888 >/dev/null
+
+              exec weed s3 \
+                -ip.bind=0.0.0.0 \
+                -port=8333 \
+                -filer=127.0.0.1:8888 \
+                -metricsPort=9094
           env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:

@@ -84,6 +84,8 @@ mastodon:
     permission: ""
     # -- If you have a caching proxy, enter its base URL here.
     alias_host: "s3.andreybondarenko.com/mastodon"
+    # SeaweedFS works reliably with path-style addressing.
+    override_path_style: "true"
   deepl:
     enabled: false
     plan:
