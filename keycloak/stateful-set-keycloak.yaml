@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: keycloak
-          image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.5.2
+          image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.5.4
           args: ["start", "--metrics-enabled=true", "--event-metrics-user-enabled=true","--event-metrics-user-tags=realm,idp,clientId", "--event-metrics-user-events=login,logout,authreqid_to_token,client_delete,client_info,client_initiated_account_linking,client_login,client_register,client_update,code_to_token,custom_required_action,delete_account,execute_action_token,execute_actions,federated_identity_link,federated_identity_override_link,grant_consent,identity_provider_first_login,identity_provider_link_account,identity_provider_login,identity_provider_post_login,identity_provider_response,identity_provider_retrieve_token,impersonate,introspect_token,invalid_signature,invite_org,login,logout,oauth2_device_auth,oauth2_device_code_to_token,oauth2_device_verify_user_code,oauth2_extension_grant,permission_token,pushed_authorization_request,refresh_token,register,register_node,remove_credential,remove_federated_identity,reset_password,restart_authentication,revoke_grant,send_identity_provider_link,send_reset_password,send_verify_email,token_exchange,unregister_node,update_consent,update_credential,update_email,update_password,user_disabled_by_permanent_lockout,user_disabled_by_temporary_lockout,user_info_request,verify_email,verify_profile","--http-metrics-histograms-enabled=true","--http-metrics-slos=5,10,25,50,250,500,1000,2500,5000,10000"]
           env:
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
