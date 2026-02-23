@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: spotify
+  name: andreybondarenko-web-ingress
+  annotations:
+    # Traefik router on HTTPS entrypoint
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+    # Use Traefik's ACME resolver
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    # Apply HSTS middleware
+    traefik.ingress.kubernetes.io/router.middlewares: spotify-hsts@kubernetescrd
+
+    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
+    # so no per-ingress redirect annotation is needed.
+  labels:
+    app: spotify
+    app.kubernetes.io/name: spotify
+    app.kubernetes.io/instance: spotify
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+
+  rules:
+    - host: spt.andreybondarenko.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 3000

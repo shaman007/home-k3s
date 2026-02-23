@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-metrics
+  namespace: seaweedfs
+  labels:
+    app: seaweedfs-s3
+spec:
+  type: ClusterIP
+  selector:
+    app: seaweedfs-s3
+  ports:
+    - name: master-metrics
+      port: 9091
+      targetPort: master-metrics
+    - name: volume-metrics
+      port: 9092
+      targetPort: volume-metrics
+    - name: filer-metrics
+      port: 9093
+      targetPort: filer-metrics
+    - name: s3-metrics
+      port: 9094

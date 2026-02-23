@@ -1,0 +1,11 @@
+# Baseline policy for WordPress namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wordpress-default-deny
+  namespace: wordpress
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

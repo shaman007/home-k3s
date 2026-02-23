@@ -1,0 +1,74 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-allow-egress-ingress-namespaces
+  namespace: traefik
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bitwarden
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: collabora
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: dawarich
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: harbor
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: homeassistant
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: karakeep
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keycloak
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: longhorn-system
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mail
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mastodon
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: matrix
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nextcloud
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: plex
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: seaweedfs
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: spotify
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: stirling-pdf
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: wordpress
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: year

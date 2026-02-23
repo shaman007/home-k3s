@@ -1,0 +1,11 @@
+# Baseline network policy for Your Spotify in namespace spotify.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: spotify-default-deny
+  namespace: spotify
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

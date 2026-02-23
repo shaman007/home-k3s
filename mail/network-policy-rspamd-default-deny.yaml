@@ -1,0 +1,14 @@
+# Rspamd: default deny, then allow service traffic + DNS + web.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rspamd-default-deny
+  namespace: mail
+spec:
+  podSelector:
+    matchLabels:
+      app: rspamd
+      tier: mail
+  policyTypes:
+    - Ingress
+    - Egress

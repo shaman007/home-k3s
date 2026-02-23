@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wordpress-allow-php-egress-to-mysql-wordpress-and-redis
+  namespace: wordpress
+spec:
+  podSelector:
+    matchLabels:
+      app: wordpress
+      tier: backend
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: mysql-wordpress
+              tier: mysql
+      ports:
+        - protocol: TCP
+          port: 3306
+    # Redis deployed in wordpress namespace (service: redis.wordpress.svc.cluster.local)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: wordpress
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Redis deployed in dedicated redis namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: redis
+      ports:
+        - protocol: TCP
+          port: 6379

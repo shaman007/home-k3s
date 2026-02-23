@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-operator-allow-ingress-probes
+  namespace: ot-operators
+spec:
+  podSelector:
+    matchLabels:
+      name: redis-operator
+  policyTypes:
+    - Ingress
+  ingress:
+    # Kubelet probes can originate from node/control-plane addresses.
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 8081
+    - from:
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - protocol: TCP
+          port: 8081

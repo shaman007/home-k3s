@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-thanos-s3
+  namespace: monitoring
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - prometheus-server
+          - thanos-store-gateway
+          - thanos-compactor
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 81.19.4.105/32
+      ports:
+        - protocol: TCP
+          port: 443

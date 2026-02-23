@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dovecot-allow-ingress-services
+  namespace: mail
+spec:
+  podSelector:
+    matchLabels:
+      app: dovecot
+      tier: mail
+  policyTypes:
+    - Ingress
+  ingress:
+    # Postfix -> Dovecot auth and LMTP
+    - from:
+        - podSelector:
+            matchLabels:
+              app: postfix
+              tier: mail
+      ports:
+        - protocol: TCP
+          port: 24
+        - protocol: TCP
+          port: 1234
+    # Client-facing services
+    - ports:
+        - protocol: TCP
+          port: 993
+        - protocol: TCP
+          port: 4190

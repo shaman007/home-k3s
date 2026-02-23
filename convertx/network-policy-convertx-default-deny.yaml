@@ -1,0 +1,13 @@
+# Network policy for ConvertX in namespace convertx.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-default-deny
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Ingress
+    - Egress

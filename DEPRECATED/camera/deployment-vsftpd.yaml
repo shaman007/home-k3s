@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vsftpd
+  namespace: camera
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vsftpd
+  template:
+    metadata:
+      labels:
+        app: vsftpd
+    spec:
+      volumes:
+        - name: ftp
+          persistentVolumeClaim:
+            claimName: ftp
+      containers:
+        - name: vsftpd
+          image: harbor.andreybondarenko.com/library/docker-vsftpd:latest
+          env:
+            - name: PASV_ADDRESS
+              value: 192.168.1.209
+            - name: LOG_STDOUT
+              value: "true"
+            - name: FTP_USER
+              value: camera
+            - name: PASV_MIN_PORT
+              value: "21110"
+            - name: PASV_MAX_PORT
+              value: "21111"
+            - name: FTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: camera
+                  key: PASSWORD
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "400m"
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+          ports:
+            - containerPort: 21
+            - containerPort: 20
+            - containerPort: 21110
+            - containerPort: 21111
+          volumeMounts:
+            - mountPath: "/home/vsftpd"
+              name: ftp

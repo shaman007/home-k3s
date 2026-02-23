@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-thanos-querier
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: thanos-querier
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus-server
+      ports:
+        - protocol: TCP
+          port: 10901
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app: thanos-store-gateway
+      ports:
+        - protocol: TCP
+          port: 10901

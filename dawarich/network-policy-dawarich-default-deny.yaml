@@ -1,0 +1,17 @@
+# Network policy for Dawarich workloads in namespace dawarich.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dawarich-default-deny
+  namespace: dawarich
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - dawarich
+          - photon
+  policyTypes:
+    - Ingress
+    - Egress

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: bitwarden
+  name: data-lh
+  labels:
+    storage.k8s.io/name: longhorn
+    app.kubernetes.io/name: bitwarden
+    app.kubernetes.io/instance: bitwarden
+    app.kubernetes.io/part-of: bitwarden
+    app.kubernetes.io/managed-by: argo-cd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 300Mi

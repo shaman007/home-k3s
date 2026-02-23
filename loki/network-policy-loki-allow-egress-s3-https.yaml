@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loki-allow-egress-s3-https
+  namespace: loki
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: single-binary
+  policyTypes:
+    - Egress
+  egress:
+    # Required for S3 object storage endpoint (HTTPS).
+    - to:
+        - ipBlock:
+            cidr: 81.19.4.105/32
+      ports:
+        - protocol: TCP
+          port: 443

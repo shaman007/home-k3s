@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: collabora-deny-admin
+  namespace: collabora
+spec:
+  ipAllowList:
+    sourceRange:
+      - 203.0.113.1/32

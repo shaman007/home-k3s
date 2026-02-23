@@ -1,0 +1,12 @@
+# Namespace-wide baseline for Helm-managed Collabora resources.
+# Using podSelector {} avoids dependency on chart-specific pod labels.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: collabora-default-deny
+  namespace: collabora
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

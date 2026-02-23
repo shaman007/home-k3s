@@ -1,0 +1,11 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: large-upload
+  namespace: nextcloud
+spec:
+  buffering:
+    # Max request size in bytes (here ~5 GiB)
+    maxRequestBodyBytes: 5000000000
+    # How much to keep in RAM before spilling to disk
+    memRequestBodyBytes: 20000000

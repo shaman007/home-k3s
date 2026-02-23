@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rspamd-allow-ingress-services
+  namespace: mail
+spec:
+  podSelector:
+    matchLabels:
+      app: rspamd
+      tier: mail
+  policyTypes:
+    - Ingress
+  ingress:
+    # Postfix milter path
+    - from:
+        - podSelector:
+            matchLabels:
+              app: postfix
+              tier: mail
+      ports:
+        - protocol: TCP
+          port: 11332
+    # Rspamd web UI via Traefik ingress
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 11334
+    # Internal service access for rspamd workers
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mail
+      ports:
+        - protocol: TCP
+          port: 11333
+        - protocol: TCP
+          port: 11335
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 11334

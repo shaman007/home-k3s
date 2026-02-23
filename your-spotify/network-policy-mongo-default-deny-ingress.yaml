@@ -1,0 +1,10 @@
+# Namespace-level default deny for ingress in spotify namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongo-default-deny-ingress
+  namespace: spotify
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: year
+  namespace: year
+  labels:
+    app: year
+    name.kubernetes.io/instance: year
+    app.kubernetes.io/name: year
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: year
+  template:
+    metadata:
+      labels:
+        app: year
+    spec:
+      containers:
+        - name: year
+          image: harbor.andreybondarenko.com/library/year:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: year-data
+              mountPath: /tmp
+            - name: app-cache
+              mountPath: /app/node_modules/.cache
+            - name: npm-logs
+              mountPath: /root/.npm/_logs
+      volumes:
+        - name: year-data
+          emptyDir: {}
+        - name: app-cache
+          emptyDir: {}
+        - name: npm-logs
+          emptyDir: {}

@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: canitiser-allow-ingress-http
+  namespace: ca-scanner
+spec:
+  podSelector:
+    matchLabels:
+      app: ca-report-ui
+  policyTypes:
+    - Ingress
+  ingress:
+    # Same-namespace access
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ca-scanner
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Optional ingress controller access if exposed later
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080

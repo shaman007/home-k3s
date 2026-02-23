@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: connectivity-exporter-allow-egress-web
+  namespace: connectivity-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app: connectivity-exporter
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+    - to:
+      - ipBlock:
+          cidr: ::/0
+      ports:
+      - protocol: TCP
+        port: 80
+      - protocol: TCP
+        port: 443

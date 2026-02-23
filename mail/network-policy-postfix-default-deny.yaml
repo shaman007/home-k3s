@@ -1,0 +1,14 @@
+# Postfix: default deny, then allow only required ingress/egress.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postfix-default-deny
+  namespace: mail
+spec:
+  podSelector:
+    matchLabels:
+      app: postfix
+      tier: mail
+  policyTypes:
+    - Ingress
+    - Egress

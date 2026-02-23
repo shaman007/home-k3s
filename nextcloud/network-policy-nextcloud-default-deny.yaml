@@ -1,0 +1,11 @@
+# Baseline policy set for Nextcloud namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nextcloud-default-deny
+  namespace: nextcloud
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

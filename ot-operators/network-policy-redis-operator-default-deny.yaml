@@ -1,0 +1,13 @@
+# Network policy for redis-operator namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-operator-default-deny
+  namespace: ot-operators
+spec:
+  podSelector:
+    matchLabels:
+      name: redis-operator
+  policyTypes:
+    - Ingress
+    - Egress

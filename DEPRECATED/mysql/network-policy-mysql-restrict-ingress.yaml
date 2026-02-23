@@ -1,0 +1,49 @@
+# Restrict ingress to MySQL pods while allowing known client namespaces.
+# Add another namespaceSelector entry (or use the client label rule below)
+# when a new app needs access.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql-restrict-ingress
+  namespace: db
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    # Local namespace access (admin tools/jobs in db namespace)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: db
+      ports:
+        - protocol: TCP
+          port: 3306
+
+    # Current app namespaces using the shared mysql service.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nextcloud
+      ports:
+        - protocol: TCP
+          port: 3306
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: wordpress
+      ports:
+        - protocol: TCP
+          port: 3306
+
+    # label client namespaces with `db-access/mysql-client: "true"`
+    # to grant mysql access without editing this file.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              db-access/mysql-client: "true"
+      ports:
+        - protocol: TCP
+          port: 3306

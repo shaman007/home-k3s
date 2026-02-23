@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metrics-server-allow-ingress-https
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: metrics-server
+  policyTypes:
+    - Ingress
+  ingress:
+    # API aggregation traffic reaches metrics-server on this pod port.
+    - from:
+        - ipBlock:
+            cidr: 192.168.1.209/32
+      ports:
+        - protocol: TCP
+          port: 10250
+    - from:
+        - ipBlock:
+            cidr: 192.168.1.100/32
+      ports:
+        - protocol: TCP
+          port: 10250

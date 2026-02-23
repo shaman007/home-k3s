@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nextcloud-allow-ingress-to-mysql-nextcloud-from-backend
+  namespace: nextcloud
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql-nextcloud
+      tier: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nextcloud
+              tier: backend
+      ports:
+        - protocol: TCP
+          port: 3306

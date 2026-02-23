@@ -1,0 +1,13 @@
+# Network policy for connectivity-exporter in namespace connectivity-exporter.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: connectivity-exporter-default-deny
+  namespace: connectivity-exporter
+spec:
+  podSelector:
+    matchLabels:
+      app: connectivity-exporter
+  policyTypes:
+    - Ingress
+    - Egress

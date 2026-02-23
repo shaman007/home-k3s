@@ -1,0 +1,11 @@
+# Baseline network policy for Stirling-PDF in namespace stirling-pdf.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: stirling-pdf-default-deny
+  namespace: stirling-pdf
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

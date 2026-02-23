@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bitwarden-allow-loki-egress
+  namespace: bitwarden
+spec:
+  podSelector:
+    matchLabels:
+      service: bitwarden
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: loki
+      ports:
+        - protocol: TCP
+          port: 3100

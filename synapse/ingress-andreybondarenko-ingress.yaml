@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: matrix
+  name: andreybondarenko-ingress
+  annotations:
+    # Traefik router on HTTPS entrypoint
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+    # Use Traefik's ACME resolver
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    # Apply HSTS middleware
+    traefik.ingress.kubernetes.io/router.middlewares: matrix-hsts@kubernetescrd
+    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
+    # so no per-ingress redirect annotation is needed.
+  labels:
+    app: matrix
+    app.kubernetes.io/name: matrix
+    app.kubernetes.io/instance: matrix
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+
+  rules:
+    - host: shaman007.com
+      http:
+        paths:
+            - path: /.well-known/matrix/
+              pathType: Prefix
+              backend:
+                service:
+                  name: nginx-matrix
+                  port:
+                    number: 80
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: matrix
+                  port:
+                    number: 8448

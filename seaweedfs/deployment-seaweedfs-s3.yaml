@@ -1,0 +1,172 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedfs-s3
+  namespace: seaweedfs
+  labels:
+    app: seaweedfs-s3
+    app.kubernetes.io/name: seaweedfs-s3
+    app.kubernetes.io/instance: seaweedfs-s3
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seaweedfs-s3
+  template:
+    metadata:
+      labels:
+        app: seaweedfs-s3
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+        fsGroupChangePolicy: "OnRootMismatch"
+      nodeSelector:
+        kubernetes.io/hostname: "w386.k8s.my.lan"
+      containers:
+        # MASTER
+        - name: master
+          image: chrislusf/seaweedfs:latest
+          args:
+            - "master"
+            - "-ip=0.0.0.0"
+            - "-mdir=/data"
+            - "-volumeSizeLimitMB=1024"
+            - "-metricsPort=9091"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_SECRET_ACCESS_KEY
+          ports:
+            - name: master
+              containerPort: 9333
+            - name: master-metrics
+              containerPort: 9091
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /cluster/status
+              port: 9333
+            initialDelaySeconds: 15
+            periodSeconds: 60
+
+        # VOLUME
+        - name: volume
+          image: chrislusf/seaweedfs:latest
+          args:
+            - "volume"
+            - "-ip=0.0.0.0"
+            - "-dir=/data"
+            - "-max=0"
+            - "-mserver=127.0.0.1:9333"
+            - "-metricsPort=9092"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_SECRET_ACCESS_KEY
+          ports:
+            - name: volume
+              containerPort: 8080
+            - name: volume-metrics
+              containerPort: 9092
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 60
+
+        # FILER
+        - name: filer
+          image: chrislusf/seaweedfs:latest
+          args:
+            - "filer"
+            - "-ip=0.0.0.0"
+            - "-master=127.0.0.1:9333"
+            - "-metricsPort=9093"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_SECRET_ACCESS_KEY
+          ports:
+            - name: filer
+              containerPort: 8888
+            - name: filer-metrics
+              containerPort: 9093
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8888
+            initialDelaySeconds: 15
+            periodSeconds: 60
+
+        # S3 GATEWAY
+        - name: s3
+          image: chrislusf/seaweedfs:latest
+          args:
+            - "s3"
+            - "-ip.bind=0.0.0.0"
+            - "-port=8333"
+            - "-filer=127.0.0.1:8888"
+            - "-metricsPort=9094"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-admin
+                  key: AWS_SECRET_ACCESS_KEY
+          ports:
+            - name: s3
+              containerPort: 8333
+            - name: metrics-s3
+              containerPort: 9094
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: 8333
+          #  initialDelaySeconds: 5
+          #  periodSeconds: 10
+
+      volumes:
+        - name: data
+          hostPath:
+            path: /storage/k8s/seaweedfs
+            type: DirectoryOrCreate

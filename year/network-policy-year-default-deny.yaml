@@ -1,0 +1,13 @@
+# Network policy for year deployment in namespace year.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: year-default-deny
+  namespace: year
+spec:
+  podSelector:
+    matchLabels:
+      app: year
+  policyTypes:
+    - Ingress
+    - Egress

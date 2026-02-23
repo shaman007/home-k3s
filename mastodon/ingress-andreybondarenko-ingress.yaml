@@ -1,0 +1,43 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: mastodon
+  name: andreybondarenko-ingress
+  annotations:
+    # Traefik router on HTTPS entrypoint
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+
+    # Use Traefik's ACME resolver
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    # Apply HSTS middleware
+    traefik.ingress.kubernetes.io/router.middlewares: mastodon-hsts@kubernetescrd
+
+    # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
+    # so no per-ingress redirect annotation is needed.
+  labels:
+    app: mastodon
+    app.kubernetes.io/name: mastodon
+    app.kubernetes.io/instance: mastodon
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: mastodon.andreybondarenko.com
+      http:
+        paths:
+            - path: /api/v1/streaming/
+              pathType: Prefix
+              backend:
+                service:
+                  name: mastodon-streaming
+                  port:
+                    number: 4000
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: mastodon-web
+                  port:
+                    number: 3000

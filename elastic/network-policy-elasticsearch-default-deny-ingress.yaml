@@ -1,0 +1,12 @@
+# Restrict Elasticsearch ingress to Mastodon plus Elasticsearch internal traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: elasticsearch-default-deny-ingress
+  namespace: elastic-stack
+spec:
+  podSelector:
+    matchLabels:
+      common.k8s.elastic.co/type: elasticsearch
+  policyTypes:
+    - Ingress

@@ -1,0 +1,10 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: chain
+  namespace: nextcloud
+spec:
+  chain:
+    middlewares:
+      - name: hsts
+      - name: large-upload

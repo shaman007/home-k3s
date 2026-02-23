@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: convertx-allow-egress-intra-namespace
+  namespace: convertx
+spec:
+  podSelector:
+    matchLabels:
+      app: convertx
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: convertx

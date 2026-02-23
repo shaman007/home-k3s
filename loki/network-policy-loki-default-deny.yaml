@@ -1,0 +1,11 @@
+# Network policy for Loki namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loki-default-deny
+  namespace: loki
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

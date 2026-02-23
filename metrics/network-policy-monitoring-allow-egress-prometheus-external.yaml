@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-prometheus-external
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus-server
+  policyTypes:
+    - Egress
+  egress:
+    # backup.andreybondarenko.com:9090 from the "external" scrape job
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 9090
+    - to:
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - protocol: TCP
+          port: 9090
