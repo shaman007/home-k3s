@@ -12,6 +12,8 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: meilisearch
@@ -24,9 +26,12 @@ spec:
       - name: meilisearch
         image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.36.0
         env:
-        # Use for upgrading
-        #- name: MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
-        #  value: "true"
+        # Preserve legacy DB files by using a fresh db-path for 1.36.x.
+        - name: MEILI_DB_PATH
+          value: /meili_data/data-v1.36.0-r2.ms
+        # Keep indexing memory below container limits to prevent OOM during import.
+        - name: MEILI_MAX_INDEXING_MEMORY
+          value: "1000000000"
         - name: MEILI_NO_ANALYTICS
           value: "true"
         - name: MEILI_MASTER_KEY

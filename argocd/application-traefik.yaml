@@ -35,6 +35,9 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+        additionalArguments:
+        - --entryPoints.websecure.http.encodedCharacters.allowEncodedPercent=true
+        - --entryPoints.websecure.http.encodedCharacters.allowEncodedSlash=true
         logs:
           access:
             enabled: true
