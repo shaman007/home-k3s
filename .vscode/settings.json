@@ -9,15 +9,8 @@
         }
     ],
     "yaml.schemas": {
-        "file:///c%3A/Users/me/.vscode/extensions/ibm.zopeneditor-5.5.0/resources/zapp-schema-1.4.0.json": [
-            "zapp.yaml"
-        ],
-        "file:///c%3A/Users/me/.vscode/extensions/ibm.zopeneditor-5.5.0/resources/zcodeformat-schema-0.0.1.json": [
-            "zcodeformat.yaml"
-        ],
-        "kubernetes": [
-            "**/*.yaml",
-            "**/*.yml"
-        ]
+        "file:///c%3A/Users/me/.vscode/extensions/ibm.zopeneditor-5.5.0/resources/zapp-schema-1.4.0.json": "zapp.yaml",
+        "file:///c%3A/Users/me/.vscode/extensions/ibm.zopeneditor-5.5.0/resources/zcodeformat-schema-0.0.1.json": "zcodeformat.yaml",
+        "kubernetes": "**/*.{yaml,yml}"
     }
 }
