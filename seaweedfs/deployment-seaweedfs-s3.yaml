@@ -30,7 +30,7 @@ spec:
       containers:
         # MASTER
         - name: master
-          image: chrislusf/seaweedfs:latest
+          image: chrislusf/seaweedfs:4.05
           args:
             - "master"
             - "-ip=0.0.0.0"
@@ -65,7 +65,7 @@ spec:
 
         # VOLUME
         - name: volume
-          image: chrislusf/seaweedfs:latest
+          image: chrislusf/seaweedfs:4.05
           args:
             - "volume"
             - "-ip=0.0.0.0"
@@ -101,7 +101,7 @@ spec:
 
         # FILER
         - name: filer
-          image: chrislusf/seaweedfs:latest
+          image: chrislusf/seaweedfs:4.05
           args:
             - "filer"
             - "-ip=0.0.0.0"
@@ -135,7 +135,7 @@ spec:
 
         # S3 GATEWAY
         - name: s3
-          image: chrislusf/seaweedfs:latest
+          image: chrislusf/seaweedfs:4.05
           args:
             - "s3"
             - "-ip.bind=0.0.0.0"

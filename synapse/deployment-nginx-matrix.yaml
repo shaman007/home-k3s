@@ -34,7 +34,7 @@ spec:
             sizeLimit: 1Mi
       containers:
         - name: matrix-nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:latest
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.5
           ports:
             - containerPort: 80
           volumeMounts:

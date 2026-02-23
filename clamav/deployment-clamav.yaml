@@ -75,7 +75,7 @@ spec:
               cpu: "300m"
               memory: "1016Mi"
         - name: exporter
-          image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:latest
+          image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:v2.1.2
           ports:
             - containerPort: 9906
               name: metrics

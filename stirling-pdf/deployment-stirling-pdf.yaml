@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: stirling-pdf
-          image: stirlingtools/stirling-pdf:latest-fat
+          image: stirlingtools/stirling-pdf:2.2.1-fat
           ports:
             - containerPort: 8080
           volumeMounts:

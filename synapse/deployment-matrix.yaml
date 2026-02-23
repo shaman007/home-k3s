@@ -36,7 +36,7 @@ spec:
                 path: config.yaml
       containers:
         - name: synapse
-          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:latest
+          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.143.0
           ports:
             - containerPort: 6167
               name: federation

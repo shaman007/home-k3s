@@ -33,7 +33,7 @@ spec:
                       - w386.k8s.my.lan
       containers:
         - name: plex
-          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:latest
+          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.42.2
           env:
             # valid for 4 minutes
             - name: PLEX_CLAIM

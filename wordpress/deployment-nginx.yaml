@@ -45,7 +45,7 @@ spec:
             sizeLimit: 1Mi
       containers:
         - name: nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:latest
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.5
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

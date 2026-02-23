@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: convertx
-          image: ghcr.io/c4illin/convertx:latest
+          image: ghcr.io/c4illin/convertx:v0.17.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

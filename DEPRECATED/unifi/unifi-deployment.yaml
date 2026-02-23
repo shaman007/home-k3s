@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: unifi
-          image: lscr.io/linuxserver/unifi-network-application:latest
+          image: lscr.io/linuxserver/unifi-network-application:10.0.162
           resources:
             requests:
               cpu: "100m"

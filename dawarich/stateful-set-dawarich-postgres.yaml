@@ -86,7 +86,7 @@ spec:
               mountPath: /var/lib/postgresql/data
               subPath: data
         - name: postgres-exporter
-          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:latest
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.18.1
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
