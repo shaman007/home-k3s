@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.30.0
+        image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:v0.31.0
         ports:
         - containerPort: 3000
         env:

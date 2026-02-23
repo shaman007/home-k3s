@@ -28,7 +28,7 @@ spec:
               mountPath: /data
       containers:
         - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.39.1
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
           args:
             - "compact"
             - "--log.level=info"
