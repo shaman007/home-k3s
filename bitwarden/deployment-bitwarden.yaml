@@ -89,7 +89,7 @@ spec:
             - name: logs
               mountPath: /var/log/bitwarden
         - name: alloy
-          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.13.1
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.13.2
           args:
             - run
             - /etc/alloy/config.alloy
