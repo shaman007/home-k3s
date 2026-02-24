@@ -1,0 +1,92 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    targetRevision: 6.53.0
+    helm:
+      parameters:
+        - name: memcachedExporter.image.repository
+          value: harbor.andreybondarenko.com/dockerhub/prom/memcached-exporter
+        - name: memcached.image.repository
+          value: ' harbor.andreybondarenko.com/dockerhub/memcached'
+        - name: loki.pattern_ingester.enabled
+          value: 'true'
+      values: |
+        deploymentMode: SingleBinary
+        chunksCache:
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+        gateway:
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+        lokiCanary:
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+        sidecar:
+          image:
+            repository: harbor.andreybondarenko.com/dockerhub/kiwigrid/k8s-sidecar
+
+        loki:
+          mode: SingleBinary
+          image:
+            registry: harbor.andreybondarenko.com/dockerhub
+          auth_enabled: false
+          limits_config:
+            retention_period: 72h
+            max_label_names_per_series: 30
+          compactor:
+            working_directory: /var/loki/compactor
+            retention_enabled: true
+            # delete requests go to S3 instead of filesystem
+            delete_request_store: s3
+            compaction_interval: 10m
+          commonConfig:
+            replication_factor: 1
+
+          # ---- S3 storage ----
+          storage:
+            type: s3
+            bucketNames:
+              chunks: loki
+              ruler: loki
+              admin: loki
+            s3:
+              endpoint: "https://s3.andreybondarenko.com"
+              accessKeyId: ""
+              secretAccessKey: ""
+              insecure: false
+              s3ForcePathStyle: true
+
+          schemaConfig:
+            configs:
+              - from: "2024-01-01"
+                store: tsdb
+                object_store: s3
+                schema: v13
+                index:
+                  prefix: loki_index_
+                  period: 24h
+
+        singleBinary:
+          replicas: 1
+        table_manager:
+          enabled: false
+        read:
+          replicas: 0
+        write:
+          replicas: 0
+        backend:
+          replicas: 0
+    chart: loki
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: loki
