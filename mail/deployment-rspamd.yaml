@@ -112,7 +112,7 @@ spec:
           emptyDir: {}
       containers:
         - name: rspamd
-          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:3.14.0
+          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:3.14.3
           resources:
             requests:
               cpu: "10m"
