@@ -32,7 +32,6 @@ spec:
           resources:
             limits:
               memory: "228Mi"
-              cpu: "1000m"
       volumes:
         - name: data
           persistentVolumeClaim:

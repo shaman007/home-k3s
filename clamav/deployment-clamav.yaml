@@ -48,7 +48,6 @@ spec:
               cpu: "10m"
               memory: "3300Mi"
             limits:
-              cpu: "12"
               memory: "3309Mi"
           securityContext:
             allowPrivilegeEscalation: false
@@ -74,7 +73,6 @@ spec:
               cpu: "10m"
               memory: "1016Mi"
             limits:
-              cpu: "300m"
               memory: "1016Mi"
         - name: exporter
           image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:v2.1.2
@@ -90,7 +88,6 @@ spec:
               cpu: "10m"
               memory: "128Mi"
             limits:
-              cpu: "100m"
               memory: "128Mi"
       volumes:
         - name: avdata

@@ -100,7 +100,6 @@ spec:
               cpu: 100m
             limits:
               memory: 401Mi
-              cpu: 12
         notary:
           enabled: false
           nodeSelector:

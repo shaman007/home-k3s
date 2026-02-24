@@ -12,6 +12,13 @@ spec:
     chart: eck-operator
     helm:
       releaseName: eck-operator
+      values: |
+        resources:
+          requests:
+            cpu: 100m
+            memory: 150Mi
+          limits:
+            memory: 1Gi
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: elastic-system

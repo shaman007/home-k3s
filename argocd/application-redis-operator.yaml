@@ -12,6 +12,13 @@ spec:
     chart: redis-operator
     helm:
       releaseName: redis-operator
+      values: |
+        resources:
+          requests:
+            cpu: 500m
+            memory: 500Mi
+          limits:
+            memory: 500Mi
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: ot-operators
