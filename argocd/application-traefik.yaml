@@ -84,8 +84,9 @@ spec:
           websecure:
             exposedPort: 443
             port: 443
-            tls:
-              enabled: true
+            http:
+              tls:
+                enabled: true
         providers:
           kubernetesCRD:
             enabled: true

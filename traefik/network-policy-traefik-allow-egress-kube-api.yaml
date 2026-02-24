@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-allow-egress-kube-api
+  namespace: traefik
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Allow access to Kubernetes API service ClusterIP.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow access to current control-plane endpoint used by kubernetes service.
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.209/32
+      ports:
+        - protocol: TCP
+          port: 6443
