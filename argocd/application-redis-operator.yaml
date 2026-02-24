@@ -23,4 +23,7 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: ot-operators
   syncPolicy:
-    automated: {}
+    automated:
+      enabled: true
+    syncOptions:
+      - ServerSideApply=true
