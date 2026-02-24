@@ -72,7 +72,7 @@ spec:
            #OIDC_AUTO_REGISTER=true # optional, default is false
            #OIDC_PROVIDER_NAME=YourProviderName # optional, default is OpenID Connect
            #ALLOW_EMAIL_PASSWORD_REGISTRATION=false # optional, default is true
-          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:0.36.1
+          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.2.0
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /var/app/public
@@ -134,7 +134,7 @@ spec:
               value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
               value: "false"
-          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:0.36.1
+          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.2.0
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: /var/app/public
