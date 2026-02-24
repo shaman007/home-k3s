@@ -1,7 +1,7 @@
 project: default
 source:
   repoURL: https://grafana.github.io/helm-charts
-  targetRevision: 6.46.0
+  targetRevision: 6.53.0
   helm:
     parameters:
       - name: memcachedExporter.image.repository
@@ -50,10 +50,10 @@ source:
             ruler: loki
             admin: loki
           s3:
-            endpoint: "http://w386.k8s.my.lan:31833"
+            endpoint: "https://s3.andreybondarenko.com"
             accessKeyId: ""
             secretAccessKey: ""
-            insecure: true
+            insecure: false
             s3ForcePathStyle: true
 
         schemaConfig:

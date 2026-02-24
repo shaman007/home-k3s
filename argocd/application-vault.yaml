@@ -1,5 +1,3 @@
-DEPRECATED - Using Bitnami chart for Vault is deprecated, it's no more maintained.
- Please use the  official HashiCorp chart
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -10,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://helm.releases.hashicorp.com
-    targetRevision: 0.31.0
+    targetRevision: 0.32.0
     helm:
       parameters:
         - name: injector.enabled

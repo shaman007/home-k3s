@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://helm.elastic.co
-    targetRevision: 0.16.0
+    targetRevision: 0.18.0
     chart: eck-stack
     helm:
       releaseName: es-quickstart

@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://ot-container-kit.github.io/helm-charts/
-    targetRevision: 0.16.6
+    targetRevision: 0.16.9
     chart: redis
     helm:
       releaseName: redis
