@@ -44,7 +44,7 @@ spec:
           imagePullPolicy: Always
           args:
             - --mongodb.uri=mongodb://127.0.0.1:27017
-            - --collector.profile
+            - --compatible-mode
           resources:
             requests:
               cpu: "10m"
