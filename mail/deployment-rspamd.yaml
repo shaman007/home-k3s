@@ -181,5 +181,11 @@ spec:
           volumeMounts:
             - name: rspamd-local
               mountPath: /var/lib/rspamd
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 32Mi
       nodeSelector:
         kubernetes.io/hostname: w386.k8s.my.lan

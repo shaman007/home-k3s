@@ -31,6 +31,12 @@ spec:
                 - /bin/sh
                 - -c
                 - "sleep 120; sudo -u www-data php /nextcloud/cron.php"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 256Mi
               volumeMounts:
                 - name: application-code
                   mountPath: /nextcloud

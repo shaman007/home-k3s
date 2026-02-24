@@ -48,7 +48,7 @@ spec:
               cpu: "10m"
               memory: "3300Mi"
             limits:
-              memory: "3309Mi"
+              memory: "3300Mi"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

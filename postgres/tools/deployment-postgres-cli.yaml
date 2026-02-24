@@ -21,8 +21,11 @@ spec:
         - name: postgres-cli
           image: harbor.andreybondarenko.com/library/postgres-cli:latest
           resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
             limits:
-              memory: "128Mi"
+              memory: 64Mi
           env:
             - name: PGPASSWORD
               valueFrom:

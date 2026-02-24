@@ -29,6 +29,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 32Mi
       containers:
         - name: thanos
           image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0

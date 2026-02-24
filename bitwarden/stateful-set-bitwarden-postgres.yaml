@@ -43,6 +43,12 @@ spec:
             - name: data
               mountPath: /var/lib/postgresql/data
               subPath: data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 32Mi
       containers:
         - name: postgres
           image: harbor.andreybondarenko.com/dockerhub/postgres:18
@@ -80,7 +86,7 @@ spec:
               cpu: "200m"
               memory: "1Gi"
             limits:
-              memory: "4Gi"
+              memory: "1Gi"
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data

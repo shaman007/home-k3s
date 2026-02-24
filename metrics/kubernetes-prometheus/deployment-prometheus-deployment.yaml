@@ -90,6 +90,12 @@ spec:
           volumeMounts:
             - name: prometheus-storage-volume
               mountPath: /prometheus
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 32Mi
       volumes:
         - name: prometheus-config-volume
           configMap:

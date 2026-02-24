@@ -34,8 +34,11 @@ spec:
             - name: OUTPUT_DIR
               value: "/data"
           resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
             limits:
-              memory: "228Mi"
+              memory: 64Mi
       volumes:
         - name: data
           persistentVolumeClaim:
