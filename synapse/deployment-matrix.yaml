@@ -14,6 +14,8 @@ metadata:
     app.kubernetes.io/component: synapse
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: matrix

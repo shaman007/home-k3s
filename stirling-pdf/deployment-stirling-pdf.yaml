@@ -5,6 +5,8 @@ metadata:
   namespace: stirling-pdf
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: stirling-pdf

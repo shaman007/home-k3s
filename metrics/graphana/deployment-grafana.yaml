@@ -7,6 +7,8 @@ metadata:
   name: grafana
   namespace: monitoring
 spec:
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: grafana
