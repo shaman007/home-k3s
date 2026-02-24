@@ -22,7 +22,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: prometheus
-          image:  harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.5.1
+          image:  harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.9.1
           args:
             - "--config.file=/etc/prometheus/prometheus.yaml"
             - "--storage.tsdb.path=/prometheus/"
