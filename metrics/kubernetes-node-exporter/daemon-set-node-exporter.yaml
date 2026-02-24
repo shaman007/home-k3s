@@ -5,6 +5,8 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: node-exporter
+    app.kubernetes.io/instance: node-exporter
+    app.kubernetes.io/managed-by: argoCD
   name: node-exporter
   namespace: monitoring
 spec:

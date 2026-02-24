@@ -6,6 +6,9 @@ metadata:
   namespace: monitoring
   labels:
     app: prometheus-server
+    app.kubernetes.io/name: prometheus-server
+    app.kubernetes.io/instance: prometheus-server
+    app.kubernetes.io/managed-by: argoCD
 spec:
   strategy:
     type: Recreate

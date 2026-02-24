@@ -5,8 +5,9 @@ metadata:
   namespace: year
   labels:
     app: year
-    name.kubernetes.io/instance: year
+    app.kubernetes.io/instance: year
     app.kubernetes.io/name: year
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

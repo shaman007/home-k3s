@@ -4,6 +4,9 @@ kind: Deployment
 metadata:
   labels:
     app: grafana
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/instance: grafana
+    app.kubernetes.io/managed-by: argoCD
   name: grafana
   namespace: monitoring
 spec:

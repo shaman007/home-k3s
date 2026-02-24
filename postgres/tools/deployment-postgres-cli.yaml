@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: postgres-cli
   namespace: db
+  labels:
+    app.kubernetes.io/name: postgres-cli
+    app.kubernetes.io/instance: postgres-cli
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

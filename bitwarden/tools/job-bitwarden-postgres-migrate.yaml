@@ -8,6 +8,9 @@ metadata:
     argocd.argoproj.io/hook: Skip
   labels:
     app: bitwarden-postgres-migrate
+    app.kubernetes.io/name: bitwarden-postgres-migrate
+    app.kubernetes.io/instance: bitwarden-postgres-migrate
+    app.kubernetes.io/managed-by: argoCD
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 86400

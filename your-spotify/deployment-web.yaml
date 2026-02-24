@@ -5,7 +5,7 @@ metadata:
   labels:
     app: web
     tier: frontend
-    app.kubernetes.io-name: your-spotify
+    app.kubernetes.io/name: your-spotify
     app.kubernetes.io/instance: your-spotify
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD

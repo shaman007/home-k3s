@@ -6,6 +6,9 @@ metadata:
   namespace: monitoring
   labels:
     app: thanos-querier
+    app.kubernetes.io/name: thanos-querier
+    app.kubernetes.io/instance: thanos-querier
+    app.kubernetes.io/managed-by: argoCD
 spec:
   strategy:
     type: Recreate

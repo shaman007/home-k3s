@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: stirling-pdf
   namespace: stirling-pdf
+  labels:
+    app.kubernetes.io/name: stirling-pdf
+    app.kubernetes.io/instance: stirling-pdf
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   strategy:

@@ -5,6 +5,9 @@ metadata:
   namespace: dawarich
   labels:
     app: dawarich
+    app.kubernetes.io/name: dawarich
+    app.kubernetes.io/instance: dawarich
+    app.kubernetes.io/managed-by: argoCD
 spec:
   strategy:
     type: Recreate

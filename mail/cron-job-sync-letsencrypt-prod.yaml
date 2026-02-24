@@ -3,6 +3,10 @@ kind: CronJob
 metadata:
   name: sync-letsencrypt-prod
   namespace: mail
+  labels:
+    app.kubernetes.io/name: sync-letsencrypt-prod
+    app.kubernetes.io/instance: sync-letsencrypt-prod
+    app.kubernetes.io/managed-by: argoCD
 spec:
   schedule: "17 3 * * *"
   concurrencyPolicy: Forbid

@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: ca-report-ui
   namespace: ca-scanner
+  labels:
+    app.kubernetes.io/name: ca-report-ui
+    app.kubernetes.io/instance: ca-report-ui
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

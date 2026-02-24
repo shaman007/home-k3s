@@ -7,6 +7,9 @@ metadata:
   labels:
     app: mysql-wordpress
     tier: mysql
+    app.kubernetes.io/name: mysql-wordpress
+    app.kubernetes.io/instance: mysql-wordpress
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   strategy:

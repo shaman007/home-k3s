@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: mysql-cli
   namespace: db
+  labels:
+    app.kubernetes.io/name: mysql-cli
+    app.kubernetes.io/instance: mysql-cli
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

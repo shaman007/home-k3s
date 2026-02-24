@@ -6,6 +6,9 @@ metadata:
   namespace: monitoring
   labels:
     app: thanos-store-gateway
+    app.kubernetes.io/name: thanos-store-gateway
+    app.kubernetes.io/instance: thanos-store-gateway
+    app.kubernetes.io/managed-by: argoCD
 spec:
   strategy:
     type: Recreate

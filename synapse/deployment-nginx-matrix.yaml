@@ -7,6 +7,9 @@ metadata:
   labels:
     tier: matrix
     app: matrix
+    app.kubernetes.io/name: matrix
+    app.kubernetes.io/instance: matrix
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

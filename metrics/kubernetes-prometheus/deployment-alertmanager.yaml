@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: alertmanager
   namespace: monitoring
+  labels:
+    app.kubernetes.io/name: alertmanager
+    app.kubernetes.io/instance: alertmanager
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

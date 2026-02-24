@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: redis-cli
   namespace: redis
+  labels:
+    app.kubernetes.io/name: redis-cli
+    app.kubernetes.io/instance: redis-cli
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

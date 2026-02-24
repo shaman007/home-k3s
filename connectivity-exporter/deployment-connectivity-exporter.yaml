@@ -5,6 +5,9 @@ metadata:
   namespace: connectivity-exporter
   labels:
     app: connectivity-exporter
+    app.kubernetes.io/name: connectivity-exporter
+    app.kubernetes.io/instance: connectivity-exporter
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

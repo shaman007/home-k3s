@@ -7,6 +7,9 @@ metadata:
   labels:
     app: wordpress
     tier: backend
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   selector:

@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: unifi-poller
   namespace: unifi
+  labels:
+    app.kubernetes.io/name: unifi-poller
+    app.kubernetes.io/instance: unifi-poller
+    app.kubernetes.io/managed-by: argoCD
 spec:
   selector:
     matchLabels:

@@ -7,6 +7,9 @@ metadata:
   labels:
     app: mysql-nextcloud
     tier: mysql
+    app.kubernetes.io/name: mysql-nextcloud
+    app.kubernetes.io/instance: mysql-nextcloud
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   strategy:

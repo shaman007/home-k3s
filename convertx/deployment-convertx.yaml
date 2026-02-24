@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: convertx
   namespace: convertx
+  labels:
+    app.kubernetes.io/name: convertx
+    app.kubernetes.io/instance: convertx
+    app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
   strategy:
