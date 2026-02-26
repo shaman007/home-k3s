@@ -38,9 +38,9 @@ spec:
             # valid for 4 minutes
             - name: PLEX_CLAIM
               value: claim-_UXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-            # DOES NOTHING
+            # Advertise both local and public endpoints for Plex clients.
             - name: ADVERTISE_IP
-              value: "http://192.168.1.209:32400/"
+              value: "http://192.168.1.209:32400/,https://plex.andreybondarenko.com/"
           resources:
             requests:
               memory: 2600Mi
