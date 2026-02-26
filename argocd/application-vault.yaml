@@ -23,3 +23,5 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: vault
+  syncPolicy:
+    automated: {}

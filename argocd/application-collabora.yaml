@@ -31,5 +31,6 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: collabora
   syncPolicy:
+    automated: {}
     syncOptions:
       - CreateNamespace=true

@@ -13,3 +13,5 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: wordpress
+  syncPolicy:
+    automated: {}
