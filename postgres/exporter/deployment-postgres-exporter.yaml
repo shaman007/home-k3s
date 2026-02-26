@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: postgres-exporter
-          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.19.0
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.19.1
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534
