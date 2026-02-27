@@ -9,6 +9,10 @@ data:
       listen 8080;
       server_name _;
 
+      location = / {
+        return 404;
+      }
+
       location /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/ {
         add_header Set-Cookie "hister_gate=69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c; Path=/; HttpOnly; Secure; SameSite=Lax" always;
 
