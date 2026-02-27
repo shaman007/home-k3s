@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hister
+  namespace: hister
+  labels:
+    app: hister
+    app.kubernetes.io/instance: hister
+    app.kubernetes.io/name: hister
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hister
+  template:
+    metadata:
+      labels:
+        app: hister
+    spec:
+      containers:
+        - name: hister
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.5.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi

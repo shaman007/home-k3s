@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: hister
+  name: andreybondarenko-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: hister-hsts@kubernetescrd
+  labels:
+    app: hister
+    app.kubernetes.io/name: hister
+    app.kubernetes.io/instance: hister
+    app.kubernetes.io/version: v0.5.0
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: hister.andreybondarenko.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hister
+                port:
+                  number: 8080
