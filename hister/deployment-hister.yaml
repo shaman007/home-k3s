@@ -18,6 +18,7 @@ spec:
       labels:
         app: hister
     spec:
+      enableServiceLinks: false
       containers:
         - name: hister
           image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.5.0
