@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-prefix
+  namespace: hister
+spec:
+  stripPrefix:
+    prefixes:
+      - /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c
