@@ -22,6 +22,11 @@ spec:
         - name: hister
           image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.5.0
           imagePullPolicy: IfNotPresent
+          env:
+            - name: HISTER__SERVER__ADDRESS
+              value: 0.0.0.0:8080
+            - name: HISTER__SERVER__BASE_URL
+              value: https://hister.andreybondarenko.com/
           ports:
             - name: http
               containerPort: 8080
