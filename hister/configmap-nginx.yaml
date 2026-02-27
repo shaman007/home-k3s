@@ -9,34 +9,21 @@ data:
       listen 8080;
       server_name _;
 
-      location = / {
-        return 404;
+      location = /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c {
+        return 301 /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/;
       }
 
-      location /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/ {
-        add_header Set-Cookie "hister_gate=69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c; Path=/; HttpOnly; Secure; SameSite=Lax" always;
-
+      location ^~ /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/ {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Prefix /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c;
 
         proxy_pass http://127.0.0.1:8081/;
       }
 
-      #location / {
-      #  if ($cookie_hister_gate != "69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c") {
-      #    return 404;
-      #  }
-      #
-      #  proxy_http_version 1.1;
-      #  proxy_set_header Host $host;
-      #  proxy_set_header X-Forwarded-Proto $scheme;
-      #  proxy_set_header X-Forwarded-Host $host;
-      #  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      #
-      #  proxy_pass http://127.0.0.1:8081;
-      #}
+      location / {
+        return 404;
+      }
     }
