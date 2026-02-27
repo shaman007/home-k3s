@@ -35,7 +35,7 @@ spec:
             - name: HISTER__SERVER__ADDRESS
               value: 0.0.0.0:8080
             - name: HISTER__SERVER__BASE_URL
-              value: https://hister.andreybondarenko.com/
+              value: https://hister.andreybondarenko.com/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/
             - name: HISTER_DATA_DIR
               value: /data
           ports:

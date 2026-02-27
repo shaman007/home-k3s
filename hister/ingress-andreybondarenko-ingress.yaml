@@ -20,7 +20,7 @@ spec:
     - host: hister.andreybondarenko.com
       http:
         paths:
-          - path: /
+          - path: /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c
             pathType: Prefix
             backend:
               service:
