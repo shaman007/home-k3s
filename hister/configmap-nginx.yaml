@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hister-nginx
+  namespace: hister
+data:
+  default.conf: |
+    server {
+      listen 8080;
+      server_name _;
+
+      location /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/ {
+        add_header Set-Cookie "hister_gate=69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c; Path=/; HttpOnly; Secure; SameSite=Lax" always;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Prefix /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c;
+
+        proxy_pass http://127.0.0.1:8081/;
+        proxy_redirect ~^(/.*)$ /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c$1;
+
+        sub_filter_once off;
+        sub_filter_types text/html text/css application/javascript;
+        sub_filter 'href="/' 'href="/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
+        sub_filter 'src="/' 'src="/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
+        sub_filter 'action="/' 'action="/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
+        sub_filter 'url(/' 'url(/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
+      }
+
+      location / {
+        if ($cookie_hister_gate != "69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c") {
+          return 404;
+        }
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_pass http://127.0.0.1:8081;
+      }
+    }

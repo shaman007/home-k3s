@@ -7,7 +7,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
-    traefik.ingress.kubernetes.io/router.middlewares: hister-auth@kubernetescrd,hister-hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: hister-hsts@kubernetescrd
   labels:
     app: hister
     app.kubernetes.io/name: hister
