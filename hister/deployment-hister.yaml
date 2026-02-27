@@ -28,9 +28,14 @@ spec:
               value: 0.0.0.0:8080
             - name: HISTER__SERVER__BASE_URL
               value: https://hister.andreybondarenko.com/
+            - name: HISTER_DATA_DIR
+              value: /data
           ports:
             - name: http
               containerPort: 8080
+          volumeMounts:
+            - name: hister-data
+              mountPath: /data
           readinessProbe:
             httpGet:
               path: /
@@ -51,3 +56,7 @@ spec:
               memory: 64Mi
             limits:
               memory: 256Mi
+      volumes:
+        - name: hister-data
+          persistentVolumeClaim:
+            claimName: hister-data
