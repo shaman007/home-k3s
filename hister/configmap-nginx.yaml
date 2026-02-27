@@ -24,14 +24,6 @@ data:
         proxy_set_header X-Forwarded-Prefix /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c;
 
         proxy_pass http://127.0.0.1:8081/;
-        proxy_redirect ~^(/.*)$ /69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c$1;
-
-        sub_filter_once off;
-        sub_filter_types text/html text/css application/javascript;
-        sub_filter 'href="/' 'href="/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
-        sub_filter 'src="/' 'src="/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
-        sub_filter 'action="/' 'action="/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
-        sub_filter 'url(/' 'url(/69f3c798b93a21c04299d7316d74fca32a5b5816e572f37c/';
       }
 
       location / {
