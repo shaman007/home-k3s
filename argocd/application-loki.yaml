@@ -79,6 +79,20 @@ spec:
 
         singleBinary:
           replicas: 1
+          extraEnv:
+            # Prevent fallback to EC2 IMDS when S3 credentials are missing.
+            - name: AWS_EC2_METADATA_DISABLED
+              value: "true"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: loki-objstore-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: loki-objstore-secret
+                  key: AWS_SECRET_ACCESS_KEY
         table_manager:
           enabled: false
         read:

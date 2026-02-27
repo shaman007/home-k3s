@@ -1,0 +1,22 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki-external-secrets
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: loki
+    targetRevision: HEAD
+    directory:
+      recurse: false
+      include: "*secret-*.yaml"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: loki
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
