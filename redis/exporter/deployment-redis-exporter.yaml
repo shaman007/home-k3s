@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: redis-exporter
-          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter
+          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.81.0
           env:
             - name: REDIS_PASSWORD
               valueFrom:

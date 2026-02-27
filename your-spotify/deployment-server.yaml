@@ -9,7 +9,7 @@ metadata:
     tier: backend
     app.kubernetes.io/name: your-spotify
     app.kubernetes.io/instance: your-spotify
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "1.18.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
@@ -44,7 +44,7 @@ spec:
             - name: CORS
               value: "https://spt.andreybondarenko.com, \
                 https://spt-server.andreybondarenko.com"
-          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server:1.18.0
           resources:
             requests:
               cpu: "10m"
