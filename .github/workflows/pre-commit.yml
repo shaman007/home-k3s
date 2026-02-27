@@ -1,0 +1,19 @@
+name: Pre-commit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
