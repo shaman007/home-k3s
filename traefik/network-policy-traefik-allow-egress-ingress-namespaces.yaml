@@ -26,6 +26,9 @@ spec:
               kubernetes.io/metadata.name: harbor
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: hister
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: homeassistant
         - namespaceSelector:
             matchLabels:

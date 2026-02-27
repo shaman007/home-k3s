@@ -19,10 +19,18 @@ spec:
         app: hister
     spec:
       enableServiceLinks: false
+      securityContext:
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: hister
           image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.5.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
           env:
             - name: HISTER__SERVER__ADDRESS
               value: 0.0.0.0:8080
