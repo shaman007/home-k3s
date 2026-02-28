@@ -4,9 +4,6 @@ secret.yaml
 *.pem
 *.crt
 *.env
-secrets/
-*-secret.yaml
-*-secrets.yaml
 
 # Kubeconfig
 kubeconfig
