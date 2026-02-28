@@ -1,0 +1,20 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-ingress
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: metrics
+    targetRevision: HEAD
+    directory:
+      recurse: false
+      include: ingress-*.yaml
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  syncPolicy:
+    automated: {}
