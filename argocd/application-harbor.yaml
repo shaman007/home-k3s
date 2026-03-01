@@ -129,5 +129,12 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: harbor
+  ignoreDifferences:
+  - group: ""
+    kind: Secret
+    jqPathExpressions:
+    - .data
   syncPolicy:
     automated: {}
+    syncOptions:
+    - RespectIgnoreDifferences=true
