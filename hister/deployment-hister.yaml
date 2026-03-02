@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: hister
   namespace: hister
@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/name: hister
     app.kubernetes.io/managed-by: argoCD
 spec:
+  serviceName: hister
   replicas: 1
   selector:
     matchLabels:
@@ -24,7 +25,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: hister
-          image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.5.0
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:rolling
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 65532
@@ -38,6 +39,8 @@ spec:
               value: https://hister.andreybondarenko.com/
             - name: HISTER_DATA_DIR
               value: /data
+            - name: access_token
+              value: ""
           ports:
             - name: http
               containerPort: 8080
@@ -67,4 +70,4 @@ spec:
       volumes:
         - name: hister-data
           persistentVolumeClaim:
-            claimName: hister-data
+            claimName: hister-data-v2
