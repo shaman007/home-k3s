@@ -25,7 +25,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: hister
-          image: harbor.andreybondarenko.com/github/asciimoo/hister:rolling
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:master-debug
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 65532
