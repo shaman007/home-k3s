@@ -18,7 +18,7 @@ spec:
         - name: memcachedExporter.image.repository
           value: harbor.andreybondarenko.com/dockerhub/prom/memcached-exporter
         - name: memcached.image.repository
-          value: ' harbor.andreybondarenko.com/dockerhub/memcached'
+          value: 'harbor.andreybondarenko.com/dockerhub/memcached'
         - name: loki.pattern_ingester.enabled
           value: 'true'
       values: |

@@ -2,13 +2,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: graphana
+  name: kube-node-exporter
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
-    path: metrics/graphana
+    path: metrics/kubernetes-node-exporter
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
