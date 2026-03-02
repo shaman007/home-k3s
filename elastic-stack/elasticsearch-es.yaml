@@ -5,7 +5,7 @@ metadata:
   name: es
   namespace: elastic-stack
 spec:
-  version: 8.19.12
+  version: 9.3.1
   http:
     tls:
       selfSignedCertificate:
