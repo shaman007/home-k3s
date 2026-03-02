@@ -73,4 +73,4 @@ spec:
       volumes:
         - name: hister-data
           persistentVolumeClaim:
-            claimName: hister-data-v2
+            claimName: hister-data
