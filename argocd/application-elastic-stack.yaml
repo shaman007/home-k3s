@@ -16,23 +16,11 @@ spec:
         eck-kibana:
           enabled: false
         eck-elasticsearch:
-          enabled: true
-          nodeSets:
-            - name: default
-              count: 1
-              config:
-                node.store.allow_mmap: false
-              podTemplate:
-                spec:
-                  containers:
-                    - name: elasticsearch
-                      resources:
-                        requests:
-                          memory: 3Gi
-                        limits:
-                          memory: 3Gi
+          enabled: false
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: elastic-stack
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true
