@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: plex-allow-ingress-remote-access
+  namespace: plex
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 32400
+    - from:
+        - ipBlock:
+            cidr: ::/0
+      ports:
+        - protocol: TCP
+          port: 32400
