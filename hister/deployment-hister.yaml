@@ -40,7 +40,10 @@ spec:
             - name: HISTER_DATA_DIR
               value: /data
             - name: access_token
-              value: ""
+              valueFrom:
+                secretKeyRef:
+                  name: hister-access-token
+                  key: access_token
           ports:
             - name: http
               containerPort: 8080
