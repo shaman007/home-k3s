@@ -36,7 +36,10 @@ spec:
             - name: HISTER__SERVER__ADDRESS
               value: 0.0.0.0:8080
             - name: HISTER__SERVER__BASE_URL
-              value: https://hister.andreybondarenko.com/
+              valueFrom:
+                secretKeyRef:
+                  name: hister-access-token
+                  key: base_url
             - name: HISTER_DATA_DIR
               value: /data
             - name: access_token
