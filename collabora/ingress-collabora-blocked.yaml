@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: collabora-blocked
-  namespace: collabora
+  namespace: nextcloud
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: collabora-collabora-deny-admin@kubernetescrd
 spec:
