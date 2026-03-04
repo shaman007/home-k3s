@@ -63,7 +63,7 @@ Write-Host "Dump file for import:" $dumpFile
 1. Ensure `stateful-set-meilisearch.yaml` has:
    - `MEILI_DB_PATH=/meili_data/data-v1.37.0-r1.ms`
    - `MEILI_IMPORT_DUMP=/meili_data/dumps/<dumpUid>.dump`
-2. Ensure `deployment-meilisearch.yaml` is disabled (or removed from Argo source) to avoid duplicate controllers.
+2. Ensure no `Deployment/meilisearch` manifest exists in Argo source for this app (remove it from `karakeep/`).
 3. Sync ArgoCD with prune enabled so the old Deployment is removed and StatefulSet is created.
 4. Verify import and readiness:
 
