@@ -60,12 +60,11 @@ Write-Host "Dump file for import:" $dumpFile
 
 ### Phase 3: Cut over to StatefulSet on 1.37.0
 
-1. Put the dump filename from Phase 2 into `stateful-set-meilisearch.yaml.disabled` for `MEILI_IMPORT_DUMP`.
-2. Rename files:
-   - `deployment-meilisearch.yaml` -> `deployment-meilisearch.yaml.disabled`
-   - `stateful-set-meilisearch.yaml.disabled` -> `stateful-set-meilisearch.yaml`
-   - `service-meilisearch-headless.yaml.disabled` -> `service-meilisearch-headless.yaml`
-3. Sync ArgoCD with prune enabled so the old Deployment is removed.
+1. Ensure `stateful-set-meilisearch.yaml` has:
+   - `MEILI_DB_PATH=/meili_data/data-v1.37.0-r1.ms`
+   - `MEILI_IMPORT_DUMP=/meili_data/dumps/<dumpUid>.dump`
+2. Ensure `deployment-meilisearch.yaml` is disabled (or removed from Argo source) to avoid duplicate controllers.
+3. Sync ArgoCD with prune enabled so the old Deployment is removed and StatefulSet is created.
 4. Verify import and readiness:
 
 ```powershell

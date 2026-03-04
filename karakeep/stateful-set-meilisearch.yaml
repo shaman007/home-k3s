@@ -28,9 +28,9 @@ spec:
         # Use a new DB path for 1.37.x and keep old data intact.
         - name: MEILI_DB_PATH
           value: /meili_data/data-v1.37.0-r1.ms
-        # Fill this with a real dump filename from README Phase 2.
+        # Dump exported on 2026-03-04 from the running 1.36.0 instance.
         - name: MEILI_IMPORT_DUMP
-          value: /meili_data/dumps/REPLACE_WITH_DUMP_UID.dump
+          value: /meili_data/dumps/20260304-075041475.dump
         # Keep indexing memory below container limits to prevent OOM during import.
         - name: MEILI_MAX_INDEXING_MEMORY
           value: "1000000000"
