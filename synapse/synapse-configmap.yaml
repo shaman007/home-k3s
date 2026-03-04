@@ -39,10 +39,8 @@ spec:
 
           email:
             smtp_host: "{{ .smtp_host }}"
-            smtp_port: 587
-            smtp_user: "{{ .smtp_user }}"
-            smtp_pass: "{{ .smtp_pass }}"
-            require_transport_security: true
+            smtp_port: 25
+            require_transport_security: false
             notif_from: "{{ .smtp_from }}"
             app_name: "shaman007 Matrix"
             enable_notifs: false
@@ -105,14 +103,6 @@ spec:
       remoteRef:
         key: synapse
         property: smtp_host
-    - secretKey: smtp_user
-      remoteRef:
-        key: synapse
-        property: smtp_user
-    - secretKey: smtp_pass
-      remoteRef:
-        key: synapse
-        property: smtp_pass
     - secretKey: smtp_from
       remoteRef:
         key: synapse
