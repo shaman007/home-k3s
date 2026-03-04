@@ -117,7 +117,7 @@
         {
           "refId": "A",
           "editorMode": "code",
-          "expr": "100 * node_load1{job=\"node-exporter\",kubernetes_node=~\"$node\"} / count by (kubernetes_node) (node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\",kubernetes_node=~\"$node\"})",
+          "expr": "100 * avg by (kubernetes_node) (node_load1{job=\"node-exporter\",kubernetes_node=~\"$node\"}) / count by (kubernetes_node) (node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\",kubernetes_node=~\"$node\"})",
           "legendFormat": "{{kubernetes_node}}"
         }
       ]
