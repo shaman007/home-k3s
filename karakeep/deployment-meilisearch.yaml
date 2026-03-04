@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.36.0
+        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.37.0
         env:
         # Preserve legacy DB files by using a fresh db-path for 1.36.x.
         - name: MEILI_DB_PATH
