@@ -47,6 +47,7 @@ spec:
             msc3391_enabled: true
             msc3030_enabled: true  # optional, for fallback keys
             msc3202_device_name_changes: true  # optional
+            msc3061_enabled: true  # optional, for fallback keys
           trusted_key_servers:
             - server_name: "matrix.org"
 
