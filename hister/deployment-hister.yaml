@@ -68,9 +68,9 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 1256Mi
+              memory: 2256Mi
             limits:
-              memory: 1256Mi
+              memory: 12256Mi
       volumes:
         - name: hister-data
           persistentVolumeClaim:
