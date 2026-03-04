@@ -69,7 +69,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           volumeMounts:
             - name: nextcloud-lh
               mountPath: /nextcloud

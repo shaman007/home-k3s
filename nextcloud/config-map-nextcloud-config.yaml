@@ -22,7 +22,7 @@ data:
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent"';
     server {
-      listen 80;
+      listen 8080;
       gzip on;
       index index.php index.html /index.php$request_uri;
       error_log  /var/log/nginx/error.log;
