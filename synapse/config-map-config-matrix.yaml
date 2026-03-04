@@ -10,6 +10,7 @@ data:
   config: |
     server {
         server_name shaman007.com;
+        listen 8080;
 
         # Well-known paths
         location /.well-known/matrix/server {
