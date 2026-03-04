@@ -76,7 +76,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /
+              path: /wp-json/wp-site-health/v1
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
