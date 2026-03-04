@@ -182,8 +182,6 @@ data:
 
     loki.write "default" {
         endpoint {
-            # Use gateway instead of direct single-binary service to reduce
-            # transient "connection refused" windows during backend churn.
             url       = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
         }
         external_labels = {}
