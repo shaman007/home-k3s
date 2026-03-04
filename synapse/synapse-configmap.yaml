@@ -35,19 +35,22 @@ spec:
           #registration_shared_secret: "{{ .registration_shared_secret }}"
           allow_public_rooms_over_federation: true
           enable_metrics: true
+          threepid_behaviour_email: local
+
+          email:
+            smtp_host: "{{ .smtp_host }}"
+            smtp_port: 587
+            smtp_user: "{{ .smtp_user }}"
+            smtp_pass: "{{ .smtp_pass }}"
+            require_transport_security: true
+            notif_from: "{{ .smtp_from }}"
+            app_name: "shaman007 Matrix"
+            enable_notifs: false
 
           experimental_features:
-            msc3861_enabled: true
-            msc3886_enabled: true
-            msc2965_enabled: true
-            msc3814_enabled: true
-            msc3890_enabled: true
+            # Reviewed 2026-03-04: keep only actively used flags.
             msc2815_enabled: true
-            msc2697_enabled: false
             msc3391_enabled: true
-            msc3030_enabled: true  # optional, for fallback keys
-            msc3202_device_name_changes: true  # optional
-            msc3061_enabled: true  # optional, for fallback keys
           trusted_key_servers:
             - server_name: "matrix.org"
 
@@ -98,3 +101,19 @@ spec:
       remoteRef:
         key: synapse
         property: form_secret
+    - secretKey: smtp_host
+      remoteRef:
+        key: synapse
+        property: smtp_host
+    - secretKey: smtp_user
+      remoteRef:
+        key: synapse
+        property: smtp_user
+    - secretKey: smtp_pass
+      remoteRef:
+        key: synapse
+        property: smtp_pass
+    - secretKey: smtp_from
+      remoteRef:
+        key: synapse
+        property: smtp_from
