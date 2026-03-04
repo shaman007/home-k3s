@@ -65,6 +65,13 @@ spec:
               containerPort: 10902
             - name: grpc
               containerPort: 10901
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 6
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
