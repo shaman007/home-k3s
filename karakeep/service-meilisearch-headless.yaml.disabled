@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch-headless
+  namespace: karakeep
+  labels:
+    app: meilisearch
+    app.kubernetes.io/name: meilisearch
+    app.kubernetes.io/instance: meilisearch
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  clusterIP: None
+  selector:
+    app: meilisearch
+  ports:
+    - port: 7700
+      targetPort: 7700
