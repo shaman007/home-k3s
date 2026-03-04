@@ -31,13 +31,6 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: collabora
-      ports:
-        - protocol: TCP
-          port: 9980
-    - to:
-        - namespaceSelector:
-            matchLabels:
               kubernetes.io/metadata.name: connectivity-exporter
       ports:
         - protocol: TCP
@@ -162,6 +155,8 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: nextcloud
       ports:
+        - protocol: TCP
+          port: 9980
         - protocol: TCP
           port: 9104
         - protocol: TCP
