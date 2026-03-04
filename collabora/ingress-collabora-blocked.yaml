@@ -4,7 +4,7 @@ metadata:
   name: collabora-blocked
   namespace: nextcloud
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: collabora-collabora-deny-admin@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-collabora-deny-admin@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

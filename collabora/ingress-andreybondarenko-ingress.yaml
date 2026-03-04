@@ -7,11 +7,13 @@ metadata:
     # Traefik router on HTTPS entrypoint
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    # Collabora is serving TLS on 9980, so Traefik must use HTTPS to backend.
+    traefik.ingress.kubernetes.io/service.serversscheme: "https"
 
     # Use Traefik's ACME resolver
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     # Apply HSTS middleware
-    traefik.ingress.kubernetes.io/router.middlewares: collabora-hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-hsts@kubernetescrd
 
     # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
     # so no per-ingress redirect annotation is needed.
