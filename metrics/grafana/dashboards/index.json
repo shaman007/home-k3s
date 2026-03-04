@@ -1,0 +1,254 @@
+﻿[
+    {
+        "title":  "ArgoCD",
+        "uid":  "qPkgGHg7k",
+        "version":  4,
+        "folder":  "General",
+        "updated":  "2026-01-01T20:05:50Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/qPkgGHg7k/argocd",
+        "file":  "qPkgGHg7k-ArgoCD.json"
+    },
+    {
+        "title":  "ClamAV Exporter",
+        "uid":  "d2052af1-457f-4ae5-b0db-06e9bb739a81",
+        "version":  4,
+        "folder":  "General",
+        "updated":  "2026-01-01T17:09:02Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/d2052af1-457f-4ae5-b0db-06e9bb739a81/clamav-exporter",
+        "file":  "d2052af1-457f-4ae5-b0db-06e9bb739a81-ClamAV-Exporter.json"
+    },
+    {
+        "title":  "Cluster load - new",
+        "uid":  "c1e02fb9-c0c3-46ca-bd7e-0935a5b44278",
+        "version":  91,
+        "folder":  "General",
+        "updated":  "2026-03-04T12:25:51Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/c1e02fb9-c0c3-46ca-bd7e-0935a5b44278/cluster-load-new",
+        "file":  "c1e02fb9-c0c3-46ca-bd7e-0935a5b44278-Cluster-load-new.json"
+    },
+    {
+        "title":  "Grafana metrics",
+        "uid":  "isFoa0z7k",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-12-11T07:49:10Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/isFoa0z7k/grafana-metrics",
+        "file":  "isFoa0z7k-Grafana-metrics.json"
+    },
+    {
+        "title":  "Harbor Overview",
+        "uid":  "a65d2835-5027-46c8-951f-3799fb702232",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2026-01-02T13:15:44Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/a65d2835-5027-46c8-951f-3799fb702232/harbor-overview",
+        "file":  "a65d2835-5027-46c8-951f-3799fb702232-Harbor-Overview.json"
+    },
+    {
+        "title":  "Keycloak Events",
+        "uid":  "keycloak-events-only2",
+        "version":  4,
+        "folder":  "General",
+        "updated":  "2026-01-03T12:04:14Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/keycloak-events-only2/keycloak-events",
+        "file":  "keycloak-events-only2-Keycloak-Events.json"
+    },
+    {
+        "title":  "Libreoffice Collabora",
+        "uid":  "pu47l-knz",
+        "version":  7,
+        "folder":  "General",
+        "updated":  "2026-01-01T18:31:17Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/pu47l-knz/libreoffice-collabora",
+        "file":  "pu47l-knz-Libreoffice-Collabora.json"
+    },
+    {
+        "title":  "Loki Logging Volume Analysis",
+        "uid":  "nmSpiZwHz",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2026-01-02T19:44:24Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/nmSpiZwHz/loki-logging-volume-analysis",
+        "file":  "nmSpiZwHz-Loki-Logging-Volume-Analysis.json"
+    },
+    {
+        "title":  "Loki Metrics Dashboard",
+        "uid":  "5f309ebf-2092-4182-b342-4a22c39f10b2",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2026-01-02T19:30:36Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/5f309ebf-2092-4182-b342-4a22c39f10b2/loki-metrics-dashboard",
+        "file":  "5f309ebf-2092-4182-b342-4a22c39f10b2-Loki-Metrics-Dashboard.json"
+    },
+    {
+        "title":  "Loki2.0 Global Metrics",
+        "uid":  "MQHVDmtWk",
+        "version":  2,
+        "folder":  "General",
+        "updated":  "2026-01-02T19:44:15Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/MQHVDmtWk/loki2-0-global-metrics",
+        "file":  "MQHVDmtWk-Loki2.0-Global-Metrics.json"
+    },
+    {
+        "title":  "Longhorn Example v1.1.0",
+        "uid":  "2BCgsldGz",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-01-25T15:02:37Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/2BCgsldGz/longhorn-example-v1-1-0",
+        "file":  "2BCgsldGz-Longhorn-Example-v1.1.0.json"
+    },
+    {
+        "title":  "MongoDB Exporter + Go/Process",
+        "uid":  "mongodb-exporter-go-process",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2026-01-02T13:42:11Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/mongodb-exporter-go-process/mongodb-exporter-2b-go-process",
+        "file":  "mongodb-exporter-go-process-MongoDB-Exporter-Go-Process.json"
+    },
+    {
+        "title":  "MySQL Dashboard",
+        "uid":  "r4uc0hUGk",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-01-07T18:37:27Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/r4uc0hUGk/mysql-dashboard",
+        "file":  "r4uc0hUGk-MySQL-Dashboard.json"
+    },
+    {
+        "title":  "OpenWRT",
+        "uid":  "fLi0yXAWk",
+        "version":  6,
+        "folder":  "General",
+        "updated":  "2025-12-31T15:18:38Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/fLi0yXAWk/openwrt",
+        "file":  "fLi0yXAWk-OpenWRT.json"
+    },
+    {
+        "title":  "PostgreSQL Database",
+        "uid":  "000000039",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2025-03-20T15:11:19Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/000000039/postgresql-database",
+        "file":  "000000039-PostgreSQL-Database.json"
+    },
+    {
+        "title":  "Prometheus 2.0 Stats",
+        "uid":  "UDdpyzz7z",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-12-11T07:49:12Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/UDdpyzz7z/prometheus-2-0-stats",
+        "file":  "UDdpyzz7z-Prometheus-2.0-Stats.json"
+    },
+    {
+        "title":  "Redis Dashboard for Prometheus Redis Exporter (helm stable/redis-ha)",
+        "uid":  "xDLNRKUWz",
+        "version":  5,
+        "folder":  "General",
+        "updated":  "2024-01-07T18:44:36Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/xDLNRKUWz/4b82829",
+        "file":  "xDLNRKUWz-Redis-Dashboard-for-Prometheus-Redis-Exporter-helm-stable-redis-ha.json"
+    },
+    {
+        "title":  "Rspamd stat",
+        "uid":  "190zF30Vk",
+        "version":  5,
+        "folder":  "General",
+        "updated":  "2025-12-31T15:39:08Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/190zF30Vk/rspamd-stat",
+        "file":  "190zF30Vk-Rspamd-stat.json"
+    },
+    {
+        "title":  "SeaweedFS",
+        "uid":  "nh02dOVnz",
+        "version":  8,
+        "folder":  "General",
+        "updated":  "2026-01-02T18:37:37Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/nh02dOVnz/seaweedfs",
+        "file":  "nh02dOVnz-SeaweedFS.json"
+    },
+    {
+        "title":  "Synapse",
+        "uid":  "9f15576b-9cf6-4bfc-a3ab-bb95654d97c8",
+        "version":  12,
+        "folder":  "General",
+        "updated":  "2026-01-22T14:59:36Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/9f15576b-9cf6-4bfc-a3ab-bb95654d97c8/synapse",
+        "file":  "9f15576b-9cf6-4bfc-a3ab-bb95654d97c8-Synapse.json"
+    },
+    {
+        "title":  "Thanos / Overview",
+        "uid":  "xhXVFwJ7z",
+        "version":  5,
+        "folder":  "General",
+        "updated":  "2026-01-02T18:53:09Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/xhXVFwJ7z/thanos-overview",
+        "file":  "xhXVFwJ7z-Thanos-Overview.json"
+    },
+    {
+        "title":  "Traefik Official Standalone Dashboard",
+        "uid":  "n5bu_kv45",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2025-11-14T09:13:33Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/n5bu_kv45/traefik-official-standalone-dashboard",
+        "file":  "n5bu_kv45-Traefik-Official-Standalone-Dashboard.json"
+    },
+    {
+        "title":  "UniFi-Poller: Client DPI - Prometheus",
+        "uid":  "w3usaHLZk",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-02-13T14:54:43Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/w3usaHLZk/unifi-poller3a-client-dpi-prometheus",
+        "file":  "w3usaHLZk-UniFi-Poller-Client-DPI-Prometheus.json"
+    },
+    {
+        "title":  "UniFi-Poller: Client Insights - Prometheus",
+        "uid":  "jMfvAjxWz",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-01-07T18:49:39Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/jMfvAjxWz/unifi-poller3a-client-insights-prometheus",
+        "file":  "jMfvAjxWz-UniFi-Poller-Client-Insights-Prometheus.json"
+    },
+    {
+        "title":  "UniFi-Poller: Network Sites - Prometheus",
+        "uid":  "9WaGWZaZk",
+        "version":  2,
+        "folder":  "General",
+        "updated":  "2024-01-07T18:48:24Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/9WaGWZaZk/unifi-poller3a-network-sites-prometheus",
+        "file":  "9WaGWZaZk-UniFi-Poller-Network-Sites-Prometheus.json"
+    },
+    {
+        "title":  "UniFi-Poller: UAP Insights - Prometheus",
+        "uid":  "g5wFWqxZk",
+        "version":  2,
+        "folder":  "General",
+        "updated":  "2024-01-07T18:49:26Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/g5wFWqxZk/unifi-poller3a-uap-insights-prometheus",
+        "file":  "g5wFWqxZk-UniFi-Poller-UAP-Insights-Prometheus.json"
+    },
+    {
+        "title":  "UniFi-Poller: USG Insights - Prometheus",
+        "uid":  "4Yo8IZ-Wk",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-02-13T14:52:55Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/4Yo8IZ-Wk/unifi-poller3a-usg-insights-prometheus",
+        "file":  "4Yo8IZ-Wk-UniFi-Poller-USG-Insights-Prometheus.json"
+    },
+    {
+        "title":  "UniFi-Poller: USW Insights - Prometheus",
+        "uid":  "FsfxpWaZz",
+        "version":  1,
+        "folder":  "General",
+        "updated":  "2024-01-07T18:48:49Z",
+        "url":  "https://grafana.w386.k8s.my.lan/d/FsfxpWaZz/unifi-poller3a-usw-insights-prometheus",
+        "file":  "FsfxpWaZz-UniFi-Poller-USW-Insights-Prometheus.json"
+    }
+]

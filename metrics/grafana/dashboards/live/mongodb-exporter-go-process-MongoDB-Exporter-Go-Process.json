@@ -1,0 +1,968 @@
+﻿{
+    "annotations":  {
+                        "list":  [
+                                     {
+                                         "builtIn":  1,
+                                         "datasource":  "-- Grafana --",
+                                         "enable":  true,
+                                         "hide":  true,
+                                         "iconColor":  "rgba(0, 211, 255, 1)",
+                                         "name":  "Annotations \u0026 Alerts",
+                                         "type":  "dashboard"
+                                     }
+                                 ]
+                    },
+    "description":  "MongoDB exporter + Go/process runtime metrics",
+    "editable":  true,
+    "fiscalYearStartMonth":  0,
+    "graphTooltip":  1,
+    "id":  45,
+    "links":  [
+
+              ],
+    "liveNow":  false,
+    "panels":  [
+                   {
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "id":  100,
+                       "panels":  [
+
+                                  ],
+                       "title":  "MongoDB health \u0026 exporter",
+                       "type":  "row"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "mappings":  [
+                                                                             {
+                                                                                 "options":  {
+                                                                                                 "0":  {
+                                                                                                           "text":  "DOWN"
+                                                                                                       },
+                                                                                                 "1":  {
+                                                                                                           "text":  "UP"
+                                                                                                       }
+                                                                                             },
+                                                                                 "type":  "value"
+                                                                             }
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  1
+                                   },
+                       "id":  1,
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "center",
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "mongodb_up{cluster_role=~\"$cluster_role\", instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "{{cluster_role}}",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "MongoDB Up",
+                       "type":  "stat"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "ms"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  18,
+                                       "x":  6,
+                                       "y":  1
+                                   },
+                       "id":  2,
+                       "options":  {
+                                       "legend":  {
+                                                      "calcs":  [
+
+                                                                ],
+                                                      "displayMode":  "table",
+                                                      "placement":  "right",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "collector_scrape_time_ms{exporter=~\"$exporter\", collector=~\"$collector\", instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "{{exporter}} / {{collector}}",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Collector scrape time",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "ops"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  5
+                                   },
+                       "id":  3,
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "right",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "sum by (database) (mongodb_profile_slow_query_count{database=~\"$database\", instance=~\"$instance\", job=~\"$job\"})",
+                                           "legendFormat":  "{{database}}",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Slow query counter (by database)",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "ops"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  5
+                                   },
+                       "id":  4,
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "right",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "sum by (database) (rate(mongodb_profile_slow_query_count{database=~\"$database\", instance=~\"$instance\", job=~\"$job\"}[$__rate_interval]))",
+                                           "legendFormat":  "{{database}}",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Slow queries / sec (rate)",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  13
+                                   },
+                       "id":  101,
+                       "panels":  [
+
+                                  ],
+                       "title":  "Go runtime",
+                       "type":  "row"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  6,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  14
+                                   },
+                       "id":  10,
+                       "options":  {
+                                       "legend":  {
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "go_goroutines{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "goroutines",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Goroutines",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  6,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  14
+                                   },
+                       "id":  11,
+                       "options":  {
+                                       "legend":  {
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "go_threads{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "threads",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "OS threads (Go)",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "bytes"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  6,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  14
+                                   },
+                       "id":  12,
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "right",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "go_memstats_alloc_bytes{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "alloc",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       },
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "go_memstats_heap_inuse_bytes{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "heap_inuse",
+                                           "range":  true,
+                                           "refId":  "B"
+                                       },
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "go_memstats_heap_sys_bytes{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "heap_sys",
+                                           "range":  true,
+                                           "refId":  "C"
+                                       }
+                                   ],
+                       "title":  "Go heap",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  6,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  14
+                                   },
+                       "id":  13,
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "right",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "go_gc_duration_seconds{quantile=~\"0.5|0.75|0.95|0.99|1\", instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "q={{quantile}}",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "GC pause quantiles",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  20
+                                   },
+                       "id":  102,
+                       "panels":  [
+
+                                  ],
+                       "title":  "Process",
+                       "type":  "row"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percentunit"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  7,
+                                       "w":  8,
+                                       "x":  0,
+                                       "y":  21
+                                   },
+                       "id":  20,
+                       "options":  {
+                                       "legend":  {
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "rate(process_cpu_seconds_total{instance=~\"$instance\", job=~\"$job\"}[$__rate_interval])",
+                                           "legendFormat":  "cpu_s/s",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "CPU usage (seconds/sec)",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "bytes"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  7,
+                                       "w":  8,
+                                       "x":  8,
+                                       "y":  21
+                                   },
+                       "id":  21,
+                       "options":  {
+                                       "legend":  {
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "process_resident_memory_bytes{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "rss",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Resident memory (RSS)",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  7,
+                                       "w":  8,
+                                       "x":  16,
+                                       "y":  21
+                                   },
+                       "id":  22,
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "process_open_fds{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "open_fds",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Open file descriptors",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "Bps"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  16,
+                                       "x":  0,
+                                       "y":  28
+                                   },
+                       "id":  23,
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "right",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "rate(process_network_receive_bytes_total{instance=~\"$instance\", job=~\"$job\"}[$__rate_interval])",
+                                           "legendFormat":  "rx",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       },
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "rate(process_network_transmit_bytes_total{instance=~\"$instance\", job=~\"$job\"}[$__rate_interval])",
+                                           "legendFormat":  "tx",
+                                           "range":  true,
+                                           "refId":  "B"
+                                       }
+                                   ],
+                       "title":  "Network throughput",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  8,
+                                       "x":  16,
+                                       "y":  28
+                                   },
+                       "id":  24,
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "area",
+                                       "justifyMode":  "center",
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "textMode":  "auto"
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "time() - process_start_time_seconds{instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "uptime",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Process uptime",
+                       "type":  "stat"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "align":  "auto"
+                                                                       },
+                                                            "unit":  "short"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  36
+                                   },
+                       "id":  30,
+                       "options":  {
+                                       "showHeader":  true,
+                                       "sortBy":  [
+                                                      {
+                                                          "desc":  true,
+                                                          "displayName":  "Slow query count"
+                                                      }
+                                                  ]
+                                   },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "expr":  "mongodb_profile_slow_query_count{database=~\"$database\", instance=~\"$instance\", job=~\"$job\"}",
+                                           "legendFormat":  "{{database}}",
+                                           "range":  true,
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Slow query count (table)",
+                       "transformations":  [
+                                               {
+                                                   "id":  "labelsToFields",
+                                                   "options":  {
+
+                                                               }
+                                               },
+                                               {
+                                                   "id":  "organize",
+                                                   "options":  {
+                                                                   "excludeByName":  {
+                                                                                         "__name__":  true
+                                                                                     }
+                                                               }
+                                               }
+                                           ],
+                       "type":  "table"
+                   }
+               ],
+    "refresh":  "30s",
+    "schemaVersion":  39,
+    "style":  "dark",
+    "tags":  [
+                 "mongodb",
+                 "exporter",
+                 "go",
+                 "process"
+             ],
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "current":  {
+                                                        "selected":  false,
+                                                        "text":  "Prometheus",
+                                                        "value":  "Prometheus"
+                                                    },
+                                        "hide":  0,
+                                        "includeAll":  false,
+                                        "label":  "Datasource",
+                                        "name":  "DS_PROMETHEUS",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  "prometheus",
+                                        "refresh":  1,
+                                        "regex":  "",
+                                        "type":  "datasource"
+                                    },
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "All",
+                                                        "value":  "$__all"
+                                                    },
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(process_cpu_seconds_total, job)",
+                                        "hide":  0,
+                                        "includeAll":  true,
+                                        "label":  "job",
+                                        "multi":  true,
+                                        "name":  "job",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(process_cpu_seconds_total, job)",
+                                                      "refId":  "PromQuery_job"
+                                                  },
+                                        "refresh":  2,
+                                        "regex":  "",
+                                        "sort":  1,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "All",
+                                                        "value":  "$__all"
+                                                    },
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(process_cpu_seconds_total{job=~\"$job\"}, instance)",
+                                        "hide":  0,
+                                        "includeAll":  true,
+                                        "label":  "instance",
+                                        "multi":  true,
+                                        "name":  "instance",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(process_cpu_seconds_total{job=~\"$job\"}, instance)",
+                                                      "refId":  "PromQuery_instance"
+                                                  },
+                                        "refresh":  2,
+                                        "regex":  "",
+                                        "sort":  1,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "All",
+                                                        "value":  "$__all"
+                                                    },
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(mongodb_up{job=~\"$job\",instance=~\"$instance\"}, cluster_role)",
+                                        "hide":  0,
+                                        "includeAll":  true,
+                                        "label":  "cluster_role",
+                                        "multi":  true,
+                                        "name":  "cluster_role",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(mongodb_up{job=~\"$job\",instance=~\"$instance\"}, cluster_role)",
+                                                      "refId":  "PromQuery_cluster_role"
+                                                  },
+                                        "refresh":  2,
+                                        "regex":  "",
+                                        "sort":  1,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "mongodb",
+                                                        "value":  "mongodb"
+                                                    },
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(collector_scrape_time_ms, exporter)",
+                                        "hide":  0,
+                                        "includeAll":  true,
+                                        "label":  "exporter",
+                                        "multi":  true,
+                                        "name":  "exporter",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(collector_scrape_time_ms, exporter)",
+                                                      "refId":  "PromQuery_exporter"
+                                                  },
+                                        "refresh":  2,
+                                        "regex":  "",
+                                        "sort":  1,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "All",
+                                                        "value":  "$__all"
+                                                    },
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(collector_scrape_time_ms{exporter=~\"$exporter\"}, collector)",
+                                        "hide":  0,
+                                        "includeAll":  true,
+                                        "label":  "collector",
+                                        "multi":  true,
+                                        "name":  "collector",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(collector_scrape_time_ms{exporter=~\"$exporter\"}, collector)",
+                                                      "refId":  "PromQuery_collector"
+                                                  },
+                                        "refresh":  2,
+                                        "regex":  "",
+                                        "sort":  1,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "current":  {
+                                                        "selected":  true,
+                                                        "text":  "All",
+                                                        "value":  "$__all"
+                                                    },
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(mongodb_profile_slow_query_count{job=~\"$job\",instance=~\"$instance\"}, database)",
+                                        "hide":  0,
+                                        "includeAll":  true,
+                                        "label":  "database",
+                                        "multi":  true,
+                                        "name":  "database",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(mongodb_profile_slow_query_count{job=~\"$job\",instance=~\"$instance\"}, database)",
+                                                      "refId":  "PromQuery_database"
+                                                  },
+                                        "refresh":  2,
+                                        "regex":  "",
+                                        "sort":  1,
+                                        "type":  "query"
+                                    }
+                                ]
+                   },
+    "time":  {
+                 "from":  "now-6h",
+                 "to":  "now"
+             },
+    "timepicker":  {
+                       "refresh_intervals":  [
+                                                 "5s",
+                                                 "10s",
+                                                 "30s",
+                                                 "1m",
+                                                 "5m",
+                                                 "15m",
+                                                 "30m",
+                                                 "1h"
+                                             ],
+                       "time_options":  [
+                                            "5m",
+                                            "15m",
+                                            "1h",
+                                            "6h",
+                                            "12h",
+                                            "24h",
+                                            "2d",
+                                            "7d",
+                                            "30d"
+                                        ]
+                   },
+    "timezone":  "browser",
+    "title":  "MongoDB Exporter + Go/Process",
+    "uid":  "mongodb-exporter-go-process",
+    "version":  1,
+    "weekStart":  ""
+}

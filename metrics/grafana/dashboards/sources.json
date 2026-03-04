@@ -1,0 +1,78 @@
+{
+  "defaults": {
+    "outputDir": "metrics/grafana/dashboards/vendor",
+    "datasource": "prometheus-thanos"
+  },
+  "dashboards": [
+    {
+      "gnetId": 9628,
+      "revision": "latest",
+      "outputFile": "9628-PostgreSQL-Database.json"
+    },
+    {
+      "gnetId": 13032,
+      "revision": "latest",
+      "outputFile": "13032-Longhorn-Example-v1.1.0.json"
+    },
+    {
+      "gnetId": 11313,
+      "revision": "latest",
+      "outputFile": "11313-UniFi-Poller-USG-Insights-Prometheus.json"
+    },
+    {
+      "gnetId": 17781,
+      "revision": "latest",
+      "outputFile": "17781-Loki-Metrics-Dashboard.json"
+    },
+    {
+      "gnetId": 11311,
+      "revision": "latest",
+      "outputFile": "11311-UniFi-Poller-Network-Sites-Prometheus.json"
+    },
+    {
+      "gnetId": 19716,
+      "revision": "latest",
+      "outputFile": "19716-Harbor-Overview.json"
+    },
+    {
+      "gnetId": 11312,
+      "revision": "latest",
+      "outputFile": "11312-UniFi-Poller-USW-Insights-Prometheus.json"
+    },
+    {
+      "gnetId": 11314,
+      "revision": "latest",
+      "outputFile": "11314-UniFi-Poller-UAP-Insights-Prometheus.json"
+    },
+    {
+      "gnetId": 11315,
+      "revision": "latest",
+      "outputFile": "11315-UniFi-Poller-Client-Insights-Prometheus.json"
+    },
+    {
+      "gnetId": 17346,
+      "revision": "latest",
+      "outputFile": "17346-Traefik-Official-Standalone-Dashboard.json"
+    },
+    {
+      "gnetId": 23789,
+      "revision": "latest",
+      "outputFile": "23789-Loki-Logging-Volume-Analysis.json"
+    },
+    {
+      "gnetId": 14031,
+      "revision": "latest",
+      "outputFile": "14031-MySQL-Dashboard.json"
+    },
+    {
+      "gnetId": 11310,
+      "revision": "latest",
+      "outputFile": "11310-UniFi-Poller-Client-DPI-Prometheus.json"
+    },
+    {
+      "gnetId": 11835,
+      "revision": "latest",
+      "outputFile": "11835-Redis-Dashboard-for-Prometheus-Redis-Exporter.json"
+    }
+  ]
+}

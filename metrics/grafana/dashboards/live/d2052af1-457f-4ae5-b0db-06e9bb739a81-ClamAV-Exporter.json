@@ -1,0 +1,817 @@
+﻿{
+    "annotations":  {
+                        "list":  [
+                                     {
+                                         "builtIn":  1,
+                                         "datasource":  {
+                                                            "type":  "grafana",
+                                                            "uid":  "-- Grafana --"
+                                                        },
+                                         "enable":  true,
+                                         "hide":  true,
+                                         "iconColor":  "rgba(0, 211, 255, 1)",
+                                         "name":  "Annotations \u0026 Alerts",
+                                         "type":  "dashboard"
+                                     }
+                                 ]
+                    },
+    "editable":  true,
+    "fiscalYearStartMonth":  0,
+    "graphTooltip":  1,
+    "id":  37,
+    "links":  [
+
+              ],
+    "panels":  [
+                   {
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "id":  100,
+                       "panels":  [
+
+                                  ],
+                       "title":  "Status",
+                       "type":  "row"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "mappings":  [
+                                                                             {
+                                                                                 "options":  {
+                                                                                                 "0":  {
+                                                                                                           "text":  "DOWN"
+                                                                                                       },
+                                                                                                 "1":  {
+                                                                                                           "text":  "UP"
+                                                                                                       }
+                                                                                             },
+                                                                                 "type":  "value"
+                                                                             }
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  4,
+                                       "x":  0,
+                                       "y":  1
+                                   },
+                       "id":  1,
+                       "options":  {
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "center",
+                                       "orientation":  "horizontal",
+                                       "percentChangeColorMode":  "standard",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "showPercentChange":  false,
+                                       "textMode":  "value",
+                                       "wideLayout":  true
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_up{job=~\"$job\",instance=~\"$instance\"}",
+                                           "legendFormat":  "up",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Up",
+                       "type":  "stat"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "mappings":  [
+
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  80
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  4,
+                                       "w":  6,
+                                       "x":  4,
+                                       "y":  1
+                                   },
+                       "id":  3,
+                       "options":  {
+                                       "colorMode":  "none",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "left",
+                                       "orientation":  "horizontal",
+                                       "percentChangeColorMode":  "standard",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "showPercentChange":  false,
+                                       "textMode":  "value",
+                                       "wideLayout":  true
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_db_version{job=~\"$job\",instance=~\"$instance\"}",
+                                           "legendFormat":  "db_version",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "DB Version",
+                       "type":  "stat"
+                   },
+                   {
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  5
+                                   },
+                       "id":  101,
+                       "panels":  [
+
+                                  ],
+                       "title":  "Thread Pool",
+                       "type":  "row"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      },
+                                                            "custom":  {
+                                                                           "axisBorderShow":  false,
+                                                                           "axisCenteredZero":  false,
+                                                                           "axisColorMode":  "text",
+                                                                           "axisLabel":  "",
+                                                                           "axisPlacement":  "auto",
+                                                                           "barAlignment":  0,
+                                                                           "barWidthFactor":  0.6,
+                                                                           "drawStyle":  "line",
+                                                                           "fillOpacity":  0,
+                                                                           "gradientMode":  "none",
+                                                                           "hideFrom":  {
+                                                                                            "legend":  false,
+                                                                                            "tooltip":  false,
+                                                                                            "viz":  false
+                                                                                        },
+                                                                           "insertNulls":  false,
+                                                                           "lineInterpolation":  "linear",
+                                                                           "lineWidth":  1,
+                                                                           "pointSize":  5,
+                                                                           "scaleDistribution":  {
+                                                                                                     "type":  "linear"
+                                                                                                 },
+                                                                           "showPoints":  "auto",
+                                                                           "showValues":  false,
+                                                                           "spanNulls":  false,
+                                                                           "stacking":  {
+                                                                                            "group":  "A",
+                                                                                            "mode":  "none"
+                                                                                        },
+                                                                           "thresholdsStyle":  {
+                                                                                                   "mode":  "off"
+                                                                                               }
+                                                                       },
+                                                            "mappings":  [
+
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  80
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  6
+                                   },
+                       "id":  10,
+                       "options":  {
+                                       "legend":  {
+                                                      "calcs":  [
+
+                                                                ],
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "hideZeros":  false,
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_pool_queue_length{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "queue length (index={{index}},primary={{primary}})",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Pool Queue Length",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      },
+                                                            "custom":  {
+                                                                           "axisBorderShow":  false,
+                                                                           "axisCenteredZero":  false,
+                                                                           "axisColorMode":  "text",
+                                                                           "axisLabel":  "",
+                                                                           "axisPlacement":  "auto",
+                                                                           "barAlignment":  0,
+                                                                           "barWidthFactor":  0.6,
+                                                                           "drawStyle":  "line",
+                                                                           "fillOpacity":  0,
+                                                                           "gradientMode":  "none",
+                                                                           "hideFrom":  {
+                                                                                            "legend":  false,
+                                                                                            "tooltip":  false,
+                                                                                            "viz":  false
+                                                                                        },
+                                                                           "insertNulls":  false,
+                                                                           "lineInterpolation":  "linear",
+                                                                           "lineWidth":  1,
+                                                                           "pointSize":  5,
+                                                                           "scaleDistribution":  {
+                                                                                                     "type":  "linear"
+                                                                                                 },
+                                                                           "showPoints":  "auto",
+                                                                           "showValues":  false,
+                                                                           "spanNulls":  false,
+                                                                           "stacking":  {
+                                                                                            "group":  "A",
+                                                                                            "mode":  "none"
+                                                                                        },
+                                                                           "thresholdsStyle":  {
+                                                                                                   "mode":  "off"
+                                                                                               }
+                                                                       },
+                                                            "mappings":  [
+
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  80
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "s"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  6
+                                   },
+                       "id":  11,
+                       "options":  {
+                                       "legend":  {
+                                                      "calcs":  [
+
+                                                                ],
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "hideZeros":  false,
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_pool_queue_min_wait_sec{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "min wait (index={{index}},primary={{primary}})",
+                                           "refId":  "A"
+                                       },
+                                       {
+                                           "expr":  "clamav_pool_queue_avg_wait_sec{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "avg wait (index={{index}},primary={{primary}})",
+                                           "refId":  "B"
+                                       },
+                                       {
+                                           "expr":  "clamav_pool_queue_max_wait_sec{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "max wait (index={{index}},primary={{primary}})",
+                                           "refId":  "C"
+                                       }
+                                   ],
+                       "title":  "Queue Wait Time",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      },
+                                                            "custom":  {
+                                                                           "axisBorderShow":  false,
+                                                                           "axisCenteredZero":  false,
+                                                                           "axisColorMode":  "text",
+                                                                           "axisLabel":  "",
+                                                                           "axisPlacement":  "auto",
+                                                                           "barAlignment":  0,
+                                                                           "barWidthFactor":  0.6,
+                                                                           "drawStyle":  "line",
+                                                                           "fillOpacity":  0,
+                                                                           "gradientMode":  "none",
+                                                                           "hideFrom":  {
+                                                                                            "legend":  false,
+                                                                                            "tooltip":  false,
+                                                                                            "viz":  false
+                                                                                        },
+                                                                           "insertNulls":  false,
+                                                                           "lineInterpolation":  "linear",
+                                                                           "lineWidth":  1,
+                                                                           "pointSize":  5,
+                                                                           "scaleDistribution":  {
+                                                                                                     "type":  "linear"
+                                                                                                 },
+                                                                           "showPoints":  "auto",
+                                                                           "showValues":  false,
+                                                                           "spanNulls":  false,
+                                                                           "stacking":  {
+                                                                                            "group":  "A",
+                                                                                            "mode":  "none"
+                                                                                        },
+                                                                           "thresholdsStyle":  {
+                                                                                                   "mode":  "off"
+                                                                                               }
+                                                                       },
+                                                            "mappings":  [
+
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  80
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  18,
+                                       "x":  0,
+                                       "y":  14
+                                   },
+                       "id":  12,
+                       "options":  {
+                                       "legend":  {
+                                                      "calcs":  [
+
+                                                                ],
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "hideZeros":  false,
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_pool_live_threads{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "live (index={{index}},primary={{primary}})",
+                                           "refId":  "A"
+                                       },
+                                       {
+                                           "expr":  "clamav_pool_idle_threads{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "idle (index={{index}},primary={{primary}})",
+                                           "refId":  "B"
+                                       },
+                                       {
+                                           "expr":  "clamav_pool_max_threads{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "max (index={{index}},primary={{primary}})",
+                                           "refId":  "C"
+                                       }
+                                   ],
+                       "title":  "Threads (Live/Idle/Max)",
+                       "type":  "timeseries"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "mappings":  [
+
+                                                                         ],
+                                                            "max":  5,
+                                                            "min":  0,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  80
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "none"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  14
+                                   },
+                       "id":  13,
+                       "options":  {
+                                       "minVizHeight":  75,
+                                       "minVizWidth":  75,
+                                       "orientation":  "auto",
+                                       "reduceOptions":  {
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  "",
+                                                             "values":  false
+                                                         },
+                                       "showThresholdLabels":  false,
+                                       "showThresholdMarkers":  true,
+                                       "sizing":  "auto"
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_pool_state{job=~\"$job\",instance=~\"$instance\",index=~\"$index\",primary=~\"$primary\"}",
+                                           "legendFormat":  "state (index={{index}},primary={{primary}})",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "title":  "Pool State",
+                       "type":  "gauge"
+                   },
+                   {
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  22
+                                   },
+                       "id":  102,
+                       "panels":  [
+
+                                  ],
+                       "title":  "Memory",
+                       "type":  "row"
+                   },
+                   {
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "${DS_PROMETHEUS}"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      },
+                                                            "custom":  {
+                                                                           "axisBorderShow":  false,
+                                                                           "axisCenteredZero":  false,
+                                                                           "axisColorMode":  "text",
+                                                                           "axisLabel":  "",
+                                                                           "axisPlacement":  "auto",
+                                                                           "barAlignment":  0,
+                                                                           "barWidthFactor":  0.6,
+                                                                           "drawStyle":  "line",
+                                                                           "fillOpacity":  0,
+                                                                           "gradientMode":  "none",
+                                                                           "hideFrom":  {
+                                                                                            "legend":  false,
+                                                                                            "tooltip":  false,
+                                                                                            "viz":  false
+                                                                                        },
+                                                                           "insertNulls":  false,
+                                                                           "lineInterpolation":  "linear",
+                                                                           "lineWidth":  1,
+                                                                           "pointSize":  5,
+                                                                           "scaleDistribution":  {
+                                                                                                     "type":  "linear"
+                                                                                                 },
+                                                                           "showPoints":  "auto",
+                                                                           "showValues":  false,
+                                                                           "spanNulls":  false,
+                                                                           "stacking":  {
+                                                                                            "group":  "A",
+                                                                                            "mode":  "none"
+                                                                                        },
+                                                                           "thresholdsStyle":  {
+                                                                                                   "mode":  "off"
+                                                                                               }
+                                                                       },
+                                                            "mappings":  [
+
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  0
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  80
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "unit":  "bytes"
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  23
+                                   },
+                       "id":  21,
+                       "options":  {
+                                       "legend":  {
+                                                      "calcs":  [
+
+                                                                ],
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "hideZeros":  false,
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "pluginVersion":  "12.3.1",
+                       "targets":  [
+                                       {
+                                           "expr":  "clamav_memory_pools_used_bytes{job=~\"$job\",instance=~\"$instance\"}",
+                                           "legendFormat":  "pools used",
+                                           "refId":  "A"
+                                       },
+                                       {
+                                           "expr":  "clamav_memory_pools_total_bytes{job=~\"$job\",instance=~\"$instance\"}",
+                                           "legendFormat":  "pools total",
+                                           "refId":  "B"
+                                       }
+                                   ],
+                       "title":  "Memory Pools (Used/Total)",
+                       "type":  "timeseries"
+                   }
+               ],
+    "preload":  false,
+    "refresh":  "30s",
+    "schemaVersion":  42,
+    "tags":  [
+                 "clamav",
+                 "prometheus"
+             ],
+    "templating":  {
+                       "list":  [
+                                    {
+                                        "current":  {
+                                                        "text":  "Prometheus",
+                                                        "value":  "Prometheus"
+                                                    },
+                                        "includeAll":  false,
+                                        "label":  "Datasource",
+                                        "name":  "DS_PROMETHEUS",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  "prometheus",
+                                        "refresh":  1,
+                                        "type":  "datasource"
+                                    },
+                                    {
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(clamav_up, job)",
+                                        "includeAll":  true,
+                                        "multi":  true,
+                                        "name":  "job",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(clamav_up, job)",
+                                                      "refId":  "Prometheus-job"
+                                                  },
+                                        "refresh":  2,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(clamav_up{job=~\"$job\"}, instance)",
+                                        "includeAll":  true,
+                                        "multi":  true,
+                                        "name":  "instance",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(clamav_up{job=~\"$job\"}, instance)",
+                                                      "refId":  "Prometheus-instance"
+                                                  },
+                                        "refresh":  2,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(clamav_pool_state{job=~\"$job\",instance=~\"$instance\"}, index)",
+                                        "includeAll":  true,
+                                        "multi":  true,
+                                        "name":  "index",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(clamav_pool_state{job=~\"$job\",instance=~\"$instance\"}, index)",
+                                                      "refId":  "Prometheus-index"
+                                                  },
+                                        "refresh":  2,
+                                        "type":  "query"
+                                    },
+                                    {
+                                        "datasource":  {
+                                                           "type":  "prometheus",
+                                                           "uid":  "${DS_PROMETHEUS}"
+                                                       },
+                                        "definition":  "label_values(clamav_pool_state{job=~\"$job\",instance=~\"$instance\"}, primary)",
+                                        "includeAll":  true,
+                                        "multi":  true,
+                                        "name":  "primary",
+                                        "options":  [
+
+                                                    ],
+                                        "query":  {
+                                                      "query":  "label_values(clamav_pool_state{job=~\"$job\",instance=~\"$instance\"}, primary)",
+                                                      "refId":  "Prometheus-primary"
+                                                  },
+                                        "refresh":  2,
+                                        "type":  "query"
+                                    }
+                                ]
+                   },
+    "time":  {
+                 "from":  "now-6h",
+                 "to":  "now"
+             },
+    "timepicker":  {
+                       "refresh_intervals":  [
+                                                 "10s",
+                                                 "30s",
+                                                 "1m",
+                                                 "5m",
+                                                 "15m",
+                                                 "30m",
+                                                 "1h"
+                                             ]
+                   },
+    "timezone":  "browser",
+    "title":  "ClamAV Exporter",
+    "uid":  "d2052af1-457f-4ae5-b0db-06e9bb739a81",
+    "version":  4,
+    "weekStart":  ""
+}
