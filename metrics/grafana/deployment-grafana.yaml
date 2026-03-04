@@ -76,7 +76,25 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv
+            - mountPath: /etc/grafana/provisioning/datasources
+              name: grafana-datasources
+              readOnly: true
+            - mountPath: /etc/grafana/provisioning/dashboards
+              name: grafana-dashboard-provider
+              readOnly: true
+            - mountPath: /var/lib/grafana/dashboards/cluster-load
+              name: grafana-dashboard-cluster-load-new
+              readOnly: true
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
             claimName: grafana-pvc
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: grafana-dashboard-provider
+          configMap:
+            name: grafana-dashboard-provider
+        - name: grafana-dashboard-cluster-load-new
+          configMap:
+            name: grafana-dashboard-cluster-load-new

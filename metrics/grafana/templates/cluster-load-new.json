@@ -1,0 +1,251 @@
+{
+  "title": "Cluster load - new",
+  "uid": "c1e02fb9-c0c3-46ca-bd7e-0935a5b44278",
+  "version": 90,
+  "schemaVersion": 42,
+  "refresh": "30s",
+  "tags": [
+    "cluster",
+    "k3s",
+    "saturation"
+  ],
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "DS_PROMETHEUS",
+        "label": "Datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "prometheus-thanos",
+          "value": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4",
+          "selected": true
+        }
+      },
+      {
+        "type": "query",
+        "name": "node",
+        "label": "Node",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "query": {
+          "query": "label_values(node_uname_info{job=\"node-exporter\"}, kubernetes_node)",
+          "refId": "StandardVariableQuery"
+        },
+        "current": {
+          "text": "All",
+          "value": ".*",
+          "selected": true
+        }
+      },
+      {
+        "type": "query",
+        "name": "namespace",
+        "label": "Namespace",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": true,
+        "query": {
+          "query": "label_values(kube_pod_info, namespace)",
+          "refId": "StandardVariableQuery"
+        },
+        "current": {
+          "text": "All",
+          "value": ".*",
+          "selected": true
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Node CPU Usage, %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "100 * (1 - avg by (kubernetes_node) (rate(node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\",kubernetes_node=~\"$node\"}[5m])))",
+          "legendFormat": "{{kubernetes_node}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Node Memory Usage, %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "100 * (node_memory_MemTotal_bytes{job=\"node-exporter\",kubernetes_node=~\"$node\"} - node_memory_MemAvailable_bytes{job=\"node-exporter\",kubernetes_node=~\"$node\"}) / node_memory_MemTotal_bytes{job=\"node-exporter\",kubernetes_node=~\"$node\"}",
+          "legendFormat": "{{kubernetes_node}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Node Load1 per CPU, %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "100 * node_load1{job=\"node-exporter\",kubernetes_node=~\"$node\"} / count by (kubernetes_node) (node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\",kubernetes_node=~\"$node\"})",
+          "legendFormat": "{{kubernetes_node}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Filesystem / Usage, %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "100 * (node_filesystem_size_bytes{job=\"node-exporter\",mountpoint=\"/\",fstype!=\"rootfs\",kubernetes_node=~\"$node\"} - node_filesystem_free_bytes{job=\"node-exporter\",mountpoint=\"/\",fstype!=\"rootfs\",kubernetes_node=~\"$node\"}) / node_filesystem_size_bytes{job=\"node-exporter\",mountpoint=\"/\",fstype!=\"rootfs\",kubernetes_node=~\"$node\"}",
+          "legendFormat": "{{kubernetes_node}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Top 10 Pod Memory (GiB)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (namespace, pod) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\",container!=\"\",pod!=\"\",namespace=~\"$namespace\"}) / (1024*1024*1024))",
+          "legendFormat": "{{namespace}}/{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Top 10 Pod CPU (cores)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{job=\"kubernetes-cadvisor\",container!=\"\",pod!=\"\",namespace=~\"$namespace\"}[5m])))",
+          "legendFormat": "{{namespace}}/{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Top 10 CPU Throttled Ratio",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (namespace, pod) (increase(container_cpu_cfs_throttled_periods_total{job=\"kubernetes-cadvisor\",container!=\"\",namespace=~\"$namespace\"}[5m])) / clamp_min(sum by (namespace, pod) (increase(container_cpu_cfs_periods_total{job=\"kubernetes-cadvisor\",container!=\"\",namespace=~\"$namespace\"}[5m])), 1))",
+          "legendFormat": "{{namespace}}/{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "OOM Killed (last 1h)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (namespace, pod, container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\",namespace=~\"$namespace\"}[1h]))",
+          "legendFormat": "{{namespace}}/{{pod}}/{{container}}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Failed Jobs",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (namespace, job_name) (kube_job_failed{condition=\"true\",namespace=~\"$namespace\"})",
+          "legendFormat": "{{namespace}}/{{job_name}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Connectivity Latency",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "connectivity_time_ms{job=\"connectivity-exporter\"}",
+          "legendFormat": "{{host}}"
+        },
+        {
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "connectivity_time_ms{job=\"external\"}",
+          "legendFormat": "{{host}}"
+        }
+      ]
+    }
+  ]
+}

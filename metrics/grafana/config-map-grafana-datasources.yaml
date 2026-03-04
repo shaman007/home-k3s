@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+data:
+  datasources.yaml: |-
+    apiVersion: 1
+    datasources:
+      - name: prometheus-thanos
+        uid: ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4
+        type: prometheus
+        access: proxy
+        url: http://thanos-querier.monitoring.svc.cluster.local:9090
+        isDefault: true
+        editable: true
+        jsonData:
+          httpMethod: POST
+          prometheusType: Thanos
+          prometheusVersion: 0.31.1
+          queryTimeout: 200s
+          cacheLevel: Medium
+          customQueryParameters: max_source_resolution=1h
+          incrementalQuerying: true
