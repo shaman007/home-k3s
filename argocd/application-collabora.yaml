@@ -13,7 +13,7 @@ spec:
     helm:
       values: |
         collabora:
-          server_name: office.andreybondarenko.com
+          server_name: collabora-collabora-online.nextcloud.svc.cluster.local
           extra_params: --o:ssl.enable=false --o:ssl.termination=true -o:security.enable_metrics_unauthenticated=true
         resources:
           requests:
@@ -29,7 +29,7 @@ spec:
             - name: my-image-registry
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: collabora
+    namespace: nextcloud
   syncPolicy:
     automated: {}
     syncOptions:
