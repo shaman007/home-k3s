@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: office-ingress
+  namespace: nextcloud
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/service.serversscheme: "https"
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-hsts@kubernetescrd
+spec:
+  tls:
+    - hosts:
+        - office.w386.k8s.my.lan
+      secretName: office-tls
+  rules:
+    - host: office.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: collabora-collabora-online
+                port:
+                  number: 9980
