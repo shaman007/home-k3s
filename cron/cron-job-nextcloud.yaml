@@ -43,7 +43,7 @@ spec:
           volumes:
             - name: application-code
               persistentVolumeClaim:
-                claimName: nextcloud-lh
+                claimName: nextcloud-lh-150gi
             - name: config-volume
               configMap:
                 name: php-fpm-config

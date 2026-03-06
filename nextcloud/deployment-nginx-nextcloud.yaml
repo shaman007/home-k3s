@@ -30,7 +30,7 @@ spec:
       volumes:
         - name: nextcloud-lh
           persistentVolumeClaim:
-            claimName: nextcloud-lh
+            claimName: nextcloud-lh-150gi
         - name: nextcloud-config
           configMap:
             name: nextcloud-config

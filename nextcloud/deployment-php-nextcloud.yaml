@@ -47,7 +47,7 @@ spec:
             sizeLimit: 1512Mi
         - name: nextcloud-lh
           persistentVolumeClaim:
-            claimName: nextcloud-lh
+            claimName: nextcloud-lh-150gi
         - name: dev-dri
           hostPath:
             path: /dev/dri

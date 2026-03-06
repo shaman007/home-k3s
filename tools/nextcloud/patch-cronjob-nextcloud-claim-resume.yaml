@@ -1,0 +1,10 @@
+spec:
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          volumes:
+            - name: application-code
+              persistentVolumeClaim:
+                claimName: nextcloud-lh-150gi

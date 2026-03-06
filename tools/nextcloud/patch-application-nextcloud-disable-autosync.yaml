@@ -1,0 +1,6 @@
+spec:
+  syncPolicy:
+    automated:
+      enabled: false
+    syncOptions:
+      - RespectIgnoreDifferences=true
