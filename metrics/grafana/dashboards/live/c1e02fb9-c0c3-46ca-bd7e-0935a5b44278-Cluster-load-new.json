@@ -317,7 +317,6 @@
                                                                            "showPoints":  "auto",
                                                                            "spanNulls":  false
                                                                        },
-                                                            "max":  100,
                                                             "min":  0,
                                                             "thresholds":  {
                                                                                "mode":  "absolute",
@@ -332,7 +331,7 @@
                                                                                              }
                                                                                          ]
                                                                            },
-                                                            "unit":  "percent"
+                                                            "unit":  "short"
                                                         },
                                            "overrides":  [
 

@@ -316,7 +316,6 @@ data:
                 "spanNulls": false
               },
               "min": 0,
-              "max": 100,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -330,7 +329,7 @@ data:
                   }
                 ]
               },
-              "unit": "percent"
+              "unit": "short"
             },
             "overrides": []
           },
