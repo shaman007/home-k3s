@@ -1,0 +1,62 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hister-import-firefox
+  namespace: hister
+  annotations:
+    argocd.argoproj.io/hook: Skip
+  labels:
+    app: hister-import-firefox
+    app.kubernetes.io/name: hister-import-firefox
+    app.kubernetes.io/instance: hister-import-firefox
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: hister-import-firefox
+    spec:
+      enableServiceLinks: false
+      restartPolicy: Never
+      securityContext:
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: import-firefox
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:master-debug
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          env:
+            - name: HISTER_DATA_DIR
+              value: /data
+          command:
+            - /hister/hister
+            - import
+            - firefox
+            - /data/places.sqlite
+            - --conf
+            - /data/config.yaml
+          volumeMounts:
+            - name: hister-data
+              mountPath: /data
+            - name: hister-config
+              mountPath: /data/config.yaml
+              subPath: config.yaml
+              readOnly: true
+      volumes:
+        - name: hister-data
+          persistentVolumeClaim:
+            claimName: hister-data
+        - name: hister-config
+          secret:
+            secretName: hister-access-token
+            items:
+              - key: config.yml
+                path: config.yaml
