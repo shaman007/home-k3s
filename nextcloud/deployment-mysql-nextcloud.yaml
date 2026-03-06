@@ -48,9 +48,9 @@ spec:
           resources:
             requests:
               cpu: "20m"
-              memory: "1024Mi"
+              memory: "2048Mi"
             limits:
-              memory: "1024Mi"
+              memory: "2048Mi"
           volumeMounts:
             - name: mysql-nextcloud-lh
               mountPath: /var/lib/mysql
