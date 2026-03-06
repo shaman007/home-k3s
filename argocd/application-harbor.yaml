@@ -96,10 +96,10 @@ spec:
             kubernetes.io/hostname: w386.k8s.my.lan
           resources:
             requests:
-              memory: 401Mi
-              cpu: 100m
+              memory: 1Gi
+              cpu: 500m
             limits:
-              memory: 401Mi
+              memory: 2Gi
         notary:
           enabled: false
           nodeSelector:
