@@ -13,3 +13,18 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: immich
+    # Some CNIs evaluate egress policies against Service ClusterIPs rather than
+    # translated pod IPs, so allow the cluster service range for Immich's
+    # internal dependencies.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.0/16
+      ports:
+        - protocol: TCP
+          port: 2283
+        - protocol: TCP
+          port: 3003
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
