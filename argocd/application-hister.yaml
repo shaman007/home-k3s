@@ -13,5 +13,12 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: hister
+  ignoreDifferences:
+  - group: ""
+    kind: PersistentVolumeClaim
+    jsonPointers:
+    - /spec/resources/requests/storage
   syncPolicy:
     automated: {}
+    syncOptions:
+    - RespectIgnoreDifferences=true
