@@ -6,5 +6,5 @@ metadata:
   namespace: immich
 spec:
   buffering:
-    maxRequestBodyBytes: 17179869184
+    maxRequestBodyBytes: 34359738368
     memRequestBodyBytes: 20000000
