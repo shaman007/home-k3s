@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: immich-valkey-restrict-ingress
+  namespace: immich
+spec:
+  podSelector:
+    matchLabels:
+      app: immich-valkey
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: immich
+          podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - immich-server
+                  - immich-machine-learning
+      ports:
+        - protocol: TCP
+          port: 6379

@@ -1,0 +1,11 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: chain
+  namespace: immich
+spec:
+  chain:
+    middlewares:
+      - name: hsts
+      - name: large-upload

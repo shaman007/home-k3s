@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: immich-valkey
+  namespace: immich
+  labels:
+    app: immich-valkey
+    app.kubernetes.io/name: immich-valkey
+    app.kubernetes.io/instance: immich-valkey
+    app.kubernetes.io/part-of: immich
+    app.kubernetes.io/version: "9"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  serviceName: immich-valkey
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-valkey
+  template:
+    metadata:
+      labels:
+        app: immich-valkey
+        app.kubernetes.io/name: immich-valkey
+        app.kubernetes.io/part-of: immich
+    spec:
+      containers:
+        - name: valkey
+          image: harbor.andreybondarenko.com/dockerhub/valkey/valkey:9
+          imagePullPolicy: IfNotPresent
+          command:
+            - valkey-server
+          args:
+            - --appendonly
+            - "yes"
+            - --save
+            - "60"
+            - "1"
+          ports:
+            - containerPort: 6379
+              name: redis
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - valkey-cli ping | grep PONG
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - valkey-cli ping | grep PONG
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: immich-valkey-lh

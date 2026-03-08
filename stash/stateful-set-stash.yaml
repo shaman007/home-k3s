@@ -25,7 +25,7 @@ spec:
         kubernetes.io/hostname: w386.k8s.my.lan
       containers:
         - name: stash
-          image: stashapp/stash:latest
+          image: harbor.andreybondarenko.com/library/stash:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: STASH_STASH

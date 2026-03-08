@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: immich
+  name: andreybondarenko-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: immich-chain@kubernetescrd
+  labels:
+    app: immich-server
+    app.kubernetes.io/name: immich-server
+    app.kubernetes.io/instance: immich-server
+    app.kubernetes.io/part-of: immich
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: immich.andreybondarenko.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: immich
+                port:
+                  number: 2283

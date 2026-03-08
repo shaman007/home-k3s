@@ -1,0 +1,10 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: large-upload
+  namespace: immich
+spec:
+  buffering:
+    maxRequestBodyBytes: 10000000000
+    memRequestBodyBytes: 20000000

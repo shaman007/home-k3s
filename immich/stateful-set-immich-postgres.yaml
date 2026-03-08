@@ -1,0 +1,100 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: immich-postgres
+  namespace: immich
+  labels:
+    app: immich-postgres
+    app.kubernetes.io/name: immich-postgres
+    app.kubernetes.io/instance: immich-postgres
+    app.kubernetes.io/part-of: immich
+    app.kubernetes.io/version: "14"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  serviceName: immich-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-postgres
+  template:
+    metadata:
+      labels:
+        app: immich-postgres
+        app.kubernetes.io/name: immich-postgres
+        app.kubernetes.io/part-of: immich
+    spec:
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      initContainers:
+        - name: volume-permissions
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              set -eux
+              mkdir -p /var/lib/postgresql/data /var/run/postgresql
+              chown -R 999:999 /var/lib/postgresql/data
+              chown -R 999:999 /var/run/postgresql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 32Mi
+      containers:
+        - name: postgres
+          image: harbor.andreybondarenko.com/ghcr/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+              name: tcp-postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-env
+                  key: DB_PASSWORD
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: immich
+            - name: POSTGRES_INITDB_ARGS
+              value: --data-checksums
+            - name: PGDATA
+              value: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "immich"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "immich"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-immich-postgres-lh

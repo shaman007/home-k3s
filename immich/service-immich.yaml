@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich
+  namespace: immich
+  labels:
+    app: immich-server
+    app.kubernetes.io/name: immich-server
+    app.kubernetes.io/instance: immich-server
+    app.kubernetes.io/part-of: immich
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ports:
+    - name: http
+      port: 2283
+      targetPort: http
+  selector:
+    app: immich-server
