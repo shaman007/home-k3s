@@ -32,6 +32,9 @@ spec:
               kubernetes.io/metadata.name: homeassistant
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: immich
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: karakeep
         - namespaceSelector:
             matchLabels:
