@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/name: immich-machine-learning
         app.kubernetes.io/part-of: immich
     spec:
+      enableServiceLinks: false
       containers:
         - name: immich-machine-learning
           image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v2.4.1

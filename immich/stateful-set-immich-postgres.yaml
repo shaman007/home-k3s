@@ -24,6 +24,7 @@ spec:
         app.kubernetes.io/name: immich-postgres
         app.kubernetes.io/part-of: immich
     spec:
+      enableServiceLinks: false
       securityContext:
         fsGroup: 999
         runAsUser: 999
