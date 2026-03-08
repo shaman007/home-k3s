@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: immich-machine-learning
-          image: harbor.andreybondarenko.com/ghcr/immich-app/immich-machine-learning:v2.4.1
+          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v2.4.1
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
