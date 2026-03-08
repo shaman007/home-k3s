@@ -66,10 +66,10 @@ registry:
         kubernetes.io/hostname: w386.k8s.my.lan
       resources:
         requests:
-          memory: 100Mi
+          memory: 256Mi
           cpu: 124m
         limits:
-          memory: 100Mi
+          memory: 512Mi
     controller:
       resources:
         requests:
@@ -85,6 +85,7 @@ trivy:
       memory: 1Gi
       cpu: 500m
     limits:
+      cpu: null
       memory: 2Gi
 notary:
   enabled: false  # disable notary
