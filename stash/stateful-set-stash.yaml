@@ -41,6 +41,8 @@ spec:
           ports:
             - name: http
               containerPort: 9999
+            - name: ai
+              containerPort: 7800
           readinessProbe:
             tcpSocket:
               port: http
