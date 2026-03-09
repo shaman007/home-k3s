@@ -1,0 +1,110 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bookmarked-media-sync
+  namespace: mastodon
+  labels:
+    app.kubernetes.io/name: bookmarked-media-sync
+    app.kubernetes.io/instance: bookmarked-media-sync
+    app.kubernetes.io/part-of: mastodon
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: bookmarked-media-sync
+            app.kubernetes.io/instance: bookmarked-media-sync
+            app.kubernetes.io/part-of: mastodon
+        spec:
+          enableServiceLinks: false
+          serviceAccountName: bookmarked-media-sync
+          restartPolicy: Never
+          initContainers:
+            - name: fetch-bookmarked-media
+              image: alpine:3.21
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -lc
+                - |
+                  apk add --no-cache ca-certificates coreutils curl kubectl
+                  /scripts/fetch-bookmarked-media.sh
+              env:
+                - name: BOOKMARKED_MEDIA_LOOKBACK_DAYS
+                  value: "90"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: work
+                  mountPath: /work
+          containers:
+            - name: immich-upload
+              image: node:20-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -lc
+                - |
+                  if ! find /import -type f -print -quit | grep -q .; then
+                    echo "No bookmarked media files to upload"
+                    exit 0
+                  fi
+
+                  npm install -g @immich/cli@2.5.6
+                  immich -d /config login-key "${IMMICH_INSTANCE_URL}" "${IMMICH_API_KEY}"
+                  upload_args="--recursive --no-progress"
+                  if [ "${IMMICH_DRY_RUN:-false}" = "true" ]; then
+                    upload_args="${upload_args} --dry-run --json-output"
+                  fi
+
+                  # Deliberately word-split the composed option list.
+                  # shellcheck disable=SC2086
+                  immich -d /config upload ${upload_args} /import
+              env:
+                - name: IMMICH_INSTANCE_URL
+                  value: https://immich.andreybondarenko.com/api
+                - name: IMMICH_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: bookmarked-media-sync
+                      key: IMMICH_API_KEY
+                - name: IMMICH_DRY_RUN
+                  value: "false"
+                - name: NO_COLOR
+                  value: "1"
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+                limits:
+                  memory: 1Gi
+              volumeMounts:
+                - name: work
+                  mountPath: /import
+                  subPath: import
+                - name: immich-config
+                  mountPath: /config
+          volumes:
+            - name: scripts
+              configMap:
+                name: bookmarked-media-sync-scripts
+                defaultMode: 0555
+            - name: work
+              emptyDir: {}
+            - name: immich-config
+              emptyDir: {}

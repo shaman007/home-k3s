@@ -1,0 +1,25 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: bookmarked-media-sync
+  namespace: mastodon
+  labels:
+    app.kubernetes.io/name: bookmarked-media-sync
+    app.kubernetes.io/instance: bookmarked-media-sync
+    app.kubernetes.io/part-of: mastodon
+    app.kubernetes.io/managed-by: argoCD
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - pods/exec
+    verbs:
+      - create
