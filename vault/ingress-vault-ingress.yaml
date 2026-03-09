@@ -18,6 +18,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: vault-server-ip
+                name: vault-active
                 port:
                   number: 8200
