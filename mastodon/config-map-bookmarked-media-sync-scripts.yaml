@@ -22,7 +22,7 @@ data:
 
     S3_HOST   = "https://s3.andreybondarenko.com"
     S3_BUCKET = "mastodon" # path-style bucket as you described
-    LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "90"), 10)
+    LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "30"), 10)
 
     EXPORT_DIR  = Rails.root.join("export")
     OUTPUT_PATH = EXPORT_DIR.join("bookmarked_media_s3_urls.txt")
@@ -96,7 +96,6 @@ data:
           end
         end
       end
-    end
 
     puts "Done."
   fetch-bookmarked-media.sh: |
@@ -110,6 +109,7 @@ data:
     download_dir="/work/import"
     s3_prefix="https://s3.andreybondarenko.com/mastodon/"
 
+    rm -rf /work/export /work/import
     mkdir -p /work/export "${download_dir}"
 
     pod_name="$(kubectl get pods -n mastodon -l "${pod_selector}" -o jsonpath="{.items[0].metadata.name}")"
@@ -123,7 +123,7 @@ data:
 
     kubectl exec -i -n mastodon "${pod_name}" -c mastodon-web -- sh -c "cat > ${remote_script_path}" < /scripts/list_bookmarked_media_s3.rb
 
-    kubectl exec -n mastodon "${pod_name}" -c mastodon-web -- sh -lc "rm -f ${remote_output_path}; BOOKMARKED_MEDIA_LOOKBACK_DAYS='${BOOKMARKED_MEDIA_LOOKBACK_DAYS:-90}' bundle exec rails runner ${remote_script_path}"
+    kubectl exec -n mastodon "${pod_name}" -c mastodon-web -- sh -lc "rm -f ${remote_output_path}; BOOKMARKED_MEDIA_LOOKBACK_DAYS='${BOOKMARKED_MEDIA_LOOKBACK_DAYS:-30}' bundle exec rails runner ${remote_script_path}"
 
     kubectl exec -n mastodon "${pod_name}" -c mastodon-web -- cat "${remote_output_path}" > "${export_file}"
 
@@ -146,7 +146,17 @@ data:
       mkdir -p "$(dirname "${destination}")"
 
       echo "Downloading ${url}"
-      curl --fail --location --retry 3 --retry-delay 5 --output "${destination}" "${url}"
+      if curl --fail --location --retry 3 --retry-delay 5 --output "${destination}" "${url}"; then
+        :
+      else
+        status="$?"
+        if [ "${status}" -eq 22 ]; then
+          echo "Skipping missing object: ${url}"
+          rm -f "${destination}"
+          continue
+        fi
+        exit "${status}"
+      fi
     done < "${export_file}"
 
     file_count="$(find "${download_dir}" -type f | wc -l | tr -d ' ')"

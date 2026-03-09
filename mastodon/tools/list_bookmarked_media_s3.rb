@@ -9,7 +9,7 @@ require "uri"
 
 S3_HOST   = "https://s3.andreybondarenko.com"
 S3_BUCKET = "mastodon" # path-style bucket as you described
-LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "90"), 10)
+LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "30"), 10)
 
 EXPORT_DIR  = Rails.root.join("export")
 OUTPUT_PATH = EXPORT_DIR.join("bookmarked_media_s3_urls.txt")
@@ -83,6 +83,5 @@ File.open(OUTPUT_PATH, "w") do |out|
       end
     end
   end
-end
 
 puts "Done."
