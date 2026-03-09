@@ -72,7 +72,6 @@ spec:
               mountPath: /data
             - name: stash-data
               mountPath: /external-libraries/stash-data
-              readOnly: true
           resources:
             requests:
               cpu: 250m
