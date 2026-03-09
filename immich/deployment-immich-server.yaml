@@ -24,6 +24,8 @@ spec:
         app.kubernetes.io/part-of: immich
     spec:
       enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: w386.k8s.my.lan
       containers:
         - name: immich-server
           image: harbor.andreybondarenko.com/github/immich-app/immich-server:v2.4.1
@@ -68,6 +70,9 @@ spec:
           volumeMounts:
             - name: library
               mountPath: /data
+            - name: stash-data
+              mountPath: /external-libraries/stash-data
+              readOnly: true
           resources:
             requests:
               cpu: 250m
@@ -78,3 +83,7 @@ spec:
         - name: library
           persistentVolumeClaim:
             claimName: immich-library-lh
+        - name: stash-data
+          hostPath:
+            path: /storage/k8s/stash-data
+            type: Directory

@@ -24,6 +24,8 @@ spec:
         app.kubernetes.io/part-of: immich
     spec:
       enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: w386.k8s.my.lan
       containers:
         - name: immich-machine-learning
           image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v2.4.1
