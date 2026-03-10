@@ -13,8 +13,6 @@ spec:
     helm:
       values: |
         core:
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
           resources:
             requests:
               memory: 213Mi
@@ -23,8 +21,6 @@ spec:
               memory: 213Mi
         database:
           internal:
-            nodeSelector:
-              kubernetes.io/hostname: w386.k8s.my.lan
             resources:
               requests:
                 memory: 1250Mi
@@ -33,11 +29,7 @@ spec:
                 memory: 1250Mi
         exporter:
           replicas: 1
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
         jobservice:
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
           resources:
             requests:
               memory: 100Mi
@@ -45,8 +37,6 @@ spec:
             limits:
               memory: 100Mi
         nginx:
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
           resources:
             requests:
               memory: 100Mi
@@ -54,8 +44,6 @@ spec:
             limits:
               memory: 100Mi
         portal:
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
           resources:
             requests:
               memory: 100Mi
@@ -64,8 +52,6 @@ spec:
               memory: 100Mi
         redis:
           internal:
-            nodeSelector:
-              kubernetes.io/hostname: w386.k8s.my.lan
             resources:
               requests:
                 memory: 113Mi
@@ -73,11 +59,7 @@ spec:
               limits:
                 memory: 113Mi
         registry:
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
           registry:
-            nodeSelector:
-              kubernetes.io/hostname: w386.k8s.my.lan
             resources:
               requests:
                 memory: 256Mi
@@ -92,8 +74,6 @@ spec:
               limits:
                 memory: 100Mi
         trivy:
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
           resources:
             requests:
               memory: 1Gi
@@ -103,8 +83,6 @@ spec:
               memory: 2Gi
         notary:
           enabled: false
-          nodeSelector:
-            kubernetes.io/hostname: w386.k8s.my.lan
         metrics:
           enabled: true
           core:
@@ -140,6 +118,7 @@ spec:
     jqPathExpressions:
     - .spec.template.metadata.annotations."checksum/secret"
     - .spec.template.metadata.annotations."checksum/secret-core"
+    - .spec.template.metadata.annotations."checksum/secret-jobservice"
   syncPolicy:
     automated: {}
     syncOptions:

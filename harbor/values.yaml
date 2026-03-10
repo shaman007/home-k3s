@@ -1,6 +1,4 @@
 core:
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
   resources:
     requests:
       memory: 213Mi
@@ -9,8 +7,6 @@ core:
       memory: 213Mi
 database:
   internal:
-    nodeSelector:
-      kubernetes.io/hostname: w386.k8s.my.lan
     resources:
       requests:
         memory: 1250Mi
@@ -19,11 +15,7 @@ database:
         memory: 1250Mi
 exporter:
   replicas: 1
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
 jobservice:
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
   resources:
     requests:
       memory: 100Mi
@@ -31,8 +23,6 @@ jobservice:
     limits:
       memory: 100Mi
 nginx:
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
   resources:
     requests:
       memory: 100Mi
@@ -40,8 +30,6 @@ nginx:
     limits:
       memory: 100Mi
 portal:
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
   resources:
     requests:
       memory: 100Mi
@@ -50,8 +38,6 @@ portal:
       memory: 100Mi
 redis:
   internal:
-    nodeSelector:
-      kubernetes.io/hostname: w386.k8s.my.lan
     resources:
       requests:
         memory: 113Mi
@@ -59,11 +45,7 @@ redis:
       limits:
         memory: 113Mi
 registry:
-    nodeSelector:
-      kubernetes.io/hostname: w386.k8s.my.lan
     registry:
-      nodeSelector:
-        kubernetes.io/hostname: w386.k8s.my.lan
       resources:
         requests:
           memory: 256Mi
@@ -78,8 +60,6 @@ registry:
         limits:
           memory: 100Mi
 trivy:
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
   resources:
     requests:
       memory: 1Gi
@@ -89,8 +69,6 @@ trivy:
       memory: 2Gi
 notary:
   enabled: false  # disable notary
-  nodeSelector:
-    kubernetes.io/hostname: w386.k8s.my.lan
 
 metrics:
   enabled: true
