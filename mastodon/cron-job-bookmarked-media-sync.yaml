@@ -54,7 +54,7 @@ spec:
                   mountPath: /work
           containers:
             - name: immich-upload
-              image: node:20-alpine
+              image: node:24-alpine
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
