@@ -19,6 +19,10 @@
       "automerge": true
     },
     {
+      "matchPackageNames": ["harbor.andreybondarenko.com/dockerhub/mysql"],
+      "allowedVersions": "/^8\\./"
+    },
+    {
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["major-update"]
