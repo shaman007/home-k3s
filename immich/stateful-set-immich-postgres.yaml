@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: immich-postgres
     app.kubernetes.io/instance: immich-postgres
     app.kubernetes.io/part-of: immich
-    app.kubernetes.io/version: "14"
+    app.kubernetes.io/version: "16"
     app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: immich-postgres
@@ -57,7 +57,7 @@ spec:
               memory: 32Mi
       containers:
         - name: postgres
-          image: harbor.andreybondarenko.com/github/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          image: harbor.andreybondarenko.com/github/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
@@ -100,4 +100,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data-immich-postgres-lh
+            claimName: data-immich-postgres16-lh
