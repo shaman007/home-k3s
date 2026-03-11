@@ -30,7 +30,7 @@ spec:
           restartPolicy: Never
           initContainers:
             - name: fetch-bookmarked-media
-              image: alpine:3.21
+              image: alpine:3.23
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
