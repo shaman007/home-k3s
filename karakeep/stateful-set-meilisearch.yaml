@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.37.0
+        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.38.1
         env:
         # Use a new DB path for 1.37.x and keep old data intact.
         - name: MEILI_DB_PATH
