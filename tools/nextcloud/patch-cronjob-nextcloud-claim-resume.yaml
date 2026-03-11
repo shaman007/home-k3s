@@ -7,4 +7,4 @@ spec:
           volumes:
             - name: application-code
               persistentVolumeClaim:
-                claimName: nextcloud-lh-150gi
+                claimName: nextcloud-lh-120gi

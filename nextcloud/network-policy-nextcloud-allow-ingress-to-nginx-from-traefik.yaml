@@ -7,7 +7,7 @@ spec:
   podSelector:
     matchLabels:
       app: nextcloud
-      tier: frontend
+      component: web
   policyTypes:
     - Ingress
   ingress:

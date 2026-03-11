@@ -15,7 +15,7 @@ spec:
         - podSelector:
             matchLabels:
               app: nextcloud
-              tier: backend
+              component: web
       ports:
         - protocol: TCP
           port: 3306

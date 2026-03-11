@@ -1,0 +1,50 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: copy-nextcloud-lh-150gi-to-nextcloud-lh-120gi
+  namespace: nextcloud
+  labels:
+    app.kubernetes.io/name: nextcloud-copy
+    app.kubernetes.io/instance: nextcloud
+    app.kubernetes.io/managed-by: manual
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nextcloud-copy
+        app.kubernetes.io/instance: nextcloud
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: copy
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              echo "Source usage before copy:"
+              du -sx /source
+              echo "Destination usage before copy:"
+              du -sx /target
+              cp -a /source/. /target/
+              sync
+              echo "Source usage after copy:"
+              du -sx /source
+              echo "Destination usage after copy:"
+              du -sx /target
+          volumeMounts:
+            - name: source
+              mountPath: /source
+              readOnly: true
+            - name: target
+              mountPath: /target
+      volumes:
+        - name: source
+          persistentVolumeClaim:
+            claimName: nextcloud-lh-150gi
+        - name: target
+          persistentVolumeClaim:
+            claimName: nextcloud-lh-120gi

@@ -1,7 +1,0 @@
-spec:
-  template:
-    spec:
-      volumes:
-        - name: nextcloud-lh
-          persistentVolumeClaim:
-            claimName: nextcloud-lh-150gi

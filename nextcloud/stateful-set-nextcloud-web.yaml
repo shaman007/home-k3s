@@ -1,27 +1,28 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: php-nextcloud
+  name: nextcloud-web
   namespace: nextcloud
   labels:
     app: nextcloud
-    tier: backend
+    component: web
     app.kubernetes.io/name: nextcloud
     app.kubernetes.io/instance: nextcloud
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
 spec:
+  serviceName: nextcloud-web
   replicas: 1
   selector:
     matchLabels:
       app: nextcloud
-      tier: backend
+      component: web
   template:
     metadata:
       labels:
         app: nextcloud
-        tier: backend
+        component: web
     spec:
       securityContext:
         runAsUser: 33
@@ -29,38 +30,7 @@ spec:
         fsGroup: 33
         supplementalGroups:
           - 993
-      volumes:
-        - name: phpini
-          configMap:
-            name: php-fpm-config
-        - name: varrun
-          emptyDir:
-            sizeLimit: 10Mi
-        - name: run
-          emptyDir:
-            sizeLimit: 10Mi
-        - name: sessions
-          emptyDir:
-            sizeLimit: 10Mi
-        - name: tmp
-          emptyDir:
-            sizeLimit: 1512Mi
-        - name: nextcloud-lh
-          persistentVolumeClaim:
-            claimName: nextcloud-lh-150gi
-        - name: dev-dri
-          hostPath:
-            path: /dev/dri
-            type: Directory
-        - name: alloy-config
-          configMap:
-            name: alloy-nextcloud-config
-        - name: alloy-run
-          emptyDir: {}
-        - name: alloy-data
-          emptyDir: {}
       affinity:
-        # Prevent scheduling on a specific node
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
@@ -77,7 +47,46 @@ spec:
                     operator: In
                     values:
                       - photon
-              topologyKey: "kubernetes.io/hostname"
+              topologyKey: kubernetes.io/hostname
+      volumes:
+        - name: phpini
+          configMap:
+            name: php-fpm-config
+        - name: nextcloud-config
+          configMap:
+            name: nextcloud-config
+            items:
+              - key: config
+                path: nextcloud.conf
+        - name: varrun
+          emptyDir:
+            sizeLimit: 10Mi
+        - name: run
+          emptyDir:
+            sizeLimit: 10Mi
+        - name: sessions
+          emptyDir:
+            sizeLimit: 10Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1512Mi
+        - name: nextcloud-lh
+          persistentVolumeClaim:
+            claimName: nextcloud-lh-120gi
+        - name: dev-dri
+          hostPath:
+            path: /dev/dri
+            type: Directory
+        - name: alloy-config
+          configMap:
+            name: alloy-nextcloud-config
+        - name: alloy-run
+          emptyDir: {}
+        - name: alloy-data
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir:
+            sizeLimit: 500Mi
       containers:
         - name: php-nextcloud
           image: harbor.andreybondarenko.com/library/php:latest
@@ -105,6 +114,9 @@ spec:
             - name: dev-dri
               mountPath: /dev/dri
               readOnly: false
+          ports:
+            - containerPort: 9000
+              name: fastcgi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -116,6 +128,30 @@ spec:
               memory: "6306Mi"
             limits:
               memory: "6306Mi"
+        - name: nextcloud-nginx
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.6
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - name: nextcloud-lh
+              mountPath: /nextcloud
+            - name: nextcloud-config
+              mountPath: /etc/nginx/conf.d
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.14.0
           args:

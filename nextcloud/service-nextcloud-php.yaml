@@ -6,7 +6,7 @@ metadata:
   name: nextcloud-php
   labels:
     app: nextcloud
-    tier: backend
+    component: web
     app.kubernetes.io/name: nextcloud
     app.kubernetes.io/instance: nextcloud
     app.kubernetes.io/version: "latest"
@@ -14,7 +14,7 @@ metadata:
 spec:
   selector:
     app: nextcloud
-    tier: backend
+    component: web
   ports:
     - protocol: TCP
       port: 9000

@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   namespace: nextcloud
-  name: nextcloud-lh-150gi
+  name: nextcloud-lh-120gi
   labels:
     storage.k8s.io/name: longhorn
     app.kubernetes.io/instance: nextcloud
@@ -12,8 +12,8 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   storageClassName: longhorn
   resources:
     requests:
-      storage: 150Gi
+      storage: 120Gi

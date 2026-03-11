@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   namespace: nextcloud
-  name: nginx-nextcloud
+  name: nextcloud-web
   labels:
     app: nextcloud
     component: web
@@ -12,10 +12,16 @@ metadata:
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
 spec:
+  clusterIP: None
   selector:
     app: nextcloud
     component: web
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 8080
       targetPort: 8080
+    - name: fastcgi
+      protocol: TCP
+      port: 9000
+      targetPort: 9000
