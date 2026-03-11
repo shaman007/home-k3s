@@ -83,7 +83,7 @@ spec:
               name: grafana-dashboard-provider
               readOnly: true
             - mountPath: /var/lib/grafana/dashboards/cluster-load
-              name: grafana-dashboard-cluster-load-new
+              name: grafana-dashboards
               readOnly: true
       volumes:
         - name: grafana-pv
@@ -95,6 +95,10 @@ spec:
         - name: grafana-dashboard-provider
           configMap:
             name: grafana-dashboard-provider
-        - name: grafana-dashboard-cluster-load-new
-          configMap:
-            name: grafana-dashboard-cluster-load-new
+        - name: grafana-dashboards
+          projected:
+            sources:
+              - configMap:
+                  name: grafana-dashboard-cluster-load-new
+              - configMap:
+                  name: grafana-dashboard-vault-overview

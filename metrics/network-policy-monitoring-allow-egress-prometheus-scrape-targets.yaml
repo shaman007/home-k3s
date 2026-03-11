@@ -191,6 +191,13 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    - to:
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: wordpress
       ports:
         - protocol: TCP

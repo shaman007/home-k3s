@@ -52,6 +52,20 @@ data:
           severity: mail
         annotations:
           summary: Mysql is down
+      - alert: VaultMetricsTargetDown
+        expr: up{job="vault"} < 1
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Vault metrics target is down.
+      - alert: VaultSealed
+        expr: max_over_time(vault_sys_sealed{job="vault"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: mail
+        annotations:
+          summary: Vault is sealed.
       - alert: Postgresql-bitwarden is down
         expr: pg_up{instance="bitwarden-postgres-metrics.bitwarden.svc.cluster.local:9187", job="postgres-bitwarden"} < 1
         for: 1m
@@ -386,6 +400,16 @@ data:
         static_configs:
         - targets:
           - keycloak.keycloak.svc.cluster.local:9000
+      - job_name: vault
+        scrape_interval: 45s
+        scrape_timeout: 30s
+        metrics_path: "/v1/sys/metrics"
+        params:
+          format:
+            - prometheus
+        static_configs:
+        - targets:
+          - vault-active.vault.svc.cluster.local:8200
       - job_name: harbor-core
         scrape_interval: 45s
         scrape_timeout:  30s
