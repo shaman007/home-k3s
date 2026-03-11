@@ -1,6 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
+  "registryAliases": {
+    "harbor.andreybondarenko.com/dockerhub": "index.docker.io",
+    "harbor.andreybondarenko.com/google": "gcr.io",
+    "harbor.andreybondarenko.com/github": "ghcr.io",
+    "harbor.andreybondarenko.com/quay": "quay.io"
+  },
   "argocd": {
     "managerFilePatterns": ["/^argocd\\/application-.*\\.ya?ml$/"]
   },
