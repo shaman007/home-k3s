@@ -12,9 +12,9 @@ curl -X PUT 'http://meilisearch.karakeep.svc.cluster.local:7700/indexes/bookmark
 --data-binary '["tags","createdAt"]'
 ```
 
-## Meilisearch upgrade: 1.37.0 -> 1.38.1 (dumpless)
+## Meilisearch upgrade: 1.38.1 -> 1.38.2 (dumpless)
 
-`stateful-set-meilisearch.yaml` is pinned to `v1.38.1` and keeps:
+`stateful-set-meilisearch.yaml` is pinned to `v1.38.2` and keeps:
 
 * `MEILI_DB_PATH=/meili_data/data-v1.37.0-r1.ms`
 * `MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE=true`
