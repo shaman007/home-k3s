@@ -8,7 +8,7 @@ metadata:
     app: karakeep
     app.kubernetes.io/name: meilisearch
     app.kubernetes.io/instance: meilisearch
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "1.38.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: meilisearch-headless
@@ -23,9 +23,9 @@ spec:
     spec:
       containers:
       - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.37.0
+        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.38.0
         env:
-        # Use a new DB path for 1.37.x and keep old data intact.
+        # Keep the existing 1.37 data path for the in-place 1.38.0 upgrade.
         - name: MEILI_DB_PATH
           value: /meili_data/data-v1.37.0-r1.ms
         # Keep indexing memory below container limits to prevent OOM during import.

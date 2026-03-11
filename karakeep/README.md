@@ -12,7 +12,42 @@ curl -X PUT 'http://meilisearch.karakeep.svc.cluster.local:7700/indexes/bookmark
 --data-binary '["tags","createdAt"]'
 ```
 
-## Meilisearch migration: 1.36.0 (Deployment) -> 1.37.0 (StatefulSet)
+## Meilisearch upgrade: 1.37.0 -> 1.38.0 (in place)
+
+`stateful-set-meilisearch.yaml` is pinned to `v1.38.0` and keeps:
+
+* `MEILI_DB_PATH=/meili_data/data-v1.37.0-r1.ms`
+
+This rollout keeps the existing on-disk database and only bumps the container image.
+
+### Rollout
+
+Sync ArgoCD and verify the StatefulSet restarts cleanly:
+
+```powershell
+kubectl -n karakeep get sts meilisearch
+kubectl -n karakeep rollout status statefulset/meilisearch
+kubectl -n karakeep get pods -l app=meilisearch -o wide
+kubectl -n karakeep logs statefulset/meilisearch --tail=200
+```
+
+### Smoke test
+
+```powershell
+# terminal 1
+kubectl -n karakeep port-forward svc/meilisearch 7700:7700
+```
+
+```powershell
+# terminal 2
+$masterKey = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String((kubectl -n karakeep get secret karakeep-secret-env -o jsonpath='{.data.MEILI_MASTER_KEY}')))
+$headers = @{ Authorization = "Bearer $masterKey" }
+
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:7700/health" -Headers $headers
+Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:7700/indexes/bookmarks/stats" -Headers $headers
+```
+
+## Historical migration: 1.36.0 (Deployment) -> 1.37.0 (StatefulSet)
 
 ### Phase 1: Restore availability
 
