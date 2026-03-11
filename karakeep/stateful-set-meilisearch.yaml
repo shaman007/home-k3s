@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.38.0
+        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.38.1
         env:
         # Keep the existing 1.37 data path for the in-place 1.38.0 upgrade.
         - name: MEILI_DB_PATH
