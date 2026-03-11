@@ -19,16 +19,6 @@
       "automerge": true
     },
     {
-      "matchPackageNames": ["harbor.andreybondarenko.com/dockerhub/mysql"],
-      "matchFileNames": ["nextcloud/deployment-mysql-nextcloud.yaml"],
-      "allowedVersions": "/^8\\./"
-    },
-    {
-      "matchPackageNames": ["harbor.andreybondarenko.com/dockerhub/mysql"],
-      "matchFileNames": ["wordpress/deployment-mysql-wordpress.yaml"],
-      "allowedVersions": "/^9\\./"
-    },
-    {
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["major-update"]
