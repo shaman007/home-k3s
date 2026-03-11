@@ -23,6 +23,18 @@ spec:
       securityContext:
         fsGroup: 65532
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: fix-data-permissions
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          command: ["sh", "-c", "chown -R 65532:65532 /data"]
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: hister-data
+              mountPath: /data
       containers:
         - name: hister
           image: harbor.andreybondarenko.com/github/asciimoo/hister:master
