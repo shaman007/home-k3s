@@ -15,6 +15,11 @@
   },
   "packageRules": [
     {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["harbor.andreybondarenko.com/dockerhub/mongo"],
+      "allowedVersions": "/^7(\\.|$)/"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },
