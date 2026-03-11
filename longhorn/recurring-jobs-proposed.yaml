@@ -1,0 +1,194 @@
+# Proposed normalized Longhorn recurring jobs.
+# Generated from live cluster state on 2026-03-11.
+# This file is intentionally descriptive and is not wired into Argo yet.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: trim-daily-a
+  namespace: longhorn-system
+spec:
+  concurrency: 2
+  cron: 5 0 * * *
+  groups:
+    - trim-daily-a
+  labels: {}
+  name: trim-daily-a
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: trim-daily-b
+  namespace: longhorn-system
+spec:
+  concurrency: 2
+  cron: 25 0 * * *
+  groups:
+    - trim-daily-b
+  labels: {}
+  name: trim-daily-b
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: trim-daily-c
+  namespace: longhorn-system
+spec:
+  concurrency: 2
+  cron: 45 0 * * *
+  groups:
+    - trim-daily-c
+  labels: {}
+  name: trim-daily-c
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: trim-hourly
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 17 * * * *
+  groups:
+    - trim-hourly
+  labels: {}
+  name: trim-hourly
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: trim-15min
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: '*/15 * * * *'
+  groups:
+    - trim-15min
+  labels: {}
+  name: trim-15min
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily-retain31-a
+  namespace: longhorn-system
+spec:
+  concurrency: 2
+  cron: 5 1 * * *
+  groups:
+    - backup-daily-retain31-a
+  labels: {}
+  name: backup-daily-retain31-a
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily-retain31-b
+  namespace: longhorn-system
+spec:
+  concurrency: 2
+  cron: 5 2 * * *
+  groups:
+    - backup-daily-retain31-b
+  labels: {}
+  name: backup-daily-retain31-b
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily-retain31-c
+  namespace: longhorn-system
+spec:
+  concurrency: 2
+  cron: 5 3 * * *
+  groups:
+    - backup-daily-retain31-c
+  labels: {}
+  name: backup-daily-retain31-c
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily-retain30
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 35 2 * * *
+  groups:
+    - backup-daily-retain30
+  labels: {}
+  name: backup-daily-retain30
+  parameters: {}
+  retain: 30
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily-retain11
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 20 1 * * *
+  groups:
+    - backup-daily-retain11
+  labels: {}
+  name: backup-daily-retain11
+  parameters: {}
+  retain: 11
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-daily-retain1
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 35 1 * * *
+  groups:
+    - backup-daily-retain1
+  labels: {}
+  name: backup-daily-retain1
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: snapshot-daily-retain1
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 20 4 * * *
+  groups:
+    - snapshot-daily-retain1
+  labels: {}
+  name: snapshot-daily-retain1
+  parameters: {}
+  retain: 1
+  task: snapshot

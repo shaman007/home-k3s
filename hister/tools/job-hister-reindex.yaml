@@ -26,7 +26,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: reindex
-          image: harbor.andreybondarenko.com/github/asciimoo/hister:master-debug
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:master
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 0

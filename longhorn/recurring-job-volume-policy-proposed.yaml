@@ -1,0 +1,1037 @@
+# Proposed recurring-job group assignments for Longhorn-backed volumes.
+# Use these labels on Longhorn Volume objects or the corresponding PVC/PVC template workflow once you choose an implementation path.
+generatedAt: "2026-03-11"
+sourceNamespace: longhorn-system
+implementationNotes:
+  - For existing volumes, apply recurring-job-group.longhorn.io/<group>=enabled on the Longhorn Volume resource.
+  - For workload manifests, prefer PVC or volumeClaimTemplate labels and also set recurring-job.longhorn.io/source=enabled so Longhorn syncs recurring-job labels from the PVC to the Volume.
+  - StorageClass recurringJobSelector is useful for new volumes but will not retrofit existing volumes.
+summary:
+  liveRecurringJobs: 141
+  liveVolumes: 56
+  proposedRecurringJobs: 12
+  policyGroupUsage:
+    backup-daily-retain1: 2
+    backup-daily-retain11: 1
+    backup-daily-retain30: 2
+    backup-daily-retain31-a: 9
+    backup-daily-retain31-b: 8
+    backup-daily-retain31-c: 8
+    snapshot-daily-retain1: 1
+    trim-15min: 1
+    trim-daily-a: 16
+    trim-daily-b: 15
+    trim-daily-c: 15
+    trim-hourly: 2
+volumePolicies:
+  - namespace: bitwarden
+    pvcName: data-bitwarden-postgres-lh
+    longhornVolume: pvc-2eff94a4-7422-4c84-8136-ef64d8743d96
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-0pvi4x
+      - c-yalnkj
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes: []
+  - namespace: bitwarden
+    pvcName: data-lh
+    longhornVolume: pvc-1b795b0f-43dc-431f-9a73-92734f67b360
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-cs4lzz
+      - c-w5vx0y
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: bitwarden
+    pvcName: keys-lh
+    longhornVolume: pvc-42d4833a-9c12-4239-8e69-51851ad284e7
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-238zhe
+      - c-94rxi0
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: clamav
+    pvcName: avdata
+    longhornVolume: pvc-949d40a3-b486-4d1f-9ebb-a30f2bfd11ac
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-2j74i5
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+    notes: []
+  - namespace: convertx
+    pvcName: convertx-data
+    longhornVolume: pvc-6fe73cbf-3033-46d3-9c00-4222032d6757
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-s2gxk1
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+    notes: []
+  - namespace: dawarich
+    pvcName: data-dawarich-postgres-lh
+    longhornVolume: pvc-40698ded-bda2-4bde-8441-6657969d2728
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-0nua6h
+      - c-ueppdg
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes: []
+  - namespace: dawarich
+    pvcName: dawarich-db-data
+    longhornVolume: pvc-2962a17a-2a04-4487-a723-d739d68382fc
+    workloadKinds: []
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs: []
+    currentTasks: []
+    proposedRecurringJobGroups: []
+    proposedLonghornVolumeLabels: {}
+    notes:
+      - Current behavior has no recurring jobs; proposal keeps this volume unmanaged.
+  - namespace: dawarich
+    pvcName: gem-cache
+    longhornVolume: pvc-271515af-6b11-44bd-97c5-d716aeb95dac
+    workloadKinds: []
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs: []
+    currentTasks: []
+    proposedRecurringJobGroups: []
+    proposedLonghornVolumeLabels: {}
+    notes:
+      - Current behavior has no recurring jobs; proposal keeps this volume unmanaged.
+  - namespace: dawarich
+    pvcName: gem-sidekiq
+    longhornVolume: pvc-65463c86-6100-4648-b51d-afde427330fa
+    workloadKinds: []
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs: []
+    currentTasks: []
+    proposedRecurringJobGroups: []
+    proposedLonghornVolumeLabels: {}
+    notes:
+      - Current behavior has no recurring jobs; proposal keeps this volume unmanaged.
+  - namespace: dawarich
+    pvcName: photon-data
+    longhornVolume: pvc-1cbf0685-5089-4d55-ba22-5aa9ac0de7c2
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-4glxto
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+    notes: []
+  - namespace: dawarich
+    pvcName: public
+    longhornVolume: pvc-d1da6d98-862f-420c-b91e-90a068114824
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-felw92
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+    notes: []
+  - namespace: dawarich
+    pvcName: redis-dawarich-redis-dawarich-0
+    longhornVolume: pvc-1cee2471-6fff-40bd-9487-accdbc23dee2
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-yek38w
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-hourly
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-hourly: enabled
+    notes:
+      - Normalizes hourly filesystem-trim volumes onto a shared off-peak hourly schedule.
+  - namespace: dawarich
+    pvcName: storage
+    longhornVolume: pvc-becd1e62-8345-4f85-9e52-fb5e5a8bcf67
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-cpcrux
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: dawarich
+    pvcName: watched
+    longhornVolume: pvc-43955fb4-e88f-4309-807f-6f1c3eae67af
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-r8biuc
+      - c-sdlnt7
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain30
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain30: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: elastic-stack
+    pvcName: elasticsearch-data-es-es-default-0
+    longhornVolume: pvc-77f4600c-6266-4fb3-be3c-be8d16bb8a88
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-p12632
+      - c-smg9hq
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain1
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain1: enabled
+    notes: []
+  - namespace: harbor
+    pvcName: data-harbor-redis-0
+    longhornVolume: pvc-ea5c1612-3933-4232-8f0c-13e22c187e74
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-cnxyl3
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: harbor
+    pvcName: data-harbor-trivy-0
+    longhornVolume: pvc-c3917e97-b407-446f-acd2-f93410a3aa71
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-0q3jql
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+    notes: []
+  - namespace: harbor
+    pvcName: database-data-harbor-database-0
+    longhornVolume: pvc-9d4622dd-cb6d-44cf-be1d-867ad0b93ff9
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-4qqh2o
+      - c-sonbsb
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes: []
+  - namespace: harbor
+    pvcName: harbor-jobservice
+    longhornVolume: pvc-91c680f3-9b5b-413d-9d51-c7a6c99451cb
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-vldno1
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: harbor
+    pvcName: harbor-registry
+    longhornVolume: pvc-2a9a34dd-e8c6-427a-8d61-26c013890e66
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-cet8ts
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+    notes: []
+  - namespace: hister
+    pvcName: hister-data
+    longhornVolume: pvc-9202e723-27d2-4e23-bbd7-d707f60cff82
+    workloadKinds:
+      - Job
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-m1dp11
+      - c-up7396
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-15min
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-15min: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes:
+      - Preserves the only 15-minute filesystem-trim schedule in the cluster.
+  - namespace: immich
+    pvcName: data-immich-postgres-lh
+    longhornVolume: pvc-07c06558-6d49-42d5-b0d9-56cdb58431da
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-cb5azc
+      - c-tv7n1l
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes: []
+  - namespace: immich
+    pvcName: data-immich-postgres16-lh
+    longhornVolume: pvc-b59be461-c7cc-4b3f-87fe-c7c3167bb743
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs: []
+    currentTasks: []
+    proposedRecurringJobGroups: []
+    proposedLonghornVolumeLabels: {}
+    notes:
+      - Current behavior has no recurring jobs; proposal keeps this volume unmanaged.
+  - namespace: immich
+    pvcName: immich-library-lh
+    longhornVolume: pvc-1eed8ac4-26cf-4f62-af4a-eb14867bbbd9
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-0w879p
+      - c-pxrblq
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes: []
+  - namespace: immich
+    pvcName: immich-ml-cache-lh
+    longhornVolume: pvc-b233f72f-2834-46ab-9f5f-e2a3de4f44c9
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-8l3hoi
+      - c-h4em9u
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes: []
+  - namespace: immich
+    pvcName: immich-valkey-lh
+    longhornVolume: pvc-d6e159ff-8c3c-4ae6-be9e-91debb693b14
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-gtcmye
+      - c-oa9w9w
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain11
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain11: enabled
+    notes: []
+  - namespace: karakeep
+    pvcName: karakeep-data
+    longhornVolume: pvc-2d4dbfe7-fda1-4612-beab-b6655146f9ec
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-7iroo4
+      - c-7ivma9
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain30
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain30: enabled
+    notes: []
+  - namespace: karakeep
+    pvcName: meili-data
+    longhornVolume: pvc-0c4c967e-ed4b-4b3d-9bb1-1258be21ec98
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-nplkro
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+    notes: []
+  - namespace: keycloak
+    pvcName: data-keycloak-postgres-lh
+    longhornVolume: pvc-12667a14-8bbd-4d46-8021-d56695f2e15a
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-najrkb
+      - c-nisi0t
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes: []
+  - namespace: loki
+    pvcName: storage-loki-0
+    longhornVolume: pvc-ea83c223-9963-4025-a7e3-25f81ba57a3c
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-4jt5p5
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: mail
+    pvcName: mail-lh
+    longhornVolume: pvc-d132273f-f3c9-468d-8481-fd940f95d38d
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-4hwbr0
+      - c-y4ar7p
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: mail
+    pvcName: queue-lh
+    longhornVolume: pvc-3b9ccd5c-df75-4bad-bc3e-f8e28fe179ee
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-g4nh1g
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+    notes: []
+  - namespace: mail
+    pvcName: redis-redis-0
+    longhornVolume: pvc-a2a972f9-30ef-4a6f-82df-63d3cc7a5479
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-a02bfl
+      - c-hkmpsc
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes: []
+  - namespace: mail
+    pvcName: rspamd-local
+    longhornVolume: pvc-7f98d752-eb15-4280-a559-ce666bdc03aa
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-2mm854
+      - c-9gpoc0
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: mastodon
+    pvcName: bookmarked-media-sync-work
+    longhornVolume: pvc-d14fde68-378f-43e5-a448-194e2639eff7
+    workloadKinds:
+      - Job
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs: []
+    currentTasks: []
+    proposedRecurringJobGroups: []
+    proposedLonghornVolumeLabels: {}
+    notes:
+      - Current behavior has no recurring jobs; proposal keeps this volume unmanaged.
+  - namespace: mastodon
+    pvcName: data-mastodon-postgres-lh
+    longhornVolume: pvc-4cbe3a88-3b28-4826-beba-4f31e1413c74
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-5j48s7
+      - c-kwom0m
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain1
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain1: enabled
+    notes: []
+  - namespace: mastodon
+    pvcName: redis-redis-0
+    longhornVolume: pvc-ad64d416-e94d-460a-a12d-bcd3e06aed63
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-tgtkp1
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: matrix
+    pvcName: matrix-lh
+    longhornVolume: pvc-8a69c230-20a9-4adc-8740-87a972d96083
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-6eelos
+      - c-y7epon
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: minecraft
+    pvcName: minecraft1-lh
+    longhornVolume: pvc-d2088fe3-4898-46ba-9ef4-5152bc0919a4
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-5fg7wk
+      - c-kds7ms
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: monitoring
+    pvcName: compactor-lh
+    longhornVolume: pvc-4541e1da-a9d2-4dd6-a7b9-9a1e4e7bf202
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-mrj88w
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-hourly
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-hourly: enabled
+    notes:
+      - Normalizes hourly filesystem-trim volumes onto a shared off-peak hourly schedule.
+  - namespace: monitoring
+    pvcName: grafana-pvc
+    longhornVolume: pvc-79bd19a7-ebd6-4404-b36d-d8fadc712b7c
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-gkgwd6
+      - c-l5syqy
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: monitoring
+    pvcName: prometheus-lh
+    longhornVolume: pvc-fb3395c7-e73e-4721-a9ed-126157f89616
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-ymox4u
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+    notes: []
+  - namespace: monitoring
+    pvcName: storagegw-lh
+    longhornVolume: pvc-b47ad074-9357-4907-b2d8-6e34ecf2412e
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-znb1px
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+    notes: []
+  - namespace: nextcloud
+    pvcName: mysql-nextcloud-lh
+    longhornVolume: pvc-f21fc43d-c9f1-4c72-8e6d-a5771c44b6dc
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-sxbmyk
+      - c-xyl8wr
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes: []
+  - namespace: nextcloud
+    pvcName: nextcloud-lh-120gi
+    longhornVolume: pvc-eb967c74-7374-44aa-8c5f-358972edfe93
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-667b0m
+      - c-v2mpzf
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes: []
+  - namespace: nextcloud
+    pvcName: nextcloud-lh-150gi
+    longhornVolume: pvc-c1915b2f-3619-44fe-9f6b-aa2080c5a706
+    workloadKinds:
+      - Job
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-sbcmv3
+      - c-xfrk1m
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes: []
+  - namespace: nextcloud
+    pvcName: redis-redis-0
+    longhornVolume: pvc-81121c9a-710a-4552-84eb-942cb3080628
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-39syrn
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: plex
+    pvcName: plex-conf-lh2
+    longhornVolume: pvc-f53b2a95-249a-4cf6-b07b-5d50b197cc56
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-18lku8
+      - c-9nodqt
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: spotify
+    pvcName: mongo-lh
+    longhornVolume: pvc-fc091030-bf31-4b8e-99fd-545d963b766a
+    workloadKinds:
+      - StatefulSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-78r2nf
+      - c-ohqoar
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: stirling-pdf
+    pvcName: stirling-pdf-configs
+    longhornVolume: pvc-5dcfa8ee-00f1-4fbf-bb1a-9556cd569ab1
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs: []
+    currentTasks: []
+    proposedRecurringJobGroups: []
+    proposedLonghornVolumeLabels: {}
+    notes:
+      - Current behavior has no recurring jobs; proposal keeps this volume unmanaged.
+  - namespace: traefik
+    pvcName: traefik
+    longhornVolume: pvc-afc7a5ee-23df-4b21-a143-c78ffcd2e684
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-o3v3m2
+    currentTasks:
+      - backup
+    proposedRecurringJobGroups:
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes: []
+  - namespace: vault
+    pvcName: data-vault-0
+    longhornVolume: pvc-341aa022-038e-4e8a-8963-fec8c0600d9b
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-0242kl
+      - c-zx7fwg
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+      - backup-daily-retain31-b
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    notes: []
+  - namespace: vault
+    pvcName: data-vault-1
+    longhornVolume: pvc-b2c2ab5e-e588-4271-bb14-92ca93a3496b
+    workloadKinds:
+      - StatefulSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - c-9ov66r
+      - c-h3jde6
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
+  - namespace: wordpress
+    pvcName: mysql-wordpress-lh
+    longhornVolume: pvc-78821671-e61a-4504-b4d7-1e76e5ef120c
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-5qksp1
+      - c-fi636k
+    currentTasks:
+      - filesystem-trim
+      - snapshot
+    proposedRecurringJobGroups:
+      - trim-daily-b
+      - snapshot-daily-retain1
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-b: enabled
+      recurring-job-group.longhorn.io/snapshot-daily-retain1: enabled
+    notes:
+      - Carries forward the current snapshot policy for this volume.
+  - namespace: wordpress
+    pvcName: redis-redis-0
+    longhornVolume: pvc-3ac773ad-2997-4814-84a8-ed83ba06a2f6
+    workloadKinds:
+      - StatefulSet
+    fromBackup: false
+    restoreVolumeRecurringJob: ignored
+    currentRecurringJobs:
+      - c-av1ox5
+    currentTasks:
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-c
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-c: enabled
+    notes: []
+  - namespace: wordpress
+    pvcName: wordpress-lh
+    longhornVolume: pvc-c26abb1e-aa4d-4687-ba61-2a93a0012dfc
+    workloadKinds:
+      - ReplicaSet
+    fromBackup: true
+    restoreVolumeRecurringJob: enabled
+    currentRecurringJobs:
+      - restored-recurring-job-31791951d1833d48
+      - restored-recurring-job-4500f8b61c23a4d5
+    currentTasks:
+      - backup
+      - filesystem-trim
+    proposedRecurringJobGroups:
+      - trim-daily-a
+      - backup-daily-retain31-a
+    proposedLonghornVolumeLabels:
+      recurring-job-group.longhorn.io/trim-daily-a: enabled
+      recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
+    notes:
+      - Volume was created from backup; keep restore semantics in mind before changing labels.
