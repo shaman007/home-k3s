@@ -1,0 +1,1992 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1960" height="12496" viewBox="0 0 1960 12496" role="img" aria-labelledby="title desc">
+  <title id="title">Kubernetes NetworkPolicy Inventory</title>
+  <desc id="desc">Overview, connection graph, and per-namespace inventory of live Kubernetes NetworkPolicy objects.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f4f1e8; }
+      .title { font: 700 30px 'Segoe UI', Arial, sans-serif; fill: #1d2a33; }
+      .subtitle { font: 500 15px 'Segoe UI', Arial, sans-serif; fill: #50606c; }
+      .legend { font: 600 12px 'Segoe UI', Arial, sans-serif; fill: #33424d; }
+      .overview-panel { fill: #fffaf0; stroke: #d9c9a3; stroke-width: 1.4; }
+      .namespace-chip { fill: #fdfdfc; stroke: #d7dee2; stroke-width: 1.2; }
+      .chip-title { font: 700 14px 'Segoe UI', Arial, sans-serif; fill: #23333d; }
+      .chip-subtitle { font: 500 12px 'Segoe UI', Arial, sans-serif; fill: #5d6f7a; }
+      .graph-panel { fill: #fcfcfb; stroke: #d8e0e4; stroke-width: 1.5; }
+      .graph-heading { font: 700 13px 'Segoe UI', Arial, sans-serif; fill: #2b3d46; }
+      .graph-guide { stroke: #d8dee2; stroke-width: 1; }
+      .graph-node { fill: #f0f7fb; stroke: #aac1cf; stroke-width: 1; }
+      .graph-node.special { fill: #fdf2df; stroke: #d6ba84; }
+      .graph-node-label { font: 600 11px 'Segoe UI', Arial, sans-serif; fill: #20323c; }
+      .graph-node-metric { font: 700 11px Consolas, 'Courier New', monospace; fill: #455a66; }
+      .edge { fill: none; }
+      .edge.ingress { stroke: #4d88c7; marker-end: url(#arrow-ingress); }
+      .edge.egress { stroke: #d48a2b; marker-end: url(#arrow-egress); }
+      .edge.both { stroke: #4a9b69; marker-end: url(#arrow-both); }
+      .edge-count { font: 700 10px Consolas, 'Courier New', monospace; fill: #52656f; text-anchor: middle; }
+      .namespace-panel { fill: #fbfcfb; stroke: #d9e0e3; stroke-width: 1.6; }
+      .section-title { font: 700 21px 'Segoe UI', Arial, sans-serif; fill: #18303d; }
+      .section-subtitle { font: 600 12px 'Segoe UI', Arial, sans-serif; fill: #5d6a73; }
+      .policy-title { font: 700 13px 'Segoe UI', Arial, sans-serif; fill: #12222c; }
+      .policy-subtitle { font: 600 11px 'Segoe UI', Arial, sans-serif; fill: #4b5f69; }
+      .policy-body { font: 500 12px Consolas, 'Courier New', monospace; fill: #24333b; }
+      .policy { stroke-width: 1.1; }
+      .policy.ingress { fill: #edf6ff; stroke: #98bde6; }
+      .policy.egress { fill: #fff3df; stroke: #d8b574; }
+      .policy.mixed { fill: #ebf7ef; stroke: #8dbca0; }
+      .policy.deny-both { fill: #fdebea; stroke: #db8e88; }
+      .policy.deny-ingress { fill: #f6edff; stroke: #b39bcf; }
+      .policy.deny-egress { fill: #fff0ea; stroke: #d9a08e; }
+    </style>
+    <marker id="arrow-ingress" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#4d88c7" />
+    </marker>
+    <marker id="arrow-egress" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#d48a2b" />
+    </marker>
+    <marker id="arrow-both" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#4a9b69" />
+    </marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1960" height="12496" />
+  <text x="28" y="58" class="title">Kubernetes NetworkPolicy Inventory</text>
+<text x="28" y="85" class="subtitle">Context: default | Generated: 2026-03-11 13:46 Central Europe Standard Time | Namespaces: 31 | Policies: 229</text>
+<rect x="28" y="106" width="1904" height="82" rx="18" class="overview-panel" />
+<rect x="48" y="118" width="18" height="18" rx="4" class="policy ingress" />
+<text x="76" y="132" class="legend">Ingress policy</text>
+<rect x="298" y="118" width="18" height="18" rx="4" class="policy egress" />
+<text x="326" y="132" class="legend">Egress policy</text>
+<rect x="548" y="118" width="18" height="18" rx="4" class="policy mixed" />
+<text x="576" y="132" class="legend">Ingress + Egress</text>
+<rect x="798" y="118" width="18" height="18" rx="4" class="policy deny-both" />
+<text x="826" y="132" class="legend">Default deny / empty rule set</text>
+<rect x="28" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="42" y="242" class="chip-title">bitwarden</text>
+<text x="42" y="264" class="chip-subtitle">7 policies | IN 3 | OUT 5 | deny 1</text>
+<rect x="256" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="270" y="242" class="chip-title">ca-scanner</text>
+<text x="270" y="264" class="chip-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="484" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="498" y="242" class="chip-title">clamav</text>
+<text x="498" y="264" class="chip-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="712" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="726" y="242" class="chip-title">connectivity-exporter</text>
+<text x="726" y="264" class="chip-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="940" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="954" y="242" class="chip-title">convertx</text>
+<text x="954" y="264" class="chip-subtitle">5 policies | IN 3 | OUT 3 | deny 1</text>
+<rect x="1168" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1182" y="242" class="chip-title">dawarich</text>
+<text x="1182" y="264" class="chip-subtitle">8 policies | IN 4 | OUT 5 | deny 1</text>
+<rect x="1396" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1410" y="242" class="chip-title">elastic-stack</text>
+<text x="1410" y="264" class="chip-subtitle">4 policies | IN 4 | OUT 0 | deny 1</text>
+<rect x="1624" y="218" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1638" y="242" class="chip-title">elastic-system</text>
+<text x="1638" y="264" class="chip-subtitle">6 policies | IN 3 | OUT 4 | deny 1</text>
+<rect x="28" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="42" y="316" class="chip-title">external-secrets</text>
+<text x="42" y="338" class="chip-subtitle">9 policies | IN 4 | OUT 6 | deny 1</text>
+<rect x="256" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="270" y="316" class="chip-title">harbor</text>
+<text x="270" y="338" class="chip-subtitle">7 policies | IN 4 | OUT 4 | deny 1</text>
+<rect x="484" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="498" y="316" class="chip-title">hister</text>
+<text x="498" y="338" class="chip-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="712" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="726" y="316" class="chip-title">immich</text>
+<text x="726" y="338" class="chip-subtitle">8 policies | IN 5 | OUT 4 | deny 1</text>
+<rect x="940" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="954" y="316" class="chip-title">karakeep</text>
+<text x="954" y="338" class="chip-subtitle">7 policies | IN 4 | OUT 4 | deny 1</text>
+<rect x="1168" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1182" y="316" class="chip-title">keycloak</text>
+<text x="1182" y="338" class="chip-subtitle">8 policies | IN 5 | OUT 4 | deny 1</text>
+<rect x="1396" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1410" y="316" class="chip-title">loki</text>
+<text x="1410" y="338" class="chip-subtitle">8 policies | IN 4 | OUT 5 | deny 1</text>
+<rect x="1624" y="292" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1638" y="316" class="chip-title">mail</text>
+<text x="1638" y="338" class="chip-subtitle">10 policies | IN 7 | OUT 6 | deny 3</text>
+<rect x="28" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="42" y="390" class="chip-title">mastodon</text>
+<text x="42" y="412" class="chip-subtitle">11 policies | IN 5 | OUT 7 | deny 1</text>
+<rect x="256" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="270" y="390" class="chip-title">matrix</text>
+<text x="270" y="412" class="chip-subtitle">5 policies | IN 2 | OUT 4 | deny 1</text>
+<rect x="484" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="498" y="390" class="chip-title">minecraft</text>
+<text x="498" y="412" class="chip-subtitle">6 policies | IN 4 | OUT 3 | deny 1</text>
+<rect x="712" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="726" y="390" class="chip-title">monitoring</text>
+<text x="726" y="412" class="chip-subtitle">15 policies | IN 4 | OUT 12 | deny 1</text>
+<rect x="940" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="954" y="390" class="chip-title">nextcloud</text>
+<text x="954" y="412" class="chip-subtitle">14 policies | IN 8 | OUT 8 | deny 1</text>
+<rect x="1168" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1182" y="390" class="chip-title">ot-operators</text>
+<text x="1182" y="412" class="chip-subtitle">5 policies | IN 3 | OUT 3 | deny 1</text>
+<rect x="1396" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1410" y="390" class="chip-title">plex</text>
+<text x="1410" y="412" class="chip-subtitle">10 policies | IN 6 | OUT 5 | deny 1</text>
+<rect x="1624" y="366" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1638" y="390" class="chip-title">seaweedfs</text>
+<text x="1638" y="412" class="chip-subtitle">6 policies | IN 4 | OUT 3 | deny 1</text>
+<rect x="28" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="42" y="464" class="chip-title">spotify</text>
+<text x="42" y="486" class="chip-subtitle">11 policies | IN 7 | OUT 5 | deny 2</text>
+<rect x="256" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="270" y="464" class="chip-title">stirling-pdf</text>
+<text x="270" y="486" class="chip-subtitle">6 policies | IN 4 | OUT 3 | deny 1</text>
+<rect x="484" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="498" y="464" class="chip-title">traefik</text>
+<text x="498" y="486" class="chip-subtitle">10 policies | IN 4 | OUT 7 | deny 1</text>
+<rect x="712" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="726" y="464" class="chip-title">unifi</text>
+<text x="726" y="486" class="chip-subtitle">6 policies | IN 3 | OUT 4 | deny 1</text>
+<rect x="940" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="954" y="464" class="chip-title">vault</text>
+<text x="954" y="486" class="chip-subtitle">8 policies | IN 5 | OUT 4 | deny 1</text>
+<rect x="1168" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1182" y="464" class="chip-title">wordpress</text>
+<text x="1182" y="486" class="chip-subtitle">10 policies | IN 6 | OUT 5 | deny 1</text>
+<rect x="1396" y="440" width="216" height="62" rx="14" class="namespace-chip" />
+<text x="1410" y="464" class="chip-title">year</text>
+<text x="1410" y="486" class="chip-subtitle">3 policies | IN 2 | OUT 2 | deny 1</text>
+  <rect x="28" y="540" width="1904" height="1484" rx="22" class="graph-panel" />
+<text x="48" y="574" class="section-title">Connection Graph</text>
+<text x="48" y="596" class="section-subtitle">Namespace-level directed flows aggregated from policy peers. Sources are on the left, targets are on the right.</text>
+<text x="48" y="616" class="section-subtitle">Visible cross-namespace or special-target links: 152 | Hidden same-namespace links: 76</text>
+<line x1="48" y1="638" x2="74" y2="638" class="edge ingress" />
+<text x="84" y="642" class="legend">Allowed because of ingress rule</text>
+<line x1="358" y1="638" x2="384" y2="638" class="edge egress" />
+<text x="394" y="642" class="legend">Allowed because of egress rule</text>
+<line x1="668" y1="638" x2="694" y2="638" class="edge both" />
+<text x="704" y="642" class="legend">Seen from both sides</text>
+<text x="54" y="658" class="graph-heading">Sources</text>
+<text x="1710" y="658" class="graph-heading">Targets</text>
+<line x1="258" y1="652" x2="258" y2="2004" class="graph-guide" />
+<line x1="1702" y1="652" x2="1702" y2="2004" class="graph-guide" />
+<path d="M 250 1692.0 C 590 1692.0, 1370 1380.0, 1710 1380.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1692.0 C 590 1692.0, 1370 1406.0, 1710 1406.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1692.0 C 590 1692.0, 1370 1484.0, 1710 1484.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1770.0 C 590 1770.0, 1370 1640.0, 1710 1640.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1718.0 C 590 1718.0, 1370 1640.0, 1710 1640.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1718.0 C 590 1718.0, 1370 1588.0, 1710 1588.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1796.0 C 590 1796.0, 1370 1640.0, 1710 1640.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1822.0 C 590 1822.0, 1370 1640.0, 1710 1640.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 756.0 C 590 756.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 756.0 C 590 756.0, 1370 1432.0, 1710 1432.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 756.0 C 590 756.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 782.0 C 590 782.0, 1370 1354.0, 1710 1354.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1198.0 C 590 1198.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1198.0 C 590 1198.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1250.0 C 590 1250.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 834.0 C 590 834.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1120.0 C 590 1120.0, 1370 1432.0, 1710 1432.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1120.0 C 590 1120.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1042.0 C 590 1042.0, 1370 1718.0, 1710 1718.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1042.0 C 590 1042.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1042.0 C 590 1042.0, 1370 1562.0, 1710 1562.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1042.0 C 590 1042.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1094.0 C 590 1094.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1094.0 C 590 1094.0, 1370 1874.0, 1710 1874.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1094.0 C 590 1094.0, 1370 1796.0, 1710 1796.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1094.0 C 590 1094.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1276.0 C 590 1276.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1302.0 C 590 1302.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1406.0 C 590 1406.0, 1370 1900.0, 1710 1900.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1406.0 C 590 1406.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1328.0 C 590 1328.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 808.0 C 590 808.0, 1370 1432.0, 1710 1432.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 808.0 C 590 808.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1224.0 C 590 1224.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1224.0 C 590 1224.0, 1370 1796.0, 1710 1796.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1224.0 C 590 1224.0, 1370 1822.0, 1710 1822.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1224.0 C 590 1224.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1172.0 C 590 1172.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1172.0 C 590 1172.0, 1370 1796.0, 1710 1796.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1172.0 C 590 1172.0, 1370 1432.0, 1710 1432.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1172.0 C 590 1172.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1354.0 C 590 1354.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 860.0 C 590 860.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1796.0, 1710 1796.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1822.0, 1710 1822.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 808.0, 1710 808.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1432.0, 1710 1432.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1640.0, 1710 1640.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1016.0, 1710 1016.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 912.0, 1710 912.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 964.0, 1710 964.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1614.0, 1710 1614.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1588.0, 1710 1588.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1042.0, 1710 1042.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 704.0 C 590 704.0, 1370 1458.0, 1710 1458.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 730.0 C 590 730.0, 1370 1718.0, 1710 1718.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 730.0 C 590 730.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 730.0 C 590 730.0, 1370 1432.0, 1710 1432.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1068.0 C 590 1068.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1068.0 C 590 1068.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1432.0 C 590 1432.0, 1370 1926.0, 1710 1926.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1432.0 C 590 1432.0, 1370 1952.0, 1710 1952.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1432.0 C 590 1432.0, 1370 1978.0, 1710 1978.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1432.0 C 590 1432.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 886.0 C 590 886.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1380.0 C 590 1380.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 912.0 C 590 912.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1770.0, 1710 1770.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1796.0, 1710 1796.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1692.0, 1710 1692.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 808.0, 1710 808.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1068.0, 1710 1068.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1094.0, 1710 1094.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1120.0, 1710 1120.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1172.0, 1710 1172.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 912.0, 1710 912.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 678.0 C 590 678.0, 1370 964.0, 1710 964.0" class="edge ingress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 964.0 C 590 964.0, 1370 1744.0, 1710 1744.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 964.0 C 590 964.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 964.0 C 590 964.0, 1370 1328.0, 1710 1328.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1146.0 C 590 1146.0, 1370 1874.0, 1710 1874.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1146.0 C 590 1146.0, 1370 1796.0, 1710 1796.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1146.0 C 590 1146.0, 1370 1822.0, 1710 1822.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1146.0 C 590 1146.0, 1370 1302.0, 1710 1302.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1146.0 C 590 1146.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1016.0 C 590 1016.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1016.0 C 590 1016.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1016.0 C 590 1016.0, 1370 1536.0, 1710 1536.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 938.0 C 590 938.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:1.65;opacity:0.32999999999999996" />
+<path d="M 250 1744.0 C 590 1744.0, 1370 1666.0, 1710 1666.0" class="edge ingress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1744.0 C 590 1744.0, 1370 1614.0, 1710 1614.0" class="edge ingress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1744.0 C 590 1744.0, 1370 1588.0, 1710 1588.0" class="edge ingress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 756.0 C 590 756.0, 1370 1250.0, 1710 1250.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 782.0 C 590 782.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1250.0 C 590 1250.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1120.0 C 590 1120.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1094.0 C 590 1094.0, 1370 1458.0, 1710 1458.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1276.0 C 590 1276.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1302.0 C 590 1302.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1406.0 C 590 1406.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1328.0 C 590 1328.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 990.0 C 590 990.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 990.0 C 590 990.0, 1370 1276.0, 1710 1276.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1172.0 C 590 1172.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1172.0 C 590 1172.0, 1370 1562.0, 1710 1562.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1354.0 C 590 1354.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 834.0, 1710 834.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 1276.0, 1710 1276.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 678.0, 1710 678.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 860.0, 1710 860.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 886.0, 1710 886.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 938.0, 1710 938.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 990.0, 1710 990.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 704.0 C 590 704.0, 1370 704.0, 1710 704.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 730.0 C 590 730.0, 1370 1276.0, 1710 1276.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 730.0 C 590 730.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 730.0 C 590 730.0, 1370 1250.0, 1710 1250.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1432.0 C 590 1432.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 1380.0 C 590 1380.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 834.0, 1710 834.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 860.0, 1710 860.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 886.0, 1710 886.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1146.0, 1710 1146.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1198.0, 1710 1198.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1016.0, 1710 1016.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1302.0, 1710 1302.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 756.0, 1710 756.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 938.0, 1710 938.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1328.0, 1710 1328.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1588.0, 1710 1588.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 990.0, 1710 990.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 730.0, 1710 730.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1042.0, 1710 1042.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1458.0, 1710 1458.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 782.0, 1710 782.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 678.0 C 590 678.0, 1370 1224.0, 1710 1224.0" class="edge both" style="stroke-width:2.4;opacity:0.42" />
+<path d="M 250 990.0 C 590 990.0, 1370 1510.0, 1710 1510.0" class="edge egress" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="1246.0" class="edge-count">3</text>
+<path d="M 250 704.0 C 590 704.0, 1370 1302.0, 1710 1302.0" class="edge both" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="999.0" class="edge-count">3</text>
+<path d="M 250 704.0 C 590 704.0, 1370 756.0, 1710 756.0" class="edge both" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="726.0" class="edge-count">3</text>
+<path d="M 250 704.0 C 590 704.0, 1370 1484.0, 1710 1484.0" class="edge both" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="1090.0" class="edge-count">3</text>
+<path d="M 250 704.0 C 590 704.0, 1370 782.0, 1710 782.0" class="edge both" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="739.0" class="edge-count">3</text>
+<path d="M 250 678.0 C 590 678.0, 1370 1380.0, 1710 1380.0" class="edge both" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="1025.0" class="edge-count">3</text>
+<path d="M 250 678.0 C 590 678.0, 1370 1406.0, 1710 1406.0" class="edge both" style="stroke-width:3.15;opacity:0.51" />
+<text x="980.0" y="1038.0" class="edge-count">3</text>
+<path d="M 250 704.0 C 590 704.0, 1370 1848.0, 1710 1848.0" class="edge egress" style="stroke-width:3.9;opacity:0.6" />
+<text x="980.0" y="1272.0" class="edge-count">4</text>
+<path d="M 250 704.0 C 590 704.0, 1370 1380.0, 1710 1380.0" class="edge both" style="stroke-width:3.9;opacity:0.6" />
+<text x="980.0" y="1038.0" class="edge-count">4</text>
+<path d="M 250 704.0 C 590 704.0, 1370 1406.0, 1710 1406.0" class="edge both" style="stroke-width:3.9;opacity:0.6" />
+<text x="980.0" y="1051.0" class="edge-count">4</text>
+<path d="M 250 704.0 C 590 704.0, 1370 730.0, 1710 730.0" class="edge both" style="stroke-width:3.9;opacity:0.6" />
+<text x="980.0" y="713.0" class="edge-count">4</text>
+<path d="M 250 704.0 C 590 704.0, 1370 1250.0, 1710 1250.0" class="edge both" style="stroke-width:4.65;opacity:0.69" />
+<text x="980.0" y="973.0" class="edge-count">5</text>
+<rect x="54" y="668" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="682" class="graph-node-label">traefik</text>
+<text x="240" y="682" text-anchor="end" class="graph-node-metric">53</text>
+<rect x="54" y="694" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="708" class="graph-node-label">monitoring</text>
+<text x="240" y="708" text-anchor="end" class="graph-node-metric">64</text>
+<rect x="54" y="720" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="734" class="graph-node-label">nextcloud</text>
+<text x="240" y="734" text-anchor="end" class="graph-node-metric">9</text>
+<rect x="54" y="746" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="760" class="graph-node-label">bitwarden</text>
+<text x="240" y="760" text-anchor="end" class="graph-node-metric">5</text>
+<rect x="54" y="772" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="786" class="graph-node-label">ca-scanner</text>
+<text x="240" y="786" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="798" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="812" class="graph-node-label">keycloak</text>
+<text x="240" y="812" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="54" y="824" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="838" class="graph-node-label">convertx</text>
+<text x="240" y="838" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="850" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="864" class="graph-node-label">minecraft</text>
+<text x="240" y="864" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="876" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="890" class="graph-node-label">seaweedfs</text>
+<text x="240" y="890" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="902" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="916" class="graph-node-label">stirling-pdf</text>
+<text x="240" y="916" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="928" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="942" class="graph-node-label">year</text>
+<text x="240" y="942" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="954" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="968" class="graph-node-label">unifi</text>
+<text x="240" y="968" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="980" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="994" class="graph-node-label">mail</text>
+<text x="240" y="994" text-anchor="end" class="graph-node-metric">7</text>
+<rect x="54" y="1006" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1020" class="graph-node-label">wordpress</text>
+<text x="240" y="1020" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1032" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1046" class="graph-node-label">elastic-system</text>
+<text x="240" y="1046" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="54" y="1058" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1072" class="graph-node-label">ot-operators</text>
+<text x="240" y="1072" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="54" y="1084" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1098" class="graph-node-label">external-secrets</text>
+<text x="240" y="1098" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="54" y="1110" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1124" class="graph-node-label">dawarich</text>
+<text x="240" y="1124" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="54" y="1136" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1150" class="graph-node-label">vault</text>
+<text x="240" y="1150" text-anchor="end" class="graph-node-metric">5</text>
+<rect x="54" y="1162" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1176" class="graph-node-label">mastodon</text>
+<text x="240" y="1176" text-anchor="end" class="graph-node-metric">8</text>
+<rect x="54" y="1188" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1202" class="graph-node-label">clamav</text>
+<text x="240" y="1202" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="54" y="1214" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1228" class="graph-node-label">loki</text>
+<text x="240" y="1228" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="54" y="1240" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1254" class="graph-node-label">connectivity-exporter</text>
+<text x="240" y="1254" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1266" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1280" class="graph-node-label">harbor</text>
+<text x="240" y="1280" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1292" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1306" class="graph-node-label">hister</text>
+<text x="240" y="1306" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1318" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1332" class="graph-node-label">karakeep</text>
+<text x="240" y="1332" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1344" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1358" class="graph-node-label">matrix</text>
+<text x="240" y="1358" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1370" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1384" class="graph-node-label">spotify</text>
+<text x="240" y="1384" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1396" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1410" class="graph-node-label">immich</text>
+<text x="240" y="1410" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="54" y="1422" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1436" class="graph-node-label">plex</text>
+<text x="240" y="1436" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="54" y="1448" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1462" class="graph-node-label">argocd</text>
+<text x="240" y="1462" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1474" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1488" class="graph-node-label">collabora</text>
+<text x="240" y="1488" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1500" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1514" class="graph-node-label">db</text>
+<text x="240" y="1514" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1526" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1540" class="graph-node-label">default</text>
+<text x="240" y="1540" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1552" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1566" class="graph-node-label">elastic-stack</text>
+<text x="240" y="1566" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1578" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1592" class="graph-node-label">homeassistant</text>
+<text x="240" y="1592" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1604" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1618" class="graph-node-label">kube-system</text>
+<text x="240" y="1618" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1630" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1644" class="graph-node-label">longhorn-system</text>
+<text x="240" y="1644" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1656" width="196" height="20" rx="10" class="graph-node" />
+<text x="66" y="1670" class="graph-node-label">redis</text>
+<text x="240" y="1670" text-anchor="end" class="graph-node-metric">0</text>
+<rect x="54" y="1682" width="196" height="20" rx="10" class="graph-node special" />
+<text x="66" y="1696" class="graph-node-label">All peers</text>
+<text x="240" y="1696" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="54" y="1708" width="196" height="20" rx="10" class="graph-node special" />
+<text x="66" y="1722" class="graph-node-label">CIDR 192.168.1.0/24</text>
+<text x="240" y="1722" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="54" y="1734" width="196" height="20" rx="10" class="graph-node special" />
+<text x="66" y="1748" class="graph-node-label">Internet</text>
+<text x="240" y="1748" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="54" y="1760" width="196" height="20" rx="10" class="graph-node special" />
+<text x="66" y="1774" class="graph-node-label">CIDR 10.42.0.0/16</text>
+<text x="240" y="1774" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="1786" width="196" height="20" rx="10" class="graph-node special" />
+<text x="66" y="1800" class="graph-node-label">CIDR 2001:cafe:42::/56</text>
+<text x="240" y="1800" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="54" y="1812" width="196" height="20" rx="10" class="graph-node special" />
+<text x="66" y="1826" class="graph-node-label">CIDR 2a02:e98:c0:1800::/64</text>
+<text x="240" y="1826" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="668" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="682" class="graph-node-label">connectivity-exporter</text>
+<text x="1896" y="682" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="694" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="708" class="graph-node-label">unifi</text>
+<text x="1896" y="708" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="720" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="734" class="graph-node-label">spotify</text>
+<text x="1896" y="734" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="1710" y="746" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="760" class="graph-node-label">mastodon</text>
+<text x="1896" y="760" text-anchor="end" class="graph-node-metric">5</text>
+<rect x="1710" y="772" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="786" class="graph-node-label">wordpress</text>
+<text x="1896" y="786" text-anchor="end" class="graph-node-metric">5</text>
+<rect x="1710" y="798" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="812" class="graph-node-label">argocd</text>
+<text x="1896" y="812" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="824" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="838" class="graph-node-label">bitwarden</text>
+<text x="1896" y="838" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="1710" y="850" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="864" class="graph-node-label">dawarich</text>
+<text x="1896" y="864" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="1710" y="876" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="890" class="graph-node-label">harbor</text>
+<text x="1896" y="890" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="1710" y="902" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="916" class="graph-node-label">longhorn-system</text>
+<text x="1896" y="916" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="928" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="942" class="graph-node-label">matrix</text>
+<text x="1896" y="942" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="1710" y="954" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="968" class="graph-node-label">minecraft</text>
+<text x="1896" y="968" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="980" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="994" class="graph-node-label">seaweedfs</text>
+<text x="1896" y="994" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="1710" y="1006" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1020" class="graph-node-label">karakeep</text>
+<text x="1896" y="1020" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="1710" y="1032" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1046" class="graph-node-label">stirling-pdf</text>
+<text x="1896" y="1046" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="1710" y="1058" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1072" class="graph-node-label">ca-scanner</text>
+<text x="1896" y="1072" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1084" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1098" class="graph-node-label">collabora</text>
+<text x="1896" y="1098" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1110" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1124" class="graph-node-label">convertx</text>
+<text x="1896" y="1124" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1136" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1150" class="graph-node-label">hister</text>
+<text x="1896" y="1150" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="1162" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1176" class="graph-node-label">homeassistant</text>
+<text x="1896" y="1176" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1188" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1202" class="graph-node-label">immich</text>
+<text x="1896" y="1202" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="1214" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1228" class="graph-node-label">year</text>
+<text x="1896" y="1228" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="1240" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1254" class="graph-node-label">loki</text>
+<text x="1896" y="1254" text-anchor="end" class="graph-node-metric">9</text>
+<rect x="1710" y="1266" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1280" class="graph-node-label">clamav</text>
+<text x="1896" y="1280" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="1710" y="1292" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1306" class="graph-node-label">keycloak</text>
+<text x="1896" y="1306" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="1710" y="1318" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1332" class="graph-node-label">monitoring</text>
+<text x="1896" y="1332" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="1710" y="1344" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1358" class="graph-node-label">default</text>
+<text x="1896" y="1358" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1370" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1384" class="graph-node-label">mail</text>
+<text x="1896" y="1384" text-anchor="end" class="graph-node-metric">8</text>
+<rect x="1710" y="1396" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1410" class="graph-node-label">nextcloud</text>
+<text x="1896" y="1410" text-anchor="end" class="graph-node-metric">8</text>
+<rect x="1710" y="1422" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1436" class="graph-node-label">db</text>
+<text x="1896" y="1436" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="1710" y="1448" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1462" class="graph-node-label">vault</text>
+<text x="1896" y="1462" text-anchor="end" class="graph-node-metric">5</text>
+<rect x="1710" y="1474" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1488" class="graph-node-label">traefik</text>
+<text x="1896" y="1488" text-anchor="end" class="graph-node-metric">4</text>
+<rect x="1710" y="1500" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1514" class="graph-node-label">kube-system</text>
+<text x="1896" y="1514" text-anchor="end" class="graph-node-metric">35</text>
+<rect x="1710" y="1526" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1540" class="graph-node-label">redis</text>
+<text x="1896" y="1540" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1552" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1566" class="graph-node-label">elastic-stack</text>
+<text x="1896" y="1566" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="1710" y="1578" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1592" class="graph-node-label">plex</text>
+<text x="1896" y="1592" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="1710" y="1604" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1618" class="graph-node-label">ot-operators</text>
+<text x="1896" y="1618" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="1710" y="1630" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1644" class="graph-node-label">external-secrets</text>
+<text x="1896" y="1644" text-anchor="end" class="graph-node-metric">5</text>
+<rect x="1710" y="1656" width="196" height="20" rx="10" class="graph-node" />
+<text x="1722" y="1670" class="graph-node-label">elastic-system</text>
+<text x="1896" y="1670" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="1682" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1696" class="graph-node-label">CIDR 192.168.1.247/32</text>
+<text x="1896" y="1696" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1708" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1722" class="graph-node-label">All peers</text>
+<text x="1896" y="1722" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="1734" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1748" class="graph-node-label">CIDR 192.168.1.1/32</text>
+<text x="1896" y="1748" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1760" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1774" class="graph-node-label">CIDR 10.43.0.1/32</text>
+<text x="1896" y="1774" text-anchor="end" class="graph-node-metric">7</text>
+<rect x="1710" y="1786" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1800" class="graph-node-label">CIDR 192.168.1.209/32</text>
+<text x="1896" y="1800" text-anchor="end" class="graph-node-metric">6</text>
+<rect x="1710" y="1812" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1826" class="graph-node-label">CIDR 81.19.4.105/32</text>
+<text x="1896" y="1826" text-anchor="end" class="graph-node-metric">3</text>
+<rect x="1710" y="1838" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1852" class="graph-node-label">Internet</text>
+<text x="1896" y="1852" text-anchor="end" class="graph-node-metric">32</text>
+<rect x="1710" y="1864" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1878" class="graph-node-label">CIDR 192.168.1.100/32</text>
+<text x="1896" y="1878" text-anchor="end" class="graph-node-metric">2</text>
+<rect x="1710" y="1890" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1904" class="graph-node-label">CIDR 10.43.0.0/16</text>
+<text x="1896" y="1904" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1916" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1930" class="graph-node-label">CIDR 192.168.1.0/24</text>
+<text x="1896" y="1930" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1942" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1956" class="graph-node-label">CIDR 224.0.0.0/4</text>
+<text x="1896" y="1956" text-anchor="end" class="graph-node-metric">1</text>
+<rect x="1710" y="1968" width="196" height="20" rx="10" class="graph-node special" />
+<text x="1722" y="1982" class="graph-node-label">CIDR 255.255.255.255/32</text>
+<text x="1896" y="1982" text-anchor="end" class="graph-node-metric">1</text>
+  <rect x="28" y="2050" width="608" height="2196" rx="22" class="namespace-panel" />
+<text x="44" y="2080" class="section-title">monitoring</text>
+<text x="44" y="2102" class="section-subtitle">15 policies | IN 4 | OUT 12 | deny 1</text>
+<rect x="40" y="2120" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="2144" class="policy-title">monitoring-allow-egress-alertmanager-mail</text>
+<text x="52" y="2162" class="policy-subtitle">Egress</text>
+<text x="52" y="2182" class="policy-body">Applies to {app=alertmanager}</text>
+<text x="52" y="2199" class="policy-body">OUT to ns:mail &amp; pod{app=postfix, tier=mail} on TCP/587</text>
+<text x="52" y="2216" class="policy-body">OUT to ns:traefik &amp; pod{app.kubernetes.io/name=traefik} on TCP/587</text>
+<rect x="40" y="2248" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="2272" class="policy-title">monitoring-allow-egress-alloy-loki</text>
+<text x="52" y="2290" class="policy-subtitle">Egress</text>
+<text x="52" y="2310" class="policy-body">Applies to {app=alloy}</text>
+<text x="52" y="2327" class="policy-body">OUT to ns:loki on TCP/80, TCP/8080</text>
+<rect x="40" y="2359" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="2383" class="policy-title">monitoring-allow-egress-dns</text>
+<text x="52" y="2401" class="policy-subtitle">Egress</text>
+<text x="52" y="2421" class="policy-body">Applies to all pods</text>
+<text x="52" y="2438" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="2470" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="2494" class="policy-title">monitoring-allow-egress-grafana-https</text>
+<text x="52" y="2512" class="policy-subtitle">Egress</text>
+<text x="52" y="2532" class="policy-body">Applies to {app=grafana}</text>
+<text x="52" y="2549" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/443</text>
+<text x="52" y="2566" class="policy-body">OUT to ip:::/0 on TCP/443</text>
+<rect x="40" y="2598" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="2622" class="policy-title">monitoring-allow-egress-grafana-loki</text>
+<text x="52" y="2640" class="policy-subtitle">Egress</text>
+<text x="52" y="2660" class="policy-body">Applies to {app=grafana}</text>
+<text x="52" y="2677" class="policy-body">OUT to ns:loki on TCP/3100</text>
+<rect x="40" y="2709" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="2733" class="policy-title">monitoring-allow-egress-intra-namespace</text>
+<text x="52" y="2751" class="policy-subtitle">Egress</text>
+<text x="52" y="2771" class="policy-body">Applies to all pods</text>
+<text x="52" y="2788" class="policy-body">OUT to ns:monitoring on all ports</text>
+<rect x="40" y="2820" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="2844" class="policy-title">monitoring-allow-egress-prometheus-external</text>
+<text x="52" y="2862" class="policy-subtitle">Egress</text>
+<text x="52" y="2882" class="policy-body">Applies to {app=prometheus-server}</text>
+<text x="52" y="2899" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/9090</text>
+<text x="52" y="2916" class="policy-body">OUT to ip:::/0 on TCP/9090</text>
+<rect x="40" y="2948" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="2972" class="policy-title">monitoring-allow-egress-prometheus-kubernetes-api</text>
+<text x="52" y="2990" class="policy-subtitle">Egress</text>
+<text x="52" y="3010" class="policy-body">Applies to {app=prometheus-server}</text>
+<text x="52" y="3027" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<text x="52" y="3044" class="policy-body">OUT to ip:192.168.1.209/32 on TCP/6443</text>
+<rect x="40" y="3076" width="576" height="458" rx="16" class="policy egress" />
+<text x="52" y="3100" class="policy-title">monitoring-allow-egress-prometheus-scrape-targets</text>
+<text x="52" y="3118" class="policy-subtitle">Egress</text>
+<text x="52" y="3138" class="policy-body">Applies to {app=prometheus-server}</text>
+<text x="52" y="3155" class="policy-body">OUT to ns:argocd on TCP/8080, TCP/8082, TCP/8083</text>
+<text x="52" y="3172" class="policy-body">OUT to ns:clamav on TCP/9906</text>
+<text x="52" y="3189" class="policy-body">OUT to ns:connectivity-exporter on TCP/9090</text>
+<text x="52" y="3206" class="policy-body">OUT to ns:dawarich on TCP/9121, TCP/9187</text>
+<text x="52" y="3223" class="policy-body">OUT to ns:bitwarden on TCP/9187</text>
+<text x="52" y="3240" class="policy-body">OUT to ns:db on TCP/9104, TCP/9187</text>
+<text x="52" y="3257" class="policy-body">OUT to ns:spotify on TCP/9216</text>
+<text x="52" y="3274" class="policy-body">OUT to ns:harbor on TCP/8001</text>
+<text x="52" y="3291" class="policy-body">OUT to ns:keycloak on TCP/9000, TCP/9187</text>
+<text x="52" y="3308" class="policy-body">OUT to ns:kube-system on TCP/8080, TCP/9153</text>
+<text x="52" y="3325" class="policy-body">OUT to ns:loki on TCP/3100, TCP/3500, TCP/9150</text>
+<text x="52" y="3342" class="policy-body">OUT to ns:longhorn-system on TCP/9500</text>
+<text x="52" y="3359" class="policy-body">OUT to ns:mail on TCP/9121, TCP/11334</text>
+<text x="52" y="3376" class="policy-body">OUT to ns:mastodon on TCP/9121, TCP/9187</text>
+<text x="52" y="3393" class="policy-body">OUT to ns:matrix on TCP/8008</text>
+<text x="52" y="3410" class="policy-body">OUT to ns:monitoring on TCP/3000, TCP/9090, TCP/9093, TCP/9100,</text>
+<text x="52" y="3427" class="policy-body">TCP/10902</text>
+<text x="52" y="3444" class="policy-body">OUT to ns:nextcloud on TCP/9980, TCP/9104, TCP/9121</text>
+<text x="52" y="3461" class="policy-body">OUT to ns:seaweedfs on TCP/9091, TCP/9092, TCP/9093, TCP/9094</text>
+<text x="52" y="3478" class="policy-body">OUT to ns:traefik on TCP/9100</text>
+<text x="52" y="3495" class="policy-body">OUT to ns:unifi on TCP/9130</text>
+<text x="52" y="3512" class="policy-body">OUT to ns:wordpress on TCP/9104, TCP/9121</text>
+<rect x="40" y="3544" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="3568" class="policy-title">monitoring-allow-egress-thanos-querier</text>
+<text x="52" y="3586" class="policy-subtitle">Egress</text>
+<text x="52" y="3606" class="policy-body">Applies to {app=thanos-querier}</text>
+<text x="52" y="3623" class="policy-body">OUT to ns:monitoring &amp; pod{app=prometheus-server} on TCP/10901</text>
+<text x="52" y="3640" class="policy-body">OUT to ns:monitoring &amp; pod{app=thanos-store-gateway} on TCP/10901</text>
+<rect x="40" y="3672" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="3696" class="policy-title">monitoring-allow-egress-thanos-s3</text>
+<text x="52" y="3714" class="policy-subtitle">Egress</text>
+<text x="52" y="3734" class="policy-body">Applies to all pods</text>
+<text x="52" y="3751" class="policy-body">OUT to ip:81.19.4.105/32 on TCP/443</text>
+<rect x="40" y="3783" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="3807" class="policy-title">monitoring-allow-ingress-from-monitoring</text>
+<text x="52" y="3825" class="policy-subtitle">Ingress</text>
+<text x="52" y="3845" class="policy-body">Applies to all pods</text>
+<text x="52" y="3862" class="policy-body">IN from ns:monitoring on all ports</text>
+<rect x="40" y="3894" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="3918" class="policy-title">monitoring-allow-ingress-from-traefik</text>
+<text x="52" y="3936" class="policy-subtitle">Ingress</text>
+<text x="52" y="3956" class="policy-body">Applies to all pods</text>
+<text x="52" y="3973" class="policy-body">IN from ns:traefik on TCP/3000, TCP/9090, TCP/9093</text>
+<rect x="40" y="4005" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="4029" class="policy-title">monitoring-allow-ingress-thanos-prometheus</text>
+<text x="52" y="4047" class="policy-subtitle">Ingress</text>
+<text x="52" y="4067" class="policy-body">Applies to all pods</text>
+<text x="52" y="4084" class="policy-body">IN from ns:monitoring on TCP/9090, TCP/10901, TCP/10902</text>
+<rect x="40" y="4116" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="4140" class="policy-title">monitoring-default-deny</text>
+<text x="52" y="4158" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="4178" class="policy-body">Applies to all pods</text>
+<text x="52" y="4195" class="policy-body">IN deny all ingress</text>
+<text x="52" y="4212" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="2050" width="608" height="1779" rx="22" class="namespace-panel" />
+<text x="672" y="2080" class="section-title">nextcloud</text>
+<text x="672" y="2102" class="section-subtitle">14 policies | IN 8 | OUT 8 | deny 1</text>
+<rect x="668" y="2120" width="576" height="135" rx="16" class="policy egress" />
+<text x="680" y="2144" class="policy-title">nextcloud-allow-dns-egress</text>
+<text x="680" y="2162" class="policy-subtitle">Egress</text>
+<text x="680" y="2182" class="policy-body">Applies to all pods</text>
+<text x="680" y="2199" class="policy-body">OUT to ns:kube-system &amp; podall pods on all ports</text>
+<text x="680" y="2216" class="policy-body">OUT to ns:kube-system &amp; pod{app.kubernetes.io/name=coredns} on</text>
+<text x="680" y="2233" class="policy-body">UDP/53, TCP/53</text>
+<rect x="668" y="2265" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="2289" class="policy-title">nextcloud-allow-egress-backend-to-mysql-nextcloud</text>
+<text x="680" y="2307" class="policy-subtitle">Egress</text>
+<text x="680" y="2327" class="policy-body">Applies to {app=nextcloud, tier=backend}</text>
+<text x="680" y="2344" class="policy-body">OUT to pod{app=mysql-nextcloud, tier=mysql} on TCP/3306</text>
+<rect x="668" y="2376" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="2400" class="policy-title">nextcloud-allow-egress-from-nginx-to-php</text>
+<text x="680" y="2418" class="policy-subtitle">Egress</text>
+<text x="680" y="2438" class="policy-body">Applies to {app=nextcloud, tier=frontend}</text>
+<text x="680" y="2455" class="policy-body">OUT to pod{app=nextcloud, tier=backend} on TCP/9000</text>
+<rect x="668" y="2487" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="2511" class="policy-title">nextcloud-allow-egress-to-loki</text>
+<text x="680" y="2529" class="policy-subtitle">Egress</text>
+<text x="680" y="2549" class="policy-body">Applies to {app=nextcloud, tier=backend}</text>
+<text x="680" y="2566" class="policy-body">OUT to ns:loki on TCP/3100</text>
+<rect x="668" y="2598" width="576" height="118" rx="16" class="policy ingress" />
+<text x="680" y="2622" class="policy-title">nextcloud-allow-ingress-to-collabora-from-traefik</text>
+<text x="680" y="2640" class="policy-subtitle">Ingress</text>
+<text x="680" y="2660" class="policy-body">Applies to {app.kubernetes.io/instance=collabora,</text>
+<text x="680" y="2677" class="policy-body">app.kubernetes.io/name=collabora-online, type=main}</text>
+<text x="680" y="2694" class="policy-body">IN from ns:traefik, ns:monitoring on TCP/9980</text>
+<rect x="668" y="2726" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="2750" class="policy-title">nextcloud-allow-ingress-to-mysql-nextcloud-from-backend</text>
+<text x="680" y="2768" class="policy-subtitle">Ingress</text>
+<text x="680" y="2788" class="policy-body">Applies to {app=mysql-nextcloud, tier=mysql}</text>
+<text x="680" y="2805" class="policy-body">IN from pod{app=nextcloud, tier=backend} on TCP/3306</text>
+<rect x="668" y="2837" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="2861" class="policy-title">nextcloud-allow-ingress-to-mysql-nextcloud-sidecar-from-monitoring</text>
+<text x="680" y="2879" class="policy-subtitle">Ingress</text>
+<text x="680" y="2899" class="policy-body">Applies to {app=mysql-nextcloud, tier=mysql}</text>
+<text x="680" y="2916" class="policy-body">IN from ns:monitoring on TCP/9104</text>
+<rect x="668" y="2948" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="2972" class="policy-title">nextcloud-allow-ingress-to-nginx-from-traefik</text>
+<text x="680" y="2990" class="policy-subtitle">Ingress</text>
+<text x="680" y="3010" class="policy-body">Applies to {app=nextcloud, tier=frontend}</text>
+<text x="680" y="3027" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="668" y="3059" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="3083" class="policy-title">nextcloud-allow-ingress-to-php-from-nginx</text>
+<text x="680" y="3101" class="policy-subtitle">Ingress</text>
+<text x="680" y="3121" class="policy-body">Applies to {app=nextcloud, tier=backend}</text>
+<text x="680" y="3138" class="policy-body">IN from pod{app=nextcloud, tier=frontend} on TCP/9000</text>
+<rect x="668" y="3170" width="576" height="118" rx="16" class="policy mixed" />
+<text x="680" y="3194" class="policy-title">nextcloud-allow-inter-namespace-ingress-egress</text>
+<text x="680" y="3212" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="3232" class="policy-body">Applies to all pods</text>
+<text x="680" y="3249" class="policy-body">IN from podall pods on all ports</text>
+<text x="680" y="3266" class="policy-body">OUT to podall pods on all ports</text>
+<rect x="668" y="3298" width="576" height="135" rx="16" class="policy egress" />
+<text x="680" y="3322" class="policy-title">nextcloud-allow-php-egress-db-redis-clamav</text>
+<text x="680" y="3340" class="policy-subtitle">Egress</text>
+<text x="680" y="3360" class="policy-body">Applies to {app=nextcloud, tier=backend}</text>
+<text x="680" y="3377" class="policy-body">OUT to ns:db &amp; pod{app=mysql} on TCP/3306</text>
+<text x="680" y="3394" class="policy-body">OUT to ns:nextcloud &amp; pod{app=redis} on TCP/6379</text>
+<text x="680" y="3411" class="policy-body">OUT to ns:clamav on TCP/3200</text>
+<rect x="668" y="3443" width="576" height="118" rx="16" class="policy ingress" />
+<text x="680" y="3467" class="policy-title">nextcloud-allow-redis-ingress-from-php</text>
+<text x="680" y="3485" class="policy-subtitle">Ingress</text>
+<text x="680" y="3505" class="policy-body">Applies to all pods</text>
+<text x="680" y="3522" class="policy-body">IN from pod{app=nextcloud, tier=backend} on TCP/6379</text>
+<text x="680" y="3539" class="policy-body">IN from ns:monitoring on TCP/9121, TCP/9104</text>
+<rect x="668" y="3571" width="576" height="118" rx="16" class="policy egress" />
+<text x="680" y="3595" class="policy-title">nextcloud-allow-web-egress</text>
+<text x="680" y="3613" class="policy-subtitle">Egress</text>
+<text x="680" y="3633" class="policy-body">Applies to all pods</text>
+<text x="680" y="3650" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443, TCP/25, TCP/587, TCP/465,</text>
+<text x="680" y="3667" class="policy-body">TCP/993</text>
+<rect x="668" y="3699" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="3723" class="policy-title">nextcloud-default-deny</text>
+<text x="680" y="3741" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="3761" class="policy-body">Applies to all pods</text>
+<text x="680" y="3778" class="policy-body">IN deny all ingress</text>
+<text x="680" y="3795" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="2050" width="608" height="1386" rx="22" class="namespace-panel" />
+<text x="1300" y="2080" class="section-title">mail</text>
+<text x="1300" y="2102" class="section-subtitle">10 policies | IN 7 | OUT 6 | deny 3</text>
+<rect x="1296" y="2120" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="2144" class="policy-title">dovecot-allow-egress-dns</text>
+<text x="1308" y="2162" class="policy-subtitle">Egress</text>
+<text x="1308" y="2182" class="policy-body">Applies to {app=dovecot, tier=mail}</text>
+<text x="1308" y="2199" class="policy-body">OUT to ns:kube-system on UDP/53, TCP/53</text>
+<rect x="1296" y="2231" width="576" height="118" rx="16" class="policy ingress" />
+<text x="1308" y="2255" class="policy-title">dovecot-allow-ingress-services</text>
+<text x="1308" y="2273" class="policy-subtitle">Ingress</text>
+<text x="1308" y="2293" class="policy-body">Applies to {app=dovecot, tier=mail}</text>
+<text x="1308" y="2310" class="policy-body">IN from pod{app=postfix, tier=mail} on TCP/24, TCP/1234</text>
+<text x="1308" y="2327" class="policy-body">IN from all peers on TCP/993, TCP/4190</text>
+<rect x="1296" y="2359" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="2383" class="policy-title">dovecot-default-deny</text>
+<text x="1308" y="2401" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="2421" class="policy-body">Applies to {app=dovecot, tier=mail}</text>
+<text x="1308" y="2438" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="2455" class="policy-body">OUT deny all egress</text>
+<rect x="1296" y="2487" width="576" height="135" rx="16" class="policy egress" />
+<text x="1308" y="2511" class="policy-title">postfix-allow-egress-required-services-and-dns</text>
+<text x="1308" y="2529" class="policy-subtitle">Egress</text>
+<text x="1308" y="2549" class="policy-body">Applies to {app=postfix, tier=mail}</text>
+<text x="1308" y="2566" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<text x="1308" y="2583" class="policy-body">OUT to ns:mail on TCP/24, TCP/1234, TCP/11332</text>
+<text x="1308" y="2600" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/25</text>
+<rect x="1296" y="2632" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="2656" class="policy-title">postfix-allow-ingress-alertmanager</text>
+<text x="1308" y="2674" class="policy-subtitle">Ingress</text>
+<text x="1308" y="2694" class="policy-body">Applies to {app=postfix, tier=mail}</text>
+<text x="1308" y="2711" class="policy-body">IN from ns:monitoring &amp; pod{app=alertmanager} on TCP/587</text>
+<rect x="1296" y="2743" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="2767" class="policy-title">postfix-allow-ingress-smtp-submission</text>
+<text x="1308" y="2785" class="policy-subtitle">Ingress</text>
+<text x="1308" y="2805" class="policy-body">Applies to {app=postfix, tier=mail}</text>
+<text x="1308" y="2822" class="policy-body">IN from ns:traefik on TCP/587</text>
+<rect x="1296" y="2854" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="2878" class="policy-title">postfix-default-deny</text>
+<text x="1308" y="2896" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="2916" class="policy-body">Applies to {app=postfix, tier=mail}</text>
+<text x="1308" y="2933" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="2950" class="policy-body">OUT deny all egress</text>
+<rect x="1296" y="2982" width="576" height="152" rx="16" class="policy egress" />
+<text x="1308" y="3006" class="policy-title">rspamd-allow-egress-required-services-dns-and-web</text>
+<text x="1308" y="3024" class="policy-subtitle">Egress</text>
+<text x="1308" y="3044" class="policy-body">Applies to {app=rspamd, tier=mail}</text>
+<text x="1308" y="3061" class="policy-body">OUT to ns:kube-system on UDP/53, TCP/53</text>
+<text x="1308" y="3078" class="policy-body">OUT to ns:mail on TCP/6379</text>
+<text x="1308" y="3095" class="policy-body">OUT to ns:clamav on TCP/3200</text>
+<text x="1308" y="3112" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<rect x="1296" y="3144" width="576" height="152" rx="16" class="policy ingress" />
+<text x="1308" y="3168" class="policy-title">rspamd-allow-ingress-services</text>
+<text x="1308" y="3186" class="policy-subtitle">Ingress</text>
+<text x="1308" y="3206" class="policy-body">Applies to {app=rspamd, tier=mail}</text>
+<text x="1308" y="3223" class="policy-body">IN from pod{app=postfix, tier=mail} on TCP/11332</text>
+<text x="1308" y="3240" class="policy-body">IN from ns:traefik on TCP/11334</text>
+<text x="1308" y="3257" class="policy-body">IN from ns:mail on TCP/11333, TCP/11335</text>
+<text x="1308" y="3274" class="policy-body">IN from ns:monitoring on TCP/11334</text>
+<rect x="1296" y="3306" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="3330" class="policy-title">rspamd-default-deny</text>
+<text x="1308" y="3348" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="3368" class="policy-body">Applies to {app=rspamd, tier=mail}</text>
+<text x="1308" y="3385" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="3402" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="3456" width="608" height="1378" rx="22" class="namespace-panel" />
+<text x="1300" y="3486" class="section-title">mastodon</text>
+<text x="1300" y="3508" class="section-subtitle">11 policies | IN 5 | OUT 7 | deny 1</text>
+<rect x="1296" y="3526" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="3550" class="policy-title">mastodon-allow-egress-dns</text>
+<text x="1308" y="3568" class="policy-subtitle">Egress</text>
+<text x="1308" y="3588" class="policy-body">Applies to all pods</text>
+<text x="1308" y="3605" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="3637" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="3661" class="policy-title">mastodon-allow-egress-elasticsearch</text>
+<text x="1308" y="3679" class="policy-subtitle">Egress</text>
+<text x="1308" y="3699" class="policy-body">Applies to all pods</text>
+<text x="1308" y="3716" class="policy-body">OUT to ns:elastic-stack on TCP/9200</text>
+<rect x="1296" y="3748" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="3772" class="policy-title">mastodon-allow-egress-intra-namespace</text>
+<text x="1308" y="3790" class="policy-subtitle">Egress</text>
+<text x="1308" y="3810" class="policy-body">Applies to all pods</text>
+<text x="1308" y="3827" class="policy-body">OUT to ns:mastodon on all ports</text>
+<rect x="1296" y="3859" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="3883" class="policy-title">mastodon-allow-egress-postgres</text>
+<text x="1308" y="3901" class="policy-subtitle">Egress</text>
+<text x="1308" y="3921" class="policy-body">Applies to all pods</text>
+<text x="1308" y="3938" class="policy-body">OUT to pod{app=mastodon-postgres} on TCP/5432</text>
+<text x="1308" y="3955" class="policy-body">OUT to ns:db on TCP/5432</text>
+<rect x="1296" y="3987" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="4011" class="policy-title">mastodon-allow-egress-web</text>
+<text x="1308" y="4029" class="policy-subtitle">Egress</text>
+<text x="1308" y="4049" class="policy-body">Applies to all pods</text>
+<text x="1308" y="4066" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="1308" y="4083" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="1296" y="4115" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="4139" class="policy-title">mastodon-allow-ingress-from-monitoring</text>
+<text x="1308" y="4157" class="policy-subtitle">Ingress</text>
+<text x="1308" y="4177" class="policy-body">Applies to all pods</text>
+<text x="1308" y="4194" class="policy-body">IN from ns:monitoring on TCP/3000, TCP/4000, TCP/9121</text>
+<rect x="1296" y="4226" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="4250" class="policy-title">mastodon-allow-ingress-from-traefik</text>
+<text x="1308" y="4268" class="policy-subtitle">Ingress</text>
+<text x="1308" y="4288" class="policy-body">Applies to all pods</text>
+<text x="1308" y="4305" class="policy-body">IN from ns:traefik on TCP/3000, TCP/4000</text>
+<rect x="1296" y="4337" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="4361" class="policy-title">mastodon-allow-ingress-intra-namespace</text>
+<text x="1308" y="4379" class="policy-subtitle">Ingress</text>
+<text x="1308" y="4399" class="policy-body">Applies to all pods</text>
+<text x="1308" y="4416" class="policy-body">IN from ns:mastodon on all ports</text>
+<rect x="1296" y="4448" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="4472" class="policy-title">mastodon-bookmarked-media-sync-allow-egress-kube-api</text>
+<text x="1308" y="4490" class="policy-subtitle">Egress</text>
+<text x="1308" y="4510" class="policy-body">Applies to {app.kubernetes.io/name=bookmarked-media-sync}</text>
+<text x="1308" y="4527" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<text x="1308" y="4544" class="policy-body">OUT to ip:192.168.1.209/32 on TCP/6443</text>
+<rect x="1296" y="4576" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="4600" class="policy-title">mastodon-default-deny</text>
+<text x="1308" y="4618" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="4638" class="policy-body">Applies to all pods</text>
+<text x="1308" y="4655" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="4672" class="policy-body">OUT deny all egress</text>
+<rect x="1296" y="4704" width="576" height="118" rx="16" class="policy ingress" />
+<text x="1308" y="4728" class="policy-title">mastodon-postgres-restrict-ingress</text>
+<text x="1308" y="4746" class="policy-subtitle">Ingress</text>
+<text x="1308" y="4766" class="policy-body">Applies to {app=mastodon-postgres}</text>
+<text x="1308" y="4783" class="policy-body">IN from ns:mastodon on TCP/5432</text>
+<text x="1308" y="4800" class="policy-body">IN from ns:monitoring on TCP/9187</text>
+<rect x="656" y="3849" width="608" height="1344" rx="22" class="namespace-panel" />
+<text x="672" y="3879" class="section-title">spotify</text>
+<text x="672" y="3901" class="section-subtitle">11 policies | IN 7 | OUT 5 | deny 2</text>
+<rect x="668" y="3919" width="576" height="101" rx="16" class="policy deny-ingress" />
+<text x="680" y="3943" class="policy-title">mongo-default-deny-ingress</text>
+<text x="680" y="3961" class="policy-subtitle">Ingress</text>
+<text x="680" y="3981" class="policy-body">Applies to all pods</text>
+<text x="680" y="3998" class="policy-body">IN deny all ingress</text>
+<rect x="668" y="4030" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="4054" class="policy-title">mongo-exporter-allow-monitoring</text>
+<text x="680" y="4072" class="policy-subtitle">Ingress</text>
+<text x="680" y="4092" class="policy-body">Applies to {app=mongo-exporter}</text>
+<text x="680" y="4109" class="policy-body">IN from ns:monitoring on TCP/9216</text>
+<rect x="668" y="4141" width="576" height="118" rx="16" class="policy ingress" />
+<text x="680" y="4165" class="policy-title">mongodb-allow-required-ingress</text>
+<text x="680" y="4183" class="policy-subtitle">Ingress</text>
+<text x="680" y="4203" class="policy-body">Applies to {app=mongodb}</text>
+<text x="680" y="4220" class="policy-body">IN from ns:spotify on TCP/27017</text>
+<text x="680" y="4237" class="policy-body">IN from ns:monitoring on TCP/27017, TCP/9216</text>
+<rect x="668" y="4269" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="4293" class="policy-title">spotify-allow-egress-dns</text>
+<text x="680" y="4311" class="policy-subtitle">Egress</text>
+<text x="680" y="4331" class="policy-body">Applies to all pods</text>
+<text x="680" y="4348" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="4380" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="4404" class="policy-title">spotify-allow-egress-intra-namespace</text>
+<text x="680" y="4422" class="policy-subtitle">Egress</text>
+<text x="680" y="4442" class="policy-body">Applies to all pods</text>
+<text x="680" y="4459" class="policy-body">OUT to ns:spotify on all ports</text>
+<rect x="668" y="4491" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="4515" class="policy-title">spotify-allow-egress-mongo</text>
+<text x="680" y="4533" class="policy-subtitle">Egress</text>
+<text x="680" y="4553" class="policy-body">Applies to all pods</text>
+<text x="680" y="4570" class="policy-body">OUT to ns:spotify on TCP/27017</text>
+<rect x="668" y="4602" width="576" height="118" rx="16" class="policy egress" />
+<text x="680" y="4626" class="policy-title">spotify-allow-egress-web</text>
+<text x="680" y="4644" class="policy-subtitle">Egress</text>
+<text x="680" y="4664" class="policy-body">Applies to all pods</text>
+<text x="680" y="4681" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="680" y="4698" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="668" y="4730" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="4754" class="policy-title">spotify-allow-ingress-from-monitoring</text>
+<text x="680" y="4772" class="policy-subtitle">Ingress</text>
+<text x="680" y="4792" class="policy-body">Applies to all pods</text>
+<text x="680" y="4809" class="policy-body">IN from ns:monitoring on TCP/3000, TCP/8080</text>
+<rect x="668" y="4841" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="4865" class="policy-title">spotify-allow-ingress-from-traefik</text>
+<text x="680" y="4883" class="policy-subtitle">Ingress</text>
+<text x="680" y="4903" class="policy-body">Applies to all pods</text>
+<text x="680" y="4920" class="policy-body">IN from ns:traefik on TCP/3000, TCP/8080</text>
+<rect x="668" y="4952" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="4976" class="policy-title">spotify-allow-ingress-intra-namespace</text>
+<text x="680" y="4994" class="policy-subtitle">Ingress</text>
+<text x="680" y="5014" class="policy-body">Applies to all pods</text>
+<text x="680" y="5031" class="policy-body">IN from ns:spotify on all ports</text>
+<rect x="668" y="5063" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="5087" class="policy-title">spotify-default-deny</text>
+<text x="680" y="5105" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="5125" class="policy-body">Applies to all pods</text>
+<text x="680" y="5142" class="policy-body">IN deny all ingress</text>
+<text x="680" y="5159" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="4266" width="608" height="1318" rx="22" class="namespace-panel" />
+<text x="44" y="4296" class="section-title">plex</text>
+<text x="44" y="4318" class="section-subtitle">10 policies | IN 6 | OUT 5 | deny 1</text>
+<rect x="40" y="4336" width="576" height="169" rx="16" class="policy egress" />
+<text x="52" y="4360" class="policy-title">plex-allow-egress-discovery</text>
+<text x="52" y="4378" class="policy-subtitle">Egress</text>
+<text x="52" y="4398" class="policy-body">Applies to all pods</text>
+<text x="52" y="4415" class="policy-body">OUT to ip:192.168.1.0/24 on UDP/1900, UDP/5353, UDP/32410,</text>
+<text x="52" y="4432" class="policy-body">UDP/32412, UDP/32413, UDP/32414</text>
+<text x="52" y="4449" class="policy-body">OUT to ip:224.0.0.0/4 on UDP/1900, UDP/5353</text>
+<text x="52" y="4466" class="policy-body">OUT to ip:255.255.255.255/32 on UDP/32410, UDP/32412, UDP/32413,</text>
+<text x="52" y="4483" class="policy-body">UDP/32414</text>
+<rect x="40" y="4515" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="4539" class="policy-title">plex-allow-egress-dns</text>
+<text x="52" y="4557" class="policy-subtitle">Egress</text>
+<text x="52" y="4577" class="policy-body">Applies to all pods</text>
+<text x="52" y="4594" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="4626" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="4650" class="policy-title">plex-allow-egress-intra-namespace</text>
+<text x="52" y="4668" class="policy-subtitle">Egress</text>
+<text x="52" y="4688" class="policy-body">Applies to all pods</text>
+<text x="52" y="4705" class="policy-body">OUT to ns:plex on all ports</text>
+<rect x="40" y="4737" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="4761" class="policy-title">plex-allow-egress-web</text>
+<text x="52" y="4779" class="policy-subtitle">Egress</text>
+<text x="52" y="4799" class="policy-body">Applies to all pods</text>
+<text x="52" y="4816" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="52" y="4833" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="40" y="4865" width="576" height="118" rx="16" class="policy ingress" />
+<text x="52" y="4889" class="policy-title">plex-allow-ingress-from-lan</text>
+<text x="52" y="4907" class="policy-subtitle">Ingress</text>
+<text x="52" y="4927" class="policy-body">Applies to all pods</text>
+<text x="52" y="4944" class="policy-body">IN from ip:192.168.1.0/24 on TCP/32400, UDP/1900, UDP/5353,</text>
+<text x="52" y="4961" class="policy-body">TCP/8324, UDP/32410, UDP/32412, UDP/32413, UDP/32414, TCP/32469</text>
+<rect x="40" y="4993" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="5017" class="policy-title">plex-allow-ingress-from-monitoring</text>
+<text x="52" y="5035" class="policy-subtitle">Ingress</text>
+<text x="52" y="5055" class="policy-body">Applies to all pods</text>
+<text x="52" y="5072" class="policy-body">IN from ns:monitoring on TCP/32400</text>
+<rect x="40" y="5104" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="5128" class="policy-title">plex-allow-ingress-from-traefik</text>
+<text x="52" y="5146" class="policy-subtitle">Ingress</text>
+<text x="52" y="5166" class="policy-body">Applies to all pods</text>
+<text x="52" y="5183" class="policy-body">IN from ns:traefik on TCP/32400</text>
+<rect x="40" y="5215" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="5239" class="policy-title">plex-allow-ingress-intra-namespace</text>
+<text x="52" y="5257" class="policy-subtitle">Ingress</text>
+<text x="52" y="5277" class="policy-body">Applies to all pods</text>
+<text x="52" y="5294" class="policy-body">IN from ns:plex on all ports</text>
+<rect x="40" y="5326" width="576" height="118" rx="16" class="policy ingress" />
+<text x="52" y="5350" class="policy-title">plex-allow-ingress-remote-access</text>
+<text x="52" y="5368" class="policy-subtitle">Ingress</text>
+<text x="52" y="5388" class="policy-body">Applies to all pods</text>
+<text x="52" y="5405" class="policy-body">IN from ip:0.0.0.0/0 on TCP/32400</text>
+<text x="52" y="5422" class="policy-body">IN from ip:::/0 on TCP/32400</text>
+<rect x="40" y="5454" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="5478" class="policy-title">plex-default-deny</text>
+<text x="52" y="5496" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="5516" class="policy-body">Applies to all pods</text>
+<text x="52" y="5533" class="policy-body">IN deny all ingress</text>
+<text x="52" y="5550" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="4854" width="608" height="1318" rx="22" class="namespace-panel" />
+<text x="1300" y="4884" class="section-title">traefik</text>
+<text x="1300" y="4906" class="section-subtitle">10 policies | IN 4 | OUT 7 | deny 1</text>
+<rect x="1296" y="4924" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="4948" class="policy-title">traefik-allow-egress-dns</text>
+<text x="1308" y="4966" class="policy-subtitle">Egress</text>
+<text x="1308" y="4986" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5003" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="5035" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="5059" class="policy-title">traefik-allow-egress-homeassistant-external</text>
+<text x="1308" y="5077" class="policy-subtitle">Egress</text>
+<text x="1308" y="5097" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5114" class="policy-body">OUT to ip:192.168.1.247/32 on TCP/8123</text>
+<rect x="1296" y="5146" width="576" height="169" rx="16" class="policy egress" />
+<text x="1308" y="5170" class="policy-title">traefik-allow-egress-ingress-namespaces</text>
+<text x="1308" y="5188" class="policy-subtitle">Egress</text>
+<text x="1308" y="5208" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5225" class="policy-body">OUT to ns:argocd, ns:bitwarden, ns:collabora, ns:dawarich,</text>
+<text x="1308" y="5242" class="policy-body">ns:harbor, ns:hister, ns:homeassistant, ns:immich, ns:karakeep,</text>
+<text x="1308" y="5259" class="policy-body">ns:keycloak, ns:longhorn-system, ns:mail, ns:mastodon, ns:matrix,</text>
+<text x="1308" y="5276" class="policy-body">ns:monitoring, ns:nextcloud, ns:plex, ns:seaweedfs, ns:spotify,</text>
+<text x="1308" y="5293" class="policy-body">ns:stirling-pdf, ns:vault, ns:wordpress, ns:year on all ports</text>
+<rect x="1296" y="5325" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="5349" class="policy-title">traefik-allow-egress-intra-namespace</text>
+<text x="1308" y="5367" class="policy-subtitle">Egress</text>
+<text x="1308" y="5387" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5404" class="policy-body">OUT to ns:traefik on all ports</text>
+<rect x="1296" y="5436" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="5460" class="policy-title">traefik-allow-egress-kube-api</text>
+<text x="1308" y="5478" class="policy-subtitle">Egress</text>
+<text x="1308" y="5498" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5515" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<text x="1308" y="5532" class="policy-body">OUT to ip:192.168.1.209/32 on TCP/6443</text>
+<rect x="1296" y="5564" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="5588" class="policy-title">traefik-allow-egress-web</text>
+<text x="1308" y="5606" class="policy-subtitle">Egress</text>
+<text x="1308" y="5626" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5643" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="1308" y="5660" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="1296" y="5692" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="5716" class="policy-title">traefik-allow-ingress-from-monitoring</text>
+<text x="1308" y="5734" class="policy-subtitle">Ingress</text>
+<text x="1308" y="5754" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5771" class="policy-body">IN from ns:monitoring on TCP/9100</text>
+<rect x="1296" y="5803" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="5827" class="policy-title">traefik-allow-ingress-intra-namespace</text>
+<text x="1308" y="5845" class="policy-subtitle">Ingress</text>
+<text x="1308" y="5865" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5882" class="policy-body">IN from ns:traefik on all ports</text>
+<rect x="1296" y="5914" width="576" height="118" rx="16" class="policy ingress" />
+<text x="1308" y="5938" class="policy-title">traefik-allow-ingress-public-entrypoints</text>
+<text x="1308" y="5956" class="policy-subtitle">Ingress</text>
+<text x="1308" y="5976" class="policy-body">Applies to all pods</text>
+<text x="1308" y="5993" class="policy-body">IN from all peers on TCP/80, TCP/443, TCP/587, TCP/993, TCP/25565,</text>
+<text x="1308" y="6010" class="policy-body">TCP/4190</text>
+<rect x="1296" y="6042" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="6066" class="policy-title">traefik-default-deny</text>
+<text x="1308" y="6084" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="6104" class="policy-body">Applies to all pods</text>
+<text x="1308" y="6121" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="6138" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="5213" width="608" height="1250" rx="22" class="namespace-panel" />
+<text x="672" y="5243" class="section-title">wordpress</text>
+<text x="672" y="5265" class="section-subtitle">10 policies | IN 6 | OUT 5 | deny 1</text>
+<rect x="668" y="5283" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="5307" class="policy-title">wordpress-allow-dns-egress</text>
+<text x="680" y="5325" class="policy-subtitle">Egress</text>
+<text x="680" y="5345" class="policy-body">Applies to all pods</text>
+<text x="680" y="5362" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="5394" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="5418" class="policy-title">wordpress-allow-egress-from-nginx-to-php</text>
+<text x="680" y="5436" class="policy-subtitle">Egress</text>
+<text x="680" y="5456" class="policy-body">Applies to {app=wordpress, tier=frontend}</text>
+<text x="680" y="5473" class="policy-body">OUT to pod{app=wordpress, tier=backend} on TCP/9000</text>
+<rect x="668" y="5505" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="5529" class="policy-title">wordpress-allow-egress-web</text>
+<text x="680" y="5547" class="policy-subtitle">Egress</text>
+<text x="680" y="5567" class="policy-body">Applies to all pods</text>
+<text x="680" y="5584" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<rect x="668" y="5616" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="5640" class="policy-title">wordpress-allow-ingress-to-mysql-wordpress-from-php</text>
+<text x="680" y="5658" class="policy-subtitle">Ingress</text>
+<text x="680" y="5678" class="policy-body">Applies to {app=mysql-wordpress, tier=mysql}</text>
+<text x="680" y="5695" class="policy-body">IN from pod{app=wordpress, tier=backend} on TCP/3306</text>
+<rect x="668" y="5727" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="5751" class="policy-title">wordpress-allow-ingress-to-mysql-wordpress-sidecar-from-monitoring</text>
+<text x="680" y="5769" class="policy-subtitle">Ingress</text>
+<text x="680" y="5789" class="policy-body">Applies to {app=mysql-wordpress, tier=mysql}</text>
+<text x="680" y="5806" class="policy-body">IN from ns:monitoring on TCP/9104</text>
+<rect x="668" y="5838" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="5862" class="policy-title">wordpress-allow-ingress-to-nginx-from-traefik</text>
+<text x="680" y="5880" class="policy-subtitle">Ingress</text>
+<text x="680" y="5900" class="policy-body">Applies to {app=wordpress, tier=frontend}</text>
+<text x="680" y="5917" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="668" y="5949" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="5973" class="policy-title">wordpress-allow-ingress-to-php-from-nginx</text>
+<text x="680" y="5991" class="policy-subtitle">Ingress</text>
+<text x="680" y="6011" class="policy-body">Applies to {app=wordpress, tier=backend}</text>
+<text x="680" y="6028" class="policy-body">IN from pod{app=wordpress, tier=frontend} on TCP/9000</text>
+<rect x="668" y="6060" width="576" height="135" rx="16" class="policy egress" />
+<text x="680" y="6084" class="policy-title">wordpress-allow-php-egress-to-mysql-wordpress-and-redis</text>
+<text x="680" y="6102" class="policy-subtitle">Egress</text>
+<text x="680" y="6122" class="policy-body">Applies to {app=wordpress, tier=backend}</text>
+<text x="680" y="6139" class="policy-body">OUT to pod{app=mysql-wordpress, tier=mysql} on TCP/3306</text>
+<text x="680" y="6156" class="policy-body">OUT to ns:wordpress on TCP/6379</text>
+<text x="680" y="6173" class="policy-body">OUT to ns:redis on TCP/6379</text>
+<rect x="668" y="6205" width="576" height="118" rx="16" class="policy ingress" />
+<text x="680" y="6229" class="policy-title">wordpress-allow-redis-ingress-from-php</text>
+<text x="680" y="6247" class="policy-subtitle">Ingress</text>
+<text x="680" y="6267" class="policy-body">Applies to all pods</text>
+<text x="680" y="6284" class="policy-body">IN from pod{app=wordpress, tier=backend} on TCP/6379</text>
+<text x="680" y="6301" class="policy-body">IN from ns:monitoring on TCP/9121</text>
+<rect x="668" y="6333" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="6357" class="policy-title">wordpress-default-deny</text>
+<text x="680" y="6375" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="6395" class="policy-body">Applies to all pods</text>
+<text x="680" y="6412" class="policy-body">IN deny all ingress</text>
+<text x="680" y="6429" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="5604" width="608" height="1105" rx="22" class="namespace-panel" />
+<text x="44" y="5634" class="section-title">external-secrets</text>
+<text x="44" y="5656" class="section-subtitle">9 policies | IN 4 | OUT 6 | deny 1</text>
+<rect x="40" y="5674" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="5698" class="policy-title">external-secrets-allow-egress-dns</text>
+<text x="52" y="5716" class="policy-subtitle">Egress</text>
+<text x="52" y="5736" class="policy-body">Applies to all pods</text>
+<text x="52" y="5753" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="5785" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="5809" class="policy-title">external-secrets-allow-egress-intra-namespace</text>
+<text x="52" y="5827" class="policy-subtitle">Egress</text>
+<text x="52" y="5847" class="policy-body">Applies to all pods</text>
+<text x="52" y="5864" class="policy-body">OUT to ns:external-secrets on all ports</text>
+<rect x="40" y="5896" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="5920" class="policy-title">external-secrets-allow-egress-kube-api</text>
+<text x="52" y="5938" class="policy-subtitle">Egress</text>
+<text x="52" y="5958" class="policy-body">Applies to all pods</text>
+<text x="52" y="5975" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<rect x="40" y="6007" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="6031" class="policy-title">external-secrets-allow-egress-vault</text>
+<text x="52" y="6049" class="policy-subtitle">Egress</text>
+<text x="52" y="6069" class="policy-body">Applies to all pods</text>
+<text x="52" y="6086" class="policy-body">OUT to ns:vault on TCP/8200</text>
+<rect x="40" y="6118" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="6142" class="policy-title">external-secrets-allow-egress-vault-ingress</text>
+<text x="52" y="6160" class="policy-subtitle">Egress</text>
+<text x="52" y="6180" class="policy-body">Applies to all pods</text>
+<text x="52" y="6197" class="policy-body">OUT to ip:192.168.1.209/32, ip:192.168.1.100/32 on TCP/80, TCP/443</text>
+<rect x="40" y="6229" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="6253" class="policy-title">external-secrets-allow-ingress-intra-namespace</text>
+<text x="52" y="6271" class="policy-subtitle">Ingress</text>
+<text x="52" y="6291" class="policy-body">Applies to all pods</text>
+<text x="52" y="6308" class="policy-body">IN from ns:external-secrets on all ports</text>
+<rect x="40" y="6340" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="6364" class="policy-title">external-secrets-allow-ingress-monitoring</text>
+<text x="52" y="6382" class="policy-subtitle">Ingress</text>
+<text x="52" y="6402" class="policy-body">Applies to all pods</text>
+<text x="52" y="6419" class="policy-body">IN from ns:monitoring on TCP/8080</text>
+<rect x="40" y="6451" width="576" height="118" rx="16" class="policy ingress" />
+<text x="52" y="6475" class="policy-title">external-secrets-allow-ingress-webhook</text>
+<text x="52" y="6493" class="policy-subtitle">Ingress</text>
+<text x="52" y="6513" class="policy-body">Applies to {app.kubernetes.io/name=external-secrets-webhook}</text>
+<text x="52" y="6530" class="policy-body">IN from ip:192.168.1.0/24, ip:10.42.0.0/16,</text>
+<text x="52" y="6547" class="policy-body">ip:2a02:e98:c0:1800::/64, ip:2001:cafe:42::/56 on TCP/10250</text>
+<rect x="40" y="6579" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="6603" class="policy-title">external-secrets-default-deny</text>
+<text x="52" y="6621" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="6641" class="policy-body">Applies to all pods</text>
+<text x="52" y="6658" class="policy-body">IN deny all ingress</text>
+<text x="52" y="6675" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="6192" width="608" height="1062" rx="22" class="namespace-panel" />
+<text x="1300" y="6222" class="section-title">dawarich</text>
+<text x="1300" y="6244" class="section-subtitle">8 policies | IN 4 | OUT 5 | deny 1</text>
+<rect x="1296" y="6262" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="6286" class="policy-title">dawarich-allow-egress-db</text>
+<text x="1308" y="6304" class="policy-subtitle">Egress</text>
+<text x="1308" y="6324" class="policy-body">Applies to all pods</text>
+<text x="1308" y="6341" class="policy-body">OUT to pod{app=dawarich-postgres} on TCP/5432</text>
+<text x="1308" y="6358" class="policy-body">OUT to ns:db on TCP/5432</text>
+<rect x="1296" y="6390" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="6414" class="policy-title">dawarich-allow-egress-dns</text>
+<text x="1308" y="6432" class="policy-subtitle">Egress</text>
+<text x="1308" y="6452" class="policy-body">Applies to all pods</text>
+<text x="1308" y="6469" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="6501" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="6525" class="policy-title">dawarich-allow-egress-intra-namespace</text>
+<text x="1308" y="6543" class="policy-subtitle">Egress</text>
+<text x="1308" y="6563" class="policy-body">Applies to all pods</text>
+<text x="1308" y="6580" class="policy-body">OUT to ns:dawarich on all ports</text>
+<rect x="1296" y="6612" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="6636" class="policy-title">dawarich-allow-egress-web</text>
+<text x="1308" y="6654" class="policy-subtitle">Egress</text>
+<text x="1308" y="6674" class="policy-body">Applies to all pods</text>
+<text x="1308" y="6691" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="1308" y="6708" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="1296" y="6740" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="6764" class="policy-title">dawarich-allow-ingress-from-traefik</text>
+<text x="1308" y="6782" class="policy-subtitle">Ingress</text>
+<text x="1308" y="6802" class="policy-body">Applies to {app=dawarich}</text>
+<text x="1308" y="6819" class="policy-body">IN from ns:traefik on TCP/3000</text>
+<rect x="1296" y="6851" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="6875" class="policy-title">dawarich-allow-ingress-intra-namespace</text>
+<text x="1308" y="6893" class="policy-subtitle">Ingress</text>
+<text x="1308" y="6913" class="policy-body">Applies to all pods</text>
+<text x="1308" y="6930" class="policy-body">IN from ns:dawarich on all ports</text>
+<rect x="1296" y="6962" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="6986" class="policy-title">dawarich-default-deny</text>
+<text x="1308" y="7004" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="7024" class="policy-body">Applies to all pods</text>
+<text x="1308" y="7041" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="7058" class="policy-body">OUT deny all egress</text>
+<rect x="1296" y="7090" width="576" height="152" rx="16" class="policy ingress" />
+<text x="1308" y="7114" class="policy-title">dawarich-postgres-restrict-ingress</text>
+<text x="1308" y="7132" class="policy-subtitle">Ingress</text>
+<text x="1308" y="7152" class="policy-body">Applies to {app=dawarich-postgres}</text>
+<text x="1308" y="7169" class="policy-body">IN from ns:dawarich &amp; pod{app=dawarich} on TCP/5432</text>
+<text x="1308" y="7186" class="policy-body">IN from ns:dawarich &amp; pod{app=dawarich-postgres-migrate} on</text>
+<text x="1308" y="7203" class="policy-body">TCP/5432</text>
+<text x="1308" y="7220" class="policy-body">IN from ns:monitoring on TCP/9187</text>
+<rect x="656" y="6483" width="608" height="1045" rx="22" class="namespace-panel" />
+<text x="672" y="6513" class="section-title">keycloak</text>
+<text x="672" y="6535" class="section-subtitle">8 policies | IN 5 | OUT 4 | deny 1</text>
+<rect x="668" y="6553" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="6577" class="policy-title">keycloak-allow-egress-dns</text>
+<text x="680" y="6595" class="policy-subtitle">Egress</text>
+<text x="680" y="6615" class="policy-body">Applies to all pods</text>
+<text x="680" y="6632" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="6664" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="6688" class="policy-title">keycloak-allow-egress-intra-namespace</text>
+<text x="680" y="6706" class="policy-subtitle">Egress</text>
+<text x="680" y="6726" class="policy-body">Applies to all pods</text>
+<text x="680" y="6743" class="policy-body">OUT to ns:keycloak on all ports</text>
+<rect x="668" y="6775" width="576" height="118" rx="16" class="policy egress" />
+<text x="680" y="6799" class="policy-title">keycloak-allow-egress-postgres</text>
+<text x="680" y="6817" class="policy-subtitle">Egress</text>
+<text x="680" y="6837" class="policy-body">Applies to all pods</text>
+<text x="680" y="6854" class="policy-body">OUT to pod{app=keycloak-postgres} on TCP/5432</text>
+<text x="680" y="6871" class="policy-body">OUT to ns:db on TCP/5432</text>
+<rect x="668" y="6903" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="6927" class="policy-title">keycloak-allow-ingress-from-monitoring</text>
+<text x="680" y="6945" class="policy-subtitle">Ingress</text>
+<text x="680" y="6965" class="policy-body">Applies to all pods</text>
+<text x="680" y="6982" class="policy-body">IN from ns:monitoring on TCP/9000</text>
+<rect x="668" y="7014" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="7038" class="policy-title">keycloak-allow-ingress-from-traefik</text>
+<text x="680" y="7056" class="policy-subtitle">Ingress</text>
+<text x="680" y="7076" class="policy-body">Applies to all pods</text>
+<text x="680" y="7093" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="668" y="7125" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="7149" class="policy-title">keycloak-allow-ingress-intra-namespace</text>
+<text x="680" y="7167" class="policy-subtitle">Ingress</text>
+<text x="680" y="7187" class="policy-body">Applies to all pods</text>
+<text x="680" y="7204" class="policy-body">IN from ns:keycloak on all ports</text>
+<rect x="668" y="7236" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="7260" class="policy-title">keycloak-default-deny</text>
+<text x="680" y="7278" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="7298" class="policy-body">Applies to all pods</text>
+<text x="680" y="7315" class="policy-body">IN deny all ingress</text>
+<text x="680" y="7332" class="policy-body">OUT deny all egress</text>
+<rect x="668" y="7364" width="576" height="152" rx="16" class="policy ingress" />
+<text x="680" y="7388" class="policy-title">keycloak-postgres-restrict-ingress</text>
+<text x="680" y="7406" class="policy-subtitle">Ingress</text>
+<text x="680" y="7426" class="policy-body">Applies to {app=keycloak-postgres}</text>
+<text x="680" y="7443" class="policy-body">IN from ns:keycloak &amp; pod{app=keycloak} on TCP/5432</text>
+<text x="680" y="7460" class="policy-body">IN from ns:keycloak &amp; pod{app=keycloak-postgres-migrate} on</text>
+<text x="680" y="7477" class="policy-body">TCP/5432</text>
+<text x="680" y="7494" class="policy-body">IN from ns:monitoring on TCP/9187</text>
+<rect x="28" y="6729" width="608" height="1011" rx="22" class="namespace-panel" />
+<text x="44" y="6759" class="section-title">immich</text>
+<text x="44" y="6781" class="section-subtitle">8 policies | IN 5 | OUT 4 | deny 1</text>
+<rect x="40" y="6799" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="6823" class="policy-title">immich-allow-egress-dns</text>
+<text x="52" y="6841" class="policy-subtitle">Egress</text>
+<text x="52" y="6861" class="policy-body">Applies to all pods</text>
+<text x="52" y="6878" class="policy-body">OUT to ns:kube-system on UDP/53, TCP/53</text>
+<rect x="40" y="6910" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="6934" class="policy-title">immich-allow-egress-intra-namespace</text>
+<text x="52" y="6952" class="policy-subtitle">Egress</text>
+<text x="52" y="6972" class="policy-body">Applies to all pods</text>
+<text x="52" y="6989" class="policy-body">OUT to ns:immich on all ports</text>
+<text x="52" y="7006" class="policy-body">OUT to ip:10.43.0.0/16 on TCP/2283, TCP/3003, TCP/5432, TCP/6379</text>
+<rect x="40" y="7038" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="7062" class="policy-title">immich-allow-egress-web</text>
+<text x="52" y="7080" class="policy-subtitle">Egress</text>
+<text x="52" y="7100" class="policy-body">Applies to all pods</text>
+<text x="52" y="7117" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="52" y="7134" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="40" y="7166" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="7190" class="policy-title">immich-allow-ingress-from-traefik</text>
+<text x="52" y="7208" class="policy-subtitle">Ingress</text>
+<text x="52" y="7228" class="policy-body">Applies to {app=immich-server}</text>
+<text x="52" y="7245" class="policy-body">IN from ns:traefik on TCP/2283</text>
+<rect x="40" y="7277" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="7301" class="policy-title">immich-allow-ingress-intra-namespace</text>
+<text x="52" y="7319" class="policy-subtitle">Ingress</text>
+<text x="52" y="7339" class="policy-body">Applies to all pods</text>
+<text x="52" y="7356" class="policy-body">IN from ns:immich on all ports</text>
+<rect x="40" y="7388" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="7412" class="policy-title">immich-default-deny</text>
+<text x="52" y="7430" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="7450" class="policy-body">Applies to all pods</text>
+<text x="52" y="7467" class="policy-body">IN deny all ingress</text>
+<text x="52" y="7484" class="policy-body">OUT deny all egress</text>
+<rect x="40" y="7516" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="7540" class="policy-title">immich-postgres-restrict-ingress</text>
+<text x="52" y="7558" class="policy-subtitle">Ingress</text>
+<text x="52" y="7578" class="policy-body">Applies to {app=immich-postgres}</text>
+<text x="52" y="7595" class="policy-body">IN from ns:immich &amp; podall pods on TCP/5432</text>
+<rect x="40" y="7627" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="7651" class="policy-title">immich-valkey-restrict-ingress</text>
+<text x="52" y="7669" class="policy-subtitle">Ingress</text>
+<text x="52" y="7689" class="policy-body">Applies to {app=immich-valkey}</text>
+<text x="52" y="7706" class="policy-body">IN from ns:immich &amp; podall pods on TCP/6379</text>
+<rect x="1284" y="7274" width="608" height="1011" rx="22" class="namespace-panel" />
+<text x="1300" y="7304" class="section-title">loki</text>
+<text x="1300" y="7326" class="section-subtitle">8 policies | IN 4 | OUT 5 | deny 1</text>
+<rect x="1296" y="7344" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="7368" class="policy-title">loki-allow-egress-dns</text>
+<text x="1308" y="7386" class="policy-subtitle">Egress</text>
+<text x="1308" y="7406" class="policy-body">Applies to all pods</text>
+<text x="1308" y="7423" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="7455" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="7479" class="policy-title">loki-allow-egress-intra-namespace</text>
+<text x="1308" y="7497" class="policy-subtitle">Egress</text>
+<text x="1308" y="7517" class="policy-body">Applies to all pods</text>
+<text x="1308" y="7534" class="policy-body">OUT to ns:loki on all ports</text>
+<rect x="1296" y="7566" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="7590" class="policy-title">loki-allow-egress-kube-api</text>
+<text x="1308" y="7608" class="policy-subtitle">Egress</text>
+<text x="1308" y="7628" class="policy-body">Applies to all pods</text>
+<text x="1308" y="7645" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<text x="1308" y="7662" class="policy-body">OUT to ip:192.168.1.209/32 on TCP/6443</text>
+<rect x="1296" y="7694" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="7718" class="policy-title">loki-allow-egress-s3-https</text>
+<text x="1308" y="7736" class="policy-subtitle">Egress</text>
+<text x="1308" y="7756" class="policy-body">Applies to {app.kubernetes.io/component=single-binary}</text>
+<text x="1308" y="7773" class="policy-body">OUT to ip:81.19.4.105/32 on TCP/443</text>
+<rect x="1296" y="7805" width="576" height="118" rx="16" class="policy ingress" />
+<text x="1308" y="7829" class="policy-title">loki-allow-ingress-from-monitoring</text>
+<text x="1308" y="7847" class="policy-subtitle">Ingress</text>
+<text x="1308" y="7867" class="policy-body">Applies to all pods</text>
+<text x="1308" y="7884" class="policy-body">IN from ns:monitoring on TCP/80, TCP/8080, TCP/3100, TCP/3500,</text>
+<text x="1308" y="7901" class="policy-body">TCP/9150, TCP/9095</text>
+<rect x="1296" y="7933" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="7957" class="policy-title">loki-allow-ingress-intra-namespace</text>
+<text x="1308" y="7975" class="policy-subtitle">Ingress</text>
+<text x="1308" y="7995" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8012" class="policy-body">IN from ns:loki on all ports</text>
+<rect x="1296" y="8044" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="8068" class="policy-title">loki-allow-ingress-log-clients</text>
+<text x="1308" y="8086" class="policy-subtitle">Ingress</text>
+<text x="1308" y="8106" class="policy-body">Applies to {app.kubernetes.io/component=single-binary}</text>
+<text x="1308" y="8123" class="policy-body">IN from ns:monitoring, ns:bitwarden, ns:nextcloud on TCP/3100</text>
+<rect x="1296" y="8155" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="8179" class="policy-title">loki-default-deny</text>
+<text x="1308" y="8197" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="8217" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8234" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="8251" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="7548" width="608" height="1011" rx="22" class="namespace-panel" />
+<text x="672" y="7578" class="section-title">vault</text>
+<text x="672" y="7600" class="section-subtitle">8 policies | IN 5 | OUT 4 | deny 1</text>
+<rect x="668" y="7618" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="7642" class="policy-title">vault-allow-egress-dns</text>
+<text x="680" y="7660" class="policy-subtitle">Egress</text>
+<text x="680" y="7680" class="policy-body">Applies to all pods</text>
+<text x="680" y="7697" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="7729" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="7753" class="policy-title">vault-allow-egress-intra-namespace</text>
+<text x="680" y="7771" class="policy-subtitle">Egress</text>
+<text x="680" y="7791" class="policy-body">Applies to all pods</text>
+<text x="680" y="7808" class="policy-body">OUT to ns:vault on all ports</text>
+<rect x="668" y="7840" width="576" height="135" rx="16" class="policy egress" />
+<text x="680" y="7864" class="policy-title">vault-allow-egress-keycloak</text>
+<text x="680" y="7882" class="policy-subtitle">Egress</text>
+<text x="680" y="7902" class="policy-body">Applies to all pods</text>
+<text x="680" y="7919" class="policy-body">OUT to ns:keycloak on TCP/8080</text>
+<text x="680" y="7936" class="policy-body">OUT to ip:192.168.1.209/32, ip:192.168.1.100/32, ip:81.19.4.105/32</text>
+<text x="680" y="7953" class="policy-body">on TCP/443</text>
+<rect x="668" y="7985" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="8009" class="policy-title">vault-allow-ingress-from-external-secrets</text>
+<text x="680" y="8027" class="policy-subtitle">Ingress</text>
+<text x="680" y="8047" class="policy-body">Applies to all pods</text>
+<text x="680" y="8064" class="policy-body">IN from ns:external-secrets on TCP/8200</text>
+<rect x="668" y="8096" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="8120" class="policy-title">vault-allow-ingress-from-monitoring</text>
+<text x="680" y="8138" class="policy-subtitle">Ingress</text>
+<text x="680" y="8158" class="policy-body">Applies to all pods</text>
+<text x="680" y="8175" class="policy-body">IN from ns:monitoring on TCP/8200</text>
+<rect x="668" y="8207" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="8231" class="policy-title">vault-allow-ingress-from-traefik</text>
+<text x="680" y="8249" class="policy-subtitle">Ingress</text>
+<text x="680" y="8269" class="policy-body">Applies to all pods</text>
+<text x="680" y="8286" class="policy-body">IN from ns:traefik on TCP/8200</text>
+<rect x="668" y="8318" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="8342" class="policy-title">vault-allow-ingress-intra-namespace</text>
+<text x="680" y="8360" class="policy-subtitle">Ingress</text>
+<text x="680" y="8380" class="policy-body">Applies to all pods</text>
+<text x="680" y="8397" class="policy-body">IN from ns:vault on all ports</text>
+<rect x="668" y="8429" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="8453" class="policy-title">vault-default-deny</text>
+<text x="680" y="8471" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="8491" class="policy-body">Applies to all pods</text>
+<text x="680" y="8508" class="policy-body">IN deny all ingress</text>
+<text x="680" y="8525" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="7760" width="608" height="951" rx="22" class="namespace-panel" />
+<text x="44" y="7790" class="section-title">bitwarden</text>
+<text x="44" y="7812" class="section-subtitle">7 policies | IN 3 | OUT 5 | deny 1</text>
+<rect x="40" y="7830" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="7854" class="policy-title">bitwarden-allow-dns-egress</text>
+<text x="52" y="7872" class="policy-subtitle">Egress</text>
+<text x="52" y="7892" class="policy-body">Applies to {service=bitwarden}</text>
+<text x="52" y="7909" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="7941" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="7965" class="policy-title">bitwarden-allow-external-egress</text>
+<text x="52" y="7983" class="policy-subtitle">Egress</text>
+<text x="52" y="8003" class="policy-body">Applies to {service=bitwarden}</text>
+<text x="52" y="8020" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/25, TCP/443</text>
+<rect x="40" y="8052" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="8076" class="policy-title">bitwarden-allow-ingress-from-traefik</text>
+<text x="52" y="8094" class="policy-subtitle">Ingress</text>
+<text x="52" y="8114" class="policy-body">Applies to {service=bitwarden}</text>
+<text x="52" y="8131" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="40" y="8163" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="8187" class="policy-title">bitwarden-allow-loki-egress</text>
+<text x="52" y="8205" class="policy-subtitle">Egress</text>
+<text x="52" y="8225" class="policy-body">Applies to {service=bitwarden}</text>
+<text x="52" y="8242" class="policy-body">OUT to ns:loki on TCP/3100</text>
+<rect x="40" y="8274" width="576" height="118" rx="16" class="policy egress" />
+<text x="52" y="8298" class="policy-title">bitwarden-allow-postgres-egress</text>
+<text x="52" y="8316" class="policy-subtitle">Egress</text>
+<text x="52" y="8336" class="policy-body">Applies to {service=bitwarden}</text>
+<text x="52" y="8353" class="policy-body">OUT to pod{app=bitwarden-postgres} on TCP/5432</text>
+<text x="52" y="8370" class="policy-body">OUT to ns:db on TCP/5432</text>
+<rect x="40" y="8402" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="8426" class="policy-title">bitwarden-default-deny</text>
+<text x="52" y="8444" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="8464" class="policy-body">Applies to {service=bitwarden}</text>
+<text x="52" y="8481" class="policy-body">IN deny all ingress</text>
+<text x="52" y="8498" class="policy-body">OUT deny all egress</text>
+<rect x="40" y="8530" width="576" height="169" rx="16" class="policy ingress" />
+<text x="52" y="8554" class="policy-title">bitwarden-postgres-restrict-ingress</text>
+<text x="52" y="8572" class="policy-subtitle">Ingress</text>
+<text x="52" y="8592" class="policy-body">Applies to {app=bitwarden-postgres}</text>
+<text x="52" y="8609" class="policy-body">IN from ns:bitwarden &amp; pod{db-client=bitwarden-postgres} on</text>
+<text x="52" y="8626" class="policy-body">TCP/5432</text>
+<text x="52" y="8643" class="policy-body">IN from ns:bitwarden &amp; pod{app=bitwarden-postgres-migrate} on</text>
+<text x="52" y="8660" class="policy-body">TCP/5432</text>
+<text x="52" y="8677" class="policy-body">IN from ns:monitoring on TCP/9187</text>
+<rect x="1284" y="8305" width="608" height="883" rx="22" class="namespace-panel" />
+<text x="1300" y="8335" class="section-title">harbor</text>
+<text x="1300" y="8357" class="section-subtitle">7 policies | IN 4 | OUT 4 | deny 1</text>
+<rect x="1296" y="8375" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="8399" class="policy-title">harbor-allow-egress-dns</text>
+<text x="1308" y="8417" class="policy-subtitle">Egress</text>
+<text x="1308" y="8437" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8454" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="8486" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="8510" class="policy-title">harbor-allow-egress-intra-namespace</text>
+<text x="1308" y="8528" class="policy-subtitle">Egress</text>
+<text x="1308" y="8548" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8565" class="policy-body">OUT to ns:harbor on all ports</text>
+<rect x="1296" y="8597" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="8621" class="policy-title">harbor-allow-egress-web</text>
+<text x="1308" y="8639" class="policy-subtitle">Egress</text>
+<text x="1308" y="8659" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8676" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="1308" y="8693" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="1296" y="8725" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="8749" class="policy-title">harbor-allow-ingress-from-monitoring</text>
+<text x="1308" y="8767" class="policy-subtitle">Ingress</text>
+<text x="1308" y="8787" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8804" class="policy-body">IN from ns:monitoring on TCP/8001</text>
+<rect x="1296" y="8836" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="8860" class="policy-title">harbor-allow-ingress-from-traefik</text>
+<text x="1308" y="8878" class="policy-subtitle">Ingress</text>
+<text x="1308" y="8898" class="policy-body">Applies to all pods</text>
+<text x="1308" y="8915" class="policy-body">IN from ns:traefik on TCP/80, TCP/443, TCP/5000, TCP/8080</text>
+<rect x="1296" y="8947" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="8971" class="policy-title">harbor-allow-ingress-intra-namespace</text>
+<text x="1308" y="8989" class="policy-subtitle">Ingress</text>
+<text x="1308" y="9009" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9026" class="policy-body">IN from ns:harbor on all ports</text>
+<rect x="1296" y="9058" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="9082" class="policy-title">harbor-default-deny</text>
+<text x="1308" y="9100" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="9120" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9137" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="9154" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="8579" width="608" height="883" rx="22" class="namespace-panel" />
+<text x="672" y="8609" class="section-title">karakeep</text>
+<text x="672" y="8631" class="section-subtitle">7 policies | IN 4 | OUT 4 | deny 1</text>
+<rect x="668" y="8649" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="8673" class="policy-title">karakeep-allow-egress-dns</text>
+<text x="680" y="8691" class="policy-subtitle">Egress</text>
+<text x="680" y="8711" class="policy-body">Applies to all pods</text>
+<text x="680" y="8728" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="8760" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="8784" class="policy-title">karakeep-allow-egress-intra-namespace</text>
+<text x="680" y="8802" class="policy-subtitle">Egress</text>
+<text x="680" y="8822" class="policy-body">Applies to all pods</text>
+<text x="680" y="8839" class="policy-body">OUT to ns:karakeep on all ports</text>
+<rect x="668" y="8871" width="576" height="118" rx="16" class="policy egress" />
+<text x="680" y="8895" class="policy-title">karakeep-allow-egress-web</text>
+<text x="680" y="8913" class="policy-subtitle">Egress</text>
+<text x="680" y="8933" class="policy-body">Applies to all pods</text>
+<text x="680" y="8950" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="680" y="8967" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="668" y="8999" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="9023" class="policy-title">karakeep-allow-ingress-from-monitoring</text>
+<text x="680" y="9041" class="policy-subtitle">Ingress</text>
+<text x="680" y="9061" class="policy-body">Applies to all pods</text>
+<text x="680" y="9078" class="policy-body">IN from ns:monitoring on TCP/3000</text>
+<rect x="668" y="9110" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="9134" class="policy-title">karakeep-allow-ingress-from-traefik</text>
+<text x="680" y="9152" class="policy-subtitle">Ingress</text>
+<text x="680" y="9172" class="policy-body">Applies to all pods</text>
+<text x="680" y="9189" class="policy-body">IN from ns:traefik on TCP/3000</text>
+<rect x="668" y="9221" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="9245" class="policy-title">karakeep-allow-ingress-intra-namespace</text>
+<text x="680" y="9263" class="policy-subtitle">Ingress</text>
+<text x="680" y="9283" class="policy-body">Applies to all pods</text>
+<text x="680" y="9300" class="policy-body">IN from ns:karakeep on all ports</text>
+<rect x="668" y="9332" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="9356" class="policy-title">karakeep-default-deny</text>
+<text x="680" y="9374" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="9394" class="policy-body">Applies to all pods</text>
+<text x="680" y="9411" class="policy-body">IN deny all ingress</text>
+<text x="680" y="9428" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="8731" width="608" height="772" rx="22" class="namespace-panel" />
+<text x="44" y="8761" class="section-title">elastic-system</text>
+<text x="44" y="8783" class="section-subtitle">6 policies | IN 3 | OUT 4 | deny 1</text>
+<rect x="40" y="8801" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="8825" class="policy-title">elastic-operator-allow-egress-cluster</text>
+<text x="52" y="8843" class="policy-subtitle">Egress</text>
+<text x="52" y="8863" class="policy-body">Applies to {app.kubernetes.io/name=elastic-operator}</text>
+<text x="52" y="8880" class="policy-body">OUT to all namespaces on all ports</text>
+<rect x="40" y="8912" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="8936" class="policy-title">elastic-operator-allow-egress-dns</text>
+<text x="52" y="8954" class="policy-subtitle">Egress</text>
+<text x="52" y="8974" class="policy-body">Applies to {app.kubernetes.io/name=elastic-operator}</text>
+<text x="52" y="8991" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="9023" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="9047" class="policy-title">elastic-operator-allow-egress-kube-api</text>
+<text x="52" y="9065" class="policy-subtitle">Egress</text>
+<text x="52" y="9085" class="policy-body">Applies to {app.kubernetes.io/name=elastic-operator}</text>
+<text x="52" y="9102" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<rect x="40" y="9134" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="9158" class="policy-title">elastic-operator-allow-ingress-intra-namespace</text>
+<text x="52" y="9176" class="policy-subtitle">Ingress</text>
+<text x="52" y="9196" class="policy-body">Applies to {app.kubernetes.io/name=elastic-operator}</text>
+<text x="52" y="9213" class="policy-body">IN from ns:elastic-system on all ports</text>
+<rect x="40" y="9245" width="576" height="118" rx="16" class="policy ingress" />
+<text x="52" y="9269" class="policy-title">elastic-operator-allow-ingress-webhook</text>
+<text x="52" y="9287" class="policy-subtitle">Ingress</text>
+<text x="52" y="9307" class="policy-body">Applies to {app.kubernetes.io/name=elastic-operator}</text>
+<text x="52" y="9324" class="policy-body">IN from ip:0.0.0.0/0 on TCP/9443</text>
+<text x="52" y="9341" class="policy-body">IN from ip:::/0 on TCP/9443</text>
+<rect x="40" y="9373" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="9397" class="policy-title">elastic-operator-default-deny</text>
+<text x="52" y="9415" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="9435" class="policy-body">Applies to {app.kubernetes.io/name=elastic-operator}</text>
+<text x="52" y="9452" class="policy-body">IN deny all ingress</text>
+<text x="52" y="9469" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="9208" width="608" height="755" rx="22" class="namespace-panel" />
+<text x="1300" y="9238" class="section-title">minecraft</text>
+<text x="1300" y="9260" class="section-subtitle">6 policies | IN 4 | OUT 3 | deny 1</text>
+<rect x="1296" y="9278" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="9302" class="policy-title">minecraft-allow-egress-dns</text>
+<text x="1308" y="9320" class="policy-subtitle">Egress</text>
+<text x="1308" y="9340" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9357" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="9389" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="9413" class="policy-title">minecraft-allow-egress-intra-namespace</text>
+<text x="1308" y="9431" class="policy-subtitle">Egress</text>
+<text x="1308" y="9451" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9468" class="policy-body">OUT to ns:minecraft on all ports</text>
+<rect x="1296" y="9500" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="9524" class="policy-title">minecraft-allow-ingress-from-monitoring</text>
+<text x="1308" y="9542" class="policy-subtitle">Ingress</text>
+<text x="1308" y="9562" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9579" class="policy-body">IN from ns:monitoring on TCP/25565</text>
+<rect x="1296" y="9611" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="9635" class="policy-title">minecraft-allow-ingress-from-traefik</text>
+<text x="1308" y="9653" class="policy-subtitle">Ingress</text>
+<text x="1308" y="9673" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9690" class="policy-body">IN from ns:traefik on TCP/25565</text>
+<rect x="1296" y="9722" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="9746" class="policy-title">minecraft-allow-ingress-intra-namespace</text>
+<text x="1308" y="9764" class="policy-subtitle">Ingress</text>
+<text x="1308" y="9784" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9801" class="policy-body">IN from ns:minecraft on all ports</text>
+<rect x="1296" y="9833" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="9857" class="policy-title">minecraft-default-deny</text>
+<text x="1308" y="9875" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="9895" class="policy-body">Applies to all pods</text>
+<text x="1308" y="9912" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="9929" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="9482" width="608" height="755" rx="22" class="namespace-panel" />
+<text x="672" y="9512" class="section-title">seaweedfs</text>
+<text x="672" y="9534" class="section-subtitle">6 policies | IN 4 | OUT 3 | deny 1</text>
+<rect x="668" y="9552" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="9576" class="policy-title">seaweedfs-allow-egress-dns</text>
+<text x="680" y="9594" class="policy-subtitle">Egress</text>
+<text x="680" y="9614" class="policy-body">Applies to all pods</text>
+<text x="680" y="9631" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="9663" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="9687" class="policy-title">seaweedfs-allow-egress-intra-namespace</text>
+<text x="680" y="9705" class="policy-subtitle">Egress</text>
+<text x="680" y="9725" class="policy-body">Applies to all pods</text>
+<text x="680" y="9742" class="policy-body">OUT to ns:seaweedfs on all ports</text>
+<rect x="668" y="9774" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="9798" class="policy-title">seaweedfs-allow-ingress-from-monitoring</text>
+<text x="680" y="9816" class="policy-subtitle">Ingress</text>
+<text x="680" y="9836" class="policy-body">Applies to all pods</text>
+<text x="680" y="9853" class="policy-body">IN from ns:monitoring on TCP/9091, TCP/9092, TCP/9093, TCP/9094</text>
+<rect x="668" y="9885" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="9909" class="policy-title">seaweedfs-allow-ingress-from-traefik</text>
+<text x="680" y="9927" class="policy-subtitle">Ingress</text>
+<text x="680" y="9947" class="policy-body">Applies to all pods</text>
+<text x="680" y="9964" class="policy-body">IN from ns:traefik on TCP/8333</text>
+<rect x="668" y="9996" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="10020" class="policy-title">seaweedfs-allow-ingress-intra-namespace</text>
+<text x="680" y="10038" class="policy-subtitle">Ingress</text>
+<text x="680" y="10058" class="policy-body">Applies to all pods</text>
+<text x="680" y="10075" class="policy-body">IN from ns:seaweedfs on all ports</text>
+<rect x="668" y="10107" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="10131" class="policy-title">seaweedfs-default-deny</text>
+<text x="680" y="10149" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="10169" class="policy-body">Applies to all pods</text>
+<text x="680" y="10186" class="policy-body">IN deny all ingress</text>
+<text x="680" y="10203" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="9523" width="608" height="755" rx="22" class="namespace-panel" />
+<text x="44" y="9553" class="section-title">stirling-pdf</text>
+<text x="44" y="9575" class="section-subtitle">6 policies | IN 4 | OUT 3 | deny 1</text>
+<rect x="40" y="9593" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="9617" class="policy-title">stirling-pdf-allow-egress-dns</text>
+<text x="52" y="9635" class="policy-subtitle">Egress</text>
+<text x="52" y="9655" class="policy-body">Applies to all pods</text>
+<text x="52" y="9672" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="9704" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="9728" class="policy-title">stirling-pdf-allow-egress-intra-namespace</text>
+<text x="52" y="9746" class="policy-subtitle">Egress</text>
+<text x="52" y="9766" class="policy-body">Applies to all pods</text>
+<text x="52" y="9783" class="policy-body">OUT to ns:stirling-pdf on all ports</text>
+<rect x="40" y="9815" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="9839" class="policy-title">stirling-pdf-allow-ingress-from-monitoring</text>
+<text x="52" y="9857" class="policy-subtitle">Ingress</text>
+<text x="52" y="9877" class="policy-body">Applies to all pods</text>
+<text x="52" y="9894" class="policy-body">IN from ns:monitoring on TCP/8080</text>
+<rect x="40" y="9926" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="9950" class="policy-title">stirling-pdf-allow-ingress-from-traefik</text>
+<text x="52" y="9968" class="policy-subtitle">Ingress</text>
+<text x="52" y="9988" class="policy-body">Applies to all pods</text>
+<text x="52" y="10005" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="40" y="10037" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="10061" class="policy-title">stirling-pdf-allow-ingress-intra-namespace</text>
+<text x="52" y="10079" class="policy-subtitle">Ingress</text>
+<text x="52" y="10099" class="policy-body">Applies to all pods</text>
+<text x="52" y="10116" class="policy-body">IN from ns:stirling-pdf on all ports</text>
+<rect x="40" y="10148" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="10172" class="policy-title">stirling-pdf-default-deny</text>
+<text x="52" y="10190" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="10210" class="policy-body">Applies to all pods</text>
+<text x="52" y="10227" class="policy-body">IN deny all ingress</text>
+<text x="52" y="10244" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="9983" width="608" height="755" rx="22" class="namespace-panel" />
+<text x="1300" y="10013" class="section-title">unifi</text>
+<text x="1300" y="10035" class="section-subtitle">6 policies | IN 3 | OUT 4 | deny 1</text>
+<rect x="1296" y="10053" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="10077" class="policy-title">unifi-poller-allow-egress-dns</text>
+<text x="1308" y="10095" class="policy-subtitle">Egress</text>
+<text x="1308" y="10115" class="policy-body">Applies to {app=unifi-poller}</text>
+<text x="1308" y="10132" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="10164" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="10188" class="policy-title">unifi-poller-allow-egress-to-prometheus</text>
+<text x="1308" y="10206" class="policy-subtitle">Egress</text>
+<text x="1308" y="10226" class="policy-body">Applies to {app=unifi-poller}</text>
+<text x="1308" y="10243" class="policy-body">OUT to ns:monitoring on TCP/3100</text>
+<rect x="1296" y="10275" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="10299" class="policy-title">unifi-poller-allow-egress-to-unifi-controller</text>
+<text x="1308" y="10317" class="policy-subtitle">Egress</text>
+<text x="1308" y="10337" class="policy-body">Applies to {app=unifi-poller}</text>
+<text x="1308" y="10354" class="policy-body">OUT to ip:192.168.1.1/32 on TCP/443</text>
+<rect x="1296" y="10386" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="10410" class="policy-title">unifi-poller-allow-ingress-from-monitoring</text>
+<text x="1308" y="10428" class="policy-subtitle">Ingress</text>
+<text x="1308" y="10448" class="policy-body">Applies to {app=unifi-poller}</text>
+<text x="1308" y="10465" class="policy-body">IN from ns:monitoring on TCP/9130</text>
+<rect x="1296" y="10497" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="10521" class="policy-title">unifi-poller-allow-ingress-intra-namespace</text>
+<text x="1308" y="10539" class="policy-subtitle">Ingress</text>
+<text x="1308" y="10559" class="policy-body">Applies to {app=unifi-poller}</text>
+<text x="1308" y="10576" class="policy-body">IN from ns:unifi on all ports</text>
+<rect x="1296" y="10608" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="10632" class="policy-title">unifi-poller-default-deny</text>
+<text x="1308" y="10650" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="10670" class="policy-body">Applies to {app=unifi-poller}</text>
+<text x="1308" y="10687" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="10704" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="10257" width="608" height="661" rx="22" class="namespace-panel" />
+<text x="672" y="10287" class="section-title">matrix</text>
+<text x="672" y="10309" class="section-subtitle">5 policies | IN 2 | OUT 4 | deny 1</text>
+<rect x="668" y="10327" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="10351" class="policy-title">matrix-synapse-allow-dns-egress</text>
+<text x="680" y="10369" class="policy-subtitle">Egress</text>
+<text x="680" y="10389" class="policy-body">Applies to {app=matrix, tier=backend}</text>
+<text x="680" y="10406" class="policy-body">OUT to ns:kube-system on UDP/53, TCP/53</text>
+<rect x="668" y="10438" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="10462" class="policy-title">matrix-synapse-allow-federation-egress</text>
+<text x="680" y="10480" class="policy-subtitle">Egress</text>
+<text x="680" y="10500" class="policy-body">Applies to {app=matrix, tier=backend}</text>
+<text x="680" y="10517" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/443, TCP/8448, TCP/80</text>
+<rect x="668" y="10549" width="576" height="118" rx="16" class="policy ingress" />
+<text x="680" y="10573" class="policy-title">matrix-synapse-allow-ingress-from-traefik</text>
+<text x="680" y="10591" class="policy-subtitle">Ingress</text>
+<text x="680" y="10611" class="policy-body">Applies to {app=matrix, tier=backend}</text>
+<text x="680" y="10628" class="policy-body">IN from ns:traefik on TCP/6167</text>
+<text x="680" y="10645" class="policy-body">IN from ns:monitoring on TCP/8008</text>
+<rect x="668" y="10677" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="10701" class="policy-title">matrix-synapse-allow-smtp-egress</text>
+<text x="680" y="10719" class="policy-subtitle">Egress</text>
+<text x="680" y="10739" class="policy-body">Applies to {app=matrix, tier=backend}</text>
+<text x="680" y="10756" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/25</text>
+<rect x="668" y="10788" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="10812" class="policy-title">matrix-synapse-default-deny</text>
+<text x="680" y="10830" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="10850" class="policy-body">Applies to {app=matrix, tier=backend}</text>
+<text x="680" y="10867" class="policy-body">IN deny all ingress</text>
+<text x="680" y="10884" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="10298" width="608" height="661" rx="22" class="namespace-panel" />
+<text x="44" y="10328" class="section-title">ot-operators</text>
+<text x="44" y="10350" class="section-subtitle">5 policies | IN 3 | OUT 3 | deny 1</text>
+<rect x="40" y="10368" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="10392" class="policy-title">redis-operator-allow-egress-dns</text>
+<text x="52" y="10410" class="policy-subtitle">Egress</text>
+<text x="52" y="10430" class="policy-body">Applies to {name=redis-operator}</text>
+<text x="52" y="10447" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="10479" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="10503" class="policy-title">redis-operator-allow-egress-kube-api</text>
+<text x="52" y="10521" class="policy-subtitle">Egress</text>
+<text x="52" y="10541" class="policy-body">Applies to {name=redis-operator}</text>
+<text x="52" y="10558" class="policy-body">OUT to ip:10.43.0.1/32 on TCP/443</text>
+<rect x="40" y="10590" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="10614" class="policy-title">redis-operator-allow-ingress-monitoring</text>
+<text x="52" y="10632" class="policy-subtitle">Ingress</text>
+<text x="52" y="10652" class="policy-body">Applies to {name=redis-operator}</text>
+<text x="52" y="10669" class="policy-body">IN from ns:monitoring on TCP/8080</text>
+<rect x="40" y="10701" width="576" height="118" rx="16" class="policy ingress" />
+<text x="52" y="10725" class="policy-title">redis-operator-allow-ingress-probes</text>
+<text x="52" y="10743" class="policy-subtitle">Ingress</text>
+<text x="52" y="10763" class="policy-body">Applies to {name=redis-operator}</text>
+<text x="52" y="10780" class="policy-body">IN from ip:0.0.0.0/0 on TCP/8081</text>
+<text x="52" y="10797" class="policy-body">IN from ip:::/0 on TCP/8081</text>
+<rect x="40" y="10829" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="10853" class="policy-title">redis-operator-default-deny</text>
+<text x="52" y="10871" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="10891" class="policy-body">Applies to {name=redis-operator}</text>
+<text x="52" y="10908" class="policy-body">IN deny all ingress</text>
+<text x="52" y="10925" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="10758" width="608" height="644" rx="22" class="namespace-panel" />
+<text x="1300" y="10788" class="section-title">convertx</text>
+<text x="1300" y="10810" class="section-subtitle">5 policies | IN 3 | OUT 3 | deny 1</text>
+<rect x="1296" y="10828" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="10852" class="policy-title">convertx-allow-egress-dns</text>
+<text x="1308" y="10870" class="policy-subtitle">Egress</text>
+<text x="1308" y="10890" class="policy-body">Applies to {app=convertx}</text>
+<text x="1308" y="10907" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="10939" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="10963" class="policy-title">convertx-allow-egress-intra-namespace</text>
+<text x="1308" y="10981" class="policy-subtitle">Egress</text>
+<text x="1308" y="11001" class="policy-body">Applies to {app=convertx}</text>
+<text x="1308" y="11018" class="policy-body">OUT to ns:convertx on all ports</text>
+<rect x="1296" y="11050" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="11074" class="policy-title">convertx-allow-ingress-from-traefik</text>
+<text x="1308" y="11092" class="policy-subtitle">Ingress</text>
+<text x="1308" y="11112" class="policy-body">Applies to {app=convertx}</text>
+<text x="1308" y="11129" class="policy-body">IN from ns:traefik on TCP/3000</text>
+<rect x="1296" y="11161" width="576" height="101" rx="16" class="policy ingress" />
+<text x="1308" y="11185" class="policy-title">convertx-allow-ingress-intra-namespace</text>
+<text x="1308" y="11203" class="policy-subtitle">Ingress</text>
+<text x="1308" y="11223" class="policy-body">Applies to {app=convertx}</text>
+<text x="1308" y="11240" class="policy-body">IN from ns:convertx on TCP/3000</text>
+<rect x="1296" y="11272" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="11296" class="policy-title">convertx-default-deny</text>
+<text x="1308" y="11314" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="11334" class="policy-body">Applies to {app=convertx}</text>
+<text x="1308" y="11351" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="11368" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="10938" width="608" height="567" rx="22" class="namespace-panel" />
+<text x="672" y="10968" class="section-title">ca-scanner</text>
+<text x="672" y="10990" class="section-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="668" y="11008" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="11032" class="policy-title">canitiser-allow-egress-dns</text>
+<text x="680" y="11050" class="policy-subtitle">Egress</text>
+<text x="680" y="11070" class="policy-body">Applies to {app=ca-report-ui}</text>
+<text x="680" y="11087" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="11119" width="576" height="118" rx="16" class="policy egress" />
+<text x="680" y="11143" class="policy-title">canitiser-allow-egress-kube-api</text>
+<text x="680" y="11161" class="policy-subtitle">Egress</text>
+<text x="680" y="11181" class="policy-body">Applies to {app=ca-report-ui}</text>
+<text x="680" y="11198" class="policy-body">OUT to ns:default on TCP/443</text>
+<text x="680" y="11215" class="policy-body">OUT to ns:kube-system on TCP/443</text>
+<rect x="668" y="11247" width="576" height="118" rx="16" class="policy ingress" />
+<text x="680" y="11271" class="policy-title">canitiser-allow-ingress-http</text>
+<text x="680" y="11289" class="policy-subtitle">Ingress</text>
+<text x="680" y="11309" class="policy-body">Applies to {app=ca-report-ui}</text>
+<text x="680" y="11326" class="policy-body">IN from ns:ca-scanner on TCP/8080</text>
+<text x="680" y="11343" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="668" y="11375" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="11399" class="policy-title">canitiser-default-deny</text>
+<text x="680" y="11417" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="11437" class="policy-body">Applies to {app=ca-report-ui}</text>
+<text x="680" y="11454" class="policy-body">IN deny all ingress</text>
+<text x="680" y="11471" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="10979" width="608" height="567" rx="22" class="namespace-panel" />
+<text x="44" y="11009" class="section-title">clamav</text>
+<text x="44" y="11031" class="section-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="40" y="11049" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="11073" class="policy-title">clamav-allow-dns-egress</text>
+<text x="52" y="11091" class="policy-subtitle">Egress</text>
+<text x="52" y="11111" class="policy-body">Applies to {app=clamav}</text>
+<text x="52" y="11128" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="40" y="11160" width="576" height="101" rx="16" class="policy egress" />
+<text x="52" y="11184" class="policy-title">clamav-allow-freshclam-egress</text>
+<text x="52" y="11202" class="policy-subtitle">Egress</text>
+<text x="52" y="11222" class="policy-body">Applies to {app=clamav}</text>
+<text x="52" y="11239" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443, UDP/all</text>
+<rect x="40" y="11271" width="576" height="135" rx="16" class="policy ingress" />
+<text x="52" y="11295" class="policy-title">clamav-allow-ingress-mail-and-monitoring</text>
+<text x="52" y="11313" class="policy-subtitle">Ingress</text>
+<text x="52" y="11333" class="policy-body">Applies to {app=clamav}</text>
+<text x="52" y="11350" class="policy-body">IN from ns:mail on TCP/3200</text>
+<text x="52" y="11367" class="policy-body">IN from ns:monitoring on TCP/9906</text>
+<text x="52" y="11384" class="policy-body">IN from ns:nextcloud on TCP/3200</text>
+<rect x="40" y="11416" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="52" y="11440" class="policy-title">clamav-default-deny</text>
+<text x="52" y="11458" class="policy-subtitle">Ingress, Egress</text>
+<text x="52" y="11478" class="policy-body">Applies to {app=clamav}</text>
+<text x="52" y="11495" class="policy-body">IN deny all ingress</text>
+<text x="52" y="11512" class="policy-body">OUT deny all egress</text>
+<rect x="1284" y="11422" width="608" height="567" rx="22" class="namespace-panel" />
+<text x="1300" y="11452" class="section-title">connectivity-exporter</text>
+<text x="1300" y="11474" class="section-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="1296" y="11492" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="11516" class="policy-title">connectivity-exporter-allow-egress-dns</text>
+<text x="1308" y="11534" class="policy-subtitle">Egress</text>
+<text x="1308" y="11554" class="policy-body">Applies to {app=connectivity-exporter}</text>
+<text x="1308" y="11571" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="1296" y="11603" width="576" height="118" rx="16" class="policy egress" />
+<text x="1308" y="11627" class="policy-title">connectivity-exporter-allow-egress-web</text>
+<text x="1308" y="11645" class="policy-subtitle">Egress</text>
+<text x="1308" y="11665" class="policy-body">Applies to {app=connectivity-exporter}</text>
+<text x="1308" y="11682" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="1308" y="11699" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="1296" y="11731" width="576" height="118" rx="16" class="policy ingress" />
+<text x="1308" y="11755" class="policy-title">connectivity-exporter-allow-ingress-prometheus</text>
+<text x="1308" y="11773" class="policy-subtitle">Ingress</text>
+<text x="1308" y="11793" class="policy-body">Applies to {app=connectivity-exporter}</text>
+<text x="1308" y="11810" class="policy-body">IN from ns:monitoring on TCP/9090</text>
+<text x="1308" y="11827" class="policy-body">IN from ns:connectivity-exporter on TCP/9090</text>
+<rect x="1296" y="11859" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="11883" class="policy-title">connectivity-exporter-default-deny</text>
+<text x="1308" y="11901" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="11921" class="policy-body">Applies to {app=connectivity-exporter}</text>
+<text x="1308" y="11938" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="11955" class="policy-body">OUT deny all egress</text>
+<rect x="656" y="11525" width="608" height="550" rx="22" class="namespace-panel" />
+<text x="672" y="11555" class="section-title">hister</text>
+<text x="672" y="11577" class="section-subtitle">4 policies | IN 2 | OUT 3 | deny 1</text>
+<rect x="668" y="11595" width="576" height="101" rx="16" class="policy egress" />
+<text x="680" y="11619" class="policy-title">hister-allow-egress-dns</text>
+<text x="680" y="11637" class="policy-subtitle">Egress</text>
+<text x="680" y="11657" class="policy-body">Applies to all pods</text>
+<text x="680" y="11674" class="policy-body">OUT to ns:kube-system &amp; pod{k8s-app=kube-dns} on UDP/53, TCP/53</text>
+<rect x="668" y="11706" width="576" height="118" rx="16" class="policy egress" />
+<text x="680" y="11730" class="policy-title">hister-allow-egress-web</text>
+<text x="680" y="11748" class="policy-subtitle">Egress</text>
+<text x="680" y="11768" class="policy-body">Applies to all pods</text>
+<text x="680" y="11785" class="policy-body">OUT to ip:0.0.0.0/0 on TCP/80, TCP/443</text>
+<text x="680" y="11802" class="policy-body">OUT to ip:::/0 on TCP/80, TCP/443</text>
+<rect x="668" y="11834" width="576" height="101" rx="16" class="policy ingress" />
+<text x="680" y="11858" class="policy-title">hister-allow-ingress-from-traefik</text>
+<text x="680" y="11876" class="policy-subtitle">Ingress</text>
+<text x="680" y="11896" class="policy-body">Applies to all pods</text>
+<text x="680" y="11913" class="policy-body">IN from ns:traefik on TCP/8080</text>
+<rect x="668" y="11945" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="680" y="11969" class="policy-title">hister-default-deny</text>
+<text x="680" y="11987" class="policy-subtitle">Ingress, Egress</text>
+<text x="680" y="12007" class="policy-body">Applies to all pods</text>
+<text x="680" y="12024" class="policy-body">IN deny all ingress</text>
+<text x="680" y="12041" class="policy-body">OUT deny all egress</text>
+<rect x="28" y="11566" width="608" height="533" rx="22" class="namespace-panel" />
+<text x="44" y="11596" class="section-title">elastic-stack</text>
+<text x="44" y="11618" class="section-subtitle">4 policies | IN 4 | OUT 0 | deny 1</text>
+<rect x="40" y="11636" width="576" height="118" rx="16" class="policy ingress" />
+<text x="52" y="11660" class="policy-title">elasticsearch-allow-from-elastic-operator</text>
+<text x="52" y="11678" class="policy-subtitle">Ingress</text>
+<text x="52" y="11698" class="policy-body">Applies to {common.k8s.elastic.co/type=elasticsearch}</text>
+<text x="52" y="11715" class="policy-body">IN from ns:elastic-system &amp;</text>
+<text x="52" y="11732" class="policy-body">pod{app.kubernetes.io/name=elastic-operator} on TCP/9200</text>
+<rect x="40" y="11764" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="11788" class="policy-title">elasticsearch-allow-from-mastodon</text>
+<text x="52" y="11806" class="policy-subtitle">Ingress</text>
+<text x="52" y="11826" class="policy-body">Applies to {common.k8s.elastic.co/type=elasticsearch}</text>
+<text x="52" y="11843" class="policy-body">IN from ns:mastodon on TCP/9200</text>
+<rect x="40" y="11875" width="576" height="101" rx="16" class="policy ingress" />
+<text x="52" y="11899" class="policy-title">elasticsearch-allow-intra-namespace</text>
+<text x="52" y="11917" class="policy-subtitle">Ingress</text>
+<text x="52" y="11937" class="policy-body">Applies to {common.k8s.elastic.co/type=elasticsearch}</text>
+<text x="52" y="11954" class="policy-body">IN from ns:elastic-stack on TCP/9200, TCP/9300</text>
+<rect x="40" y="11986" width="576" height="101" rx="16" class="policy deny-ingress" />
+<text x="52" y="12010" class="policy-title">elasticsearch-default-deny-ingress</text>
+<text x="52" y="12028" class="policy-subtitle">Ingress</text>
+<text x="52" y="12048" class="policy-body">Applies to {common.k8s.elastic.co/type=elasticsearch}</text>
+<text x="52" y="12065" class="policy-body">IN deny all ingress</text>
+<rect x="1284" y="12009" width="608" height="439" rx="22" class="namespace-panel" />
+<text x="1300" y="12039" class="section-title">year</text>
+<text x="1300" y="12061" class="section-subtitle">3 policies | IN 2 | OUT 2 | deny 1</text>
+<rect x="1296" y="12079" width="576" height="101" rx="16" class="policy egress" />
+<text x="1308" y="12103" class="policy-title">year-allow-egress-dns</text>
+<text x="1308" y="12121" class="policy-subtitle">Egress</text>
+<text x="1308" y="12141" class="policy-body">Applies to {app=year}</text>
+<text x="1308" y="12158" class="policy-body">OUT to ns:kube-system on UDP/53, TCP/53</text>
+<rect x="1296" y="12190" width="576" height="118" rx="16" class="policy ingress" />
+<text x="1308" y="12214" class="policy-title">year-allow-ingress-http</text>
+<text x="1308" y="12232" class="policy-subtitle">Ingress</text>
+<text x="1308" y="12252" class="policy-body">Applies to {app=year}</text>
+<text x="1308" y="12269" class="policy-body">IN from ns:traefik on TCP/3000</text>
+<text x="1308" y="12286" class="policy-body">IN from ns:year on TCP/3000</text>
+<rect x="1296" y="12318" width="576" height="118" rx="16" class="policy deny-both" />
+<text x="1308" y="12342" class="policy-title">year-default-deny</text>
+<text x="1308" y="12360" class="policy-subtitle">Ingress, Egress</text>
+<text x="1308" y="12380" class="policy-body">Applies to {app=year}</text>
+<text x="1308" y="12397" class="policy-body">IN deny all ingress</text>
+<text x="1308" y="12414" class="policy-body">OUT deny all egress</text>
+</svg>
