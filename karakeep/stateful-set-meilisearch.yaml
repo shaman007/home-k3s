@@ -28,9 +28,6 @@ spec:
         # Keep the existing 1.37 data path for the in-place 1.38.1 upgrade.
         - name: MEILI_DB_PATH
           value: /meili_data/data-v1.37.0-r1.ms
-        # Temporary: enable Meilisearch's one-shot database migration on startup.
-        - name: MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
-          value: "true"
         # Keep indexing memory below container limits to prevent OOM during import.
         - name: MEILI_MAX_INDEXING_MEMORY
           value: "1000000000"
