@@ -1,0 +1,2126 @@
+# Exported from the live cluster with .\tools\longhorn\export-recurring-jobs.ps1
+# Includes Longhorn RecurringJob resources for task=backup and task=filesystem-trim.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-0242kl
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-0242kl
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-06lu7p
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-06lu7p
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-0nua6h
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-0nua6h
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-0pvi4x
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 10 1 * * *
+  groups: []
+  labels: {}
+  name: c-0pvi4x
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-0q3jql
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-0q3jql
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-0ruebc
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 1 0 * * *
+  groups: []
+  labels: {}
+  name: c-0ruebc
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-0w879p
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-0w879p
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-18lku8
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-18lku8
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-1jmvko
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-1jmvko
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-1yo4kw
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 1 2 * * *
+  groups: []
+  labels: {}
+  name: c-1yo4kw
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-238zhe
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-238zhe
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-2j74i5
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-2j74i5
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-2mm854
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: redis
+    type: auto
+  name: c-2mm854
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-2wy7aa
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-2wy7aa
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-39syrn
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-39syrn
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-4glxto
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-4glxto
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-4hwbr0
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-4hwbr0
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-4jt5p5
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-4jt5p5
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-4qqh2o
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-4qqh2o
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-56w744
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 30 01 * * *
+  groups: []
+  labels:
+    app: mysql
+  name: c-56w744
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-5fg7wk
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 40 3 * * *
+  groups: []
+  labels:
+    app: minecraft
+  name: c-5fg7wk
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-5j48s7
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 33 0 * * *
+  groups: []
+  labels: {}
+  name: c-5j48s7
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-5qksp1
+  namespace: longhorn-system
+spec:
+  concurrency: 31
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-5qksp1
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-667b0m
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-667b0m
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-6cfj8t
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 41 0 * * *
+  groups: []
+  labels: {}
+  name: c-6cfj8t
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-6eelos
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 7 3 * * *
+  groups: []
+  labels: {}
+  name: c-6eelos
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-78r2nf
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 1 * * *
+  groups: []
+  labels: {}
+  name: c-78r2nf
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-7g9xk6
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-7g9xk6
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-7iroo4
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 11 2 * * *
+  groups: []
+  labels: {}
+  name: c-7iroo4
+  parameters: {}
+  retain: 30
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-7ivma9
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-7ivma9
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-8l3hoi
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 44 1 * * *
+  groups: []
+  labels: {}
+  name: c-8l3hoi
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-94rxi0
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-94rxi0
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-9gpoc0
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: mail
+  name: c-9gpoc0
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-9ivg6o
+  namespace: longhorn-system
+spec:
+  concurrency: 31
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-9ivg6o
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-9nodqt
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 01 10 * * *
+  groups: []
+  labels: {}
+  name: c-9nodqt
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-9ov66r
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 1 23 * * *
+  groups: []
+  labels: {}
+  name: c-9ov66r
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-a02bfl
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-a02bfl
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-aexig7
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-aexig7
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-av1ox5
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-av1ox5
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-b7pcvt
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-b7pcvt
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cb5azc
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 22 0 * * *
+  groups: []
+  labels: {}
+  name: c-cb5azc
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cet8ts
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-cet8ts
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cnxyl3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-cnxyl3
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cpcrux
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-cpcrux
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cs2z00
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-cs2z00
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cs4lzz
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-cs4lzz
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-cysjwt
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-cysjwt
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-czktts
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-czktts
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-d4bdn5
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 20 5 * * *
+  groups: []
+  labels:
+    app: postgres
+  name: c-d4bdn5
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-dr1wn3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-dr1wn3
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-e0gpzw
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: mysql
+  name: c-e0gpzw
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-f7yu1r
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-f7yu1r
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-felw92
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-felw92
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-g4nh1g
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-g4nh1g
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-gkgwd6
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 20 2 * * *
+  groups: []
+  labels:
+    app: graphana
+    type: auto
+  name: c-gkgwd6
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-gtcmye
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-gtcmye
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-h3jde6
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-h3jde6
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-h4em9u
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 4 1 * * *
+  groups: []
+  labels: {}
+  name: c-h4em9u
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-h8272h
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 10 0 * * *
+  groups: []
+  labels: {}
+  name: c-h8272h
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-hhm074
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-hhm074
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-hkmpsc
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 1 0 * * *
+  groups: []
+  labels: {}
+  name: c-hkmpsc
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ibgobg
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-ibgobg
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-jf9fs3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-jf9fs3
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-kds7ms
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 7 * * *
+  groups: []
+  labels: {}
+  name: c-kds7ms
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ks6dbj
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-ks6dbj
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-kwom0m
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-kwom0m
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-kzgcic
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-kzgcic
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-l5syqy
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 10 3 * * *
+  groups: []
+  labels:
+    app: graphana
+  name: c-l5syqy
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-lgclg3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-lgclg3
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ltacfh
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-ltacfh
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-lznbvt
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 32 1 * * *
+  groups: []
+  labels: {}
+  name: c-lznbvt
+  parameters: {}
+  retain: 30
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-m1dp11
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: '*/15 * * * *'
+  groups: []
+  labels: {}
+  name: c-m1dp11
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-mbmywr
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-mbmywr
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-mk58lp
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: mongo
+  name: c-mk58lp
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-mmxz1w
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-mmxz1w
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-mrj88w
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 23 * * * *
+  groups: []
+  labels: {}
+  name: c-mrj88w
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-najrkb
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-najrkb
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-nisi0t
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-nisi0t
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-nplkro
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-nplkro
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-nwgenl
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-nwgenl
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-o3v3m2
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-o3v3m2
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-oa9w9w
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-oa9w9w
+  parameters: {}
+  retain: 11
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-oc45e4
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 11 0 * * *
+  groups: []
+  labels: {}
+  name: c-oc45e4
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ocz775
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 10 3 * * *
+  groups: []
+  labels: {}
+  name: c-ocz775
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ohqoar
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-ohqoar
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-opsncr
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-opsncr
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-p12632
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-p12632
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-pxrblq
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 10 2 * * *
+  groups: []
+  labels: {}
+  name: c-pxrblq
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-r21tp9
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-r21tp9
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-r8biuc
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 2 10 * * *
+  groups: []
+  labels: {}
+  name: c-r8biuc
+  parameters: {}
+  retain: 30
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-re33tc
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-re33tc
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-rk8vtd
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 43 2 * * *
+  groups: []
+  labels: {}
+  name: c-rk8vtd
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-rs2fle
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-rs2fle
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-s2gxk1
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-s2gxk1
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-sbcmv3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 12 2 * * *
+  groups: []
+  labels: {}
+  name: c-sbcmv3
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-sdlnt7
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-sdlnt7
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-smg9hq
+  namespace: longhorn-system
+spec:
+  concurrency: 31
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-smg9hq
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-sonbsb
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 30 0 * * *
+  groups: []
+  labels: {}
+  name: c-sonbsb
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-sxbmyk
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 22 1 * * *
+  groups: []
+  labels: {}
+  name: c-sxbmyk
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-symhsl
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 5 * * *
+  groups: []
+  labels:
+    app: mongo
+  name: c-symhsl
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-tgtkp1
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-tgtkp1
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-tuor1r
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 3 0 * * *
+  groups: []
+  labels:
+    app: postgres
+  name: c-tuor1r
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-tv7n1l
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-tv7n1l
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-tvohz3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-tvohz3
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ueppdg
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 23 3 * * *
+  groups: []
+  labels: {}
+  name: c-ueppdg
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-up7396
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 11 2 * * *
+  groups: []
+  labels: {}
+  name: c-up7396
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-uxeotl
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-uxeotl
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-uyu5d2
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 30 0 * * *
+  groups: []
+  labels: {}
+  name: c-uyu5d2
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-v2mpzf
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 43 1 * * *
+  groups: []
+  labels: {}
+  name: c-v2mpzf
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-vefwk1
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 2 * * *
+  groups: []
+  labels: {}
+  name: c-vefwk1
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-vldno1
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-vldno1
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-vqxlc3
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 22 1 * * *
+  groups: []
+  labels: {}
+  name: c-vqxlc3
+  parameters: {}
+  retain: 1
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-w5vx0y
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-w5vx0y
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-w6cf6d
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 23 1 * * *
+  groups: []
+  labels: {}
+  name: c-w6cf6d
+  parameters: {}
+  retain: 20
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-wkjihn
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-wkjihn
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ws2p1x
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-ws2p1x
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-wy7e8b
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-wy7e8b
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-xbht6v
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 33 2 * * *
+  groups: []
+  labels: {}
+  name: c-xbht6v
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-xfrk1m
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-xfrk1m
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-xrktr0
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-xrktr0
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-xyl8wr
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-xyl8wr
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-y4ar7p
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 30 2 * * *
+  groups: []
+  labels:
+    app: mail
+    type: auto
+  name: c-y4ar7p
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-y7epon
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 02 0 * * *
+  groups: []
+  labels: {}
+  name: c-y7epon
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-yalnkj
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-yalnkj
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-yek38w
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 * * * *
+  groups: []
+  labels: {}
+  name: c-yek38w
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-ymox4u
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 44 0 * * *
+  groups: []
+  labels: {}
+  name: c-ymox4u
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-znb1px
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-znb1px
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: c-zx7fwg
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: c-zx7fwg
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-049f9dd87a8d6130
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 10 0 * * *
+  groups: []
+  labels: {}
+  name: restored-recurring-job-049f9dd87a8d6130
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-0d87d2d0093d1b4b
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: redis
+  name: restored-recurring-job-0d87d2d0093d1b4b
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-2fa23aedb6c41aa6
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 20 0 * * *
+  groups: []
+  labels:
+    app: redis
+  name: restored-recurring-job-2fa23aedb6c41aa6
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-31791951d1833d48
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: wordpress
+  name: restored-recurring-job-31791951d1833d48
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-4500f8b61c23a4d5
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 21 3 * * *
+  groups: []
+  labels:
+    app: wordpress
+  name: restored-recurring-job-4500f8b61c23a4d5
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-4a804d1fb30dd7c0
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 33 0 * * *
+  groups: []
+  labels:
+    app: nextcloud
+  name: restored-recurring-job-4a804d1fb30dd7c0
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-67b6ae9b4e66a56e
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels: {}
+  name: restored-recurring-job-67b6ae9b4e66a56e
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-a09a86ea4aad674b
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 2 * * *
+  groups: []
+  labels:
+    app: redis
+  name: restored-recurring-job-a09a86ea4aad674b
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-a4ea7dcf4a531861
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 21 3 * * *
+  groups: []
+  labels:
+    app: nextcloud
+  name: restored-recurring-job-a4ea7dcf4a531861
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-adfdf928d7fefe80
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 11 0 * * *
+  groups: []
+  labels:
+    app: redis
+  name: restored-recurring-job-adfdf928d7fefe80
+  parameters: {}
+  retain: 0
+  task: filesystem-trim
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-cdfcd3753e9bfe33
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 11 0 * * *
+  groups: []
+  labels:
+    app: redis
+  name: restored-recurring-job-cdfcd3753e9bfe33
+  parameters: {}
+  retain: 31
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: restored-recurring-job-e155657ffd142d39
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 0 0 * * *
+  groups: []
+  labels:
+    app: redis
+  name: restored-recurring-job-e155657ffd142d39
+  parameters: {}
+  retain: 31
+  task: backup
