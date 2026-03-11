@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: harbor.andreybondarenko.com/dockerhub/mysql:8.0.41
+          image: harbor.andreybondarenko.com/dockerhub/mysql:9.6.0
           imagePullPolicy: IfNotPresent
           env:
             # Create this secret manually in-cluster; do not commit credentials.
