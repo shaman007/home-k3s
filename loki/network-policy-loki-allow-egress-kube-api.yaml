@@ -9,16 +9,15 @@ spec:
     - Egress
   egress:
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
+        - ipBlock:
+            cidr: 10.43.0.1/32
       ports:
         - protocol: TCP
           port: 443
+    # kube-router can enforce post-DNAT; allow the direct apiserver endpoint too.
     - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
+        - ipBlock:
+            cidr: 192.168.1.209/32
       ports:
         - protocol: TCP
-          port: 443
+          port: 6443
