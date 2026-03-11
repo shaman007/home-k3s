@@ -64,7 +64,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
         - name: nextcloud-nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.5
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.6
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
