@@ -610,7 +610,7 @@ data:
             regex: true
 
           # avoid double-scraping node-exporter (handled by the dedicated job above)
-          - source_labels: [__meta_kubernetes_endpointslice_service_name]
+          - source_labels: [__meta_kubernetes_service_name]
             action: drop
             regex: node-exporter
 
@@ -632,6 +632,6 @@ data:
           - source_labels: [__meta_kubernetes_namespace]
             action: replace
             target_label: kubernetes_namespace
-          - source_labels: [__meta_kubernetes_endpointslice_service_name]
+          - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
