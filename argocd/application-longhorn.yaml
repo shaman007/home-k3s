@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: longhorn
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
   finalizers:
     - pre-delete-finalizer.argocd.argoproj.io
     - pre-delete-finalizer.argocd.argoproj.io/cleanup
