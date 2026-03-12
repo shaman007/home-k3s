@@ -7,6 +7,7 @@
     "harbor.andreybondarenko.com/github": "ghcr.io",
     "harbor.andreybondarenko.com/quay": "quay.io"
   },
+  "gitAuthor": "Andrey Bondarenko <me@andreybondarenko.com>",
   "argocd": {
     "managerFilePatterns": ["/^argocd\\/application-.*\\.ya?ml$/"]
   },
@@ -16,7 +17,7 @@
   "packageRules": [
     {
       "matchDatasources": ["docker"],
-      "matchPackageNames": ["harbor.andreybondarenko.com/dockerhub/mongo"],
+      "matchPackageNames": ["index.docker.io/mongo"],
       "allowedVersions": "/^7(\\.|$)/"
     },
     {
