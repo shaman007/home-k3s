@@ -12,7 +12,7 @@ spec:
   project: default
   source:
     repoURL: https://grafana.github.io/helm-charts
-    targetRevision: 6.54.0
+    targetRevision: 6.55.0
     helm:
       parameters:
         - name: memcachedExporter.image.repository
