@@ -61,6 +61,31 @@ spec:
               value: "https://grafana.w386.k8s.my.lan"
             - name: GF_AUTH_GENERIC_OAUTH_ENABLED
               value: "true"
+            - name: GF_AUTH_GENERIC_OAUTH_NAME
+              value: "Keycloak"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_ID
+              value: "grafana"
+            - name: GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-oauth-secret
+                  key: clientSecret
+            - name: GF_AUTH_GENERIC_OAUTH_SCOPES
+              value: "openid profile email"
+            - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
+              value: "https://sso.andreybondarenko.com/realms/master/protocol/openid-connect/auth"
+            - name: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
+              value: "https://sso.andreybondarenko.com/realms/master/protocol/openid-connect/token"
+            - name: GF_AUTH_GENERIC_OAUTH_API_URL
+              value: "https://sso.andreybondarenko.com/realms/master/protocol/openid-connect/userinfo"
+            - name: GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH
+              value: "preferred_username"
+            - name: GF_AUTH_GENERIC_OAUTH_NAME_ATTRIBUTE_PATH
+              value: "name"
+            - name: GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_PATH
+              value: "email"
+            - name: GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH
+              value: "email=='me@andreybondarenko.com' && 'Admin' || 'Viewer'"
             - name: GF_AUTH_OAUTH_ALLOW_INSECURE_EMAIL_LOOKUP
               value: "true"
             - name: GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP
