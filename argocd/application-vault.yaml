@@ -21,6 +21,7 @@ spec:
           value: '2'
       values: |
         server:
+          includeConfigAnnotation: true
           ha:
             raft:
               config: |
