@@ -90,7 +90,7 @@ spec:
       containers:
         - name: php-nextcloud
           image: harbor.andreybondarenko.com/library/php:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           volumeMounts:
             - name: phpini
               mountPath: /etc/php/8.4/fpm/pool.d/php.ini
@@ -130,7 +130,7 @@ spec:
               memory: "6306Mi"
         - name: nextcloud-nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.6
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
