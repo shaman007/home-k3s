@@ -80,9 +80,6 @@ Observability and security:
 - `DEPRECATED/`: Old manifests kept for reference.
 - `k3s-config.yaml`: Baseline k3s server config used by this cluster.
 
-## Codex workflow
-
-This project advertises shared Codex skills in `C:\Users\me\.codex\skills\k8s-readonly-ops\` and `C:\Users\me\.codex\skills\git-readonly-ops\`. They cover read-only `kubectl`/`helm` cluster diagnostics and read-only `git` repository inspection without prompting, while any live cluster or repository mutation still requires confirmation.
 
 ## Bootstrap flow
 
