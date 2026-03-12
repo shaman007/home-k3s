@@ -15,6 +15,25 @@ cd Chart
 helm dependency build
 helm install --namespace mastodon mastodon ./ -f ../mastodon-values.yaml
 ```
+
+## ArgoCD
+
+The tracked Mastodon namespace manifests can be managed by ArgoCD with:
+
+* `argocd/application-mastodon-custom.yaml`
+
+The main Helm release cannot be cleanly moved to ArgoCD from this repository yet,
+because the current chart lives under `mastodon/chart` and that path is ignored by
+Git in `mastodon/.gitignore`.
+
+That leaves two realistic paths:
+
+* start tracking the current vendored chart in Git and let ArgoCD render it from the repo
+* migrate to the newer official chart repo at `https://mastodon.github.io/helm-charts`
+
+For now I recommend not switching charts yet. The newer official chart is promising,
+but its published Mastodon release is still behind the `v4.5.6` app version running
+here and requires a fuller values migration.
 # TODO
 
 * Metrics + Dashboard

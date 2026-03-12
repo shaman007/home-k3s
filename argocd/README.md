@@ -12,7 +12,10 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 ## TODO
 
-* Mastodon. It has horrible helm chart. I am waiting for the new one that can use 'helm repo' command.
+* Mastodon main Helm release is still outside ArgoCD because the current vendored
+  chart is ignored by Git in `mastodon/.gitignore`. Either track that chart in the
+  repo or migrate to the newer official `mastodon/helm-charts` repo once it catches
+  up with the app version we run and the migration cost is worth it.
 
 ## Repos
 
