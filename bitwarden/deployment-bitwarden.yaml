@@ -70,6 +70,7 @@ spec:
                   name: yubico-secret-key
                   key: secret-key
           image: harbor.andreybondarenko.com/github/bitwarden/self-host:beta
+          imagePullPolicy: Always
           name: bitwarden
           ports:
             - containerPort: 8080
@@ -90,6 +91,7 @@ spec:
               mountPath: /var/log/bitwarden
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.14.0
+          imagePullPolicy: IfNotPresent
           args:
             - run
             - /etc/alloy/config.alloy

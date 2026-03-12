@@ -90,7 +90,7 @@ spec:
       containers:
         - name: php-nextcloud
           image: harbor.andreybondarenko.com/library/php:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: phpini
               mountPath: /etc/php/8.4/fpm/pool.d/php.ini
@@ -154,6 +154,7 @@ spec:
               memory: "100Mi"
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.14.0
+          imagePullPolicy: IfNotPresent
           args:
             - run
             - /etc/alloy/config.alloy

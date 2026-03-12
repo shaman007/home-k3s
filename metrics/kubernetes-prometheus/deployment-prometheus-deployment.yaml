@@ -26,6 +26,7 @@ spec:
       containers:
         - name: prometheus
           image:  harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.10.0
+          imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/prometheus/prometheus.yaml"
             - "--storage.tsdb.path=/prometheus/"
@@ -55,6 +56,7 @@ spec:
               memory: 3072Mi
         - name: thanos
           image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
+          imagePullPolicy: IfNotPresent
           args:
             - "sidecar"
             - "--tsdb.path=/prometheus"
@@ -93,6 +95,7 @@ spec:
       initContainers:
         - name: fix-perms
           image:  harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:
             - name: prometheus-storage-volume

@@ -21,6 +21,7 @@ spec:
       containers:
         - name: ui
           image: harbor.andreybondarenko.com/library/canitiser:latest
+          imagePullPolicy: Always
           command: ["python", "/app/ca-report-server.py"]
           env:
             # use "all" to show all namespaces, or "ca-scanner" to show only that ns

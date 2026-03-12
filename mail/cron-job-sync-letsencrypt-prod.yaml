@@ -19,7 +19,7 @@ spec:
           containers:
             - name: sync
               image: harbor.andreybondarenko.com/library/sync:latest
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               env:
                 - name: DOMAIN
                   value: "andreybondarenko.com"

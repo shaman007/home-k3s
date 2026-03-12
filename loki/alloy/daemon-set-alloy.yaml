@@ -22,6 +22,7 @@ spec:
       containers:
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.14.0
+          imagePullPolicy: IfNotPresent
           args:
             - run
             - /etc/alloy/config.alloy

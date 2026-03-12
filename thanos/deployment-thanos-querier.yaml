@@ -24,6 +24,7 @@ spec:
       containers:
         - name: thanos
           image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
+          imagePullPolicy: IfNotPresent
           args:
             - query
             - --log.level=info

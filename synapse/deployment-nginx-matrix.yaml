@@ -38,6 +38,7 @@ spec:
       containers:
         - name: matrix-nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.6
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           volumeMounts:

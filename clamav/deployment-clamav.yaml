@@ -29,6 +29,7 @@ spec:
       containers:
         - name: clamd
           image: harbor.andreybondarenko.com/library/clamav:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3200
               name: api
@@ -54,6 +55,7 @@ spec:
             readOnlyRootFilesystem: true
         - name: fresclam
           image: harbor.andreybondarenko.com/library/clamav:latest
+          imagePullPolicy: Always
           env:
             - name: UPDATE
               value: "true"
@@ -76,6 +78,7 @@ spec:
               memory: "1016Mi"
         - name: exporter
           image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:v2.1.2
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9906
               name: metrics

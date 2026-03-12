@@ -59,6 +59,7 @@ spec:
       containers:
         - name: postfix-mail
           image: harbor.andreybondarenko.com/library/postfix:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 587
           volumeMounts:

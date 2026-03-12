@@ -25,6 +25,7 @@ spec:
       initContainers:
         - name: volume-mount-hack
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 1001:1001 /data"]
           volumeMounts:
             - name: data
@@ -38,6 +39,7 @@ spec:
       containers:
         - name: thanos
           image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
+          imagePullPolicy: IfNotPresent
           args:
             - "store"
             - "--log.level=info"

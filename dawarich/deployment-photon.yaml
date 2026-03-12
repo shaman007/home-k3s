@@ -23,6 +23,7 @@ spec:
       containers:
         - name: photon
           image: harbor.andreybondarenko.com/library/photon:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 2322
           volumeMounts:

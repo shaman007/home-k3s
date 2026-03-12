@@ -23,7 +23,7 @@ spec:
       containers:
         - name: migrate
           image: harbor.andreybondarenko.com/library/postgres-cli:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: SOURCE_PGHOST
               value: "postgres-postgresql.db.svc.cluster.local"

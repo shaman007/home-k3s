@@ -39,6 +39,7 @@ spec:
       containers:
         - name: synapse
           image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.149.1
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 6167
               name: federation
@@ -62,6 +63,7 @@ spec:
       initContainers:
         - name: fix-permissions
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 991:991 /data"]
           volumeMounts:
             - name: matrix-lh

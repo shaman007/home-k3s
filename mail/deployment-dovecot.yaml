@@ -101,6 +101,7 @@ spec:
       containers:
         - name: dovecot-mail
           image: harbor.andreybondarenko.com/library/dovecot:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 24
             - containerPort: 1234

@@ -23,6 +23,7 @@ spec:
       containers:
         - name: alertmanager
           image:  harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.31.1
+          imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"

@@ -39,6 +39,7 @@ spec:
       containers:
         - name: mnecraft
           image: harbor.andreybondarenko.com/dockerhub/itzg/minecraft-server:2026.3.1
+          imagePullPolicy: IfNotPresent
           env:
             - name: EULA
               value: "TRUE"

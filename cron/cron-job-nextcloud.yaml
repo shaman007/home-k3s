@@ -27,6 +27,7 @@ spec:
           containers:
             - name: previews
               image: harbor.andreybondarenko.com/library/php:latest
+              imagePullPolicy: Always
               command:
                 - /bin/sh
                 - -c

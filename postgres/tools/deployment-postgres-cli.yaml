@@ -20,6 +20,7 @@ spec:
       containers:
         - name: postgres-cli
           image: harbor.andreybondarenko.com/library/postgres-cli:latest
+          imagePullPolicy: Always
           resources:
             requests:
               cpu: 10m

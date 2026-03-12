@@ -21,6 +21,7 @@ spec:
       containers:
       - name: exporter
         image: harbor.andreybondarenko.com/library/connectivity-exporter:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 9090
         env:

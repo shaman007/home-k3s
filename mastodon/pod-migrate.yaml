@@ -8,7 +8,7 @@ spec:
   containers:
     - name: migrate
       image: nginx:stable-alpine
-      imagePullPolicy: IfNotPresent
+      imagePullPolicy: Always
       volumeMounts:
         - name: volv1
           mountPath: /from

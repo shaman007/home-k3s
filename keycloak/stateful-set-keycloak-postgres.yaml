@@ -29,6 +29,7 @@ spec:
       initContainers:
         - name: volume-permissions
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 0
           command:
@@ -93,6 +94,7 @@ spec:
               subPath: data
         - name: postgres-exporter
           image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.19.1
+          imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
             runAsUser: 65534

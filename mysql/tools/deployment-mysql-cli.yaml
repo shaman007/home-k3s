@@ -20,6 +20,7 @@ spec:
       containers:
         - name: mysql-cli
           image: harbor.andreybondarenko.com/library/mysql-cli:latest
+          imagePullPolicy: Always
           resources:
             requests:
               cpu: 10m

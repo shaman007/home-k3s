@@ -34,6 +34,7 @@ spec:
       containers:
         - name: plex
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.0
+          imagePullPolicy: IfNotPresent
           env:
             # valid for 4 minutes
             - name: PLEX_CLAIM

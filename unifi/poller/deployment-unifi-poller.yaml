@@ -20,6 +20,7 @@ spec:
       containers:
         - name: unifi-poller
           image: harbor.andreybondarenko.com/github/unpoller/unpoller:v2.34.0
+          imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

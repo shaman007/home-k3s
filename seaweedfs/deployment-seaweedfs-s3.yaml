@@ -33,6 +33,7 @@ spec:
         # MASTER
         - name: master
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.17
+          imagePullPolicy: IfNotPresent
           args:
             - "master"
             - "-ip=0.0.0.0"
@@ -68,6 +69,7 @@ spec:
         # VOLUME
         - name: volume
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.17
+          imagePullPolicy: IfNotPresent
           args:
             - "volume"
             - "-ip=0.0.0.0"
@@ -104,6 +106,7 @@ spec:
         # FILER
         - name: filer
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.17
+          imagePullPolicy: IfNotPresent
           args:
             - "filer"
             - "-ip=0.0.0.0"
@@ -138,6 +141,7 @@ spec:
         # S3 GATEWAY
         - name: s3
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.17
+          imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
             - -ec

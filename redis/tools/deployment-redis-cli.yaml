@@ -20,6 +20,7 @@ spec:
       containers:
         - name: redis-cli
           image: harbor.andreybondarenko.com/library/redis-cli:latest
+          imagePullPolicy: Always
           volumeMounts:
             - name: data
               mountPath: /data

@@ -46,6 +46,7 @@ spec:
       containers:
         - name: nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.6
+          imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

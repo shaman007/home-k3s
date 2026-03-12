@@ -45,6 +45,7 @@ spec:
               value: "https://spt.andreybondarenko.com, \
                 https://spt-server.andreybondarenko.com"
           image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server:1.18.0
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: "10m"

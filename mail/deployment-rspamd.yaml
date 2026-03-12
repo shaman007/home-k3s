@@ -115,6 +115,7 @@ spec:
       containers:
         - name: rspamd
           image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:3.14.3
+          imagePullPolicy: IfNotPresent
           resources:
             requests:
               cpu: "10m"
@@ -177,6 +178,7 @@ spec:
       initContainers:
         - name: fix-perms
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 11333:11333 /var/lib/rspamd && chmod 755 /var/lib/rspamd"]
           volumeMounts:
             - name: rspamd-local

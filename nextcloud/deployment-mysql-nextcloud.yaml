@@ -56,6 +56,7 @@ spec:
               mountPath: /var/lib/mysql
         - name: mysqld-exporter
           image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:main
+          imagePullPolicy: Always
           command:
             - /bin/sh
             - -ec

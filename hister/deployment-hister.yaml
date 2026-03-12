@@ -38,7 +38,7 @@ spec:
       containers:
         - name: hister
           image: harbor.andreybondarenko.com/github/asciimoo/hister:master
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           securityContext:
             runAsUser: 65532
             runAsGroup: 65532
