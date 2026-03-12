@@ -4,6 +4,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: grafana-pvc
   namespace: monitoring
+  labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
 spec:
   accessModes:
     - ReadWriteOnce

@@ -6,6 +6,8 @@ metadata:
   name: matrix-lh
   labels:
     storage.k8s.io/name: longhorn
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
 spec:
   accessModes:
     - ReadWriteOnce

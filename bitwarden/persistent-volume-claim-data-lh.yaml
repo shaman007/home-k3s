@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/instance: bitwarden
     app.kubernetes.io/part-of: bitwarden
     app.kubernetes.io/managed-by: argo-cd
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
 spec:
   accessModes:
     - ReadWriteOnce

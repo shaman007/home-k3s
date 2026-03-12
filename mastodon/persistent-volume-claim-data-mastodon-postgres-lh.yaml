@@ -11,6 +11,8 @@ metadata:
     app.kubernetes.io/part-of: mastodon
     app.kubernetes.io/component: database
     app.kubernetes.io/managed-by: helm
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain1: enabled
 spec:
   accessModes:
     - ReadWriteOnce

@@ -12,6 +12,8 @@ metadata:
     app.kubernetes.io/instance: dovecot
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
 spec:
   accessModes:
     - ReadWriteOnce

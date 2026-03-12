@@ -7,6 +7,8 @@ metadata:
   labels:
     app: mysql-nextcloud
     tier: mysql
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
 spec:
   accessModes:
     - ReadWriteOnce

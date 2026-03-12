@@ -3,6 +3,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: hister-data
   namespace: hister
+  labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
 spec:
   accessModes:
     - ReadWriteOnce

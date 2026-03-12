@@ -6,6 +6,8 @@ metadata:
   name: wordpress-lh
   labels:
     storage.k8s.io/name: longhorn
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain31-a: enabled
 spec:
   accessModes:
     - ReadWriteMany

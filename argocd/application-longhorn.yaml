@@ -21,6 +21,9 @@ spec:
           persistence:
             defaultClassReplicaCount: 1
             defaultDataLocality: best-effort
+            recurringJobSelector:
+              enable: true
+              jobList: '[{"name":"trim-daily-a","isGroup":true}]'
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system

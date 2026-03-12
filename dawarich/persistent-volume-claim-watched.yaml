@@ -5,6 +5,8 @@ metadata:
   name: watched
   labels:
     storage.k8s.io/name: longhorn
+    recurring-job.longhorn.io/source: enabled
+    recurring-job-group.longhorn.io/backup-daily-retain30: enabled
 spec:
   accessModes:
     - ReadWriteOnce
