@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
     recurring-job.longhorn.io/source: enabled
-    recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-c: enabled
 spec:
   accessModes:
     - ReadWriteOnce

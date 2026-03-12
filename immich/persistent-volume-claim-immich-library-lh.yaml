@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: immich
     app.kubernetes.io/managed-by: argoCD
     recurring-job.longhorn.io/source: enabled
-    recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-b: enabled
 spec:
   accessModes:
     - ReadWriteOnce

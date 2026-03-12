@@ -138,7 +138,7 @@ for volume in sorted(
         notes.append("Volume was created from backup; keep restore semantics in mind before changing labels.")
 
     label_map = {
-        f"recurring-job-group.longhorn.io/{group}": "enabled"
+        f"recurring-job.longhorn.io/{group}": "enabled"
         for group in proposed_groups
     }
 
@@ -179,7 +179,7 @@ mapping_doc = {
     "generatedAt": date.today().isoformat(),
     "sourceNamespace": NAMESPACE,
     "implementationNotes": [
-        "For existing volumes, apply recurring-job-group.longhorn.io/<group>=enabled on the Longhorn Volume resource.",
+        "For existing volumes, apply recurring-job.longhorn.io/<job>=enabled on the Longhorn Volume resource.",
         "For workload manifests, prefer PVC or volumeClaimTemplate labels and also set recurring-job.longhorn.io/source=enabled so Longhorn syncs recurring-job labels from the PVC to the Volume.",
         "StorageClass recurringJobSelector is useful for new volumes but will not retrofit existing volumes.",
     ],
