@@ -13,15 +13,13 @@ deployment:
 podSecurityContext:
   fsGroup: 1000
   fsGroupChangePolicy: "OnRootMismatch"
-nodeSelector:
-  # Keep Traefik on the node that owns the Service external IP (192.168.1.209)
-  # so k3s servicelb does not SNAT across nodes before traffic reaches Traefik.
-  kubernetes.io/hostname: w386.k8s.my.lan
-# Expose via LoadBalancer; or change to NodePort if you don't have LB
+# Expose via MetalLB using a dedicated LAN VIP for router port-forwards.
 service:
   type: LoadBalancer
   spec:
     externalTrafficPolicy: Local
+    loadBalancerClass: metallb-l2
+    loadBalancerIP: 192.168.1.210
 
 ports:
   web:

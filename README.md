@@ -101,7 +101,7 @@ vm.swappiness = 10
 curl -sfL https://get.k3s.io | \
   INSTALL_K3S_EXEC="server --cluster-cidr=10.42.0.0/16,2001:cafe:42:0::/56 \
   --service-cidr=10.43.0.0/16,2001:cafe:42:1::/112 \
-  --flannel-ipv6-masq --disable traefik" sh -s -
+  --flannel-ipv6-masq --disable traefik --disable servicelb" sh -s -
 ```
 
 These would result the config:
@@ -117,8 +117,9 @@ service-cidr: "10.43.0.0/16"
 service-cidr-ipv6: "2001:cafe:42:1::/112"
 flannel-backend-type: "vxlan"
 flannel-ipv6-masq: true
-no-deploy:
+disable:
   - traefik
+  - servicelb
 ```
 
 3. Join worker nodes.

@@ -43,8 +43,6 @@ spec:
             enabled: true
           general:
             level: INFO
-        nodeSelector:
-          kubernetes.io/hostname: w386.k8s.my.lan
         persistence:
           accessMode: ReadWriteOnce
           enabled: true
@@ -95,6 +93,8 @@ spec:
         service:
           spec:
             externalTrafficPolicy: Local
+            loadBalancerClass: metallb-l2
+            loadBalancerIP: 192.168.1.210
           type: LoadBalancer
   destination:
     server: 'https://kubernetes.default.svc'
