@@ -4,9 +4,13 @@ kind: Application
 metadata:
   name: longhorn
   namespace: argocd
+  finalizers:
+    - pre-delete-finalizer.argocd.argoproj.io
+    - pre-delete-finalizer.argocd.argoproj.io/cleanup
 spec:
   syncPolicy:
-    automated: {}
+    automated:
+      enabled: true
     syncOptions:
       - CreateNamespace=true
   project: default
