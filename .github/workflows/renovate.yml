@@ -22,4 +22,5 @@ jobs:
         with:
           token: ${{ secrets.RENOVATE_TOKEN || secrets.GITHUB_TOKEN }}
         env:
+          RENOVATE_GIT_AUTHOR: "Andrey Bondarenko <me@andreybondarenko.com>"
           RENOVATE_REPOSITORIES: ${{ github.repository }}
