@@ -1,0 +1,23 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: "https://metallb.github.io/metallb"
+    targetRevision: 0.15.2
+    chart: metallb
+    helm:
+      values: |
+        loadBalancerClass: metallb-l2
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      enabled: true
