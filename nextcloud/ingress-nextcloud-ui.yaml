@@ -4,9 +4,13 @@ metadata:
   name: nextcloud-ui
   namespace: nextcloud
   annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.middlewares: nextcloud-hsts@kubernetescrd
 spec:
+  ingressClassName: traefik
   rules:
     - host: cloud.andreybondarenko.com
       http:

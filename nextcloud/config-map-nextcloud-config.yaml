@@ -44,6 +44,7 @@ data:
         if ( $http_user_agent ~ ^DavClnt ) {
             return 302 /remote.php/webdav/$is_args$args;
         }
+        return 302 /index.php$request_uri;
       }
 
       location = /robots.txt {
@@ -69,7 +70,7 @@ data:
 
       location ~ \.php(?:$|/) {
       # Required for legacy support
-      #rewrite ^/(?!index|remote|public|cron|core\/ajax\/update|status|ocs\/v[12]|updater\/.+|oc[ms]-provider\/.+|.+\/richdocumentscode\/proxy) /index.php$request_uri;
+      rewrite ^/(?!index|remote|public|cron|core\/ajax\/update|status|ocs\/v[12]|updater\/.+|oc[ms]-provider\/.+|.+\/richdocumentscode\/proxy) /index.php$request_uri;
       fastcgi_split_path_info ^(.+?\.php)(/.*)$;
       set $path_info $fastcgi_path_info;
       try_files $fastcgi_script_name =404;
@@ -77,6 +78,8 @@ data:
       fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
       fastcgi_param PATH_INFO $path_info;
       fastcgi_param HTTPS on;
+      fastcgi_param SERVER_PORT 443;
+      fastcgi_param HTTP_X_FORWARDED_PORT 443;
       fastcgi_param modHeadersAvailable true;
       fastcgi_param front_controller_active true;
       fastcgi_pass 127.0.0.1:9000;
