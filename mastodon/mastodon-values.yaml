@@ -459,12 +459,19 @@ externalAuth:
 # if you manually change the UID/GID environment variables, ensure these values
 # match:
 podSecurityContext:
+  runAsNonRoot: true
   runAsUser: 991
   runAsGroup: 991
   fsGroup: 991
+  seccompProfile:
+    type: RuntimeDefault
 
 # @ignored
-securityContext: {}
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
 
 serviceAccount:
   # -- Specifies whether a service account should be created
