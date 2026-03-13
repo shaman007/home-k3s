@@ -42,18 +42,16 @@ spec:
           ports:
             - containerPort: 8080
           readinessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 8080
             periodSeconds: 10
-            timeoutSeconds: 2
+            timeoutSeconds: 1
             failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 8080
             periodSeconds: 30
-            timeoutSeconds: 2
+            timeoutSeconds: 1
             failureThreshold: 3
           volumeMounts:
             - name: config-matrix

@@ -90,13 +90,6 @@ spec:
           - { name: chrome-data, mountPath: /data }
         ports:
           - { containerPort: 9222 }
-        livenessProbe:
-          httpGet:
-            path: /json/version
-            port: 9222
-          periodSeconds: 30
-          timeoutSeconds: 2
-          failureThreshold: 3
         resources:
           requests:
             cpu: 17m

@@ -150,18 +150,16 @@ spec:
             - containerPort: 8080
               name: http
           readinessProbe:
-            httpGet:
-              path: /status.php
+            tcpSocket:
               port: http
             periodSeconds: 10
-            timeoutSeconds: 2
+            timeoutSeconds: 1
             failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /status.php
+            tcpSocket:
               port: http
             periodSeconds: 30
-            timeoutSeconds: 2
+            timeoutSeconds: 1
             failureThreshold: 3
           volumeMounts:
             - name: nextcloud-lh
