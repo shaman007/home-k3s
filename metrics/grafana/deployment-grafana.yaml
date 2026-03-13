@@ -71,7 +71,7 @@ spec:
                   name: grafana-oauth-secret
                   key: clientSecret
             - name: GF_AUTH_GENERIC_OAUTH_SCOPES
-              value: "openid profile email"
+              value: "openid"
             - name: GF_AUTH_GENERIC_OAUTH_AUTH_URL
               value: "https://sso.andreybondarenko.com/realms/master/protocol/openid-connect/auth"
             - name: GF_AUTH_GENERIC_OAUTH_TOKEN_URL
