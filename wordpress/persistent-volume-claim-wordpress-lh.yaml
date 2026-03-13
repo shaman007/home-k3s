@@ -10,7 +10,7 @@ metadata:
     recurring-job.longhorn.io/backup-daily-retain31-a: enabled
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   storageClassName: longhorn
   resources:
     requests:
