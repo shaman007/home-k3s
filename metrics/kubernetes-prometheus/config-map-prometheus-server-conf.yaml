@@ -108,20 +108,6 @@ data:
           severity: mail
         annotations:
           summary: Processes experience elevated CPU throttling.
-      - alert: KubePersistentVolumeFillingUp
-        expr: kubelet_volume_stats_available_bytes  / kubelet_volume_stats_capacity_bytes < 0.15
-        for: 1m
-        labels:
-          severity: mail
-        annotations:
-          summary: PersistentVolume is filling up.
-      - alert: KubePersistentVolumeFillingUp
-        expr: (kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes) < 0.15 and predict_linear(kubelet_volume_stats_available_bytes[6h], 4 * 24 * 3600) < 0
-        for: 1m
-        labels:
-          severity: mail
-        annotations:
-          summary: PersistentVolume is filling up in 4 days.
       - alert: KubePodCrashLooping
         expr: max_over_time(kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace=~".*",reason="CrashLoopBackOff"}[5m]) >= 1
         for: 5m
