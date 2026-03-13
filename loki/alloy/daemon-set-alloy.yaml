@@ -26,9 +26,16 @@ spec:
           args:
             - run
             - /etc/alloy/config.alloy
+            - --server.http.listen-addr=0.0.0.0:12345
           ports:
             - containerPort: 12345
               name: http
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 60
           readinessProbe:
             tcpSocket:
               port: http
