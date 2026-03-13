@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres-exporter
-  namespace: db
+  namespace: kube-system
   labels:
     app: postgres-exporter
     app.kubernetes.io/name: postgres-exporter
