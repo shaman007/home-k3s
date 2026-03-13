@@ -28,6 +28,7 @@ spec:
         runAsUser: 33
         runAsGroup: 33
         fsGroup: 33
+        fsGroupChangePolicy: OnRootMismatch
         supplementalGroups:
           - 993
       affinity:
