@@ -34,6 +34,24 @@ spec:
             - containerPort: 3200
               name: api
               protocol: TCP
+          startupProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: api
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           volumeMounts:
             - mountPath: /var/lib/clamav
               name: avdata
@@ -86,6 +104,13 @@ spec:
           args:
             - "--clamav.address"
             - "tcp://localhost:3200"
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             requests:
               cpu: "10m"

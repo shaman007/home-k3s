@@ -34,6 +34,20 @@ spec:
           ports:
             - containerPort: 9100
               protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9100
+            periodSeconds: 15
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9100
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             limits:
               memory: 100Mi

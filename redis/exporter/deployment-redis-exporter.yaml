@@ -28,6 +28,20 @@ spec:
                   key: password
             - name: REDIS_ADDR
               value: redis://redis-master.redis.svc.cluster.local:6379
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9121
+            periodSeconds: 15
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9121
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             requests:
               memory: "100Mi"

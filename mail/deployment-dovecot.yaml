@@ -107,6 +107,18 @@ spec:
             - containerPort: 1234
             - containerPort: 993
             - containerPort: 4190
+          readinessProbe:
+            tcpSocket:
+              port: 993
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 993
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false

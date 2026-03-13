@@ -25,6 +25,24 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           volumeMounts:
             - name: configs
               mountPath: /configs

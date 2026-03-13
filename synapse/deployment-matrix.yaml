@@ -45,6 +45,24 @@ spec:
               name: federation
             - containerPort: 8008
               name: metrics
+          startupProbe:
+            tcpSocket:
+              port: federation
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: federation
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: federation
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           volumeMounts:
             - name: matrix-lh
               mountPath: /data

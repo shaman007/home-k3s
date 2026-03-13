@@ -31,6 +31,20 @@ spec:
           ports:
             - name: alertmanager
               containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: alertmanager
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: alertmanager
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             requests:
               cpu: 10m

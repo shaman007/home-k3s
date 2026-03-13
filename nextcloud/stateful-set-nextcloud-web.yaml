@@ -117,6 +117,18 @@ spec:
           ports:
             - containerPort: 9000
               name: fastcgi
+          readinessProbe:
+            tcpSocket:
+              port: fastcgi
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: fastcgi
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -137,6 +149,20 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+          readinessProbe:
+            httpGet:
+              path: /status.php
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /status.php
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           volumeMounts:
             - name: nextcloud-lh
               mountPath: /nextcloud
@@ -162,6 +188,12 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
+          livenessProbe:
+            tcpSocket:
+              port: 12345
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           resources:
             requests:
               cpu: "177m"

@@ -31,6 +31,20 @@ spec:
           value: "45"
         - name: PORT
           value: "9090"
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9090
+          periodSeconds: 15
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9090
+          periodSeconds: 30
+          timeoutSeconds: 2
+          failureThreshold: 3
         volumeMounts:
         - name: config-volume
           mountPath: /config

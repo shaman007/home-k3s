@@ -65,6 +65,14 @@ spec:
               port: 9333
             initialDelaySeconds: 15
             periodSeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /cluster/status
+              port: 9333
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 2
+            failureThreshold: 3
 
         # VOLUME
         - name: volume
@@ -102,6 +110,14 @@ spec:
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 2
+            failureThreshold: 3
 
         # FILER
         - name: filer
@@ -137,6 +153,14 @@ spec:
               port: 8888
             initialDelaySeconds: 15
             periodSeconds: 60
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 2
+            failureThreshold: 3
 
         # S3 GATEWAY
         - name: s3
@@ -183,12 +207,24 @@ spec:
               containerPort: 8333
             - name: metrics-s3
               containerPort: 9094
-          #readinessProbe:
-          #  httpGet:
-          #    path: /
-          #    port: 8333
-          #  initialDelaySeconds: 5
-          #  periodSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: s3
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: s3
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: s3
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
 
       volumes:
         - name: data

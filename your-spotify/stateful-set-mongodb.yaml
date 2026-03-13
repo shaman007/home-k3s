@@ -28,6 +28,36 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 27017
+          startupProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)"
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)"
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --quiet
+                - --eval
+                - "quit(db.adminCommand({ ping: 1 }).ok ? 0 : 1)"
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
           resources:
             requests:
               cpu: "12m"
@@ -46,6 +76,13 @@ spec:
           args:
             - --mongodb.uri=mongodb://127.0.0.1:27017
             - --compatible-mode
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9216
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             requests:
               cpu: "10m"

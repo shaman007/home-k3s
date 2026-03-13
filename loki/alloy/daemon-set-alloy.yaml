@@ -29,6 +29,18 @@ spec:
           ports:
             - containerPort: 12345
               name: http
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           volumeMounts:
             - name: config
               mountPath: /etc/alloy

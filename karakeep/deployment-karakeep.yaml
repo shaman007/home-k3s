@@ -27,6 +27,27 @@ spec:
         image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.31.0
         ports:
         - containerPort: 3000
+        startupProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          periodSeconds: 30
+          timeoutSeconds: 2
+          failureThreshold: 3
         env:
           - name: CRAWLER_STORE_PDF
             value: "true"
@@ -69,6 +90,13 @@ spec:
           - { name: chrome-data, mountPath: /data }
         ports:
           - { containerPort: 9222 }
+        livenessProbe:
+          httpGet:
+            path: /json/version
+            port: 9222
+          periodSeconds: 30
+          timeoutSeconds: 2
+          failureThreshold: 3
         resources:
           requests:
             cpu: 17m

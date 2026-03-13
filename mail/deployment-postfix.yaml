@@ -62,6 +62,18 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 587
+          readinessProbe:
+            tcpSocket:
+              port: 587
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 587
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
           volumeMounts:
             - name: mail-lh
               mountPath: /var/mail

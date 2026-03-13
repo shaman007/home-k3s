@@ -41,6 +41,27 @@ spec:
             secretKeyRef:
               name: karakeep-secret-env
               key: MEILI_MASTER_KEY
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 7700
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 7700
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 7700
+          periodSeconds: 30
+          timeoutSeconds: 2
+          failureThreshold: 3
         volumeMounts:
         - name: meili-data
           mountPath: /meili_data

@@ -41,6 +41,20 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           volumeMounts:
             - name: config-matrix
               mountPath: /etc/nginx/conf.d

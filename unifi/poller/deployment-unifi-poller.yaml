@@ -44,6 +44,20 @@ spec:
               value: "http://loki.monitoring.svc.cluster.local:3100"
             - name: UP_LOKI_VERIFY_SSL
               value: "false"
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9130
+            periodSeconds: 15
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9130
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
           resources:
             requests:
               memory: "100Mi"
