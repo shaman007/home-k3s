@@ -249,9 +249,20 @@ data:
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
-        static_configs:
-        - targets:
-          - postgres-exporter.kube-system.svc.cluster.local:9187
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_app]
+          action: keep
+          regex: kube-system;postgres-exporter
+        - source_labels: [__meta_kubernetes_pod_container_port_number]
+          action: keep
+          regex: "9187"
+        - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_container_port_number]
+          action: replace
+          target_label: __address__
+          regex: (.+);(.+)
+          replacement: $1:$2
 
       - job_name: rspamd
         scrape_interval: 45s
