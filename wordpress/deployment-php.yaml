@@ -6,7 +6,7 @@ metadata:
   name: php
   labels:
     app: wordpress
-    tier: backend
+    component: web
     app.kubernetes.io/name: wordpress
     app.kubernetes.io/instance: wordpress
     app.kubernetes.io/managed-by: argoCD
@@ -15,12 +15,12 @@ spec:
   selector:
     matchLabels:
       app: wordpress
-      tier: backend
+      component: web
   template:
     metadata:
       labels:
         app: wordpress
-        tier: backend
+        component: web
     spec:
       securityContext:
         runAsUser: 33
@@ -42,6 +42,15 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 1000Mi
+        - name: config
+          configMap:
+            name: nginx-config
+            items:
+              - key: config
+                path: site.conf
+        - name: cache
+          emptyDir:
+            sizeLimit: 500Mi
       containers:
         - name: php
           image: harbor.andreybondarenko.com/library/php:latest
@@ -75,3 +84,42 @@ spec:
               memory: "768Mi"
             limits:
               memory: "768Mi"
+        - name: nginx
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.6
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: wordpress-lh
+              mountPath: /code
+            - name: config
+              mountPath: /etc/nginx/conf.d
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "100Mi"
+            limits:
+              memory: "100Mi"
+          livenessProbe:
+            httpGet:
+              path: /wp-json/wp-site-health/v1
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /wp-json/wp-site-health/v1
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

@@ -6,7 +6,7 @@ metadata:
   name: php
   labels:
     app: wordpress
-    tier: backend
+    component: web
     app.kubernetes.io/name: wordpress
     app.kubernetes.io/instance: wordpress
     app.kubernetes.io/version: "latest"
@@ -14,7 +14,7 @@ metadata:
 spec:
   selector:
     app: wordpress
-    tier: backend
+    component: web
   ports:
     - protocol: TCP
       port: 9000

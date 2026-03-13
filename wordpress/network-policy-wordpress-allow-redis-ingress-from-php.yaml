@@ -14,7 +14,7 @@ spec:
         - podSelector:
             matchLabels:
               app: wordpress
-              tier: backend
+              component: web
       ports:
         - protocol: TCP
           port: 6379

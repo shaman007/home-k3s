@@ -6,7 +6,7 @@ metadata:
   name: nginx
   labels:
     app: wordpress
-    tier: frontend
+    component: web
     app.kubernetes.io/name: wordpress
     app.kubernetes.io/instance: wordpress
     app.kubernetes.io/version: "latest"
@@ -14,7 +14,7 @@ metadata:
 spec:
   selector:
     app: wordpress
-    tier: frontend
+    component: web
   ports:
     - protocol: TCP
       port: 8080

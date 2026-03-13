@@ -7,7 +7,7 @@ spec:
   podSelector:
     matchLabels:
       app: wordpress
-      tier: backend
+      component: web
   policyTypes:
     - Egress
   egress:
