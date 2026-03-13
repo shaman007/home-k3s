@@ -352,12 +352,15 @@ redis:
     password: ""
   # you can also specify the name of an existing Secret
   # with a key of redis-password set to the password you want
-  existingSecret: "mastodon-redis"
+  existingSecret: ""
 
 # @ignored
 service:
   type: ClusterIP
   port: 80
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+    - IPv4
 
 
 #kubectl create secret generic redis-password \
