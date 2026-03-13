@@ -45,3 +45,23 @@ spec:
           ports:
             - containerPort: 9187
               name: pmetrics
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: pmetrics
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: pmetrics
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: pmetrics
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
