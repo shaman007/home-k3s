@@ -56,8 +56,8 @@ spec:
               path: /metrics
               port: 9130
             periodSeconds: 30
-            timeoutSeconds: 2
-            failureThreshold: 3
+            timeoutSeconds: 15
+            failureThreshold: 5
           resources:
             requests:
               memory: "100Mi"
