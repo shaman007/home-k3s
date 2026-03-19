@@ -20,33 +20,42 @@ spec:
       labels:
         app: photon
     spec:
+      terminationGracePeriodSeconds: 120
       containers:
         - name: photon
-          image: harbor.andreybondarenko.com/library/photon:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/github/rtuszik/photon-docker:v2.1.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: UPDATE_STRATEGY
+              value: SEQUENTIAL
+            - name: UPDATE_INTERVAL
+              value: 720h
           ports:
             - containerPort: 2322
           startupProbe:
-            tcpSocket:
+            httpGet:
+              path: /status
               port: 2322
             periodSeconds: 10
-            timeoutSeconds: 1
-            failureThreshold: 60
+            timeoutSeconds: 5
+            failureThreshold: 2160
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /status
               port: 2322
             periodSeconds: 10
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /status
               port: 2322
             periodSeconds: 30
-            timeoutSeconds: 1
+            timeoutSeconds: 5
             failureThreshold: 3
           volumeMounts:
             - name: photon-data
-              mountPath: /photon/photon_data
+              mountPath: /photon/data
           resources:
             requests:
               memory: "1545Mi"
