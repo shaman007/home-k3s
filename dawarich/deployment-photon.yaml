@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 120
       containers:
         - name: photon
-          image: harbor.andreybondarenko.com/github/rtuszik/photon-docker:v2.1.1
+          image: harbor.andreybondarenko.com/dockerhub/rtuszik/photon-docker:v2.1.1
           imagePullPolicy: IfNotPresent
           env:
             - name: UPDATE_STRATEGY
