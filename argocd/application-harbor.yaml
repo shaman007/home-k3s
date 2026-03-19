@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://helm.goharbor.io
-    targetRevision: 1.18.2
+    targetRevision: 1.18.3
     chart: harbor
     helm:
       values: |
