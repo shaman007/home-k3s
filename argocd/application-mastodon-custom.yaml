@@ -12,7 +12,7 @@ spec:
     targetRevision: HEAD
     directory:
       recurse: false
-      include: "{config-map-*.yaml,cron-job-*.yaml,external-secret-*.yaml,ingress-*.yaml,middleware-*.yaml,network-policy-*.yaml,persistent-volume-claim-bookmarked-media-sync-work.yaml,persistent-volume-claim-data-mastodon-postgres-lh.yaml,role-*.yaml,role-binding-*.yaml,secret-store-*.yaml,service-account-*.yaml,service-mastodon-postgres*.yaml,stateful-set-mastodon-postgres.yaml}"
+      include: "{config-map-*.yaml,cron-job-*.yaml,external-secret-*.yaml,ingress-*.yaml,middleware-*.yaml,network-policy-*.yaml,persistent-volume-claim-data-mastodon-postgres-lh.yaml,role-*.yaml,role-binding-*.yaml,secret-store-*.yaml,service-account-*.yaml,service-mastodon-postgres*.yaml,stateful-set-mastodon-postgres.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: mastodon
