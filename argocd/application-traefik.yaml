@@ -51,6 +51,8 @@ spec:
         podSecurityContext:
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch
+        updateStrategy:
+          type: Recreate
         ports:
           imaps:
             expose:
