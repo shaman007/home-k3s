@@ -103,6 +103,8 @@ spec:
           persistentVolumeClaim:
             registry:
               existingClaim: harbor-registry
+        updateStrategy:
+          type: Recreate
         externalURL: https://harbor.andreybondarenko.com
         harborAdminPassword: Harbor12345
   destination:
