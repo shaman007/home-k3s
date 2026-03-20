@@ -20,6 +20,9 @@ spec:
               kubernetes.io/metadata.name: collabora
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: convertx
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: dawarich
         - namespaceSelector:
             matchLabels:
