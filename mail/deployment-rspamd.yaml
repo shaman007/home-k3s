@@ -73,7 +73,7 @@ spec:
             name: rspamd-cf
             items:
               - key: statistics
-                path: statistics.conf
+                path: statistic.conf
         - name: rspamd
           configMap:
             name: rspamd-cf
@@ -164,7 +164,8 @@ spec:
               mountPath: /etc/rspamd/local.d/antivirus.conf
               subPath: antivirus.conf
             - name: statistics-cf
-              mountPath: /etc/rspamd/statistics.conf
+              mountPath: /etc/rspamd/statistic.conf
+              subPath: statistic.conf
             - name: rspamd
               mountPath: /etc/rspamd/rspamd.conf
               subPath: rspamd.conf
