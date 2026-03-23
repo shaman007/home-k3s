@@ -164,7 +164,7 @@ spec:
               mountPath: /etc/rspamd/local.d/antivirus.conf
               subPath: antivirus.conf
             - name: statistics-cf
-              mountPath: /etc/rspamd/statistic.conf
+              mountPath: /usr/share/rspamd/config/statistic.conf
               subPath: statistic.conf
             - name: rspamd
               mountPath: /etc/rspamd/rspamd.conf
