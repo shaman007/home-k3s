@@ -11,6 +11,8 @@ metadata:
     app.kubernetes.io/instance: nextcloud
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
+  annotations:
+    configmap.reloader.stakater.com/auto: "true"
 spec:
   serviceName: nextcloud-web
   replicas: 1

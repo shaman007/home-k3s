@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/name: prometheus-server
     app.kubernetes.io/instance: prometheus-server
     app.kubernetes.io/managed-by: argoCD
+  annotations:
+    configmap.reloader.stakater.com/auto: "true"
 spec:
   strategy:
     type: Recreate

@@ -11,6 +11,8 @@ metadata:
     app.kubernetes.io/instance: rspamd
     app.kubernetes.io/version: "latest"
     app.kubernetes.io/managed-by: argoCD
+  annotations:
+    configmap.reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
