@@ -15,5 +15,7 @@ spec:
   selector:
     app: meilisearch
   ports:
-    - port: 7700
-      targetPort: 7700
+    - name: http
+      port: 7700
+      targetPort: http
+      protocol: TCP

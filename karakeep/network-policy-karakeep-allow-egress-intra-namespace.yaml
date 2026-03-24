@@ -4,7 +4,9 @@ metadata:
   name: karakeep-allow-egress-intra-namespace
   namespace: karakeep
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels:
+      app: karakeep
   policyTypes:
     - Egress
   egress:
@@ -12,3 +14,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: karakeep
+          podSelector:
+            matchLabels:
+              app: meilisearch
+      ports:
+        - protocol: TCP
+          port: 7700

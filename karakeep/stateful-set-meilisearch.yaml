@@ -24,6 +24,10 @@ spec:
       containers:
       - name: meilisearch
         image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.40.0
+        ports:
+        - name: http
+          containerPort: 7700
+          protocol: TCP
         env:
         # Keep the existing data path for the in-place 1.38.2 upgrade.
         - name: MEILI_DB_PATH
@@ -44,21 +48,21 @@ spec:
         startupProbe:
           httpGet:
             path: /health
-            port: 7700
+            port: http
           periodSeconds: 5
           timeoutSeconds: 2
           failureThreshold: 60
         readinessProbe:
           httpGet:
             path: /health
-            port: 7700
+            port: http
           periodSeconds: 10
           timeoutSeconds: 2
           failureThreshold: 3
         livenessProbe:
           httpGet:
             path: /health
-            port: 7700
+            port: http
           periodSeconds: 30
           timeoutSeconds: 2
           failureThreshold: 3

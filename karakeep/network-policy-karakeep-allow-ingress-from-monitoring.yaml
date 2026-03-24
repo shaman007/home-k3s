@@ -4,7 +4,9 @@ metadata:
   name: karakeep-allow-ingress-from-monitoring
   namespace: karakeep
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels:
+      app: karakeep
   policyTypes:
     - Ingress
   ingress:
