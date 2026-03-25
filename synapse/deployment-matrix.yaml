@@ -38,7 +38,7 @@ spec:
                 path: config.yaml
       containers:
         - name: synapse
-          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.149.1
+          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.150.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 6167
