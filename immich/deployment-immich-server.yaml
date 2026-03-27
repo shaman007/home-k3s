@@ -30,7 +30,7 @@ spec:
         kubernetes.io/hostname: w386.k8s.my.lan
       containers:
         - name: immich-server
-          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v2.6.2
+          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v2.6.3
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
