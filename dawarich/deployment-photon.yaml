@@ -30,6 +30,9 @@ spec:
               value: SEQUENTIAL
             - name: UPDATE_INTERVAL
               value: 720h
+            - name: JAVA_PARAMS
+              value: >-
+                -Des.cluster.routing.allocation.node_initial_primaries_recoveries=5
           ports:
             - containerPort: 2322
           startupProbe:
