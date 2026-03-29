@@ -25,6 +25,27 @@ spec:
         - name: photon
           image: harbor.andreybondarenko.com/dockerhub/rtuszik/photon-docker:2.1.1
           imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              (
+                i=0
+                while [ "$i" -lt 60 ]; do
+                  if curl -fsS http://127.0.0.1:9201/_cluster/health >/dev/null 2>&1; then
+                    cat <<'EOF' >/tmp/photon-cluster-settings.json
+                    {"persistent":{"cluster.routing.allocation.node_initial_primaries_recoveries":"5"}}
+                    EOF
+                    curl -fsS -X PUT -H 'Content-Type: application/json' \
+                      http://127.0.0.1:9201/_cluster/settings \
+                      --data-binary @/tmp/photon-cluster-settings.json >/dev/null 2>&1 || true
+                    break
+                  fi
+                  i=$((i + 1))
+                  sleep 1
+                done
+              ) &
+              exec /bin/sh /photon/entrypoint.sh uv run -m src.process_manager
           env:
             - name: UPDATE_STRATEGY
               value: SEQUENTIAL
@@ -56,28 +77,6 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    i=0
-                    while [ "$i" -lt 60 ]; do
-                      if curl -fsS http://127.0.0.1:9201/_cluster/health >/dev/null 2>&1; then
-                        cat <<'EOF' >/tmp/photon-cluster-settings.json
-                        {"persistent":{"cluster.routing.allocation.node_initial_primaries_recoveries":"5"}}
-                        EOF
-                        curl -fsS -X PUT -H 'Content-Type: application/json' \
-                          http://127.0.0.1:9201/_cluster/settings \
-                          --data-binary @/tmp/photon-cluster-settings.json >/dev/null 2>&1 || true
-                        exit 0
-                      fi
-                      i=$((i + 1))
-                      sleep 1
-                    done
-                    exit 0
           volumeMounts:
             - name: photon-data
               mountPath: /photon/data
