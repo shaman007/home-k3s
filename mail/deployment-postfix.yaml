@@ -65,14 +65,20 @@ spec:
           ports:
             - containerPort: 587
           readinessProbe:
-            tcpSocket:
-              port: 587
+            exec:
+              command:
+                - /usr/bin/sh
+                - -lc
+                - postfix status >/dev/null 2>&1
             periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 3
           livenessProbe:
-            tcpSocket:
-              port: 587
+            exec:
+              command:
+                - /usr/bin/sh
+                - -lc
+                - postfix status >/dev/null 2>&1
             periodSeconds: 30
             timeoutSeconds: 1
             failureThreshold: 3
