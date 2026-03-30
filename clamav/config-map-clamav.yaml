@@ -12,6 +12,9 @@ metadata:
 data:
   clamd.conf: |
     TCPSocket 3200
+    LocalSocket /run/clamav/clamd.sock
+    FixStaleSocket true
+    LocalSocketMode 666
     User clamav
     ScanMail true
     ScanArchive true

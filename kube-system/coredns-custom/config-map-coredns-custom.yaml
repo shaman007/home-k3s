@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  00-silence-empty-import.override: |
+    # Placeholder file so the default K3s CoreDNS import glob matches.
+  00-silence-empty-import.server: |
+    # Placeholder file so the default K3s CoreDNS import glob matches.

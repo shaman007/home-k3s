@@ -57,6 +57,8 @@ spec:
           volumeMounts:
             - mountPath: /var/lib/clamav
               name: avdata
+            - mountPath: /run/clamav
+              name: run
             - mountPath: /tmp
               name: tmp
             - mountPath: /etc/clamav/clamd.conf
@@ -105,7 +107,10 @@ spec:
               protocol: TCP
           args:
             - "--clamav.address"
-            - "tcp://localhost:3200"
+            - "unix:///run/clamav/clamd.sock"
+          volumeMounts:
+            - mountPath: /run/clamav
+              name: run
           livenessProbe:
             tcpSocket:
               port: metrics
@@ -131,6 +136,9 @@ spec:
         - name: log
           emptyDir:
             sizeLimit: 100Mi
+        - name: run
+          emptyDir:
+            sizeLimit: 10Mi
         - name: tmp
           emptyDir:
             sizeLimit: 600Mi

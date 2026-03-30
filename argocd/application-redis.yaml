@@ -11,6 +11,27 @@ spec:
     targetRevision: 0.16.9
     chart: redis
     helm:
+      values: |
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          fsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+        redisExporter:
+          enabled: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
       parameters:
       - name: redisExporter.enabled
         value: 'true'

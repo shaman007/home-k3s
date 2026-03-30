@@ -17,9 +17,19 @@ spec:
       labels:
         app: redis-exporter
     spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: redis-exporter
           image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.82.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
           env:
             - name: REDIS_PASSWORD
               valueFrom:
