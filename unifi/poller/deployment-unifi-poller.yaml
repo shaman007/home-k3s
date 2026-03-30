@@ -45,15 +45,13 @@ spec:
             - name: UP_LOKI_VERIFY_SSL
               value: "false"
           readinessProbe:
-            httpGet:
-              path: /metrics
+            tcpSocket:
               port: 9130
             periodSeconds: 15
             timeoutSeconds: 2
             failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /metrics
+            tcpSocket:
               port: 9130
             periodSeconds: 30
             timeoutSeconds: 15

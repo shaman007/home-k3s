@@ -79,8 +79,7 @@ spec:
             - --mongodb.uri=mongodb://127.0.0.1:27017
             - --compatible-mode
           livenessProbe:
-            httpGet:
-              path: /metrics
+            tcpSocket:
               port: 9216
             periodSeconds: 30
             timeoutSeconds: 2

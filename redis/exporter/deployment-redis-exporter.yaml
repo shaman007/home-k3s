@@ -29,15 +29,13 @@ spec:
             - name: REDIS_ADDR
               value: redis://redis-master.redis.svc.cluster.local:6379
           readinessProbe:
-            httpGet:
-              path: /metrics
+            tcpSocket:
               port: 9121
             periodSeconds: 15
             timeoutSeconds: 2
             failureThreshold: 3
           livenessProbe:
-            httpGet:
-              path: /metrics
+            tcpSocket:
               port: 9121
             periodSeconds: 30
             timeoutSeconds: 2

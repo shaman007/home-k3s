@@ -107,8 +107,7 @@ spec:
             - "--clamav.address"
             - "tcp://localhost:3200"
           livenessProbe:
-            httpGet:
-              path: /metrics
+            tcpSocket:
               port: metrics
             periodSeconds: 30
             timeoutSeconds: 2
