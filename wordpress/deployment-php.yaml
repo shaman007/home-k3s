@@ -34,6 +34,9 @@ spec:
         - name: phpini
           configMap:
             name: php-fpm-config
+        - name: mu-plugins
+          configMap:
+            name: wordpress-mu-plugins
         - name: wordpress-lh
           persistentVolumeClaim:
             claimName: wordpress-lh
@@ -76,6 +79,9 @@ spec:
               subPath: www.conf
             - name: wordpress-lh
               mountPath: /code
+            - name: mu-plugins
+              mountPath: /code/wp-content/mu-plugins/miniorange-redis-session-compat.php
+              subPath: miniorange-redis-session-compat.php
             - name: varrun
               mountPath: /var/run/php
             - name: run

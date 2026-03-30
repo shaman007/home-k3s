@@ -1,0 +1,108 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: wordpress
+  name: wordpress-mu-plugins
+  labels:
+    app: wordpress
+    app.kubernetes.io/name: wordpress
+    app.kubernetes.io/instance: wordpress
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: argoCD
+data:
+  miniorange-redis-session-compat.php: |
+    <?php
+    /**
+     * Plugin Name: MiniOrange Redis Session Compatibility
+     * Description: Replaces MiniOrange's file-only session path check so Redis-backed sessions work cleanly.
+     */
+
+    if ( ! defined( 'ABSPATH' ) ) {
+    	exit;
+    }
+
+    /**
+     * Remove the MiniOrange session starter once its callback is registered.
+     */
+    function home_k3s_remove_miniorange_session_hook() {
+    	global $wp_filter;
+
+    	if ( ! class_exists( 'MOOAuth_Widget' ) || ! isset( $wp_filter['init'] ) ) {
+    		return;
+    	}
+
+    	$callbacks = $wp_filter['init']->callbacks ?? array();
+
+    	foreach ( $callbacks as $priority => $handlers ) {
+    		foreach ( $handlers as $handler ) {
+    			$function = $handler['function'] ?? null;
+
+    			if (
+    				is_array( $function ) &&
+    				is_object( $function[0] ) &&
+    				$function[0] instanceof MOOAuth_Widget &&
+    				'mo_oauth_start_session' === $function[1]
+    			) {
+    				remove_action( 'init', array( $function[0], 'mo_oauth_start_session' ), $priority );
+    			}
+    		}
+    	}
+    }
+    add_action( 'plugins_loaded', 'home_k3s_remove_miniorange_session_hook', 100 );
+    add_action( 'init', 'home_k3s_remove_miniorange_session_hook', -1000 );
+
+    /**
+     * Detect REST API requests without relying on the plugin's helper, which is inverted.
+     *
+     * @return bool
+     */
+    function home_k3s_is_rest_request() {
+    	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+    		return true;
+    	}
+
+    	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+
+    	return is_string( $request_uri ) && false !== strpos( $request_uri, '/wp-json/' );
+    }
+
+    /**
+     * Start PHP sessions safely when MiniOrange needs them, including Redis-backed handlers.
+     */
+    function home_k3s_start_miniorange_session() {
+    	if ( PHP_SESSION_NONE !== session_status() || PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg' ) {
+    		return;
+    	}
+
+    	if ( function_exists( 'mooauth_client_is_ajax_request' ) && mooauth_client_is_ajax_request() ) {
+    		return;
+    	}
+
+    	if ( home_k3s_is_rest_request() ) {
+    		return;
+    	}
+
+    	$session_handler = strtolower( (string) ini_get( 'session.save_handler' ) );
+
+    	if ( '' !== $session_handler && 'files' !== $session_handler ) {
+    		session_start();
+    		return;
+    	}
+
+    	$session_path = session_save_path();
+
+    	if ( empty( $session_path ) ) {
+    		$session_path = sys_get_temp_dir();
+    	}
+
+    	if ( is_string( $session_path ) && false !== strpos( $session_path, '://' ) ) {
+    		session_start();
+    		return;
+    	}
+
+    	if ( is_string( $session_path ) && is_writable( $session_path ) ) {
+    		session_start();
+    	}
+    }
+    add_action( 'init', 'home_k3s_start_miniorange_session', -999 );
