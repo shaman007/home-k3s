@@ -50,7 +50,7 @@ data:
     	}
     }
     add_action( 'plugins_loaded', 'home_k3s_remove_miniorange_session_hook', 100 );
-    add_action( 'init', 'home_k3s_remove_miniorange_session_hook', -1000 );
+    add_action( 'init', 'home_k3s_remove_miniorange_session_hook', 9 );
 
     /**
      * Detect REST API requests without relying on the plugin's helper, which is inverted.
@@ -109,7 +109,7 @@ data:
     		session_start();
     	}
     }
-    add_action( 'init', 'home_k3s_start_miniorange_session', -999 );
+    add_action( 'init', 'home_k3s_start_miniorange_session', 9 );
   independent-publisher-compat.php: |
     <?php
     /**
