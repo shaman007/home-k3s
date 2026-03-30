@@ -97,7 +97,7 @@ data:
     name: Keycloak
     issuer: https://sso.andreybondarenko.com/realms/master
     clientID: argocd
-    clientSecret: $oidc.keycloak.clientSecret
+    clientSecret: $argocd-oidc-secret:clientSecret
     enablePKCEAuthentication: true
     refreshTokenThreshold: 2m
     requestedScopes:
