@@ -82,6 +82,9 @@ spec:
             - name: mu-plugins
               mountPath: /code/wp-content/mu-plugins/miniorange-redis-session-compat.php
               subPath: miniorange-redis-session-compat.php
+            - name: mu-plugins
+              mountPath: /code/wp-content/mu-plugins/independent-publisher-compat.php
+              subPath: independent-publisher-compat.php
             - name: varrun
               mountPath: /var/run/php
             - name: run

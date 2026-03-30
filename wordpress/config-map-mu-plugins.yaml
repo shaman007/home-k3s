@@ -83,6 +83,10 @@ data:
     		return;
     	}
 
+    	if ( headers_sent() ) {
+    		return;
+    	}
+
     	$session_handler = strtolower( (string) ini_get( 'session.save_handler' ) );
 
     	if ( '' !== $session_handler && 'files' !== $session_handler ) {
@@ -106,3 +110,51 @@ data:
     	}
     }
     add_action( 'init', 'home_k3s_start_miniorange_session', -999 );
+  independent-publisher-compat.php: |
+    <?php
+    /**
+     * Plugin Name: Independent Publisher Compatibility
+     * Description: Adds missing customizer defaults for newer PHP versions.
+     */
+
+    if ( ! defined( 'ABSPATH' ) ) {
+    	exit;
+    }
+
+    /**
+     * Backfill the theme's missing background_color default to avoid undefined array key warnings.
+     */
+    function home_k3s_fix_independent_publisher_defaults() {
+    	if ( ! class_exists( 'IndependentPublisher_Customize' ) ) {
+    		return;
+    	}
+
+    	try {
+    		$reflection = new ReflectionClass( 'IndependentPublisher_Customize' );
+    		$property   = $reflection->getProperty( 'default_colors' );
+    		$property->setAccessible( true );
+    		$defaults = (array) $property->getValue();
+    	} catch ( ReflectionException $exception ) {
+    		return;
+    	}
+
+    	if ( array_key_exists( 'background_color', $defaults ) ) {
+    		return;
+    	}
+
+    	$default_background = 'ffffff';
+    	$background_support = get_theme_support( 'custom-background' );
+
+    	if (
+    		is_array( $background_support ) &&
+    		isset( $background_support[0]['default-color'] ) &&
+    		is_string( $background_support[0]['default-color'] ) &&
+    		'' !== $background_support[0]['default-color']
+    	) {
+    		$default_background = ltrim( $background_support[0]['default-color'], '#' );
+    	}
+
+    	$defaults['background_color'] = $default_background;
+    	$property->setValue( null, $defaults );
+    }
+    add_action( 'after_setup_theme', 'home_k3s_fix_independent_publisher_defaults', 100 );
