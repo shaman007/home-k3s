@@ -58,6 +58,19 @@ spec:
         - name: queue
           emptyDir:
             sizeLimit: 500Mi
+      initContainers:
+        - name: init-postfix-queue-perms
+          image: harbor.andreybondarenko.com/library/postfix:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/bin/sh
+            - -lc
+            - chown 100:102 /var/lib/postfix && chmod 755 /var/lib/postfix
+          volumeMounts:
+            - name: queue
+              mountPath: /var/lib/postfix
+          securityContext:
+            allowPrivilegeEscalation: false
       containers:
         - name: postfix-mail
           image: harbor.andreybondarenko.com/library/postfix:latest
