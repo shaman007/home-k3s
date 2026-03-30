@@ -172,6 +172,9 @@ data:
     enabled = true;
     whitelist = "/var/lib/rspamd/surbl-whitelist.inc.local";
   options: |
+    # Keep Rspamd 4 content-derived URLs explicit so PDFs and other computed
+    # parts participate in SURBL, phishing, and fuzzy-driven reputation checks.
+    include_content_urls = true;
     url_tld = "/var/lib/rspamd/effective_tld_names.local.dat";
   rspamd: |
     .include "$CONFDIR/common.conf"
