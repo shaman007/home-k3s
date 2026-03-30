@@ -98,6 +98,24 @@ data:
 
         stage.decolorize { }
 
+        // Dawarich is running in a verbose Rails mode and occasionally emits
+        // entries larger than Loki's 256KiB limit. Trim the line before write
+        // and drop the repetitive framework chatter that does not help triage.
+        stage.match {
+            selector = "{namespace=\"dawarich\", app=\"dawarich\"}"
+
+            stage.drop {
+                expression = "^(  Rendering .*|.*ApiController#current_api_user.*|  (CACHE )?User Load .*)$"
+            }
+
+            stage.truncate {
+                rule {
+                    limit  = "240KiB"
+                    suffix = "... [truncated by alloy]"
+                }
+            }
+        }
+
         stage.drop {
             expression = ".*(\\/health|\\/metrics|\\/ping).*"
         }
