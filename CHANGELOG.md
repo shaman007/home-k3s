@@ -11879,3 +11879,14 @@ recommendations and ensure consistent YAML separators and formatting.
   - `seaweedfs/seaweedfs.yaml`
   - `stirling-pdf/stirling-pdf.yaml`
   - `year/year.yaml`
+
+## 2026-03-30 – Weekly Highlights
+
+- **Highlights**
+  - Added `application-reloader` across workloads to restart pods on config and secret changes.
+  - Added Kubernetes CSI snapshot controller manifests and the matching ArgoCD application.
+  - Split ArgoCD OIDC client configuration into `argocd-oidc-secret` and allowed Alloy HTTPS egress to Grafana.
+  - Fixed Meilisearch networking, Photon recovery and cluster settings startup, WordPress health probes, node-exporter probes and filesystem flag usage, Rspamd bayes handling, and Nextcloud nginx config.
+
+- **Key PR Links**
+  - [#85](https://github.com/shaman007/home-k3s/pull/85), [#86](https://github.com/shaman007/home-k3s/pull/86), [#87](https://github.com/shaman007/home-k3s/pull/87), [#88](https://github.com/shaman007/home-k3s/pull/88), [#89](https://github.com/shaman007/home-k3s/pull/89), [#90](https://github.com/shaman007/home-k3s/pull/90), [#93](https://github.com/shaman007/home-k3s/pull/93), [#94](https://github.com/shaman007/home-k3s/pull/94), [#95](https://github.com/shaman007/home-k3s/pull/95), [#96](https://github.com/shaman007/home-k3s/pull/96), [#97](https://github.com/shaman007/home-k3s/pull/97), [#98](https://github.com/shaman007/home-k3s/pull/98), [#100](https://github.com/shaman007/home-k3s/pull/100), [#101](https://github.com/shaman007/home-k3s/pull/101), [#102](https://github.com/shaman007/home-k3s/pull/102)
