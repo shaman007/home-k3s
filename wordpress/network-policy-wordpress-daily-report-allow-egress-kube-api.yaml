@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wordpress-daily-report-allow-egress-kube-api
+  namespace: wordpress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wordpress-daily-report
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    # k3s exposes the kubernetes service via a ClusterIP, but the actual
+    # apiserver endpoint is the control-plane node on 6443.
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.209/32
+      ports:
+        - protocol: TCP
+          port: 6443

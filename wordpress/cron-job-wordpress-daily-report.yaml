@@ -1,0 +1,76 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wordpress-daily-report
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/name: wordpress-daily-report
+    app.kubernetes.io/instance: wordpress-daily-report
+    app.kubernetes.io/part-of: wordpress
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "15 6 * * *"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: wordpress-daily-report
+            app.kubernetes.io/instance: wordpress-daily-report
+            app.kubernetes.io/part-of: wordpress
+        spec:
+          enableServiceLinks: false
+          serviceAccountName: wordpress-daily-report
+          restartPolicy: Never
+          containers:
+            - name: report
+              image: alpine:3.23
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -lc
+                - |
+                  set -eu
+                  apk add --no-cache ca-certificates kubectl python3 tzdata
+                  python3 /scripts/wordpress-daily-report.py
+              env:
+                - name: REPORT_NAMESPACE
+                  value: wordpress
+                - name: REPORT_POD_SELECTOR
+                  value: app=wordpress,component=web
+                - name: REPORT_CONTAINER
+                  value: nginx
+                - name: REPORT_TIMEZONE
+                  value: Europe/Prague
+                - name: SITE_TITLE
+                  value: andreybondarenko.com
+                - name: SITE_HOSTS
+                  value: andreybondarenko.com,www.andreybondarenko.com
+                - name: SMTP_HOST
+                  value: andreybondarenko.com
+                - name: SMTP_PORT
+                  value: "25"
+                - name: MAIL_FROM
+                  value: wordpress-report@andreybondarenko.com
+                - name: MAIL_TO
+                  value: me@andreybondarenko.com
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+          volumes:
+            - name: scripts
+              configMap:
+                name: wordpress-daily-report-scripts
+                defaultMode: 0555

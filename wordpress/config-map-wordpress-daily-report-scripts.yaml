@@ -1,0 +1,431 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-daily-report-scripts
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/name: wordpress-daily-report
+    app.kubernetes.io/instance: wordpress-daily-report
+    app.kubernetes.io/part-of: wordpress
+    app.kubernetes.io/managed-by: argoCD
+data:
+  wordpress-daily-report.py: |
+    #!/usr/bin/env python3
+    import ipaddress
+    import json
+    import os
+    import re
+    import smtplib
+    import subprocess
+    import sys
+    from collections import Counter
+    from datetime import datetime, timedelta
+    from email.message import EmailMessage
+    from urllib.parse import urlparse, unquote
+    from zoneinfo import ZoneInfo
+
+    BOT_PATTERNS = [
+        (re.compile(pattern, re.IGNORECASE), label)
+        for pattern, label in [
+            (r"googlebot", "Googlebot"),
+            (r"googleother", "GoogleOther"),
+            (r"bingbot|bingpreview", "Bing"),
+            (r"yandex", "Yandex"),
+            (r"duckduckbot", "DuckDuckBot"),
+            (r"baiduspider", "BaiduSpider"),
+            (r"applebot", "Applebot"),
+            (r"facebookexternalhit", "Facebook"),
+            (r"linkedinbot", "LinkedInBot"),
+            (r"slackbot", "Slackbot"),
+            (r"discordbot", "Discordbot"),
+            (r"telegrambot", "TelegramBot"),
+            (r"whatsapp", "WhatsApp"),
+            (r"petalbot", "PetalBot"),
+            (r"ahrefsbot", "AhrefsBot"),
+            (r"semrushbot", "SemrushBot"),
+            (r"mj12bot", "MJ12bot"),
+            (r"bot|crawler|spider|slurp|validator|uptime|monitor", "Other bot"),
+        ]
+    ]
+    STATIC_SUFFIXES = (
+        ".css", ".js", ".mjs", ".json", ".xml", ".txt", ".ico", ".svg", ".png",
+        ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".woff", ".woff2", ".ttf",
+        ".eot", ".otf", ".map", ".pdf", ".zip", ".gz", ".mp4", ".webm", ".mp3",
+        ".ogg", ".wav", ".mov", ".avi", ".mkv",
+    )
+    LEGACY_LOG_RE = re.compile(
+        r'^(?P<x_forwarded_for>.*?) - (?P<remote_user>.*?) '
+        r'(?P<time_local>\[[^\]]+\]) "(?P<request>[^"]*)" '
+        r'(?P<status>\d{3}) (?P<body_bytes_sent>\d+) '
+        r'"(?P<referer>[^"]*)" "(?P<user_agent>[^"]*)"$'
+    )
+
+
+    def env(name, default=None, required=False):
+        value = os.environ.get(name, default)
+        if required and not value:
+            raise SystemExit(f"Missing required environment variable: {name}")
+        return value
+
+
+    def run_command(command):
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Command failed ({result.returncode}): {' '.join(command)}\n{result.stderr.strip()}"
+            )
+        return result.stdout
+
+
+    def get_time_window(time_zone_name):
+        tz = ZoneInfo(time_zone_name)
+        now = datetime.now(tz)
+        end_local = datetime(now.year, now.month, now.day, tzinfo=tz)
+        start_local = end_local - timedelta(days=1)
+        return tz, start_local, end_local
+
+
+    def list_pods(namespace, selector):
+        output = run_command(
+            [
+                "kubectl",
+                "get",
+                "pods",
+                "-n",
+                namespace,
+                "-l",
+                selector,
+                "-o",
+                'jsonpath={range .items[*]}{.metadata.name}{"\n"}{end}',
+            ]
+        )
+        return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+    def fetch_logs(namespace, pod_name, container, since_time):
+        return run_command(
+            [
+                "kubectl",
+                "logs",
+                "-n",
+                namespace,
+                pod_name,
+                "-c",
+                container,
+                f"--since-time={since_time}",
+            ]
+        )
+
+
+    def parse_json_line(line):
+        payload = json.loads(line)
+        payload["status"] = int(payload.get("status", 0) or 0)
+        payload["body_bytes_sent"] = int(payload.get("body_bytes_sent", 0) or 0)
+        return payload
+
+
+    def parse_legacy_line(line):
+        match = LEGACY_LOG_RE.match(line)
+        if not match:
+            return None
+        payload = match.groupdict()
+        payload["time_local"] = payload["time_local"].strip("[]")
+        payload["status"] = int(payload["status"])
+        payload["body_bytes_sent"] = int(payload["body_bytes_sent"])
+        request = payload.get("request", "")
+        request_parts = request.split()
+        if len(request_parts) >= 2:
+            payload["method"] = request_parts[0]
+            payload["request_uri"] = request_parts[1]
+        return payload
+
+
+    def parse_timestamp(entry):
+        if entry.get("time_iso8601"):
+            return datetime.fromisoformat(entry["time_iso8601"])
+        if entry.get("time_local"):
+            return datetime.strptime(entry["time_local"], "%d/%b/%Y:%H:%M:%S %z")
+        return None
+
+
+    def parse_line(line):
+        line = line.strip()
+        if not line:
+            return None
+        if line.startswith("{"):
+            try:
+                return parse_json_line(line)
+            except json.JSONDecodeError:
+                pass
+        return parse_legacy_line(line)
+
+
+    def first_non_empty(values):
+        for value in values:
+            if not value:
+                continue
+            value = value.strip()
+            if value and value not in {"-", "unknown", "null"}:
+                return value
+        return ""
+
+
+    def normalize_ip(value):
+        candidate = value.strip().split("%", 1)[0]
+        try:
+            return str(ipaddress.ip_address(candidate))
+        except ValueError:
+            return ""
+
+
+    def pick_client_ip(entry):
+        direct_ip = normalize_ip(entry.get("cf_connecting_ip", ""))
+        if direct_ip:
+            return direct_ip
+
+        forwarded_for = entry.get("x_forwarded_for", "")
+        if forwarded_for:
+            for part in forwarded_for.split(","):
+                normalized = normalize_ip(part.strip())
+                if normalized:
+                    return normalized
+
+        return normalize_ip(entry.get("remote_addr", ""))
+
+
+    def classify_robot(user_agent):
+        ua = user_agent or ""
+        for pattern, label in BOT_PATTERNS:
+            if pattern.search(ua):
+                return label
+        return ""
+
+
+    def canonical_path(request_uri):
+        parsed = urlparse(request_uri or "/")
+        path = unquote(parsed.path or "/")
+        return path or "/"
+
+
+    def is_page_request(method, path):
+        if method not in {"GET", "HEAD"}:
+            return False
+        if path == "/health":
+            return False
+        return not path.lower().endswith(STATIC_SUFFIXES)
+
+
+    def is_internal_referrer(referrer, site_hosts):
+        try:
+            host = urlparse(referrer).netloc.lower()
+        except ValueError:
+            return True
+        return not host or host in site_hosts
+
+
+    def format_counter(counter, limit=10, empty_text="  - none"):
+        if not counter:
+            return [empty_text]
+        return [f"  - {name}: {count}" for name, count in counter.most_common(limit)]
+
+
+    def render_report(
+        *,
+        site_title,
+        start_local,
+        end_local,
+        pods,
+        total_requests,
+        status_counts,
+        page_counts,
+        referrer_counts,
+        robot_counts,
+        country_counts,
+        unique_ips,
+        human_ips,
+        robot_ips,
+        authenticated_users,
+        notes,
+    ):
+        lines = [
+            f"WordPress daily traffic report for {site_title}",
+            "",
+            f"Window: {start_local.strftime('%Y-%m-%d %H:%M:%S %Z')} to {end_local.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+            f"Pods checked: {', '.join(pods) if pods else 'none'}",
+            "",
+            "Overview",
+            f"  - Total requests: {total_requests}",
+            f"  - Unique visitor IPs: {len(unique_ips)}",
+            f"  - Unique human visitor IPs: {len(human_ips)}",
+            f"  - Unique robot visitor IPs: {len(robot_ips)}",
+            f"  - Authenticated users seen: {len(authenticated_users)}",
+            "",
+            "HTTP status codes",
+            *format_counter(status_counts, limit=10),
+            "",
+            "Seen pages",
+            *format_counter(page_counts, limit=20),
+            "",
+            "Sources / referrers",
+            *format_counter(referrer_counts, limit=15),
+            "",
+            "Robots visited",
+            *format_counter(robot_counts, limit=15),
+            "",
+            "Country totals",
+        ]
+
+        if country_counts:
+            lines.extend(format_counter(country_counts, limit=15))
+        else:
+            lines.append("  - No country data in this window")
+
+        lines.extend(
+            [
+                "",
+                "Notes",
+                "  - Country is based on the Cloudflare CF-IPCountry header when present.",
+                "  - Region is not available from the current WordPress log format.",
+            ]
+        )
+
+        for note in notes:
+            lines.append(f"  - {note}")
+
+        return "\n".join(lines) + "\n"
+
+
+    def send_email(host, port, mail_from, mail_to, subject, body):
+        message = EmailMessage()
+        message["From"] = mail_from
+        message["To"] = mail_to
+        message["Subject"] = subject
+        message.set_content(body)
+
+        with smtplib.SMTP(host=host, port=port, timeout=30) as smtp:
+            smtp.send_message(message)
+
+
+    def main():
+        namespace = env("REPORT_NAMESPACE", "wordpress")
+        pod_selector = env("REPORT_POD_SELECTOR", "app=wordpress,component=web")
+        container = env("REPORT_CONTAINER", "nginx")
+        time_zone_name = env("REPORT_TIMEZONE", "Europe/Prague")
+        smtp_host = env("SMTP_HOST", required=True)
+        smtp_port = int(env("SMTP_PORT", "25"))
+        mail_from = env("MAIL_FROM", required=True)
+        mail_to = env("MAIL_TO", required=True)
+        site_title = env("SITE_TITLE", "andreybondarenko.com")
+        site_hosts = {
+            host.strip().lower()
+            for host in env("SITE_HOSTS", "andreybondarenko.com,www.andreybondarenko.com").split(",")
+            if host.strip()
+        }
+
+        tz, start_local, end_local = get_time_window(time_zone_name)
+        start_utc = start_local.astimezone(ZoneInfo("UTC")).isoformat()
+        pods = list_pods(namespace, pod_selector)
+        if not pods:
+            raise SystemExit(f"No pods found for selector {pod_selector} in namespace {namespace}")
+
+        status_counts = Counter()
+        page_counts = Counter()
+        referrer_counts = Counter()
+        robot_counts = Counter()
+        country_counts = Counter()
+        unique_ips = set()
+        human_ips = set()
+        robot_ips = set()
+        authenticated_users = set()
+        notes = []
+        total_requests = 0
+        parse_failures = 0
+
+        for pod_name in pods:
+            output = fetch_logs(namespace, pod_name, container, start_utc)
+            for raw_line in output.splitlines():
+                entry = parse_line(raw_line)
+                if not entry:
+                    parse_failures += 1
+                    continue
+
+                timestamp = parse_timestamp(entry)
+                if not timestamp:
+                    parse_failures += 1
+                    continue
+
+                timestamp_local = timestamp.astimezone(tz)
+                if timestamp_local < start_local or timestamp_local >= end_local:
+                    continue
+
+                total_requests += 1
+                status_counts[str(entry.get("status", 0))] += 1
+
+                method = (entry.get("method") or "").upper()
+                path = canonical_path(entry.get("request_uri", "/"))
+                if is_page_request(method, path):
+                    page_counts[path] += 1
+
+                referrer = first_non_empty([entry.get("referer", "")])
+                if referrer and not is_internal_referrer(referrer, site_hosts):
+                    referrer_host = urlparse(referrer).netloc.lower()
+                    if referrer_host:
+                        referrer_counts[referrer_host] += 1
+
+                user_agent = entry.get("user_agent", "")
+                robot_name = classify_robot(user_agent)
+
+                client_ip = pick_client_ip(entry)
+                if client_ip:
+                    unique_ips.add(client_ip)
+                    if robot_name:
+                        robot_ips.add(client_ip)
+                    else:
+                        human_ips.add(client_ip)
+
+                if robot_name:
+                    robot_counts[robot_name] += 1
+
+                remote_user = first_non_empty([entry.get("remote_user", "")])
+                if remote_user:
+                    authenticated_users.add(remote_user)
+
+                country = (entry.get("cf_ipcountry") or "").strip().upper()
+                if country and country not in {"-", "XX", "T1"}:
+                    country_counts[country] += 1
+
+        if parse_failures:
+            notes.append(f"Skipped {parse_failures} log lines that did not match the expected formats.")
+        if not country_counts:
+            notes.append("No CF-IPCountry values were present, so country totals could not be derived.")
+
+        subject = f"[WordPress] Daily traffic report for {site_title} ({start_local.strftime('%Y-%m-%d')})"
+        body = render_report(
+            site_title=site_title,
+            start_local=start_local,
+            end_local=end_local,
+            pods=pods,
+            total_requests=total_requests,
+            status_counts=status_counts,
+            page_counts=page_counts,
+            referrer_counts=referrer_counts,
+            robot_counts=robot_counts,
+            country_counts=country_counts,
+            unique_ips=unique_ips,
+            human_ips=human_ips,
+            robot_ips=robot_ips,
+            authenticated_users=authenticated_users,
+            notes=notes,
+        )
+
+        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, body)
+        print(body)
+
+
+    if __name__ == "__main__":
+        try:
+            main()
+        except Exception as exc:
+            print(f"wordpress-daily-report failed: {exc}", file=sys.stderr)
+            raise

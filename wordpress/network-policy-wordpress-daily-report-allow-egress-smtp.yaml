@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: wordpress-daily-report-allow-egress-smtp
+  namespace: wordpress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: wordpress-daily-report
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 25

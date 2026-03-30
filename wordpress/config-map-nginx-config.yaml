@@ -13,15 +13,27 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 data:
   config: |
-    log_format blog '$http_x_forwarded_for - $remote_user $time_local "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent"';
+    log_format blog_json escape=json '{'
+                                 '"time_iso8601":"$time_iso8601",'
+                                 '"remote_addr":"$remote_addr",'
+                                 '"x_forwarded_for":"$http_x_forwarded_for",'
+                                 '"cf_connecting_ip":"$http_cf_connecting_ip",'
+                                 '"cf_ipcountry":"$http_cf_ipcountry",'
+                                 '"remote_user":"$remote_user",'
+                                 '"host":"$host",'
+                                 '"method":"$request_method",'
+                                 '"request_uri":"$request_uri",'
+                                 '"status":$status,'
+                                 '"body_bytes_sent":$body_bytes_sent,'
+                                 '"referer":"$http_referer",'
+                                 '"user_agent":"$http_user_agent"'
+                               '}';
     server {
       listen 8080;
       gzip on;
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
-      access_log /var/log/nginx/access.log blog;
+      access_log /var/log/nginx/access.log blog_json;
       root /code;
       client_max_body_size 250M;
       add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
