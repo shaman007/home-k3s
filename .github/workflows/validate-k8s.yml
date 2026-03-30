@@ -23,6 +23,11 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml
+
       - name: Install kubeconform
         env:
           KUBECONFORM_VERSION: v0.7.0
@@ -41,6 +46,10 @@ jobs:
           if [ "${manifest_count}" -gt 0 ]; then
             tr '\0' '\n' < manifest-files.txt
           fi
+
+      - name: Validate runtime contracts
+        run: |
+          python tools/ci/validate-runtime-contracts.py
 
       - name: Validate tracked manifests with kubeconform
         run: |

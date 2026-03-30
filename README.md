@@ -78,6 +78,7 @@ Observability and security:
 - `argocd-deploy/`: Argo CD post-install cluster manifests (ConfigMap and Ingress).
 - `<service>/`: Namespace-scoped manifests/charts for each service.
 - `DEPRECATED/`: Old manifests kept for reference.
+- `docs/upgrade-playbook.md`: Pre-merge runtime checklist for upgrades.
 - `k3s-config.yaml`: Baseline k3s server config used by this cluster.
 
 
