@@ -58,6 +58,12 @@ spec:
             items:
               - key: greylist
                 path: greylist.conf
+        - name: greylist-whitelist-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: greylist_whitelist_domains
+                path: greylist-whitelist-domains.inc
         - name: antivirus-cf
           configMap:
             name: rspamd-cf
@@ -163,6 +169,9 @@ spec:
             - name: greylist-cf
               mountPath: /etc/rspamd/local.d/greylist.conf
               subPath: greylist.conf
+            - name: greylist-whitelist-cf
+              mountPath: /etc/rspamd/local.d/greylist-whitelist-domains.inc
+              subPath: greylist-whitelist-domains.inc
             - name: neural-cf
               mountPath: /etc/rspamd/local.d/neural.conf
               subPath: neural.conf

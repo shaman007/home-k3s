@@ -30,11 +30,7 @@ data:
 
   greylist: |
     enabled = true;
-    # Search "example.com" and "mail.example.com" for "mx.out.mail.example.com":
-    whitelist_domains_url = [
-    "$LOCAL_CONFDIR/local.d/greylist-whitelist-domains.inc",
-    "$LOCAL_CONFDIR/local.d/maps.d/greylist-whitelist-domains.inc",
-    ];
+    whitelist_domains_url = "$LOCAL_CONFDIR/greylist-whitelist-domains.inc";
     expire = 365d; # 1 day by default
     timeout = 5min; # 5 minutes by default
     key_prefix = "rg"; # default hash name
@@ -46,6 +42,15 @@ data:
     ipv6_mask = 64; # Mask bits for ipv6
     servers = "redis.mail.svc.cluster.local:6379";
     write_servers = "redis.mail.svc.cluster.local:6379";
+  greylist_whitelist_domains: |
+    # Greylist-only whitelist. Keep this list intentionally small.
+    # Local mail domains managed by Postfix mydestination.
+    andreybondarenko.com
+    shaman007.com
+    # Trusted service domains.
+    github.com
+    githubstatus.com
+    cloudflare.com
   neural: |
     #servers = 127.0.0.1:6379; # Redis server to store learning data and ANN
     enabled = true
