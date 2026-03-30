@@ -41,7 +41,7 @@ spec:
             - name: UP_LOKI_DISABLE
               value: "false"
             - name: UP_LOKI_URI
-              value: "http://loki.monitoring.svc.cluster.local:3100"
+              value: "http://loki-gateway.loki.svc.cluster.local"
             - name: UP_LOKI_VERIFY_SSL
               value: "false"
           readinessProbe:
