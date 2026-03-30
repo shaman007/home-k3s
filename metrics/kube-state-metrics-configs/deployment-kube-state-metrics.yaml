@@ -46,8 +46,7 @@ spec:
             initialDelaySeconds: 5
             timeoutSeconds: 5
           readinessProbe:
-            httpGet:
-              path: /
+            tcpSocket:
               port: 8081
             initialDelaySeconds: 5
             timeoutSeconds: 5

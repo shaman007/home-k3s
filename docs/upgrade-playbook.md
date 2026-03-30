@@ -18,6 +18,8 @@ Use this playbook before merging Renovate or manual version bumps.
 - Confirm liveness and readiness use a cheap route meant for automation.
 - Prefer a dedicated `/health` style endpoint over heavy diagnostics or
   user-facing routes.
+- Do not probe `/` as a default. Root routes tend to drift when auth,
+  redirects, middleware, or frontend boot logic changes.
 - Do not probe `/metrics` unless upstream explicitly documents it as a health
   endpoint.
 - If the app is fronted by Nginx, verify the probe route still reaches the real
@@ -76,6 +78,7 @@ these runtime checks:
 CI now runs `tools/ci/validate-runtime-contracts.py` in addition to
 `kubeconform`. The validator is intentionally narrow and currently blocks:
 
+- HTTP probes against `/`
 - HTTP probes against `/metrics`
 - HTTP probes against `/wp-json/wp-site-health/v1`
 - deprecated node-exporter `--collector.filesystem.ignored-mount-points`

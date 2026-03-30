@@ -11,6 +11,7 @@ import yaml
 
 
 SUSPICIOUS_HTTP_PROBE_PATHS = {
+    "/": "root routes are brittle health checks; prefer a dedicated health endpoint or tcpSocket when you only need to verify the listener is up",
     "/metrics": "use tcpSocket for metrics-only endpoints unless the application documents /metrics as a supported health check",
     "/wp-json/wp-site-health/v1": "prefer a lightweight dedicated health endpoint instead of a heavyweight application diagnostic route",
 }
@@ -22,6 +23,12 @@ DEPRECATED_ARGS = {
 }
 
 WORKLOAD_KINDS = {"Deployment", "DaemonSet", "StatefulSet"}
+
+ALLOWED_HTTP_PROBE_PATHS = {
+    ("dawarich/deployment-dawarich.yaml", "dawarich-sidekiq", "readinessProbe", "/"): (
+        "temporary exception until the sidekiq container gets a workload-specific readiness signal"
+    ),
+}
 
 
 def repo_root() -> Path:
@@ -87,6 +94,11 @@ def check_http_probe_paths(path: Path, document_index: int, document: dict) -> l
             if not isinstance(http_get, dict):
                 continue
             probe_path = http_get.get("path")
+            allowed_reason = ALLOWED_HTTP_PROBE_PATHS.get(
+                (path.as_posix(), container_name, probe_name, probe_path)
+            )
+            if allowed_reason:
+                continue
             message = SUSPICIOUS_HTTP_PROBE_PATHS.get(probe_path)
             if message:
                 errors.append(

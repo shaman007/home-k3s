@@ -30,22 +30,19 @@ spec:
         ports:
         - containerPort: 3000
         startupProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 3000
           periodSeconds: 10
           timeoutSeconds: 2
           failureThreshold: 30
         readinessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 3000
           periodSeconds: 10
           timeoutSeconds: 2
           failureThreshold: 3
         livenessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 3000
           periodSeconds: 30
           timeoutSeconds: 2
