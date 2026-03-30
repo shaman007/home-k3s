@@ -33,9 +33,7 @@ spec:
                 i=0
                 while [ "$i" -lt 60 ]; do
                   if curl -fsS http://127.0.0.1:9201/_cluster/health >/dev/null 2>&1; then
-                    cat <<'EOF' >/tmp/photon-cluster-settings.json
-                    {"persistent":{"cluster.routing.allocation.node_initial_primaries_recoveries":"5"}}
-                    EOF
+                    echo 'eyJwZXJzaXN0ZW50Ijp7ImNsdXN0ZXIucm91dGluZy5hbGxvY2F0aW9uLm5vZGVfaW5pdGlhbF9wcmltYXJpZXNfcmVjb3ZlcmllcyI6IjUifX0=' | base64 -d >/tmp/photon-cluster-settings.json
                     curl -fsS -X PUT -H 'Content-Type: application/json' \
                       http://127.0.0.1:9201/_cluster/settings \
                       --data-binary @/tmp/photon-cluster-settings.json >/dev/null 2>&1 || true
