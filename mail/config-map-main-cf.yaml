@@ -13,6 +13,7 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 data:
   config: |
+    compatibility_level = 3.6
     biff = no
     append_dot_mydomain = no
     mydomain = andreybondarenko.com
