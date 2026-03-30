@@ -25,6 +25,12 @@ data:
       root /code;
       client_max_body_size 250M;
       add_header 'Content-Security-Policy' 'upgrade-insecure-requests';
+      location = /health {
+          include fastcgi_params;
+          fastcgi_pass 127.0.0.1:9000;
+          fastcgi_param SCRIPT_FILENAME /health;
+          access_log off;
+      }
       location / {
           try_files $uri $uri/ /index.php?$query_string;
       }

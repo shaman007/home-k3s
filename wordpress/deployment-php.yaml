@@ -113,7 +113,7 @@ spec:
               memory: "100Mi"
           livenessProbe:
             httpGet:
-              path: /wp-json/wp-site-health/v1
+              path: /health
               port: 8080
             initialDelaySeconds: 30
             periodSeconds: 10
@@ -121,7 +121,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /wp-json/wp-site-health/v1
+              path: /health
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
