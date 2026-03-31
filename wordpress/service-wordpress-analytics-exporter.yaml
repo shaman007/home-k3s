@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-analytics-exporter
+  namespace: wordpress
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: /metrics
+  labels:
+    app: wordpress-analytics-exporter
+    app.kubernetes.io/name: wordpress-analytics-exporter
+    app.kubernetes.io/instance: wordpress-analytics-exporter
+    app.kubernetes.io/part-of: wordpress
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  selector:
+    app: wordpress-analytics-exporter
+  ports:
+    - name: http
+      port: 9090
+      targetPort: metrics

@@ -60,6 +60,8 @@ spec:
                   value: wordpress-report@andreybondarenko.com
                 - name: MAIL_TO
                   value: me@andreybondarenko.com
+                - name: METRICS_CONFIGMAP_NAME
+                  value: wordpress-daily-report-metrics
               resources:
                 requests:
                   cpu: 100m

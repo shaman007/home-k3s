@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wordpress-daily-report-metrics
+  namespace: wordpress
+  labels:
+    app.kubernetes.io/name: wordpress-daily-report
+    app.kubernetes.io/instance: wordpress-daily-report
+    app.kubernetes.io/part-of: wordpress
+    app.kubernetes.io/managed-by: argoCD
+data:
+  metrics.prom: |
+    # HELP wordpress_analytics_report_timestamp_seconds Unix timestamp when the WordPress analytics report was generated.
+    # TYPE wordpress_analytics_report_timestamp_seconds gauge
+    wordpress_analytics_report_timestamp_seconds{site="andreybondarenko.com"} 0
+  report.txt: |
+    Waiting for the first successful wordpress-daily-report run.

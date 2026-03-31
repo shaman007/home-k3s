@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wordpress-analytics-exporter
+  namespace: wordpress
+  labels:
+    app: wordpress-analytics-exporter
+    app.kubernetes.io/name: wordpress-analytics-exporter
+    app.kubernetes.io/instance: wordpress-analytics-exporter
+    app.kubernetes.io/part-of: wordpress
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wordpress-analytics-exporter
+  template:
+    metadata:
+      labels:
+        app: wordpress-analytics-exporter
+        app.kubernetes.io/name: wordpress-analytics-exporter
+        app.kubernetes.io/instance: wordpress-analytics-exporter
+        app.kubernetes.io/part-of: wordpress
+    spec:
+      containers:
+        - name: nginx
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.7
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - containerPort: 9090
+              name: metrics
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+            - name: metrics-data
+              mountPath: /metrics-data
+              readOnly: true
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+      volumes:
+        - name: config
+          configMap:
+            name: wordpress-analytics-exporter
+        - name: metrics-data
+          configMap:
+            name: wordpress-daily-report-metrics
+        - name: cache
+          emptyDir:
+            sizeLimit: 32Mi
+        - name: run
+          emptyDir:
+            sizeLimit: 8Mi

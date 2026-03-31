@@ -19,6 +19,7 @@ data:
     import smtplib
     import subprocess
     import sys
+    import tempfile
     from collections import Counter
     from datetime import datetime, timedelta
     from email.message import EmailMessage
@@ -69,8 +70,14 @@ data:
         return value
 
 
-    def run_command(command):
-        result = subprocess.run(command, capture_output=True, text=True, check=False)
+    def run_command(command, input_text=None):
+        result = subprocess.run(
+            command,
+            input=input_text,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
         if result.returncode != 0:
             raise RuntimeError(
                 f"Command failed ({result.returncode}): {' '.join(command)}\n{result.stderr.strip()}"
@@ -234,6 +241,182 @@ data:
         return [f"  - {name}: {count}" for name, count in counter.most_common(limit)]
 
 
+    def prometheus_escape(value):
+        return (
+            str(value)
+            .replace("\\", "\\\\")
+            .replace("\n", "\\n")
+            .replace('"', '\\"')
+        )
+
+
+    def format_prometheus_labels(labels):
+        if not labels:
+            return ""
+        parts = [f'{name}="{prometheus_escape(value)}"' for name, value in sorted(labels.items())]
+        return "{" + ",".join(parts) + "}"
+
+
+    def append_gauge(lines, name, help_text, samples):
+        lines.append(f"# HELP {name} {help_text}")
+        lines.append(f"# TYPE {name} gauge")
+        for labels, value in samples:
+            lines.append(f"{name}{format_prometheus_labels(labels)} {value}")
+        lines.append("")
+
+
+    def render_metrics(
+        *,
+        site_title,
+        start_local,
+        end_local,
+        total_requests,
+        status_counts,
+        page_counts,
+        referrer_counts,
+        robot_counts,
+        country_counts,
+        unique_ips,
+        human_ips,
+        robot_ips,
+        authenticated_users,
+        parse_failures,
+    ):
+        base_labels = {"site": site_title}
+        lines = []
+
+        append_gauge(
+            lines,
+            "wordpress_analytics_report_timestamp_seconds",
+            "Unix timestamp when the WordPress analytics report was generated.",
+            [(base_labels, int(datetime.now(ZoneInfo("UTC")).timestamp()))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_window_start_timestamp_seconds",
+            "Unix timestamp for the start of the analyzed WordPress analytics window.",
+            [(base_labels, int(start_local.timestamp()))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_window_end_timestamp_seconds",
+            "Unix timestamp for the end of the analyzed WordPress analytics window.",
+            [(base_labels, int(end_local.timestamp()))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_requests_daily",
+            "Daily WordPress request count for the most recent completed reporting window.",
+            [(base_labels, total_requests)],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_unique_visitors_daily",
+            "Daily unique WordPress visitor IP count for the most recent completed reporting window.",
+            [(base_labels, len(unique_ips))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_unique_human_visitors_daily",
+            "Daily unique human WordPress visitor IP count for the most recent completed reporting window.",
+            [(base_labels, len(human_ips))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_unique_robot_visitors_daily",
+            "Daily unique robot WordPress visitor IP count for the most recent completed reporting window.",
+            [(base_labels, len(robot_ips))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_authenticated_users_daily",
+            "Daily authenticated WordPress user count for the most recent completed reporting window.",
+            [(base_labels, len(authenticated_users))],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_parse_failures_daily",
+            "Daily WordPress log line parse failures for the most recent completed reporting window.",
+            [(base_labels, parse_failures)],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_status_daily",
+            "Daily WordPress request totals grouped by HTTP status code.",
+            [
+                (base_labels | {"status": status}, count)
+                for status, count in sorted(status_counts.items(), key=lambda item: int(item[0]))
+            ],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_pages_daily",
+            "Daily WordPress page totals grouped by request path for the most recent completed reporting window.",
+            [
+                (base_labels | {"path": path}, count)
+                for path, count in page_counts.most_common(20)
+            ],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_referrers_daily",
+            "Daily WordPress referrer totals grouped by referrer host for the most recent completed reporting window.",
+            [
+                (base_labels | {"referrer_host": host}, count)
+                for host, count in referrer_counts.most_common(15)
+            ],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_robots_daily",
+            "Daily WordPress robot request totals grouped by robot family for the most recent completed reporting window.",
+            [
+                (base_labels | {"robot": robot}, count)
+                for robot, count in robot_counts.most_common(15)
+            ],
+        )
+        append_gauge(
+            lines,
+            "wordpress_analytics_countries_daily",
+            "Daily WordPress request totals grouped by country code for the most recent completed reporting window.",
+            [
+                (base_labels | {"country": country}, count)
+                for country, count in country_counts.most_common(15)
+            ],
+        )
+
+        return "\n".join(lines).strip() + "\n"
+
+
+    def publish_metrics_configmap(namespace, configmap_name, metrics_text, report_text):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            metrics_path = os.path.join(temp_dir, "metrics.prom")
+            report_path = os.path.join(temp_dir, "report.txt")
+
+            with open(metrics_path, "w", encoding="utf-8") as handle:
+                handle.write(metrics_text)
+
+            with open(report_path, "w", encoding="utf-8") as handle:
+                handle.write(report_text)
+
+            rendered = run_command(
+                [
+                    "kubectl",
+                    "create",
+                    "configmap",
+                    configmap_name,
+                    "-n",
+                    namespace,
+                    "--from-file=metrics.prom=" + metrics_path,
+                    "--from-file=report.txt=" + report_path,
+                    "--dry-run=client",
+                    "-o",
+                    "yaml",
+                ]
+            )
+            run_command(["kubectl", "apply", "-f", "-"], input_text=rendered)
+
+
     def render_report(
         *,
         site_title,
@@ -320,6 +503,7 @@ data:
         smtp_port = int(env("SMTP_PORT", "25"))
         mail_from = env("MAIL_FROM", required=True)
         mail_to = env("MAIL_TO", required=True)
+        metrics_configmap_name = env("METRICS_CONFIGMAP_NAME", "wordpress-daily-report-metrics")
         site_title = env("SITE_TITLE", "andreybondarenko.com")
         site_hosts = {
             host.strip().lower()
@@ -422,7 +606,24 @@ data:
             authenticated_users=authenticated_users,
             notes=notes,
         )
+        metrics = render_metrics(
+            site_title=site_title,
+            start_local=start_local,
+            end_local=end_local,
+            total_requests=total_requests,
+            status_counts=status_counts,
+            page_counts=page_counts,
+            referrer_counts=referrer_counts,
+            robot_counts=robot_counts,
+            country_counts=country_counts,
+            unique_ips=unique_ips,
+            human_ips=human_ips,
+            robot_ips=robot_ips,
+            authenticated_users=authenticated_users,
+            parse_failures=parse_failures,
+        )
 
+        publish_metrics_configmap(namespace, metrics_configmap_name, metrics, body)
         send_email(smtp_host, smtp_port, mail_from, mail_to, subject, body)
         print(body)
 

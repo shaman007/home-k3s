@@ -129,3 +129,5 @@ spec:
                   name: grafana-dashboard-cluster-load-new
               - configMap:
                   name: grafana-dashboard-vault-overview
+              - configMap:
+                  name: grafana-dashboard-wordpress-analytics
