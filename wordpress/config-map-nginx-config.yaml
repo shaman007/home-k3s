@@ -13,12 +13,19 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 data:
   config: |
+    map $http_geoip_country_code $country_code {
+      default $http_geoip_country_code;
+      "" $http_cf_ipcountry;
+    }
+
     log_format blog_json escape=json '{'
                                  '"time_iso8601":"$time_iso8601",'
                                  '"remote_addr":"$remote_addr",'
                                  '"x_forwarded_for":"$http_x_forwarded_for",'
                                  '"cf_connecting_ip":"$http_cf_connecting_ip",'
-                                 '"cf_ipcountry":"$http_cf_ipcountry",'
+                                 '"geoip_country":"$http_geoip_country",'
+                                 '"geoip_country_code":"$http_geoip_country_code",'
+                                 '"cf_ipcountry":"$country_code",'
                                  '"remote_user":"$remote_user",'
                                  '"host":"$host",'
                                  '"method":"$request_method",'

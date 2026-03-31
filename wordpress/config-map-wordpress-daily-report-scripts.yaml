@@ -472,7 +472,7 @@ data:
             [
                 "",
                 "Notes",
-                "  - Country is based on the Cloudflare CF-IPCountry header when present.",
+                "  - Country is based on the Traefik GeoIP country code header when present, with CF-IPCountry as a fallback.",
                 "  - Region is not available from the current WordPress log format.",
             ]
         )
@@ -579,14 +579,21 @@ data:
                 if remote_user:
                     authenticated_users.add(remote_user)
 
-                country = (entry.get("cf_ipcountry") or "").strip().upper()
+                country = first_non_empty(
+                    [
+                        entry.get("geoip_country_code", ""),
+                        entry.get("cf_ipcountry", ""),
+                    ]
+                ).strip().upper()
                 if country and country not in {"-", "XX", "T1"}:
                     country_counts[country] += 1
 
         if parse_failures:
             notes.append(f"Skipped {parse_failures} log lines that did not match the expected formats.")
         if not country_counts:
-            notes.append("No CF-IPCountry values were present, so country totals could not be derived.")
+            notes.append(
+                "No GeoIP-Country-Code or CF-IPCountry values were present, so country totals could not be derived."
+            )
 
         subject = f"[WordPress] Daily traffic report for {site_title} ({start_local.strftime('%Y-%m-%d')})"
         body = render_report(
