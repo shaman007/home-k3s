@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-external-access-daily-report-kubernetes-api
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: external-access-daily-report
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.209/32
+      ports:
+        - protocol: TCP
+          port: 6443

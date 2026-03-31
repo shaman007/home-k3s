@@ -1,0 +1,76 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: external-access-daily-report
+  namespace: monitoring
+  labels:
+    app: external-access-daily-report
+    app.kubernetes.io/name: external-access-daily-report
+    app.kubernetes.io/instance: external-access-daily-report
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "20 6 * * *"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: external-access-daily-report
+            app.kubernetes.io/name: external-access-daily-report
+            app.kubernetes.io/instance: external-access-daily-report
+            app.kubernetes.io/part-of: monitoring
+        spec:
+          enableServiceLinks: false
+          serviceAccountName: external-access-daily-report
+          restartPolicy: Never
+          containers:
+            - name: report
+              image: alpine:3.23
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -lc
+                - |
+                  set -eu
+                  apk add --no-cache ca-certificates python3 tzdata
+                  python3 /scripts/external-access-daily-report.py
+              env:
+                - name: REPORT_TIMEZONE
+                  value: Europe/Prague
+                - name: LOKI_BASE_URL
+                  value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
+                - name: KUBERNETES_API_URL
+                  value: https://kubernetes.default.svc
+                - name: PUBLIC_HOST_SUFFIXES
+                  value: andreybondarenko.com,shaman007.com
+                - name: HARBOR_HOST
+                  value: harbor.andreybondarenko.com
+                - name: SMTP_HOST
+                  value: andreybondarenko.com
+                - name: SMTP_PORT
+                  value: "25"
+                - name: MAIL_FROM
+                  value: external-access-report@andreybondarenko.com
+                - name: MAIL_TO
+                  value: me@andreybondarenko.com
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+          volumes:
+            - name: scripts
+              configMap:
+                name: external-access-daily-report-scripts
+                defaultMode: 0555

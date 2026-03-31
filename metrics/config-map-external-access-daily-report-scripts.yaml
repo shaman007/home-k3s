@@ -1,0 +1,551 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-access-daily-report-scripts
+  namespace: monitoring
+  labels:
+    app: external-access-daily-report
+    app.kubernetes.io/name: external-access-daily-report
+    app.kubernetes.io/instance: external-access-daily-report
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  external-access-daily-report.py: |
+    #!/usr/bin/env python3
+    import ipaddress
+    import json
+    import os
+    import re
+    import smtplib
+    import ssl
+    import sys
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+    from collections import Counter, defaultdict
+    from datetime import datetime, timedelta
+    from email.message import EmailMessage
+    from pathlib import Path
+    from urllib.parse import unquote, urlparse
+    from zoneinfo import ZoneInfo
+
+    SERVICE_ACCOUNT_DIR = Path("/var/run/secrets/kubernetes.io/serviceaccount")
+    SERVICE_ACCOUNT_TOKEN = SERVICE_ACCOUNT_DIR / "token"
+    SERVICE_ACCOUNT_CA = SERVICE_ACCOUNT_DIR / "ca.crt"
+
+    TRAEFIK_LOG_RE = re.compile(
+        r'^(?P<client_ip>\S+) - (?P<remote_user>\S+) '
+        r'\[(?P<time_local>[^\]]+)\] '
+        r'"(?P<method>[A-Z]+) (?P<path>\S+) (?P<protocol>[^"]+)" '
+        r'(?P<status>\d{3}) (?P<body_bytes_sent>\d+) '
+        r'"(?P<referer>[^"]*)" "(?P<user_agent>[^"]*)" '
+        r'(?P<request_id>\S+) "(?P<router>[^"]*)" '
+        r'"(?P<backend_url>[^"]*)" (?P<duration>\S+)$'
+    )
+    POSTFIX_CONNECT_RE = re.compile(
+        r"postfix/smtpd\[\d+\]: connect from [^\[]+\[(?P<ip>[^\]]+)\]"
+    )
+    POSTFIX_REJECT_RE = re.compile(
+        r"postfix/smtpd\[\d+\]: NOQUEUE: reject: .* from [^\[]+\[(?P<ip>[^\]]+)\]"
+    )
+    POSTFIX_AUTH_FAIL_RE = re.compile(
+        r"(?:authentication failed|SASL (?:LOGIN|PLAIN) authentication failed)",
+        re.IGNORECASE,
+    )
+    POSTFIX_STATUS_RE = re.compile(r"status=(?P<status>sent|deferred|bounced)")
+    DOVECOT_SUCCESS_RE = re.compile(
+        r"(?:imap|pop3|managesieve)-login: Login: user=<(?P<user>[^>]*)>.*rip=(?P<ip>[^, ]+)"
+    )
+    DOVECOT_FAILURE_RE = re.compile(
+        r"(?:Aborted login|Disconnected \(auth failed.*\)|auth failed).*rip=(?P<ip>[^, ]+)",
+        re.IGNORECASE,
+    )
+    HARBOR_PULL_RE = re.compile(
+        r"^/v2/(?P<repo>.+?)/(?P<kind>manifests|blobs)/(?P<ref>[^/?]+)"
+    )
+
+
+    def env(name, default=None, required=False):
+        value = os.environ.get(name, default)
+        if required and not value:
+            raise SystemExit(f"Missing required environment variable: {name}")
+        return value
+
+
+    def load_cluster_credentials():
+        token = SERVICE_ACCOUNT_TOKEN.read_text(encoding="utf-8").strip()
+        ssl_context = ssl.create_default_context(cafile=str(SERVICE_ACCOUNT_CA))
+        return token, ssl_context
+
+
+    def http_json(url, *, headers=None, ssl_context=None):
+        request = urllib.request.Request(url, headers=headers or {})
+        with urllib.request.urlopen(request, context=ssl_context, timeout=60) as response:
+            return json.load(response)
+
+
+    def kube_json(base_url, path, token, ssl_context):
+        url = base_url.rstrip("/") + path
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        }
+        return http_json(url, headers=headers, ssl_context=ssl_context)
+
+
+    def loki_query_iter(base_url, query, start_ns, end_ns, *, limit=5000):
+        next_start_ns = start_ns
+        while next_start_ns < end_ns:
+            params = urllib.parse.urlencode(
+                {
+                    "query": query,
+                    "start": str(next_start_ns),
+                    "end": str(end_ns),
+                    "limit": str(limit),
+                    "direction": "forward",
+                }
+            )
+            url = f"{base_url.rstrip('/')}/query_range?{params}"
+            payload = http_json(url)
+            streams = payload.get("data", {}).get("result", [])
+            batch = []
+            for stream in streams:
+                labels = stream.get("stream", {})
+                for timestamp_ns, line in stream.get("values", []):
+                    batch.append((int(timestamp_ns), line, labels))
+
+            if not batch:
+                break
+
+            batch.sort(key=lambda item: (item[0], item[1]))
+            for item in batch:
+                yield item
+
+            last_timestamp_ns = batch[-1][0]
+            if len(batch) < limit or last_timestamp_ns >= end_ns:
+                break
+
+            next_start_ns = last_timestamp_ns + 1
+
+
+    def get_time_window(time_zone_name):
+        tz = ZoneInfo(time_zone_name)
+        now = datetime.now(tz)
+        end_local = datetime(now.year, now.month, now.day, tzinfo=tz)
+        start_local = end_local - timedelta(days=1)
+        return tz, start_local, end_local
+
+
+    def is_public_host(host, suffixes):
+        host = host.lower().rstrip(".")
+        return any(host == suffix or host.endswith("." + suffix) for suffix in suffixes)
+
+
+    def fetch_public_hosts(base_url, token, ssl_context, suffixes):
+        payload = kube_json(base_url, "/apis/networking.k8s.io/v1/ingresses", token, ssl_context)
+        hosts = set()
+        for item in payload.get("items", []):
+            for rule in item.get("spec", {}).get("rules", []):
+                host = (rule.get("host") or "").strip().lower()
+                if host and is_public_host(host, suffixes):
+                    hosts.add(host)
+        return sorted(hosts)
+
+
+    def host_fragments(hosts):
+        items = []
+        for host in hosts:
+            fragment = host.replace(".", "-")
+            items.append((fragment, host))
+        return sorted(items, key=lambda item: len(item[0]), reverse=True)
+
+
+    def host_from_router(router_name, fragments):
+        router_name = router_name.lower()
+        for fragment, host in fragments:
+            if fragment in router_name:
+                return host
+        return ""
+
+
+    def strip_query(path):
+        parsed = urlparse(path)
+        return unquote(parsed.path or "/") or "/"
+
+
+    def normalize_ip(value):
+        candidate = value.strip().split("%", 1)[0]
+        try:
+            return str(ipaddress.ip_address(candidate))
+        except ValueError:
+            return ""
+
+
+    def is_external_ip(value):
+        normalized = normalize_ip(value)
+        if not normalized:
+            return False
+        candidate = ipaddress.ip_address(normalized)
+        return not any(
+            [
+                candidate.is_private,
+                candidate.is_loopback,
+                candidate.is_link_local,
+                candidate.is_multicast,
+                candidate.is_reserved,
+                candidate.is_unspecified,
+            ]
+        )
+
+
+    def format_counter(counter, limit=5, empty_text="  - none"):
+        if not counter:
+            return [empty_text]
+        return [f"  - {name}: {count}" for name, count in counter.most_common(limit)]
+
+
+    def summarize_top_paths(counter, limit=3):
+        if not counter:
+            return "none"
+        return ", ".join(f"{path} ({count})" for path, count in counter.most_common(limit))
+
+
+    def summarize_top_ips(counter, limit=5):
+        if not counter:
+            return "none"
+        return ", ".join(f"{ip} ({count})" for ip, count in counter.most_common(limit))
+
+
+    def collect_ingress_stats(loki_base_url, start_ns, end_ns, fragments, harbor_host):
+        stats = defaultdict(
+            lambda: {
+                "requests": 0,
+                "external_requests": 0,
+                "status_counts": Counter(),
+                "path_counts": Counter(),
+                "external_ip_counts": Counter(),
+                "external_ips": set(),
+            }
+        )
+        harbor_stats = {
+            "external_requests": 0,
+            "external_ips": set(),
+            "external_ip_counts": Counter(),
+            "manifest_requests": 0,
+            "blob_requests": 0,
+            "repo_counts": Counter(),
+            "status_counts": Counter(),
+            "pull_user_agents": Counter(),
+        }
+
+        query = '{namespace="traefik", app="traefik", container="traefik"}'
+        for _, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
+            match = TRAEFIK_LOG_RE.match(line.strip())
+            if not match:
+                continue
+
+            entry = match.groupdict()
+            host = host_from_router(entry["router"], fragments)
+            if not host:
+                continue
+
+            path = strip_query(entry["path"])
+            status = entry["status"]
+            client_ip = normalize_ip(entry["client_ip"])
+            external = is_external_ip(client_ip)
+
+            current = stats[host]
+            current["requests"] += 1
+            current["status_counts"][status] += 1
+            current["path_counts"][path] += 1
+
+            if external:
+                current["external_requests"] += 1
+                current["external_ip_counts"][client_ip] += 1
+                current["external_ips"].add(client_ip)
+
+            if host != harbor_host:
+                continue
+
+            if not external:
+                continue
+
+            harbor_stats["external_requests"] += 1
+            harbor_stats["external_ips"].add(client_ip)
+            harbor_stats["external_ip_counts"][client_ip] += 1
+            harbor_stats["status_counts"][status] += 1
+
+            if entry["method"] not in {"GET", "HEAD"}:
+                continue
+
+            if not status.startswith(("2", "3")):
+                continue
+
+            registry_match = HARBOR_PULL_RE.match(path)
+            if not registry_match:
+                continue
+
+            repo = registry_match.group("repo")
+            kind = registry_match.group("kind")
+            harbor_stats["repo_counts"][repo] += 1
+            user_agent = (entry.get("user_agent") or "").strip()
+            if user_agent and user_agent != "-":
+                harbor_stats["pull_user_agents"][user_agent] += 1
+            if kind == "manifests":
+                harbor_stats["manifest_requests"] += 1
+            elif kind == "blobs":
+                harbor_stats["blob_requests"] += 1
+
+        return stats, harbor_stats
+
+
+    def collect_postfix_stats(loki_base_url, start_ns, end_ns):
+        stats = {
+            "connections": 0,
+            "external_connections": 0,
+            "external_ip_counts": Counter(),
+            "auth_failures": 0,
+            "rejects": 0,
+            "reject_ip_counts": Counter(),
+            "delivery_status": Counter(),
+        }
+        query = '{namespace="mail", app="postfix"}'
+        for _, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
+            if "the Postfix mail system is running" in line:
+                continue
+
+            connect_match = POSTFIX_CONNECT_RE.search(line)
+            if connect_match:
+                stats["connections"] += 1
+                client_ip = normalize_ip(connect_match.group("ip"))
+                if is_external_ip(client_ip):
+                    stats["external_connections"] += 1
+                    stats["external_ip_counts"][client_ip] += 1
+
+            if POSTFIX_AUTH_FAIL_RE.search(line):
+                stats["auth_failures"] += 1
+
+            reject_match = POSTFIX_REJECT_RE.search(line)
+            if reject_match:
+                stats["rejects"] += 1
+                client_ip = normalize_ip(reject_match.group("ip"))
+                if client_ip:
+                    stats["reject_ip_counts"][client_ip] += 1
+
+            delivery_match = POSTFIX_STATUS_RE.search(line)
+            if delivery_match:
+                stats["delivery_status"][delivery_match.group("status")] += 1
+
+        return stats
+
+
+    def collect_dovecot_stats(loki_base_url, start_ns, end_ns):
+        stats = {
+            "successful_logins": 0,
+            "failed_logins": 0,
+            "users": Counter(),
+            "external_ip_counts": Counter(),
+            "failure_ip_counts": Counter(),
+        }
+        query = '{namespace="mail", app="dovecot"}'
+        for _, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
+            success_match = DOVECOT_SUCCESS_RE.search(line)
+            if success_match:
+                stats["successful_logins"] += 1
+                username = success_match.group("user").strip() or "unknown"
+                client_ip = normalize_ip(success_match.group("ip"))
+                stats["users"][username] += 1
+                if is_external_ip(client_ip):
+                    stats["external_ip_counts"][client_ip] += 1
+                continue
+
+            failure_match = DOVECOT_FAILURE_RE.search(line)
+            if failure_match:
+                stats["failed_logins"] += 1
+                client_ip = normalize_ip(failure_match.group("ip"))
+                if client_ip:
+                    stats["failure_ip_counts"][client_ip] += 1
+
+        return stats
+
+
+    def render_ingress_section(hosts, stats):
+        lines = ["Public HTTP ingress summary"]
+        for host in hosts:
+            current = stats.get(
+                host,
+                {
+                    "requests": 0,
+                    "external_requests": 0,
+                    "status_counts": Counter(),
+                    "path_counts": Counter(),
+                    "external_ip_counts": Counter(),
+                    "external_ips": set(),
+                },
+            )
+            errors_4xx = sum(
+                count for status, count in current["status_counts"].items() if status.startswith("4")
+            )
+            errors_5xx = sum(
+                count for status, count in current["status_counts"].items() if status.startswith("5")
+            )
+            lines.append(
+                "  - "
+                f"{host}: requests={current['requests']}, "
+                f"external_requests={current['external_requests']}, "
+                f"external_unique_ips={len(current['external_ips'])}, "
+                f"4xx={errors_4xx}, 5xx={errors_5xx}, "
+                f"top_paths={summarize_top_paths(current['path_counts'])}"
+            )
+        return lines
+
+
+    def render_harbor_section(host, stats):
+        lines = [
+            "",
+            f"Harbor external pull activity ({host})",
+            "  - Pull activity is approximated from successful public /v2/ manifest and blob fetches.",
+            f"  - External Harbor requests seen: {stats['external_requests']}",
+            f"  - External unique IPs: {len(stats['external_ips'])}",
+            f"  - Approx manifest fetches: {stats['manifest_requests']}",
+            f"  - Approx blob fetches: {stats['blob_requests']}",
+            f"  - Top external IPs: {summarize_top_ips(stats['external_ip_counts'])}",
+        ]
+
+        if stats["repo_counts"]:
+            lines.append("  - Top repositories:")
+            lines.extend(format_counter(stats["repo_counts"], limit=10))
+        else:
+            lines.append("  - Top repositories: none")
+
+        if stats["status_counts"]:
+            lines.append("  - Status totals:")
+            lines.extend(format_counter(stats["status_counts"], limit=10))
+        else:
+            lines.append("  - Status totals: none")
+
+        if stats["pull_user_agents"]:
+            lines.append("  - Top pull user agents:")
+            lines.extend(format_counter(stats["pull_user_agents"], limit=5))
+        else:
+            lines.append("  - Top pull user agents: none")
+
+        return lines
+
+
+    def render_mail_section(postfix_stats, dovecot_stats):
+        lines = [
+            "",
+            "Mail access summary",
+            f"  - Postfix connections: {postfix_stats['connections']}",
+            f"  - Postfix external connections: {postfix_stats['external_connections']}",
+            f"  - Postfix auth failures: {postfix_stats['auth_failures']}",
+            f"  - Postfix rejects: {postfix_stats['rejects']}",
+            f"  - Postfix top external IPs: {summarize_top_ips(postfix_stats['external_ip_counts'])}",
+        ]
+
+        if postfix_stats["delivery_status"]:
+            lines.append("  - Postfix delivery statuses:")
+            lines.extend(format_counter(postfix_stats["delivery_status"], limit=10))
+        else:
+            lines.append("  - Postfix delivery statuses: none")
+
+        lines.extend(
+            [
+                f"  - Dovecot successful logins: {dovecot_stats['successful_logins']}",
+                f"  - Dovecot failed logins: {dovecot_stats['failed_logins']}",
+                f"  - Dovecot top users: {summarize_top_ips(dovecot_stats['users'])}",
+                f"  - Dovecot top external IPs: {summarize_top_ips(dovecot_stats['external_ip_counts'])}",
+            ]
+        )
+        return lines
+
+
+    def send_email(host, port, mail_from, mail_to, subject, body):
+        message = EmailMessage()
+        message["From"] = mail_from
+        message["To"] = mail_to
+        message["Subject"] = subject
+        message.set_content(body)
+
+        with smtplib.SMTP(host=host, port=port, timeout=30) as smtp:
+            smtp.send_message(message)
+
+
+    def main():
+        time_zone_name = env("REPORT_TIMEZONE", "Europe/Prague")
+        loki_base_url = env(
+            "LOKI_BASE_URL",
+            "http://loki-gateway.loki.svc.cluster.local/loki/api/v1",
+        )
+        kubernetes_api_url = env("KUBERNETES_API_URL", "https://kubernetes.default.svc")
+        public_host_suffixes = [
+            value.strip().lower()
+            for value in env(
+                "PUBLIC_HOST_SUFFIXES",
+                "andreybondarenko.com,shaman007.com",
+            ).split(",")
+            if value.strip()
+        ]
+        harbor_host = env("HARBOR_HOST", "harbor.andreybondarenko.com").strip().lower()
+        smtp_host = env("SMTP_HOST", required=True)
+        smtp_port = int(env("SMTP_PORT", "25"))
+        mail_from = env("MAIL_FROM", required=True)
+        mail_to = env("MAIL_TO", required=True)
+
+        token, ssl_context = load_cluster_credentials()
+        _, start_local, end_local = get_time_window(time_zone_name)
+        start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
+        end_ns = int(end_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
+
+        hosts = fetch_public_hosts(
+            kubernetes_api_url,
+            token,
+            ssl_context,
+            public_host_suffixes,
+        )
+        if not hosts:
+            raise SystemExit("No public ingress hosts matched the configured suffixes.")
+
+        fragments = host_fragments(hosts)
+        ingress_stats, harbor_stats = collect_ingress_stats(
+            loki_base_url,
+            start_ns,
+            end_ns,
+            fragments,
+            harbor_host,
+        )
+        postfix_stats = collect_postfix_stats(loki_base_url, start_ns, end_ns)
+        dovecot_stats = collect_dovecot_stats(loki_base_url, start_ns, end_ns)
+
+        subject = (
+            "[Home k3s] External access report "
+            f"({start_local.strftime('%Y-%m-%d')})"
+        )
+        lines = [
+            "Home k3s external access daily report",
+            "",
+            f"Window: {start_local.strftime('%Y-%m-%d %H:%M:%S %Z')} "
+            f"to {end_local.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+            f"Public hosts discovered: {', '.join(hosts)}",
+            "",
+        ]
+        lines.extend(render_ingress_section(hosts, ingress_stats))
+        lines.extend(render_harbor_section(harbor_host, harbor_stats))
+        lines.extend(render_mail_section(postfix_stats, dovecot_stats))
+
+        report = "\n".join(lines) + "\n"
+        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, report)
+        print(report)
+
+
+    if __name__ == "__main__":
+        try:
+            main()
+        except urllib.error.HTTPError as exc:
+            print(f"external-access-daily-report failed: {exc.code} {exc.reason}", file=sys.stderr)
+            raise
+        except Exception as exc:
+            print(f"external-access-daily-report failed: {exc}", file=sys.stderr)
+            raise
