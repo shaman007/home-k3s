@@ -20,6 +20,7 @@ data:
     import smtplib
     import ssl
     import sys
+    import textwrap
     import urllib.error
     import urllib.parse
     import urllib.request
@@ -352,6 +353,51 @@ data:
         return ", ".join(f"{name} ({count})" for name, count in counter.most_common(limit))
 
 
+    def wrap_table_cell(value, width):
+        text = str(value or "")
+        wrapped_lines = []
+        for chunk in text.splitlines() or [""]:
+            lines = textwrap.wrap(
+                chunk,
+                width=width,
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+            wrapped_lines.extend(lines or [""])
+        return wrapped_lines or [""]
+
+
+    def render_text_table(headers, rows, max_widths=None):
+        if not rows:
+            return ["(none)"]
+
+        string_rows = [[str(cell) for cell in row] for row in rows]
+        widths = []
+        for index, header in enumerate(headers):
+            width = max([len(header)] + [len(row[index]) for row in string_rows])
+            if max_widths and index < len(max_widths):
+                width = min(width, max_widths[index])
+            widths.append(width)
+
+        border = "+-" + "-+-".join("-" * width for width in widths) + "-+"
+        lines = [border]
+        lines.append("| " + " | ".join(header.ljust(widths[index]) for index, header in enumerate(headers)) + " |")
+        lines.append(border)
+
+        for row in string_rows:
+            wrapped_cells = [wrap_table_cell(row[index], widths[index]) for index in range(len(headers))]
+            row_height = max(len(cell_lines) for cell_lines in wrapped_cells)
+            for line_index in range(row_height):
+                rendered_cells = []
+                for cell_index, cell_lines in enumerate(wrapped_cells):
+                    value = cell_lines[line_index] if line_index < len(cell_lines) else ""
+                    rendered_cells.append(value.ljust(widths[cell_index]))
+                lines.append("| " + " | ".join(rendered_cells) + " |")
+            lines.append(border)
+
+        return lines
+
+
     def prometheus_escape(value):
         return (
             str(value)
@@ -620,6 +666,16 @@ data:
         )
         append_gauge(
             lines,
+            "external_access_analytics_external_ip_requests_daily",
+            "Daily external request totals grouped by public host and client IP for the most recent completed reporting window.",
+            [
+                ({"host": host, "client_ip": client_ip}, count)
+                for host in hosts
+                for client_ip, count in ingress_stats.get(host, {}).get("external_ip_counts", Counter()).most_common(20)
+            ],
+        )
+        append_gauge(
+            lines,
             "external_access_analytics_countries_daily",
             "Daily external request totals grouped by public host and country code for the most recent completed reporting window.",
             [
@@ -770,7 +826,11 @@ data:
 
 
     def render_ingress_section(hosts, stats):
-        lines = ["Public HTTP ingress summary"]
+        lines = ["Public HTTP ingress summary", ""]
+        summary_rows = []
+        country_rows = []
+        ip_rows = []
+        path_rows = []
         for host in hosts:
             current = stats.get(
                 host,
@@ -790,15 +850,64 @@ data:
             errors_5xx = sum(
                 count for status, count in current["status_counts"].items() if status.startswith("5")
             )
-            lines.append(
-                "  - "
-                f"{host}: requests={current['requests']}, "
-                f"external_requests={current['external_requests']}, "
-                f"external_unique_ips={len(current['external_ips'])}, "
-                f"4xx={errors_4xx}, 5xx={errors_5xx}, "
-                f"top_paths={summarize_top_paths(current['path_counts'])}, "
-                f"top_countries={summarize_top_counts(current['country_counts'])}"
+            summary_rows.append(
+                [
+                    host,
+                    current["requests"],
+                    current["external_requests"],
+                    len(current["external_ips"]),
+                    errors_4xx,
+                    errors_5xx,
+                ]
             )
+            country_rows.append(
+                [
+                    host,
+                    summarize_top_counts(current["country_counts"], limit=10),
+                ]
+            )
+            ip_rows.append(
+                [
+                    host,
+                    summarize_top_ips(current["external_ip_counts"], limit=20),
+                ]
+            )
+            path_rows.append(
+                [
+                    host,
+                    summarize_top_counts(current["path_counts"], limit=5),
+                ]
+            )
+
+        lines.append("Overview")
+        lines.extend(
+            render_text_table(
+                ["Host", "Requests", "External", "Unique IPs", "4xx", "5xx"],
+                summary_rows,
+                max_widths=[32, 10, 10, 10, 6, 6],
+            )
+        )
+        lines.extend(
+            [
+                "",
+                "Top 10 countries by host",
+            ]
+        )
+        lines.extend(render_text_table(["Host", "Countries"], country_rows, max_widths=[32, 110]))
+        lines.extend(
+            [
+                "",
+                "Top 20 external IPs by host",
+            ]
+        )
+        lines.extend(render_text_table(["Host", "External IPs"], ip_rows, max_widths=[32, 120]))
+        lines.extend(
+            [
+                "",
+                "Top 5 paths by host",
+            ]
+        )
+        lines.extend(render_text_table(["Host", "Paths"], path_rows, max_widths=[32, 110]))
         return lines
 
 
