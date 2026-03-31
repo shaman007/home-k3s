@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-access-analytics-exporter
+  namespace: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: /metrics
+  labels:
+    app: external-access-analytics-exporter
+    app.kubernetes.io/name: external-access-analytics-exporter
+    app.kubernetes.io/instance: external-access-analytics-exporter
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  selector:
+    app: external-access-analytics-exporter
+  ports:
+    - name: http
+      port: 9090
+      targetPort: metrics

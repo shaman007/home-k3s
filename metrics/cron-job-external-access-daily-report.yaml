@@ -60,6 +60,8 @@ spec:
                   value: external-access-report@andreybondarenko.com
                 - name: MAIL_TO
                   value: me@andreybondarenko.com
+                - name: METRICS_CONFIGMAP_NAME
+                  value: external-access-daily-report-metrics
               resources:
                 requests:
                   cpu: 100m

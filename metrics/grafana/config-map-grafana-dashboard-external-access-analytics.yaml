@@ -1,0 +1,212 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-external-access-analytics
+  namespace: monitoring
+data:
+  external-access-analytics.json: |-
+    {
+      "annotations":{"list":[{"builtIn":1,"datasource":{"type":"grafana","uid":"-- Grafana --"},"enable":true,"hide":true,"iconColor":"rgba(0, 211, 255, 1)","name":"Annotations & Alerts","type":"dashboard"}]},
+      "editable":true,
+      "fiscalYearStartMonth":0,
+      "graphTooltip":1,
+      "id":null,
+      "links":[],
+      "panels":[
+        {
+          "id":1,
+          "type":"stat",
+          "title":"Daily Requests",
+          "gridPos":{"h":4,"w":5,"x":0,"y":0},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"external_access_analytics_requests_daily{host=\"$host\"}","range":true}],
+          "options":{"colorMode":"background","graphMode":"none","justifyMode":"auto","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}},
+          "fieldConfig":{"defaults":{"unit":"short","thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}},"overrides":[]}
+        },
+        {
+          "id":2,
+          "type":"stat",
+          "title":"External Requests",
+          "gridPos":{"h":4,"w":5,"x":5,"y":0},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"external_access_analytics_external_requests_daily{host=\"$host\"}","range":true}],
+          "options":{"colorMode":"background","graphMode":"none","justifyMode":"auto","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}},
+          "fieldConfig":{"defaults":{"unit":"short","thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}},"overrides":[]}
+        },
+        {
+          "id":3,
+          "type":"stat",
+          "title":"Unique External IPs",
+          "gridPos":{"h":4,"w":5,"x":10,"y":0},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"external_access_analytics_unique_external_ips_daily{host=\"$host\"}","range":true}],
+          "options":{"colorMode":"background","graphMode":"none","justifyMode":"auto","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}},
+          "fieldConfig":{"defaults":{"unit":"short","thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}},"overrides":[]}
+        },
+        {
+          "id":4,
+          "type":"stat",
+          "title":"Report Age",
+          "gridPos":{"h":4,"w":4,"x":15,"y":0},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"time() - external_access_analytics_report_timestamp_seconds{scope=\"cluster\"}","range":true}],
+          "options":{"colorMode":"background","graphMode":"none","justifyMode":"auto","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}},
+          "fieldConfig":{"defaults":{"unit":"s","thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"orange","value":86400},{"color":"red","value":172800}]}},"overrides":[]}
+        },
+        {
+          "id":5,
+          "type":"stat",
+          "title":"4xx / 5xx",
+          "gridPos":{"h":4,"w":5,"x":19,"y":0},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"sum(external_access_analytics_status_daily{host=\"$host\",status=~\"4..|5..\"})","range":true}],
+          "options":{"colorMode":"background","graphMode":"none","justifyMode":"auto","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false}},
+          "fieldConfig":{"defaults":{"unit":"short","thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"orange","value":1},{"color":"red","value":10}]}},"overrides":[]}
+        },
+        {
+          "id":6,
+          "type":"timeseries",
+          "title":"Daily Host Trend",
+          "gridPos":{"h":8,"w":12,"x":0,"y":4},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[
+            {"refId":"A","editorMode":"code","expr":"external_access_analytics_requests_daily{host=\"$host\"}","legendFormat":"requests","range":true},
+            {"refId":"B","editorMode":"code","expr":"external_access_analytics_external_requests_daily{host=\"$host\"}","legendFormat":"external","range":true},
+            {"refId":"C","editorMode":"code","expr":"external_access_analytics_unique_external_ips_daily{host=\"$host\"}","legendFormat":"unique IPs","range":true}
+          ],
+          "options":{"legend":{"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"multi","sort":"desc"}},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"},"custom":{"axisPlacement":"auto","drawStyle":"line","lineWidth":2,"pointSize":4,"showPoints":"auto","spanNulls":false}},"overrides":[]}
+        },
+        {
+          "id":7,
+          "type":"bargauge",
+          "title":"Status Codes",
+          "gridPos":{"h":8,"w":6,"x":12,"y":4},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"external_access_analytics_status_daily{host=\"$host\"}","legendFormat":"{{status}}","range":true}],
+          "options":{"displayMode":"basic","orientation":"horizontal","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"showUnfilled":false},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"}},"overrides":[]}
+        },
+        {
+          "id":8,
+          "type":"bargauge",
+          "title":"Top Paths",
+          "gridPos":{"h":8,"w":6,"x":18,"y":4},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"topk(10, external_access_analytics_paths_daily{host=\"$host\"})","legendFormat":"{{path}}","range":true}],
+          "options":{"displayMode":"basic","orientation":"horizontal","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"showUnfilled":false},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"}},"overrides":[]}
+        },
+        {
+          "id":9,
+          "type":"timeseries",
+          "title":"External Requests by Host",
+          "gridPos":{"h":8,"w":12,"x":0,"y":12},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"sum by (host) (external_access_analytics_external_requests_daily)","legendFormat":"{{host}}","range":true}],
+          "options":{"legend":{"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"multi","sort":"desc"}},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"},"custom":{"axisPlacement":"auto","drawStyle":"line","lineWidth":2,"pointSize":4,"showPoints":"auto","spanNulls":false}},"overrides":[]}
+        },
+        {
+          "id":10,
+          "type":"timeseries",
+          "title":"Harbor Pull Trend",
+          "gridPos":{"h":8,"w":12,"x":12,"y":12},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[
+            {"refId":"A","editorMode":"code","expr":"external_access_analytics_harbor_external_requests_daily{host=\"harbor.andreybondarenko.com\"}","legendFormat":"external requests","range":true},
+            {"refId":"B","editorMode":"code","expr":"external_access_analytics_harbor_manifest_fetches_daily{host=\"harbor.andreybondarenko.com\"}","legendFormat":"manifest fetches","range":true},
+            {"refId":"C","editorMode":"code","expr":"external_access_analytics_harbor_blob_fetches_daily{host=\"harbor.andreybondarenko.com\"}","legendFormat":"blob fetches","range":true}
+          ],
+          "options":{"legend":{"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"multi","sort":"desc"}},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"},"custom":{"axisPlacement":"auto","drawStyle":"line","lineWidth":2,"pointSize":4,"showPoints":"auto","spanNulls":false}},"overrides":[]}
+        },
+        {
+          "id":11,
+          "type":"bargauge",
+          "title":"Harbor Top Repositories",
+          "gridPos":{"h":8,"w":12,"x":0,"y":20},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"topk(10, external_access_analytics_harbor_repo_requests_daily{host=\"harbor.andreybondarenko.com\"})","legendFormat":"{{repo}}","range":true}],
+          "options":{"displayMode":"basic","orientation":"horizontal","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"showUnfilled":false},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"}},"overrides":[]}
+        },
+        {
+          "id":12,
+          "type":"timeseries",
+          "title":"Mail Access Trend",
+          "gridPos":{"h":8,"w":12,"x":12,"y":20},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[
+            {"refId":"A","editorMode":"code","expr":"external_access_analytics_mail_postfix_external_connections_daily{service=\"postfix\"}","legendFormat":"postfix external","range":true},
+            {"refId":"B","editorMode":"code","expr":"external_access_analytics_mail_postfix_auth_failures_daily{service=\"postfix\"}","legendFormat":"postfix auth failures","range":true},
+            {"refId":"C","editorMode":"code","expr":"external_access_analytics_mail_dovecot_successful_logins_daily{service=\"dovecot\"}","legendFormat":"dovecot success","range":true},
+            {"refId":"D","editorMode":"code","expr":"external_access_analytics_mail_dovecot_failed_logins_daily{service=\"dovecot\"}","legendFormat":"dovecot failed","range":true}
+          ],
+          "options":{"legend":{"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"multi","sort":"desc"}},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"},"custom":{"axisPlacement":"auto","drawStyle":"line","lineWidth":2,"pointSize":4,"showPoints":"auto","spanNulls":false}},"overrides":[]}
+        },
+        {
+          "id":13,
+          "type":"bargauge",
+          "title":"Postfix Delivery Statuses",
+          "gridPos":{"h":8,"w":12,"x":0,"y":28},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"external_access_analytics_mail_postfix_delivery_status_daily{service=\"postfix\"}","legendFormat":"{{status}}","range":true}],
+          "options":{"displayMode":"basic","orientation":"horizontal","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"showUnfilled":false},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"}},"overrides":[]}
+        },
+        {
+          "id":14,
+          "type":"bargauge",
+          "title":"Top Dovecot Users",
+          "gridPos":{"h":8,"w":12,"x":12,"y":28},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "targets":[{"refId":"A","editorMode":"code","expr":"topk(10, external_access_analytics_mail_dovecot_user_logins_daily{service=\"dovecot\"})","legendFormat":"{{user}}","range":true}],
+          "options":{"displayMode":"basic","orientation":"horizontal","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"showUnfilled":false},
+          "fieldConfig":{"defaults":{"unit":"short","color":{"mode":"palette-classic"}},"overrides":[]}
+        }
+      ],
+      "refresh":"30m",
+      "schemaVersion":42,
+      "tags":["external-access","analytics","harbor","mail"],
+      "templating":{"list":[
+        {
+          "current":{"selected":true,"text":"prometheus-thanos","value":"ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"},
+          "hide":0,
+          "includeAll":false,
+          "label":"Datasource",
+          "multi":false,
+          "name":"DS_PROMETHEUS",
+          "options":[],
+          "query":"prometheus",
+          "refresh":1,
+          "regex":"",
+          "skipUrlSync":false,
+          "type":"datasource"
+        },
+        {
+          "current":{"selected":true,"text":"andreybondarenko.com","value":"andreybondarenko.com"},
+          "datasource":{"type":"prometheus","uid":"${DS_PROMETHEUS}"},
+          "definition":"label_values(external_access_analytics_requests_daily, host)",
+          "hide":0,
+          "includeAll":false,
+          "label":"Host",
+          "multi":false,
+          "name":"host",
+          "options":[],
+          "query":{"query":"label_values(external_access_analytics_requests_daily, host)","refId":"StandardVariableQuery"},
+          "refresh":1,
+          "regex":"",
+          "sort":1,
+          "type":"query"
+        }
+      ]},
+      "time":{"from":"now-90d","to":"now"},
+      "timepicker":{},
+      "timezone":"",
+      "title":"External Access Analytics",
+      "uid":"external-access-analytics",
+      "version":1
+    }

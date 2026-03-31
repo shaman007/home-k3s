@@ -131,3 +131,5 @@ spec:
                   name: grafana-dashboard-vault-overview
               - configMap:
                   name: grafana-dashboard-wordpress-analytics
+              - configMap:
+                  name: grafana-dashboard-external-access-analytics

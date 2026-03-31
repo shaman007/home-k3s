@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-access-daily-report-metrics
+  namespace: monitoring
+  labels:
+    app: external-access-daily-report
+    app.kubernetes.io/name: external-access-daily-report
+    app.kubernetes.io/instance: external-access-daily-report
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  metrics.prom: |
+    # HELP external_access_analytics_report_timestamp_seconds Unix timestamp when the external access analytics report was generated.
+    # TYPE external_access_analytics_report_timestamp_seconds gauge
+    external_access_analytics_report_timestamp_seconds{scope="cluster"} 0
+  report.txt: |
+    Waiting for the first successful external-access-daily-report run.

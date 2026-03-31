@@ -79,19 +79,35 @@ data:
         return token, ssl_context
 
 
-    def http_json(url, *, headers=None, ssl_context=None):
-        request = urllib.request.Request(url, headers=headers or {})
+    def http_json(url, *, headers=None, ssl_context=None, method="GET", payload=None):
+        request_headers = dict(headers or {})
+        data = None
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            request_headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(
+            url,
+            headers=request_headers,
+            data=data,
+            method=method,
+        )
         with urllib.request.urlopen(request, context=ssl_context, timeout=60) as response:
             return json.load(response)
 
 
-    def kube_json(base_url, path, token, ssl_context):
+    def kube_json(base_url, path, token, ssl_context, method="GET", payload=None):
         url = base_url.rstrip("/") + path
         headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
         }
-        return http_json(url, headers=headers, ssl_context=ssl_context)
+        return http_json(
+            url,
+            headers=headers,
+            ssl_context=ssl_context,
+            method=method,
+            payload=payload,
+        )
 
 
     def loki_query_iter(base_url, query, start_ns, end_ns, *, limit=5000):
@@ -215,6 +231,30 @@ data:
         if not counter:
             return "none"
         return ", ".join(f"{ip} ({count})" for ip, count in counter.most_common(limit))
+
+
+    def prometheus_escape(value):
+        return (
+            str(value)
+            .replace("\\", "\\\\")
+            .replace("\n", "\\n")
+            .replace('"', '\\"')
+        )
+
+
+    def format_prometheus_labels(labels):
+        if not labels:
+            return ""
+        parts = [f'{name}="{prometheus_escape(value)}"' for name, value in sorted(labels.items())]
+        return "{" + ",".join(parts) + "}"
+
+
+    def append_gauge(lines, name, help_text, samples):
+        lines.append(f"# HELP {name} {help_text}")
+        lines.append(f"# TYPE {name} gauge")
+        for labels, value in samples:
+            lines.append(f"{name}{format_prometheus_labels(labels)} {value}")
+        lines.append("")
 
 
     def collect_ingress_stats(loki_base_url, start_ns, end_ns, fragments, harbor_host):
@@ -370,6 +410,228 @@ data:
         return stats
 
 
+    def render_metrics(
+        *,
+        report_timestamp,
+        start_local,
+        end_local,
+        hosts,
+        ingress_stats,
+        harbor_host,
+        harbor_stats,
+        postfix_stats,
+        dovecot_stats,
+    ):
+        lines = []
+        cluster_labels = {"scope": "cluster"}
+
+        append_gauge(
+            lines,
+            "external_access_analytics_report_timestamp_seconds",
+            "Unix timestamp when the external access analytics report was generated.",
+            [(cluster_labels, report_timestamp)],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_window_start_timestamp_seconds",
+            "Unix timestamp for the start of the analyzed external access reporting window.",
+            [(cluster_labels, int(start_local.timestamp()))],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_window_end_timestamp_seconds",
+            "Unix timestamp for the end of the analyzed external access reporting window.",
+            [(cluster_labels, int(end_local.timestamp()))],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_requests_daily",
+            "Daily total HTTP requests grouped by public host for the most recent completed reporting window.",
+            [
+                ({"host": host}, ingress_stats.get(host, {}).get("requests", 0))
+                for host in hosts
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_external_requests_daily",
+            "Daily externally sourced HTTP requests grouped by public host for the most recent completed reporting window.",
+            [
+                ({"host": host}, ingress_stats.get(host, {}).get("external_requests", 0))
+                for host in hosts
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_unique_external_ips_daily",
+            "Daily unique external client IP count grouped by public host for the most recent completed reporting window.",
+            [
+                ({"host": host}, len(ingress_stats.get(host, {}).get("external_ips", set())))
+                for host in hosts
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_status_daily",
+            "Daily HTTP request totals grouped by public host and status code for the most recent completed reporting window.",
+            [
+                ({"host": host, "status": status}, count)
+                for host in hosts
+                for status, count in sorted(
+                    ingress_stats.get(host, {}).get("status_counts", {}).items(),
+                    key=lambda item: int(item[0]),
+                )
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_paths_daily",
+            "Daily public-host request totals grouped by request path for the most recent completed reporting window.",
+            [
+                ({"host": host, "path": path}, count)
+                for host in hosts
+                for path, count in ingress_stats.get(host, {}).get("path_counts", Counter()).most_common(20)
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_harbor_external_requests_daily",
+            "Daily external Harbor HTTP requests for the most recent completed reporting window.",
+            [({"host": harbor_host}, harbor_stats["external_requests"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_harbor_manifest_fetches_daily",
+            "Daily Harbor external manifest fetches for the most recent completed reporting window.",
+            [({"host": harbor_host}, harbor_stats["manifest_requests"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_harbor_blob_fetches_daily",
+            "Daily Harbor external blob fetches for the most recent completed reporting window.",
+            [({"host": harbor_host}, harbor_stats["blob_requests"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_harbor_unique_external_ips_daily",
+            "Daily unique external client IP count for Harbor for the most recent completed reporting window.",
+            [({"host": harbor_host}, len(harbor_stats["external_ips"]))],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_harbor_repo_requests_daily",
+            "Daily Harbor external registry requests grouped by repository for the most recent completed reporting window.",
+            [
+                ({"host": harbor_host, "repo": repo}, count)
+                for repo, count in harbor_stats["repo_counts"].most_common(20)
+            ],
+        )
+
+        mail_labels = {"service": "postfix"}
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_postfix_connections_daily",
+            "Daily Postfix connection count for the most recent completed reporting window.",
+            [(mail_labels, postfix_stats["connections"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_postfix_external_connections_daily",
+            "Daily Postfix external connection count for the most recent completed reporting window.",
+            [(mail_labels, postfix_stats["external_connections"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_postfix_auth_failures_daily",
+            "Daily Postfix authentication failure count for the most recent completed reporting window.",
+            [(mail_labels, postfix_stats["auth_failures"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_postfix_rejects_daily",
+            "Daily Postfix rejection count for the most recent completed reporting window.",
+            [(mail_labels, postfix_stats["rejects"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_postfix_delivery_status_daily",
+            "Daily Postfix delivery outcomes grouped by status for the most recent completed reporting window.",
+            [
+                (mail_labels | {"status": status}, count)
+                for status, count in postfix_stats["delivery_status"].most_common()
+            ],
+        )
+
+        dovecot_labels = {"service": "dovecot"}
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_dovecot_successful_logins_daily",
+            "Daily Dovecot successful login count for the most recent completed reporting window.",
+            [(dovecot_labels, dovecot_stats["successful_logins"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_dovecot_failed_logins_daily",
+            "Daily Dovecot failed login count for the most recent completed reporting window.",
+            [(dovecot_labels, dovecot_stats["failed_logins"])],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_mail_dovecot_user_logins_daily",
+            "Daily Dovecot successful logins grouped by user for the most recent completed reporting window.",
+            [
+                (dovecot_labels | {"user": user}, count)
+                for user, count in dovecot_stats["users"].most_common(10)
+            ],
+        )
+
+        return "\n".join(lines).strip() + "\n"
+
+
+    def upsert_configmap(base_url, namespace, name, data, token, ssl_context):
+        object_path = f"/api/v1/namespaces/{namespace}/configmaps/{name}"
+        body = {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": name,
+                "namespace": namespace,
+                "labels": {
+                    "app": "external-access-daily-report",
+                    "app.kubernetes.io/name": "external-access-daily-report",
+                    "app.kubernetes.io/instance": "external-access-daily-report",
+                    "app.kubernetes.io/part-of": "monitoring",
+                    "app.kubernetes.io/managed-by": "argoCD",
+                },
+            },
+            "data": data,
+        }
+
+        try:
+            existing = kube_json(base_url, object_path, token, ssl_context)
+            body["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
+            return kube_json(
+                base_url,
+                object_path,
+                token,
+                ssl_context,
+                method="PUT",
+                payload=body,
+            )
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+
+        return kube_json(
+            base_url,
+            f"/api/v1/namespaces/{namespace}/configmaps",
+            token,
+            ssl_context,
+            method="POST",
+            payload=body,
+        )
+
+
     def render_ingress_section(hosts, stats):
         lines = ["Public HTTP ingress summary"]
         for host in hosts:
@@ -493,9 +755,14 @@ data:
         smtp_port = int(env("SMTP_PORT", "25"))
         mail_from = env("MAIL_FROM", required=True)
         mail_to = env("MAIL_TO", required=True)
+        metrics_configmap_name = env(
+            "METRICS_CONFIGMAP_NAME",
+            "external-access-daily-report-metrics",
+        )
 
         token, ssl_context = load_cluster_credentials()
         _, start_local, end_local = get_time_window(time_zone_name)
+        report_timestamp = int(datetime.now(ZoneInfo("UTC")).timestamp())
         start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
         end_ns = int(end_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
 
@@ -536,6 +803,28 @@ data:
         lines.extend(render_mail_section(postfix_stats, dovecot_stats))
 
         report = "\n".join(lines) + "\n"
+        metrics = render_metrics(
+            report_timestamp=report_timestamp,
+            start_local=start_local,
+            end_local=end_local,
+            hosts=hosts,
+            ingress_stats=ingress_stats,
+            harbor_host=harbor_host,
+            harbor_stats=harbor_stats,
+            postfix_stats=postfix_stats,
+            dovecot_stats=dovecot_stats,
+        )
+        upsert_configmap(
+            kubernetes_api_url,
+            "monitoring",
+            metrics_configmap_name,
+            {
+                "metrics.prom": metrics,
+                "report.txt": report,
+            },
+            token,
+            ssl_context,
+        )
         send_email(smtp_host, smtp_port, mail_from, mail_to, subject, report)
         print(report)
 
