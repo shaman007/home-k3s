@@ -10,9 +10,41 @@ deployment:
       volumeMounts:
        - name: data
          mountPath: /data
+    - name: download-geoip-country-db
+      image: docker.io/library/busybox:1.37.0
+      command:
+        - sh
+        - -ceu
+        - |
+          mkdir -p /geoip
+          db_archive='/tmp/dbip-country-lite.mmdb.gz'
+          db_url='https://download.db-ip.com/free/dbip-country-lite-latest.mmdb.gz'
+          if ! wget -q -O "$db_archive" "$db_url"; then
+            page="$(wget -qO- https://db-ip.com/db/download/ip-to-country-lite)"
+            db_url="$(printf '%s' "$page" | tr '\n' ' ' | sed -n 's/.*\(https:\/\/download\.db-ip\.com\/free\/dbip-country-lite-[0-9][0-9][0-9][0-9]-[0-9][0-9]\.mmdb\.gz\).*/\1/p')"
+            test -n "$db_url"
+            wget -q -O "$db_archive" "$db_url"
+          fi
+          gunzip -c "$db_archive" > /geoip/dbip-country-lite.mmdb
+          rm -f "$db_archive"
+          chmod 0644 /geoip/dbip-country-lite.mmdb
+      volumeMounts:
+       - name: geoip-country-db
+         mountPath: /geoip
+  additionalVolumes:
+    - name: geoip-country-db
+      emptyDir: {}
+additionalVolumeMounts:
+  - name: geoip-country-db
+    mountPath: /geoip
 podSecurityContext:
   fsGroup: 1000
   fsGroupChangePolicy: "OnRootMismatch"
+experimental:
+  plugins:
+    geoip2:
+      moduleName: github.com/thiagotognoli/traefikgeoip
+      version: v1.1.1
 # Expose via MetalLB using a dedicated LAN VIP for router port-forwards.
 service:
   type: LoadBalancer
@@ -25,12 +57,17 @@ ports:
   web:
     port: 80
     exposedPort: 80
-    # redirect HTTP -> HTTPS
+    http:
+      middlewares:
+        - traefik-geoip-country@kubernetescrd
   websecure:
     port: 443
     exposedPort: 443
-    tls:
-      enabled: true
+    http:
+      middlewares:
+        - traefik-geoip-country@kubernetescrd
+      tls:
+        enabled: true
   # TCP entrypoints for non-HTTP workloads.
   submission:
     port: 587
@@ -63,6 +100,86 @@ providers:
     enabled: true
   kubernetesIngress:
     enabled: true
+extraObjects:
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: geoip-country
+      namespace: traefik
+    spec:
+      plugin:
+        geoip2:
+          countryDbPath: /geoip/dbip-country-lite.mmdb
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: geoip-db-refresh
+      namespace: traefik
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      name: geoip-db-refresh
+      namespace: traefik
+    rules:
+      - apiGroups:
+          - apps
+        resourceNames:
+          - '{{ include "traefik.fullname" . }}'
+        resources:
+          - deployments
+        verbs:
+          - get
+          - patch
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: geoip-db-refresh
+      namespace: traefik
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: geoip-db-refresh
+    subjects:
+      - kind: ServiceAccount
+        name: geoip-db-refresh
+        namespace: traefik
+  - apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: geoip-db-refresh
+      namespace: traefik
+    spec:
+      schedule: "17 4 2 * *"
+      concurrencyPolicy: Forbid
+      successfulJobsHistoryLimit: 1
+      failedJobsHistoryLimit: 3
+      jobTemplate:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              serviceAccountName: geoip-db-refresh
+              restartPolicy: OnFailure
+              containers:
+                - name: restart-traefik
+                  image: docker.io/curlimages/curl:8.12.1
+                  imagePullPolicy: IfNotPresent
+                  command:
+                    - sh
+                    - -ceu
+                    - |
+                      api='https://kubernetes.default.svc/apis/apps/v1/namespaces/traefik/deployments/{{ include "traefik.fullname" . }}'
+                      token="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
+                      ca_cert='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+                      timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+                      payload="$(printf '{"spec":{"template":{"metadata":{"annotations":{"geoip.db-ip.com/restarted-at":"%s"}}}}}' "$timestamp")"
+                      curl --fail --silent --show-error \
+                        --cacert "$ca_cert" \
+                        -X PATCH \
+                        -H "Authorization: Bearer $token" \
+                        -H 'Content-Type: application/strategic-merge-patch+json' \
+                        --data "$payload" \
+                        "$api"
 
 # Simple dashboard (optionally exposed via IngressRoute)
 ingressRoute:
