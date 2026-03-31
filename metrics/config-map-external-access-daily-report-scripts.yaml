@@ -521,22 +521,22 @@ data:
           <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:20px;">
             <div style="flex:1 1 520px;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
               <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
-                <h2 style="margin:0;font-size:20px;">Harbor External Pull Activity</h2>
+                <h2 style="margin:0;font-size:20px;">Harbor Pull Activity</h2>
                 <div style="margin-top:6px;color:#6b7280;">{html.escape(harbor_host)}</div>
               </div>
               <div style="padding:20px 22px;">
                 <table style="width:100%;border-collapse:collapse;">
                   {render_html_stat_row('External requests', harbor_stats['external_requests'])}
                   {render_html_stat_row('Unique external IPs', len(harbor_stats['external_ips']))}
-                  {render_html_stat_row('Approx manifest fetches', harbor_stats['manifest_requests'])}
-                  {render_html_stat_row('Approx blob fetches', harbor_stats['blob_requests'])}
+                  {render_html_stat_row('Manifest fetches', harbor_stats['manifest_requests'])}
+                  {render_html_stat_row('Blob fetches', harbor_stats['blob_requests'])}
                 </table>
                 <div style="margin-top:16px;">
                   <div style="font-weight:700;margin-bottom:8px;">Top external IPs</div>
                   {render_html_counter_list(harbor_stats['external_ip_counts'], 20)}
                 </div>
                 <div style="margin-top:16px;">
-                  <div style="font-weight:700;margin-bottom:8px;">Top repositories</div>
+                  <div style="font-weight:700;margin-bottom:8px;">Top pulled repositories</div>
                   {render_html_counter_list(harbor_stats['repo_counts'], 10)}
                 </div>
                 <div style="margin-top:16px;">
@@ -665,14 +665,14 @@ data:
             if host != harbor_host:
                 continue
 
-            if not external:
-                continue
+            if external:
+                harbor_stats["external_requests"] += 1
+                harbor_stats["external_ips"].add(client_ip)
+                harbor_stats["external_ip_counts"][client_ip] += 1
+                harbor_stats["status_counts"][status] += 1
 
-            harbor_stats["external_requests"] += 1
-            harbor_stats["external_ips"].add(client_ip)
-            harbor_stats["external_ip_counts"][client_ip] += 1
-            harbor_stats["status_counts"][status] += 1
-
+            # Harbor pulls may arrive through a private upstream hop, so keep the
+            # pull accounting independent from the public-IP classification.
             if entry["method"] not in {"GET", "HEAD"}:
                 continue
 
@@ -881,13 +881,13 @@ data:
         append_gauge(
             lines,
             "external_access_analytics_harbor_manifest_fetches_daily",
-            "Daily Harbor external manifest fetches for the most recent completed reporting window.",
+            "Daily Harbor successful manifest fetches for the most recent completed reporting window.",
             [({"host": harbor_host}, harbor_stats["manifest_requests"])],
         )
         append_gauge(
             lines,
             "external_access_analytics_harbor_blob_fetches_daily",
-            "Daily Harbor external blob fetches for the most recent completed reporting window.",
+            "Daily Harbor successful blob fetches for the most recent completed reporting window.",
             [({"host": harbor_host}, harbor_stats["blob_requests"])],
         )
         append_gauge(
@@ -899,7 +899,7 @@ data:
         append_gauge(
             lines,
             "external_access_analytics_harbor_repo_requests_daily",
-            "Daily Harbor external registry requests grouped by repository for the most recent completed reporting window.",
+            "Daily Harbor successful registry requests grouped by repository for the most recent completed reporting window.",
             [
                 ({"host": harbor_host, "repo": repo}, count)
                 for repo, count in harbor_stats["repo_counts"].most_common(20)
@@ -1100,20 +1100,21 @@ data:
     def render_harbor_section(host, stats):
         lines = [
             "",
-            f"Harbor external pull activity ({host})",
-            "  - Pull activity is approximated from successful public /v2/ manifest and blob fetches.",
+            f"Harbor pull activity ({host})",
+            "  - Pull activity is approximated from successful Harbor /v2/ manifest and blob fetches.",
+            "  - Pull counts are tracked separately from external-IP classification because some pulls arrive through a private upstream hop.",
             f"  - External Harbor requests seen: {stats['external_requests']}",
             f"  - External unique IPs: {len(stats['external_ips'])}",
-            f"  - Approx manifest fetches: {stats['manifest_requests']}",
-            f"  - Approx blob fetches: {stats['blob_requests']}",
+            f"  - Manifest fetches: {stats['manifest_requests']}",
+            f"  - Blob fetches: {stats['blob_requests']}",
             f"  - Top external IPs: {summarize_top_ips(stats['external_ip_counts'])}",
         ]
 
         if stats["repo_counts"]:
-            lines.append("  - Top repositories:")
+            lines.append("  - Top pulled repositories:")
             lines.extend(format_counter(stats["repo_counts"], limit=10))
         else:
-            lines.append("  - Top repositories: none")
+            lines.append("  - Top pulled repositories: none")
 
         if stats["status_counts"]:
             lines.append("  - Status totals:")
