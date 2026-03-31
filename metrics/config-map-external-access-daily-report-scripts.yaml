@@ -13,6 +13,7 @@ metadata:
 data:
   external-access-daily-report.py: |
     #!/usr/bin/env python3
+    import html
     import ipaddress
     import json
     import os
@@ -396,6 +397,191 @@ data:
             lines.append(border)
 
         return lines
+
+
+    def render_html_counter_list(counter, limit, *, empty_text="none"):
+        if not counter:
+            return f'<span style="color:#6b7280;">{html.escape(empty_text)}</span>'
+
+        items = []
+        for name, count in counter.most_common(limit):
+            items.append(
+                "<li style=\"margin:0 0 4px 18px;\">"
+                f"<span style=\"font-family:ui-monospace, SFMono-Regular, Menlo, monospace;\">{html.escape(str(name))}</span> "
+                f"<strong>{count}</strong>"
+                "</li>"
+            )
+        return "<ol style=\"margin:0;padding:0;\">" + "".join(items) + "</ol>"
+
+
+    def render_html_stat_row(label, value):
+        return (
+            "<tr>"
+            f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#374151;\">{html.escape(label)}</td>"
+            f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;color:#111827;\">{html.escape(str(value))}</td>"
+            "</tr>"
+        )
+
+
+    def render_html_report(
+        *,
+        start_local,
+        end_local,
+        hosts,
+        ingress_stats,
+        harbor_host,
+        harbor_stats,
+        postfix_stats,
+        dovecot_stats,
+    ):
+        ingress_rows = []
+        for host in hosts:
+            current = ingress_stats.get(
+                host,
+                {
+                    "requests": 0,
+                    "external_requests": 0,
+                    "status_counts": Counter(),
+                    "path_counts": Counter(),
+                    "country_counts": Counter(),
+                    "external_ip_counts": Counter(),
+                    "external_ips": set(),
+                },
+            )
+            errors_4xx = sum(
+                count for status, count in current["status_counts"].items() if status.startswith("4")
+            )
+            errors_5xx = sum(
+                count for status, count in current["status_counts"].items() if status.startswith("5")
+            )
+            ingress_rows.append(
+                "<tr>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;font-weight:600;color:#111827;\">{html.escape(host)}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{current['requests']}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{current['external_requests']}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{len(current['external_ips'])}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{errors_4xx}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{errors_5xx}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;min-width:220px;\">{render_html_counter_list(current['country_counts'], 10)}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;min-width:280px;\">{render_html_counter_list(current['external_ip_counts'], 20)}</td>"
+                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;min-width:280px;\">{render_html_counter_list(current['path_counts'], 5)}</td>"
+                "</tr>"
+            )
+
+        harbor_status_rows = "".join(
+            render_html_stat_row(status, count) for status, count in harbor_stats["status_counts"].most_common(10)
+        ) or render_html_stat_row("none", 0)
+        postfix_status_rows = "".join(
+            render_html_stat_row(status, count)
+            for status, count in postfix_stats["delivery_status"].most_common(10)
+        ) or render_html_stat_row("none", 0)
+
+        return f"""\
+    <html>
+      <body style="margin:0;padding:0;background:#f3f4f6;color:#111827;font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+        <div style="max-width:1680px;margin:0 auto;padding:24px;">
+          <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#ffffff;border-radius:18px;padding:24px 28px;box-shadow:0 14px 40px rgba(15,23,42,0.18);">
+            <div style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.82;">Home k3s</div>
+            <h1 style="margin:8px 0 10px;font-size:30px;line-height:1.15;">External Access Daily Report</h1>
+            <div style="font-size:15px;opacity:0.92;">
+              Window: {html.escape(start_local.strftime('%Y-%m-%d %H:%M:%S %Z'))} to {html.escape(end_local.strftime('%Y-%m-%d %H:%M:%S %Z'))}
+            </div>
+            <div style="margin-top:10px;font-size:13px;opacity:0.82;">
+              Public hosts discovered: {html.escape(', '.join(hosts))}
+            </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;margin-top:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
+            <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
+              <h2 style="margin:0;font-size:20px;">Public HTTP Ingress Summary</h2>
+              <div style="margin-top:6px;color:#6b7280;">Requests, errors, top 10 countries, top 20 external IPs, and top 5 paths per host.</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;min-width:1500px;">
+                <thead>
+                  <tr style="background:#f8fafc;color:#374151;text-align:left;">
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Host</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">Requests</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">External</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">Unique IPs</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">4xx</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">5xx</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Top 10 Countries</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Top 20 External IPs</th>
+                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Top 5 Paths</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {''.join(ingress_rows)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:20px;">
+            <div style="flex:1 1 520px;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
+              <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
+                <h2 style="margin:0;font-size:20px;">Harbor External Pull Activity</h2>
+                <div style="margin-top:6px;color:#6b7280;">{html.escape(harbor_host)}</div>
+              </div>
+              <div style="padding:20px 22px;">
+                <table style="width:100%;border-collapse:collapse;">
+                  {render_html_stat_row('External requests', harbor_stats['external_requests'])}
+                  {render_html_stat_row('Unique external IPs', len(harbor_stats['external_ips']))}
+                  {render_html_stat_row('Approx manifest fetches', harbor_stats['manifest_requests'])}
+                  {render_html_stat_row('Approx blob fetches', harbor_stats['blob_requests'])}
+                </table>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Top external IPs</div>
+                  {render_html_counter_list(harbor_stats['external_ip_counts'], 20)}
+                </div>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Top repositories</div>
+                  {render_html_counter_list(harbor_stats['repo_counts'], 10)}
+                </div>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Status totals</div>
+                  <table style="width:100%;border-collapse:collapse;">{harbor_status_rows}</table>
+                </div>
+              </div>
+            </div>
+
+            <div style="flex:1 1 420px;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
+              <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
+                <h2 style="margin:0;font-size:20px;">Mail Access Summary</h2>
+              </div>
+              <div style="padding:20px 22px;">
+                <table style="width:100%;border-collapse:collapse;">
+                  {render_html_stat_row('Postfix connections', postfix_stats['connections'])}
+                  {render_html_stat_row('Postfix external connections', postfix_stats['external_connections'])}
+                  {render_html_stat_row('Postfix auth failures', postfix_stats['auth_failures'])}
+                  {render_html_stat_row('Postfix rejects', postfix_stats['rejects'])}
+                  {render_html_stat_row('Dovecot successful logins', dovecot_stats['successful_logins'])}
+                  {render_html_stat_row('Dovecot failed logins', dovecot_stats['failed_logins'])}
+                </table>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Postfix top external IPs</div>
+                  {render_html_counter_list(postfix_stats['external_ip_counts'], 20)}
+                </div>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Postfix delivery statuses</div>
+                  <table style="width:100%;border-collapse:collapse;">{postfix_status_rows}</table>
+                </div>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Dovecot top users</div>
+                  {render_html_counter_list(dovecot_stats['users'], 10)}
+                </div>
+                <div style="margin-top:16px;">
+                  <div style="font-weight:700;margin-bottom:8px;">Dovecot top external IPs</div>
+                  {render_html_counter_list(dovecot_stats['external_ip_counts'], 20)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+    """
 
 
     def prometheus_escape(value):
@@ -972,12 +1158,13 @@ data:
         return lines
 
 
-    def send_email(host, port, mail_from, mail_to, subject, body):
+    def send_email(host, port, mail_from, mail_to, subject, body, html_body):
         message = EmailMessage()
         message["From"] = mail_from
         message["To"] = mail_to
         message["Subject"] = subject
         message.set_content(body)
+        message.add_alternative(html_body, subtype="html")
 
         with smtplib.SMTP(host=host, port=port, timeout=30) as smtp:
             smtp.send_message(message)
@@ -1052,6 +1239,16 @@ data:
         lines.extend(render_mail_section(postfix_stats, dovecot_stats))
 
         report = "\n".join(lines) + "\n"
+        html_report = render_html_report(
+            start_local=start_local,
+            end_local=end_local,
+            hosts=hosts,
+            ingress_stats=ingress_stats,
+            harbor_host=harbor_host,
+            harbor_stats=harbor_stats,
+            postfix_stats=postfix_stats,
+            dovecot_stats=dovecot_stats,
+        )
         metrics = render_metrics(
             report_timestamp=report_timestamp,
             start_local=start_local,
@@ -1074,7 +1271,7 @@ data:
             token,
             ssl_context,
         )
-        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, report)
+        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, report, html_report)
         print(report)
 
 
