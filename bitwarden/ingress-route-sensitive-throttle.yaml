@@ -1,0 +1,37 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sensitive-path-throttle
+  namespace: bitwarden
+spec:
+  rateLimit:
+    average: 30
+    burst: 15
+    period: 1m
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sensitive-path-throttle
+  namespace: bitwarden
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      priority: 200
+      match: >-
+        Host(`bitwarden.andreybondarenko.com`) &&
+        PathPrefix(`/identity/connect/`) &&
+        !ClientIP(`192.168.1.0/24`) &&
+        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+      middlewares:
+        - name: sensitive-path-throttle
+        - name: hsts
+      services:
+        - kind: Service
+          name: bitwarden
+          port: 80
+  tls:
+    certResolver: letsencrypt

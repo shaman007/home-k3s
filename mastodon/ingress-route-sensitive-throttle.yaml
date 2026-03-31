@@ -1,0 +1,37 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sensitive-path-throttle
+  namespace: mastodon
+spec:
+  rateLimit:
+    average: 30
+    burst: 15
+    period: 1m
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sensitive-path-throttle
+  namespace: mastodon
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      priority: 200
+      match: >-
+        Host(`mastodon.andreybondarenko.com`) &&
+        (PathPrefix(`/auth/sign_in`) || PathPrefix(`/auth/sign_up`)) &&
+        !ClientIP(`192.168.1.0/24`) &&
+        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+      middlewares:
+        - name: sensitive-path-throttle
+        - name: hsts
+      services:
+        - kind: Service
+          name: mastodon-web
+          port: 3000
+  tls:
+    certResolver: letsencrypt
