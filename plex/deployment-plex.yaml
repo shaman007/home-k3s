@@ -53,6 +53,10 @@ spec:
               mountPath: /data
             - name: plex-conf-lh2
               mountPath: /config
+            - name: plex-custom-init
+              mountPath: /custom-cont-init.d/10-disable-scheduled-library-updates.sh
+              subPath: 10-disable-scheduled-library-updates.sh
+              readOnly: true
             - name: dev-dri
               mountPath: /dev/dri
               readOnly: false
@@ -97,6 +101,10 @@ spec:
         - name: plex-lib
           persistentVolumeClaim:
             claimName: plex-lib
+        - name: plex-custom-init
+          configMap:
+            name: plex-custom-init
+            defaultMode: 0755
         - name: dev-dri
           hostPath:
             path: /dev/dri

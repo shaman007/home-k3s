@@ -33,12 +33,14 @@ spec:
             - name: data
               mountPath: /app/data
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthcheck
               port: 3000
             initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthcheck
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5

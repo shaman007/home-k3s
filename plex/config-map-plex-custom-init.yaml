@@ -1,0 +1,49 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plex-custom-init
+  namespace: plex
+data:
+  10-disable-scheduled-library-updates.sh: |
+    #!/usr/bin/with-contenv bash
+    set -euo pipefail
+
+    prefs="/config/Library/Application Support/Plex Media Server/Preferences.xml"
+
+    if [[ ! -f "${prefs}" ]]; then
+      echo "[plex-preferences] Preferences.xml not present yet, skipping."
+      exit 0
+    fi
+
+    tmp="$(mktemp)"
+    cp "${prefs}" "${tmp}"
+
+    if grep -q 'ScheduledLibraryUpdatesEnabled="' "${tmp}"; then
+      sed -i 's/ScheduledLibraryUpdatesEnabled="[^"]*"/ScheduledLibraryUpdatesEnabled="0"/' "${tmp}"
+    else
+      sed -i 's#/># ScheduledLibraryUpdatesEnabled="0"/>#' "${tmp}"
+    fi
+
+    if grep -q 'FSEventLibraryUpdatesEnabled="' "${tmp}"; then
+      sed -i 's/FSEventLibraryUpdatesEnabled="[^"]*"/FSEventLibraryUpdatesEnabled="1"/' "${tmp}"
+    else
+      sed -i 's#/># FSEventLibraryUpdatesEnabled="1"/>#' "${tmp}"
+    fi
+
+    if grep -q 'FSEventLibraryPartialScanEnabled="' "${tmp}"; then
+      sed -i 's/FSEventLibraryPartialScanEnabled="[^"]*"/FSEventLibraryPartialScanEnabled="1"/' "${tmp}"
+    else
+      sed -i 's#/># FSEventLibraryPartialScanEnabled="1"/>#' "${tmp}"
+    fi
+
+    if cmp -s "${tmp}" "${prefs}"; then
+      echo "[plex-preferences] Library scan preferences already set."
+      rm -f "${tmp}"
+      exit 0
+    fi
+
+    cat "${tmp}" > "${prefs}"
+    rm -f "${tmp}"
+
+    echo "[plex-preferences] Disabled scheduled library polling and kept filesystem event scans enabled."
