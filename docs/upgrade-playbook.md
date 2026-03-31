@@ -50,6 +50,10 @@ Use this playbook before merging Renovate or manual version bumps.
   secret generation.
 - `ExternalSecret` resources should always define `spec.target.name` and
   `spec.target.creationPolicy`.
+- Keep `ExternalSecret.spec.refreshInterval` at `15m` unless you are
+  intentionally debugging a short-lived issue.
+- Set `SecretStore.spec.refreshInterval` to `900` seconds so store validation
+  stays aligned with the 15-minute cadence.
 - If a secret key is consumed by another app, make the mapping explicit in the
   `ExternalSecret` template or `data` block rather than relying on inherited
   upstream key names.
@@ -83,6 +87,8 @@ CI now runs `tools/ci/validate-runtime-contracts.py` in addition to
 - HTTP probes against `/wp-json/wp-site-health/v1`
 - deprecated node-exporter `--collector.filesystem.ignored-mount-points`
 - `ExternalSecret` manifests without explicit target name and creation policy
+- `ExternalSecret` manifests without `spec.refreshInterval: 15m`
+- `SecretStore` manifests without `spec.refreshInterval: 900`
 
 When a new regression pattern shows up more than once, add it there instead of
 keeping the fix as tribal knowledge.

@@ -30,6 +30,9 @@ ALLOWED_HTTP_PROBE_PATHS = {
     ),
 }
 
+EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL = "15m"
+EXPECTED_SECRET_STORE_REFRESH_INTERVAL = 900
+
 
 def repo_root() -> Path:
     return Path(
@@ -147,6 +150,31 @@ def check_external_secret_targets(path: Path, document_index: int, document: dic
     return errors
 
 
+def check_secret_refresh_intervals(path: Path, document_index: int, document: dict) -> list[str]:
+    errors: list[str] = []
+    kind = document.get("kind")
+    spec = document.get("spec", {})
+    refresh_interval = spec.get("refreshInterval")
+
+    if kind == "ExternalSecret":
+        if refresh_interval != EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL:
+            errors.append(
+                f"{path}: document {document_index}, ExternalSecret should set spec.refreshInterval to {EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL!r} instead of the debug cadence."
+            )
+        return errors
+
+    if kind in {"SecretStore", "ClusterSecretStore"}:
+        if refresh_interval not in {
+            EXPECTED_SECRET_STORE_REFRESH_INTERVAL,
+            str(EXPECTED_SECRET_STORE_REFRESH_INTERVAL),
+        }:
+            errors.append(
+                f"{path}: document {document_index}, {kind} should set spec.refreshInterval to {EXPECTED_SECRET_STORE_REFRESH_INTERVAL} seconds (15 minutes)."
+            )
+
+    return errors
+
+
 def main() -> int:
     root = repo_root()
     errors: list[str] = []
@@ -157,6 +185,9 @@ def main() -> int:
             errors.extend(check_deprecated_args(path.relative_to(root), document_index, document))
             errors.extend(
                 check_external_secret_targets(path.relative_to(root), document_index, document)
+            )
+            errors.extend(
+                check_secret_refresh_intervals(path.relative_to(root), document_index, document)
             )
 
     if errors:
