@@ -190,12 +190,125 @@ data:
         return unquote(parsed.path or "/") or "/"
 
 
+    def first_non_empty(values):
+        for value in values:
+            if value is None:
+                continue
+            value = str(value).strip()
+            if value and value not in {"-", "unknown", "null"}:
+                return value
+        return ""
+
+
     def normalize_ip(value):
         candidate = value.strip().split("%", 1)[0]
+        if candidate.startswith("[") and "]" in candidate:
+            candidate = candidate[1 : candidate.index("]")]
+        elif candidate.count(":") == 1 and "." in candidate:
+            candidate = candidate.rsplit(":", 1)[0]
         try:
             return str(ipaddress.ip_address(candidate))
         except ValueError:
             return ""
+
+
+    def normalize_country_code(value):
+        country = first_non_empty([value]).upper()
+        if country in {"", "-", "XX", "T1"}:
+            return ""
+        return country
+
+
+    def extract_traefik_request_header(entry, header_name):
+        target = header_name.lower()
+        request_headers = entry.get("RequestHeaders")
+        if isinstance(request_headers, dict):
+            for key, value in request_headers.items():
+                if str(key).lower() == target:
+                    return first_non_empty([value])
+
+        for key, value in entry.items():
+            if not isinstance(key, str):
+                continue
+            if not key.lower().startswith("request_"):
+                continue
+            if key[8:].lower() == target:
+                return first_non_empty([value])
+
+        return ""
+
+
+    def parse_traefik_line(line):
+        line = line.strip()
+        if not line:
+            return None
+
+        if line.startswith("{"):
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                payload = None
+
+            if isinstance(payload, dict):
+                request_host = first_non_empty(
+                    [
+                        payload.get("RequestHost", ""),
+                        extract_traefik_request_header(payload, "Host"),
+                    ]
+                ).lower()
+                path = strip_query(
+                    first_non_empty(
+                        [
+                            payload.get("RequestPath", ""),
+                            payload.get("RequestURI", ""),
+                            payload.get("path", ""),
+                            "/",
+                        ]
+                    )
+                )
+                return {
+                    "client_ip": first_non_empty(
+                        [
+                            payload.get("ClientHost", ""),
+                            payload.get("ClientAddr", ""),
+                        ]
+                    ),
+                    "path": path,
+                    "status": str(
+                        first_non_empty(
+                            [
+                                payload.get("DownstreamStatus", ""),
+                                payload.get("OriginStatus", ""),
+                                payload.get("status", ""),
+                            ]
+                        )
+                        or "0"
+                    ),
+                    "router": first_non_empty(
+                        [
+                            payload.get("RouterName", ""),
+                            payload.get("router", ""),
+                        ]
+                    ),
+                    "request_host": request_host,
+                    "country_code": normalize_country_code(
+                        first_non_empty(
+                            [
+                                extract_traefik_request_header(payload, "GeoIP-Country-Code"),
+                                extract_traefik_request_header(payload, "CF-IPCountry"),
+                            ]
+                        )
+                    ),
+                }
+
+        match = TRAEFIK_LOG_RE.match(line)
+        if not match:
+            return None
+
+        payload = match.groupdict()
+        payload["request_host"] = ""
+        payload["country_code"] = ""
+        return payload
 
 
     def is_external_ip(value):
@@ -233,6 +346,12 @@ data:
         return ", ".join(f"{ip} ({count})" for ip, count in counter.most_common(limit))
 
 
+    def summarize_top_counts(counter, limit=5):
+        if not counter:
+            return "none"
+        return ", ".join(f"{name} ({count})" for name, count in counter.most_common(limit))
+
+
     def prometheus_escape(value):
         return (
             str(value)
@@ -257,13 +376,15 @@ data:
         lines.append("")
 
 
-    def collect_ingress_stats(loki_base_url, start_ns, end_ns, fragments, harbor_host):
+    def collect_ingress_stats(loki_base_url, start_ns, end_ns, hosts, fragments, harbor_host):
+        host_set = set(hosts)
         stats = defaultdict(
             lambda: {
                 "requests": 0,
                 "external_requests": 0,
                 "status_counts": Counter(),
                 "path_counts": Counter(),
+                "country_counts": Counter(),
                 "external_ip_counts": Counter(),
                 "external_ips": set(),
             }
@@ -281,12 +402,13 @@ data:
 
         query = '{namespace="traefik", app="traefik", container="traefik"}'
         for _, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
-            match = TRAEFIK_LOG_RE.match(line.strip())
-            if not match:
+            entry = parse_traefik_line(line)
+            if not entry:
                 continue
 
-            entry = match.groupdict()
-            host = host_from_router(entry["router"], fragments)
+            host = (entry.get("request_host") or "").strip().lower()
+            if host not in host_set:
+                host = host_from_router(entry["router"], fragments)
             if not host:
                 continue
 
@@ -304,6 +426,9 @@ data:
                 current["external_requests"] += 1
                 current["external_ip_counts"][client_ip] += 1
                 current["external_ips"].add(client_ip)
+                country_code = normalize_country_code(entry.get("country_code", ""))
+                if country_code:
+                    current["country_counts"][country_code] += 1
 
             if host != harbor_host:
                 continue
@@ -495,6 +620,18 @@ data:
         )
         append_gauge(
             lines,
+            "external_access_analytics_countries_daily",
+            "Daily external request totals grouped by public host and country code for the most recent completed reporting window.",
+            [
+                ({"host": host, "country": country}, count)
+                for host in hosts
+                for country, count in sorted(
+                    ingress_stats.get(host, {}).get("country_counts", Counter()).items()
+                )
+            ],
+        )
+        append_gauge(
+            lines,
             "external_access_analytics_harbor_external_requests_daily",
             "Daily external Harbor HTTP requests for the most recent completed reporting window.",
             [({"host": harbor_host}, harbor_stats["external_requests"])],
@@ -642,6 +779,7 @@ data:
                     "external_requests": 0,
                     "status_counts": Counter(),
                     "path_counts": Counter(),
+                    "country_counts": Counter(),
                     "external_ip_counts": Counter(),
                     "external_ips": set(),
                 },
@@ -658,7 +796,8 @@ data:
                 f"external_requests={current['external_requests']}, "
                 f"external_unique_ips={len(current['external_ips'])}, "
                 f"4xx={errors_4xx}, 5xx={errors_5xx}, "
-                f"top_paths={summarize_top_paths(current['path_counts'])}"
+                f"top_paths={summarize_top_paths(current['path_counts'])}, "
+                f"top_countries={summarize_top_counts(current['country_counts'])}"
             )
         return lines
 
@@ -780,6 +919,7 @@ data:
             loki_base_url,
             start_ns,
             end_ns,
+            hosts,
             fragments,
             harbor_host,
         )

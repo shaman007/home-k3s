@@ -18,9 +18,26 @@ data:
       "" "";
       default "immutable";
     }
-    log_format cloud '$http_x_forwarded_for - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent"';
+    map $http_geoip_country_code $country_code {
+      default $http_geoip_country_code;
+      "" $http_cf_ipcountry;
+    }
+    log_format cloud_json escape=json '{'
+                           '"time_iso8601":"$time_iso8601",'
+                           '"remote_addr":"$remote_addr",'
+                           '"x_forwarded_for":"$http_x_forwarded_for",'
+                           '"geoip_country":"$http_geoip_country",'
+                           '"geoip_country_code":"$http_geoip_country_code",'
+                           '"cf_ipcountry":"$country_code",'
+                           '"remote_user":"$remote_user",'
+                           '"host":"$host",'
+                           '"method":"$request_method",'
+                           '"request_uri":"$request_uri",'
+                           '"status":$status,'
+                           '"body_bytes_sent":$body_bytes_sent,'
+                           '"referer":"$http_referer",'
+                           '"user_agent":"$http_user_agent"'
+                         '}';
     server {
       listen 8080;
       # Keep redirect targets relative so Traefik's external scheme/port are preserved.
@@ -28,7 +45,7 @@ data:
       gzip on;
       index index.php index.html /index.php$request_uri;
       error_log  /var/log/nginx/error.log;
-      access_log /var/log/nginx/access.log cloud;
+      access_log /var/log/nginx/access.log cloud_json;
       root /nextcloud;
       client_max_body_size 10000M;
       client_body_buffer_size 512k;

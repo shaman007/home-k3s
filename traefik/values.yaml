@@ -207,3 +207,14 @@ logs:
     level: INFO
   access:
     enabled: true
+    format: json
+    fields:
+      general:
+        defaultmode: keep
+      headers:
+        defaultmode: drop
+        names:
+          CF-IPCountry: keep
+          GeoIP-Country: keep
+          GeoIP-Country-Code: keep
+          X-Forwarded-For: keep
