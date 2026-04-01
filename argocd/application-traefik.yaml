@@ -217,7 +217,7 @@ spec:
                           -H 'Content-Type: application/strategic-merge-patch+json' \
                           --data "$payload" \
                           "$api"
-                      image: docker.io/curlimages/curl:8.12.1
+                      image: docker.io/curlimages/curl:8.18.0
                       imagePullPolicy: IfNotPresent
                       name: restart-traefik
         service:
