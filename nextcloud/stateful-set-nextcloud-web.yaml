@@ -26,7 +26,6 @@ spec:
         app: nextcloud
         component: web
     spec:
-      runtimeClassName: nvidia
       securityContext:
         runAsUser: 33
         runAsGroup: 33
@@ -137,10 +136,6 @@ spec:
               memory: "6306Mi"
             limits:
               memory: "6306Mi"
-              nvidia.com/gpu: 1
-          env:
-            - name: NVIDIA_DRIVER_CAPABILITIES
-              value: compute,video,utility
         - name: nextcloud-nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.7
           imagePullPolicy: IfNotPresent
