@@ -162,7 +162,7 @@ extraObjects:
               restartPolicy: OnFailure
               containers:
                 - name: restart-traefik
-                  image: docker.io/curlimages/curl:8.12.1
+                  image: docker.io/curlimages/curl:8.18.0
                   imagePullPolicy: IfNotPresent
                   command:
                     - sh
