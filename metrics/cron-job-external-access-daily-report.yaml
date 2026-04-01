@@ -62,6 +62,12 @@ spec:
                   value: me@andreybondarenko.com
                 - name: METRICS_CONFIGMAP_NAME
                   value: external-access-daily-report-metrics
+                - name: HTTP_TIMEOUT_SECONDS
+                  value: "180"
+                - name: HTTP_MAX_ATTEMPTS
+                  value: "3"
+                - name: HTTP_RETRY_DELAY_SECONDS
+                  value: "5"
               resources:
                 requests:
                   cpu: 100m
