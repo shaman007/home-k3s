@@ -335,6 +335,22 @@ data:
                             payload.get("router", ""),
                         ]
                     ),
+                    "method": first_non_empty(
+                        [
+                            payload.get("RequestMethod", ""),
+                            payload.get("request_method", ""),
+                            payload.get("Method", ""),
+                            payload.get("method", ""),
+                        ]
+                    ).upper(),
+                    "user_agent": first_non_empty(
+                        [
+                            payload.get("RequestUserAgent", ""),
+                            payload.get("UserAgent", ""),
+                            payload.get("user_agent", ""),
+                            extract_traefik_request_header(payload, "User-Agent"),
+                        ]
+                    ),
                     "request_host": request_host,
                     "country_code": normalize_country_code(
                         first_non_empty(
@@ -683,13 +699,13 @@ data:
 
             host = (entry.get("request_host") or "").strip().lower()
             if host not in host_set:
-                host = host_from_router(entry["router"], fragments)
+                host = host_from_router(entry.get("router", ""), fragments)
             if not host:
                 continue
 
-            path = strip_query(entry["path"])
-            status = entry["status"]
-            client_ip = normalize_ip(entry["client_ip"])
+            path = strip_query(entry.get("path", "/"))
+            status = str(entry.get("status", "0"))
+            client_ip = normalize_ip(entry.get("client_ip", ""))
             external = is_external_ip(client_ip)
 
             current = stats[host]
@@ -716,7 +732,7 @@ data:
 
             # Harbor pulls may arrive through a private upstream hop, so keep the
             # pull accounting independent from the public-IP classification.
-            if entry["method"] not in {"GET", "HEAD"}:
+            if (entry.get("method") or "").upper() not in {"GET", "HEAD"}:
                 continue
 
             if not status.startswith(("2", "3")):
