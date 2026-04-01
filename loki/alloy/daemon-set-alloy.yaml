@@ -23,7 +23,7 @@ spec:
       serviceAccountName: alloy
       containers:
         - name: alloy
-          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.14.2
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.15.0
           imagePullPolicy: IfNotPresent
           args:
             - run
