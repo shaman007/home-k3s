@@ -25,7 +25,6 @@ spec:
         app.kubernetes.io/name: immich-server
         app.kubernetes.io/part-of: immich
     spec:
-      runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: w386.k8s.my.lan
@@ -49,8 +48,6 @@ spec:
               value: immich-valkey
             - name: IMMICH_MACHINE_LEARNING_URL
               value: http://immich-machine-learning:3003
-            - name: NVIDIA_DRIVER_CAPABILITIES
-              value: compute,video,utility
             - name: TZ
               value: Europe/Prague
           ports:
@@ -83,7 +80,6 @@ spec:
               memory: 4Gi
             limits:
               memory: 48Gi
-              nvidia.com/gpu: 1
       volumes:
         - name: library
           persistentVolumeClaim:
