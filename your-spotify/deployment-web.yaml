@@ -27,7 +27,7 @@ spec:
         - env:
             - name: API_ENDPOINT
               value: https://spt-server.andreybondarenko.com
-          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_client:1.18.0
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_client:1.19.0
           imagePullPolicy: IfNotPresent
           name: web
           resources:
