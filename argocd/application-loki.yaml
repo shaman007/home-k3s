@@ -41,6 +41,17 @@ spec:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
           auth_enabled: false
+          server:
+            grpc_server_max_recv_msg_size: 16777216
+            grpc_server_max_send_msg_size: 16777216
+          frontend:
+            grpc_client_config:
+              max_recv_msg_size: 16777216
+              max_send_msg_size: 16777216
+          frontend_worker:
+            grpc_client_config:
+              max_recv_msg_size: 16777216
+              max_send_msg_size: 16777216
           limits_config:
             retention_period: 72h
             max_label_names_per_series: 30

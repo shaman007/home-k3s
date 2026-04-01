@@ -19,7 +19,7 @@ metadata:
     app: spotify
     app.kubernetes.io/name: spotify
     app.kubernetes.io/instance: spotify
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "1.19.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik

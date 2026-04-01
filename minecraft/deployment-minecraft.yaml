@@ -9,7 +9,7 @@ metadata:
     app: minecraft
     app.kubernetes.io/name: minecraft
     app.kubernetes.io/instance: minecraft
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "2026.3.3"
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1

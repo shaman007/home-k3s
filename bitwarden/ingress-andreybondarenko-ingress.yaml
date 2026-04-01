@@ -18,7 +18,7 @@ metadata:
     app: bitwarden
     app.kubernetes.io/name: bitwarden
     app.kubernetes.io/instance: bitwarden
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "beta"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik

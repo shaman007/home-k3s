@@ -8,7 +8,7 @@ metadata:
     name: plex
     app.kubernetes.io/name: plex
     app.kubernetes.io/instance: plex
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "1.43.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ports:

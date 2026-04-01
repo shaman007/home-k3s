@@ -10,7 +10,7 @@ metadata:
     app: minecraft
     app.kubernetes.io/name: minecraft
     app.kubernetes.io/instance: minecraft
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "2026.3.3"
     app.kubernetes.io/managed-by: argoCD
     recurring-job.longhorn.io/source: enabled
     recurring-job.longhorn.io/backup-daily-retain31-c: enabled

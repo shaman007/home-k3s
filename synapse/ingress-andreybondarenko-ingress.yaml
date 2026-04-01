@@ -18,7 +18,7 @@ metadata:
     app: matrix
     app.kubernetes.io/name: matrix
     app.kubernetes.io/instance: matrix
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "v1.150.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik

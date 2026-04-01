@@ -19,7 +19,7 @@ metadata:
     app: convertx
     app.kubernetes.io/name: convertx
     app.kubernetes.io/instance: convertx
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "v0.17.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik

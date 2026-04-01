@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: immich-machine-learning
     app.kubernetes.io/instance: immich-machine-learning
     app.kubernetes.io/part-of: immich
-    app.kubernetes.io/version: v2.4.1
+    app.kubernetes.io/version: v2.6.3
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1

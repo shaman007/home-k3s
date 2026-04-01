@@ -9,7 +9,7 @@ metadata:
     app: mongodb
     app.kubernetes.io/name: mongodb
     app.kubernetes.io/instance: mongodb
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "7"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ports:

@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: bitwarden-postgres
     app.kubernetes.io/instance: bitwarden-postgres
     app.kubernetes.io/part-of: bitwarden
-    app.kubernetes.io/version: "17"
+    app.kubernetes.io/version: "18"
     app.kubernetes.io/managed-by: argo-cd
 spec:
   serviceName: bitwarden-postgres

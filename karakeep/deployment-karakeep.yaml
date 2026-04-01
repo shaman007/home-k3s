@@ -8,7 +8,7 @@ metadata:
     app: karakeep
     app.kubernetes.io/name: karakeep
     app.kubernetes.io/instance: karakeep
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "0.31.0"
     app.kubernetes.io/managed-by: argoCD
   annotations:
     configmap.reloader.stakater.com/auto: "true"

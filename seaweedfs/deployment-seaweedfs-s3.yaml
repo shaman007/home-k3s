@@ -7,7 +7,7 @@ metadata:
     app: seaweedfs-s3
     app.kubernetes.io/name: seaweedfs-s3
     app.kubernetes.io/instance: seaweedfs-s3
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "4.17"
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1

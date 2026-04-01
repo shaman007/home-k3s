@@ -7,7 +7,7 @@ metadata:
     app: postgres
     app.kubernetes.io/name: postgres
     app.kubernetes.io/instance: postgres
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "17"
     app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: postgres

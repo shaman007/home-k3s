@@ -8,7 +8,7 @@ metadata:
     app: meilisearch
     app.kubernetes.io/name: meilisearch
     app.kubernetes.io/instance: meilisearch
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: "v1.41.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   clusterIP: None
