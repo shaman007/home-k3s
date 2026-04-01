@@ -25,12 +25,13 @@ spec:
         app.kubernetes.io/name: immich-machine-learning
         app.kubernetes.io/part-of: immich
     spec:
+      runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: w386.k8s.my.lan
       containers:
         - name: immich-machine-learning
-          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v2.6.3
+          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v2.6.3-cuda
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
@@ -54,6 +55,8 @@ spec:
               value: /cache/huggingface-xet
             - name: MPLCONFIGDIR
               value: /cache/matplotlib-config
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
             - name: TZ
               value: Europe/Prague
           ports:
@@ -84,6 +87,7 @@ spec:
               memory: 2Gi
             limits:
               memory: 4Gi
+              nvidia.com/gpu: 1
       volumes:
         - name: cache
           persistentVolumeClaim:

@@ -1,0 +1,44 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nvidia-device-plugin
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://nvidia.github.io/k8s-device-plugin
+      targetRevision: 0.17.1
+      chart: nvidia-device-plugin
+      helm:
+        values: |
+          runtimeClassName: nvidia
+          nodeSelector:
+            kubernetes.io/hostname: w386.k8s.my.lan
+          config:
+            map:
+              default: |
+                version: v1
+                flags:
+                  migStrategy: none
+                  failOnInitError: true
+                  nvidiaDriverRoot: /
+                  plugin:
+                    deviceListStrategy: envvar
+                    deviceIDStrategy: uuid
+                sharing:
+                  timeSlicing:
+                    resources:
+                      - name: nvidia.com/gpu
+                        replicas: 8
+    - repoURL: https://github.com/shaman007/home-k3s.git
+      targetRevision: HEAD
+      path: nvidia-device-plugin
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nvidia-device-plugin
+  syncPolicy:
+    automated:
+      enabled: true
+    syncOptions:
+      - CreateNamespace=true

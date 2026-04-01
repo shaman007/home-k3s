@@ -21,6 +21,7 @@ spec:
       labels:
         app: plex
     spec:
+      runtimeClassName: nvidia
       affinity:
         # Prevent scheduling on a specific node
         nodeAffinity:
@@ -42,12 +43,15 @@ spec:
             # Advertise both local and public endpoints for Plex clients.
             - name: ADVERTISE_IP
               value: "http://192.168.1.209:32400/,https://plex.andreybondarenko.com/"
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,video,utility
           resources:
             requests:
               memory: 2600Mi
               cpu: "10m"
             limits:
               memory: 2600Mi
+              nvidia.com/gpu: 1
           volumeMounts:
             - name: plex-lib
               mountPath: /data
@@ -57,9 +61,6 @@ spec:
               mountPath: /custom-cont-init.d/10-disable-scheduled-library-updates.sh
               subPath: 10-disable-scheduled-library-updates.sh
               readOnly: true
-            - name: dev-dri
-              mountPath: /dev/dri
-              readOnly: false
           ports:
             - containerPort: 32400
             - containerPort: 1900
@@ -105,7 +106,3 @@ spec:
           configMap:
             name: plex-custom-init
             defaultMode: 0755
-        - name: dev-dri
-          hostPath:
-            path: /dev/dri
-            type: Directory
