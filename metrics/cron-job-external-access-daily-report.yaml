@@ -32,15 +32,11 @@ spec:
           restartPolicy: Never
           containers:
             - name: report
-              image: alpine:3.23
-              imagePullPolicy: IfNotPresent
+              image: harbor.andreybondarenko.com/library/external-access-daily-report:latest
+              imagePullPolicy: Always
               command:
-                - /bin/sh
-                - -lc
-                - |
-                  set -eu
-                  apk add --no-cache ca-certificates python3 tzdata
-                  python3 /scripts/external-access-daily-report.py
+                - python3
+                - /app/external-access-daily-report.py
               env:
                 - name: REPORT_TIMEZONE
                   value: Europe/Prague
@@ -74,11 +70,3 @@ spec:
                   memory: 128Mi
                 limits:
                   memory: 256Mi
-              volumeMounts:
-                - name: scripts
-                  mountPath: /scripts
-          volumes:
-            - name: scripts
-              configMap:
-                name: external-access-daily-report-scripts
-                defaultMode: 0555
