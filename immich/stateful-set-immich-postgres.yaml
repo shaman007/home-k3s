@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: immich-postgres
     app.kubernetes.io/instance: immich-postgres
     app.kubernetes.io/part-of: immich
-    app.kubernetes.io/version: "16"
+    app.kubernetes.io/version: "16-vectorchord0.4.3-pgvectors0.2.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: immich-postgres
