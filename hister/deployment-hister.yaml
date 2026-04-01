@@ -37,7 +37,7 @@ spec:
               mountPath: /data
       containers:
         - name: hister
-          image: harbor.andreybondarenko.com/github/asciimoo/hister:master
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.11.0
           imagePullPolicy: Always
           securityContext:
             runAsUser: 65532
