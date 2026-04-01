@@ -23,6 +23,9 @@ data:
       - '.metadata.annotations."deployment.kubernetes.io/desired-replicas"'
       - '.metadata.annotations."deployment.kubernetes.io/max-replicas"'
       - '.metadata.annotations."rollout.argoproj.io/desired-replicas"'
+  resource.customizations.ignoreResourceUpdates.apps_StatefulSet: |
+    jqPathExpressions:
+      - '.metadata.annotations."banzaicloud.com/last-applied"'
   resource.customizations.ignoreResourceUpdates.argoproj.io_Application: |
     jqPathExpressions:
       - '.metadata.annotations."notified.notifications.argoproj.io"'
@@ -43,6 +46,9 @@ data:
       - /metadata
       - /endpoints
       - /ports
+  resource.customizations.ignoreResourceUpdates.Service: |
+    jqPathExpressions:
+      - '.metadata.annotations."banzaicloud.com/last-applied"'
   resource.exclusions: |
     - apiGroups:
       - ''
