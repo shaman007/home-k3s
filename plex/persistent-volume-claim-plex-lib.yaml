@@ -7,6 +7,11 @@ spec:
   accessModes:
     - ReadWriteOnce
   storageClassName: local-path
+  volumeName: local-storage
+  selector:
+    matchLabels:
+      app: plex
+      storage-role: plex-media
   resources:
     requests:
       storage: 15Ti
