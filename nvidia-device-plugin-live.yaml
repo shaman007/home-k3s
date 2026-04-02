@@ -24,7 +24,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: nvidia-device-plugin-ctr
-          image: nvcr.io/nvidia/k8s-device-plugin:v0.17.1
+          image: nvcr.io/nvidia/k8s-device-plugin:v0.19.0
           imagePullPolicy: IfNotPresent
           env:
             - name: FAIL_ON_INIT_ERROR
