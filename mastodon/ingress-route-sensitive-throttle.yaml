@@ -5,8 +5,19 @@ metadata:
   namespace: mastodon
 spec:
   rateLimit:
-    average: 30
-    burst: 15
+    average: 15
+    burst: 10
+    period: 1m
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: signup-path-throttle
+  namespace: mastodon
+spec:
+  rateLimit:
+    average: 3
+    burst: 2
     period: 1m
 ---
 apiVersion: traefik.io/v1alpha1
@@ -19,10 +30,36 @@ spec:
     - websecure
   routes:
     - kind: Rule
+      priority: 210
+      match: >-
+        Host(`mastodon.andreybondarenko.com`) &&
+        PathPrefix(`/auth/sign_up`) &&
+        ClientIP(`57.141.20.0/24`)
+      middlewares:
+        - name: hsts
+      services:
+        - kind: TraefikService
+          name: noop@internal
+    - kind: Rule
       priority: 200
       match: >-
         Host(`mastodon.andreybondarenko.com`) &&
-        (PathPrefix(`/auth/sign_in`) || PathPrefix(`/auth/sign_up`)) &&
+        PathPrefix(`/auth/sign_up`) &&
+        !ClientIP(`192.168.1.0/24`) &&
+        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+      middlewares:
+        - name: signup-path-throttle
+        - name: hsts
+      services:
+        - kind: Service
+          name: mastodon-web
+          port: 3000
+    - kind: Rule
+      priority: 190
+      match: >-
+        Host(`mastodon.andreybondarenko.com`) &&
+        PathPrefix(`/auth/sign_in`) &&
         !ClientIP(`192.168.1.0/24`) &&
         !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
         !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
