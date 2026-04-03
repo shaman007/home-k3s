@@ -11890,3 +11890,14 @@ recommendations and ensure consistent YAML separators and formatting.
 
 - **Key PR Links**
   - [#85](https://github.com/shaman007/home-k3s/pull/85), [#86](https://github.com/shaman007/home-k3s/pull/86), [#87](https://github.com/shaman007/home-k3s/pull/87), [#88](https://github.com/shaman007/home-k3s/pull/88), [#89](https://github.com/shaman007/home-k3s/pull/89), [#90](https://github.com/shaman007/home-k3s/pull/90), [#93](https://github.com/shaman007/home-k3s/pull/93), [#94](https://github.com/shaman007/home-k3s/pull/94), [#95](https://github.com/shaman007/home-k3s/pull/95), [#96](https://github.com/shaman007/home-k3s/pull/96), [#97](https://github.com/shaman007/home-k3s/pull/97), [#98](https://github.com/shaman007/home-k3s/pull/98), [#100](https://github.com/shaman007/home-k3s/pull/100), [#101](https://github.com/shaman007/home-k3s/pull/101), [#102](https://github.com/shaman007/home-k3s/pull/102)
+
+## 2026-04-03 – Weekly Highlights
+
+- **Highlights**
+  - Added external-access analytics and reporting around Traefik logs, including GeoIP enrichment, country and external IP metrics, Grafana dashboards, and HTML email output.
+  - Reworked GPU allocation so Immich and Plex share NVIDIA capacity, added the NVIDIA device plugin manifests, and bound Plex and Stirling storage more explicitly.
+  - Tightened ingress protection with sensitive-path rate limits, added harsher blocking for abusive Facebook traffic, and moved Traefik geodata onto persistent storage.
+  - Updated platform components including Traefik, Meilisearch, curl, Alloy, Your Spotify, Dawarich, ECK operator, NVIDIA device plugin, Keycloak, SeaweedFS, Prometheus, and Stirling PDF.
+
+- **Key PR Links**
+  - [#103](https://github.com/shaman007/home-k3s/pull/103), [#104](https://github.com/shaman007/home-k3s/pull/104), [#105](https://github.com/shaman007/home-k3s/pull/105), [#106](https://github.com/shaman007/home-k3s/pull/106), [#107](https://github.com/shaman007/home-k3s/pull/107), [#108](https://github.com/shaman007/home-k3s/pull/108), [#109](https://github.com/shaman007/home-k3s/pull/109), [#110](https://github.com/shaman007/home-k3s/pull/110), [#111](https://github.com/shaman007/home-k3s/pull/111), [#112](https://github.com/shaman007/home-k3s/pull/112), [#113](https://github.com/shaman007/home-k3s/pull/113), [#114](https://github.com/shaman007/home-k3s/pull/114), [#115](https://github.com/shaman007/home-k3s/pull/115), [#116](https://github.com/shaman007/home-k3s/pull/116)
