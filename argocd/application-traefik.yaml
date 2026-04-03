@@ -35,30 +35,36 @@ spec:
             - sh
             - -ceu
             - |
-              mkdir -p /geoip
+              db_dir='/data/geoip'
+              db_file="$db_dir/dbip-country-lite.mmdb"
               db_archive='/tmp/dbip-country-lite.mmdb.gz'
               db_url='https://download.db-ip.com/free/dbip-country-lite-latest.mmdb.gz'
+              mkdir -p "$db_dir"
+              if wget -q -O "$db_archive" "$db_url"; then
+                gunzip -c "$db_archive" > "$db_file"
+                rm -f "$db_archive"
+                chmod 0644 "$db_file"
+                exit 0
+              fi
               if ! wget -q -O "$db_archive" "$db_url"; then
                 page="$(wget -qO- https://db-ip.com/db/download/ip-to-country-lite)"
                 db_url="$(printf '%s' "$page" | tr '\n' ' ' | sed -n 's/.*\(https:\/\/download\.db-ip\.com\/free\/dbip-country-lite-[0-9][0-9][0-9][0-9]-[0-9][0-9]\.mmdb\.gz\).*/\1/p')"
                 test -n "$db_url"
-                wget -q -O "$db_archive" "$db_url"
+                if wget -q -O "$db_archive" "$db_url"; then
+                  gunzip -c "$db_archive" > "$db_file"
+                  rm -f "$db_archive"
+                  chmod 0644 "$db_file"
+                  exit 0
+                fi
               fi
-              gunzip -c "$db_archive" > /geoip/dbip-country-lite.mmdb
               rm -f "$db_archive"
-              chmod 0644 /geoip/dbip-country-lite.mmdb
+              test -s "$db_file"
             image: docker.io/library/busybox:1.37.0
             name: download-geoip-country-db
             volumeMounts:
-            - mountPath: /geoip
-              name: geoip-country-db
-          additionalVolumes:
-          - emptyDir: {}
-            name: geoip-country-db
+            - mountPath: /data
+              name: data
           replicas: 1
-        additionalVolumeMounts:
-        - mountPath: /geoip
-          name: geoip-country-db
         experimental:
           plugins:
             geoip2:
@@ -149,7 +155,7 @@ spec:
           spec:
             plugin:
               geoip2:
-                countryDbPath: /geoip/dbip-country-lite.mmdb
+                countryDbPath: /data/geoip/dbip-country-lite.mmdb
         - apiVersion: v1
           kind: ServiceAccount
           metadata:
