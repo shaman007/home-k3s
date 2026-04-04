@@ -14,12 +14,21 @@ data:
     livedebugging {
       enabled = true
     }
+
     discovery.kubernetes "kubernetes_pods" {
         role = "pod"
     }
 
     discovery.relabel "kubernetes_pods" {
         targets = discovery.kubernetes.kubernetes_pods.targets
+
+        // Keep DaemonSet replicas from duplicating cluster-wide pod logs by
+        // only tailing containers scheduled onto the current node.
+        rule {
+            source_labels = ["__meta_kubernetes_pod_node_name"]
+            regex         = env("ALLOY_NODE_NAME")
+            action        = "keep"
+        }
 
         rule {
             source_labels = ["__meta_kubernetes_pod_controller_name"]
@@ -70,31 +79,10 @@ data:
             source_labels = ["__meta_kubernetes_pod_container_name"]
             target_label  = "container"
         }
-
-        rule {
-            source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-            separator     = "/"
-            target_label  = "__path__"
-            replacement   = "/var/log/pods/*$1/*.log"
-        }
-
-        rule {
-            source_labels = ["__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash", "__meta_kubernetes_pod_annotation_kubernetes_io_config_hash", "__meta_kubernetes_pod_container_name"]
-            separator     = "/"
-            regex         = "true/(.*)"
-            target_label  = "__path__"
-            replacement   = "/var/log/pods/*$1/*.log"
-        }
-    }
-
-    local.file_match "kubernetes_pods" {
-        path_targets = discovery.relabel.kubernetes_pods.output
     }
 
     loki.process "kubernetes_pods" {
         forward_to = [loki.write.default.receiver]
-
-        stage.cri { }
 
         stage.decolorize { }
 
@@ -121,10 +109,9 @@ data:
         }
     }
 
-    loki.source.file "kubernetes_pods" {
-        targets               = local.file_match.kubernetes_pods.targets
-        forward_to            = [loki.process.kubernetes_pods.receiver]
-        legacy_positions_file = "/run/promtail/positions.yaml"
+    loki.source.kubernetes "kubernetes_pods" {
+        targets    = discovery.relabel.kubernetes_pods.output
+        forward_to = [loki.process.kubernetes_pods.receiver]
     }
 
     discovery.relabel "systemd_journal" {

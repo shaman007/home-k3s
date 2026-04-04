@@ -25,6 +25,11 @@ spec:
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.15.0
           imagePullPolicy: IfNotPresent
+          env:
+            - name: ALLOY_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           args:
             - run
             - /etc/alloy/config.alloy
@@ -53,11 +58,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/alloy
-            - name: varlog
-              mountPath: /var/log
-            - name: containers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
           resources:
             requests:
               cpu: 338m
@@ -68,9 +68,3 @@ spec:
         - name: config
           configMap:
             name: alloy-config
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: containers
-          hostPath:
-            path: /var/lib/docker/containers
