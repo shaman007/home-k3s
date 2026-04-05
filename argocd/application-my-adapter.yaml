@@ -12,6 +12,10 @@ spec:
     chart: prometheus-adapter
     helm:
       releaseName: my-adapter
+      values: |
+        prometheus:
+          url: http://thanos-querier.monitoring.svc.cluster.local
+          port: 9090
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: default

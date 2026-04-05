@@ -1,0 +1,1 @@
+{"spec":{"source":{"helm":{"releaseName":"my-adapter","values":"prometheus:\n  url: http://thanos-querier.monitoring.svc.cluster.local\n  port: 9090\n"}}}}
