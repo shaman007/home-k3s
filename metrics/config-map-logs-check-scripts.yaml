@@ -161,6 +161,32 @@ data:
             return {"ok": False, "error": str(exc)}
 
 
+    def ollama_preflight():
+        base_url = env("OLLAMA_BASE_URL", "http://ollama.ollama.svc.cluster.local:11434")
+        model = env("OLLAMA_MODEL", "gpt-oss:20b")
+        checks = {"base_url": base_url, "model": model}
+        try:
+            checks["version"] = http_json(f"{base_url.rstrip('/')}/api/version")
+            checks["version_ok"] = True
+        except Exception as exc:  # noqa: BLE001
+            checks["version_ok"] = False
+            checks["version_error"] = str(exc)
+
+        try:
+            tags = http_json(f"{base_url.rstrip('/')}/api/tags")
+            names = [item.get("name", "") for item in tags.get("models", [])]
+            checks["tags_ok"] = True
+            checks["available_models"] = names
+            checks["model_present"] = any(name == model or name.startswith(model + ":") for name in names)
+        except Exception as exc:  # noqa: BLE001
+            checks["tags_ok"] = False
+            checks["tags_error"] = str(exc)
+            checks["model_present"] = False
+
+        checks["ok"] = bool(checks.get("version_ok")) and bool(checks.get("tags_ok"))
+        return checks
+
+
     def grafana_datasource_preflight():
         namespace = env("REPORT_NAMESPACE", "monitoring")
         try:
@@ -299,6 +325,33 @@ data:
         return (message.get("content") or "").strip()
 
 
+    def fallback_analysis(preflight, grouped_entries):
+        lines = [
+            "1. [platform issue] Local Ollama was unreachable from the CronJob, so LLM summarization did not run.",
+            f"   Context: {preflight.get('ollama', {}).get('base_url', 'unknown')}",
+        ]
+        version_error = preflight.get("ollama", {}).get("version_error")
+        tags_error = preflight.get("ollama", {}).get("tags_error")
+        if version_error:
+            lines.append(f"   Version check error: {version_error}")
+        if tags_error:
+            lines.append(f"   Tags check error: {tags_error}")
+
+        for name, entries in grouped_entries.items():
+            if not entries:
+                continue
+            first = entries[0]
+            lines.append(
+                f"2. [{name}] Sample context: {first['ts']} ns={first['namespace'] or '-'} "
+                f"pod={first['pod'] or '-'} container={first['container'] or '-'}"
+            )
+            lines.append(f"   Example: {trim_line(first['line'])}")
+            break
+
+        lines.append("Smallest next action: verify the `ollama` Service has ready endpoints when this CronJob runs, then rerun the job.")
+        return "\n".join(lines)
+
+
     def main():
         start_local, end_local = get_window()
         start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
@@ -309,6 +362,7 @@ data:
             "grafana": grafana_preflight(),
             "loki": loki_preflight(),
             "grafana_datasources": grafana_datasource_preflight(),
+            "ollama": ollama_preflight(),
         }
 
         queries = {
@@ -336,7 +390,11 @@ data:
             previous_report,
             grouped_entries,
         )
-        analysis = call_ollama(system_prompt, user_prompt)
+        try:
+            analysis = call_ollama(system_prompt, user_prompt)
+        except Exception as exc:  # noqa: BLE001
+            preflight["ollama"]["chat_error"] = str(exc)
+            analysis = fallback_analysis(preflight, grouped_entries)
         report = "\n".join(
             [
                 "Home k3s logs check",
