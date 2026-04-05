@@ -16,5 +16,13 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: logs-check-report
+      namespace: monitoring
+      jsonPointers:
+        - /data/report.txt
+        - /data/report.json
   syncPolicy:
     automated: {}

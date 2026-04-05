@@ -258,7 +258,7 @@ data:
         return kube_json(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
 
 
-    def trim_line(value, max_chars=500):
+    def trim_line(value, max_chars=220):
         text = " ".join(value.split())
         if len(text) <= max_chars:
             return text
@@ -301,7 +301,7 @@ data:
             "Grafana/Loki preflight:",
             json.dumps(preflight, indent=2, ensure_ascii=True),
             "Previous report excerpt:",
-            previous_report[:3000] if previous_report else "(none)",
+            previous_report[:1000] if previous_report else "(none)",
         ]
         for name, entries in grouped_entries.items():
             sections.append(f"{name} samples:")
@@ -320,6 +320,7 @@ data:
             "stream": False,
             "options": {
                 "temperature": 0.1,
+                "num_predict": 350,
             },
             "messages": [
                 {"role": "system", "content": system_prompt},

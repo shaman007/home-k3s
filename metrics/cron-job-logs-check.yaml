@@ -55,11 +55,11 @@ spec:
                 - name: LOOKBACK_HOURS
                   value: "168"
                 - name: LOKI_QUERY_LIMIT
-                  value: "80"
+                  value: "24"
                 - name: MAX_SAMPLES_PER_QUERY
-                  value: "20"
+                  value: "5"
                 - name: OLLAMA_MAX_CONTEXT_CHARS
-                  value: "24000"
+                  value: "6000"
                 - name: HTTP_TIMEOUT_SECONDS
                   value: "60"
                 - name: HTTP_MAX_ATTEMPTS
