@@ -1,0 +1,83 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: logs-check
+  namespace: monitoring
+  labels:
+    app: logs-check
+    app.kubernetes.io/name: logs-check
+    app.kubernetes.io/instance: logs-check
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "0 12 * * 5"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: logs-check
+            app.kubernetes.io/name: logs-check
+            app.kubernetes.io/instance: logs-check
+            app.kubernetes.io/part-of: monitoring
+        spec:
+          enableServiceLinks: false
+          serviceAccountName: logs-check
+          restartPolicy: Never
+          containers:
+            - name: logs-check
+              image: harbor.andreybondarenko.com/dockerhub/library/python:3.13-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - python3
+                - /scripts/logs-check.py
+              env:
+                - name: REPORT_TIMEZONE
+                  value: Europe/Prague
+                - name: REPORT_NAMESPACE
+                  value: monitoring
+                - name: REPORT_CONFIGMAP_NAME
+                  value: logs-check-report
+                - name: GRAFANA_BASE_URL
+                  value: http://grafana.monitoring.svc.cluster.local:3000
+                - name: LOKI_BASE_URL
+                  value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
+                - name: OLLAMA_BASE_URL
+                  value: http://ollama.ollama.svc.cluster.local:11434
+                - name: OLLAMA_MODEL
+                  value: gpt-oss:20b
+                - name: LOOKBACK_HOURS
+                  value: "168"
+                - name: LOKI_QUERY_LIMIT
+                  value: "80"
+                - name: MAX_SAMPLES_PER_QUERY
+                  value: "20"
+                - name: OLLAMA_MAX_CONTEXT_CHARS
+                  value: "24000"
+                - name: HTTP_TIMEOUT_SECONDS
+                  value: "60"
+                - name: HTTP_MAX_ATTEMPTS
+                  value: "3"
+                - name: HTTP_RETRY_DELAY_SECONDS
+                  value: "5"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: logs-check-scripts
+                defaultMode: 0555

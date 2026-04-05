@@ -1,0 +1,371 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logs-check-scripts
+  namespace: monitoring
+  labels:
+    app: logs-check
+    app.kubernetes.io/name: logs-check
+    app.kubernetes.io/instance: logs-check
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  logs-check.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    import sys
+    import time
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+    from datetime import datetime, timedelta
+    from pathlib import Path
+    from zoneinfo import ZoneInfo
+
+    SERVICE_ACCOUNT_DIR = Path("/var/run/secrets/kubernetes.io/serviceaccount")
+    SERVICE_ACCOUNT_TOKEN = SERVICE_ACCOUNT_DIR / "token"
+    SERVICE_ACCOUNT_CA = SERVICE_ACCOUNT_DIR / "ca.crt"
+
+
+    def env(name, default=None, required=False):
+        value = os.environ.get(name, default)
+        if required and (value is None or value == ""):
+            raise SystemExit(f"Missing required environment variable: {name}")
+        return value
+
+
+    def env_int(name, default):
+        raw = env(name, str(default))
+        try:
+            return int(raw)
+        except ValueError as exc:
+            raise SystemExit(f"Environment variable {name} must be an integer, got {raw!r}") from exc
+
+
+    def load_sa_token():
+        if not SERVICE_ACCOUNT_TOKEN.exists():
+            return ""
+        return SERVICE_ACCOUNT_TOKEN.read_text(encoding="utf-8").strip()
+
+
+    def http_json(url, *, headers=None, method="GET", payload=None):
+        request_headers = dict(headers or {})
+        data = None
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            request_headers["Content-Type"] = "application/json"
+
+        request = urllib.request.Request(url, headers=request_headers, data=data, method=method)
+        timeout_seconds = env_int("HTTP_TIMEOUT_SECONDS", 60)
+        max_attempts = max(1, env_int("HTTP_MAX_ATTEMPTS", 3))
+        retry_delay_seconds = max(0, env_int("HTTP_RETRY_DELAY_SECONDS", 5))
+
+        last_exc = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+                    return json.load(response)
+            except (TimeoutError, urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError) as exc:
+                last_exc = exc
+                if attempt >= max_attempts:
+                    raise
+                time.sleep(retry_delay_seconds * attempt)
+        raise last_exc  # pragma: no cover
+
+
+    def kube_json(path, *, method="GET", payload=None):
+        base_url = env("KUBERNETES_API_URL", "https://kubernetes.default.svc")
+        token = load_sa_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        }
+        ssl_context = None
+        if SERVICE_ACCOUNT_CA.exists():
+            import ssl
+
+            ssl_context = ssl.create_default_context(cafile=str(SERVICE_ACCOUNT_CA))
+        url = base_url.rstrip("/") + path
+        request_headers = headers
+        data = None
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            request_headers = dict(headers)
+            request_headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(url, headers=request_headers, data=data, method=method)
+        timeout_seconds = env_int("HTTP_TIMEOUT_SECONDS", 60)
+        with urllib.request.urlopen(request, timeout=timeout_seconds, context=ssl_context) as response:
+            return json.load(response)
+
+
+    def get_window():
+        tz = ZoneInfo(env("REPORT_TIMEZONE", "Europe/Prague"))
+        now = datetime.now(tz)
+        end_local = now.replace(minute=0, second=0, microsecond=0)
+        start_local = end_local - timedelta(hours=env_int("LOOKBACK_HOURS", 168))
+        return start_local, end_local
+
+
+    def loki_query_range(query, start_ns, end_ns, *, limit):
+        base_url = env("LOKI_BASE_URL", "http://loki-gateway.loki.svc.cluster.local/loki/api/v1")
+        params = urllib.parse.urlencode(
+            {
+                "query": query,
+                "start": str(start_ns),
+                "end": str(end_ns),
+                "limit": str(limit),
+                "direction": "backward",
+            }
+        )
+        payload = http_json(f"{base_url.rstrip('/')}/query_range?{params}")
+        entries = []
+        for stream in payload.get("data", {}).get("result", []):
+            labels = stream.get("stream", {})
+            for timestamp_ns, line in stream.get("values", []):
+                entries.append(
+                    {
+                        "ts_ns": int(timestamp_ns),
+                        "ts": datetime.fromtimestamp(int(timestamp_ns) / 1_000_000_000, tz=ZoneInfo("UTC")).isoformat(),
+                        "namespace": labels.get("namespace", ""),
+                        "pod": labels.get("pod", ""),
+                        "container": labels.get("container", ""),
+                        "job": labels.get("job", ""),
+                        "line": line.strip(),
+                    }
+                )
+        entries.sort(key=lambda item: item["ts_ns"], reverse=True)
+        return entries
+
+
+    def grafana_preflight():
+        base_url = env("GRAFANA_BASE_URL", "http://grafana.monitoring.svc.cluster.local:3000")
+        checks = []
+        for path in ("/api/health",):
+            url = base_url.rstrip("/") + path
+            try:
+                payload = http_json(url)
+                checks.append({"path": path, "ok": True, "payload": payload})
+            except Exception as exc:  # noqa: BLE001
+                checks.append({"path": path, "ok": False, "error": str(exc)})
+        return checks
+
+
+    def loki_preflight():
+        base_url = env("LOKI_BASE_URL", "http://loki-gateway.loki.svc.cluster.local/loki/api/v1")
+        try:
+            payload = http_json(f"{base_url.rstrip('/')}/labels")
+            return {"ok": True, "label_count": len(payload.get("data", []))}
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": str(exc)}
+
+
+    def grafana_datasource_preflight():
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        try:
+            payload = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/grafana-datasources")
+        except urllib.error.HTTPError as exc:
+            return {"ok": False, "error": f"{exc.code} {exc.reason}"}
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": str(exc)}
+
+        raw = payload.get("data", {}).get("datasources.yaml", "")
+        datasources = []
+        current = {}
+        for line in raw.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("- name:"):
+                if current:
+                    datasources.append(current)
+                current = {"name": stripped.split(":", 1)[1].strip()}
+            elif stripped.startswith("type:"):
+                current["type"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("url:"):
+                current["url"] = stripped.split(":", 1)[1].strip()
+        if current:
+            datasources.append(current)
+        return {"ok": True, "datasources": datasources}
+
+
+    def fetch_previous_report(name):
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        try:
+            payload = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/{name}")
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return ""
+            raise
+        return payload.get("data", {}).get("report.txt", "")
+
+
+    def upsert_report(name, report, payload_json):
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        body = {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": name,
+                "namespace": namespace,
+                "labels": {
+                    "app": "logs-check",
+                    "app.kubernetes.io/name": "logs-check",
+                    "app.kubernetes.io/instance": "logs-check",
+                    "app.kubernetes.io/part-of": "monitoring",
+                    "app.kubernetes.io/managed-by": "argoCD",
+                },
+            },
+            "data": {
+                "report.txt": report,
+                "report.json": json.dumps(payload_json, indent=2, ensure_ascii=True),
+            },
+        }
+
+        object_path = f"/api/v1/namespaces/{namespace}/configmaps/{name}"
+        try:
+            existing = kube_json(object_path)
+            body["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
+            return kube_json(object_path, method="PUT", payload=body)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+        return kube_json(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
+
+
+    def trim_line(value, max_chars=500):
+        text = " ".join(value.split())
+        if len(text) <= max_chars:
+            return text
+        return text[: max_chars - 3] + "..."
+
+
+    def render_entries(entries, max_items):
+        lines = []
+        for item in entries[:max_items]:
+            line = trim_line(item["line"])
+            lines.append(
+                f"- {item['ts']} | ns={item['namespace'] or '-'} pod={item['pod'] or '-'} "
+                f"container={item['container'] or '-'} | {line}"
+            )
+        return "\n".join(lines) if lines else "- none"
+
+
+    def build_prompt(start_local, end_local, preflight, previous_report, grouped_entries):
+        max_context = env_int("OLLAMA_MAX_CONTEXT_CHARS", 24000)
+        system_prompt = (
+            "You are reviewing home Kubernetes logs.\n"
+            "Classify findings into exactly one of: real fault, probe instability, noise, or platform issue.\n"
+            "Prioritize actionable issues over generic counts.\n"
+            "Keep the output concise and structured:\n"
+            "1. High-severity findings first.\n"
+            "2. For each finding include classification, why it matters, exact app/pod context, and one or more timestamps.\n"
+            "3. Skip duplicate observations that represent the same underlying issue.\n"
+            "4. If something appears already-known from the previous report, mention it as ongoing rather than new.\n"
+            "5. End with 'Smallest next action:' followed by one concrete next step."
+        )
+
+        sections = [
+            f"Window: {start_local.isoformat()} to {end_local.isoformat()}",
+            "Grafana/Loki preflight:",
+            json.dumps(preflight, indent=2, ensure_ascii=True),
+            "Previous report excerpt:",
+            previous_report[:3000] if previous_report else "(none)",
+        ]
+        for name, entries in grouped_entries.items():
+            sections.append(f"{name} samples:")
+            sections.append(render_entries(entries, env_int("MAX_SAMPLES_PER_QUERY", 20)))
+        user_prompt = "\n\n".join(sections)
+        if len(user_prompt) > max_context:
+            user_prompt = user_prompt[:max_context]
+        return system_prompt, user_prompt
+
+
+    def call_ollama(system_prompt, user_prompt):
+        base_url = env("OLLAMA_BASE_URL", "http://ollama.ollama.svc.cluster.local:11434")
+        model = env("OLLAMA_MODEL", "gpt-oss:20b")
+        payload = {
+            "model": model,
+            "stream": False,
+            "options": {
+                "temperature": 0.1,
+            },
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        }
+        response = http_json(f"{base_url.rstrip('/')}/api/chat", method="POST", payload=payload)
+        message = response.get("message", {})
+        return (message.get("content") or "").strip()
+
+
+    def main():
+        start_local, end_local = get_window()
+        start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
+        end_ns = int(end_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
+        sample_limit = env_int("LOKI_QUERY_LIMIT", 80)
+
+        preflight = {
+            "grafana": grafana_preflight(),
+            "loki": loki_preflight(),
+            "grafana_datasources": grafana_datasource_preflight(),
+        }
+
+        queries = {
+            "real_fault_candidates": r'{namespace!~"loki|monitoring"} |~ "(?i)(panic|fatal|traceback|exception|segfault|outofmemory|oomkilled|crashloopbackoff|back-off restarting failed container|failed to start|error syncing pod|segmentation fault)"',
+            "probe_instability_candidates": r'{namespace!~"loki"} |~ "(?i)(readiness probe failed|liveness probe failed|startup probe failed|probe failed)"',
+            "noise_candidates": r'{namespace!~"loki"} |~ "(?i)(deprecated|comparison expired|controller refresh requested|oidc|stale session|no status changes\\. skipping patch|warning)"',
+            "platform_issue_candidates": r'{namespace!~"loki"} |~ "(?i)(context deadline exceeded|i/o timeout|connection refused|tls handshake timeout|dial tcp|no such host|temporary failure in name resolution)"',
+        }
+
+        grouped_entries = {}
+        query_errors = {}
+        for name, query in queries.items():
+            try:
+                grouped_entries[name] = loki_query_range(query, start_ns, end_ns, limit=sample_limit)
+            except Exception as exc:  # noqa: BLE001
+                grouped_entries[name] = []
+                query_errors[name] = str(exc)
+        if query_errors:
+            preflight["query_errors"] = query_errors
+        previous_report = fetch_previous_report(env("REPORT_CONFIGMAP_NAME", "logs-check-report"))
+        system_prompt, user_prompt = build_prompt(
+            start_local,
+            end_local,
+            preflight,
+            previous_report,
+            grouped_entries,
+        )
+        analysis = call_ollama(system_prompt, user_prompt)
+        report = "\n".join(
+            [
+                "Home k3s logs check",
+                "",
+                f"Window: {start_local.strftime('%Y-%m-%d %H:%M:%S %Z')} to {end_local.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+                "",
+                analysis or "Ollama returned an empty analysis.",
+                "",
+                "Preflight summary:",
+                json.dumps(preflight, indent=2, ensure_ascii=True),
+            ]
+        ).strip() + "\n"
+
+        payload_json = {
+            "generated_at": datetime.now(ZoneInfo("UTC")).isoformat(),
+            "window_start": start_local.isoformat(),
+            "window_end": end_local.isoformat(),
+            "preflight": preflight,
+            "queries": queries,
+            "samples": grouped_entries,
+            "analysis": analysis,
+        }
+        upsert_report(env("REPORT_CONFIGMAP_NAME", "logs-check-report"), report, payload_json)
+        print(report)
+
+
+    if __name__ == "__main__":
+        try:
+            main()
+        except Exception as exc:  # noqa: BLE001
+            print(f"logs-check failed: {exc}", file=sys.stderr)
+            raise

@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logs-check-report
+  namespace: monitoring
+  labels:
+    app: logs-check
+    app.kubernetes.io/name: logs-check
+    app.kubernetes.io/instance: logs-check
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  report.txt: |
+    Logs check report not generated yet.
+  report.json: |
+    {}
