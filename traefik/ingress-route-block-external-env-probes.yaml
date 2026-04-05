@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: block-external-env-probes
+  namespace: traefik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      priority: 1000
+      match: >-
+        HostRegexp(`{host:.+}`) &&
+        PathRegexp(`^/(?:.+/)?\\.env(?:$|[./?#].*)`) &&
+        !ClientIP(`192.168.1.0/24`)
+      services:
+        - kind: TraefikService
+          name: noop@internal
+  tls: {}
