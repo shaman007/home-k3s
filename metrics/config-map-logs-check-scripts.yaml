@@ -366,10 +366,10 @@ data:
         }
 
         queries = {
-            "real_fault_candidates": r'{namespace!~"loki|monitoring"} |~ "(?i)(panic|fatal|traceback|exception|segfault|outofmemory|oomkilled|crashloopbackoff|back-off restarting failed container|failed to start|error syncing pod|segmentation fault)"',
-            "probe_instability_candidates": r'{namespace!~"loki"} |~ "(?i)(readiness probe failed|liveness probe failed|startup probe failed|probe failed)"',
-            "noise_candidates": r'{namespace!~"loki"} |~ "(?i)(deprecated|comparison expired|controller refresh requested|oidc|stale session|no status changes\\. skipping patch|warning)"',
-            "platform_issue_candidates": r'{namespace!~"loki"} |~ "(?i)(context deadline exceeded|i/o timeout|connection refused|tls handshake timeout|dial tcp|no such host|temporary failure in name resolution)"',
+            "real_fault_candidates": '{namespace!~"loki|monitoring"} |~ "panic|fatal|Traceback|traceback|Exception|exception|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
+            "probe_instability_candidates": '{namespace!~"loki"} |~ "Readiness probe failed|readiness probe failed|Liveness probe failed|liveness probe failed|Startup probe failed|startup probe failed|probe failed"',
+            "noise_candidates": '{namespace!~"loki"} |~ "deprecated|comparison expired|controller refresh requested|OIDC|oidc|stale session|No status changes. Skipping patch|warning|Warning"',
+            "platform_issue_candidates": '{namespace!~"loki"} |~ "context deadline exceeded|i/o timeout|connection refused|TLS handshake timeout|tls handshake timeout|dial tcp|no such host|Temporary failure in name resolution|temporary failure in name resolution"',
         }
 
         grouped_entries = {}
