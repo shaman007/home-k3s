@@ -282,12 +282,18 @@ data:
             "You are reviewing home Kubernetes logs.\n"
             "Classify findings into exactly one of: real fault, probe instability, noise, or platform issue.\n"
             "Prioritize actionable issues over generic counts.\n"
+            "Use only the provided preflight data and log samples.\n"
+            "Do not invent queries, SQL, dashboards, APIs, or remediation steps that are not grounded in the supplied samples.\n"
+            "Do not output tables.\n"
+            "Do not output code blocks.\n"
             "Keep the output concise and structured:\n"
             "1. High-severity findings first.\n"
             "2. For each finding include classification, why it matters, exact app/pod context, and one or more timestamps.\n"
             "3. Skip duplicate observations that represent the same underlying issue.\n"
             "4. If something appears already-known from the previous report, mention it as ongoing rather than new.\n"
-            "5. End with 'Smallest next action:' followed by one concrete next step."
+            "5. If a candidate bucket only contains harmless scan noise or debug chatter, say so explicitly.\n"
+            "6. End with 'Smallest next action:' followed by one concrete next step.\n"
+            "7. Output plain text only with short paragraphs or bullets."
         )
 
         sections = [
@@ -366,10 +372,10 @@ data:
         }
 
         queries = {
-            "real_fault_candidates": '{namespace!~"loki|monitoring"} |~ "panic|fatal|Traceback|traceback|Exception|exception|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
-            "probe_instability_candidates": '{namespace!~"loki"} |~ "Readiness probe failed|readiness probe failed|Liveness probe failed|liveness probe failed|Startup probe failed|startup probe failed|probe failed"',
-            "noise_candidates": '{namespace!~"loki"} |~ "deprecated|comparison expired|controller refresh requested|OIDC|oidc|stale session|No status changes. Skipping patch|warning|Warning"',
-            "platform_issue_candidates": '{namespace!~"loki"} |~ "context deadline exceeded|i/o timeout|connection refused|TLS handshake timeout|tls handshake timeout|dial tcp|no such host|Temporary failure in name resolution|temporary failure in name resolution"',
+            "real_fault_candidates": '{namespace=~".+",namespace!~"loki|monitoring"} |~ "panic|fatal|Traceback|traceback|Exception|exception|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
+            "probe_instability_candidates": '{namespace=~".+",namespace!~"loki"} |~ "Readiness probe failed|readiness probe failed|Liveness probe failed|liveness probe failed|Startup probe failed|startup probe failed|probe failed"',
+            "noise_candidates": '{namespace=~".+",namespace!~"loki"} |~ "deprecated|comparison expired|controller refresh requested|OIDC|oidc|stale session|No status changes. Skipping patch|warning|Warning"',
+            "platform_issue_candidates": '{namespace=~".+",namespace!~"loki"} |~ "context deadline exceeded|i/o timeout|connection refused|TLS handshake timeout|tls handshake timeout|dial tcp|no such host|Temporary failure in name resolution|temporary failure in name resolution"',
         }
 
         grouped_entries = {}
