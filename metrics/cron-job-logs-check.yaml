@@ -53,15 +53,25 @@ spec:
                 - name: OLLAMA_MODEL
                   value: gpt-oss:20b
                 - name: LOOKBACK_HOURS
-                  value: "168"
+                  value: "1"
                 - name: LOKI_QUERY_LIMIT
-                  value: "24"
+                  value: "0"
                 - name: MAX_SAMPLES_PER_QUERY
-                  value: "5"
-                - name: OLLAMA_MAX_CONTEXT_CHARS
-                  value: "6000"
+                  value: "0"
+                - name: LOKI_BATCH_LIMIT
+                  value: "1000"
+                - name: OLLAMA_BATCH_CONTEXT_CHARS
+                  value: "12000"
+                - name: OLLAMA_REDUCTION_CONTEXT_CHARS
+                  value: "16000"
+                - name: OLLAMA_BATCH_NUM_PREDICT
+                  value: "500"
+                - name: OLLAMA_REDUCTION_NUM_PREDICT
+                  value: "700"
+                - name: MAX_REPORT_JSON_CHARS
+                  value: "900000"
                 - name: HTTP_TIMEOUT_SECONDS
-                  value: "60"
+                  value: "600"
                 - name: HTTP_MAX_ATTEMPTS
                   value: "3"
                 - name: HTTP_RETRY_DELAY_SECONDS
