@@ -16,6 +16,18 @@ database:
 exporter:
   replicas: 1
 jobservice:
+  initContainers:
+    - name: wait-for-core
+      image: busybox:1.37
+      imagePullPolicy: IfNotPresent
+      command:
+        - /bin/sh
+        - -c
+        - |
+          until wget -qO- http://harbor-core:80/api/v2.0/ping >/dev/null; do
+            echo "waiting for harbor-core"
+            sleep 5
+          done
   resources:
     requests:
       memory: 100Mi
