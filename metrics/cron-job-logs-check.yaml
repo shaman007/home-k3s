@@ -32,7 +32,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: logs-check
-              image: harbor.andreybondarenko.com/dockerhub/library/python:3.13-alpine
+              image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
               imagePullPolicy: IfNotPresent
               command:
                 - python3
