@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mempalace
+  namespace: mempalace
+  labels:
+    app: mempalace
+    app.kubernetes.io/name: mempalace
+    app.kubernetes.io/instance: mempalace
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mempalace
+  template:
+    metadata:
+      labels:
+        app: mempalace
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: mempalace
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-slim
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /bootstrap/start-mempalace.sh
+          env:
+            - name: HOME
+              value: /data
+            - name: PIP_NO_CACHE_DIR
+              value: "1"
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: mempalace-data
+              mountPath: /data
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - test -x /data/venv/bin/mempalace
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - test -x /data/venv/bin/mempalace
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 2
+      volumes:
+        - name: mempalace-data
+          persistentVolumeClaim:
+            claimName: mempalace-data
+        - name: bootstrap
+          configMap:
+            name: mempalace-bootstrap
+            defaultMode: 0555

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mempalace-bootstrap
+  namespace: mempalace
+data:
+  start-mempalace.sh: |
+    #!/bin/sh
+    set -eu
+
+    export HOME=/data
+    export PATH="/data/venv/bin:${PATH}"
+
+    if [ ! -x /data/venv/bin/mempalace ]; then
+      python3 -m venv /data/venv
+      /data/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
+      /data/venv/bin/pip install --no-cache-dir mempalace==3.0.0
+    fi
+
+    mkdir -p /data/.mempalace
+
+    exec sleep infinity
