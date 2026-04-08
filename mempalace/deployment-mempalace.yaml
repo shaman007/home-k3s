@@ -22,18 +22,45 @@ spec:
       securityContext:
         fsGroup: 65532
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: bootstrap-mempalace
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-slim
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /bootstrap/bootstrap-mempalace.sh
+          env:
+            - name: HOME
+              value: /data
+            - name: PIP_NO_CACHE_DIR
+              value: "1"
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: mempalace-data
+              mountPath: /data
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
       containers:
         - name: mempalace
           image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-slim
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
-            - /bootstrap/start-mempalace.sh
+            - /bootstrap/run-host.sh
           env:
             - name: HOME
               value: /data
-            - name: PIP_NO_CACHE_DIR
-              value: "1"
           securityContext:
             runAsUser: 65532
             runAsGroup: 65532

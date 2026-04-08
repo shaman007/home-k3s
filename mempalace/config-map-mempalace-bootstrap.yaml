@@ -4,7 +4,7 @@ metadata:
   name: mempalace-bootstrap
   namespace: mempalace
 data:
-  start-mempalace.sh: |
+  bootstrap-mempalace.sh: |
     #!/bin/sh
     set -eu
 
@@ -17,6 +17,15 @@ data:
       /data/venv/bin/pip install --no-cache-dir mempalace==3.0.0
     fi
 
+    mkdir -p /data/.mempalace
+  run-host.sh: |
+    #!/bin/sh
+    set -eu
+
+    export HOME=/data
+    export PATH="/data/venv/bin:${PATH}"
+
+    test -x /data/venv/bin/mempalace
     mkdir -p /data/.mempalace
 
     exec sleep infinity
