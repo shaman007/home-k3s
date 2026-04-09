@@ -22,6 +22,102 @@ spec:
           - ml
       podTemplate:
         spec:
+          initContainers:
+            - name: elastic-internal-init-filesystem
+              command:
+                - bash
+                - -c
+                - /mnt/elastic-internal/scripts/prepare-fs.sh
+              image: docker.elastic.co/elasticsearch/elasticsearch:9.3.1
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: POD_IP
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: status.podIP
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.name
+                - name: NODE_NAME
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: spec.nodeName
+                - name: NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.namespace
+                - name: HEADLESS_SERVICE_NAME
+                  value: es-es-default
+                - name: PROBE_PASSWORD_PATH
+                  value: /mnt/elastic-internal/pod-mounted-users/elastic-internal-probe
+                - name: PROBE_USERNAME
+                  value: elastic-internal-probe
+                - name: READINESS_PROBE_PROTOCOL
+                  value: http
+                - name: NSS_SDB_USE_CACHE
+                  value: "no"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 50Mi
+                limits:
+                  memory: 50Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                privileged: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+              volumeMounts:
+                - mountPath: /mnt/elastic-internal/downward-api
+                  name: downward-api
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/elasticsearch-bin-local
+                  name: elastic-internal-elasticsearch-bin-local
+                - mountPath: /mnt/elastic-internal/elasticsearch-config
+                  name: elastic-internal-elasticsearch-config
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/elasticsearch-config-local
+                  name: elastic-internal-elasticsearch-config-local
+                - mountPath: /mnt/elastic-internal/elasticsearch-plugins-local
+                  name: elastic-internal-elasticsearch-plugins-local
+                - mountPath: /usr/share/elasticsearch/config/http-certs
+                  name: elastic-internal-http-certificates
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/pod-mounted-users
+                  name: elastic-internal-probe-user
+                  readOnly: true
+                - mountPath: /usr/share/elasticsearch/config/transport-remote-certs/
+                  name: elastic-internal-remote-certificate-authorities
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/scripts
+                  name: elastic-internal-scripts
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/transport-certificates
+                  name: elastic-internal-transport-certificates
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/unicast-hosts
+                  name: elastic-internal-unicast-hosts
+                  readOnly: true
+                - mountPath: /mnt/elastic-internal/xpack-file-realm
+                  name: elastic-internal-xpack-file-realm
+                  readOnly: true
+                - mountPath: /usr/share/elasticsearch/data
+                  name: elasticsearch-data
+                - mountPath: /usr/share/elasticsearch/logs
+                  name: elasticsearch-logs
+                - mountPath: /usr/share/elasticsearch/config/operator
+                  name: file-settings
+                  readOnly: true
+                - mountPath: /tmp
+                  name: tmp-volume
           containers:
             - name: elasticsearch
               resources:
