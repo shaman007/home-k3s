@@ -32,7 +32,7 @@ data:
         annotations:
           summary: High Load Avarage
       - alert: High Filesystem Usage
-        expr: ((node_filesystem_size_bytes{mountpoint="/", } - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 75
+        expr: ((node_filesystem_size_bytes{mountpoint="/", } - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 85
         for: 3m
         labels:
           severity: mail
@@ -144,12 +144,12 @@ data:
         annotations:
           summary: One or more targets are unreachable.
       - alert: PVC is full!
-        expr: longhorn_volume_actual_size_bytes/longhorn_volume_capacity_bytes > 0.9
+        expr: longhorn_volume_actual_size_bytes/longhorn_volume_capacity_bytes > 0.95
         for: 1m
         labels:
           severity: mail
         annotations:
-          summary: One or more PVC is >85% utilized.
+          summary: One or more PVC is >95% utilized.
 
   prometheus.yaml: |-
     global:
