@@ -24,7 +24,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: bootstrap-mempalace
-          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-slim
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-slim
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -53,7 +53,7 @@ spec:
               readOnly: true
       containers:
         - name: mempalace
-          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-slim
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-slim
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
