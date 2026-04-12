@@ -466,7 +466,7 @@ data:
         for name, count in counter.most_common(limit):
             items.append(
                 "<li style=\"margin:0 0 4px 18px;\">"
-                f"<span style=\"font-family:ui-monospace, SFMono-Regular, Menlo, monospace;\">{html.escape(str(name))}</span> "
+                f"<span style=\"font-family:ui-monospace, SFMono-Regular, Menlo, monospace;word-break:break-word;overflow-wrap:anywhere;\">{html.escape(str(name))}</span> "
                 f"<strong>{count}</strong>"
                 "</li>"
             )
@@ -493,7 +493,7 @@ data:
         postfix_stats,
         dovecot_stats,
     ):
-        ingress_rows = []
+        ingress_cards = []
         for host in hosts:
             current = ingress_stats.get(
                 host,
@@ -513,18 +513,48 @@ data:
             errors_5xx = sum(
                 count for status, count in current["status_counts"].items() if status.startswith("5")
             )
-            ingress_rows.append(
+            ingress_cards.append(
+                "<div style=\"margin-top:16px;border:1px solid #e5e7eb;border-radius:16px;background:#ffffff;overflow:hidden;\">"
+                "<div style=\"padding:16px 18px;border-bottom:1px solid #e5e7eb;background:#f8fafc;\">"
+                f"<div style=\"font-size:18px;line-height:1.35;font-weight:700;color:#111827;word-break:break-word;overflow-wrap:anywhere;\">{html.escape(host)}</div>"
+                "</div>"
+                "<div style=\"padding:18px;\">"
+                "<table style=\"width:100%;border-collapse:collapse;table-layout:fixed;\">"
                 "<tr>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;font-weight:600;color:#111827;\">{html.escape(host)}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{current['requests']}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{current['external_requests']}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{len(current['external_ips'])}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{errors_4xx}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;text-align:right;\">{errors_5xx}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;min-width:220px;\">{render_html_counter_list(current['country_counts'], 10)}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;min-width:280px;\">{render_html_counter_list(current['external_ip_counts'], 20)}</td>"
-                f"<td style=\"padding:12px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;min-width:280px;\">{render_html_counter_list(current['path_counts'], 5)}</td>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#374151;width:38%;\">Requests</td>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;color:#111827;\">{current['requests']}</td>"
                 "</tr>"
+                "<tr>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#374151;\">External</td>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;color:#111827;\">{current['external_requests']}</td>"
+                "</tr>"
+                "<tr>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#374151;\">Unique IPs</td>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;color:#111827;\">{len(current['external_ips'])}</td>"
+                "</tr>"
+                "<tr>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;color:#374151;\">4xx</td>"
+                f"<td style=\"padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;color:#111827;\">{errors_4xx}</td>"
+                "</tr>"
+                "<tr>"
+                f"<td style=\"padding:8px 10px;color:#374151;\">5xx</td>"
+                f"<td style=\"padding:8px 10px;text-align:right;font-weight:600;color:#111827;\">{errors_5xx}</td>"
+                "</tr>"
+                "</table>"
+                "<div style=\"margin-top:16px;\">"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Top 10 Countries</div>"
+                f"{render_html_counter_list(current['country_counts'], 10)}"
+                "</div>"
+                "<div style=\"margin-top:16px;\">"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Top 20 External IPs</div>"
+                f"{render_html_counter_list(current['external_ip_counts'], 20)}"
+                "</div>"
+                "<div style=\"margin-top:16px;\">"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Top 5 Paths</div>"
+                f"{render_html_counter_list(current['path_counts'], 5)}"
+                "</div>"
+                "</div>"
+                "</div>"
             )
 
         harbor_status_rows = "".join(
@@ -550,31 +580,14 @@ data:
             </div>
           </div>
 
-          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;margin-top:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
-            <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
-              <h2 style="margin:0;font-size:20px;">Public HTTP Ingress Summary</h2>
+            <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;margin-top:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
+              <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
+                <h2 style="margin:0;font-size:20px;">Public HTTP Ingress Summary</h2>
               <div style="margin-top:6px;color:#6b7280;">Requests, errors, top 10 countries, top 20 external IPs, and top 5 paths per host.</div>
-            </div>
-            <div style="overflow-x:auto;">
-              <table style="width:100%;border-collapse:collapse;min-width:1500px;">
-                <thead>
-                  <tr style="background:#f8fafc;color:#374151;text-align:left;">
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Host</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">Requests</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">External</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">Unique IPs</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">4xx</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">5xx</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Top 10 Countries</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Top 20 External IPs</th>
-                    <th style="padding:12px 10px;border-bottom:1px solid #e5e7eb;">Top 5 Paths</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {''.join(ingress_rows)}
-                </tbody>
-              </table>
-            </div>
+              </div>
+              <div style="padding:4px 16px 16px;">
+                {''.join(ingress_cards)}
+              </div>
           </div>
 
           <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:20px;">
