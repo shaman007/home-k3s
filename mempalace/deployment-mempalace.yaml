@@ -83,7 +83,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - test -x /data/venv/bin/mempalace
+                - /data/venv/bin/python -c "import mempalace"
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2
@@ -92,7 +92,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - test -x /data/venv/bin/mempalace
+                - /data/venv/bin/python -c "import mempalace"
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 2

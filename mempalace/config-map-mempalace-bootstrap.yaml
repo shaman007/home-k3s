@@ -10,8 +10,15 @@ data:
 
     export HOME=/data
     export PATH="/data/venv/bin:${PATH}"
+    expected_python="$(python3 -c 'import sys; print(str(sys.version_info.major) + "." + str(sys.version_info.minor))')"
+    actual_python=""
 
-    if [ ! -x /data/venv/bin/mempalace ]; then
+    if [ -f /data/venv/pyvenv.cfg ]; then
+      actual_python="$(awk '/^version = / {print $3}' /data/venv/pyvenv.cfg | cut -d. -f1,2)"
+    fi
+
+    if [ ! -x /data/venv/bin/mempalace ] || [ "${actual_python}" != "${expected_python}" ]; then
+      rm -rf /data/venv
       python3 -m venv /data/venv
       /data/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
       /data/venv/bin/pip install --no-cache-dir mempalace==3.0.0
@@ -25,7 +32,7 @@ data:
     export HOME=/data
     export PATH="/data/venv/bin:${PATH}"
 
-    test -x /data/venv/bin/mempalace
+    /data/venv/bin/python -c "import mempalace"
     mkdir -p /data/.mempalace
 
     exec sleep infinity
