@@ -11,3 +11,8 @@ The upstream chart telemetry is enabled in [`argocd/application-vault.yaml`](../
 ## Dashboard
 
 Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-grafana-dashboard-vault-overview.yaml`](../metrics/grafana/config-map-grafana-dashboard-vault-overview.yaml).
+
+## PKI Renewal
+
+Internal ingress TLS secrets are renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
+The CronJob expects a `vault-pki-renewer-token` secret in the `vault` namespace with a `token` key bound to a periodic Vault policy that can renew itself and issue `pki-root/issue/w386-k8s-my-lan-wildcard` plus `pki-root/issue/vault-ingress`.

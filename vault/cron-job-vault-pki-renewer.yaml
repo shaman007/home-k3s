@@ -1,0 +1,161 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-pki-renewer
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault-pki-renewer
+    app.kubernetes.io/instance: vault-pki-renewer
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "27 4 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: vault-pki-renewer
+          restartPolicy: OnFailure
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: renew
+              image: harbor.andreybondarenko.com/library/sync:latest
+              imagePullPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: VAULT_ADDR
+                  value: "http://vault.vault.svc:8200"
+                - name: VAULT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: vault-pki-renewer-token
+                      key: token
+                - name: CERT_TTL
+                  value: "720h"
+                - name: RENEW_BEFORE_SECONDS
+                  value: "604800"
+              args:
+                - |
+                  set -euo pipefail
+
+                  vault_post() {
+                    path="$1"
+                    payload="$2"
+                    host="vault.vault.svc"
+                    port="8200"
+                    payload_length="${#payload}"
+
+                    exec 3<>"/dev/tcp/${host}/${port}"
+                    printf 'POST /v1/%s HTTP/1.1\r\n' "$path" >&3
+                    printf 'Host: %s\r\n' "$host" >&3
+                    printf 'X-Vault-Token: %s\r\n' "$VAULT_TOKEN" >&3
+                    printf 'Content-Type: application/json\r\n' >&3
+                    printf 'Content-Length: %s\r\n' "$payload_length" >&3
+                    printf 'Connection: close\r\n\r\n' >&3
+                    printf '%s' "$payload" >&3
+
+                    response="$(cat <&3)"
+                    exec 3<&-
+                    exec 3>&-
+
+                    status_line="${response%%$'\r\n'*}"
+                    body="${response#*$'\r\n\r\n'}"
+                    case "$status_line" in
+                      *" 200 "*|*" 204 "*) ;;
+                      *)
+                        echo "Vault request failed: ${status_line}" >&2
+                        echo "$body" >&2
+                        return 1
+                        ;;
+                    esac
+
+                    printf '%s' "$body"
+                  }
+
+                  vault_post "auth/token/renew-self" '{}' >/dev/null
+
+                  issue_cert() {
+                    role="$1"
+                    common_name="$2"
+                    cert_path="$3"
+                    key_path="$4"
+
+                    payload="$(jq -cn --arg cn "$common_name" --arg ttl "$CERT_TTL" '{common_name: $cn, ttl: $ttl}')"
+                    response="$(vault_post "pki-root/issue/${role}" "$payload")"
+
+                    printf '%s\n%s\n' \
+                      "$(printf '%s' "$response" | jq -r '.data.certificate')" \
+                      "$(printf '%s' "$response" | jq -r '.data.issuing_ca')" > "$cert_path"
+                    printf '%s\n' "$(printf '%s' "$response" | jq -r '.data.private_key')" > "$key_path"
+                  }
+
+                  secret_needs_renewal() {
+                    namespace="$1"
+                    name="$2"
+                    current_cert="/tmp/current-${namespace}-${name}.crt"
+
+                    if ! kubectl get secret "$name" -n "$namespace" >/dev/null 2>&1; then
+                      return 0
+                    fi
+
+                    crt_b64="$(kubectl get secret "$name" -n "$namespace" -o jsonpath='{.data.tls\.crt}')"
+                    if [ -z "$crt_b64" ]; then
+                      return 0
+                    fi
+
+                    printf '%s' "$crt_b64" | base64 -d > "$current_cert"
+                    if openssl x509 -in "$current_cert" -noout -checkend "$RENEW_BEFORE_SECONDS" >/dev/null 2>&1; then
+                      return 1
+                    fi
+
+                    return 0
+                  }
+
+                  apply_secret() {
+                    namespace="$1"
+                    name="$2"
+                    cert_path="$3"
+                    key_path="$4"
+
+                    kubectl -n "$namespace" create secret tls "$name" \
+                      --cert="$cert_path" \
+                      --key="$key_path" \
+                      --dry-run=client -o yaml | kubectl apply -f -
+                  }
+
+                  wildcard_targets="argocd/argocd-tls longhorn-system/longhorn-tls mail/rspamd-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls nextcloud/office-tls"
+                  rotate_wildcard=false
+
+                  for target in $wildcard_targets; do
+                    namespace="${target%%/*}"
+                    name="${target##*/}"
+                    if secret_needs_renewal "$namespace" "$name"; then
+                      rotate_wildcard=true
+                      break
+                    fi
+                  done
+
+                  if [ "$rotate_wildcard" = true ]; then
+                    issue_cert "w386-k8s-my-lan-wildcard" "*.w386.k8s.my.lan" /tmp/wildcard.crt /tmp/wildcard.key
+                    for target in $wildcard_targets; do
+                      namespace="${target%%/*}"
+                      name="${target##*/}"
+                      apply_secret "$namespace" "$name" /tmp/wildcard.crt /tmp/wildcard.key
+                    done
+                    echo "Rotated wildcard TLS secrets"
+                  else
+                    echo "Wildcard TLS secrets still valid beyond renewal window"
+                  fi
+
+                  if secret_needs_renewal "vault" "vault-tls"; then
+                    issue_cert "vault-ingress" "vault.w386.k8s.my.lan" /tmp/vault.crt /tmp/vault.key
+                    apply_secret "vault" "vault-tls" /tmp/vault.crt /tmp/vault.key
+                    echo "Rotated vault ingress TLS secret"
+                  else
+                    echo "Vault ingress TLS secret still valid beyond renewal window"
+                  fi
