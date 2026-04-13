@@ -11,7 +11,7 @@ metadata:
     # Use Traefik's ACME resolver
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     # Apply HSTS middleware
-    traefik.ingress.kubernetes.io/router.middlewares: convertx-hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: convertx-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 
     # HTTP->HTTPS is handled globally on entryPoints,
     # so no per-ingress redirect annotation is needed.

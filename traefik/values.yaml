@@ -51,6 +51,9 @@ experimental:
     geoip2:
       moduleName: github.com/thiagotognoli/traefikgeoip
       version: v1.1.1
+    robotstxt:
+      moduleName: github.com/solution-libre/traefik-plugin-robots-txt
+      version: v0.2.2
 # Expose via MetalLB using a dedicated LAN VIP for router port-forwards.
 service:
   type: LoadBalancer
@@ -116,6 +119,19 @@ extraObjects:
       plugin:
         geoip2:
           countryDbPath: /data/geoip/dbip-country-lite.mmdb
+  - apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: robots-disallow-all
+      namespace: traefik
+    spec:
+      plugin:
+        robotstxt:
+          overwrite: true
+          enableComment: false
+          customRules: |
+            User-agent: *
+            Disallow: /
   - apiVersion: v1
     kind: ServiceAccount
     metadata:
