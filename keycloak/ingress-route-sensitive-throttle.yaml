@@ -25,8 +25,8 @@ spec:
         (PathPrefix(`/realms/master/protocol/openid-connect/auth`) ||
         PathPrefix(`/realms/master/protocol/openid-connect/token`)) &&
         !ClientIP(`192.168.1.0/24`) &&
-        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
-        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+        !HeaderRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeaderRegexp(`CF-IPCountry`, `^CZ$`)
       middlewares:
         - name: sensitive-path-throttle
         - name: hsts

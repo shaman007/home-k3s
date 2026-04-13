@@ -8,7 +8,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     kubernetes.io/ingress.class: traefik
-    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,nextcloud-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:

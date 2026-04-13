@@ -63,15 +63,10 @@ ports:
   web:
     port: 80
     exposedPort: 80
-    http:
-      middlewares:
-        - traefik-geoip-country@kubernetescrd
   websecure:
     port: 443
     exposedPort: 443
     http:
-      middlewares:
-        - traefik-geoip-country@kubernetescrd
       tls:
         enabled: true
   # TCP entrypoints for non-HTTP workloads.

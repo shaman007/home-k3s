@@ -46,8 +46,8 @@ spec:
         Host(`mastodon.andreybondarenko.com`) &&
         PathPrefix(`/auth/sign_up`) &&
         !ClientIP(`192.168.1.0/24`) &&
-        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
-        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+        !HeaderRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeaderRegexp(`CF-IPCountry`, `^CZ$`)
       middlewares:
         - name: signup-path-throttle
         - name: hsts
@@ -61,8 +61,8 @@ spec:
         Host(`mastodon.andreybondarenko.com`) &&
         PathPrefix(`/auth/sign_in`) &&
         !ClientIP(`192.168.1.0/24`) &&
-        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
-        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+        !HeaderRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeaderRegexp(`CF-IPCountry`, `^CZ$`)
       middlewares:
         - name: sensitive-path-throttle
         - name: hsts

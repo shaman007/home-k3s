@@ -7,6 +7,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
   labels:
     app: seaweedfs-s3
     app.kubernetes.io/managed-by: argoCD

@@ -24,8 +24,8 @@ spec:
         Host(`bitwarden.andreybondarenko.com`) &&
         PathPrefix(`/identity/connect/`) &&
         !ClientIP(`192.168.1.0/24`) &&
-        !HeadersRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
-        !HeadersRegexp(`CF-IPCountry`, `^CZ$`)
+        !HeaderRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
+        !HeaderRegexp(`CF-IPCountry`, `^CZ$`)
       middlewares:
         - name: sensitive-path-throttle
         - name: hsts

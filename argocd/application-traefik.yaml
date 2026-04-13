@@ -135,15 +135,10 @@ spec:
           web:
             exposedPort: 80
             port: 80
-            http:
-              middlewares:
-              - traefik-geoip-country@kubernetescrd
           websecure:
             exposedPort: 443
             port: 443
             http:
-              middlewares:
-              - traefik-geoip-country@kubernetescrd
               tls:
                 enabled: true
         providers:
