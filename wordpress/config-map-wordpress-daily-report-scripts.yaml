@@ -20,6 +20,10 @@ data:
     import subprocess
     import sys
     import tempfile
+    import time
+    import urllib.error
+    import urllib.parse
+    import urllib.request
     from collections import Counter
     from datetime import datetime, timedelta
     from email.message import EmailMessage
@@ -85,6 +89,84 @@ data:
         return result.stdout
 
 
+    def env_int(name, default):
+        value = env(name, str(default))
+        try:
+            return int(value)
+        except ValueError as exc:
+            raise SystemExit(f"Environment variable {name} must be an integer, got: {value}") from exc
+
+
+    def should_retry_http_error(exc):
+        if isinstance(exc, TimeoutError):
+            return True
+        if isinstance(exc, urllib.error.HTTPError):
+            return exc.code in {408, 429, 500, 502, 503, 504}
+        if isinstance(exc, urllib.error.URLError):
+            reason = exc.reason
+            if isinstance(reason, TimeoutError):
+                return True
+            if isinstance(reason, OSError):
+                return True
+        return False
+
+
+    def http_json(url):
+        timeout_seconds = env_int("HTTP_TIMEOUT_SECONDS", 180)
+        max_attempts = max(1, env_int("HTTP_MAX_ATTEMPTS", 3))
+        retry_delay_seconds = max(0, env_int("HTTP_RETRY_DELAY_SECONDS", 5))
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                with urllib.request.urlopen(url, timeout=timeout_seconds) as response:
+                    return json.load(response)
+            except (TimeoutError, urllib.error.HTTPError, urllib.error.URLError) as exc:
+                if attempt >= max_attempts or not should_retry_http_error(exc):
+                    raise
+                sleep_seconds = retry_delay_seconds * attempt
+                print(
+                    f"http_json retrying attempt {attempt + 1}/{max_attempts} after "
+                    f"{sleep_seconds}s for {url}: {exc}",
+                    file=sys.stderr,
+                )
+                time.sleep(sleep_seconds)
+
+
+    def loki_query_iter(base_url, query, start_ns, end_ns, *, limit=5000):
+        next_start_ns = start_ns
+        while next_start_ns < end_ns:
+            params = urllib.parse.urlencode(
+                {
+                    "query": query,
+                    "start": str(next_start_ns),
+                    "end": str(end_ns),
+                    "limit": str(limit),
+                    "direction": "forward",
+                }
+            )
+            url = f"{base_url.rstrip('/')}/query_range?{params}"
+            payload = http_json(url)
+            streams = payload.get("data", {}).get("result", [])
+            batch = []
+            for stream in streams:
+                labels = stream.get("stream", {})
+                for timestamp_ns, line in stream.get("values", []):
+                    batch.append((int(timestamp_ns), line, labels))
+
+            if not batch:
+                break
+
+            batch.sort(key=lambda item: (item[0], item[1]))
+            for item in batch:
+                yield item
+
+            last_timestamp_ns = batch[-1][0]
+            if len(batch) < limit or last_timestamp_ns >= end_ns:
+                break
+
+            next_start_ns = last_timestamp_ns + 1
+
+
     def get_time_window(time_zone_name):
         tz = ZoneInfo(time_zone_name)
         now = datetime.now(tz)
@@ -114,19 +196,10 @@ data:
         ]
 
 
-    def fetch_logs(namespace, pod_name, container, since_time):
-        return run_command(
-            [
-                "kubectl",
-                "logs",
-                "-n",
-                namespace,
-                pod_name,
-                "-c",
-                container,
-                f"--since-time={since_time}",
-            ]
-        )
+    def fetch_logs_from_loki(base_url, start_ns, end_ns):
+        query = '{namespace="wordpress", container="nginx"}'
+        for _, line, _ in loki_query_iter(base_url, query, start_ns, end_ns):
+            yield line
 
 
     def parse_json_line(line):
@@ -499,6 +572,10 @@ data:
         pod_selector = env("REPORT_POD_SELECTOR", "app=wordpress,component=web")
         container = env("REPORT_CONTAINER", "nginx")
         time_zone_name = env("REPORT_TIMEZONE", "Europe/Prague")
+        loki_base_url = env(
+            "LOKI_BASE_URL",
+            "http://loki-gateway.loki.svc.cluster.local/loki/api/v1",
+        )
         smtp_host = env("SMTP_HOST", required=True)
         smtp_port = int(env("SMTP_PORT", "25"))
         mail_from = env("MAIL_FROM", required=True)
@@ -512,7 +589,8 @@ data:
         }
 
         tz, start_local, end_local = get_time_window(time_zone_name)
-        start_utc = start_local.astimezone(ZoneInfo("UTC")).isoformat()
+        start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
+        end_ns = int(end_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
         pods = list_pods(namespace, pod_selector)
         if not pods:
             raise SystemExit(f"No pods found for selector {pod_selector} in namespace {namespace}")
@@ -530,63 +608,65 @@ data:
         total_requests = 0
         parse_failures = 0
 
-        for pod_name in pods:
-            output = fetch_logs(namespace, pod_name, container, start_utc)
-            for raw_line in output.splitlines():
-                entry = parse_line(raw_line)
-                if not entry:
-                    parse_failures += 1
-                    continue
+        for raw_line in fetch_logs_from_loki(loki_base_url, start_ns, end_ns):
+            entry = parse_line(raw_line)
+            if not entry:
+                parse_failures += 1
+                continue
 
-                timestamp = parse_timestamp(entry)
-                if not timestamp:
-                    parse_failures += 1
-                    continue
+            timestamp = parse_timestamp(entry)
+            if not timestamp:
+                parse_failures += 1
+                continue
 
-                timestamp_local = timestamp.astimezone(tz)
-                if timestamp_local < start_local or timestamp_local >= end_local:
-                    continue
+            timestamp_local = timestamp.astimezone(tz)
+            if timestamp_local < start_local or timestamp_local >= end_local:
+                continue
 
-                total_requests += 1
-                status_counts[str(entry.get("status", 0))] += 1
+            request_host = first_non_empty([entry.get("host", "")]).lower()
+            if request_host and request_host not in site_hosts:
+                continue
 
-                method = (entry.get("method") or "").upper()
-                path = canonical_path(entry.get("request_uri", "/"))
-                if is_page_request(method, path):
-                    page_counts[path] += 1
+            total_requests += 1
+            status_counts[str(entry.get("status", 0))] += 1
 
-                referrer = first_non_empty([entry.get("referer", "")])
-                if referrer and not is_internal_referrer(referrer, site_hosts):
-                    referrer_host = urlparse(referrer).netloc.lower()
-                    if referrer_host:
-                        referrer_counts[referrer_host] += 1
+            method = (entry.get("method") or "").upper()
+            path = canonical_path(entry.get("request_uri", "/"))
+            if is_page_request(method, path):
+                page_counts[path] += 1
 
-                user_agent = entry.get("user_agent", "")
-                robot_name = classify_robot(user_agent)
+            referrer = first_non_empty([entry.get("referer", "")])
+            if referrer and not is_internal_referrer(referrer, site_hosts):
+                referrer_host = urlparse(referrer).netloc.lower()
+                if referrer_host:
+                    referrer_counts[referrer_host] += 1
 
-                client_ip = pick_client_ip(entry)
-                if client_ip:
-                    unique_ips.add(client_ip)
-                    if robot_name:
-                        robot_ips.add(client_ip)
-                    else:
-                        human_ips.add(client_ip)
+            user_agent = entry.get("user_agent", "")
+            robot_name = classify_robot(user_agent)
 
+            client_ip = pick_client_ip(entry)
+            if client_ip:
+                unique_ips.add(client_ip)
                 if robot_name:
-                    robot_counts[robot_name] += 1
+                    robot_ips.add(client_ip)
+                else:
+                    human_ips.add(client_ip)
 
-                remote_user = first_non_empty([entry.get("remote_user", "")])
-                if remote_user:
-                    authenticated_users.add(remote_user)
+            if robot_name:
+                robot_counts[robot_name] += 1
 
-                country = first_non_empty(
-                    [
-                        entry.get("geoip_country_code", ""),
-                        entry.get("cf_ipcountry", ""),
-                    ]
-                ).strip().upper()
-                if country and country not in {"-", "XX", "T1"}:
-                    country_counts[country] += 1
+            remote_user = first_non_empty([entry.get("remote_user", "")])
+            if remote_user:
+                authenticated_users.add(remote_user)
+
+            country = first_non_empty(
+                [
+                    entry.get("geoip_country_code", ""),
+                    entry.get("cf_ipcountry", ""),
+                ]
+            ).strip().upper()
+            if country and country not in {"-", "XX", "T1"}:
+                country_counts[country] += 1
 
         if parse_failures:
             notes.append(f"Skipped {parse_failures} log lines that did not match the expected formats.")

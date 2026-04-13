@@ -48,6 +48,8 @@ spec:
                   value: nginx
                 - name: REPORT_TIMEZONE
                   value: Europe/Prague
+                - name: LOKI_BASE_URL
+                  value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
                 - name: SITE_TITLE
                   value: andreybondarenko.com
                 - name: SITE_HOSTS
@@ -62,6 +64,12 @@ spec:
                   value: me@andreybondarenko.com
                 - name: METRICS_CONFIGMAP_NAME
                   value: wordpress-daily-report-metrics
+                - name: HTTP_TIMEOUT_SECONDS
+                  value: "180"
+                - name: HTTP_MAX_ATTEMPTS
+                  value: "3"
+                - name: HTTP_RETRY_DELAY_SECONDS
+                  value: "5"
               resources:
                 requests:
                   cpu: 100m
