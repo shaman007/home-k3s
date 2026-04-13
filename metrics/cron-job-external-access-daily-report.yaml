@@ -36,7 +36,7 @@ spec:
               imagePullPolicy: Always
               command:
                 - python3
-                - /app/external-access-daily-report.py
+                - /opt/external-access-daily-report/external-access-daily-report.py
               env:
                 - name: REPORT_TIMEZONE
                   value: Europe/Prague
@@ -70,3 +70,12 @@ spec:
                   memory: 128Mi
                 limits:
                   memory: 256Mi
+              volumeMounts:
+                - name: report-script
+                  mountPath: /opt/external-access-daily-report
+                  readOnly: true
+          volumes:
+            - name: report-script
+              configMap:
+                name: external-access-daily-report-scripts
+                defaultMode: 0755
