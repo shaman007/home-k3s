@@ -553,8 +553,8 @@ data:
                 f"{render_html_counter_list(current['external_ip_counts'], 20)}"
                 "</div>"
                 "<div style=\"margin-top:16px;\">"
-                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Top 5 Paths</div>"
-                f"{render_html_counter_list(current['path_counts'], 5)}"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Top 10 Paths</div>"
+                f"{render_html_counter_list(current['path_counts'], 10)}"
                 "</div>"
                 "</div>"
                 "</div>"
@@ -586,7 +586,7 @@ data:
             <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;margin-top:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
               <div style="padding:18px 22px;border-bottom:1px solid #e5e7eb;background:#f8fafc;">
                 <h2 style="margin:0;font-size:20px;">Public HTTP Ingress Summary</h2>
-              <div style="margin-top:6px;color:#6b7280;">Requests, errors, top 10 countries, top 20 external IPs, and top 5 paths per host.</div>
+              <div style="margin-top:6px;color:#6b7280;">Requests, errors, top 10 countries, top 20 external IPs, and top 10 paths per host.</div>
               </div>
               <div style="padding:4px 16px 16px;">
                 {''.join(ingress_cards)}
@@ -1136,7 +1136,7 @@ data:
             path_rows.append(
                 [
                     host,
-                    summarize_top_counts(current["path_counts"], limit=5),
+                summarize_top_counts(current["path_counts"], limit=10),
                 ]
             )
 
@@ -1165,7 +1165,7 @@ data:
         lines.extend(
             [
                 "",
-                "Top 5 paths by host",
+            "Top 10 paths by host",
             ]
         )
         lines.extend(render_text_table(["Host", "Paths"], path_rows, max_widths=[32, 110]))
