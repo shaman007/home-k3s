@@ -59,15 +59,15 @@ service:
     loadBalancerClass: metallb-l2
     loadBalancerIP: 192.168.1.210
 
+additionalArguments:
+  - --entryPoints.web.http.redirections.entryPoint.to=websecure
+  - --entryPoints.web.http.redirections.entryPoint.scheme=https
+  - --entryPoints.web.http.redirections.entryPoint.permanent=true
+
 ports:
   web:
     port: 80
     exposedPort: 80
-    redirections:
-      entryPoint:
-        to: websecure
-        scheme: https
-        permanent: true
   websecure:
     port: 443
     exposedPort: 443

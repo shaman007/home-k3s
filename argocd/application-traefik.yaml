@@ -79,6 +79,9 @@ spec:
           dashboard:
             enabled: true
         additionalArguments:
+        - --entryPoints.web.http.redirections.entryPoint.to=websecure
+        - --entryPoints.web.http.redirections.entryPoint.scheme=https
+        - --entryPoints.web.http.redirections.entryPoint.permanent=true
         - --entryPoints.websecure.http.encodedCharacters.allowEncodedPercent=true
         - --entryPoints.websecure.http.encodedCharacters.allowEncodedSlash=true
         logs:
@@ -135,11 +138,6 @@ spec:
           web:
             exposedPort: 80
             port: 80
-            redirections:
-              entryPoint:
-                to: websecure
-                scheme: https
-                permanent: true
           websecure:
             exposedPort: 443
             port: 443
