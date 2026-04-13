@@ -135,6 +135,11 @@ spec:
           web:
             exposedPort: 80
             port: 80
+            redirections:
+              entryPoint:
+                to: websecure
+                scheme: https
+                permanent: true
           websecure:
             exposedPort: 443
             port: 443
