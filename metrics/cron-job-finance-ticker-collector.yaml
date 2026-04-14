@@ -1,0 +1,71 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: finance-ticker-collector
+  namespace: monitoring
+  labels:
+    app: finance-ticker-collector
+    app.kubernetes.io/name: finance-ticker-collector
+    app.kubernetes.io/instance: finance-ticker-collector
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "*/15 * * * *"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: finance-ticker-collector
+            app.kubernetes.io/name: finance-ticker-collector
+            app.kubernetes.io/instance: finance-ticker-collector
+            app.kubernetes.io/part-of: monitoring
+        spec:
+          enableServiceLinks: false
+          serviceAccountName: finance-ticker-collector
+          restartPolicy: Never
+          containers:
+            - name: finance-ticker-collector
+              image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - python3
+                - /scripts/finance-ticker-collector.py
+              env:
+                - name: REPORT_NAMESPACE
+                  value: monitoring
+                - name: REPORT_CONFIGMAP_NAME
+                  value: finance-ticker-metrics
+                - name: KUBERNETES_API_URL
+                  value: https://kubernetes.default.svc
+                - name: ETH_WALLET_ADDRESS
+                  value: 0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330
+                - name: ZETA_STOCK_SYMBOL
+                  value: ZETA
+                - name: HTTP_TIMEOUT_SECONDS
+                  value: "60"
+                - name: HTTP_MAX_ATTEMPTS
+                  value: "3"
+                - name: HTTP_RETRY_DELAY_SECONDS
+                  value: "5"
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 96Mi
+                limits:
+                  memory: 192Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: finance-ticker-collector-scripts
+                defaultMode: 0555

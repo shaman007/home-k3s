@@ -1,0 +1,313 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-ticker-collector-scripts
+  namespace: monitoring
+  labels:
+    app: finance-ticker-collector
+    app.kubernetes.io/name: finance-ticker-collector
+    app.kubernetes.io/instance: finance-ticker-collector
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  finance-ticker-collector.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    import ssl
+    import time
+    import urllib.error
+    import urllib.request
+    import xml.etree.ElementTree as ET
+    from datetime import datetime, timezone
+    from decimal import Decimal, getcontext
+    from pathlib import Path
+
+    getcontext().prec = 28
+    SA_DIR = Path("/var/run/secrets/kubernetes.io/serviceaccount")
+
+
+    def env(name, default=None, required=False):
+        value = os.environ.get(name, default)
+        if required and not value:
+            raise SystemExit(f"Missing required environment variable: {name}")
+        return value
+
+
+    def env_int(name, default):
+        raw = env(name, str(default))
+        try:
+            return int(raw)
+        except ValueError as exc:
+            raise SystemExit(f"Invalid integer for {name}: {raw!r}") from exc
+
+
+    def utc_now():
+        return datetime.now(timezone.utc)
+
+
+    def should_retry(exc):
+        if isinstance(exc, TimeoutError):
+            return True
+        if isinstance(exc, urllib.error.HTTPError):
+            return exc.code in {408, 425, 429, 500, 502, 503, 504}
+        return isinstance(exc, urllib.error.URLError)
+
+
+    def http_request(url, *, headers=None, method="GET", payload=None, ctx=None):
+        request_headers = dict(headers or {})
+        data = None
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            request_headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(url, headers=request_headers, data=data, method=method)
+        timeout = env_int("HTTP_TIMEOUT_SECONDS", 60)
+        attempts = max(1, env_int("HTTP_MAX_ATTEMPTS", 3))
+        delay = max(0, env_int("HTTP_RETRY_DELAY_SECONDS", 5))
+        last_exc = None
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=timeout, context=ctx) as response:
+                    return response.read()
+            except (TimeoutError, urllib.error.HTTPError, urllib.error.URLError) as exc:
+                last_exc = exc
+                if attempt >= attempts or not should_retry(exc):
+                    raise
+                time.sleep(delay * attempt)
+        raise last_exc
+
+
+    def http_json(url, *, headers=None, method="GET", payload=None, ctx=None):
+        return json.loads(http_request(url, headers=headers, method=method, payload=payload, ctx=ctx).decode("utf-8"))
+
+
+    def kube_client():
+        token = (SA_DIR / "token").read_text(encoding="utf-8").strip()
+        ctx = ssl.create_default_context(cafile=str(SA_DIR / "ca.crt"))
+        base = env("KUBERNETES_API_URL", "https://kubernetes.default.svc").rstrip("/")
+
+        def call(path, method="GET", payload=None):
+            return http_json(
+                base + path,
+                headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+                method=method,
+                payload=payload,
+                ctx=ctx,
+            )
+
+        return call
+
+
+    def decimal_from(value):
+        return Decimal(str(value))
+
+
+    def format_decimal(value):
+        normalized = decimal_from(value).normalize()
+        text = format(normalized, "f")
+        if "." in text:
+            text = text.rstrip("0").rstrip(".")
+        return text or "0"
+
+
+    def fetch_crypto_prices():
+        url = (
+            env("COINGECKO_SIMPLE_PRICE_URL", "https://api.coingecko.com/api/v3/simple/price")
+            + "?ids=bitcoin,ethereum&vs_currencies=usd,eur,czk&include_last_updated_at=true"
+        )
+        payload = http_json(url, headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"})
+        return {
+            "BTC": {
+                "usd": decimal_from(payload["bitcoin"]["usd"]),
+                "eur": decimal_from(payload["bitcoin"]["eur"]),
+                "czk": decimal_from(payload["bitcoin"]["czk"]),
+                "updated_at": int(payload["bitcoin"].get("last_updated_at", 0)),
+                "source": "coingecko",
+            },
+            "ETH": {
+                "usd": decimal_from(payload["ethereum"]["usd"]),
+                "eur": decimal_from(payload["ethereum"]["eur"]),
+                "czk": decimal_from(payload["ethereum"]["czk"]),
+                "updated_at": int(payload["ethereum"].get("last_updated_at", 0)),
+                "source": "coingecko",
+            },
+        }
+
+
+    def fetch_stock_price():
+        base = env("YAHOO_FINANCE_CHART_URL", "https://query1.finance.yahoo.com/v8/finance/chart").rstrip("/")
+        symbol = env("ZETA_STOCK_SYMBOL", "ZETA")
+        payload = http_json(
+            f"{base}/{symbol}?interval=1d&range=5d",
+            headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
+        )
+        result = payload.get("chart", {}).get("result", [])
+        if not result:
+            raise SystemExit(f"No chart data returned for {symbol}")
+        meta = result[0].get("meta", {})
+        price = meta.get("regularMarketPrice")
+        if price is None:
+            raise SystemExit(f"Missing regularMarketPrice for {symbol}")
+        return {"symbol": symbol, "price_usd": decimal_from(price), "source": "yahoo_finance"}
+
+
+    def fetch_fx_rates():
+        payload = http_request(
+            env("ECB_FX_URL", "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"),
+            headers={"Accept": "application/xml", "User-Agent": "finance-ticker-collector/1.0"},
+        )
+        root = ET.fromstring(payload)
+        ns = {"def": "http://www.ecb.int/vocabulary/2002-08-01/eurofxref"}
+        rates = {}
+        for cube in root.findall(".//def:Cube[@currency]", ns):
+            rates[cube.attrib["currency"]] = decimal_from(cube.attrib["rate"])
+        eur_to_usd = rates["USD"]
+        eur_to_czk = rates["CZK"]
+        return {
+            ("CZK", "USD"): eur_to_usd / eur_to_czk,
+            ("CZK", "EUR"): Decimal("1") / eur_to_czk,
+            ("USD", "EUR"): Decimal("1") / eur_to_usd,
+            "source": "ecb",
+        }
+
+
+    def fetch_eth_balance():
+        address = env("ETH_WALLET_ADDRESS", required=True)
+        payload = http_json(
+            env("ETH_RPC_URL", "https://cloudflare-eth.com"),
+            method="POST",
+            payload={"jsonrpc": "2.0", "method": "eth_getBalance", "params": [address, "latest"], "id": 1},
+            headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
+        )
+        if "result" not in payload:
+            raise SystemExit(f"Unexpected Ethereum RPC response: {payload!r}")
+        return {
+            "address": address,
+            "balance_eth": Decimal(int(payload["result"], 16)) / Decimal("1000000000000000000"),
+            "source": "ethereum_rpc",
+        }
+
+
+    def render_report(collected_at, crypto, stock, fx_rates, wallet):
+        lines = [
+            "Finance ticker collector",
+            "",
+            f"Generated: {collected_at.strftime('%Y-%m-%d %H:%M:%S UTC')}",
+            f"Wallet: {wallet['address']}",
+            "",
+            "Prices:",
+            f"  - BTC: {format_decimal(crypto['BTC']['usd'])} USD",
+            f"  - ETH: {format_decimal(crypto['ETH']['usd'])} USD",
+            f"  - {stock['symbol']}: {format_decimal(stock['price_usd'])} USD",
+            "",
+            "FX:",
+            f"  - CZK/USD: {format_decimal(fx_rates[('CZK', 'USD')])}",
+            f"  - CZK/EUR: {format_decimal(fx_rates[('CZK', 'EUR')])}",
+            f"  - USD/EUR: {format_decimal(fx_rates[('USD', 'EUR')])}",
+            "",
+            "Wallet:",
+            f"  - ETH balance: {format_decimal(wallet['balance_eth'])} ETH",
+            f"  - USD value: {format_decimal(wallet['value_usd'])}",
+            f"  - EUR value: {format_decimal(wallet['value_eur'])}",
+            f"  - CZK value: {format_decimal(wallet['value_czk'])}",
+        ]
+        return "\n".join(lines).strip() + "\n"
+
+
+    def render_metrics(collected_at, crypto, stock, fx_rates, wallet):
+        lines = [
+            "# HELP finance_collection_timestamp_seconds Unix timestamp when the finance collector last wrote metrics.",
+            "# TYPE finance_collection_timestamp_seconds gauge",
+            f'finance_collection_timestamp_seconds{{scope="cluster"}} {int(collected_at.timestamp())}',
+            "# HELP finance_collection_success Whether the latest finance collection completed successfully.",
+            "# TYPE finance_collection_success gauge",
+            'finance_collection_success{scope="cluster"} 1',
+            "# HELP finance_price_last_updated_seconds Last-updated timestamp for a collected price source when available.",
+            "# TYPE finance_price_last_updated_seconds gauge",
+            "# HELP finance_asset_price Asset price by symbol and quote currency.",
+            "# TYPE finance_asset_price gauge",
+            "# HELP finance_fx_rate Foreign-exchange rate quoted as 1 base currency in quote currency.",
+            "# TYPE finance_fx_rate gauge",
+            "# HELP finance_wallet_balance Wallet balance by address and asset.",
+            "# TYPE finance_wallet_balance gauge",
+            "# HELP finance_wallet_value Wallet balance converted into quote currency.",
+            "# TYPE finance_wallet_value gauge",
+            "# HELP finance_source_up Whether a specific upstream source succeeded during the latest collection.",
+            "# TYPE finance_source_up gauge",
+        ]
+        for symbol, values in crypto.items():
+            for quote in ("USD", "EUR", "CZK"):
+                lines.append(
+                    f'finance_asset_price{{symbol="{symbol}",quote="{quote}",source="{values["source"]}"}} {format_decimal(values[quote.lower()])}'
+                )
+            lines.append(
+                f'finance_price_last_updated_seconds{{symbol="{symbol}",source="{values["source"]}"}} {values["updated_at"]}'
+            )
+        lines.append(
+            f'finance_asset_price{{symbol="{stock["symbol"]}",quote="USD",source="{stock["source"]}"}} {format_decimal(stock["price_usd"])}'
+        )
+        for base, quote in (("CZK", "USD"), ("CZK", "EUR"), ("USD", "EUR")):
+            lines.append(
+                f'finance_fx_rate{{base="{base}",quote="{quote}",source="{fx_rates["source"]}"}} {format_decimal(fx_rates[(base, quote)])}'
+            )
+        lines.append(
+            f'finance_wallet_balance{{address="{wallet["address"]}",asset="ETH",source="{wallet["source"]}"}} {format_decimal(wallet["balance_eth"])}'
+        )
+        for quote, value in (("USD", wallet["value_usd"]), ("EUR", wallet["value_eur"]), ("CZK", wallet["value_czk"])):
+            lines.append(
+                f'finance_wallet_value{{address="{wallet["address"]}",asset="ETH",quote="{quote}"}} {format_decimal(value)}'
+            )
+        for source in ("coingecko", "yahoo_finance", "ecb", "ethereum_rpc"):
+            lines.append(f'finance_source_up{{source="{source}"}} 1')
+        return "\n".join(lines).strip() + "\n"
+
+
+    def upsert_configmap(kube, report, metrics):
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        name = env("REPORT_CONFIGMAP_NAME", "finance-ticker-metrics")
+        body = {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": name,
+                "namespace": namespace,
+                "labels": {
+                    "app": "finance-ticker-collector",
+                    "app.kubernetes.io/name": "finance-ticker-collector",
+                    "app.kubernetes.io/instance": "finance-ticker-collector",
+                    "app.kubernetes.io/part-of": "monitoring",
+                    "app.kubernetes.io/managed-by": "argoCD",
+                },
+            },
+            "data": {"report.txt": report, "metrics.prom": metrics},
+        }
+        path = f"/api/v1/namespaces/{namespace}/configmaps/{name}"
+        try:
+            current = kube(path)
+            body["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
+            kube(path, method="PUT", payload=body)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+            kube(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
+
+
+    def main():
+        kube = kube_client()
+        collected_at = utc_now()
+        crypto = fetch_crypto_prices()
+        stock = fetch_stock_price()
+        fx_rates = fetch_fx_rates()
+        wallet = fetch_eth_balance()
+        wallet["value_usd"] = wallet["balance_eth"] * crypto["ETH"]["usd"]
+        wallet["value_eur"] = wallet["balance_eth"] * crypto["ETH"]["eur"]
+        wallet["value_czk"] = wallet["balance_eth"] * crypto["ETH"]["czk"]
+        report = render_report(collected_at, crypto, stock, fx_rates, wallet)
+        metrics = render_metrics(collected_at, crypto, stock, fx_rates, wallet)
+        upsert_configmap(kube, report, metrics)
+        print(report)
+
+
+    if __name__ == "__main__":
+        main()

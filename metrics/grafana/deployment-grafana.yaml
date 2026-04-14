@@ -135,3 +135,5 @@ spec:
                   name: grafana-dashboard-external-access-analytics
               - configMap:
                   name: grafana-dashboard-platform-health
+              - configMap:
+                  name: grafana-dashboard-finance-ticker

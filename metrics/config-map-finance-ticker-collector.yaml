@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: finance-ticker-metrics
+  namespace: monitoring
+  labels:
+    app: finance-ticker-collector
+    app.kubernetes.io/name: finance-ticker-collector
+    app.kubernetes.io/instance: finance-ticker-collector
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  metrics.prom: |
+    # HELP finance_collection_timestamp_seconds Unix timestamp when the finance collector last wrote metrics.
+    # TYPE finance_collection_timestamp_seconds gauge
+    finance_collection_timestamp_seconds{scope="cluster"} 0
+    # HELP finance_collection_success Whether the latest finance collection completed successfully.
+    # TYPE finance_collection_success gauge
+    finance_collection_success{scope="cluster"} 0
+  report.txt: |
+    Waiting for the first successful finance-ticker-collector run.

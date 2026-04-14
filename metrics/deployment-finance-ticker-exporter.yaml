@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finance-ticker-exporter
+  namespace: monitoring
+  labels:
+    app: finance-ticker-exporter
+    app.kubernetes.io/name: finance-ticker-exporter
+    app.kubernetes.io/instance: finance-ticker-exporter
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: finance-ticker-exporter
+  template:
+    metadata:
+      labels:
+        app: finance-ticker-exporter
+        app.kubernetes.io/name: finance-ticker-exporter
+        app.kubernetes.io/instance: finance-ticker-exporter
+        app.kubernetes.io/part-of: monitoring
+    spec:
+      containers:
+        - name: nginx
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.29.8
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - containerPort: 9090
+              name: metrics
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+            - name: metrics-data
+              mountPath: /metrics-data
+              readOnly: true
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+      volumes:
+        - name: config
+          configMap:
+            name: finance-ticker-exporter
+        - name: metrics-data
+          configMap:
+            name: finance-ticker-metrics
+        - name: cache
+          emptyDir:
+            sizeLimit: 32Mi
+        - name: run
+          emptyDir:
+            sizeLimit: 8Mi
