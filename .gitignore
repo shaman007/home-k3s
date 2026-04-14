@@ -1,4 +1,5 @@
 secret.yaml
+.tmp*
 # Secrets
 *.key
 *.pem
