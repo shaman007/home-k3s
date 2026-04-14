@@ -279,7 +279,20 @@ data:
 
         ingresses = kube("/apis/networking.k8s.io/v1/ingresses").get("items", [])
         ingressroutes = kube("/apis/traefik.io/v1alpha1/ingressroutes").get("items", [])
-        throttle_namespaces = {item["metadata"]["namespace"] for item in ingressroutes if item["metadata"]["name"] == "ingress-route-sensitive-throttle"}
+        throttle_routes = {}
+        for item in ingressroutes:
+            if item["metadata"]["name"] != "sensitive-path-throttle":
+                continue
+            namespace = item["metadata"]["namespace"]
+            hosts = set()
+            for route in item.get("spec", {}).get("routes", []):
+                match = route.get("match", "")
+                parts = match.split("Host(`")
+                for part in parts[1:]:
+                    host = part.split("`", 1)[0]
+                    if host:
+                        hosts.add(host)
+            throttle_routes[namespace] = hosts
         warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 14, int)
         public_suffixes = (".andreybondarenko.com", ".shaman007.com")
         internal_suffix = ".k8s.my.lan"
@@ -296,8 +309,9 @@ data:
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
             if public_hosts and "traefik-robots-disallow-all@kubernetescrd" not in middleware_ref:
                 guard_issues.extend({"namespace": namespace, "item": host, "value": 0} for host in public_hosts)
-            if public_hosts and namespace not in throttle_namespaces:
-                guard_issues.extend({"namespace": namespace, "item": host, "value": 0} for host in public_hosts)
+            for host in public_hosts:
+                if host in throttle_routes.get(namespace, set()):
+                    continue
             for tls in ingress.get("spec", {}).get("tls", []):
                 name = tls.get("secretName")
                 if not name:
@@ -413,7 +427,11 @@ data:
         ]
         checks.append(check("monitoring_stack", grafana_up >= 1 and prometheus_up >= 1 and thanos_up >= 1 and compactions > 0, f"Monitoring stack: grafana={grafana_up:.0f}, prometheus={prometheus_up:.0f}, thanos={thanos_up:.0f}, compactions_24h={compactions:.0f}.", stack_details))
 
-        vault_sealed = prom_scalar('max(vault_sys_sealed{job="vault"})', 1.0)
+        vault_pods = kube("/api/v1/namespaces/vault/pods").get("items", [])
+        active_pod = next((pod for pod in vault_pods if pod.get("metadata", {}).get("labels", {}).get("vault-active") == "true"), None)
+        vault_sealed = 1.0
+        if active_pod and active_pod.get("metadata", {}).get("labels", {}).get("vault-sealed") == "false":
+            vault_sealed = 0.0
         vault_up = prom_scalar('sum(up{job="vault"} == 1)', 0.0)
         vault_details = [
             {"namespace": "vault", "item": "sealed", "value": vault_sealed, "value_name": "vault_sealed"},
