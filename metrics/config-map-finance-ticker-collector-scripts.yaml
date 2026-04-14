@@ -174,19 +174,41 @@ data:
 
     def fetch_eth_balance():
         address = env("ETH_WALLET_ADDRESS", required=True)
-        payload = http_json(
-            env("ETH_RPC_URL", "https://cloudflare-eth.com"),
-            method="POST",
-            payload={"jsonrpc": "2.0", "method": "eth_getBalance", "params": [address, "latest"], "id": 1},
-            headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
-        )
-        if "result" not in payload:
-            raise SystemExit(f"Unexpected Ethereum RPC response: {payload!r}")
-        return {
-            "address": address,
-            "balance_eth": Decimal(int(payload["result"], 16)) / Decimal("1000000000000000000"),
-            "source": "ethereum_rpc",
-        }
+        rpc_urls = [
+            value.strip()
+            for value in env(
+                "ETH_RPC_URLS",
+                ",".join(
+                    [
+                        env("ETH_RPC_URL", "https://cloudflare-eth.com"),
+                        "https://ethereum-rpc.publicnode.com",
+                        "https://rpc.ankr.com/eth",
+                    ]
+                ),
+            ).split(",")
+            if value.strip()
+        ]
+        last_error = None
+        for rpc_url in rpc_urls:
+            try:
+                payload = http_json(
+                    rpc_url,
+                    method="POST",
+                    payload={"jsonrpc": "2.0", "method": "eth_getBalance", "params": [address, "latest"], "id": 1},
+                    headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
+                )
+                if "result" not in payload:
+                    raise ValueError(f"Unexpected Ethereum RPC response from {rpc_url}: {payload!r}")
+                print(f"Fetched ETH balance from {rpc_url}")
+                return {
+                    "address": address,
+                    "balance_eth": Decimal(int(payload["result"], 16)) / Decimal("1000000000000000000"),
+                    "source": "ethereum_rpc",
+                }
+            except Exception as exc:
+                last_error = exc
+                print(f"Ethereum RPC failed for {rpc_url}: {exc}")
+        raise SystemExit(f"All Ethereum RPC endpoints failed: {last_error}")
 
 
     def render_report(collected_at, crypto, stock, fx_rates, wallet):
