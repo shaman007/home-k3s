@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-token-rotator
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault-token-rotator
+    app.kubernetes.io/instance: vault-token-rotator
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: vault-token-rotator
+          restartPolicy: OnFailure
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: rotate
+              image: harbor.andreybondarenko.com/library/sync:latest
+              imagePullPolicy: Always
+              command: ["/bin/bash", "/scripts/rotate-tokens.sh"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: VAULT_ADDR
+                  value: "http://vault-active.vault.svc:8200"
+                - name: VAULT_BOOTSTRAP_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: vault-token-rotator-token
+                      key: token
+                - name: RENEW_BEFORE_SECONDS
+                  value: "2592000"
+                - name: DEFAULT_TOKEN_TTL
+                  value: "17520h"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: vault-token-rotator-scripts
+                defaultMode: 0555

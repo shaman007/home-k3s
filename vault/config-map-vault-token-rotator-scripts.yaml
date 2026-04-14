@@ -1,0 +1,208 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-token-rotator-scripts
+  namespace: vault
+data:
+  rotate-tokens.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    : "${VAULT_ADDR:=http://vault-active.vault.svc:8200}"
+    : "${RENEW_BEFORE_SECONDS:=2592000}"
+    : "${DEFAULT_TOKEN_TTL:=17520h}"
+    : "${VAULT_BOOTSTRAP_TOKEN:?VAULT_BOOTSTRAP_TOKEN is required}"
+
+    vault_host="${VAULT_ADDR#http://}"
+    vault_host="${vault_host#https://}"
+    vault_host="${vault_host%%/*}"
+    vault_port="80"
+    if [[ "$vault_host" == *:* ]]; then
+      vault_port="${vault_host##*:}"
+      vault_host="${vault_host%%:*}"
+    elif [[ "$VAULT_ADDR" == https://* ]]; then
+      echo "HTTPS Vault endpoints are not supported by this script" >&2
+      exit 1
+    fi
+
+    vault_request() {
+      local token="$1"
+      local method="$2"
+      local path="$3"
+      local payload="${4:-}"
+      local payload_length="${#payload}"
+      local response status_line
+      local attempts=0
+      local max_attempts="${VAULT_REQUEST_ATTEMPTS:-5}"
+
+      while ! exec 3<>"/dev/tcp/${vault_host}/${vault_port}"; do
+        attempts=$((attempts + 1))
+        if (( attempts >= max_attempts )); then
+          VAULT_STATUS="000"
+          VAULT_BODY="failed to connect to ${vault_host}:${vault_port} after ${attempts} attempts"
+          return
+        fi
+        sleep 2
+      done
+
+      printf '%s /v1/%s HTTP/1.1\r\n' "$method" "$path" >&3
+      printf 'Host: %s\r\n' "$vault_host" >&3
+      printf 'X-Vault-Token: %s\r\n' "$token" >&3
+      printf 'Content-Type: application/json\r\n' >&3
+      printf 'Content-Length: %s\r\n' "$payload_length" >&3
+      printf 'Connection: close\r\n\r\n' >&3
+      printf '%s' "$payload" >&3
+
+      response="$(cat <&3)"
+      exec 3<&-
+      exec 3>&-
+
+      status_line="${response%%$'\r\n'*}"
+      VAULT_STATUS="$(printf '%s' "$status_line" | awk '{print $2}')"
+      VAULT_BODY="${response#*$'\r\n\r\n'}"
+    }
+
+    ensure_shared_policy() {
+      local policy payload
+      read -r -d '' policy <<'EOF' || true
+    path "auth/token/lookup-self" {
+      capabilities = ["read"]
+    }
+    EOF
+      payload="$(jq -cn --arg policy "$policy" '{policy: $policy}')"
+      vault_request "$VAULT_BOOTSTRAP_TOKEN" PUT "sys/policies/acl/external-secrets-token" "$payload"
+      if [[ "$VAULT_STATUS" != "200" && "$VAULT_STATUS" != "204" ]]; then
+        echo "failed to ensure external-secrets-token policy: $VAULT_STATUS" >&2
+        echo "$VAULT_BODY" >&2
+        exit 1
+      fi
+    }
+
+    collect_store_refs() {
+      kubectl get secretstores -A -o json | jq -r '
+        .items[]
+        | . as $store
+        | .spec.provider.vault.auth.tokenSecretRef? as $ref
+        | select($ref.name != null and $ref.key != null)
+        | [
+            "SecretStore",
+            $store.metadata.namespace,
+            $store.metadata.name,
+            ($ref.namespace // $store.metadata.namespace),
+            $ref.name,
+            $ref.key,
+            ($store.metadata.annotations["vault.w386.k8s.my.lan/token-policies"] // "")
+          ]
+        | @tsv
+      '
+
+      kubectl get clustersecretstores -o json | jq -r '
+        .items[]
+        | . as $store
+        | .spec.provider.vault.auth.tokenSecretRef? as $ref
+        | select($ref.name != null and $ref.key != null and $ref.namespace != null)
+        | [
+            "ClusterSecretStore",
+            "",
+            $store.metadata.name,
+            $ref.namespace,
+            $ref.name,
+            $ref.key,
+            ($store.metadata.annotations["vault.w386.k8s.my.lan/token-policies"] // "")
+          ]
+        | @tsv
+      '
+    }
+
+    rotate_secret_token() {
+      local store_kind="$1"
+      local store_namespace="$2"
+      local store_name="$3"
+      local secret_namespace="$4"
+      local secret_name="$5"
+      local secret_key="$6"
+      local policy_hint="$7"
+      local secret_json token_b64 current_token lookup_payload creation_ttl ttl
+      local policies_json ttl_value create_payload new_token patch
+
+      secret_json="$(kubectl get secret "$secret_name" -n "$secret_namespace" -o json 2>/dev/null || true)"
+      if [[ -z "$secret_json" ]]; then
+        echo "skip ${secret_namespace}/${secret_name}: secret not found"
+        return
+      fi
+
+      token_b64="$(printf '%s' "$secret_json" | jq -r --arg key "$secret_key" '.data[$key] // empty')"
+      if [[ -z "$token_b64" ]]; then
+        echo "skip ${secret_namespace}/${secret_name}: key ${secret_key} missing"
+        return
+      fi
+
+      current_token="$(printf '%s' "$token_b64" | base64 -d)"
+      lookup_payload="$(jq -cn --arg token "$current_token" '{token: $token}')"
+      vault_request "$VAULT_BOOTSTRAP_TOKEN" POST "auth/token/lookup" "$lookup_payload"
+
+      if [[ "$VAULT_STATUS" == "200" ]]; then
+        ttl="$(printf '%s' "$VAULT_BODY" | jq -r '.data.ttl // 0')"
+        creation_ttl="$(printf '%s' "$VAULT_BODY" | jq -r '.data.creation_ttl // 0')"
+        policies_json="$(printf '%s' "$VAULT_BODY" | jq -c '[.data.policies[]? | select(. != "default" and . != "root")]')"
+        if (( ttl > RENEW_BEFORE_SECONDS )); then
+          echo "keep ${secret_namespace}/${secret_name}: ttl ${ttl}s"
+          return
+        fi
+      else
+        if [[ -z "$policy_hint" ]]; then
+          echo "skip ${secret_namespace}/${secret_name}: token invalid and no policy hint on ${store_kind}/${store_namespace}${store_namespace:+/}${store_name}"
+          return
+        fi
+        creation_ttl=0
+        policies_json="$(printf '%s' "$policy_hint" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))')"
+        echo "recover ${secret_namespace}/${secret_name}: token invalid, using policy hint ${policy_hint}"
+      fi
+
+      if [[ "$(printf '%s' "$policies_json" | jq 'length')" -eq 0 ]]; then
+        echo "skip ${secret_namespace}/${secret_name}: no non-default policies to rotate"
+        return
+      fi
+
+      policies_json="$(printf '%s' "$policies_json" | jq -c '. + ["external-secrets-token"] | unique')"
+      if (( creation_ttl > 0 )); then
+        ttl_value="${creation_ttl}s"
+      else
+        ttl_value="$DEFAULT_TOKEN_TTL"
+      fi
+
+      create_payload="$(jq -cn \
+        --argjson policies "$policies_json" \
+        --arg ttl "$ttl_value" \
+        --arg display "token-${secret_namespace}-${secret_name}" \
+        '{policies: $policies, ttl: $ttl, display_name: $display}')"
+      vault_request "$VAULT_BOOTSTRAP_TOKEN" POST "auth/token/create" "$create_payload"
+      if [[ "$VAULT_STATUS" != "200" ]]; then
+        echo "failed to create token for ${secret_namespace}/${secret_name}: $VAULT_STATUS" >&2
+        echo "$VAULT_BODY" >&2
+        return
+      fi
+
+      new_token="$(printf '%s' "$VAULT_BODY" | jq -r '.auth.client_token')"
+      patch="$(jq -cn --arg key "$secret_key" --arg value "$(printf '%s' "$new_token" | base64 | tr -d '\n')" '{data: {($key): $value}}')"
+      kubectl patch secret "$secret_name" -n "$secret_namespace" --type merge --patch "$patch" >/dev/null
+      echo "rotated ${secret_namespace}/${secret_name} via ${store_kind}/${store_namespace}${store_namespace:+/}${store_name}"
+    }
+
+    main() {
+      local entry store_kind store_namespace store_name secret_namespace secret_name secret_key policy_hint
+      declare -A seen=()
+
+      ensure_shared_policy
+
+      while IFS=$'\t' read -r store_kind store_namespace store_name secret_namespace secret_name secret_key policy_hint; do
+        [[ -z "${secret_namespace:-}" || -z "${secret_name:-}" || -z "${secret_key:-}" ]] && continue
+        if [[ -n "${seen["$secret_namespace/$secret_name/$secret_key"]:-}" ]]; then
+          continue
+        fi
+        seen["$secret_namespace/$secret_name/$secret_key"]=1
+        rotate_secret_token "$store_kind" "$store_namespace" "$store_name" "$secret_namespace" "$secret_name" "$secret_key" "$policy_hint"
+      done < <(collect_store_refs)
+    }
+
+    main
