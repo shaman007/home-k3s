@@ -45,7 +45,7 @@ spec:
                 - name: KUBERNETES_API_URL
                   value: https://kubernetes.default.svc
                 - name: ETH_WALLET_ADDRESS
-                  value: 0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330
+                  value: 0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98
                 - name: ZETA_STOCK_SYMBOL
                   value: ZETA
                 - name: HTTP_TIMEOUT_SECONDS

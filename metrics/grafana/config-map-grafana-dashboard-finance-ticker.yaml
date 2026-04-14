@@ -95,7 +95,7 @@ data:
           "title": "Wallet ETH",
           "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_balance{asset=\"ETH\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_balance{asset=\"ETH\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "none","decimals": 6},"overrides": []}
         },
@@ -105,7 +105,7 @@ data:
           "title": "Wallet USD",
           "gridPos": {"h": 4, "w": 6, "x": 6, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 2},"overrides": []}
         },
@@ -115,7 +115,7 @@ data:
           "title": "Wallet EUR",
           "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyEUR","decimals": 2},"overrides": []}
         },
@@ -125,7 +125,7 @@ data:
           "title": "Wallet CZK",
           "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 2},"overrides": []}
         },
@@ -150,7 +150,7 @@ data:
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
             {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ZETA\",quote=\"USD\"}", "legendFormat": "ZETA/USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "Wallet USD"}
+            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}", "legendFormat": "Wallet USD"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
@@ -176,12 +176,136 @@ data:
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
-            {"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "EUR"},
-            {"refId": "C", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "CZK"}
+            {"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}", "legendFormat": "USD"},
+            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}", "legendFormat": "EUR"},
+            {"refId": "C", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}", "legendFormat": "CZK"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "short","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 15,
+          "type": "timeseries",
+          "title": "Brent",
+          "gridPos": {"h": 7, "w": 12, "x": 0, "y": 24},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [
+            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"BZ=F\",quote=\"USD\"}", "legendFormat": "Brent"}
+          ],
+          "options": {"legend": {"displayMode": "hidden", "placement": "bottom", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 2,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 16,
+          "type": "timeseries",
+          "title": "Gold",
+          "gridPos": {"h": 7, "w": 12, "x": 12, "y": 24},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [
+            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"GC=F\",quote=\"USD\"}", "legendFormat": "Gold"}
+          ],
+          "options": {"legend": {"displayMode": "hidden", "placement": "bottom", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 2,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 17,
+          "type": "timeseries",
+          "title": "Apple",
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 31},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"AAPL\",quote=\"USD\"}", "legendFormat": "Apple"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 18,
+          "type": "timeseries",
+          "title": "Microsoft",
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 31},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"MSFT\",quote=\"USD\"}", "legendFormat": "Microsoft"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 19,
+          "type": "timeseries",
+          "title": "Alphabet",
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 31},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"GOOGL\",quote=\"USD\"}", "legendFormat": "Alphabet"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 20,
+          "type": "timeseries",
+          "title": "Oracle",
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 31},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ORCL\",quote=\"USD\"}", "legendFormat": "Oracle"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 21,
+          "type": "timeseries",
+          "title": "Netflix",
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 37},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"NFLX\",quote=\"USD\"}", "legendFormat": "Netflix"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 22,
+          "type": "timeseries",
+          "title": "S&P 500",
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 37},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"^GSPC\",quote=\"USD\"}", "legendFormat": "S&P 500"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "short","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 23,
+          "type": "timeseries",
+          "title": "NASDAQ",
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 37},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"^IXIC\",quote=\"USD\"}", "legendFormat": "NASDAQ"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "short","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 24,
+          "type": "timeseries",
+          "title": "Dow Jones",
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 37},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"^DJI\",quote=\"USD\"}", "legendFormat": "Dow Jones"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "short","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 25,
+          "type": "timeseries",
+          "title": "Russell 2000",
+          "gridPos": {"h": 6, "w": 6, "x": 0, "y": 43},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"^RUT\",quote=\"USD\"}", "legendFormat": "Russell 2000"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "short","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 26,
+          "type": "timeseries",
+          "title": "VIX",
+          "gridPos": {"h": 6, "w": 6, "x": 6, "y": 43},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"^VIX\",quote=\"USD\"}", "legendFormat": "VIX"}],
+          "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+          "fieldConfig": {"defaults": {"unit": "short","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
         }
       ],
       "refresh": "15m",

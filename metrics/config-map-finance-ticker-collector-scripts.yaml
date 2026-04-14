@@ -135,9 +135,8 @@ data:
         }
 
 
-    def fetch_stock_price():
+    def fetch_yahoo_price(symbol):
         base = env("YAHOO_FINANCE_CHART_URL", "https://query1.finance.yahoo.com/v8/finance/chart").rstrip("/")
-        symbol = env("ZETA_STOCK_SYMBOL", "ZETA")
         payload = http_json(
             f"{base}/{symbol}?interval=1d&range=5d",
             headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
@@ -150,6 +149,34 @@ data:
         if price is None:
             raise SystemExit(f"Missing regularMarketPrice for {symbol}")
         return {"symbol": symbol, "price_usd": decimal_from(price), "source": "yahoo_finance"}
+
+
+    def fetch_yahoo_assets():
+        assets = [
+            ("ZETA", "Zeta Global"),
+            ("BZ=F", "Brent"),
+            ("GC=F", "Gold"),
+            ("AAPL", "Apple"),
+            ("MSFT", "Microsoft"),
+            ("GOOGL", "Alphabet"),
+            ("ORCL", "Oracle"),
+            ("NFLX", "Netflix"),
+            ("^GSPC", "S&P 500"),
+            ("^IXIC", "NASDAQ"),
+            ("^DJI", "Dow Jones"),
+            ("^RUT", "Russell 2000"),
+            ("^VIX", "VIX"),
+        ]
+        return [
+            {
+                "symbol": symbol,
+                "name": name,
+                "price_usd": fetched["price_usd"],
+                "source": fetched["source"],
+            }
+            for symbol, name in assets
+            for fetched in [fetch_yahoo_price(symbol)]
+        ]
 
 
     def fetch_fx_rates():
@@ -211,7 +238,7 @@ data:
         raise SystemExit(f"All Ethereum RPC endpoints failed: {last_error}")
 
 
-    def render_report(collected_at, crypto, stock, fx_rates, wallet):
+    def render_report(collected_at, crypto, yahoo_assets, fx_rates, wallet):
         lines = [
             "Finance ticker collector",
             "",
@@ -221,7 +248,9 @@ data:
             "Prices:",
             f"  - BTC: {format_decimal(crypto['BTC']['usd'])} USD",
             f"  - ETH: {format_decimal(crypto['ETH']['usd'])} USD",
-            f"  - {stock['symbol']}: {format_decimal(stock['price_usd'])} USD",
+            f"  - ZETA: {format_decimal(next(item['price_usd'] for item in yahoo_assets if item['symbol'] == 'ZETA'))} USD",
+            f"  - Brent: {format_decimal(next(item['price_usd'] for item in yahoo_assets if item['symbol'] == 'BZ=F'))} USD",
+            f"  - Gold: {format_decimal(next(item['price_usd'] for item in yahoo_assets if item['symbol'] == 'GC=F'))} USD",
             "",
             "FX:",
             f"  - CZK/USD: {format_decimal(fx_rates[('CZK', 'USD')])}",
@@ -237,7 +266,7 @@ data:
         return "\n".join(lines).strip() + "\n"
 
 
-    def render_metrics(collected_at, crypto, stock, fx_rates, wallet):
+    def render_metrics(collected_at, crypto, yahoo_assets, fx_rates, wallet):
         lines = [
             "# HELP finance_collection_timestamp_seconds Unix timestamp when the finance collector last wrote metrics.",
             "# TYPE finance_collection_timestamp_seconds gauge",
@@ -266,9 +295,10 @@ data:
             lines.append(
                 f'finance_price_last_updated_seconds{{symbol="{symbol}",source="{values["source"]}"}} {values["updated_at"]}'
             )
-        lines.append(
-            f'finance_asset_price{{symbol="{stock["symbol"]}",quote="USD",source="{stock["source"]}"}} {format_decimal(stock["price_usd"])}'
-        )
+        for asset in yahoo_assets:
+            lines.append(
+                f'finance_asset_price{{symbol="{asset["symbol"]}",quote="USD",source="{asset["source"]}"}} {format_decimal(asset["price_usd"])}'
+            )
         for base, quote in (("CZK", "USD"), ("CZK", "EUR"), ("USD", "EUR")):
             lines.append(
                 f'finance_fx_rate{{base="{base}",quote="{quote}",source="{fx_rates["source"]}"}} {format_decimal(fx_rates[(base, quote)])}'
@@ -319,14 +349,14 @@ data:
         kube = kube_client()
         collected_at = utc_now()
         crypto = fetch_crypto_prices()
-        stock = fetch_stock_price()
+        yahoo_assets = fetch_yahoo_assets()
         fx_rates = fetch_fx_rates()
         wallet = fetch_eth_balance()
         wallet["value_usd"] = wallet["balance_eth"] * crypto["ETH"]["usd"]
         wallet["value_eur"] = wallet["balance_eth"] * crypto["ETH"]["eur"]
         wallet["value_czk"] = wallet["balance_eth"] * crypto["ETH"]["czk"]
-        report = render_report(collected_at, crypto, stock, fx_rates, wallet)
-        metrics = render_metrics(collected_at, crypto, stock, fx_rates, wallet)
+        report = render_report(collected_at, crypto, yahoo_assets, fx_rates, wallet)
+        metrics = render_metrics(collected_at, crypto, yahoo_assets, fx_rates, wallet)
         upsert_configmap(kube, report, metrics)
         print(report)
 
