@@ -132,12 +132,11 @@ data:
         {
           "id": 11,
           "type": "timeseries",
-          "title": "BTC and ETH",
-          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "title": "BTC",
+          "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
-            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"BTC\",quote=\"USD\"}", "legendFormat": "BTC/USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ETH\",quote=\"USD\"}", "legendFormat": "ETH/USD"}
+            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"BTC\",quote=\"USD\"}", "legendFormat": "BTC/USD"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
@@ -145,12 +144,23 @@ data:
         {
           "id": 12,
           "type": "timeseries",
-          "title": "ZETA and Wallet USD",
+          "title": "ETH",
+          "gridPos": {"h": 8, "w": 6, "x": 6, "y": 8},
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "targets": [
+            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ETH\",quote=\"USD\"}", "legendFormat": "ETH/USD"}
+          ],
+          "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
+        },
+        {
+          "id": 27,
+          "type": "timeseries",
+          "title": "ZETA",
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
-            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ZETA\",quote=\"USD\"}", "legendFormat": "ZETA/USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}", "legendFormat": "Wallet USD"}
+            {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ZETA\",quote=\"USD\"}", "legendFormat": "ZETA/USD"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
