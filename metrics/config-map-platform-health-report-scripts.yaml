@@ -297,7 +297,7 @@ data:
         public_suffixes = (".andreybondarenko.com", ".shaman007.com")
         internal_suffix = ".k8s.my.lan"
         internal_hosts = 0
-        guard_issues = []
+        host_guard_state = {}
         cert_details = []
         cert_issues = []
         for ingress in ingresses:
@@ -307,8 +307,10 @@ data:
             internal_hosts += sum(1 for host in hosts if host.endswith(internal_suffix))
             public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
-            if public_hosts and "traefik-robots-disallow-all@kubernetescrd" not in middleware_ref:
-                guard_issues.extend({"namespace": namespace, "item": host, "value": 0} for host in public_hosts)
+            has_robots_guard = "traefik-robots-disallow-all@kubernetescrd" in middleware_ref
+            for host in public_hosts:
+                state = host_guard_state.setdefault((namespace, host), {"has_robots_guard": False})
+                state["has_robots_guard"] = state["has_robots_guard"] or has_robots_guard
             for host in public_hosts:
                 if host in throttle_routes.get(namespace, set()):
                     continue
@@ -329,6 +331,11 @@ data:
                             cert_issues.append(entry)
                 except Exception:
                     cert_issues.append({"namespace": namespace, "item": name, "value": 0, "value_name": "cert_expiry_days"})
+        guard_issues = [
+            {"namespace": namespace, "item": host, "value": 0}
+            for (namespace, host), state in sorted(host_guard_state.items())
+            if not state["has_robots_guard"]
+        ]
         checks.append(check("internal_ingresses", internal_hosts > 0, f"Detected {internal_hosts} internal ingress host(s)."))
         checks.append(check("external_ingress_guards", not guard_issues, "External ingress middleware checks completed.", guard_issues))
         checks.append(check("ingress_certificates", not cert_issues, f"{len(cert_details)} TLS host certificate(s) inspected.", cert_details if cert_issues else cert_details[:20]))
