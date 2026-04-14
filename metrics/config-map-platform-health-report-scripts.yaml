@@ -1,0 +1,414 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-health-report-scripts
+  namespace: monitoring
+  labels:
+    app: platform-health-report
+    app.kubernetes.io/name: platform-health-report
+    app.kubernetes.io/instance: platform-health-report
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  platform-health-report.py: |
+    #!/usr/bin/env python3
+    import base64
+    import json
+    import os
+    import smtplib
+    import ssl
+    import tempfile
+    import time
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+    from datetime import datetime, timedelta, timezone
+    from email.message import EmailMessage
+    from pathlib import Path
+
+    SA_DIR = Path("/var/run/secrets/kubernetes.io/serviceaccount")
+
+
+    def env(name, default=None, required=False):
+        value = os.environ.get(name, default)
+        if required and not value:
+            raise SystemExit(f"Missing required environment variable: {name}")
+        return value
+
+
+    def env_num(name, default, cast=float):
+        raw = env(name, str(default))
+        try:
+            return cast(raw)
+        except ValueError as exc:
+            raise SystemExit(f"Invalid numeric value for {name}: {raw!r}") from exc
+
+
+    def utc_now():
+        return datetime.now(timezone.utc)
+
+
+    def parse_time(value):
+        if not value:
+            return None
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+    def http_json(url, headers=None, ctx=None, method="GET", payload=None):
+        req_headers = dict(headers or {})
+        data = None
+        if payload is not None:
+            data = json.dumps(payload).encode("utf-8")
+            req_headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(url, headers=req_headers, data=data, method=method)
+        timeout = env_num("HTTP_TIMEOUT_SECONDS", 180, int)
+        attempts = env_num("HTTP_MAX_ATTEMPTS", 3, int)
+        delay = env_num("HTTP_RETRY_DELAY_SECONDS", 5, int)
+        last_exc = None
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(request, context=ctx, timeout=timeout) as response:
+                    return json.load(response)
+            except (TimeoutError, urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError) as exc:
+                last_exc = exc
+                if attempt >= attempts:
+                    raise
+                time.sleep(delay * attempt)
+        raise last_exc
+
+
+    def kube_client():
+        token = (SA_DIR / "token").read_text(encoding="utf-8").strip()
+        ctx = ssl.create_default_context(cafile=str(SA_DIR / "ca.crt"))
+        base = env("KUBERNETES_API_URL", "https://kubernetes.default.svc").rstrip("/")
+
+        def call(path, method="GET", payload=None):
+            return http_json(
+                base + path,
+                headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+                ctx=ctx,
+                method=method,
+                payload=payload,
+            )
+
+        return call
+
+
+    def prom_query(expr):
+        base = env("PROMETHEUS_BASE_URL", "http://prometheus-service.monitoring.svc.cluster.local:9090").rstrip("/")
+        params = urllib.parse.urlencode({"query": expr})
+        payload = http_json(f"{base}/api/v1/query?{params}")
+        return payload.get("data", {}).get("result", [])
+
+
+    def prom_scalar(expr, default=0.0):
+        result = prom_query(expr)
+        return float(result[0]["value"][1]) if result else float(default)
+
+
+    def series(expr, value_name):
+        result = []
+        for item in prom_query(expr):
+            metric = item.get("metric", {})
+            result.append(
+                {
+                    "namespace": metric.get("namespace") or metric.get("pvc_namespace") or "cluster",
+                    "item": metric.get("persistentvolumeclaim") or metric.get("pvc") or metric.get("volume") or metric.get("pod") or metric.get("item") or metric.get("host") or metric.get("job") or "cluster",
+                    "container": metric.get("container", ""),
+                    "value": float(item["value"][1]),
+                    "value_name": value_name,
+                }
+            )
+        for item in result:
+            if item["container"]:
+                item["item"] = f'{item["item"]}/{item["container"]}'
+        return sorted(result, key=lambda x: x["value"], reverse=True)
+
+
+    def loki_scalar(query, default=0.0):
+        base = env("LOKI_BASE_URL", "http://loki-gateway.loki.svc.cluster.local/loki/api/v1").rstrip("/")
+        params = urllib.parse.urlencode({"query": query})
+        payload = http_json(f"{base}/query?{params}")
+        result = payload.get("data", {}).get("result", [])
+        return float(result[0]["value"][1]) if result else float(default)
+
+
+    def check(name, passed, summary, details=None):
+        details = details or []
+        return {"name": name, "passed": bool(passed), "summary": summary, "details": details, "failures": 0 if passed else len(details) or 1}
+
+
+    def ready(conditions, kind="Ready"):
+        return any(item.get("type") == kind and item.get("status") == "True" for item in conditions or [])
+
+
+    def cert_days_left(pem_text):
+        with tempfile.NamedTemporaryFile("w", suffix=".crt", delete=True) as handle:
+            handle.write(pem_text)
+            handle.flush()
+            parsed = ssl._ssl._test_decode_cert(handle.name)
+        expires = datetime.strptime(parsed["notAfter"], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+        return int((expires - utc_now()).total_seconds() / 86400)
+
+
+    def render_report(checks):
+        lines = [
+            "Home k3s platform health report",
+            "",
+            f"Generated: {utc_now().strftime('%Y-%m-%d %H:%M:%S UTC')}",
+            f'Checks passed: {sum(1 for item in checks if item["passed"])}/{len(checks)}',
+            "",
+            "Status summary:",
+        ]
+        for item in checks:
+            status = "PASS" if item["passed"] else "FAIL"
+            lines.append(f'- [{status}] {item["name"]}: {item["summary"]}')
+        failing = [item for item in checks if not item["passed"]]
+        if failing:
+            lines.extend(["", "Top items to review:"])
+            for item in failing:
+                for detail in item["details"][:5]:
+                    lines.append(f'- {item["name"]}: ns={detail.get("namespace", "-")} item={detail.get("item", "-")} value={detail.get("value", 0)}')
+        return "\n".join(lines).strip() + "\n"
+
+
+    def render_metrics(checks):
+        lines = [
+            "# HELP platform_health_report_timestamp_seconds Unix timestamp when the platform health report was generated.",
+            "# TYPE platform_health_report_timestamp_seconds gauge",
+            f'platform_health_report_timestamp_seconds{{scope="cluster"}} {int(utc_now().timestamp())}',
+            "# HELP platform_health_overall_status Cluster-wide pass or fail for the platform health report.",
+            "# TYPE platform_health_overall_status gauge",
+            f'platform_health_overall_status{{scope="cluster"}} {1 if all(item["passed"] for item in checks) else 0}',
+            "# HELP platform_health_check_status Pass or fail per platform health check.",
+            "# TYPE platform_health_check_status gauge",
+            "# HELP platform_health_check_failures Failure count per platform health check.",
+            "# TYPE platform_health_check_failures gauge",
+            "# HELP platform_health_detail_value Detailed per-item values emitted by the platform health report.",
+            "# TYPE platform_health_detail_value gauge",
+        ]
+        for item in checks:
+            lines.append(f'platform_health_check_status{{scope="cluster",check="{item["name"]}"}} {1 if item["passed"] else 0}')
+            lines.append(f'platform_health_check_failures{{scope="cluster",check="{item["name"]}"}} {item["failures"]}')
+            for detail in item["details"]:
+                namespace = str(detail.get("namespace", "cluster")).replace('"', "")
+                label_item = str(detail.get("item", "cluster")).replace('"', "")
+                value_name = str(detail.get("value_name", item["name"])).replace('"', "")
+                lines.append(f'platform_health_detail_value{{check="{value_name}",namespace="{namespace}",item="{label_item}"}} {detail.get("value", 0)}')
+        return "\n".join(lines).strip() + "\n"
+
+
+    def send_email(report):
+        message = EmailMessage()
+        message["From"] = env("MAIL_FROM", required=True)
+        message["To"] = env("MAIL_TO", required=True)
+        message["Subject"] = "[Home k3s] Platform health report"
+        message.set_content(report)
+        message.add_alternative(f"<html><body><pre>{report}</pre></body></html>", subtype="html")
+        with smtplib.SMTP(host=env("SMTP_HOST", required=True), port=env_num("SMTP_PORT", 25, int), timeout=30) as smtp:
+            smtp.send_message(message)
+
+
+    def upsert_configmap(kube, report, metrics):
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        name = env("REPORT_CONFIGMAP_NAME", "platform-health-report")
+        body = {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": name,
+                "namespace": namespace,
+                "labels": {
+                    "app": "platform-health-report",
+                    "app.kubernetes.io/name": "platform-health-report",
+                    "app.kubernetes.io/instance": "platform-health-report",
+                    "app.kubernetes.io/part-of": "monitoring",
+                    "app.kubernetes.io/managed-by": "argoCD",
+                },
+            },
+            "data": {"report.txt": report, "metrics.prom": metrics},
+        }
+        path = f"/api/v1/namespaces/{namespace}/configmaps/{name}"
+        try:
+            current = kube(path)
+            body["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
+            kube(path, method="PUT", payload=body)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
+            kube(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
+
+
+    def main():
+        kube = kube_client()
+        checks = []
+
+        externalsecrets = kube("/apis/external-secrets.io/v1/externalsecrets").get("items", [])
+        es_fail = [{"namespace": x["metadata"]["namespace"], "item": x["metadata"]["name"], "value": 0} for x in externalsecrets if not ready(x.get("status", {}).get("conditions", []))]
+        checks.append(check("external_secrets", not es_fail, f"{len(externalsecrets) - len(es_fail)}/{len(externalsecrets)} ExternalSecrets are Ready.", es_fail))
+
+        vault_cron = kube("/apis/batch/v1/namespaces/vault/cronjobs").get("items", [])
+        vault_pods = kube("/api/v1/namespaces/vault/pods").get("items", [])
+        recent_cutoff = utc_now() - timedelta(hours=24)
+        token_runs = []
+        cron_present = False
+        for item in vault_cron:
+            if item["metadata"]["name"] == "vault-token-rotator" and not item.get("spec", {}).get("suspend", False):
+                cron_present = True
+        for pod in vault_pods:
+            if not pod["metadata"]["name"].startswith("vault-token-rotator"):
+                continue
+            finished = None
+            for status in pod.get("status", {}).get("containerStatuses", []):
+                finished = parse_time(status.get("state", {}).get("terminated", {}).get("finishedAt"))
+                if finished:
+                    break
+            if pod.get("status", {}).get("phase") == "Succeeded" and finished and finished >= recent_cutoff:
+                token_runs.append({"namespace": "vault", "item": pod["metadata"]["name"], "value": int((utc_now() - finished).total_seconds() / 3600), "value_name": "vault_token_rotation_age_hours"})
+        token_ok = cron_present and bool(token_runs)
+        token_summary = "Vault token rotation has a CronJob and recent successful activity." if token_ok else "Vault token rotation does not show a recent successful run yet."
+        checks.append(check("vault_token_rotation", token_ok, token_summary, token_runs if not token_ok else token_runs[:5]))
+
+        ingresses = kube("/apis/networking.k8s.io/v1/ingresses").get("items", [])
+        ingressroutes = kube("/apis/traefik.io/v1alpha1/ingressroutes").get("items", [])
+        throttle_namespaces = {item["metadata"]["namespace"] for item in ingressroutes if item["metadata"]["name"] == "ingress-route-sensitive-throttle"}
+        warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 14, int)
+        public_suffixes = (".andreybondarenko.com", ".shaman007.com")
+        internal_suffix = ".k8s.my.lan"
+        internal_hosts = 0
+        guard_issues = []
+        cert_details = []
+        cert_issues = []
+        for ingress in ingresses:
+            namespace = ingress["metadata"]["namespace"]
+            annotations = ingress.get("metadata", {}).get("annotations", {})
+            hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
+            internal_hosts += sum(1 for host in hosts if host.endswith(internal_suffix))
+            public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
+            middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
+            if public_hosts and "traefik-robots-disallow-all@kubernetescrd" not in middleware_ref:
+                guard_issues.extend({"namespace": namespace, "item": host, "value": 0} for host in public_hosts)
+            if public_hosts and namespace not in throttle_namespaces:
+                guard_issues.extend({"namespace": namespace, "item": host, "value": 0} for host in public_hosts)
+            for tls in ingress.get("spec", {}).get("tls", []):
+                name = tls.get("secretName")
+                if not name:
+                    continue
+                try:
+                    secret = kube(f"/api/v1/namespaces/{namespace}/secrets/{name}")
+                    pem = base64.b64decode(secret.get("data", {}).get("tls.crt", "")).decode("utf-8")
+                    if not pem:
+                        raise ValueError("tls.crt is empty")
+                    days = cert_days_left(pem)
+                    for host in tls.get("hosts") or [name]:
+                        entry = {"namespace": namespace, "item": host, "value": days, "value_name": "cert_expiry_days"}
+                        cert_details.append(entry)
+                        if days < warn_days:
+                            cert_issues.append(entry)
+                except Exception:
+                    cert_issues.append({"namespace": namespace, "item": name, "value": 0, "value_name": "cert_expiry_days"})
+        checks.append(check("internal_ingresses", internal_hosts > 0, f"Detected {internal_hosts} internal ingress host(s)."))
+        checks.append(check("external_ingress_guards", not guard_issues, "External ingress middleware checks completed.", guard_issues))
+        checks.append(check("ingress_certificates", not cert_issues, f"{len(cert_details)} TLS host certificate(s) inspected.", cert_details if cert_issues else cert_details[:20]))
+
+        pvc_limit = env_num("PVC_USAGE_WARNING_PERCENT", 90.0)
+        pvc_usage = series("100 * (longhorn_volume_actual_size_bytes / longhorn_volume_capacity_bytes)", "pvc_usage_percent")
+        pvc_issues = [item for item in pvc_usage if item["value"] > pvc_limit]
+        checks.append(check("pvc_usage", not pvc_issues, f"{len(pvc_issues)} PVC(s) are above {int(pvc_limit)}% utilization.", pvc_usage[:20]))
+
+        recurring = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/recurringjobs").get("items", [])
+        lh_pods = kube("/api/v1/namespaces/longhorn-system/pods").get("items", [])
+        backup_jobs = [item for item in recurring if item.get("spec", {}).get("task") == "backup"]
+        trim_jobs = [item for item in recurring if item.get("spec", {}).get("task") == "filesystem-trim"]
+        recent_backups = 0
+        recent_trims = 0
+        for pod in lh_pods:
+            if pod.get("status", {}).get("phase") != "Succeeded":
+                continue
+            finished = None
+            for status in pod.get("status", {}).get("containerStatuses", []):
+                finished = parse_time(status.get("state", {}).get("terminated", {}).get("finishedAt"))
+                if finished:
+                    break
+            if not finished or finished < recent_cutoff:
+                continue
+            if pod["metadata"]["name"].startswith("backup-"):
+                recent_backups += 1
+            if pod["metadata"]["name"].startswith("trim-"):
+                recent_trims += 1
+        maintenance_details = [
+            {"namespace": "longhorn-system", "item": "recent-backups-24h", "value": recent_backups, "value_name": "longhorn_recent_backups_24h"},
+            {"namespace": "longhorn-system", "item": "recent-trims-24h", "value": recent_trims, "value_name": "longhorn_recent_trims_24h"},
+        ]
+        checks.append(check("longhorn_maintenance", bool(backup_jobs) and bool(trim_jobs) and recent_backups > 0 and recent_trims > 0, f"Longhorn maintenance runs in the last 24h: backups={recent_backups}, trims={recent_trims}.", maintenance_details))
+
+        backups = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/backups").get("items", [])
+        backup_detail = []
+        backup_bad = []
+        for item in backups:
+            synced = parse_time(item.get("status", {}).get("lastSyncedAt"))
+            if not synced or synced < recent_cutoff:
+                continue
+            detail = {"namespace": "longhorn-system", "item": item["metadata"]["name"], "value": int((utc_now() - synced).total_seconds() / 3600), "value_name": "longhorn_backup_age_hours"}
+            backup_detail.append(detail)
+            if item.get("status", {}).get("state") != "Completed":
+                backup_bad.append(detail)
+        checks.append(check("longhorn_backups", bool(backup_detail) and not backup_bad, f"Recent Longhorn backups found: {len(backup_detail)}.", backup_bad or backup_detail[:10]))
+
+        loki_lines = loki_scalar('sum(count_over_time({namespace=~".+"}[1h]))', 0.0)
+        loki_details = [{"namespace": "loki", "item": "cluster", "value": loki_lines, "value_name": "loki_log_lines_1h"}]
+        checks.append(check("loki", loki_lines > 0, f"Loki observed {int(loki_lines)} log line(s) in the last hour.", loki_details))
+
+        grafana_up = prom_scalar('min(up{job="grafana"})', 0.0)
+        prometheus_up = prom_scalar('min(up{job="prometheus"})', 0.0)
+        thanos_up = prom_scalar('min(up{job=~"thanos-querier|thanos-store-gateway|thanos-compactor"})', 0.0)
+        compactions = prom_scalar("sum(increase(thanos_compact_group_compactions_total[24h]))", 0.0)
+        stack_details = [
+            {"namespace": "monitoring", "item": "grafana", "value": grafana_up, "value_name": "stack_component_up"},
+            {"namespace": "monitoring", "item": "prometheus", "value": prometheus_up, "value_name": "stack_component_up"},
+            {"namespace": "monitoring", "item": "thanos", "value": thanos_up, "value_name": "stack_component_up"},
+            {"namespace": "monitoring", "item": "thanos-compactions-24h", "value": compactions, "value_name": "thanos_compactions_24h"},
+        ]
+        checks.append(check("monitoring_stack", grafana_up >= 1 and prometheus_up >= 1 and thanos_up >= 1 and compactions > 0, f"Monitoring stack: grafana={grafana_up:.0f}, prometheus={prometheus_up:.0f}, thanos={thanos_up:.0f}, compactions_24h={compactions:.0f}.", stack_details))
+
+        vault_sealed = prom_scalar('max(vault_sys_sealed{job="vault"})', 1.0)
+        vault_up = prom_scalar('sum(up{job="vault"} == 1)', 0.0)
+        vault_details = [
+            {"namespace": "vault", "item": "sealed", "value": vault_sealed, "value_name": "vault_sealed"},
+            {"namespace": "vault", "item": "healthy-targets", "value": vault_up, "value_name": "vault_healthy_targets"},
+        ]
+        checks.append(check("vault", vault_sealed == 0 and vault_up >= 1, f"Vault status: sealed={vault_sealed:.0f}, healthy_targets={vault_up:.0f}.", vault_details))
+
+        pods = kube("/api/v1/pods").get("items", [])
+        pod_issues = []
+        for pod in pods:
+            owners = pod.get("metadata", {}).get("ownerReferences", [])
+            if pod.get("status", {}).get("phase") == "Succeeded" and any(owner.get("kind") == "Job" for owner in owners):
+                continue
+            if pod.get("status", {}).get("phase") not in {"Running", "Succeeded"}:
+                pod_issues.append({"namespace": pod["metadata"]["namespace"], "item": pod["metadata"]["name"], "value": 0})
+                continue
+            statuses = pod.get("status", {}).get("containerStatuses", [])
+            if statuses and not all(status.get("ready", False) for status in statuses):
+                pod_issues.append({"namespace": pod["metadata"]["namespace"], "item": pod["metadata"]["name"], "value": 0})
+        checks.append(check("pods", not pod_issues, f"{len(pod_issues)} pod(s) are not healthy by phase/readiness.", pod_issues[:20]))
+
+        oom = [item for item in series('max by (namespace, pod, container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[24h]))', "oom_killed_24h") if item["value"] > 0]
+        throttle = [item for item in series('sum by (namespace, pod, container) (increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) / clamp_min(sum by (namespace, pod, container) (increase(container_cpu_cfs_periods_total{container!=""}[5m])), 1)', "throttled_ratio") if item["value"] > 0.25]
+        checks.append(check("oom_and_throttle", not oom and not throttle, f"OOM offenders={len(oom)}, throttled offenders={len(throttle)}.", (oom + throttle)[:20]))
+
+        restart_limit = env_num("RESTART_WARNING_COUNT", 5.0)
+        restarts = series("increase(kube_pod_container_status_restarts_total[24h])", "restarts_24h")
+        restart_issues = [item for item in restarts if item["value"] > restart_limit]
+        checks.append(check("restarts", not restart_issues, f"{len(restart_issues)} container(s) exceeded {int(restart_limit)} restart(s) in the last 24h.", restarts[:20]))
+
+        report = render_report(checks)
+        metrics = render_metrics(checks)
+        upsert_configmap(kube, report, metrics)
+        send_email(report)
+        print(report)
+
+
+    if __name__ == "__main__":
+        main()

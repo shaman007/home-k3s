@@ -133,3 +133,5 @@ spec:
                   name: grafana-dashboard-wordpress-analytics
               - configMap:
                   name: grafana-dashboard-external-access-analytics
+              - configMap:
+                  name: grafana-dashboard-platform-health

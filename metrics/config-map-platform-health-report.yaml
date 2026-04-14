@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-health-report
+  namespace: monitoring
+  labels:
+    app: platform-health-report
+    app.kubernetes.io/name: platform-health-report
+    app.kubernetes.io/instance: platform-health-report
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+data:
+  metrics.prom: |
+    # HELP platform_health_report_timestamp_seconds Unix timestamp when the platform health report was generated.
+    # TYPE platform_health_report_timestamp_seconds gauge
+    platform_health_report_timestamp_seconds{scope="cluster"} 0
+  report.txt: |
+    Waiting for the first successful platform-health-report run.
