@@ -152,6 +152,13 @@ data:
         return int((expires - utc_now()).total_seconds() / 86400)
 
 
+    def pod_ready(pod):
+        if pod.get("status", {}).get("phase") != "Running":
+            return False
+        statuses = pod.get("status", {}).get("containerStatuses", [])
+        return bool(statuses) and all(status.get("ready", False) for status in statuses)
+
+
     def render_report(checks):
         lines = [
             "Home k3s platform health report",
@@ -355,6 +362,40 @@ data:
             if item.get("status", {}).get("state") != "Completed":
                 backup_bad.append(detail)
         checks.append(check("longhorn_backups", bool(backup_detail) and not backup_bad, f"Recent Longhorn backups found: {len(backup_detail)}.", backup_bad or backup_detail[:10]))
+
+        mail_services = kube("/api/v1/namespaces/mail/services").get("items", [])
+        mail_pods = kube("/api/v1/namespaces/mail/pods").get("items", [])
+        mail_secret = kube("/api/v1/namespaces/mail/secrets/letsencrypt-prod")
+        mail_pem = base64.b64decode(mail_secret.get("data", {}).get("tls.crt", "")).decode("utf-8")
+        mail_cert_days = cert_days_left(mail_pem) if mail_pem else 0
+        service_map = {item["metadata"]["name"]: item for item in mail_services}
+        postfix_ready = any(pod_ready(pod) for pod in mail_pods if pod["metadata"]["name"].startswith("postfix-"))
+        dovecot_ready = any(pod_ready(pod) for pod in mail_pods if pod["metadata"]["name"].startswith("dovecot-"))
+        mail_details = [
+            {
+                "namespace": "mail",
+                "item": "smtp-submission",
+                "value": 1 if ("postfix-tls" in service_map and postfix_ready and mail_cert_days >= warn_days) else 0,
+                "value_name": "mail_protocol_healthy",
+            },
+            {
+                "namespace": "mail",
+                "item": "imaps",
+                "value": 1 if ("dovecot-tls" in service_map and dovecot_ready and mail_cert_days >= warn_days) else 0,
+                "value_name": "mail_protocol_healthy",
+            },
+            {
+                "namespace": "mail",
+                "item": "managesieve",
+                "value": 1 if ("dovecot-managesieve" in service_map and dovecot_ready and mail_cert_days >= warn_days) else 0,
+                "value_name": "mail_protocol_healthy",
+            },
+            {"namespace": "mail", "item": "smtp-submission", "value": mail_cert_days, "value_name": "mail_cert_expiry_days"},
+            {"namespace": "mail", "item": "imaps", "value": mail_cert_days, "value_name": "mail_cert_expiry_days"},
+            {"namespace": "mail", "item": "managesieve", "value": mail_cert_days, "value_name": "mail_cert_expiry_days"},
+        ]
+        mail_issues = [item for item in mail_details[:3] if item["value"] < 1]
+        checks.append(check("mail_protocols", not mail_issues, f"SMTP submission, IMAPS, and ManageSieve use the mail TLS cert with {mail_cert_days} day(s) remaining.", mail_issues or mail_details))
 
         loki_lines = loki_scalar('sum(count_over_time({namespace=~".+"}[1h]))', 0.0)
         loki_details = [{"namespace": "loki", "item": "cluster", "value": loki_lines, "value_name": "loki_log_lines_1h"}]

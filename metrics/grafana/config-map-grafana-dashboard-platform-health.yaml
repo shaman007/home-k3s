@@ -760,6 +760,136 @@ data:
           ],
           "title": "Longhorn Backups (24h)",
           "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "text": "Fail"
+                    },
+                    "1": {
+                      "text": "Pass"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 28
+          },
+          "id": 13,
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "platform_health_detail_value{check=\"mail_protocol_healthy\",namespace=\"mail\"}",
+              "legendFormat": "{{item}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Mail Protocol Health",
+          "type": "bargauge"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "orange",
+                    "value": 14
+                  },
+                  {
+                    "color": "green",
+                    "value": 30
+                  }
+                ]
+              },
+              "unit": "d"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 28
+          },
+          "id": 14,
+          "options": {
+            "displayMode": "gradient",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showUnfilled": true
+          },
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "platform_health_detail_value{check=\"mail_cert_expiry_days\",namespace=\"mail\"}",
+              "legendFormat": "{{item}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Mail Cert Days Remaining",
+          "type": "bargauge"
         }
       ],
       "refresh": "5m",
