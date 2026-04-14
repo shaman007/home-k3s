@@ -62,32 +62,32 @@ data:
         {
           "id": 4,
           "type": "stat",
-          "title": "CZK/USD",
+          "title": "USD/CZK",
           "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_fx_rate{base=\"CZK\",quote=\"USD\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "1 / finance_fx_rate{base=\"CZK\",quote=\"USD\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
-          "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 4},"overrides": []}
+          "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 4},"overrides": []}
         },
         {
           "id": 5,
           "type": "stat",
-          "title": "CZK/EUR",
+          "title": "EUR/CZK",
           "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_fx_rate{base=\"CZK\",quote=\"EUR\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "1 / finance_fx_rate{base=\"CZK\",quote=\"EUR\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
-          "fieldConfig": {"defaults": {"unit": "currencyEUR","decimals": 4},"overrides": []}
+          "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 4},"overrides": []}
         },
         {
           "id": 6,
           "type": "stat",
-          "title": "USD/EUR",
+          "title": "EUR/USD",
           "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_fx_rate{base=\"USD\",quote=\"EUR\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "1 / finance_fx_rate{base=\"USD\",quote=\"EUR\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
-          "fieldConfig": {"defaults": {"unit": "currencyEUR","decimals": 4},"overrides": []}
+          "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 4},"overrides": []}
         },
         {
           "id": 7,
@@ -95,7 +95,7 @@ data:
           "title": "Wallet ETH",
           "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_balance{asset=\"ETH\",address=\"$wallet\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_balance{asset=\"ETH\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "none","decimals": 6},"overrides": []}
         },
@@ -105,7 +105,7 @@ data:
           "title": "Wallet USD",
           "gridPos": {"h": 4, "w": 6, "x": 6, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"$wallet\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 2},"overrides": []}
         },
@@ -115,7 +115,7 @@ data:
           "title": "Wallet EUR",
           "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"$wallet\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyEUR","decimals": 2},"overrides": []}
         },
@@ -125,7 +125,7 @@ data:
           "title": "Wallet CZK",
           "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"$wallet\"}"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}"}],
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields": "","values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 2},"overrides": []}
         },
@@ -150,7 +150,7 @@ data:
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
             {"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"ZETA\",quote=\"USD\"}", "legendFormat": "ZETA/USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"$wallet\"}", "legendFormat": "Wallet USD"}
+            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "Wallet USD"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
@@ -162,9 +162,9 @@ data:
           "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
-            {"refId": "A", "editorMode": "code", "expr": "finance_fx_rate{base=\"CZK\",quote=\"USD\"}", "legendFormat": "CZK/USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_fx_rate{base=\"CZK\",quote=\"EUR\"}", "legendFormat": "CZK/EUR"},
-            {"refId": "C", "editorMode": "code", "expr": "finance_fx_rate{base=\"USD\",quote=\"EUR\"}", "legendFormat": "USD/EUR"}
+            {"refId": "A", "editorMode": "code", "expr": "1 / finance_fx_rate{base=\"CZK\",quote=\"USD\"}", "legendFormat": "USD/CZK"},
+            {"refId": "B", "editorMode": "code", "expr": "1 / finance_fx_rate{base=\"CZK\",quote=\"EUR\"}", "legendFormat": "EUR/CZK"},
+            {"refId": "C", "editorMode": "code", "expr": "1 / finance_fx_rate{base=\"USD\",quote=\"EUR\"}", "legendFormat": "EUR/USD"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "short","decimals": 4,"color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
@@ -176,9 +176,9 @@ data:
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
           "targets": [
-            {"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"$wallet\"}", "legendFormat": "USD"},
-            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"$wallet\"}", "legendFormat": "EUR"},
-            {"refId": "C", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"$wallet\"}", "legendFormat": "CZK"}
+            {"refId": "A", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "USD"},
+            {"refId": "B", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "EUR"},
+            {"refId": "C", "editorMode": "code", "expr": "finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330\"}", "legendFormat": "CZK"}
           ],
           "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
           "fieldConfig": {"defaults": {"unit": "short","color": {"mode": "palette-classic"},"custom": {"axisPlacement": "auto","drawStyle": "line","lineWidth": 2,"pointSize": 3,"showPoints": "auto","spanNulls": false}},"overrides": []}
@@ -202,22 +202,6 @@ data:
             "regex": "",
             "skipUrlSync": false,
             "type": "datasource"
-          },
-          {
-            "current": {"selected": true, "text": "0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330", "value": "0x2144cf4F2c5C4460092c7151B8e8a6A853Ed7330"},
-            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-            "definition": "label_values(finance_wallet_balance, address)",
-            "hide": 0,
-            "includeAll": false,
-            "label": "Wallet",
-            "multi": false,
-            "name": "wallet",
-            "options": [],
-            "query": {"query": "label_values(finance_wallet_balance, address)", "refId": "StandardVariableQuery"},
-            "refresh": 1,
-            "regex": "",
-            "sort": 1,
-            "type": "query"
           }
         ]
       },
