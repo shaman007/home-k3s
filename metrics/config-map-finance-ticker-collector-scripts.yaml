@@ -13,6 +13,7 @@ metadata:
 data:
   finance-ticker-collector.py: |
     #!/usr/bin/env python3
+    import http.client
     import json
     import os
     import ssl
@@ -50,6 +51,8 @@ data:
     def should_retry(exc):
         if isinstance(exc, TimeoutError):
             return True
+        if isinstance(exc, (http.client.RemoteDisconnected, ConnectionResetError)):
+            return True
         if isinstance(exc, urllib.error.HTTPError):
             return exc.code in {408, 425, 429, 500, 502, 503, 504}
         return isinstance(exc, urllib.error.URLError)
@@ -70,7 +73,7 @@ data:
             try:
                 with urllib.request.urlopen(request, timeout=timeout, context=ctx) as response:
                     return response.read()
-            except (TimeoutError, urllib.error.HTTPError, urllib.error.URLError) as exc:
+            except (TimeoutError, http.client.RemoteDisconnected, ConnectionResetError, urllib.error.HTTPError, urllib.error.URLError) as exc:
                 last_exc = exc
                 if attempt >= attempts or not should_retry(exc):
                     raise
@@ -137,44 +140,57 @@ data:
 
     def fetch_yahoo_price(symbol):
         base = env("YAHOO_FINANCE_CHART_URL", "https://query1.finance.yahoo.com/v8/finance/chart").rstrip("/")
-        payload = http_json(
+        headers = {"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"}
+
+        def extract_price(payload):
+            result = payload.get("chart", {}).get("result", [])
+            if not result:
+                raise ValueError(f"No chart data returned for {symbol}")
+            chart = result[0]
+            meta = chart.get("meta", {})
+            timestamps = chart.get("timestamp", []) or []
+            quotes = (chart.get("indicators", {}).get("quote", []) or [{}])[0]
+            closes = quotes.get("close", []) or []
+
+            latest_price = None
+            latest_timestamp = None
+            for timestamp, close in zip(timestamps, closes):
+                if close is None:
+                    continue
+                latest_price = close
+                latest_timestamp = timestamp
+
+            if latest_price is None:
+                latest_price = meta.get("preMarketPrice")
+                latest_timestamp = meta.get("preMarketTime")
+            if latest_price is None:
+                latest_price = meta.get("postMarketPrice")
+                latest_timestamp = meta.get("postMarketTime")
+            if latest_price is None:
+                latest_price = meta.get("regularMarketPrice")
+                latest_timestamp = meta.get("regularMarketTime")
+            if latest_price is None:
+                raise ValueError(f"Missing usable Yahoo price for {symbol}")
+            return decimal_from(latest_price), int(latest_timestamp or 0)
+
+        urls = [
             f"{base}/{symbol}?interval=1m&range=1d&includePrePost=true",
-            headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
-        )
-        result = payload.get("chart", {}).get("result", [])
-        if not result:
-            raise SystemExit(f"No chart data returned for {symbol}")
-        chart = result[0]
-        meta = chart.get("meta", {})
-        timestamps = chart.get("timestamp", []) or []
-        quotes = (chart.get("indicators", {}).get("quote", []) or [{}])[0]
-        closes = quotes.get("close", []) or []
-
-        latest_price = None
-        latest_timestamp = None
-        for timestamp, close in zip(timestamps, closes):
-            if close is None:
-                continue
-            latest_price = close
-            latest_timestamp = timestamp
-
-        if latest_price is None:
-            latest_price = meta.get("preMarketPrice")
-            latest_timestamp = meta.get("preMarketTime")
-        if latest_price is None:
-            latest_price = meta.get("postMarketPrice")
-            latest_timestamp = meta.get("postMarketTime")
-        if latest_price is None:
-            latest_price = meta.get("regularMarketPrice")
-            latest_timestamp = meta.get("regularMarketTime")
-        if latest_price is None:
-            raise SystemExit(f"Missing usable Yahoo price for {symbol}")
-        return {
-            "symbol": symbol,
-            "price_usd": decimal_from(latest_price),
-            "updated_at": int(latest_timestamp or 0),
-            "source": "yahoo_finance",
-        }
+            f"{base}/{symbol}?interval=1d&range=5d",
+        ]
+        last_error = None
+        for url in urls:
+            try:
+                price_usd, updated_at = extract_price(http_json(url, headers=headers))
+                return {
+                    "symbol": symbol,
+                    "price_usd": price_usd,
+                    "updated_at": updated_at,
+                    "source": "yahoo_finance",
+                }
+            except Exception as exc:
+                last_error = exc
+                print(f"Yahoo fetch failed for {symbol} via {url}: {exc}")
+        raise SystemExit(f"All Yahoo requests failed for {symbol}: {last_error}")
 
 
     def fetch_yahoo_assets():
