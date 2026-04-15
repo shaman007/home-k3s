@@ -54,10 +54,10 @@ spec:
               containerPort: 10901
           resources:
             requests:
-              cpu: "10m"
-              memory: "2288Mi"
+              cpu: "50m"
+              memory: "512Mi"
             limits:
-              memory: "2288Mi"
+              memory: "1536Mi"
           livenessProbe:
             httpGet:
               port: 10902

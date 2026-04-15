@@ -47,7 +47,7 @@ spec:
               path: /-/ready
           resources:
             requests:
-              cpu: "854m"
-              memory: "1100Mi"
+              cpu: "100m"
+              memory: "128Mi"
             limits:
-              memory: "1100Mi"
+              memory: "256Mi"

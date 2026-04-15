@@ -69,10 +69,10 @@ spec:
               mountPath: /data/
           resources:
             requests:
-              cpu: "10m"
-              memory: "2291Mi"
+              cpu: "200m"
+              memory: "256Mi"
             limits:
-              memory: "2291Mi"
+              memory: "768Mi"
       volumes:
         - name: objstoreyml
           secret:

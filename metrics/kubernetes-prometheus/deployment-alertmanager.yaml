@@ -49,10 +49,10 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 10m
-              memory: 100M
+              cpu: 25m
+              memory: 64Mi
             limits:
-              memory: 100M
+              memory: 128Mi
           volumeMounts:
             - name: config-volume
               mountPath: /etc/alertmanager
