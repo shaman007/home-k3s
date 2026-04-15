@@ -18,9 +18,9 @@ spec:
         resources:
           requests:
             cpu: "171m"
-            memory: "1015Mi"
+            memory: "1515Mi"
           limits:
-            memory: "1015Mi"
+            memory: "1515Mi"
         autoscaling:
           enabled: false
         image:
