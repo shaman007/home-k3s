@@ -138,17 +138,43 @@ data:
     def fetch_yahoo_price(symbol):
         base = env("YAHOO_FINANCE_CHART_URL", "https://query1.finance.yahoo.com/v8/finance/chart").rstrip("/")
         payload = http_json(
-            f"{base}/{symbol}?interval=1d&range=5d",
+            f"{base}/{symbol}?interval=1m&range=1d&includePrePost=true",
             headers={"Accept": "application/json", "User-Agent": "finance-ticker-collector/1.0"},
         )
         result = payload.get("chart", {}).get("result", [])
         if not result:
             raise SystemExit(f"No chart data returned for {symbol}")
-        meta = result[0].get("meta", {})
-        price = meta.get("regularMarketPrice")
-        if price is None:
-            raise SystemExit(f"Missing regularMarketPrice for {symbol}")
-        return {"symbol": symbol, "price_usd": decimal_from(price), "source": "yahoo_finance"}
+        chart = result[0]
+        meta = chart.get("meta", {})
+        timestamps = chart.get("timestamp", []) or []
+        quotes = (chart.get("indicators", {}).get("quote", []) or [{}])[0]
+        closes = quotes.get("close", []) or []
+
+        latest_price = None
+        latest_timestamp = None
+        for timestamp, close in zip(timestamps, closes):
+            if close is None:
+                continue
+            latest_price = close
+            latest_timestamp = timestamp
+
+        if latest_price is None:
+            latest_price = meta.get("preMarketPrice")
+            latest_timestamp = meta.get("preMarketTime")
+        if latest_price is None:
+            latest_price = meta.get("postMarketPrice")
+            latest_timestamp = meta.get("postMarketTime")
+        if latest_price is None:
+            latest_price = meta.get("regularMarketPrice")
+            latest_timestamp = meta.get("regularMarketTime")
+        if latest_price is None:
+            raise SystemExit(f"Missing usable Yahoo price for {symbol}")
+        return {
+            "symbol": symbol,
+            "price_usd": decimal_from(latest_price),
+            "updated_at": int(latest_timestamp or 0),
+            "source": "yahoo_finance",
+        }
 
 
     def fetch_yahoo_assets():
@@ -172,6 +198,7 @@ data:
                 "symbol": symbol,
                 "name": name,
                 "price_usd": fetched["price_usd"],
+                "updated_at": fetched["updated_at"],
                 "source": fetched["source"],
             }
             for symbol, name in assets
@@ -299,6 +326,10 @@ data:
             lines.append(
                 f'finance_asset_price{{symbol="{asset["symbol"]}",quote="USD",source="{asset["source"]}"}} {format_decimal(asset["price_usd"])}'
             )
+            if asset["updated_at"]:
+                lines.append(
+                    f'finance_price_last_updated_seconds{{symbol="{asset["symbol"]}",source="{asset["source"]}"}} {asset["updated_at"]}'
+                )
         for base, quote in (("CZK", "USD"), ("CZK", "EUR"), ("USD", "EUR")):
             lines.append(
                 f'finance_fx_rate{{base="{base}",quote="{quote}",source="{fx_rates["source"]}"}} {format_decimal(fx_rates[(base, quote)])}'
