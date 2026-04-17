@@ -17,10 +17,10 @@ spec:
       ports:
         - protocol: TCP
           port: 443
-    # kube-router can enforce post-DNAT; allow direct API endpoint as well.
+    # kube-router can enforce post-DNAT; allow control-plane endpoints on the node LAN as well.
     - to:
         - ipBlock:
-            cidr: 192.168.1.209/32
+            cidr: 192.168.1.0/24
       ports:
         - protocol: TCP
           port: 6443

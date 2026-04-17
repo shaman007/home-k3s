@@ -1,22 +1,23 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: monitoring-allow-egress-logs-check-kubernetes-api
+  name: monitoring-allow-egress-alloy-kubernetes-api
   namespace: monitoring
 spec:
   podSelector:
     matchLabels:
-      app: logs-check
+      app: alloy
   policyTypes:
     - Egress
   egress:
+    # kubernetes.default.svc:443 used by Alloy's kubernetes log tailer.
     - to:
         - ipBlock:
             cidr: 10.43.0.1/32
       ports:
         - protocol: TCP
           port: 443
-    # Allow direct API access to control-plane endpoints on the node LAN.
+    # kube-router can enforce post-DNAT; allow control-plane endpoints on the node LAN as well.
     - to:
         - ipBlock:
             cidr: 192.168.1.0/24
