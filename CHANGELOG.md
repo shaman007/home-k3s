@@ -11901,3 +11901,15 @@ recommendations and ensure consistent YAML separators and formatting.
 
 - **Key PR Links**
   - [#103](https://github.com/shaman007/home-k3s/pull/103), [#104](https://github.com/shaman007/home-k3s/pull/104), [#105](https://github.com/shaman007/home-k3s/pull/105), [#106](https://github.com/shaman007/home-k3s/pull/106), [#107](https://github.com/shaman007/home-k3s/pull/107), [#108](https://github.com/shaman007/home-k3s/pull/108), [#109](https://github.com/shaman007/home-k3s/pull/109), [#110](https://github.com/shaman007/home-k3s/pull/110), [#111](https://github.com/shaman007/home-k3s/pull/111), [#112](https://github.com/shaman007/home-k3s/pull/112), [#113](https://github.com/shaman007/home-k3s/pull/113), [#114](https://github.com/shaman007/home-k3s/pull/114), [#115](https://github.com/shaman007/home-k3s/pull/115), [#116](https://github.com/shaman007/home-k3s/pull/116)
+
+## 2026-04-17 – Weekly Highlights
+
+- **Highlights**
+  - Added new monitoring and reporting workflows, including a Loki-based daily external-access report, finance ticker collection and dashboards, plus mail and cluster health checks.
+  - Consolidated monitoring secrets and token rotation, then fixed monitoring network policy ownership and rules to keep scrapes and related access working.
+  - Tightened ingress handling by adding `robots.txt` middleware to public ingresses, fixing HTTPS redirect and middleware behavior, and repairing the Collabora ingress.
+  - Tuned workload resources and resiliency with requests, limits, and memory adjustments, plus a fix for Yahoo lookup failures in the reporting flow.
+  - Updated platform components including the Renovate GitHub Action, Prometheus, Grafana Alloy, Immich, SeaweedFS, Meilisearch, Grafana, nginx, reloader, and Keycloak.
+
+- **Key PR Links**
+  - [#140](https://github.com/shaman007/home-k3s/pull/140), [#141](https://github.com/shaman007/home-k3s/pull/141), [#142](https://github.com/shaman007/home-k3s/pull/142), [#143](https://github.com/shaman007/home-k3s/pull/143), [#144](https://github.com/shaman007/home-k3s/pull/144), [#145](https://github.com/shaman007/home-k3s/pull/145), [#146](https://github.com/shaman007/home-k3s/pull/146), [#147](https://github.com/shaman007/home-k3s/pull/147), [#148](https://github.com/shaman007/home-k3s/pull/148), [#149](https://github.com/shaman007/home-k3s/pull/149), [#150](https://github.com/shaman007/home-k3s/pull/150), [#151](https://github.com/shaman007/home-k3s/pull/151), [#152](https://github.com/shaman007/home-k3s/pull/152)
