@@ -30,14 +30,6 @@ spec:
               mountPath: /usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
               subPath: opensearch_dashboards.yml
             - name: dashboard-certs
-              mountPath: /usr/share/wazuh-dashboard/certs/cert.pem
-              subPath: cert.pem
-              readOnly: true
-            - name: dashboard-certs
-              mountPath: /usr/share/wazuh-dashboard/certs/key.pem
-              subPath: key.pem
-              readOnly: true
-            - name: dashboard-certs
               mountPath: /usr/share/wazuh-dashboard/certs/root-ca.pem
               subPath: root-ca.pem
               readOnly: true
@@ -67,12 +59,6 @@ spec:
                 secretKeyRef:
                   name: dashboard-cred
                   key: password
-            - name: SERVER_SSL_ENABLED
-              value: "true"
-            - name: SERVER_SSL_CERTIFICATE
-              value: /usr/share/wazuh-dashboard/certs/cert.pem
-            - name: SERVER_SSL_KEY
-              value: /usr/share/wazuh-dashboard/certs/key.pem
             - name: WAZUH_API_URL
               value: https://wazuh.wazuh.svc.cluster.local
             - name: API_USERNAME

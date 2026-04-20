@@ -13,9 +13,7 @@ data:
     opensearch.requestHeadersWhitelist: [ authorization, securitytenant ]
     opensearch_security.multitenancy.enabled: false
     opensearch_security.readonly_mode.roles: ["kibana_read_only"]
-    server.ssl.enabled: true
-    server.ssl.key: "/usr/share/wazuh-dashboard/certs/key.pem"
-    server.ssl.certificate: "/usr/share/wazuh-dashboard/certs/cert.pem"
+    server.ssl.enabled: false
     opensearch.ssl.certificateAuthorities: ["/usr/share/wazuh-dashboard/certs/root-ca.pem"]
     uiSettings.overrides.defaultRoute: /app/wz-home
     opensearch_security.cookie.ttl: 900000

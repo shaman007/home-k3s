@@ -6,7 +6,6 @@ metadata:
   namespace: wazuh
   annotations:
     kubernetes.io/ingress.class: "traefik"
-    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   tls:
     - hosts:
