@@ -16,5 +16,12 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: wazuh
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: wazuh
+      jsonPointers:
+        - /data/token
   syncPolicy:
     automated: {}
