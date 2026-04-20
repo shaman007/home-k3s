@@ -60,7 +60,7 @@ spec:
                   name: dashboard-cred
                   key: password
             - name: WAZUH_API_URL
-              value: https://wazuh.wazuh.svc.cluster.local:55000
+              value: https://wazuh.wazuh.svc.cluster.local
             - name: API_USERNAME
               valueFrom:
                 secretKeyRef:
