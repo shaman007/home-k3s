@@ -27,4 +27,37 @@ data:
         <description>UniFi Dream Machine syslog event.</description>
         <group>network,unifi,udm,</group>
       </rule>
+
+      <rule id="100103" level="6">
+        <if_sid>100100</if_sid>
+        <match type="pcre2">(?i)(wp-login\.php|xmlrpc\.php)</match>
+        <description>WordPress authentication endpoint access mirrored from Traefik.</description>
+        <group>wordpress,web,authentication,</group>
+      </rule>
+
+      <rule id="100104" level="7">
+        <if_sid>100100</if_sid>
+        <match type="pcre2">(?i)(/wp-admin|/wp-content|/wp-includes|/wlwmanifest\.xml|/wp-json)</match>
+        <description>Suspicious WordPress probing request mirrored from Traefik.</description>
+        <group>wordpress,web,web_scan,</group>
+      </rule>
+
+      <rule id="100105" level="8">
+        <if_sid>100100</if_sid>
+        <match type="pcre2">(?i)(wp-login\.php|xmlrpc\.php).*(status\":(401|403|404|429|499|500|502|503|504)|DownstreamStatus\":(401|403|404|429|499|500|502|503|504))</match>
+        <description>WordPress authentication request returned an anomalous HTTP status.</description>
+        <group>wordpress,web,authentication_failed,</group>
+      </rule>
+
+      <rule id="100106" level="10" frequency="8" timeframe="120">
+        <if_matched_sid>100103</if_matched_sid>
+        <description>Repeated WordPress login or XML-RPC access detected in mirrored ingress logs.</description>
+        <group>wordpress,web,bruteforce,</group>
+      </rule>
+
+      <rule id="100107" level="10" frequency="10" timeframe="180">
+        <if_matched_sid>100104</if_matched_sid>
+        <description>Repeated suspicious WordPress path probing detected in mirrored ingress logs.</description>
+        <group>wordpress,web,web_scan,</group>
+      </rule>
     </group>

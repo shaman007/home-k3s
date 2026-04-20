@@ -39,7 +39,7 @@ spec:
             - name: LOKI_URL
               value: http://loki.loki.svc.cluster.local:3100
             - name: LOKI_QUERY
-              value: '{namespace=~"kube-system|traefik|harbor|wazuh"} |~ "(?i)(error|warn|fail|denied|unauthorized|forbidden|panic|critical)"'
+              value: '{namespace=~"kube-system|traefik|harbor|wazuh"} |~ "(?i)(error|warn|fail|denied|unauthorized|forbidden|panic|critical|wp-login\\.php|xmlrpc\\.php|/wp-admin|/wp-content|/wp-includes|/wlwmanifest\\.xml|/wp-json)"'
             - name: POLL_INTERVAL_SECONDS
               value: "60"
             - name: INITIAL_LOOKBACK_SECONDS

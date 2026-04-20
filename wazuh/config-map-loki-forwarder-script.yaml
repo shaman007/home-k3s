@@ -17,7 +17,7 @@ data:
     LOKI_URL = os.environ.get("LOKI_URL", "http://loki.loki.svc.cluster.local:3100")
     LOKI_QUERY = os.environ.get(
         "LOKI_QUERY",
-        '{namespace=~"kube-system|traefik|harbor|wazuh"} |~ "(?i)(error|warn|fail|denied|unauthorized|forbidden|panic|critical)"',
+        '{namespace=~"kube-system|traefik|harbor|wazuh"} |~ "(?i)(error|warn|fail|denied|unauthorized|forbidden|panic|critical|wp-login\\\\.php|xmlrpc\\\\.php|/wp-admin|/wp-content|/wp-includes|/wlwmanifest\\\\.xml|/wp-json)"',
     )
     POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL_SECONDS", "60"))
     INITIAL_LOOKBACK = int(os.environ.get("INITIAL_LOOKBACK_SECONDS", "300"))
