@@ -9,6 +9,7 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerClass: metallb-l2
+  loadBalancerIP: 192.168.1.211
   externalTrafficPolicy: Local
   selector:
     app: wazuh-manager
