@@ -74,7 +74,7 @@ spec:
             - name: SERVER_SSL_KEY
               value: /usr/share/wazuh-dashboard/certs/key.pem
             - name: WAZUH_API_URL
-              value: https://wazuh.wazuh.svc.cluster.local:55000
+              value: https://wazuh.wazuh.svc.cluster.local
             - name: API_USERNAME
               valueFrom:
                 secretKeyRef:
