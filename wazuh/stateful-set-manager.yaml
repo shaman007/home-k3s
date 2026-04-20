@@ -21,6 +21,9 @@ spec:
         - name: config
           configMap:
             name: wazuh-conf
+        - name: local-rules
+          configMap:
+            name: wazuh-local-rules
         - name: filebeat-certs
           secret:
             secretName: indexer-certs
@@ -54,6 +57,10 @@ spec:
             - name: wazuh-authd-pass
               mountPath: /wazuh-config-mount/etc/authd.pass
               subPath: authd.pass
+              readOnly: true
+            - name: local-rules
+              mountPath: /var/ossec/etc/rules/local_rules.xml
+              subPath: local_rules.xml
               readOnly: true
             - name: wazuh-manager
               mountPath: /var/ossec/api/configuration

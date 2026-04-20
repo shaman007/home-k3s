@@ -1,0 +1,30 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-local-rules
+  namespace: wazuh
+data:
+  local_rules.xml: |
+    <group name="local,syslog,">
+      <rule id="100100" level="5">
+        <if_sid>1002</if_sid>
+        <program_name>loki-forwarder</program_name>
+        <description>Loki-forwarded cluster event mirrored into Wazuh.</description>
+        <group>loki,cluster,</group>
+      </rule>
+
+      <rule id="100101" level="7">
+        <if_sid>1002</if_sid>
+        <program_name>harbor-webhook</program_name>
+        <description>Harbor security event received through the Wazuh webhook bridge.</description>
+        <group>harbor,container_registry,</group>
+      </rule>
+
+      <rule id="100102" level="5">
+        <if_sid>1002</if_sid>
+        <hostname type="pcre2">(?i).*(udm|unifi|dream).*</hostname>
+        <description>UniFi Dream Machine syslog event.</description>
+        <group>network,unifi,udm,</group>
+      </rule>
+    </group>

@@ -22,3 +22,11 @@ spec:
       port: 514
       targetPort: 514
       protocol: TCP
+    - name: agents-events
+      port: 1514
+      targetPort: 1514
+      protocol: TCP
+    - name: registration
+      port: 1515
+      targetPort: 1515
+      protocol: TCP

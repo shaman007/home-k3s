@@ -17,7 +17,7 @@ data:
       </global>
 
       <alerts>
-        <log_alert_level>3</log_alert_level>
+        <log_alert_level>2</log_alert_level>
         <email_alert_level>12</email_alert_level>
       </alerts>
 
