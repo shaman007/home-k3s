@@ -7,6 +7,8 @@ This directory deploys a small-footprint Wazuh stack for this cluster:
 - `wazuh-dashboard`: UI exposed through Traefik
 - `loki-forwarder`: polls Loki for security-relevant cluster log lines and forwards them into Wazuh over syslog
 - `harbor-webhook-bridge`: receives Harbor webhooks and forwards image/security events into Wazuh over syslog
+- `traefik-access-indexer`: mirrors raw Traefik access logs from Loki into OpenSearch indices named `traefik-access-*`
+- `traefik-detector-bootstrap`: creates per-host OpenSearch anomaly detectors for exposed ingresses
 
 Design notes:
 
@@ -16,6 +18,7 @@ Design notes:
 - The same external Wazuh IP can also accept agent enrollment and secure agent traffic on `1515/tcp` and `1514/tcp`.
 - Loki integration in this repo is additive: Wazuh keeps Loki as the source of truth for cluster logs and only mirrors selected high-signal events into the SIEM.
 - WordPress web detections are mirrored from Traefik access logs for suspicious paths such as `wp-login.php`, `xmlrpc.php`, `wp-admin`, `wp-content`, `wp-includes`, `wlwmanifest.xml`, and `wp-json`.
+- Raw Traefik access logs are also normalized into OpenSearch so anomaly detection can run against real ingress traffic instead of only post-processed Wazuh alerts.
 - Harbor integration uses an internal webhook receiver at `http://harbor-webhook-bridge.wazuh.svc.cluster.local/`.
 - Credentials and certificates are expected in Vault and synced with External Secrets.
 
@@ -55,6 +58,7 @@ Alert visibility:
 
 - Wazuh keeps all mirrored events in archives, but this repo also raises Loki, Harbor, and UDM-originated events into normal alerts so they appear in the dashboard.
 - WordPress alerts are raised as dedicated Wazuh rules for login endpoint access, suspicious probing, anomalous HTTP statuses, and burst-style scanning patterns.
+- Ingress anomaly detectors are created per exposed host and include a dedicated WordPress auth detector for `andreybondarenko.com`.
 
 Harbor setup:
 

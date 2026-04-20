@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-access-indexer
+  namespace: wazuh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik-access-indexer
+  template:
+    metadata:
+      labels:
+        app: traefik-access-indexer
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: script
+          configMap:
+            name: traefik-access-indexer-script
+        - name: indexer-certs
+          secret:
+            secretName: indexer-certs
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: traefik-access-indexer
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - /app/indexer.py
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: LOKI_URL
+              value: http://loki.loki.svc.cluster.local:3100
+            - name: LOKI_QUERY
+              value: '{namespace="traefik",container="traefik"} |= "\"RequestHost\""'
+            - name: INDEXER_URL
+              value: https://indexer.wazuh.svc.cluster.local:9200
+            - name: INDEXER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: indexer-cred
+                  key: username
+            - name: INDEXER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: indexer-cred
+                  key: password
+            - name: INDEXER_CA_CERT
+              value: /certs/root-ca.pem
+            - name: POLL_INTERVAL_SECONDS
+              value: "60"
+            - name: INITIAL_LOOKBACK_SECONDS
+              value: "300"
+            - name: QUERY_LIMIT
+              value: "5000"
+          volumeMounts:
+            - name: script
+              mountPath: /app/indexer.py
+              subPath: indexer.py
+            - name: indexer-certs
+              mountPath: /certs
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 20m
+              memory: 96Mi
+            limits:
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true

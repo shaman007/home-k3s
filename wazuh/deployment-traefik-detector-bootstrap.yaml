@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-detector-bootstrap
+  namespace: wazuh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik-detector-bootstrap
+  template:
+    metadata:
+      labels:
+        app: traefik-detector-bootstrap
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: script
+          configMap:
+            name: traefik-detector-bootstrap-script
+        - name: indexer-certs
+          secret:
+            secretName: indexer-certs
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: traefik-detector-bootstrap
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - /app/bootstrap.py
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: INDEXER_URL
+              value: https://indexer.wazuh.svc.cluster.local:9200
+            - name: INDEXER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: indexer-cred
+                  key: username
+            - name: INDEXER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: indexer-cred
+                  key: password
+            - name: INDEXER_CA_CERT
+              value: /certs/root-ca.pem
+            - name: EXPOSED_INGRESS_HOSTS
+              value: argocd.w386.k8s.my.lan,bitwarden.andreybondarenko.com,convert.andreybondarenko.com,dawarich.andreybondarenko.com,harbor.andreybondarenko.com,hister.andreybondarenko.com,ha.andreybondarenko.com,immich.andreybondarenko.com,keep.andreybondarenko.com,sso.andreybondarenko.com,mastodon.andreybondarenko.com,cloud.andreybondarenko.com,office.andreybondarenko.com,office.w386.k8s.my.lan,plex.andreybondarenko.com,s3.andreybondarenko.com,pdf.andreybondarenko.com,shaman007.com,vault.w386.k8s.my.lan,wazuh.w386.k8s.my.lan,alerts.w386.k8s.my.lan,grafana.w386.k8s.my.lan,prometheus.w386.k8s.my.lan,longhorn.w386.k8s.my.lan,rspamd.w386.k8s.my.lan,ollama.w386.k8s.my.lan,year.andreybondarenko.com,spt-server.andreybondarenko.com,spt.andreybondarenko.com,andreybondarenko.com
+            - name: WORDPRESS_HOSTS
+              value: andreybondarenko.com
+            - name: LOOP_INTERVAL_SECONDS
+              value: "300"
+          volumeMounts:
+            - name: script
+              mountPath: /app/bootstrap.py
+              subPath: bootstrap.py
+            - name: indexer-certs
+              mountPath: /certs
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true

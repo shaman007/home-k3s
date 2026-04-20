@@ -1,0 +1,257 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-detector-bootstrap-script
+  namespace: wazuh
+data:
+  bootstrap.py: |
+    import base64
+    import json
+    import os
+    import ssl
+    import time
+    import urllib.error
+    import urllib.request
+
+
+    INDEXER_URL = os.environ.get("INDEXER_URL", "https://indexer.wazuh.svc.cluster.local:9200")
+    INDEXER_USERNAME = os.environ["INDEXER_USERNAME"]
+    INDEXER_PASSWORD = os.environ["INDEXER_PASSWORD"]
+    INDEXER_CA_CERT = os.environ.get("INDEXER_CA_CERT", "/certs/root-ca.pem")
+    INDEX_PATTERN = os.environ.get("INDEX_PATTERN", "traefik-access-*")
+    EXPOSED_INGRESS_HOSTS = [
+        host.strip().lower()
+        for host in os.environ.get("EXPOSED_INGRESS_HOSTS", "").split(",")
+        if host.strip()
+    ]
+    WORDPRESS_HOSTS = {
+        host.strip().lower()
+        for host in os.environ.get("WORDPRESS_HOSTS", "").split(",")
+        if host.strip()
+    }
+    LOOP_INTERVAL = int(os.environ.get("LOOP_INTERVAL_SECONDS", "300"))
+
+
+    def build_ssl_context():
+        if INDEXER_CA_CERT and os.path.exists(INDEXER_CA_CERT):
+            context = ssl.create_default_context(cafile=INDEXER_CA_CERT)
+            context.check_hostname = False
+            return context
+        return ssl._create_unverified_context()
+
+
+    SSL_CONTEXT = build_ssl_context()
+    AUTH_HEADER = "Basic " + base64.b64encode(
+        f"{INDEXER_USERNAME}:{INDEXER_PASSWORD}".encode("utf-8")
+    ).decode("ascii")
+
+
+    def http_json(method: str, path: str, payload=None):
+        body = None
+        headers = {
+            "Authorization": AUTH_HEADER,
+            "Accept": "application/json",
+        }
+        if payload is not None:
+            body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(
+            f"{INDEXER_URL}{path}",
+            data=body,
+            method=method,
+            headers=headers,
+        )
+        with urllib.request.urlopen(request, timeout=30, context=SSL_CONTEXT) as response:
+            raw = response.read().decode("utf-8")
+        return json.loads(raw) if raw else {}
+
+
+    def list_indices():
+        request = urllib.request.Request(
+            f"{INDEXER_URL}/_cat/indices/{INDEX_PATTERN}?format=json",
+            headers={
+                "Authorization": AUTH_HEADER,
+                "Accept": "application/json",
+            },
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30, context=SSL_CONTEXT) as response:
+                raw = response.read().decode("utf-8")
+            return json.loads(raw) if raw else []
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return []
+            raise
+
+
+    def slugify(host: str) -> str:
+        return host.replace(".", "-")
+
+
+    def get_detectors():
+        payload = {"size": 1000, "query": {"match_all": {}}}
+        response = http_json("POST", "/_plugins/_anomaly_detection/detectors/_search", payload)
+        detectors = {}
+        for hit in response.get("hits", {}).get("hits", []):
+            source = hit.get("_source", {})
+            detectors[source.get("name", "")] = hit.get("_id")
+        return detectors
+
+
+    def start_detector(detector_id: str):
+        try:
+            http_json("POST", f"/_plugins/_anomaly_detection/detectors/{detector_id}/_start", {})
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (400, 409):
+                raise
+
+
+    def ensure_detector(name: str, detector_payload: dict, detectors: dict):
+        detector_id = detectors.get(name)
+        if not detector_id:
+            response = http_json("POST", "/_plugins/_anomaly_detection/detectors", detector_payload)
+            detector_id = response.get("_id")
+            if detector_id:
+                detectors[name] = detector_id
+        if detector_id:
+            start_detector(detector_id)
+
+
+    def host_filter_query(host: str):
+        return {"bool": {"filter": [{"term": {"request_host": host}}]}}
+
+
+    def host_detector_payload(host: str):
+        return {
+            "name": f"ingress-{slugify(host)}-traffic-detector",
+            "description": f"Traffic and error anomalies for {host}.",
+            "time_field": "@timestamp",
+            "indices": [INDEX_PATTERN],
+            "filter_query": host_filter_query(host),
+            "feature_attributes": [
+                {
+                    "feature_name": "request_volume",
+                    "feature_enabled": True,
+                    "aggregation_query": {
+                        "request_volume": {
+                            "value_count": {
+                                "field": "request_host"
+                            }
+                        }
+                    },
+                },
+                {
+                    "feature_name": "error_responses",
+                    "feature_enabled": True,
+                    "aggregation_query": {
+                        "error_responses": {
+                            "sum": {
+                                "field": "error_flag"
+                            }
+                        }
+                    },
+                },
+                {
+                    "feature_name": "unique_clients",
+                    "feature_enabled": True,
+                    "aggregation_query": {
+                        "unique_clients": {
+                            "cardinality": {
+                                "field": "client_ip"
+                            }
+                        }
+                    },
+                },
+            ],
+            "detection_interval": {"period": {"interval": 5, "unit": "Minutes"}},
+            "window_delay": {"period": {"interval": 1, "unit": "Minutes"}},
+            "shingle_size": 8,
+            "schema_version": 0,
+        }
+
+
+    def wordpress_detector_payload(host: str):
+        return {
+            "name": f"wordpress-{slugify(host)}-auth-detector",
+            "description": f"WordPress auth endpoint anomalies for {host}.",
+            "time_field": "@timestamp",
+            "indices": [INDEX_PATTERN],
+            "filter_query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"request_host": host}},
+                        {
+                            "bool": {
+                                "should": [
+                                    {"wildcard": {"request_path": "*/wp-login.php*"}},
+                                    {"wildcard": {"request_path": "*/xmlrpc.php*"}},
+                                ],
+                                "minimum_should_match": 1,
+                            }
+                        },
+                    ]
+                }
+            },
+            "feature_attributes": [
+                {
+                    "feature_name": "auth_requests",
+                    "feature_enabled": True,
+                    "aggregation_query": {
+                        "auth_requests": {
+                            "sum": {
+                                "field": "wp_auth_flag"
+                            }
+                        }
+                    },
+                },
+                {
+                    "feature_name": "auth_errors",
+                    "feature_enabled": True,
+                    "aggregation_query": {
+                        "auth_errors": {
+                            "sum": {
+                                "field": "wp_auth_error_flag"
+                            }
+                        }
+                    },
+                },
+                {
+                    "feature_name": "unique_auth_clients",
+                    "feature_enabled": True,
+                    "aggregation_query": {
+                        "unique_auth_clients": {
+                            "cardinality": {
+                                "field": "client_ip"
+                            }
+                        }
+                    },
+                },
+            ],
+            "detection_interval": {"period": {"interval": 5, "unit": "Minutes"}},
+            "window_delay": {"period": {"interval": 1, "unit": "Minutes"}},
+            "shingle_size": 8,
+            "schema_version": 0,
+        }
+
+
+    def main():
+        while True:
+            try:
+                if not list_indices():
+                    print("waiting for traefik-access indices", flush=True)
+                else:
+                    detectors = get_detectors()
+                    for host in EXPOSED_INGRESS_HOSTS:
+                        payload = host_detector_payload(host)
+                        ensure_detector(payload["name"], payload, detectors)
+                        if host in WORDPRESS_HOSTS:
+                            wp_payload = wordpress_detector_payload(host)
+                            ensure_detector(wp_payload["name"], wp_payload, detectors)
+            except Exception as exc:
+                print(f"bootstrap failed: {exc}", flush=True)
+            time.sleep(LOOP_INTERVAL)
+
+
+    if __name__ == "__main__":
+        main()

@@ -1,0 +1,278 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-access-indexer-script
+  namespace: wazuh
+data:
+  indexer.py: |
+    import base64
+    import datetime
+    import hashlib
+    import json
+    import os
+    import ssl
+    import time
+    import urllib.parse
+    import urllib.request
+
+
+    LOKI_URL = os.environ.get("LOKI_URL", "http://loki.loki.svc.cluster.local:3100")
+    LOKI_QUERY = os.environ.get(
+        "LOKI_QUERY",
+        '{namespace="traefik",container="traefik"} |= "\\"RequestHost\\""',
+    )
+    INDEXER_URL = os.environ.get("INDEXER_URL", "https://indexer.wazuh.svc.cluster.local:9200")
+    INDEXER_USERNAME = os.environ["INDEXER_USERNAME"]
+    INDEXER_PASSWORD = os.environ["INDEXER_PASSWORD"]
+    INDEXER_CA_CERT = os.environ.get("INDEXER_CA_CERT", "/certs/root-ca.pem")
+    INDEX_TEMPLATE_NAME = os.environ.get("INDEX_TEMPLATE_NAME", "traefik-access")
+    INDEX_PATTERN = os.environ.get("INDEX_PATTERN", "traefik-access-*")
+    POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL_SECONDS", "60"))
+    INITIAL_LOOKBACK = int(os.environ.get("INITIAL_LOOKBACK_SECONDS", "300"))
+    QUERY_LIMIT = int(os.environ.get("QUERY_LIMIT", "5000"))
+
+
+    def build_ssl_context():
+        if INDEXER_CA_CERT and os.path.exists(INDEXER_CA_CERT):
+            context = ssl.create_default_context(cafile=INDEXER_CA_CERT)
+            context.check_hostname = False
+            return context
+        return ssl._create_unverified_context()
+
+
+    SSL_CONTEXT = build_ssl_context()
+    AUTH_HEADER = "Basic " + base64.b64encode(
+        f"{INDEXER_USERNAME}:{INDEXER_PASSWORD}".encode("utf-8")
+    ).decode("ascii")
+
+
+    def http_json(method: str, url: str, payload=None):
+        body = None
+        headers = {
+            "Authorization": AUTH_HEADER,
+            "Accept": "application/json",
+        }
+        if payload is not None:
+            body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(url, data=body, method=method, headers=headers)
+        with urllib.request.urlopen(request, timeout=30, context=SSL_CONTEXT) as response:
+            raw = response.read().decode("utf-8")
+        return json.loads(raw) if raw else {}
+
+
+    def http_bulk(url: str, lines):
+        payload = "\n".join(lines) + "\n"
+        request = urllib.request.Request(
+            url,
+            data=payload.encode("utf-8"),
+            method="POST",
+            headers={
+                "Authorization": AUTH_HEADER,
+                "Accept": "application/json",
+                "Content-Type": "application/x-ndjson",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=60, context=SSL_CONTEXT) as response:
+            raw = response.read().decode("utf-8")
+        return json.loads(raw) if raw else {}
+
+
+    def ensure_index_template():
+        template = {
+            "index_patterns": [INDEX_PATTERN],
+            "template": {
+                "settings": {
+                    "number_of_shards": 1,
+                    "number_of_replicas": 0,
+                },
+                "mappings": {
+                    "properties": {
+                        "@timestamp": {"type": "date"},
+                        "source": {"type": "keyword"},
+                        "namespace": {"type": "keyword"},
+                        "pod": {"type": "keyword"},
+                        "container": {"type": "keyword"},
+                        "request_host": {"type": "keyword"},
+                        "request_path": {"type": "keyword", "ignore_above": 4096},
+                        "request_method": {"type": "keyword"},
+                        "request_scheme": {"type": "keyword"},
+                        "request_protocol": {"type": "keyword"},
+                        "status": {"type": "integer"},
+                        "origin_status": {"type": "integer"},
+                        "client_ip": {"type": "ip", "ignore_malformed": True},
+                        "country": {"type": "keyword"},
+                        "country_code": {"type": "keyword"},
+                        "router_name": {"type": "keyword"},
+                        "service_name": {"type": "keyword"},
+                        "entrypoint": {"type": "keyword"},
+                        "duration_ns": {"type": "long"},
+                        "duration_ms": {"type": "float"},
+                        "request_count": {"type": "long"},
+                        "is_error": {"type": "boolean"},
+                        "error_flag": {"type": "integer"},
+                        "is_wordpress": {"type": "boolean"},
+                        "is_wp_probe": {"type": "boolean"},
+                        "wp_probe_flag": {"type": "integer"},
+                        "wp_auth_flag": {"type": "integer"},
+                        "wp_auth_error_flag": {"type": "integer"},
+                        "raw_message": {"type": "wildcard"},
+                    }
+                },
+            },
+        }
+        http_json(
+            "PUT",
+            f"{INDEXER_URL}/_index_template/{INDEX_TEMPLATE_NAME}",
+            template,
+        )
+
+
+    def fetch_loki_logs(start_ns: int, end_ns: int):
+        params = {
+            "query": LOKI_QUERY,
+            "start": str(start_ns),
+            "end": str(end_ns),
+            "limit": str(QUERY_LIMIT),
+            "direction": "forward",
+        }
+        url = f"{LOKI_URL}/loki/api/v1/query_range?{urllib.parse.urlencode(params)}"
+        request = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return payload.get("data", {}).get("result", [])
+
+
+    def flatten_results(results):
+        entries = []
+        for stream in results:
+            labels = stream.get("stream", {})
+            for ts, line in stream.get("values", []):
+                entries.append((int(ts), labels, line))
+        entries.sort(key=lambda item: item[0])
+        return entries
+
+
+    def parse_traefik_record(labels, line: str):
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            return None
+        request_host = record.get("RequestHost") or record.get("RequestAddr")
+        request_path = record.get("RequestPath") or ""
+        if not request_host or not request_path:
+            return None
+        timestamp = record.get("StartUTC") or record.get("time")
+        if not timestamp:
+            return None
+        status = int(record.get("DownstreamStatus", 0) or 0)
+        origin_status = int(record.get("OriginStatus", 0) or 0)
+        duration_ns = int(record.get("Duration", 0) or 0)
+        client_ip = record.get("ClientHost") or ""
+        path_lower = request_path.lower()
+        is_wp_probe = any(
+            needle in path_lower
+            for needle in (
+                "/wp-login.php",
+                "/xmlrpc.php",
+                "/wp-admin",
+                "/wp-content/plugins",
+                "/wp-content/themes",
+                "/wp-includes",
+                "/wp-json",
+                "/wlwmanifest.xml",
+            )
+        )
+        is_wp_auth = "/wp-login.php" in path_lower or "/xmlrpc.php" in path_lower
+        return {
+            "@timestamp": timestamp,
+            "source": "traefik-access",
+            "namespace": labels.get("namespace", "unknown"),
+            "pod": labels.get("pod", "unknown"),
+            "container": labels.get("container", "unknown"),
+            "request_host": request_host.lower(),
+            "request_path": request_path,
+            "request_method": (record.get("RequestMethod") or "").upper(),
+            "request_scheme": record.get("RequestScheme", ""),
+            "request_protocol": record.get("RequestProtocol", ""),
+            "status": status,
+            "origin_status": origin_status,
+            "client_ip": client_ip,
+            "country": record.get("request_Geoip-Country", ""),
+            "country_code": record.get("request_Geoip-Country-Code", ""),
+            "router_name": record.get("RouterName", ""),
+            "service_name": record.get("ServiceName", ""),
+            "entrypoint": record.get("entryPointName", ""),
+            "duration_ns": duration_ns,
+            "duration_ms": round(duration_ns / 1_000_000, 3),
+            "request_count": int(record.get("RequestCount", 0) or 0),
+            "is_error": status >= 400,
+            "error_flag": 1 if status >= 400 else 0,
+            "is_wordpress": "/wp-" in path_lower or "xmlrpc.php" in path_lower or "wlwmanifest.xml" in path_lower,
+            "is_wp_probe": is_wp_probe,
+            "wp_probe_flag": 1 if is_wp_probe else 0,
+            "wp_auth_flag": 1 if is_wp_auth else 0,
+            "wp_auth_error_flag": 1 if is_wp_auth and status >= 400 else 0,
+            "raw_message": line,
+        }
+
+
+    def build_doc_id(document):
+        fingerprint = "|".join(
+            [
+                document.get("@timestamp", ""),
+                document.get("request_host", ""),
+                document.get("request_path", ""),
+                document.get("client_ip", ""),
+                str(document.get("status", "")),
+                document.get("router_name", ""),
+            ]
+        )
+        return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()
+
+
+    def index_documents(documents):
+        if not documents:
+            return
+        bulk_lines = []
+        for document in documents:
+            timestamp = datetime.datetime.fromisoformat(
+                document["@timestamp"].replace("Z", "+00:00")
+            )
+            index_name = f"traefik-access-{timestamp.strftime('%Y.%m.%d')}"
+            bulk_lines.append(
+                json.dumps(
+                    {"index": {"_index": index_name, "_id": build_doc_id(document)}},
+                    separators=(",", ":"),
+                )
+            )
+            bulk_lines.append(json.dumps(document, separators=(",", ":")))
+        response = http_bulk(f"{INDEXER_URL}/_bulk", bulk_lines)
+        if response.get("errors"):
+            items = response.get("items", [])
+            failed = sum(1 for item in items if item.get("index", {}).get("error"))
+            print(f"bulk indexing completed with {failed} failed items", flush=True)
+
+
+    def main():
+        ensure_index_template()
+        last_seen_ns = int(time.time() * 1_000_000_000) - INITIAL_LOOKBACK * 1_000_000_000
+        while True:
+            try:
+                now_ns = int(time.time() * 1_000_000_000)
+                results = fetch_loki_logs(last_seen_ns + 1, now_ns)
+                entries = flatten_results(results)
+                documents = []
+                for ts, labels, line in entries:
+                    parsed = parse_traefik_record(labels, line)
+                    if parsed:
+                        documents.append(parsed)
+                    last_seen_ns = max(last_seen_ns, ts)
+                index_documents(documents)
+            except Exception as exc:
+                print(f"poll failed: {exc}", flush=True)
+            time.sleep(POLL_INTERVAL)
+
+
+    if __name__ == "__main__":
+        main()
