@@ -1,0 +1,48 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: indexer-conf
+  namespace: wazuh
+data:
+  opensearch.yml: |
+    cluster.name: wazuh
+    node.name: ${NODE_NAME}
+    network.host: 0.0.0.0
+    discovery.type: single-node
+    path.data: /var/lib/wazuh-indexer
+    path.logs: /var/log/wazuh-indexer
+    plugins.security.ssl.http.pemcert_filepath: /usr/share/wazuh-indexer/config/certs/node.pem
+    plugins.security.ssl.http.pemkey_filepath: /usr/share/wazuh-indexer/config/certs/node-key.pem
+    plugins.security.ssl.http.pemtrustedcas_filepath: /usr/share/wazuh-indexer/config/certs/root-ca.pem
+    plugins.security.ssl.transport.pemcert_filepath: /usr/share/wazuh-indexer/config/certs/node.pem
+    plugins.security.ssl.transport.pemkey_filepath: /usr/share/wazuh-indexer/config/certs/node-key.pem
+    plugins.security.ssl.transport.pemtrustedcas_filepath: /usr/share/wazuh-indexer/config/certs/root-ca.pem
+    plugins.security.ssl.http.enabled: true
+    plugins.security.ssl.transport.enforce_hostname_verification: false
+    plugins.security.ssl.transport.resolve_hostname: false
+    plugins.security.authcz.admin_dn:
+      - CN=admin,O=Company,L=California,C=US
+    plugins.security.nodes_dn:
+      - CN=indexer,O=Company,L=California,C=US
+    plugins.security.restapi.roles_enabled:
+      - "all_access"
+      - "security_rest_api_access"
+    plugins.security.allow_default_init_securityindex: true
+    cluster.routing.allocation.disk.threshold_enabled: false
+    compatibility.override_main_response_version: true
+  internal_users.yml: |
+    ---
+    _meta:
+      type: "internalusers"
+      config_version: 2
+    admin:
+      hash: "$2y$12$K/SpwjtB.wOHJ/Nc6GVRDuc1h0rM1DfvziFRNPtk27P.c4yDr9njO"
+      reserved: true
+      backend_roles:
+        - "admin"
+      description: "Wazuh admin user"
+    kibanaserver:
+      hash: "$2a$12$4AcgAt3xwOWadA5s5blL6ev39OXDNhmOesEoo33eZtrq2N0YrU3H."
+      reserved: true
+      description: "Wazuh dashboard service user"

@@ -68,6 +68,7 @@ Observability and security:
 - Prometheus + exporters
 - Thanos
 - Loki
+- Wazuh
 - ClamAV
 - Connectivity exporter
 - CA scanner UI (`canitiser/`)

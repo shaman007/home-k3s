@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wazuh-dashboard-ingress
+  namespace: wazuh
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+spec:
+  tls:
+    - hosts:
+        - wazuh.w386.k8s.my.lan
+      secretName: wazuh-dashboard-tls
+  rules:
+    - host: wazuh.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 5601

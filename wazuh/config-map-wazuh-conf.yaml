@@ -1,0 +1,102 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wazuh-conf
+  namespace: wazuh
+data:
+  ossec.conf: |
+    <ossec_config>
+      <global>
+        <jsonout_output>yes</jsonout_output>
+        <alerts_log>yes</alerts_log>
+        <logall>no</logall>
+        <logall_json>yes</logall_json>
+        <email_notification>no</email_notification>
+        <queue_size>131072</queue_size>
+      </global>
+
+      <alerts>
+        <log_alert_level>3</log_alert_level>
+        <email_alert_level>12</email_alert_level>
+      </alerts>
+
+      <logging>
+        <log_format>plain,json</log_format>
+      </logging>
+
+      <remote>
+        <connection>secure</connection>
+        <port>1514</port>
+        <protocol>tcp</protocol>
+        <queue_size>131072</queue_size>
+      </remote>
+
+      <remote>
+        <connection>syslog</connection>
+        <port>514</port>
+        <protocol>udp</protocol>
+        <allowed-ips>192.168.1.0/24</allowed-ips>
+      </remote>
+
+      <remote>
+        <connection>syslog</connection>
+        <port>514</port>
+        <protocol>tcp</protocol>
+        <allowed-ips>192.168.1.0/24</allowed-ips>
+      </remote>
+
+      <vulnerability-detection>
+        <enabled>yes</enabled>
+        <index-status>yes</index-status>
+        <feed-update-interval>60m</feed-update-interval>
+      </vulnerability-detection>
+
+      <indexer>
+        <enabled>yes</enabled>
+        <hosts>
+          <host>https://indexer:9200</host>
+        </hosts>
+        <ssl>
+          <certificate_authorities>
+            <ca>/etc/ssl/root-ca.pem</ca>
+          </certificate_authorities>
+          <certificate>/etc/ssl/filebeat.pem</certificate>
+          <key>/etc/ssl/filebeat.key</key>
+        </ssl>
+      </indexer>
+
+      <auth>
+        <disabled>no</disabled>
+        <port>1515</port>
+        <use_source_ip>no</use_source_ip>
+        <force>
+          <enabled>yes</enabled>
+          <key_mismatch>yes</key_mismatch>
+          <disconnected_time enabled="yes">1h</disconnected_time>
+          <after_registration_time>1h</after_registration_time>
+        </force>
+        <purge>no</purge>
+        <use_password>yes</use_password>
+        <ciphers>HIGH:!ADH:!EXP:!MD5:!RC4:!3DES:!CAMELLIA:@STRENGTH</ciphers>
+        <ssl_verify_host>no</ssl_verify_host>
+        <ssl_manager_cert>/var/ossec/etc/sslmanager.cert</ssl_manager_cert>
+        <ssl_manager_key>/var/ossec/etc/sslmanager.key</ssl_manager_key>
+        <ssl_auto_negotiate>no</ssl_auto_negotiate>
+      </auth>
+
+      <ruleset>
+        <decoder_dir>ruleset/decoders</decoder_dir>
+        <rule_dir>ruleset/rules</rule_dir>
+        <rule_exclude>0215-policy_rules.xml</rule_exclude>
+        <decoder_dir>etc/decoders</decoder_dir>
+        <rule_dir>etc/rules</rule_dir>
+      </ruleset>
+    </ossec_config>
+
+    <ossec_config>
+      <localfile>
+        <log_format>syslog</log_format>
+        <location>/var/ossec/logs/active-responses.log</location>
+      </localfile>
+    </ossec_config>
