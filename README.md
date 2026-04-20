@@ -73,6 +73,9 @@ Observability and security:
 - Connectivity exporter
 - CA scanner UI (`canitiser/`)
 
+Wazuh in this repo ingests Dream Machine syslog directly and can also mirror
+selected cluster log events from Loki plus Harbor webhook events for SIEM use.
+
 ## Repository layout
 
 - `argocd/`: Argo CD `Application` manifests (main deployment entrypoint).

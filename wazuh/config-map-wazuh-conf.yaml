@@ -36,14 +36,14 @@ data:
         <connection>syslog</connection>
         <port>514</port>
         <protocol>udp</protocol>
-        <allowed-ips>192.168.1.0/24</allowed-ips>
+        <allowed-ips>0.0.0.0/0</allowed-ips>
       </remote>
 
       <remote>
         <connection>syslog</connection>
         <port>514</port>
         <protocol>tcp</protocol>
-        <allowed-ips>192.168.1.0/24</allowed-ips>
+        <allowed-ips>0.0.0.0/0</allowed-ips>
       </remote>
 
       <vulnerability-detection>

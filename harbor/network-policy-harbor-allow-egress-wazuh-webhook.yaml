@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: harbor-allow-egress-wazuh-webhook
+  namespace: harbor
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: core
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: wazuh
+          podSelector:
+            matchLabels:
+              app: harbor-webhook-bridge
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 8080

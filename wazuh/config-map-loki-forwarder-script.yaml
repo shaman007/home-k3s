@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-forwarder-script
+  namespace: wazuh
+data:
+  forwarder.py: |
+    import datetime
+    import json
+    import os
+    import socket
+    import time
+    import urllib.parse
+    import urllib.request
+
+
+    LOKI_URL = os.environ.get("LOKI_URL", "http://loki.loki.svc.cluster.local:3100")
+    LOKI_QUERY = os.environ.get(
+        "LOKI_QUERY",
+        '{namespace=~"kube-system|traefik|harbor|wazuh"} |~ "(?i)(error|warn|fail|denied|unauthorized|forbidden|panic|critical)"',
+    )
+    POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL_SECONDS", "60"))
+    INITIAL_LOOKBACK = int(os.environ.get("INITIAL_LOOKBACK_SECONDS", "300"))
+    QUERY_LIMIT = int(os.environ.get("QUERY_LIMIT", "1000"))
+    SYSLOG_HOST = os.environ.get("SYSLOG_HOST", "wazuh-syslog.wazuh.svc.cluster.local")
+    SYSLOG_PORT = int(os.environ.get("SYSLOG_PORT", "514"))
+    SYSLOG_PROTO = os.environ.get("SYSLOG_PROTO", "udp").lower()
+    SYSLOG_HOSTNAME = os.environ.get("SYSLOG_HOSTNAME", "wazuh-loki-forwarder")
+    SYSLOG_TAG = os.environ.get("SYSLOG_TAG", "loki-forwarder")
+
+
+    def build_syslog_message(message: str) -> bytes:
+        timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%b %d %H:%M:%S")
+        line = f"<134>{timestamp} {SYSLOG_HOSTNAME} {SYSLOG_TAG}: {message[:7000]}"
+        return line.encode("utf-8", errors="replace")
+
+
+    def send_syslog(message: str) -> None:
+        payload = build_syslog_message(message)
+        if SYSLOG_PROTO == "tcp":
+            with socket.create_connection((SYSLOG_HOST, SYSLOG_PORT), timeout=5) as sock:
+                sock.sendall(payload + b"\n")
+            return
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.sendto(payload, (SYSLOG_HOST, SYSLOG_PORT))
+        finally:
+            sock.close()
+
+
+    def fetch_logs(start_ns: int, end_ns: int):
+        params = {
+            "query": LOKI_QUERY,
+            "start": str(start_ns),
+            "end": str(end_ns),
+            "limit": str(QUERY_LIMIT),
+            "direction": "forward",
+        }
+        url = f"{LOKI_URL}/loki/api/v1/query_range?{urllib.parse.urlencode(params)}"
+        request = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return payload.get("data", {}).get("result", [])
+
+
+    def flatten_results(results):
+        entries = []
+        for stream in results:
+            labels = stream.get("stream", {})
+            for ts, line in stream.get("values", []):
+                entries.append((int(ts), labels, line))
+        entries.sort(key=lambda item: item[0])
+        return entries
+
+
+    def main() -> None:
+        last_seen_ns = int(time.time() * 1_000_000_000) - INITIAL_LOOKBACK * 1_000_000_000
+        while True:
+            try:
+                now_ns = int(time.time() * 1_000_000_000)
+                results = fetch_logs(last_seen_ns + 1, now_ns)
+                entries = flatten_results(results)
+                for ts, labels, line in entries:
+                    namespace = labels.get("namespace", "unknown")
+                    pod = labels.get("pod", "unknown")
+                    container = labels.get("container", "unknown")
+                    syslog_line = json.dumps(
+                        {
+                            "source": "loki",
+                            "namespace": namespace,
+                            "pod": pod,
+                            "container": container,
+                            "message": line,
+                        },
+                        separators=(",", ":"),
+                    )
+                    send_syslog(syslog_line)
+                    last_seen_ns = max(last_seen_ns, ts)
+            except Exception as exc:
+                error_line = json.dumps(
+                    {
+                        "source": "loki-forwarder",
+                        "level": "error",
+                        "message": f"poll failed: {exc}",
+                    },
+                    separators=(",", ":"),
+                )
+                send_syslog(error_line)
+            time.sleep(POLL_INTERVAL)
+
+
+    if __name__ == "__main__":
+        main()

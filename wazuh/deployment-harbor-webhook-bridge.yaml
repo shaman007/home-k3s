@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harbor-webhook-bridge
+  namespace: wazuh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: harbor-webhook-bridge
+  template:
+    metadata:
+      labels:
+        app: harbor-webhook-bridge
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: script
+          configMap:
+            name: harbor-webhook-bridge-script
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: harbor-webhook-bridge
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - /app/server.py
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: SYSLOG_HOST
+              value: wazuh-manager-0.wazuh-manager.wazuh.svc.cluster.local
+            - name: SYSLOG_PORT
+              value: "514"
+            - name: SYSLOG_PROTO
+              value: udp
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: script
+              mountPath: /app/server.py
+              subPath: server.py
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true

@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: harbor-webhook-bridge-script
+  namespace: wazuh
+data:
+  server.py: |
+    import json
+    import os
+    import socket
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+
+    SYSLOG_HOST = os.environ.get("SYSLOG_HOST", "wazuh-syslog.wazuh.svc.cluster.local")
+    SYSLOG_PORT = int(os.environ.get("SYSLOG_PORT", "514"))
+    SYSLOG_PROTO = os.environ.get("SYSLOG_PROTO", "udp").lower()
+    SYSLOG_HOSTNAME = os.environ.get("SYSLOG_HOSTNAME", "wazuh-harbor-webhook")
+    SYSLOG_TAG = os.environ.get("SYSLOG_TAG", "harbor-webhook")
+    HARBOR_WEBHOOK_TOKEN = os.environ.get("HARBOR_WEBHOOK_TOKEN", "")
+
+
+    def build_syslog_message(message: str) -> bytes:
+        from datetime import datetime, timezone
+
+        timestamp = datetime.now(timezone.utc).strftime("%b %d %H:%M:%S")
+        line = f"<134>{timestamp} {SYSLOG_HOSTNAME} {SYSLOG_TAG}: {message[:7000]}"
+        return line.encode("utf-8", errors="replace")
+
+
+    def send_syslog(message: str) -> None:
+        payload = build_syslog_message(message)
+        if SYSLOG_PROTO == "tcp":
+            with socket.create_connection((SYSLOG_HOST, SYSLOG_PORT), timeout=5) as sock:
+                sock.sendall(payload + b"\n")
+            return
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.sendto(payload, (SYSLOG_HOST, SYSLOG_PORT))
+        finally:
+            sock.close()
+
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            if HARBOR_WEBHOOK_TOKEN:
+                token = self.headers.get("X-Harbor-Webhook-Token", "")
+                if token != HARBOR_WEBHOOK_TOKEN:
+                    self.send_response(403)
+                    self.end_headers()
+                    return
+
+            content_length = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(content_length)
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception:
+                self.send_response(400)
+                self.end_headers()
+                return
+
+            event_type = payload.get("type", "unknown")
+            operator = payload.get("operator", "unknown")
+            event_data = payload.get("event_data", {})
+            resource = ""
+            if isinstance(event_data, dict):
+                if isinstance(event_data.get("repository"), dict):
+                    resource = event_data["repository"].get("repo_full_name", "")
+                if not resource and isinstance(event_data.get("resources"), list) and event_data["resources"]:
+                    first = event_data["resources"][0]
+                    if isinstance(first, dict):
+                        resource = first.get("resource_url", "") or first.get("digest", "")
+
+            syslog_line = json.dumps(
+                {
+                    "source": "harbor-webhook",
+                    "type": event_type,
+                    "operator": operator,
+                    "resource": resource,
+                    "payload": payload,
+                },
+                separators=(",", ":"),
+            )
+            send_syslog(syslog_line)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok"}')
+
+        def log_message(self, format, *args):
+            return
+
+
+    if __name__ == "__main__":
+        server = HTTPServer(("0.0.0.0", 8080), Handler)
+        server.serve_forever()

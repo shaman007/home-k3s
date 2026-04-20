@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki-forwarder
+  namespace: wazuh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki-forwarder
+  template:
+    metadata:
+      labels:
+        app: loki-forwarder
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: script
+          configMap:
+            name: loki-forwarder-script
+        - name: tmp
+          emptyDir: {}
+      containers:
+        - name: loki-forwarder
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - /app/forwarder.py
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: LOKI_URL
+              value: http://loki.loki.svc.cluster.local:3100
+            - name: LOKI_QUERY
+              value: '{namespace=~"kube-system|traefik|harbor|wazuh"} |~ "(?i)(error|warn|fail|denied|unauthorized|forbidden|panic|critical)"'
+            - name: POLL_INTERVAL_SECONDS
+              value: "60"
+            - name: INITIAL_LOOKBACK_SECONDS
+              value: "300"
+            - name: QUERY_LIMIT
+              value: "1000"
+            - name: SYSLOG_HOST
+              value: wazuh-manager-0.wazuh-manager.wazuh.svc.cluster.local
+            - name: SYSLOG_PORT
+              value: "514"
+            - name: SYSLOG_PROTO
+              value: udp
+          volumeMounts:
+            - name: script
+              mountPath: /app/forwarder.py
+              subPath: forwarder.py
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
