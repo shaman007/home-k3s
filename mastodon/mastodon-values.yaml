@@ -172,7 +172,7 @@ mastodon:
   streaming:
     image:
       repository: harbor.andreybondarenko.com/github/mastodon/mastodon-streaming
-      tag: v4.5.8
+      tag: v4.5.9
     port: 4000
     # -- this should be set manually since os.cpus() returns the number of CPUs on
     # the node running the pod, which is unrelated to the resources allocated to
@@ -225,7 +225,7 @@ mastodon:
     persistentTimeout: "20"
     image:
       repository: harbor.andreybondarenko.com/github/mastodon/mastodon
-      tag: v4.5.8
+      tag: v4.5.9
     # allows you to mount a custom database.yml from a configmap
     # for example if you want to use a read-only replica
     customDatabaseConfigYml:
