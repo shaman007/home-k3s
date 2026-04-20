@@ -42,3 +42,8 @@ Current assumptions:
 
 - LAN devices live on `192.168.1.0/24`.
 - The dashboard is served at `wazuh.w386.k8s.my.lan`.
+
+Bootstrap note:
+
+- `secret-vault-token.yaml` seeds a placeholder `vault-token` secret so the
+  existing Vault token rotator can mint and rotate a namespace-scoped token.
