@@ -1,5 +1,7 @@
 # Wazuh
 
+Deprecated: this stack is no longer part of the active cluster and is kept here only for reference.
+
 This directory deploys a small-footprint Wazuh stack for this cluster:
 
 - `wazuh-manager`: single manager for API, authd, and Dream Machine syslog

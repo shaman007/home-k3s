@@ -128,7 +128,7 @@ spec:
                       --dry-run=client -o yaml | kubectl apply -f -
                   }
 
-                  wildcard_targets="argocd/argocd-tls longhorn-system/longhorn-tls mail/rspamd-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls nextcloud/office-tls wazuh/wazuh-dashboard-tls"
+                  wildcard_targets="argocd/argocd-tls longhorn-system/longhorn-tls mail/rspamd-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls nextcloud/office-tls"
                   rotate_wildcard=false
 
                   for target in $wildcard_targets; do

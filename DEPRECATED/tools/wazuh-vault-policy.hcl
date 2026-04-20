@@ -1,3 +1,4 @@
+# DEPRECATED: retained only for the historical Wazuh deployment.
 path "kv/data/wazuh" {
   capabilities = ["read"]
 }

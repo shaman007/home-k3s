@@ -68,13 +68,9 @@ Observability and security:
 - Prometheus + exporters
 - Thanos
 - Loki
-- Wazuh
 - ClamAV
 - Connectivity exporter
 - CA scanner UI (`canitiser/`)
-
-Wazuh in this repo ingests Dream Machine syslog directly and can also mirror
-selected cluster log events from Loki plus Harbor webhook events for SIEM use.
 
 ## Repository layout
 
@@ -176,6 +172,7 @@ required features.
 ## Deprecated manifests
 
 Historical manifests are kept under [`DEPRECATED/`](DEPRECATED/README.md).
+This now includes the retired Wazuh stack and its related helper manifests.
 
 ## License
 

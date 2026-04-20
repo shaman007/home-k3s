@@ -1,3 +1,4 @@
+## DEPRECATED: retained for historical reference only.
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -8,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
-    path: wazuh
+    path: DEPRECATED/wazuh
     targetRevision: HEAD
     directory:
       recurse: false

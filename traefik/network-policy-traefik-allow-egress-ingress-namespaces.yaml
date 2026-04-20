@@ -77,9 +77,6 @@ spec:
               kubernetes.io/metadata.name: vault
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: wazuh
-        - namespaceSelector:
-            matchLabels:
               kubernetes.io/metadata.name: wordpress
         - namespaceSelector:
             matchLabels:
