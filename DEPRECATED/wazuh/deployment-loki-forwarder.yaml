@@ -28,7 +28,7 @@ spec:
           emptyDir: {}
       containers:
         - name: loki-forwarder
-          image: harbor.andreybondarenko.com/dockerhub/library/python:3.12-alpine
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
           imagePullPolicy: IfNotPresent
           command:
             - python3
