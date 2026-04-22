@@ -20,4 +20,6 @@ spec:
               app.kubernetes.io/name: prometheus-adapter
       ports:
         - protocol: TCP
+          port: 9090
+        - protocol: TCP
           port: 10902
