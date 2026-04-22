@@ -15,12 +15,14 @@ data:
     #!/usr/bin/env python3
     import json
     import os
+    import smtplib
     import sys
     import time
     import urllib.error
     import urllib.parse
     import urllib.request
     from datetime import datetime, timedelta
+    from email.message import EmailMessage
     from pathlib import Path
     from zoneinfo import ZoneInfo
 
@@ -285,6 +287,22 @@ data:
             if exc.code != 404:
                 raise
         return kube_json(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
+
+
+    def send_email(subject, body):
+        smtp_host = env("SMTP_HOST", required=True)
+        smtp_port = env_int("SMTP_PORT", 25)
+        mail_from = env("MAIL_FROM", required=True)
+        mail_to = env("MAIL_TO", required=True)
+
+        message = EmailMessage()
+        message["From"] = mail_from
+        message["To"] = mail_to
+        message["Subject"] = subject
+        message.set_content(body)
+
+        with smtplib.SMTP(host=smtp_host, port=smtp_port, timeout=30) as smtp:
+            smtp.send_message(message)
 
 
     def trim_line(value, max_chars=220):
@@ -687,6 +705,10 @@ data:
         payload_json["entries"] = stored_entries
         payload_json["entries_truncated_for_storage"] = truncated_for_storage
         upsert_report(env("REPORT_CONFIGMAP_NAME", "logs-check-report"), report, payload_json)
+        send_email(
+            f"Home k3s logs check - {end_local.strftime('%Y-%m-%d %H:%M %Z')}",
+            report,
+        )
         print(report)
 
 
