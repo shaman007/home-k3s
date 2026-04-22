@@ -12,6 +12,7 @@ metadata:
 data:
   wordpress-daily-report.py: |
     #!/usr/bin/env python3
+    import html
     import ipaddress
     import json
     import os
@@ -556,15 +557,111 @@ data:
         return "\n".join(lines) + "\n"
 
 
-    def send_email(host, port, mail_from, mail_to, subject, body):
+    def send_email(host, port, mail_from, mail_to, subject, body, html_body):
         message = EmailMessage()
         message["From"] = mail_from
         message["To"] = mail_to
         message["Subject"] = subject
         message.set_content(body)
+        message.add_alternative(html_body, subtype="html")
 
         with smtplib.SMTP(host=host, port=port, timeout=30) as smtp:
             smtp.send_message(message)
+
+
+    def render_html_counter(counter, limit, empty_text="none"):
+        if not counter:
+            return f'<div style="color:#687787;">{html.escape(empty_text)}</div>'
+        items = []
+        for name, count in counter.most_common(limit):
+            items.append(
+                "<tr>"
+                f"<td style=\"padding:8px 0;border-top:1px solid #e7edf3;color:#16202a;word-break:break-word;overflow-wrap:anywhere;\">{html.escape(str(name))}</td>"
+                f"<td style=\"padding:8px 0;border-top:1px solid #e7edf3;text-align:right;font-weight:700;color:#16202a;\">{count}</td>"
+                "</tr>"
+            )
+        return '<table role="presentation" style="width:100%;border-collapse:collapse;">' + "".join(items) + "</table>"
+
+
+    def render_html_stat(label, value):
+        return (
+            "<td style=\"padding:14px 16px;border:1px solid #dbe3ea;background:#ffffff;\">"
+            f"<div style=\"font-size:12px;line-height:1.4;color:#516070;text-transform:uppercase;\">{html.escape(label)}</div>"
+            f"<div style=\"font-size:22px;line-height:1.3;font-weight:700;color:#16202a;\">{html.escape(str(value))}</div>"
+            "</td>"
+        )
+
+
+    def render_html_section(title, body):
+        return (
+            "<div style=\"border:1px solid #dbe3ea;border-radius:8px;background:#ffffff;margin:0 0 16px;padding:16px;\">"
+            f"<h2 style=\"margin:0 0 10px;font-size:16px;line-height:1.35;color:#16202a;\">{html.escape(title)}</h2>"
+            f"{body}"
+            "</div>"
+        )
+
+
+    def render_html_report(
+        *,
+        site_title,
+        start_local,
+        end_local,
+        pods,
+        total_requests,
+        status_counts,
+        page_counts,
+        referrer_counts,
+        robot_counts,
+        country_counts,
+        unique_ips,
+        human_ips,
+        robot_ips,
+        authenticated_users,
+        notes,
+    ):
+        stat_rows = (
+            "<tr>"
+            f"{render_html_stat('Requests', total_requests)}"
+            f"{render_html_stat('Unique visitors', len(unique_ips))}"
+            "</tr><tr>"
+            f"{render_html_stat('Human visitors', len(human_ips))}"
+            f"{render_html_stat('Robot visitors', len(robot_ips))}"
+            "</tr><tr>"
+            f"{render_html_stat('Authenticated users', len(authenticated_users))}"
+            f"{render_html_stat('Pods checked', len(pods))}"
+            "</tr>"
+        )
+        note_block = ""
+        if notes:
+            note_items = "".join(
+                f"<li style=\"margin:0 0 6px 18px;color:#516070;\">{html.escape(note)}</li>"
+                for note in notes
+            )
+            note_block = render_html_section("Notes", f'<ul style="margin:0;padding:0;">{note_items}</ul>')
+
+        return f"""<!doctype html>
+    <html>
+      <body style="margin:0;padding:0;background:#eef3f7;color:#16202a;font-family:Arial,Helvetica,sans-serif;">
+        <div style="max-width:780px;margin:0 auto;padding:24px;">
+          <div style="background:#16202a;color:#ffffff;padding:22px 24px;border-radius:8px 8px 0 0;">
+            <div style="font-size:13px;line-height:1.4;color:#b8c7d3;">WordPress</div>
+            <h1 style="margin:4px 0 0;font-size:24px;line-height:1.25;">{html.escape(site_title)} usage report</h1>
+            <div style="margin-top:8px;color:#dbe7ef;font-size:14px;line-height:1.5;">
+              {html.escape(start_local.strftime('%Y-%m-%d %H:%M %Z'))} to {html.escape(end_local.strftime('%Y-%m-%d %H:%M %Z'))}
+            </div>
+          </div>
+          <div style="background:#ffffff;border:1px solid #dbe3ea;border-top:0;padding:22px 24px;">
+            <table role="presentation" style="width:100%;border-collapse:collapse;margin-bottom:22px;">{stat_rows}</table>
+            {render_html_section('HTTP status codes', render_html_counter(status_counts, 10))}
+            {render_html_section('Seen pages', render_html_counter(page_counts, 20))}
+            {render_html_section('Sources / referrers', render_html_counter(referrer_counts, 15))}
+            {render_html_section('Robots visited', render_html_counter(robot_counts, 15))}
+            {render_html_section('Country totals', render_html_counter(country_counts, 15, 'No country data in this window'))}
+            {note_block}
+          </div>
+        </div>
+      </body>
+    </html>"""
 
 
     def main():
@@ -693,6 +790,23 @@ data:
             authenticated_users=authenticated_users,
             notes=notes,
         )
+        html_body = render_html_report(
+            site_title=site_title,
+            start_local=start_local,
+            end_local=end_local,
+            pods=pods,
+            total_requests=total_requests,
+            status_counts=status_counts,
+            page_counts=page_counts,
+            referrer_counts=referrer_counts,
+            robot_counts=robot_counts,
+            country_counts=country_counts,
+            unique_ips=unique_ips,
+            human_ips=human_ips,
+            robot_ips=robot_ips,
+            authenticated_users=authenticated_users,
+            notes=notes,
+        )
         metrics = render_metrics(
             site_title=site_title,
             start_local=start_local,
@@ -711,7 +825,7 @@ data:
         )
 
         publish_metrics_configmap(namespace, metrics_configmap_name, metrics, body)
-        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, body)
+        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, body, html_body)
         print(body)
 
 
