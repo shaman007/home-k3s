@@ -285,7 +285,7 @@ data:
             smtp.send_message(message)
 
 
-    def upsert_configmap(kube, report, metrics):
+    def upsert_configmap(kube, report, html_report, metrics):
         namespace = env("REPORT_NAMESPACE", "monitoring")
         name = env("REPORT_CONFIGMAP_NAME", "platform-health-report")
         body = {
@@ -302,7 +302,7 @@ data:
                     "app.kubernetes.io/managed-by": "argoCD",
                 },
             },
-            "data": {"report.txt": report, "metrics.prom": metrics},
+            "data": {"report.txt": report, "report.html": html_report, "metrics.prom": metrics},
         }
         path = f"/api/v1/namespaces/{namespace}/configmaps/{name}"
         try:
@@ -541,7 +541,7 @@ data:
         report = render_report(checks)
         html_report = render_html_report(checks, generated_at)
         metrics = render_metrics(checks)
-        upsert_configmap(kube, report, metrics)
+        upsert_configmap(kube, report, html_report, metrics)
         send_email(report, html_report)
         print(report)
 

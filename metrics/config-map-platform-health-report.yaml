@@ -15,5 +15,20 @@ data:
     # HELP platform_health_report_timestamp_seconds Unix timestamp when the platform health report was generated.
     # TYPE platform_health_report_timestamp_seconds gauge
     platform_health_report_timestamp_seconds{scope="cluster"} 0
+  report.html: |
+    <!doctype html>
+    <html>
+      <body style="margin:0;padding:0;background:#eef3f7;color:#16202a;font-family:Arial,Helvetica,sans-serif;">
+        <div style="max-width:780px;margin:0 auto;padding:24px;">
+          <div style="background:#16202a;color:#ffffff;padding:22px 24px;border-radius:8px 8px 0 0;">
+            <div style="font-size:13px;line-height:1.4;color:#b8c7d3;">Home k3s</div>
+            <h1 style="margin:4px 0 0;font-size:24px;line-height:1.25;">Platform health report</h1>
+          </div>
+          <div style="background:#ffffff;border:1px solid #dbe3ea;border-top:0;padding:22px 24px;">
+            <p style="margin:0;color:#516070;font-size:14px;line-height:1.5;">Waiting for the first successful platform-health-report run.</p>
+          </div>
+        </div>
+      </body>
+    </html>
   report.txt: |
     Waiting for the first successful platform-health-report run.
