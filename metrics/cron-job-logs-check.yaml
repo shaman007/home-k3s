@@ -75,7 +75,7 @@ spec:
                 - name: OLLAMA_BATCH_NUM_PREDICT
                   value: "500"
                 - name: OLLAMA_REDUCTION_NUM_PREDICT
-                  value: "700"
+                  value: "1200"
                 - name: MAX_REPORT_JSON_CHARS
                   value: "900000"
                 - name: HTTP_TIMEOUT_SECONDS

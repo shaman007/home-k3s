@@ -109,8 +109,17 @@ data:
 
     def get_window():
         tz = ZoneInfo(env("REPORT_TIMEZONE", "Europe/Prague"))
-        now = datetime.now(tz)
-        end_local = now.replace(minute=0, second=0, microsecond=0)
+        override_end = env("REPORT_WINDOW_END", "")
+        if override_end:
+            end_local = datetime.fromisoformat(override_end)
+            if end_local.tzinfo is None:
+                end_local = end_local.replace(tzinfo=tz)
+            else:
+                end_local = end_local.astimezone(tz)
+            end_local = end_local.replace(second=0, microsecond=0)
+        else:
+            now = datetime.now(tz)
+            end_local = now.replace(minute=0, second=0, microsecond=0)
         start_local = end_local - timedelta(hours=env_int("LOOKBACK_HOURS", 168))
         return start_local, end_local
 
@@ -299,6 +308,125 @@ data:
         )
 
 
+    def render_inline_markdown(value):
+        escaped = html.escape(value)
+        parts = escaped.split("**")
+        if len(parts) == 1:
+            return escaped
+        rendered = []
+        for index, part in enumerate(parts):
+            if index % 2:
+                rendered.append(f"<strong>{part}</strong>")
+            else:
+                rendered.append(part)
+        return "".join(rendered)
+
+
+    def render_markdown_table(lines):
+        header = [cell.strip() for cell in lines[0].strip("|").split("|")]
+        body_lines = lines[2:]
+        head_html = "".join(
+            f"<th style=\"padding:9px 10px;border-bottom:1px solid #dbe3ea;text-align:left;background:#eef3f7;color:#16202a;\">{render_inline_markdown(cell)}</th>"
+            for cell in header
+        )
+        body_rows = []
+        for line in body_lines:
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            body_rows.append(
+                "<tr>"
+                + "".join(
+                    f"<td style=\"padding:9px 10px;border-bottom:1px solid #edf2f7;color:#26323d;vertical-align:top;\">{render_inline_markdown(cell)}</td>"
+                    for cell in cells
+                )
+                + "</tr>"
+            )
+        return (
+            "<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;border:1px solid #dbe3ea;margin:10px 0 16px;\">"
+            f"<thead><tr>{head_html}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
+        )
+
+
+    def render_analysis_html(analysis):
+        if not analysis.strip():
+            return "<p style=\"margin:0;color:#516070;\">No analysis was produced.</p>"
+
+        output = []
+        paragraph = []
+        bullet_items = []
+        lines = analysis.splitlines()
+        index = 0
+
+        def flush_paragraph():
+            if paragraph:
+                text = " ".join(item.strip() for item in paragraph if item.strip())
+                output.append(
+                    f"<p style=\"margin:0 0 12px;font-size:14px;line-height:1.6;color:#26323d;\">{render_inline_markdown(text)}</p>"
+                )
+                paragraph.clear()
+
+        def flush_bullets():
+            if bullet_items:
+                output.append(
+                    "<ul style=\"margin:0 0 14px 20px;padding:0;color:#26323d;font-size:14px;line-height:1.6;\">"
+                    + "".join(f"<li style=\"margin:0 0 7px;\">{item}</li>" for item in bullet_items)
+                    + "</ul>"
+                )
+                bullet_items.clear()
+
+        while index < len(lines):
+            line = lines[index].rstrip()
+            stripped = line.strip()
+            if not stripped:
+                flush_paragraph()
+                flush_bullets()
+                index += 1
+                continue
+
+            if stripped.startswith("|") and index + 1 < len(lines) and lines[index + 1].strip().startswith("|"):
+                table_lines = [stripped]
+                index += 1
+                while index < len(lines) and lines[index].strip().startswith("|"):
+                    table_lines.append(lines[index].strip())
+                    index += 1
+                if len(table_lines) >= 3:
+                    flush_paragraph()
+                    flush_bullets()
+                    output.append(render_markdown_table(table_lines))
+                continue
+
+            if stripped.startswith("* ") or stripped.startswith("- "):
+                flush_paragraph()
+                bullet_items.append(render_inline_markdown(stripped[2:].strip()))
+                index += 1
+                continue
+
+            if stripped.startswith("**") and stripped.endswith("**") and len(stripped) > 4:
+                flush_paragraph()
+                flush_bullets()
+                title = stripped.strip("*").strip()
+                output.append(
+                    f"<h2 style=\"margin:18px 0 8px;font-size:17px;line-height:1.35;color:#16202a;\">{html.escape(title)}</h2>"
+                )
+                index += 1
+                continue
+
+            if stripped.lower().startswith("smallest next action:"):
+                flush_paragraph()
+                flush_bullets()
+                output.append(
+                    f"<div style=\"margin:16px 0 0;padding:12px 14px;border-left:4px solid #2563eb;background:#eff6ff;color:#1e3a8a;font-size:14px;line-height:1.55;\"><strong>Smallest next action:</strong> {render_inline_markdown(stripped.split(':', 1)[1].strip())}</div>"
+                )
+                index += 1
+                continue
+
+            paragraph.append(stripped)
+            index += 1
+
+        flush_paragraph()
+        flush_bullets()
+        return "".join(output)
+
+
     def render_html_report(start_local, end_local, analysis, preflight, entry_counts):
         rows = []
         for name, count in entry_counts.items():
@@ -320,6 +448,7 @@ data:
                 "</tr>"
             )
 
+        analysis_html = render_analysis_html(analysis)
         return f"""<!doctype html>
     <html>
       <body style="margin:0;padding:0;background:#eef3f7;color:#16202a;font-family:Arial,Helvetica,sans-serif;">
@@ -334,7 +463,7 @@ data:
           <div style="background:#ffffff;border:1px solid #dbe3ea;border-top:0;padding:22px 24px;">
             <table role="presentation" style="width:100%;border-collapse:collapse;margin-bottom:22px;">{stat_rows}</table>
             <h2 style="margin:0 0 10px;font-size:17px;line-height:1.35;color:#16202a;">Analysis</h2>
-            <div style="white-space:pre-wrap;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.55;color:#26323d;background:#f8fafc;border:1px solid #dbe3ea;border-radius:6px;padding:14px;">{html.escape(analysis or 'No analysis was produced.')}</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;background:#f8fafc;border:1px solid #dbe3ea;border-radius:6px;padding:14px;">{analysis_html}</div>
             <h2 style="margin:22px 0 10px;font-size:17px;line-height:1.35;color:#16202a;">Preflight</h2>
             <table role="presentation" style="width:100%;border-collapse:collapse;border:1px solid #e7edf3;">{''.join(check_rows)}</table>
           </div>
@@ -414,6 +543,120 @@ data:
             for item in entries:
                 blocks.append(render_entry_for_prompt(name, item))
         return chunk_blocks(blocks, env_int("OLLAMA_BATCH_CONTEXT_CHARS", 12000))
+
+
+    def is_false_positive(bucket, item):
+        if bucket != "real_fault_candidates":
+            return False
+        line = item.get("line", "")
+        lowered = line.lower()
+        if "panic.go:" in lowered and "\"http\"" in lowered and "resp=200" in lowered:
+            return True
+        if "debug -- : enqueued schedule:" in lowered and "\"exception_executions\":{}" in lowered:
+            return True
+        if "command :: ffmpeg" in lowered and "loglevel" in lowered and "fatal" in lowered:
+            return True
+        return False
+
+
+    def filter_false_positives(grouped_entries):
+        filtered = {}
+        counts = {}
+        examples = {}
+        for name, entries in grouped_entries.items():
+            kept = []
+            removed = []
+            for item in entries:
+                if is_false_positive(name, item):
+                    removed.append(item)
+                else:
+                    kept.append(item)
+            filtered[name] = kept
+            if removed:
+                counts[name] = len(removed)
+                examples[name] = [
+                    {
+                        "namespace": item.get("namespace", ""),
+                        "pod": item.get("pod", ""),
+                        "container": item.get("container", ""),
+                        "line": trim_line(item.get("line", ""), 180),
+                    }
+                    for item in removed[:5]
+                ]
+        return filtered, counts, examples
+
+
+    def group_entry_counts(entries):
+        groups = {}
+        for item in entries:
+            key = (
+                item.get("namespace", "") or "-",
+                item.get("pod", "") or "-",
+                item.get("container", "") or "-",
+            )
+            if key not in groups:
+                groups[key] = {"count": 0, "first": item, "last": item}
+            groups[key]["count"] += 1
+            groups[key]["last"] = item
+        return sorted(groups.items(), key=lambda item: item[1]["count"], reverse=True)
+
+
+    def render_observed_evidence(grouped_entries, raw_entry_counts, false_positive_counts, false_positive_examples):
+        lines = ["**Observed evidence from this run**", ""]
+        real_fault_count = len(grouped_entries.get("real_fault_candidates", []))
+        raw_real_fault_count = raw_entry_counts.get("real_fault_candidates", real_fault_count)
+        removed_real_fault_count = false_positive_counts.get("real_fault_candidates", 0)
+        lines.append(
+            f"* **Real fault candidates after filtering** - {real_fault_count}. "
+            f"The raw query matched {raw_real_fault_count}, but {removed_real_fault_count} were removed as known false positives."
+        )
+        for (namespace, pod, container), detail in group_entry_counts(grouped_entries.get("real_fault_candidates", []))[:5]:
+            first = detail["first"]
+            last = detail["last"]
+            lines.append(
+                f"* **Real fault evidence: {namespace}/{pod}/{container}** - {detail['count']} entries from {last['ts']} to {first['ts']}. "
+                f"Example: `{trim_line(first['line'], 240)}`"
+            )
+
+        if removed_real_fault_count:
+            false_positive_groups = {}
+            for item in false_positive_examples.get("real_fault_candidates", []):
+                key = f"{item.get('namespace', '-')}/{item.get('pod', '-')}/{item.get('container', '-')}"
+                false_positive_groups[key] = false_positive_groups.get(key, 0) + 1
+            lines.append(
+                "* **Why those were not real faults** - the removed examples were healthy `prometheus-adapter` HTTP audit lines from `panic.go` with `resp=200`, Dawarich Sidekiq debug schedule messages containing an empty `exception_executions` field, and Mastodon ffmpeg commands that set `-loglevel fatal` without reporting a failure."
+            )
+
+        platform_entries = grouped_entries.get("platform_issue_candidates", [])
+        lines.append(f"* **Platform issue candidates** - {len(platform_entries)}.")
+        for (namespace, pod, container), detail in group_entry_counts(platform_entries)[:5]:
+            first = detail["first"]
+            last = detail["last"]
+            lines.append(
+                f"* **{namespace}/{pod}/{container}** - {detail['count']} entries from {last['ts']} to {first['ts']}. "
+                f"Example: `{trim_line(first['line'], 220)}`"
+            )
+
+        probe_entries = grouped_entries.get("probe_instability_candidates", [])
+        lines.append(f"* **Probe instability candidates** - {len(probe_entries)}.")
+        for (namespace, pod, container), detail in group_entry_counts(probe_entries)[:3]:
+            first = detail["first"]
+            last = detail["last"]
+            lines.append(
+                f"* **Probe evidence: {namespace}/{pod}/{container}** - {detail['count']} entries from {last['ts']} to {first['ts']}. "
+                f"Example: `{trim_line(first['line'], 220)}`"
+            )
+
+        noise_entries = grouped_entries.get("noise_candidates", [])
+        top_noise_groups = group_entry_counts(noise_entries)[:3]
+        if top_noise_groups:
+            summary = ", ".join(
+                f"{namespace}/{pod}/{container}: {detail['count']}"
+                for (namespace, pod, container), detail in top_noise_groups
+            )
+            lines.append(f"* **Noise top sources** - {summary}.")
+
+        return "\n".join(lines)
 
 
     def compact_entries_for_storage(grouped_entries):
@@ -499,7 +742,9 @@ data:
             "Deduplicate repeated observations across batches.\n"
             "If something appears in the previous report, mention it as ongoing rather than new.\n"
             "Do not invent evidence beyond the provided batch summaries and preflight data.\n"
-            "Do not output tables or code blocks.\n"
+            "Output Markdown with these sections: Overall findings, Real problems found, Platform issues, Noise filtered, Cross-batch recurrence, Smallest next action.\n"
+            "In Real problems found and Platform issues, explain what is failing, where it happened, why it matters, and cite example timestamps/pods.\n"
+            "Use a compact Markdown table only for the category/count/severity overview.\n"
             "End with 'Smallest next action:' followed by one concrete next step."
         )
 
@@ -720,6 +965,13 @@ data:
                 log_progress(f"query failed bucket={name} error={exc}")
         if query_errors:
             preflight["query_errors"] = query_errors
+        raw_entry_counts = {name: len(entries) for name, entries in grouped_entries.items()}
+        grouped_entries, false_positive_counts, false_positive_examples = filter_false_positives(grouped_entries)
+        if false_positive_counts:
+            preflight["false_positive_filters"] = {
+                "counts": false_positive_counts,
+                "examples": false_positive_examples,
+            }
         previous_report = fetch_previous_report(env("REPORT_CONFIGMAP_NAME", "logs-check-report"))
         try:
             analysis = analyze_logs_with_ollama(
@@ -734,6 +986,13 @@ data:
             analysis = fallback_analysis(preflight, grouped_entries)
         if not analysis.strip():
             analysis = summarize_samples(grouped_entries)
+        observed_evidence = render_observed_evidence(
+            grouped_entries,
+            raw_entry_counts,
+            false_positive_counts,
+            false_positive_examples,
+        )
+        analysis = analysis.rstrip() + "\n\n" + observed_evidence
         report = "\n".join(
             [
                 "Home k3s logs check",
@@ -754,6 +1013,7 @@ data:
             "preflight": preflight,
             "queries": queries,
             "entry_counts": {name: len(entries) for name, entries in grouped_entries.items()},
+            "raw_entry_counts": raw_entry_counts,
             "analysis": analysis,
         }
         stored_entries, truncated_for_storage = compact_entries_for_storage(grouped_entries)
