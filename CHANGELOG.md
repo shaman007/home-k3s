@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-04-24 – Weekly Highlights
+
+- **Highlights**
+  - Added and refined monitoring reports by improving Mastodon bookmarked-media sync reliability, extending the mail log check with SMTP delivery, and generating HTML output for the platform health report.
+  - Expanded monitoring and networking support by allowing Prometheus Adapter access to Thanos, fixing the related network policy, permitting Traefik egress to the Minecraft namespace, and increasing Prometheus memory.
+  - Introduced a Wazuh stack with dashboard, indexer, manager, Vault-backed secrets, log ingestion, and exposed-service detection, then deprecated that deployment and moved the related manifests under `DEPRECATED`.
+  - Updated platform components including Traefik, Mastodon, Renovate GitHub Action, SeaweedFS, Minecraft server, Python, Unifi Network Application, MySQL, NVIDIA device plugin, Wazuh components, Grafana Alloy, Loki, and the Ubuntu base image.
+
+- **Key PR Links**
+  - [#154](https://github.com/shaman007/home-k3s/pull/154), [#155](https://github.com/shaman007/home-k3s/pull/155), [#156](https://github.com/shaman007/home-k3s/pull/156), [#157](https://github.com/shaman007/home-k3s/pull/157), [#158](https://github.com/shaman007/home-k3s/pull/158), [#159](https://github.com/shaman007/home-k3s/pull/159), [#160](https://github.com/shaman007/home-k3s/pull/160), [#161](https://github.com/shaman007/home-k3s/pull/161), [#162](https://github.com/shaman007/home-k3s/pull/162), [#163](https://github.com/shaman007/home-k3s/pull/163), [#164](https://github.com/shaman007/home-k3s/pull/164), [#165](https://github.com/shaman007/home-k3s/pull/165), [#166](https://github.com/shaman007/home-k3s/pull/166), [#167](https://github.com/shaman007/home-k3s/pull/167), [#168](https://github.com/shaman007/home-k3s/pull/168)
+
 ## 2023-11-10 – `ffe61c7` by Andrey Bondarenko
 
 - **License Addition**
