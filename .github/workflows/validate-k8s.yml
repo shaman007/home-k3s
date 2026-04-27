@@ -51,6 +51,10 @@ jobs:
         run: |
           python tools/ci/validate-runtime-contracts.py
 
+      - name: Check generated NetworkPolicy bundles
+        run: |
+          python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
+
       - name: Validate tracked manifests with kubeconform
         run: |
           if [ ! -s manifest-files.txt ]; then

@@ -1,0 +1,16 @@
+namespace: ollama
+namePrefix: ollama
+output: ollama/network-policies-generated.yaml
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: web-egress
+  - type: namespace-ingress
+  - type: namespace-ingress
+    name: allow-ingress-from-traefik
+    namespace: traefik
+    port: 11434
+  - type: namespace-ingress
+    name: allow-ingress-from-monitoring
+    namespace: monitoring
+    port: 11434

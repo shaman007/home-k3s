@@ -1,0 +1,15 @@
+namespace: connectivity-exporter
+namePrefix: connectivity-exporter
+output: connectivity-exporter/network-policies-generated.yaml
+podSelector:
+  app: connectivity-exporter
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: web-egress
+  - type: namespace-ingresses
+    name: allow-ingress-prometheus
+    namespaces:
+      - monitoring
+      - connectivity-exporter
+    port: 9090

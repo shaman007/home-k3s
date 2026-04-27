@@ -1,0 +1,16 @@
+namespace: stirling-pdf
+namePrefix: stirling-pdf
+output: stirling-pdf/network-policies-generated.yaml
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: namespace-egress
+  - type: namespace-ingress
+  - type: namespace-ingress
+    name: allow-ingress-from-traefik
+    namespace: traefik
+    port: 8080
+  - type: namespace-ingress
+    name: allow-ingress-from-monitoring
+    namespace: monitoring
+    port: 8080

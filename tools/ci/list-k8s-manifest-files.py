@@ -35,7 +35,10 @@ def tracked_yaml_files(repo_root: Path) -> list[Path]:
             continue
         if entry.startswith(EXCLUDED_PREFIXES):
             continue
-        files.append(repo_root / entry)
+        path = repo_root / entry
+        if not path.exists():
+            continue
+        files.append(path)
     return files
 
 

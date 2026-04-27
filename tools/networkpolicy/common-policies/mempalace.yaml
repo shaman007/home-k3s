@@ -1,0 +1,7 @@
+namespace: mempalace
+namePrefix: mempalace
+output: mempalace/network-policies-generated.yaml
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: web-egress

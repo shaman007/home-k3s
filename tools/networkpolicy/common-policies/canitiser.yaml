@@ -1,0 +1,20 @@
+namespace: ca-scanner
+namePrefix: canitiser
+output: canitiser/network-policies-generated.yaml
+podSelector:
+  app: ca-report-ui
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: namespace-ingresses
+    name: allow-ingress-http
+    namespaces:
+      - ca-scanner
+      - traefik
+    port: 8080
+  - type: namespace-egresses
+    name: allow-egress-kube-api
+    namespaces:
+      - default
+      - kube-system
+    port: 443

@@ -58,7 +58,10 @@ def tracked_yaml_files(root: Path) -> list[Path]:
             continue
         if entry.startswith(("DEPRECATED/", "mastodon/chart/")):
             continue
-        files.append(root / entry)
+        path = root / entry
+        if not path.exists():
+            continue
+        files.append(path)
     return files
 
 

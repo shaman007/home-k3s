@@ -1,0 +1,14 @@
+namespace: year
+namePrefix: year
+output: year/network-policies-generated.yaml
+podSelector:
+  app: year
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: namespace-ingresses
+    name: allow-ingress-http
+    namespaces:
+      - traefik
+      - year
+    port: 3000

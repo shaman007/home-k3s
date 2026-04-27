@@ -1,0 +1,16 @@
+namespace: open-webui
+namePrefix: open-webui
+output: open-webui/network-policies-generated.yaml
+podSelector:
+  app: open-webui
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: namespace-egress
+    name: allow-egress-to-ollama
+    namespace: ollama
+    port: 11434
+  - type: namespace-ingress
+    name: allow-ingress-from-traefik
+    namespace: traefik
+    port: 8080
