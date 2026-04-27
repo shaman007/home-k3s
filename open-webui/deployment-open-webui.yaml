@@ -31,7 +31,7 @@ spec:
             - name: OLLAMA_BASE_URL
               value: http://ollama.ollama.svc.cluster.local:11434
             - name: WEBUI_AUTH
-              value: "False"
+              value: "True"
             - name: ENABLE_OPENAI_API
               value: "False"
             - name: ENABLE_SIGNUP
