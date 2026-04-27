@@ -98,6 +98,24 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  name: ollama-allow-ingress-from-open-webui
+  namespace: ollama
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: open-webui
+    ports:
+    - protocol: TCP
+      port: 11434
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
   name: ollama-allow-ingress-from-monitoring
   namespace: ollama
 spec:

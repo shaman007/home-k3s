@@ -11,6 +11,10 @@ policies:
     namespace: traefik
     port: 11434
   - type: namespace-ingress
+    name: allow-ingress-from-open-webui
+    namespace: open-webui
+    port: 11434
+  - type: namespace-ingress
     name: allow-ingress-from-monitoring
     namespace: monitoring
     port: 11434
