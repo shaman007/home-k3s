@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-small
+  namespace: ollama
+  labels:
+    app: ollama-small
+    app.kubernetes.io/name: ollama-small
+    app.kubernetes.io/instance: ollama-small
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ollama-small
+  template:
+    metadata:
+      labels:
+        app: ollama-small
+        app.kubernetes.io/name: ollama-small
+        app.kubernetes.io/part-of: ollama
+    spec:
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: w486.k8s.my.lan
+      containers:
+        - name: ollama
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OLLAMA_HOST
+              value: 0.0.0.0:11434
+            - name: OLLAMA_KEEP_ALIVE
+              value: 30s
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"
+            - name: TZ
+              value: Europe/Prague
+          ports:
+            - name: http
+              containerPort: 11434
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              memory: 8Gi
+          volumeMounts:
+            - name: ollama-small-data
+              mountPath: /root/.ollama
+        - name: model-puller
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until ollama list >/dev/null 2>&1; do
+                sleep 2
+              done
+              ollama pull qwen2.5:1.5b
+              sleep infinity
+          env:
+            - name: OLLAMA_HOST
+              value: http://127.0.0.1:11434
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: ollama-small-data
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-small-data
+          persistentVolumeClaim:
+            claimName: ollama-small-data

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-small
+  namespace: ollama
+  labels:
+    app: ollama-small
+    app.kubernetes.io/name: ollama-small
+    app.kubernetes.io/instance: ollama-small
+    app.kubernetes.io/part-of: ollama
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  type: ClusterIP
+  selector:
+    app: ollama-small
+  ports:
+    - name: http
+      port: 11434
+      targetPort: http
