@@ -25,7 +25,7 @@ spec:
     spec:
       enableServiceLinks: false
       nodeSelector:
-        kubernetes.io/hostname: w486.k8s.my.lan
+        kubernetes.io/hostname: w386.k8s.my.lan
       containers:
         - name: ollama
           image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:latest
