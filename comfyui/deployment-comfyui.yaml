@@ -54,7 +54,7 @@ spec:
               mountPath: /models
       containers:
         - name: comfyui
-          image: ghcr.io/lecode-official/comfyui-docker:latest
+          image: harbor.andreybondarenko.com/github/lecode-official/comfyui-docker:0.6.3-comfyui-0.8.2-pytorch-2.9.1-cuda-12.8-cudnn-9
           imagePullPolicy: IfNotPresent
           env:
             - name: USER_ID
