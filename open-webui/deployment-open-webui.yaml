@@ -38,12 +38,106 @@ spec:
               value: "True"
             - name: IMAGE_GENERATION_ENGINE
               value: comfyui
+            - name: IMAGE_GENERATION_MODEL
+              value: sdxl_lightning_4step.safetensors
             - name: COMFYUI_BASE_URL
               value: http://comfyui.comfyui.svc.cluster.local:8188
             - name: IMAGE_SIZE
               value: 1024x1024
             - name: IMAGE_STEPS
-              value: "28"
+              value: "4"
+            - name: COMFYUI_WORKFLOW
+              value: |
+                {
+                  "3": {
+                    "inputs": {
+                      "seed": 0,
+                      "steps": 4,
+                      "cfg": 1,
+                      "sampler_name": "euler",
+                      "scheduler": "sgm_uniform",
+                      "denoise": 1,
+                      "model": ["4", 0],
+                      "positive": ["6", 0],
+                      "negative": ["7", 0],
+                      "latent_image": ["5", 0]
+                    },
+                    "class_type": "KSampler",
+                    "_meta": {
+                      "title": "KSampler"
+                    }
+                  },
+                  "4": {
+                    "inputs": {
+                      "ckpt_name": "sdxl_lightning_4step.safetensors"
+                    },
+                    "class_type": "CheckpointLoaderSimple",
+                    "_meta": {
+                      "title": "Load Checkpoint"
+                    }
+                  },
+                  "5": {
+                    "inputs": {
+                      "width": 1024,
+                      "height": 1024,
+                      "batch_size": 1
+                    },
+                    "class_type": "EmptyLatentImage",
+                    "_meta": {
+                      "title": "Empty Latent Image"
+                    }
+                  },
+                  "6": {
+                    "inputs": {
+                      "text": "a beautiful image",
+                      "clip": ["4", 1]
+                    },
+                    "class_type": "CLIPTextEncode",
+                    "_meta": {
+                      "title": "Positive Prompt"
+                    }
+                  },
+                  "7": {
+                    "inputs": {
+                      "text": "text, watermark, blurry, distorted",
+                      "clip": ["4", 1]
+                    },
+                    "class_type": "CLIPTextEncode",
+                    "_meta": {
+                      "title": "Negative Prompt"
+                    }
+                  },
+                  "8": {
+                    "inputs": {
+                      "samples": ["3", 0],
+                      "vae": ["4", 2]
+                    },
+                    "class_type": "VAEDecode",
+                    "_meta": {
+                      "title": "VAE Decode"
+                    }
+                  },
+                  "9": {
+                    "inputs": {
+                      "filename_prefix": "open-webui",
+                      "images": ["8", 0]
+                    },
+                    "class_type": "SaveImage",
+                    "_meta": {
+                      "title": "Save Image"
+                    }
+                  }
+                }
+            - name: COMFYUI_WORKFLOW_NODES
+              value: |
+                [
+                  {"type": "prompt", "key": "text", "node_ids": ["6"]},
+                  {"type": "model", "key": "ckpt_name", "node_ids": ["4"]},
+                  {"type": "width", "key": "width", "node_ids": ["5"]},
+                  {"type": "height", "key": "height", "node_ids": ["5"]},
+                  {"type": "steps", "key": "steps", "node_ids": ["3"]},
+                  {"type": "seed", "key": "seed", "node_ids": ["3"]}
+                ]
             - name: ENABLE_SIGNUP
               value: "False"
             - name: TZ

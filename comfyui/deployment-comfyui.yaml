@@ -29,6 +29,29 @@ spec:
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: model-downloader
+          image: alpine:3.20
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              mkdir -p /models/checkpoints
+              if [ ! -s /models/checkpoints/sdxl_lightning_4step.safetensors ]; then
+                wget -O /models/checkpoints/sdxl_lightning_4step.safetensors.tmp https://huggingface.co/ByteDance/SDXL-Lightning/resolve/main/sdxl_lightning_4step.safetensors
+                mv /models/checkpoints/sdxl_lightning_4step.safetensors.tmp /models/checkpoints/sdxl_lightning_4step.safetensors
+              fi
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: comfyui-data
+              mountPath: /models
       containers:
         - name: comfyui
           image: ghcr.io/lecode-official/comfyui-docker:latest
@@ -80,9 +103,6 @@ spec:
             - name: comfyui-data
               mountPath: /opt/comfyui/models
               subPath: models
-            - name: comfyui-data
-              mountPath: /opt/comfyui/custom_nodes
-              subPath: custom-nodes
             - name: comfyui-data
               mountPath: /opt/comfyui/output
               subPath: output
