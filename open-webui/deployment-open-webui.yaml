@@ -38,6 +38,13 @@ spec:
               value: "False"
             - name: ENABLE_IMAGE_GENERATION
               value: "True"
+            - name: TERMINAL_SERVER_CONNECTIONS
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-terminal-server-connections
+                  key: TERMINAL_SERVER_CONNECTIONS
+            - name: AIOHTTP_CLIENT_TIMEOUT_TOOL_SERVER
+              value: "120"
             - name: IMAGE_GENERATION_ENGINE
               value: comfyui
             - name: IMAGE_GENERATION_MODEL

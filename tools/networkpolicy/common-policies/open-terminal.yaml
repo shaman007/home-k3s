@@ -1,0 +1,13 @@
+namespace: open-terminal
+namePrefix: open-terminal
+output: open-terminal/network-policies-generated.yaml
+podSelector:
+  app: open-terminal
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: web-egress
+  - type: namespace-ingress
+    name: allow-ingress-from-open-webui
+    namespace: open-webui
+    port: 8000

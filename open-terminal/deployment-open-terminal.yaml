@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-terminal
+  namespace: open-terminal
+  labels:
+    app: open-terminal
+    app.kubernetes.io/name: open-terminal
+    app.kubernetes.io/instance: open-terminal
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: open-terminal
+  template:
+    metadata:
+      labels:
+        app: open-terminal
+        app.kubernetes.io/name: open-terminal
+        app.kubernetes.io/instance: open-terminal
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: open-terminal
+          image: ghcr.io/open-webui/open-terminal:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OPEN_TERMINAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: open-terminal-api-key
+                  key: api-key
+            - name: OPEN_TERMINAL_ALLOWED_DOMAINS
+              value: github.com,*.github.com,githubusercontent.com,*.githubusercontent.com
+            - name: OPEN_TERMINAL_EXECUTE_TIMEOUT
+              value: "120"
+            - name: OPEN_TERMINAL_EXECUTE_DESCRIPTION
+              value: >
+                This terminal is for read-oriented public Git repository exploration.
+                Clone public repositories into /home/user/repos, inspect source files,
+                and return concise summaries or relevant excerpts for Open WebUI chats.
+            - name: TZ
+              value: Europe/Prague
+          ports:
+            - name: http
+              containerPort: 8000
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: open-terminal-data
+              mountPath: /home/user
+      volumes:
+        - name: open-terminal-data
+          persistentVolumeClaim:
+            claimName: open-terminal-data
