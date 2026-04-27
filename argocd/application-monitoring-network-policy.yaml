@@ -13,6 +13,7 @@ spec:
     directory:
       recurse: false
       include: network-policy-*.yaml
+      exclude: network-policy-monitoring-allow-egress-logs-check-*.yaml
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring
