@@ -10,6 +10,10 @@ policies:
     name: allow-egress-to-ollama
     namespace: ollama
     port: 11434
+  - type: namespace-egress
+    name: allow-egress-to-comfyui
+    namespace: comfyui
+    port: 8188
   - type: namespace-ingress
     name: allow-ingress-from-traefik
     namespace: traefik

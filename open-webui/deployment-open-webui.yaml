@@ -34,6 +34,16 @@ spec:
               value: "True"
             - name: ENABLE_OPENAI_API
               value: "False"
+            - name: ENABLE_IMAGE_GENERATION
+              value: "True"
+            - name: IMAGE_GENERATION_ENGINE
+              value: comfyui
+            - name: COMFYUI_BASE_URL
+              value: http://comfyui.comfyui.svc.cluster.local:8188
+            - name: IMAGE_SIZE
+              value: 1024x1024
+            - name: IMAGE_STEPS
+              value: "28"
             - name: ENABLE_SIGNUP
               value: "False"
             - name: TZ

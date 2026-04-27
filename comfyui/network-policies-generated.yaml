@@ -4,12 +4,12 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: open-webui-default-deny
-  namespace: open-webui
+  name: comfyui-default-deny
+  namespace: comfyui
 spec:
   podSelector:
     matchLabels:
-      app: open-webui
+      app: comfyui
   policyTypes:
   - Ingress
   - Egress
@@ -17,12 +17,12 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: open-webui-allow-egress-dns
-  namespace: open-webui
+  name: comfyui-allow-egress-dns
+  namespace: comfyui
 spec:
   podSelector:
     matchLabels:
-      app: open-webui
+      app: comfyui
   policyTypes:
   - Egress
   egress:
@@ -42,52 +42,41 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: open-webui-allow-egress-to-ollama
-  namespace: open-webui
+  name: comfyui-allow-egress-web
+  namespace: comfyui
 spec:
   podSelector:
     matchLabels:
-      app: open-webui
+      app: comfyui
   policyTypes:
   - Egress
   egress:
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: ollama
+    - ipBlock:
+        cidr: 0.0.0.0/0
     ports:
     - protocol: TCP
-      port: 11434
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: open-webui-allow-egress-to-comfyui
-  namespace: open-webui
-spec:
-  podSelector:
-    matchLabels:
-      app: open-webui
-  policyTypes:
-  - Egress
-  egress:
+      port: 80
+    - protocol: TCP
+      port: 443
   - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: comfyui
+    - ipBlock:
+        cidr: ::/0
     ports:
     - protocol: TCP
-      port: 8188
+      port: 80
+    - protocol: TCP
+      port: 443
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: open-webui-allow-ingress-from-traefik
-  namespace: open-webui
+  name: comfyui-allow-ingress-from-traefik
+  namespace: comfyui
 spec:
   podSelector:
     matchLabels:
-      app: open-webui
+      app: comfyui
   policyTypes:
   - Ingress
   ingress:
@@ -97,4 +86,24 @@ spec:
           kubernetes.io/metadata.name: traefik
     ports:
     - protocol: TCP
-      port: 8080
+      port: 8188
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: comfyui-allow-ingress-from-open-webui
+  namespace: comfyui
+spec:
+  podSelector:
+    matchLabels:
+      app: comfyui
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: open-webui
+    ports:
+    - protocol: TCP
+      port: 8188

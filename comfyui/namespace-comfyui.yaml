@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: comfyui
+  labels:
+    app.kubernetes.io/name: comfyui
+    app.kubernetes.io/managed-by: argoCD

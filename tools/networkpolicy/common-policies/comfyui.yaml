@@ -1,0 +1,17 @@
+namespace: comfyui
+namePrefix: comfyui
+output: comfyui/network-policies-generated.yaml
+podSelector:
+  app: comfyui
+policies:
+  - type: default-deny
+  - type: dns-egress
+  - type: web-egress
+  - type: namespace-ingress
+    name: allow-ingress-from-traefik
+    namespace: traefik
+    port: 8188
+  - type: namespace-ingress
+    name: allow-ingress-from-open-webui
+    namespace: open-webui
+    port: 8188

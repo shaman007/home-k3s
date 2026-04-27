@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: comfyui
+  namespace: comfyui
+  labels:
+    app: comfyui
+    app.kubernetes.io/name: comfyui
+    app.kubernetes.io/instance: comfyui
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: comfyui
+  template:
+    metadata:
+      labels:
+        app: comfyui
+        app.kubernetes.io/name: comfyui
+        app.kubernetes.io/instance: comfyui
+    spec:
+      runtimeClassName: nvidia
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: w386.k8s.my.lan
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: comfyui
+          image: ghcr.io/lecode-official/comfyui-docker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: USER_ID
+              value: "1000"
+            - name: GROUP_ID
+              value: "1000"
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: TZ
+              value: Europe/Prague
+          args:
+            - --listen
+            - 0.0.0.0
+            - --port
+            - "8188"
+            - --enable-cors-header
+            - '*'
+          ports:
+            - name: http
+              containerPort: 8188
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              memory: 16Gi
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: comfyui-data
+              mountPath: /opt/comfyui/models
+              subPath: models
+            - name: comfyui-data
+              mountPath: /opt/comfyui/custom_nodes
+              subPath: custom-nodes
+            - name: comfyui-data
+              mountPath: /opt/comfyui/output
+              subPath: output
+      volumes:
+        - name: comfyui-data
+          persistentVolumeClaim:
+            claimName: comfyui-data
