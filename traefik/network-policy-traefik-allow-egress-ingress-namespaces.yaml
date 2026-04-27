@@ -65,6 +65,9 @@ spec:
               kubernetes.io/metadata.name: nextcloud
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: open-webui
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: plex
         - namespaceSelector:
             matchLabels:
