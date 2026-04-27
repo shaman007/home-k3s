@@ -57,6 +57,8 @@ spec:
                 - Do not answer the user.
                 - Do not say you cannot draw, create, render, browse, or provide images.
                 - Do not include apologies, disclaimers, explanations, markdown, or extra text.
+                - Do not wrap the JSON in a markdown code fence.
+                - The first character of your response must be { and the last character must be }.
                 - Keep the prompt concrete and visual.
                 - Preserve the user's requested subject, style, composition, colors, and mood.
                 - If details are missing, add a few tasteful visual details that help image generation.
