@@ -74,6 +74,8 @@ spec:
             - "8188"
             - --enable-cors-header
             - '*'
+            - --disable-smart-memory
+            - --cache-none
           ports:
             - name: http
               containerPort: 8188
