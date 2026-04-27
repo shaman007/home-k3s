@@ -18,6 +18,12 @@ spec:
       kind: PersistentVolumeClaim
       jsonPointers:
         - /spec/resources/requests/storage
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: open-webui
+      jsonPointers:
+        - /data
   syncPolicy:
     automated: {}
     syncOptions:
