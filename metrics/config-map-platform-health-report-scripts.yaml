@@ -154,9 +154,11 @@ data:
         return int((expires - utc_now()).total_seconds() / 86400)
 
 
-    def live_tls_cert_days_left(host, port=443):
+    def live_tls_cert_days_left(host):
+        connect_host = env("TRAEFIK_HTTPS_HOST", "traefik.traefik.svc.cluster.local")
+        connect_port = env_num("TRAEFIK_HTTPS_PORT", 443, int)
         ctx = ssl._create_unverified_context()
-        with socket.create_connection((host, port), timeout=10) as sock:
+        with socket.create_connection((connect_host, connect_port), timeout=10) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as tls:
                 der_cert = tls.getpeercert(binary_form=True)
         pem_text = ssl.DER_cert_to_PEM_cert(der_cert)
