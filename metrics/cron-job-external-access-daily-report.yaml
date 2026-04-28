@@ -28,7 +28,7 @@ spec:
             app.kubernetes.io/part-of: monitoring
         spec:
           enableServiceLinks: false
-          serviceAccountName: external-access-daily-report
+          serviceAccountName: platform-health-report
           restartPolicy: Never
           containers:
             - name: report
@@ -42,6 +42,8 @@ spec:
                   value: Europe/Prague
                 - name: LOKI_BASE_URL
                   value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
+                - name: PROMETHEUS_BASE_URL
+                  value: http://prometheus-service.monitoring.svc.cluster.local:9090
                 - name: KUBERNETES_API_URL
                   value: https://kubernetes.default.svc
                 - name: PUBLIC_HOST_SUFFIXES
@@ -69,7 +71,7 @@ spec:
                   cpu: 100m
                   memory: 128Mi
                 limits:
-                  memory: 256Mi
+                  memory: 384Mi
               volumeMounts:
                 - name: report-script
                   mountPath: /opt/external-access-daily-report

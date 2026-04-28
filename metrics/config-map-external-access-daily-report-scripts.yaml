@@ -67,6 +67,29 @@ data:
     HARBOR_PULL_RE = re.compile(
         r"^/v2/(?P<repo>.+?)/(?P<kind>manifests|blobs)/(?P<ref>[^/?]+)"
     )
+    BOT_PATTERNS = [
+        (re.compile(pattern, re.IGNORECASE), label)
+        for pattern, label in [
+            (r"googlebot", "Googlebot"),
+            (r"googleother", "GoogleOther"),
+            (r"bingbot|bingpreview", "Bing"),
+            (r"yandex", "Yandex"),
+            (r"duckduckbot", "DuckDuckBot"),
+            (r"baiduspider", "BaiduSpider"),
+            (r"applebot", "Applebot"),
+            (r"facebookexternalhit", "Facebook"),
+            (r"linkedinbot", "LinkedInBot"),
+            (r"slackbot", "Slackbot"),
+            (r"discordbot", "Discordbot"),
+            (r"telegrambot", "TelegramBot"),
+            (r"whatsapp", "WhatsApp"),
+            (r"petalbot", "PetalBot"),
+            (r"ahrefsbot", "AhrefsBot"),
+            (r"semrushbot", "SemrushBot"),
+            (r"mj12bot", "MJ12bot"),
+            (r"bot|crawler|spider|slurp|validator|uptime|monitor", "Other bot"),
+        ]
+    ]
 
 
     def env(name, default=None, required=False):
@@ -351,6 +374,18 @@ data:
                             extract_traefik_request_header(payload, "User-Agent"),
                         ]
                     ),
+                    "referer": first_non_empty(
+                        [
+                            payload.get("RequestReferer", ""),
+                            payload.get("RequestReferrer", ""),
+                            payload.get("Referer", ""),
+                            payload.get("Referrer", ""),
+                            payload.get("referer", ""),
+                            payload.get("referrer", ""),
+                            extract_traefik_request_header(payload, "Referer"),
+                            extract_traefik_request_header(payload, "Referrer"),
+                        ]
+                    ),
                     "request_host": request_host,
                     "country_code": normalize_country_code(
                         first_non_empty(
@@ -411,6 +446,29 @@ data:
         if not counter:
             return "none"
         return ", ".join(f"{name} ({count})" for name, count in counter.most_common(limit))
+
+
+    def referrer_host(referrer, public_hosts):
+        value = first_non_empty([referrer])
+        if not value:
+            return ""
+        try:
+            parsed = urlparse(value)
+        except ValueError:
+            return ""
+
+        host = parsed.netloc.lower().split("@")[-1].split(":", 1)[0]
+        if not host or host in public_hosts:
+            return ""
+        return host
+
+
+    def classify_robot(user_agent):
+        ua = user_agent or ""
+        for pattern, label in BOT_PATTERNS:
+            if pattern.search(ua):
+                return label
+        return ""
 
 
     def wrap_table_cell(value, width):
@@ -482,6 +540,72 @@ data:
         )
 
 
+    def render_platform_html_detail_rows(details):
+        if not details:
+            return '<tr><td colspan="3" style="padding:10px 12px;color:#6b7280;">No items to review.</td></tr>'
+
+        rows = []
+        for detail in details[:8]:
+            rows.append(
+                "<tr>"
+                f"<td style=\"padding:9px 10px;border-top:1px solid #e5e7eb;color:#4b5563;\">{html.escape(str(detail.get('namespace', '-')))}</td>"
+                f"<td style=\"padding:9px 10px;border-top:1px solid #e5e7eb;color:#111827;word-break:break-word;overflow-wrap:anywhere;\">{html.escape(str(detail.get('item', '-')))}</td>"
+                f"<td style=\"padding:9px 10px;border-top:1px solid #e5e7eb;text-align:right;color:#111827;font-weight:600;\">{html.escape(str(round(float(detail.get('value', 0)), 2)))}</td>"
+                "</tr>"
+            )
+        return "".join(rows)
+
+
+    def render_platform_html_section(platform_health):
+        if not platform_health:
+            return ""
+
+        checks = platform_health.get("checks", [])
+        generated_at = platform_health.get("generated_at", "")
+        passed = sum(1 for item in checks if item.get("passed"))
+        failed = len(checks) - passed
+        status_color = "#166534" if failed == 0 else "#9a3412"
+        status_label = "Healthy" if failed == 0 else "Needs review"
+        cards = []
+        for item in checks:
+            item_passed = bool(item.get("passed"))
+            color = "#166534" if item_passed else "#9a3412"
+            badge_bg = "#dcfce7" if item_passed else "#ffedd5"
+            badge_text = "PASS" if item_passed else "FAIL"
+            cards.append(
+                "<div style=\"border:1px solid #e5e7eb;border-radius:8px;background:#ffffff;margin:0 0 14px;overflow:hidden;\">"
+                "<div style=\"padding:14px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;\">"
+                f"<span style=\"display:inline-block;background:{badge_bg};color:{color};font-size:12px;font-weight:700;line-height:1;padding:6px 8px;border-radius:999px;\">{badge_text}</span>"
+                f"<span style=\"margin-left:10px;font-size:16px;font-weight:700;color:#111827;\">{html.escape(str(item.get('name', '')).replace('_', ' '))}</span>"
+                f"<div style=\"margin-top:8px;color:#4b5563;font-size:14px;line-height:1.45;\">{html.escape(str(item.get('summary', '')))}</div>"
+                "</div>"
+                "<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">"
+                f"{render_platform_html_detail_rows(item.get('details', []))}"
+                "</table>"
+                "</div>"
+            )
+
+        return (
+            "<div style=\"margin:0 0 24px;\">"
+            "<h2 style=\"margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;\">Platform health</h2>"
+            f"<div style=\"margin:0 0 10px;color:#4b5563;font-size:14px;line-height:1.45;\">Generated {html.escape(generated_at)}</div>"
+            "<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;margin-bottom:18px;\">"
+            "<tr>"
+            "<td style=\"padding:14px 16px;border:1px solid #e5e7eb;background:#ffffff;\">"
+            "<div style=\"font-size:12px;color:#4b5563;text-transform:uppercase;\">Overall</div>"
+            f"<div style=\"font-size:22px;font-weight:700;color:{status_color};\">{status_label}</div>"
+            "</td>"
+            "<td style=\"padding:14px 16px;border:1px solid #e5e7eb;background:#ffffff;\">"
+            "<div style=\"font-size:12px;color:#4b5563;text-transform:uppercase;\">Checks</div>"
+            f"<div style=\"font-size:22px;font-weight:700;color:#111827;\">{passed}/{len(checks)}</div>"
+            "</td>"
+            "</tr>"
+            "</table>"
+            f"{''.join(cards)}"
+            "</div>"
+        )
+
+
     def render_html_report(
         *,
         start_local,
@@ -492,6 +616,7 @@ data:
         harbor_stats,
         postfix_stats,
         dovecot_stats,
+        platform_health=None,
     ):
         ingress_cards = []
         for host in hosts:
@@ -502,6 +627,8 @@ data:
                     "external_requests": 0,
                     "status_counts": Counter(),
                     "path_counts": Counter(),
+                    "referrer_counts": Counter(),
+                    "robot_counts": Counter(),
                     "country_counts": Counter(),
                     "external_ip_counts": Counter(),
                     "external_ips": set(),
@@ -545,6 +672,18 @@ data:
                 "</div>"
                 "<div style=\"padding:18px;\">"
                 "<div style=\"margin-top:16px;\">"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Status Codes</div>"
+                f"{render_html_counter_list(current['status_counts'], 10)}"
+                "</div>"
+                "<div style=\"margin-top:16px;\">"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Sources / Referrers</div>"
+                f"{render_html_counter_list(current['referrer_counts'], 15)}"
+                "</div>"
+                "<div style=\"margin-top:16px;\">"
+                "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Robots Visited</div>"
+                f"{render_html_counter_list(current['robot_counts'], 15)}"
+                "</div>"
+                "<div style=\"margin-top:16px;\">"
                 "<div style=\"font-weight:700;margin-bottom:8px;color:#111827;\">Top 10 Countries</div>"
                 f"{render_html_counter_list(current['country_counts'], 10)}"
                 "</div>"
@@ -581,6 +720,10 @@ data:
             <div style="margin-top:10px;font-size:13px;opacity:0.82;">
               Public hosts discovered: {html.escape(', '.join(hosts))}
             </div>
+          </div>
+
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;margin-top:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;padding:20px 22px;">
+            {render_platform_html_section(platform_health)}
           </div>
 
             <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;margin-top:20px;box-shadow:0 8px 24px rgba(15,23,42,0.06);overflow:hidden;">
@@ -691,6 +834,8 @@ data:
                 "external_requests": 0,
                 "status_counts": Counter(),
                 "path_counts": Counter(),
+                "referrer_counts": Counter(),
+                "robot_counts": Counter(),
                 "country_counts": Counter(),
                 "external_ip_counts": Counter(),
                 "external_ips": set(),
@@ -728,6 +873,9 @@ data:
             current["requests"] += 1
             current["status_counts"][status] += 1
             current["path_counts"][path] += 1
+            source_host = referrer_host(entry.get("referer", ""), host_set)
+            if source_host:
+                current["referrer_counts"][source_host] += 1
 
             if external:
                 current["external_requests"] += 1
@@ -768,6 +916,27 @@ data:
                 harbor_stats["manifest_requests"] += 1
             elif kind == "blobs":
                 harbor_stats["blob_requests"] += 1
+
+        wordpress_query = '{namespace="wordpress", container="nginx"}'
+        for _, line, _ in loki_query_iter(loki_base_url, wordpress_query, start_ns, end_ns):
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            host = first_non_empty([entry.get("host", "")]).lower()
+            if host not in host_set:
+                continue
+
+            internal_hosts = {host}
+            if not host.startswith("www."):
+                internal_hosts.add("www." + host)
+            source_host = referrer_host(entry.get("referer", ""), internal_hosts)
+            if source_host:
+                stats[host]["referrer_counts"][source_host] += 1
+            robot_name = classify_robot(entry.get("user_agent", ""))
+            if robot_name:
+                stats[host]["robot_counts"][robot_name] += 1
 
         return stats, harbor_stats
 
@@ -923,6 +1092,26 @@ data:
                 ({"host": host, "path": path}, count)
                 for host in hosts
                 for path, count in ingress_stats.get(host, {}).get("path_counts", Counter()).most_common(20)
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_referrers_daily",
+            "Daily public-host request totals grouped by external referrer host for the most recent completed reporting window.",
+            [
+                ({"host": host, "referrer_host": referrer}, count)
+                for host in hosts
+                for referrer, count in ingress_stats.get(host, {}).get("referrer_counts", Counter()).most_common(20)
+            ],
+        )
+        append_gauge(
+            lines,
+            "external_access_analytics_robots_daily",
+            "Daily WordPress robot request totals grouped by public host and robot family for the most recent completed reporting window.",
+            [
+                ({"host": host, "robot": robot}, count)
+                for host in hosts
+                for robot, count in ingress_stats.get(host, {}).get("robot_counts", Counter()).most_common(20)
             ],
         )
         append_gauge(
@@ -1086,12 +1275,63 @@ data:
         )
 
 
+    def collect_platform_health_report(base_url, token, ssl_context):
+        script_object = kube_json(
+            base_url,
+            "/api/v1/namespaces/monitoring/configmaps/platform-health-report-scripts",
+            token,
+            ssl_context,
+        )
+        source = script_object.get("data", {}).get("platform-health-report.py", "")
+        if not source:
+            raise RuntimeError("platform-health-report-scripts ConfigMap does not contain platform-health-report.py")
+
+        namespace = {"__name__": "platform_health_embedded"}
+        exec(compile(source, "platform-health-report.py", "exec"), namespace)
+        captured = {"generated_at": datetime.now(ZoneInfo("UTC")).strftime("%Y-%m-%d %H:%M:%S UTC")}
+
+        original_render_report = namespace.get("render_report")
+        if not callable(original_render_report):
+            raise RuntimeError("platform-health-report.py does not define render_report")
+
+        def capture_report(checks):
+            captured["checks"] = checks
+            captured["report"] = original_render_report(checks)
+            return captured["report"]
+
+        original_render_metrics = namespace.get("render_metrics")
+        if callable(original_render_metrics):
+            def capture_metrics(checks):
+                captured["metrics"] = original_render_metrics(checks)
+                return captured["metrics"]
+
+            namespace["render_metrics"] = capture_metrics
+
+        original_render_html_report = namespace.get("render_html_report")
+        if callable(original_render_html_report):
+            def capture_html_report(checks, generated_at):
+                captured["generated_at"] = generated_at
+                captured["html_report"] = original_render_html_report(checks, generated_at)
+                return captured["html_report"]
+
+            namespace["render_html_report"] = capture_html_report
+
+        namespace["render_report"] = capture_report
+        namespace["send_email"] = lambda *args, **kwargs: None
+        namespace["upsert_configmap"] = lambda *args, **kwargs: None
+        namespace["main"]()
+        return captured
+
+
     def render_ingress_section(hosts, stats):
         lines = ["Public HTTP ingress summary", ""]
         summary_rows = []
         country_rows = []
         ip_rows = []
         path_rows = []
+        status_rows = []
+        referrer_rows = []
+        robot_rows = []
         for host in hosts:
             current = stats.get(
                 host,
@@ -1100,6 +1340,8 @@ data:
                     "external_requests": 0,
                     "status_counts": Counter(),
                     "path_counts": Counter(),
+                    "referrer_counts": Counter(),
+                    "robot_counts": Counter(),
                     "country_counts": Counter(),
                     "external_ip_counts": Counter(),
                     "external_ips": set(),
@@ -1139,6 +1381,24 @@ data:
                 summarize_top_counts(current["path_counts"], limit=10),
                 ]
             )
+            status_rows.append(
+                [
+                    host,
+                    summarize_top_counts(current["status_counts"], limit=10),
+                ]
+            )
+            referrer_rows.append(
+                [
+                    host,
+                    summarize_top_counts(current["referrer_counts"], limit=15),
+                ]
+            )
+            robot_rows.append(
+                [
+                    host,
+                    summarize_top_counts(current["robot_counts"], limit=15),
+                ]
+            )
 
         lines.append("Overview")
         lines.extend(
@@ -1148,6 +1408,27 @@ data:
                 max_widths=[32, 10, 10, 10, 6, 6],
             )
         )
+        lines.extend(
+            [
+                "",
+                "HTTP status codes by host",
+            ]
+        )
+        lines.extend(render_text_table(["Host", "Status codes"], status_rows, max_widths=[32, 110]))
+        lines.extend(
+            [
+                "",
+                "Sources / referrers by host",
+            ]
+        )
+        lines.extend(render_text_table(["Host", "Sources / referrers"], referrer_rows, max_widths=[32, 110]))
+        lines.extend(
+            [
+                "",
+                "Robots visited by host",
+            ]
+        )
+        lines.extend(render_text_table(["Host", "Robots visited"], robot_rows, max_widths=[32, 110]))
         lines.extend(
             [
                 "",
@@ -1297,6 +1578,11 @@ data:
         )
         postfix_stats = collect_postfix_stats(loki_base_url, start_ns, end_ns)
         dovecot_stats = collect_dovecot_stats(loki_base_url, start_ns, end_ns)
+        platform_health = collect_platform_health_report(
+            kubernetes_api_url,
+            token,
+            ssl_context,
+        )
 
         subject = (
             "[Home k3s] External access report "
@@ -1310,6 +1596,9 @@ data:
             f"Public hosts discovered: {', '.join(hosts)}",
             "",
         ]
+        platform_report = (platform_health.get("report") or "").strip()
+        if platform_report:
+            lines.extend([platform_report, ""])
         lines.extend(render_ingress_section(hosts, ingress_stats))
         lines.extend(render_harbor_section(harbor_host, harbor_stats))
         lines.extend(render_mail_section(postfix_stats, dovecot_stats))
@@ -1324,6 +1613,7 @@ data:
             harbor_stats=harbor_stats,
             postfix_stats=postfix_stats,
             dovecot_stats=dovecot_stats,
+            platform_health=platform_health,
         )
         metrics = render_metrics(
             report_timestamp=report_timestamp,
@@ -1336,6 +1626,9 @@ data:
             postfix_stats=postfix_stats,
             dovecot_stats=dovecot_stats,
         )
+        platform_metrics = (platform_health.get("metrics") or "").strip()
+        if platform_metrics:
+            metrics = metrics.rstrip() + "\n\n" + platform_metrics + "\n"
         upsert_configmap(
             kubernetes_api_url,
             "monitoring",
@@ -1343,6 +1636,7 @@ data:
             {
                 "metrics.prom": metrics,
                 "report.txt": report,
+                "report.html": html_report,
             },
             token,
             ssl_context,
