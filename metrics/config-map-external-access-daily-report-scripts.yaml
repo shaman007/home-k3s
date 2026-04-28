@@ -545,7 +545,7 @@ data:
             return '<tr><td colspan="3" style="padding:10px 12px;color:#6b7280;">No items to review.</td></tr>'
 
         rows = []
-        for detail in details[:8]:
+        for detail in details:
             rows.append(
                 "<tr>"
                 f"<td style=\"padding:9px 10px;border-top:1px solid #e5e7eb;color:#4b5563;\">{html.escape(str(detail.get('namespace', '-')))}</td>"

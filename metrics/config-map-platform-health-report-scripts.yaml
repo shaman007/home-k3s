@@ -18,6 +18,7 @@ data:
     import json
     import os
     import smtplib
+    import socket
     import ssl
     import tempfile
     import time
@@ -153,22 +154,19 @@ data:
         return int((expires - utc_now()).total_seconds() / 86400)
 
 
-    def cert_details_for_host(pem_text, host):
+    def live_tls_cert_days_left(host, port=443):
+        ctx = ssl._create_unverified_context()
+        with socket.create_connection((host, port), timeout=10) as sock:
+            with ctx.wrap_socket(sock, server_hostname=host) as tls:
+                der_cert = tls.getpeercert(binary_form=True)
+        pem_text = ssl.DER_cert_to_PEM_cert(der_cert)
         with tempfile.NamedTemporaryFile("w", suffix=".crt", delete=True) as handle:
             handle.write(pem_text)
             handle.flush()
             parsed = ssl._ssl._test_decode_cert(handle.name)
-        expires = datetime.strptime(parsed["notAfter"], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
         ssl.match_hostname(parsed, host)
+        expires = datetime.strptime(parsed["notAfter"], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
         return int((expires - utc_now()).total_seconds() / 86400)
-
-
-    def tls_host_matches(host, tls_host):
-        if host == tls_host:
-            return True
-        if tls_host.startswith("*."):
-            return host.endswith(tls_host[1:]) and host.count(".") == tls_host.count(".")
-        return False
 
 
     def pod_ready(pod):
@@ -203,7 +201,7 @@ data:
         if not details:
             return '<tr><td colspan="3" style="padding:10px 12px;color:#687787;">No items to review.</td></tr>'
         rows = []
-        for detail in details[:8]:
+        for detail in details:
             rows.append(
                 "<tr>"
                 f"<td style=\"padding:9px 10px;border-top:1px solid #e7edf3;color:#516070;\">{html.escape(str(detail.get('namespace', '-')))}</td>"
@@ -385,11 +383,14 @@ data:
         host_guard_state = {}
         cert_details = []
         cert_issues = []
+        ingress_hosts = []
         for ingress in ingresses:
             namespace = ingress["metadata"]["namespace"]
             ingress_name = ingress["metadata"]["name"]
             annotations = ingress.get("metadata", {}).get("annotations", {})
             hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
+            for host in hosts:
+                ingress_hosts.append((namespace, ingress_name, host))
             public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
             has_robots_guard = "traefik-robots-disallow-all@kubernetescrd" in middleware_ref
@@ -399,58 +400,38 @@ data:
             for host in public_hosts:
                 if host in throttle_routes.get(namespace, set()):
                     continue
-            covered_hosts = set()
-            for tls in ingress.get("spec", {}).get("tls", []):
-                name = tls.get("secretName")
-                if not name:
-                    continue
-                declared_tls_hosts = tls.get("hosts") or hosts
-                tls_hosts = [
-                    host
-                    for host in hosts
-                    if any(tls_host_matches(host, tls_host) for tls_host in declared_tls_hosts)
-                ]
-                covered_hosts.update(tls_hosts)
-                try:
-                    secret = kube(f"/api/v1/namespaces/{namespace}/secrets/{name}")
-                    pem = base64.b64decode(secret.get("data", {}).get("tls.crt", "")).decode("utf-8")
-                    if not pem:
-                        raise ValueError("tls.crt is empty")
-                except Exception:
-                    for host in tls_hosts:
-                        cert_issues.append({"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "cert_expiry_days"})
-                    continue
-                for host in tls_hosts:
-                    try:
-                        days = cert_details_for_host(pem, host)
-                        entry = {"namespace": namespace, "item": f"{ingress_name}/{host}", "value": days, "value_name": "cert_expiry_days"}
-                        cert_details.append(entry)
-                        if days < warn_days:
-                            cert_issues.append(entry)
-                    except Exception:
-                        cert_issues.append({"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "cert_expiry_days"})
-            for host in hosts:
-                if host in covered_hosts:
-                    continue
-                cert_issues.append({"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "missing_ingress_tls"})
+        seen_ingress_hosts = set()
+        for namespace, ingress_name, host in sorted(ingress_hosts):
+            key = (namespace, ingress_name, host)
+            if key in seen_ingress_hosts:
+                continue
+            seen_ingress_hosts.add(key)
+            entry = {"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "cert_expiry_days"}
+            try:
+                entry["value"] = live_tls_cert_days_left(host)
+                cert_details.append(entry)
+                if entry["value"] < warn_days:
+                    cert_issues.append(entry)
+            except Exception:
+                cert_details.append(entry)
+                cert_issues.append(entry)
         guard_issues = [
-            {"namespace": namespace, "item": host, "value": 0}
+            {"namespace": namespace, "item": f"missing robots guard: {host}", "value": 0}
             for (namespace, host), state in sorted(host_guard_state.items())
             if not state["has_robots_guard"]
         ]
-        ingress_host_count = sum(1 for ingress in ingresses for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host"))
+        ingress_host_count = len(seen_ingress_hosts)
         internal_host_count = sum(
             1
-            for ingress in ingresses
-            for rule in ingress.get("spec", {}).get("rules", [])
-            if (rule.get("host") or "").endswith(internal_suffixes)
+            for _, _, host in seen_ingress_hosts
+            if host.endswith(internal_suffixes)
         )
         checks.append(check("external_ingress_guards", not guard_issues, "External ingress middleware checks completed.", guard_issues))
         checks.append(check(
             "ingress_certificates",
             not cert_issues,
             f"{len(cert_details)}/{ingress_host_count} ingress host certificate(s) inspected, including {internal_host_count} internal host(s).",
-            cert_issues or cert_details[:20],
+            cert_details,
         ))
 
         pvc_limit = env_num("PVC_USAGE_WARNING_PERCENT", 90.0)
