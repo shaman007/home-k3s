@@ -28,7 +28,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: open-terminal
-          image: harbor.andreybondarenko.com/github/open-webui/open-terminal:0.10.2
+          image: harbor.andreybondarenko.com/github/open-webui/open-terminal:0.11.34
           imagePullPolicy: IfNotPresent
           env:
             - name: OPEN_TERMINAL_API_KEY
