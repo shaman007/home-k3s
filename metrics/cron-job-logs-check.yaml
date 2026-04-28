@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: monitoring
     app.kubernetes.io/managed-by: argoCD
 spec:
-  schedule: "0 12 * * *"
+  schedule: "0 5 * * *"
   timeZone: Europe/Prague
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
