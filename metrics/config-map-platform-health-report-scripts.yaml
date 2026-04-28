@@ -153,6 +153,24 @@ data:
         return int((expires - utc_now()).total_seconds() / 86400)
 
 
+    def cert_details_for_host(pem_text, host):
+        with tempfile.NamedTemporaryFile("w", suffix=".crt", delete=True) as handle:
+            handle.write(pem_text)
+            handle.flush()
+            parsed = ssl._ssl._test_decode_cert(handle.name)
+        expires = datetime.strptime(parsed["notAfter"], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+        ssl.match_hostname(parsed, host)
+        return int((expires - utc_now()).total_seconds() / 86400)
+
+
+    def tls_host_matches(host, tls_host):
+        if host == tls_host:
+            return True
+        if tls_host.startswith("*."):
+            return host.endswith(tls_host[1:]) and host.count(".") == tls_host.count(".")
+        return False
+
+
     def pod_ready(pod):
         if pod.get("status", {}).get("phase") != "Running":
             return False
@@ -363,16 +381,15 @@ data:
             throttle_routes[namespace] = hosts
         warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 14, int)
         public_suffixes = (".andreybondarenko.com", ".shaman007.com")
-        internal_suffix = ".k8s.my.lan"
-        internal_hosts = 0
+        internal_suffixes = (".k8s.my.lan",)
         host_guard_state = {}
         cert_details = []
         cert_issues = []
         for ingress in ingresses:
             namespace = ingress["metadata"]["namespace"]
+            ingress_name = ingress["metadata"]["name"]
             annotations = ingress.get("metadata", {}).get("annotations", {})
             hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
-            internal_hosts += sum(1 for host in hosts if host.endswith(internal_suffix))
             public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
             has_robots_guard = "traefik-robots-disallow-all@kubernetescrd" in middleware_ref
@@ -382,31 +399,59 @@ data:
             for host in public_hosts:
                 if host in throttle_routes.get(namespace, set()):
                     continue
+            covered_hosts = set()
             for tls in ingress.get("spec", {}).get("tls", []):
                 name = tls.get("secretName")
                 if not name:
                     continue
+                declared_tls_hosts = tls.get("hosts") or hosts
+                tls_hosts = [
+                    host
+                    for host in hosts
+                    if any(tls_host_matches(host, tls_host) for tls_host in declared_tls_hosts)
+                ]
+                covered_hosts.update(tls_hosts)
                 try:
                     secret = kube(f"/api/v1/namespaces/{namespace}/secrets/{name}")
                     pem = base64.b64decode(secret.get("data", {}).get("tls.crt", "")).decode("utf-8")
                     if not pem:
                         raise ValueError("tls.crt is empty")
-                    days = cert_days_left(pem)
-                    for host in tls.get("hosts") or [name]:
-                        entry = {"namespace": namespace, "item": host, "value": days, "value_name": "cert_expiry_days"}
+                except Exception:
+                    for host in tls_hosts:
+                        cert_issues.append({"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "cert_expiry_days"})
+                    continue
+                for host in tls_hosts:
+                    try:
+                        days = cert_details_for_host(pem, host)
+                        entry = {"namespace": namespace, "item": f"{ingress_name}/{host}", "value": days, "value_name": "cert_expiry_days"}
                         cert_details.append(entry)
                         if days < warn_days:
                             cert_issues.append(entry)
-                except Exception:
-                    cert_issues.append({"namespace": namespace, "item": name, "value": 0, "value_name": "cert_expiry_days"})
+                    except Exception:
+                        cert_issues.append({"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "cert_expiry_days"})
+            for host in hosts:
+                if host in covered_hosts:
+                    continue
+                cert_issues.append({"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "missing_ingress_tls"})
         guard_issues = [
             {"namespace": namespace, "item": host, "value": 0}
             for (namespace, host), state in sorted(host_guard_state.items())
             if not state["has_robots_guard"]
         ]
-        checks.append(check("internal_ingresses", internal_hosts > 0, f"Detected {internal_hosts} internal ingress host(s)."))
+        ingress_host_count = sum(1 for ingress in ingresses for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host"))
+        internal_host_count = sum(
+            1
+            for ingress in ingresses
+            for rule in ingress.get("spec", {}).get("rules", [])
+            if (rule.get("host") or "").endswith(internal_suffixes)
+        )
         checks.append(check("external_ingress_guards", not guard_issues, "External ingress middleware checks completed.", guard_issues))
-        checks.append(check("ingress_certificates", not cert_issues, f"{len(cert_details)} TLS host certificate(s) inspected.", cert_details if cert_issues else cert_details[:20]))
+        checks.append(check(
+            "ingress_certificates",
+            not cert_issues,
+            f"{len(cert_details)}/{ingress_host_count} ingress host certificate(s) inspected, including {internal_host_count} internal host(s).",
+            cert_issues or cert_details[:20],
+        ))
 
         pvc_limit = env_num("PVC_USAGE_WARNING_PERCENT", 90.0)
         pvc_usage = series("100 * (longhorn_volume_actual_size_bytes / longhorn_volume_capacity_bytes)", "pvc_usage_percent")
