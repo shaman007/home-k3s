@@ -13,13 +13,7 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: comfyui
-  ignoreDifferences:
-    - group: ""
-      kind: PersistentVolumeClaim
-      jsonPointers:
-        - /spec/resources/requests/storage
   syncPolicy:
     automated: {}
     syncOptions:
       - CreateNamespace=true
-      - RespectIgnoreDifferences=true
