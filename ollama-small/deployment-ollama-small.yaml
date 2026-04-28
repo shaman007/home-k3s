@@ -61,10 +61,10 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 500m
+              cpu: "1.15"
               memory: 2Gi
             limits:
-              memory: 8Gi
+              memory: 2Gi
           volumeMounts:
             - name: ollama-small-data
               mountPath: /root/.ollama
@@ -88,7 +88,7 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              memory: 1Gi
+              memory: 256Mi
           volumeMounts:
             - name: ollama-small-data
               mountPath: /root/.ollama

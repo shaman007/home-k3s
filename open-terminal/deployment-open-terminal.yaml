@@ -71,8 +71,7 @@ spec:
               cpu: 100m
               memory: 512Mi
             limits:
-              cpu: "2"
-              memory: 2Gi
+              memory: 512Mi
           volumeMounts:
             - name: open-terminal-data
               mountPath: /home/user

@@ -48,9 +48,9 @@ spec:
             failureThreshold: 3
           resources:
             limits:
-              memory: 64Mi
+              memory: 32Mi
             requests:
-              cpu: 20m
+              cpu: 40m
               memory: 32Mi
           volumeMounts:
             - mountPath: /host/sys

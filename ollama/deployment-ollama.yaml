@@ -66,10 +66,10 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: 500m
-              memory: 12Gi
+              cpu: "6.76"
+              memory: 13Gi
             limits:
-              memory: 28Gi
+              memory: 13Gi
               nvidia.com/gpu: 1
           volumeMounts:
             - name: ollama-data
@@ -94,7 +94,7 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              memory: 1Gi
+              memory: 256Mi
           volumeMounts:
             - name: ollama-data
               mountPath: /root/.ollama

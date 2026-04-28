@@ -83,10 +83,10 @@ spec:
               mountPath: /cache
           resources:
             requests:
-              cpu: 100m
-              memory: 2Gi
+              cpu: 210m
+              memory: 4Gi
             limits:
-              memory: 24Gi
+              memory: 4Gi
               nvidia.com/gpu: 1
       volumes:
         - name: cache

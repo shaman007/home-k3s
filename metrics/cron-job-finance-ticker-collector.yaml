@@ -59,7 +59,7 @@ spec:
                   cpu: 50m
                   memory: 96Mi
                 limits:
-                  memory: 192Mi
+                  memory: 96Mi
               volumeMounts:
                 - name: scripts
                   mountPath: /scripts

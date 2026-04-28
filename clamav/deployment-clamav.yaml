@@ -68,7 +68,7 @@ spec:
               mountPath: /var/log/clamav
           resources:
             requests:
-              cpu: "10m"
+              cpu: "1.21"
               memory: "3300Mi"
             limits:
               memory: "3300Mi"

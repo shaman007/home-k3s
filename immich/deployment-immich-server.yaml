@@ -76,10 +76,10 @@ spec:
               mountPath: /external-libraries/stash-data
           resources:
             requests:
-              cpu: 250m
+              cpu: 870m
               memory: 4Gi
             limits:
-              memory: 48Gi
+              memory: 4Gi
       volumes:
         - name: library
           persistentVolumeClaim:

@@ -52,7 +52,7 @@ spec:
               cpu: 25m
               memory: 64Mi
             limits:
-              memory: 128Mi
+              memory: 64Mi
           volumeMounts:
             - name: config-volume
               mountPath: /etc/alertmanager

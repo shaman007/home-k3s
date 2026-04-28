@@ -154,6 +154,29 @@ data:
         return int((expires - utc_now()).total_seconds() / 86400)
 
 
+    def cert_name_matches(host, cert_name):
+        cert_name = (cert_name or "").lower()
+        host = (host or "").lower()
+        if host == cert_name:
+            return True
+        if cert_name.startswith("*."):
+            suffix = cert_name[1:]
+            return host.endswith(suffix) and host.count(".") == cert_name.count(".")
+        return False
+
+
+    def cert_matches_host(parsed_cert, host):
+        names = [value for kind, value in parsed_cert.get("subjectAltName", []) if kind == "DNS"]
+        if not names:
+            names = [
+                value
+                for subject in parsed_cert.get("subject", [])
+                for key, value in subject
+                if key == "commonName"
+            ]
+        return any(cert_name_matches(host, name) for name in names)
+
+
     def live_tls_cert_days_left(host):
         connect_host = env("TRAEFIK_HTTPS_HOST", "traefik.traefik.svc.cluster.local")
         connect_port = env_num("TRAEFIK_HTTPS_PORT", 443, int)
@@ -166,7 +189,8 @@ data:
             handle.write(pem_text)
             handle.flush()
             parsed = ssl._ssl._test_decode_cert(handle.name)
-        ssl.match_hostname(parsed, host)
+        if not cert_matches_host(parsed, host):
+            raise ValueError("certificate does not match host")
         expires = datetime.strptime(parsed["notAfter"], "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
         return int((expires - utc_now()).total_seconds() / 86400)
 
@@ -414,7 +438,8 @@ data:
                 cert_details.append(entry)
                 if entry["value"] < warn_days:
                     cert_issues.append(entry)
-            except Exception:
+            except Exception as exc:
+                entry["item"] = f"{ingress_name}/{host} ({type(exc).__name__}: {exc})"
                 cert_details.append(entry)
                 cert_issues.append(entry)
         guard_issues = [

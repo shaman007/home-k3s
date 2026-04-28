@@ -55,9 +55,9 @@ spec:
           resources:
             requests:
               cpu: "20m"
-              memory: "768Mi"
+              memory: "816Mi"
             limits:
-              memory: "768Mi"
+              memory: "816Mi"
           volumeMounts:
             - name: mysql-wordpress-lh
               mountPath: /var/lib/mysql

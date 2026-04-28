@@ -195,9 +195,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 512Mi
+              memory: 864Mi
             limits:
-              memory: 2Gi
+              memory: 864Mi
           volumeMounts:
             - name: open-webui-data
               mountPath: /app/backend/data

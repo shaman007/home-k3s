@@ -80,10 +80,10 @@ spec:
               mountPath: /photon/data
           resources:
             requests:
-              memory: "1545Mi"
-              cpu: "10m"
+              memory: "2Gi"
+              cpu: "200m"
             limits:
-              memory: "1545Mi"
+              memory: "2Gi"
       volumes:
         - name: photon-data
           persistentVolumeClaim:

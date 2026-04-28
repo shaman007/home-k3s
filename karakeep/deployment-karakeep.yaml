@@ -91,7 +91,7 @@ spec:
           - { containerPort: 9222 }
         resources:
           requests:
-            cpu: 17m
+            cpu: 40m
             memory: 1504Mi
           limits:
             memory: 1504Mi

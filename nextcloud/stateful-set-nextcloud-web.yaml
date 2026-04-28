@@ -191,9 +191,9 @@ spec:
           resources:
             requests:
               cpu: "177m"
-              memory: "107Mi"
+              memory: "128Mi"
             limits:
-              memory: "107Mi"
+              memory: "128Mi"
           volumeMounts:
             - name: alloy-config
               mountPath: /etc/alloy
