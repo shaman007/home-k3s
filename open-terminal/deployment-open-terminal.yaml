@@ -36,8 +36,6 @@ spec:
                 secretKeyRef:
                   name: open-terminal-api-key
                   key: api-key
-            - name: OPEN_TERMINAL_ALLOWED_DOMAINS
-              value: github.com,*.github.com,githubusercontent.com,*.githubusercontent.com
             - name: OPEN_TERMINAL_EXECUTE_TIMEOUT
               value: "120"
             - name: OPEN_TERMINAL_EXECUTE_DESCRIPTION
