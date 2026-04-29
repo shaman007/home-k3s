@@ -68,10 +68,10 @@ spec:
                   value: "5"
               resources:
                 requests:
-                  cpu: 840m
+                  cpu: 100m
                   memory: 128Mi
                 limits:
-                  memory: 128Mi
+                  memory: 384Mi
               volumeMounts:
                 - name: report-script
                   mountPath: /opt/external-access-daily-report
