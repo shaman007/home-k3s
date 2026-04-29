@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: comfyui
+spec:
+  hard:
+    pods: "6"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 120Gi

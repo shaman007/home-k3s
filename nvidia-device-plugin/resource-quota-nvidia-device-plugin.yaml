@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: nvidia-device-plugin
+spec:
+  hard:
+    pods: "10"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi

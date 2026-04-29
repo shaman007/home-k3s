@@ -1,0 +1,532 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: argocd
+spec:
+  hard:
+    pods: "20"
+    services: "20"
+    secrets: "50"
+    configmaps: "50"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: default
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: kube-system
+spec:
+  hard:
+    pods: "50"
+    services: "20"
+    secrets: "50"
+    configmaps: "50"
+    persistentvolumeclaims: "5"
+    requests.storage: 5Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: bitwarden
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "20"
+    persistentvolumeclaims: "6"
+    requests.storage: 12Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: ca-scanner
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: clamav
+spec:
+  hard:
+    pods: "8"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 12Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: connectivity-exporter
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: convertx
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 10Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: dawarich
+spec:
+  hard:
+    pods: "15"
+    services: "10"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "10"
+    requests.storage: 250Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: elastic-stack
+spec:
+  hard:
+    pods: "6"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 30Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: elastic-system
+spec:
+  hard:
+    pods: "6"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: external-secrets
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: harbor
+spec:
+  hard:
+    pods: "20"
+    services: "20"
+    secrets: "50"
+    configmaps: "50"
+    persistentvolumeclaims: "10"
+    requests.storage: 120Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: hister
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 50Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: homeassistant
+spec:
+  hard:
+    pods: "4"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: immich
+spec:
+  hard:
+    pods: "15"
+    services: "15"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "8"
+    requests.storage: 350Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: karakeep
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "5"
+    requests.storage: 20Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: keycloak
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "4"
+    requests.storage: 15Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: loki
+spec:
+  hard:
+    pods: "15"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "4"
+    requests.storage: 20Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: longhorn-system
+spec:
+  hard:
+    pods: "90"
+    services: "30"
+    secrets: "50"
+    configmaps: "50"
+    persistentvolumeclaims: "5"
+    requests.storage: 5Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: mail
+spec:
+  hard:
+    pods: "15"
+    services: "15"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "8"
+    requests.storage: 20Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: mastodon
+spec:
+  hard:
+    pods: "15"
+    services: "15"
+    secrets: "50"
+    configmaps: "50"
+    persistentvolumeclaims: "8"
+    requests.storage: 50Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: matrix
+spec:
+  hard:
+    pods: "8"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "4"
+    requests.storage: 40Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: mempalace
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 30Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: metallb-system
+spec:
+  hard:
+    pods: "15"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: minecraft
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 15Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: monitoring
+spec:
+  hard:
+    pods: "40"
+    services: "30"
+    secrets: "80"
+    configmaps: "80"
+    persistentvolumeclaims: "8"
+    requests.storage: 260Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: nextcloud
+spec:
+  hard:
+    pods: "25"
+    services: "20"
+    secrets: "50"
+    configmaps: "50"
+    persistentvolumeclaims: "6"
+    requests.storage: 150Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: ot-operators
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: plex
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 16Ti
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: seaweedfs
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: spotify
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "4"
+    requests.storage: 20Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: stirling-pdf
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 15Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: traefik
+spec:
+  hard:
+    pods: "10"
+    services: "20"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "4"
+    requests.storage: 5Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: unifi
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: vault
+spec:
+  hard:
+    pods: "15"
+    services: "10"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "6"
+    requests.storage: 30Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: wordpress
+spec:
+  hard:
+    pods: "12"
+    services: "15"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "6"
+    requests.storage: 20Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: year
+spec:
+  hard:
+    pods: "5"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "2"
+    requests.storage: 1Gi

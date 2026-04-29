@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: ollama
+spec:
+  hard:
+    pods: "10"
+    services: "10"
+    secrets: "30"
+    configmaps: "30"
+    persistentvolumeclaims: "4"
+    requests.storage: 80Gi
