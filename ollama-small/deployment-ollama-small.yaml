@@ -28,7 +28,7 @@ spec:
         kubernetes.io/hostname: w486.k8s.my.lan
       containers:
         - name: ollama
-          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.21.2
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.22.0
           imagePullPolicy: IfNotPresent
           env:
             - name: OLLAMA_HOST
@@ -69,7 +69,7 @@ spec:
             - name: ollama-small-data
               mountPath: /root/.ollama
         - name: model-puller
-          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.21.2
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.22.0
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
