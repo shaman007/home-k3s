@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp
+  namespace: headlamp
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.middlewares: headlamp-local-network-only@kubernetescrd,headlamp-hsts@kubernetescrd
+  labels:
+    app: headlamp
+    app.kubernetes.io/name: headlamp
+    app.kubernetes.io/instance: headlamp
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - headlamp.w386.k8s.my.lan
+      secretName: headlamp-tls
+  rules:
+    - host: headlamp.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: headlamp
+                port:
+                  number: 80

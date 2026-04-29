@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: headlamp-allow-egress-kubernetes-api
+  namespace: headlamp
+spec:
+  podSelector:
+    matchLabels:
+      app: headlamp
+  policyTypes:
+    - Egress
+  egress:
+    # kubernetes.default.svc:443 used by Headlamp's in-cluster client.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    # kube-router can enforce post-DNAT; allow control-plane endpoints on the node LAN as well.
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.0/24
+      ports:
+        - protocol: TCP
+          port: 6443
