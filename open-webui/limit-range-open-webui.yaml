@@ -10,3 +10,11 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 64Mi
+      max:
+        cpu: "2"
+        memory: 4Gi

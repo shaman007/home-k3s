@@ -10,6 +10,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -22,6 +30,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -34,6 +50,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -46,6 +70,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 3Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -58,6 +90,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -70,6 +110,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 6Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -82,6 +130,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -94,6 +150,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 3Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -106,6 +170,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -118,6 +190,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 512Mi
+      default:
+        memory: 4Gi
+      min:
+        cpu: 25m
+        memory: 32Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -130,6 +210,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -142,6 +230,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -154,6 +250,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -166,6 +270,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 64Mi
+      max:
+        cpu: "2"
+        memory: 6Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -178,6 +290,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -190,6 +310,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 512Mi
+      default:
+        memory: 4Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -202,6 +330,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -214,6 +350,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -226,6 +370,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 512Mi
+      default:
+        memory: 4Gi
+      min:
+        cpu: 25m
+        memory: 128Mi
+      max:
+        cpu: "4"
+        memory: 12Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -238,6 +390,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -250,6 +410,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "4"
+        memory: 6Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -262,6 +430,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -274,6 +450,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 64Mi
+      max:
+        cpu: "2"
+        memory: 6Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -286,6 +470,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -298,6 +490,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 512Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 128Mi
+      max:
+        cpu: "4"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -310,6 +510,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 32Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -322,6 +530,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 64Mi
+      max:
+        cpu: "4"
+        memory: 8Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -334,6 +550,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -346,6 +570,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 64Mi
+      max:
+        cpu: "4"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -358,6 +590,14 @@ spec:
       defaultRequest:
         cpu: 100m
         memory: 512Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 128Mi
+      max:
+        cpu: "4"
+        memory: 6Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -370,6 +610,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -382,6 +630,14 @@ spec:
       defaultRequest:
         cpu: 50m
         memory: 256Mi
+      default:
+        memory: 2Gi
+      min:
+        cpu: 10m
+        memory: 64Mi
+      max:
+        cpu: "2"
+        memory: 4Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -394,6 +650,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 3Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -406,6 +670,14 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -418,6 +690,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -430,6 +710,14 @@ spec:
       defaultRequest:
         cpu: 25m
         memory: 128Mi
+      default:
+        memory: 1Gi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "2"
+        memory: 2Gi
 ---
 apiVersion: v1
 kind: LimitRange
@@ -442,3 +730,11 @@ spec:
       defaultRequest:
         cpu: 10m
         memory: 64Mi
+      default:
+        memory: 512Mi
+      min:
+        cpu: 5m
+        memory: 32Mi
+      max:
+        cpu: "1"
+        memory: 1Gi
