@@ -1,0 +1,444 @@
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: argocd
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: default
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: kube-system
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: bitwarden
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: ca-scanner
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: clamav
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: connectivity-exporter
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: convertx
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: dawarich
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: elastic-stack
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 512Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: elastic-system
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: external-secrets
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: harbor
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: hister
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: homeassistant
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: immich
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 512Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: karakeep
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: keycloak
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: loki
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 512Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: mail
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: mastodon
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: matrix
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: mempalace
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: metallb-system
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: minecraft
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 512Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: monitoring
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: nextcloud
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: ot-operators
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: plex
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: seaweedfs
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 100m
+        memory: 512Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: spotify
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: stirling-pdf
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: traefik
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: unifi
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: vault
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: wordpress
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: year
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi

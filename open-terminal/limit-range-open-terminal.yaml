@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: open-terminal
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 25m
+        memory: 128Mi
