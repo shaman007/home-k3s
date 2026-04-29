@@ -136,9 +136,17 @@ data:
         return float(result[0]["value"][1]) if result else float(default)
 
 
-    def check(name, passed, summary, details=None):
+    def check(name, passed, summary, details=None, review_details=None):
         details = details or []
-        return {"name": name, "passed": bool(passed), "summary": summary, "details": details, "failures": 0 if passed else len(details) or 1}
+        review_details = details if review_details is None else (review_details or [])
+        return {
+            "name": name,
+            "passed": bool(passed),
+            "summary": summary,
+            "details": details,
+            "review_details": review_details,
+            "failures": 0 if passed else len(review_details) or 1,
+        }
 
 
     def ready(conditions, kind="Ready"):
@@ -218,7 +226,7 @@ data:
         if failing:
             lines.extend(["", "Top items to review:"])
             for item in failing:
-                for detail in item["details"][:5]:
+                for detail in item.get("review_details", item["details"])[:5]:
                     lines.append(f'- {item["name"]}: ns={detail.get("namespace", "-")} item={detail.get("item", "-")} value={detail.get("value", 0)}')
         return "\n".join(lines).strip() + "\n"
 
@@ -256,7 +264,7 @@ data:
                 f"<div style=\"margin-top:8px;color:#516070;font-size:14px;line-height:1.45;\">{html.escape(item['summary'])}</div>"
                 "</div>"
                 "<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\">"
-                f"{render_html_detail_rows(item.get('details', []))}"
+                f"{render_html_detail_rows(item.get('details', []) if item['passed'] else item.get('review_details', item.get('details', [])))}"
                 "</table>"
                 "</div>"
             )
@@ -403,7 +411,7 @@ data:
                     if host:
                         hosts.add(host)
             throttle_routes[namespace] = hosts
-        warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 14, int)
+        warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 7, int)
         public_suffixes = (".andreybondarenko.com", ".shaman007.com")
         internal_suffixes = (".k8s.my.lan",)
         host_guard_state = {}
@@ -457,8 +465,9 @@ data:
         checks.append(check(
             "ingress_certificates",
             not cert_issues,
-            f"{len(cert_details)}/{ingress_host_count} ingress host certificate(s) inspected, including {internal_host_count} internal host(s).",
+            f"{len(cert_details)}/{ingress_host_count} ingress host certificate(s) inspected, including {internal_host_count} internal host(s); warning below {warn_days} day(s).",
             cert_details,
+            cert_issues,
         ))
 
         pvc_limit = env_num("PVC_USAGE_WARNING_PERCENT", 90.0)
