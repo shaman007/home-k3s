@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl-user-shell
+  namespace: default
+  labels:
+    app.kubernetes.io/name: curl-user-shell
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: shell
+      image: python:3.12-bookworm
+      imagePullPolicy: IfNotPresent
+      workingDir: /tmp
+      command:
+        - /bin/bash
+        - -lc
+        - id; command -v curl; command -v su; command -v python3; sleep infinity
+      stdin: true
+      tty: true
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        capabilities:
+          drop:
+            - ALL
