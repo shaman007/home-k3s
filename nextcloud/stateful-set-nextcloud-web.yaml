@@ -132,8 +132,8 @@ spec:
               add: ["SYS_ADMIN"]
           resources:
             requests:
-              cpu: "27m"
-              memory: "6306Mi"
+              cpu: "10m"
+              memory: "512Mi"
             limits:
               memory: "6306Mi"
         - name: nextcloud-nginx
@@ -168,8 +168,8 @@ spec:
               mountPath: /var/run
           resources:
             requests:
-              cpu: "10m"
-              memory: "100Mi"
+              cpu: "5m"
+              memory: "64Mi"
             limits:
               memory: "100Mi"
         - name: alloy
@@ -190,8 +190,8 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: "177m"
-              memory: "128Mi"
+              cpu: "25m"
+              memory: "64Mi"
             limits:
               memory: "128Mi"
           volumeMounts:
