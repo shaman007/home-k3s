@@ -16,7 +16,7 @@ spec:
       type: RuntimeDefault
   containers:
     - name: shell
-      image: python:3.12-bookworm
+      image: python:3.14-bookworm
       imagePullPolicy: IfNotPresent
       workingDir: /tmp
       command:
