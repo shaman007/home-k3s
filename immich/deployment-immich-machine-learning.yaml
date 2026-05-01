@@ -67,17 +67,22 @@ spec:
               path: /ping
               port: http
             periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 60
           readinessProbe:
             httpGet:
               path: /ping
               port: http
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /ping
               port: http
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           volumeMounts:
             - name: cache
               mountPath: /cache
@@ -86,7 +91,7 @@ spec:
               cpu: 210m
               memory: 3Gi
             limits:
-              memory: 3Gi
+              memory: 5Gi
               nvidia.com/gpu: 1
       volumes:
         - name: cache

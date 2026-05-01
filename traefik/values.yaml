@@ -59,6 +59,13 @@ service:
     loadBalancerClass: metallb-l2
     loadBalancerIP: 192.168.1.210
 
+resources:
+  requests:
+    cpu: 25m
+    memory: 256Mi
+  limits:
+    memory: 2Gi
+
 additionalArguments:
   - --entryPoints.web.http.redirections.entryPoint.to=websecure
   - --entryPoints.web.http.redirections.entryPoint.scheme=https

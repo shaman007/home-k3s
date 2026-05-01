@@ -248,6 +248,12 @@ spec:
             loadBalancerClass: metallb-l2
             loadBalancerIP: 192.168.1.210
           type: LoadBalancer
+        resources:
+          requests:
+            cpu: 25m
+            memory: 256Mi
+          limits:
+            memory: 2Gi
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: traefik

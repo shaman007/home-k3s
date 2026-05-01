@@ -16,5 +16,4 @@ spec:
         cpu: 25m
         memory: 128Mi
       max:
-        cpu: "4"
         memory: 12Gi
