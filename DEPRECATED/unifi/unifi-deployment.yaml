@@ -23,7 +23,6 @@ spec:
               memory: 500Mi
             limits:
               memory: "2048Mi"
-              cpu: "2500m"
           ports:
             - containerPort: 8443
             - containerPort: 3478  # udp

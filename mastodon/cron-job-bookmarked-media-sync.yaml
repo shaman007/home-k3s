@@ -47,7 +47,7 @@ spec:
                   value: "15"
               resources:
                 requests:
-                  cpu: 100m
+                  cpu: 10m
                   memory: 256Mi
                 limits:
                   memory: 512Mi
@@ -93,7 +93,7 @@ spec:
                   value: "1"
               resources:
                 requests:
-                  cpu: 250m
+                  cpu: 10m
                   memory: 512Mi
                 limits:
                   memory: 512Mi

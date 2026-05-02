@@ -25,7 +25,6 @@ spec:
             cpu: "50m"
           limits:
             memory: "1280Mi"
-            cpu: "1500m"
         ports:
         - containerPort: 443
       volumes:
