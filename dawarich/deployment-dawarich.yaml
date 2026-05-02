@@ -72,9 +72,9 @@ spec:
               value: "https://sso.andreybondarenko.com/realms/master"
             - name: OIDC_REDIRECT_URI
               value: "https://dawarich.andreybondarenko.com/users/auth/openid_connect/callback"
-           #OIDC_AUTO_REGISTER=true # optional, default is false
-           #OIDC_PROVIDER_NAME=YourProviderName # optional, default is OpenID Connect
-           #ALLOW_EMAIL_PASSWORD_REGISTRATION=false # optional, default is true
+              #OIDC_AUTO_REGISTER=true # optional, default is false
+              #OIDC_PROVIDER_NAME=YourProviderName # optional, default is OpenID Connect
+              #ALLOW_EMAIL_PASSWORD_REGISTRATION=false # optional, default is true
           image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.7.2
           imagePullPolicy: IfNotPresent
           volumeMounts:
@@ -90,12 +90,12 @@ spec:
             - "bin/rails server -p 3000 -b 0.0.0.0"
           resources:
             requests:
-              memory: "2405Mi"
+              memory: "1536Mi"
               cpu: "201m"
             limits:
-              memory: "2405Mi"
+              memory: "2Gi"
           ports:
-          - containerPort: 3000
+            - containerPort: 3000
         - name: dawarich-sidekiq
           env:
             - name: RAILS_ENV
@@ -152,10 +152,10 @@ spec:
             - "bsidekiq"
           resources:
             requests:
-              memory: "2048Mi"
+              memory: "512Mi"
               cpu: "1.84"
             limits:
-              memory: "2048Mi"
+              memory: "704Mi"
           livenessProbe:
             httpGet:
               path: /api/v1/health

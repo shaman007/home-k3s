@@ -70,9 +70,9 @@ spec:
           resources:
             requests:
               cpu: "500m"
-              memory: "544Mi"
+              memory: "128Mi"
             limits:
-              memory: "544Mi"
+              memory: "896Mi"
       volumes:
         - name: objstoreyml
           secret:

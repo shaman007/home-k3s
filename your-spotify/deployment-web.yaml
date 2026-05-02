@@ -33,9 +33,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "100Mi"
+              memory: "128Mi"
             limits:
-              memory: "100Mi"
+              memory: "160Mi"
           ports:
             - containerPort: 3000
               protocol: TCP

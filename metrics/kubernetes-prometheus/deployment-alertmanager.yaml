@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: alertmanager
-          image:  harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.32.1
+          image: harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.32.1
           imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/alertmanager/config.yml"
@@ -52,7 +52,7 @@ spec:
               cpu: 25m
               memory: 64Mi
             limits:
-              memory: 64Mi
+              memory: 128Mi
           volumeMounts:
             - name: config-volume
               mountPath: /etc/alertmanager

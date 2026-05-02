@@ -22,60 +22,60 @@ spec:
         app: meilisearch
     spec:
       containers:
-      - name: meilisearch
-        image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.42.1
-        ports:
-        - name: http
-          containerPort: 7700
-          protocol: TCP
-        env:
-        # Keep the existing data path for the in-place 1.38.2 upgrade.
-        - name: MEILI_DB_PATH
-          value: /meili_data/data-v1.37.0-r1.ms
-        # Temporary: enable Meilisearch's one-shot database migration on startup.
-        - name: MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
-          value: "true"
-        # Keep indexing memory below container limits to prevent OOM during import.
-        - name: MEILI_MAX_INDEXING_MEMORY
-          value: "1000000000"
-        - name: MEILI_NO_ANALYTICS
-          value: "true"
-        - name: MEILI_MASTER_KEY
-          valueFrom:
-            secretKeyRef:
-              name: karakeep-secret-env
-              key: MEILI_MASTER_KEY
-        startupProbe:
-          httpGet:
-            path: /health
-            port: http
-          periodSeconds: 5
-          timeoutSeconds: 2
-          failureThreshold: 60
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: http
-          periodSeconds: 10
-          timeoutSeconds: 2
-          failureThreshold: 3
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: http
-          periodSeconds: 30
-          timeoutSeconds: 2
-          failureThreshold: 3
-        volumeMounts:
-        - name: meili-data
-          mountPath: /meili_data
-        resources:
-          requests:
-            cpu: 10m
-            memory: 1250Mi
-          limits:
-            memory: 1250Mi
+        - name: meilisearch
+          image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.42.1
+          ports:
+            - name: http
+              containerPort: 7700
+              protocol: TCP
+          env:
+            # Keep the existing data path for the in-place 1.38.2 upgrade.
+            - name: MEILI_DB_PATH
+              value: /meili_data/data-v1.37.0-r1.ms
+            # Temporary: enable Meilisearch's one-shot database migration on startup.
+            - name: MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE
+              value: "true"
+            # Keep indexing memory below container limits to prevent OOM during import.
+            - name: MEILI_MAX_INDEXING_MEMORY
+              value: "1000000000"
+            - name: MEILI_NO_ANALYTICS
+              value: "true"
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: karakeep-secret-env
+                  key: MEILI_MASTER_KEY
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 2
+            failureThreshold: 3
+          volumeMounts:
+            - name: meili-data
+              mountPath: /meili_data
+          resources:
+            requests:
+              cpu: 10m
+              memory: 160Mi
+            limits:
+              memory: 432Mi
       volumes:
-      - name: meili-data
-        persistentVolumeClaim:
-          claimName: meili-data
+        - name: meili-data
+          persistentVolumeClaim:
+            claimName: meili-data

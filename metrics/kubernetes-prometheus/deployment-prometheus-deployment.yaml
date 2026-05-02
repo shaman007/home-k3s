@@ -27,7 +27,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: prometheus
-          image:  harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.11.3
+          image: harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.11.3
           imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/prometheus/prometheus.yaml"
@@ -74,11 +74,11 @@ spec:
           resources:
             requests:
               cpu: 430m
-              memory: 5Gi
+              memory: 4864Mi
             limits:
-              memory: 5Gi
+              memory: 6400Mi
         - name: thanos
-          image:  harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
           imagePullPolicy: IfNotPresent
           args:
             - "sidecar"
@@ -119,12 +119,12 @@ spec:
           resources:
             requests:
               cpu: 30m
-              memory: 384Mi
+              memory: 288Mi
             limits:
-              memory: 384Mi
+              memory: 416Mi
       initContainers:
         - name: fix-perms
-          image:  harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:

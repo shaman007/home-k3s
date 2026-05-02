@@ -133,9 +133,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "512Mi"
+              memory: "576Mi"
             limits:
-              memory: "6306Mi"
+              memory: "1088Mi"
         - name: nextcloud-nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.30.0
           imagePullPolicy: IfNotPresent
@@ -169,9 +169,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "64Mi"
+              memory: "128Mi"
             limits:
-              memory: "100Mi"
+              memory: "256Mi"
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.16.0
           imagePullPolicy: IfNotPresent
@@ -191,9 +191,9 @@ spec:
           resources:
             requests:
               cpu: "25m"
-              memory: "64Mi"
-            limits:
               memory: "128Mi"
+            limits:
+              memory: "256Mi"
           volumeMounts:
             - name: alloy-config
               mountPath: /etc/alloy

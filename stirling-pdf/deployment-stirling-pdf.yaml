@@ -46,6 +46,11 @@ spec:
           volumeMounts:
             - name: configs
               mountPath: /configs
+          resources:
+            requests:
+              memory: 1344Mi
+            limits:
+              memory: 1920Mi
       volumes:
         - name: configs
           persistentVolumeClaim:

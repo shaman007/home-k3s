@@ -89,9 +89,9 @@ spec:
           resources:
             requests:
               cpu: 210m
-              memory: 3Gi
+              memory: 2304Mi
             limits:
-              memory: 5Gi
+              memory: 4352Mi
               nvidia.com/gpu: 1
       volumes:
         - name: cache

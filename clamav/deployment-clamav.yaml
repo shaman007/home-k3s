@@ -69,9 +69,9 @@ spec:
           resources:
             requests:
               cpu: "1.21"
-              memory: "3300Mi"
+              memory: "1536Mi"
             limits:
-              memory: "3300Mi"
+              memory: "2304Mi"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -95,9 +95,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "1016Mi"
+              memory: "64Mi"
             limits:
-              memory: "1016Mi"
+              memory: "704Mi"
         - name: exporter
           image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:v2.1.2
           imagePullPolicy: IfNotPresent
@@ -122,7 +122,7 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "128Mi"
+              memory: "64Mi"
             limits:
               memory: "128Mi"
       volumes:

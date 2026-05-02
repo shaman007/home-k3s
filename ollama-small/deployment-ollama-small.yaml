@@ -62,9 +62,9 @@ spec:
           resources:
             requests:
               cpu: "1.15"
-              memory: 2Gi
+              memory: 1664Mi
             limits:
-              memory: 2Gi
+              memory: 2304Mi
           volumeMounts:
             - name: ollama-small-data
               mountPath: /root/.ollama
@@ -86,7 +86,7 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 128Mi
             limits:
               memory: 256Mi
           volumeMounts:

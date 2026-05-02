@@ -40,9 +40,8 @@ spec:
               value: "120"
             - name: OPEN_TERMINAL_EXECUTE_DESCRIPTION
               value: >
-                This terminal is for read-oriented public Git repository exploration.
-                Clone public repositories into /home/user/repos, inspect source files,
-                and return concise summaries or relevant excerpts for Open WebUI chats.
+                This terminal is for read-oriented public Git repository exploration. Clone public repositories into /home/user/repos, inspect source files, and return concise summaries or relevant excerpts for Open WebUI chats.
+
             - name: TZ
               value: Europe/Prague
           ports:
@@ -69,9 +68,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 512Mi
+              memory: 128Mi
             limits:
-              memory: 512Mi
+              memory: 176Mi
           volumeMounts:
             - name: open-terminal-data
               mountPath: /home/user

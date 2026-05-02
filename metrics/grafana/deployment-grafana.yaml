@@ -55,9 +55,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 750Mi
+              memory: 240Mi
             limits:
-              memory: 750Mi
+              memory: 704Mi
           env:
             - name: GF_SERVER_ROOT_URL
               value: "https://grafana.w386.k8s.my.lan"

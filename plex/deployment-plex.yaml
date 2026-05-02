@@ -47,10 +47,10 @@ spec:
               value: compute,video,utility
           resources:
             requests:
-              memory: 2600Mi
+              memory: 480Mi
               cpu: "530m"
             limits:
-              memory: 2600Mi
+              memory: 704Mi
               nvidia.com/gpu: 1
           volumeMounts:
             - name: plex-lib

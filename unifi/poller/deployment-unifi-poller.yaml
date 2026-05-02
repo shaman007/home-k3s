@@ -58,9 +58,9 @@ spec:
             failureThreshold: 5
           resources:
             requests:
-              memory: "100Mi"
+              memory: "64Mi"
               cpu: "10m"
             limits:
-              memory: "100Mi"
+              memory: "128Mi"
           ports:
             - containerPort: 9130

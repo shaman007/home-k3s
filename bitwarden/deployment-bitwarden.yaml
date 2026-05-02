@@ -99,9 +99,9 @@ spec:
           resources:
             requests:
               cpu: "288m"
-              memory: "2Gi"
+              memory: "1728Mi"
             limits:
-              memory: "2Gi"
+              memory: "2304Mi"
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
@@ -119,9 +119,9 @@ spec:
           resources:
             requests:
               cpu: "177m"
-              memory: "107Mi"
+              memory: "96Mi"
             limits:
-              memory: "107Mi"
+              memory: "144Mi"
           volumeMounts:
             - name: alloy-config
               mountPath: /etc/alloy

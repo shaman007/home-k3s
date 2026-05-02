@@ -43,6 +43,11 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 1
             failureThreshold: 3
+          resources:
+            requests:
+              memory: 96Mi
+            limits:
+              memory: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -57,3 +62,6 @@ spec:
       targetPort: 8080
       protocol: TCP
       name: http
+  template:
+    spec:
+      containers: []

@@ -75,9 +75,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "566Mi"
+              memory: "208Mi"
             limits:
-              memory: "566Mi"
+              memory: "288Mi"
       initContainers:
         - name: fix-permissions
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
@@ -86,7 +86,6 @@ spec:
           volumeMounts:
             - name: matrix-lh
               mountPath: /data
-
           resources:
             requests:
               cpu: 10m

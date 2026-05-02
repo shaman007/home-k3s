@@ -73,7 +73,11 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 2
             failureThreshold: 3
-
+          resources:
+            requests:
+              memory: 144Mi
+            limits:
+              memory: 192Mi
         # VOLUME
         - name: volume
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.22
@@ -118,7 +122,11 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 2
             failureThreshold: 3
-
+          resources:
+            requests:
+              memory: 336Mi
+            limits:
+              memory: 1792Mi
         # FILER
         - name: filer
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.22
@@ -159,7 +167,11 @@ spec:
             periodSeconds: 60
             timeoutSeconds: 2
             failureThreshold: 3
-
+          resources:
+            requests:
+              memory: 1216Mi
+            limits:
+              memory: 1600Mi
         # S3 GATEWAY
         - name: s3
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.22
@@ -223,7 +235,11 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 1
             failureThreshold: 3
-
+          resources:
+            requests:
+              memory: 1088Mi
+            limits:
+              memory: 3Gi
       volumes:
         - name: data
           hostPath:

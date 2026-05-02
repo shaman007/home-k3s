@@ -67,9 +67,9 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 6Gi
+              memory: 6400Mi
             limits:
-              memory: 6Gi
+              memory: 12800Mi
               nvidia.com/gpu: 1
           volumeMounts:
             - name: ollama-data
@@ -92,7 +92,7 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 128Mi
             limits:
               memory: 256Mi
           volumeMounts:

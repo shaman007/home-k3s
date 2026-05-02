@@ -42,6 +42,11 @@ spec:
             - name: nvidia-device-plugin-config
               mountPath: /config
               readOnly: true
+          resources:
+            requests:
+              memory: 64Mi
+            limits:
+              memory: 128Mi
       volumes:
         - name: device-plugin
           hostPath:

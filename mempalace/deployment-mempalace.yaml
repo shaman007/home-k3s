@@ -69,9 +69,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 3Gi
+              memory: 2560Mi
             limits:
-              memory: 3Gi
+              memory: 3328Mi
           volumeMounts:
             - name: mempalace-data
               mountPath: /data

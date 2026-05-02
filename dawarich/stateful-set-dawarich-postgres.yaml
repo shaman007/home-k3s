@@ -85,9 +85,9 @@ spec:
           resources:
             requests:
               cpu: "200m"
-              memory: "1Gi"
+              memory: "368Mi"
             limits:
-              memory: "1Gi"
+              memory: "496Mi"
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
@@ -105,10 +105,10 @@ spec:
                 - ALL
           resources:
             requests:
-              memory: "100Mi"
+              memory: "128Mi"
               cpu: "10m"
             limits:
-              memory: "100Mi"
+              memory: "256Mi"
           env:
             - name: DATA_SOURCE_URI
               value: "localhost:5432/dawarich_development?sslmode=disable"

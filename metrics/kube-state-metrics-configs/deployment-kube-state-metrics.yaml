@@ -29,11 +29,9 @@ spec:
       containers:
         - name: kube-state-metrics
           image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0
-
           # 🔧 Fix: don't watch deprecated v1 Endpoints; use EndpointSlice instead.
           args:
             - --resources=pods,nodes,namespaces,services,endpointslices,deployments,replicasets,statefulsets,daemonsets,jobs,cronjobs,horizontalpodautoscalers,poddisruptionbudgets
-
           ports:
             - containerPort: 8080
               name: http-metrics
@@ -57,6 +55,6 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 80Mi
+              memory: 64Mi
             limits:
-              memory: 80Mi
+              memory: 128Mi

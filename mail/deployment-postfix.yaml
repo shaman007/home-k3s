@@ -119,8 +119,8 @@ spec:
           resources:
             requests:
               cpu: "20m"
-              memory: "100Mi"
+              memory: "64Mi"
             limits:
-              memory: "100Mi"
+              memory: "128Mi"
       nodeSelector:
         kubernetes.io/hostname: w386.k8s.my.lan

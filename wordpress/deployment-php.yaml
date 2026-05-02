@@ -94,9 +94,9 @@ spec:
           resources:
             requests:
               cpu: "990m"
-              memory: "768Mi"
+              memory: "432Mi"
             limits:
-              memory: "768Mi"
+              memory: "576Mi"
         - name: nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.30.0
           imagePullPolicy: IfNotPresent
@@ -117,9 +117,9 @@ spec:
           resources:
             requests:
               cpu: "10m"
-              memory: "100Mi"
+              memory: "64Mi"
             limits:
-              memory: "100Mi"
+              memory: "128Mi"
           livenessProbe:
             httpGet:
               path: /health

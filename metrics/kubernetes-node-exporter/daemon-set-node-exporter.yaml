@@ -48,10 +48,10 @@ spec:
             failureThreshold: 3
           resources:
             limits:
-              memory: 32Mi
+              memory: 128Mi
             requests:
               cpu: 40m
-              memory: 32Mi
+              memory: 64Mi
           volumeMounts:
             - mountPath: /host/sys
               mountPropagation: HostToContainer
