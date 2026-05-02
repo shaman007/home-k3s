@@ -97,9 +97,9 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 19200Mi
+              memory: 10Gi
             limits:
-              memory: 25856Mi
+              memory: 16Gi
               nvidia.com/gpu: 1
           volumeMounts:
             - name: comfyui-data
