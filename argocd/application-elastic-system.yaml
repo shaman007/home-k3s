@@ -18,7 +18,6 @@ spec:
             cpu: 100m
             memory: 150Mi
           limits:
-            cpu: null
             memory: 1Gi
   destination:
     server: 'https://kubernetes.default.svc'

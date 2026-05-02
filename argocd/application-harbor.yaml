@@ -91,7 +91,6 @@ spec:
               memory: 1Gi
               cpu: 500m
             limits:
-              cpu: null
               memory: 2Gi
         notary:
           enabled: false
