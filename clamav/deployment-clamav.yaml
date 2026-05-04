@@ -75,7 +75,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-        - name: fresclam
+        - name: freshclam
           image: harbor.andreybondarenko.com/library/clamav:latest
           imagePullPolicy: Always
           env:
@@ -87,6 +87,9 @@ spec:
             - mountPath: /etc/clamav/clamd.conf
               name: clamav
               subPath: clamd.conf
+            - mountPath: /etc/clamav/freshclam.conf
+              name: clamav
+              subPath: freshclam.conf
             - name: log
               mountPath: /var/log/clamav
           securityContext:
@@ -135,6 +138,8 @@ spec:
             items:
               - key: clamd.conf
                 path: clamd.conf
+              - key: freshclam.conf
+                path: freshclam.conf
         - name: log
           emptyDir:
             sizeLimit: 100Mi
