@@ -111,8 +111,8 @@ spec:
           args:
             - "--clamav.address"
             - "unix:///run/clamav/clamd.sock"
-            - "--clamav.timeout=30s"
-            - "--clamav.retries=2"
+            - "--clamav.timeout=60s"
+            - "--clamav.retries=5"
           volumeMounts:
             - mountPath: /run/clamav
               name: run
