@@ -179,12 +179,12 @@ spec:
   limits:
     - type: Container
       defaultRequest:
-        cpu: 100m
+        cpu: 50m
         memory: 512Mi
       default:
         memory: 4Gi
       min:
-        cpu: 25m
+        cpu: 5m
         memory: 32Mi
       max:
         memory: 8Gi
@@ -293,7 +293,7 @@ spec:
   limits:
     - type: Container
       defaultRequest:
-        cpu: 100m
+        cpu: 50m
         memory: 512Mi
       default:
         memory: 4Gi
@@ -350,12 +350,12 @@ spec:
   limits:
     - type: Container
       defaultRequest:
-        cpu: 100m
+        cpu: 25m
         memory: 512Mi
       default:
         memory: 4Gi
       min:
-        cpu: 25m
+        cpu: 5m
         memory: 128Mi
       max:
         memory: 12Gi
@@ -464,7 +464,7 @@ spec:
   limits:
     - type: Container
       defaultRequest:
-        cpu: 100m
+        cpu: 50m
         memory: 512Mi
       default:
         memory: 2Gi
@@ -559,7 +559,7 @@ spec:
   limits:
     - type: Container
       defaultRequest:
-        cpu: 100m
+        cpu: 50m
         memory: 512Mi
       default:
         memory: 2Gi

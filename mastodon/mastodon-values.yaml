@@ -116,7 +116,7 @@ mastodon:
       limits:
         memory: 2052Mi
       requests:
-        cpu: 192m
+        cpu: 75m
         memory: 2052Mi
     # -- Affinity for all Sidekiq Deployments unless overwritten, overwrites .Values.affinity
     affinity: {}
@@ -215,7 +215,7 @@ mastodon:
       limits:
         memory: 4115Mi
       requests:
-        cpu: "1.27"
+        cpu: 200m
         memory: 4115Mi
     # -- Puma-specific options. Below values are based on default behavior in
     # config/puma.rb when no custom values are provided.

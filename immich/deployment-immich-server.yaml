@@ -76,7 +76,7 @@ spec:
               mountPath: /external-libraries/stash-data
           resources:
             requests:
-              cpu: 870m
+              cpu: 100m
               memory: 2560Mi
             limits:
               memory: 3328Mi

@@ -91,7 +91,7 @@ spec:
           resources:
             requests:
               memory: "1536Mi"
-              cpu: "201m"
+              cpu: "75m"
             limits:
               memory: "2Gi"
           ports:
@@ -153,7 +153,7 @@ spec:
           resources:
             requests:
               memory: "512Mi"
-              cpu: "1.84"
+              cpu: "100m"
             limits:
               memory: "704Mi"
           livenessProbe:

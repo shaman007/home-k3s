@@ -93,7 +93,7 @@ spec:
               mountPath: /tmp
           resources:
             requests:
-              cpu: "990m"
+              cpu: "100m"
               memory: "432Mi"
             limits:
               memory: "576Mi"

@@ -121,5 +121,5 @@ spec:
             limits:
               memory: 1408Mi
             requests:
-              cpu: 500m
+              cpu: 100m
               memory: 1Gi

@@ -98,7 +98,7 @@ spec:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: "288m"
+              cpu: "100m"
               memory: "1728Mi"
             limits:
               memory: "2304Mi"
@@ -118,7 +118,7 @@ spec:
             - --server.http.listen-addr=0.0.0.0:12345
           resources:
             requests:
-              cpu: "177m"
+              cpu: "25m"
               memory: "96Mi"
             limits:
               memory: "144Mi"

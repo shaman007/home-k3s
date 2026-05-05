@@ -17,7 +17,7 @@ spec:
           extra_params: --o:ssl.enable=false --o:ssl.termination=true -o:security.enable_metrics_unauthenticated=true
         resources:
           requests:
-            cpu: "171m"
+            cpu: "50m"
             memory: "1515Mi"
           limits:
             memory: "1515Mi"

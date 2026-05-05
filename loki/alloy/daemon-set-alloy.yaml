@@ -60,7 +60,7 @@ spec:
               mountPath: /etc/alloy
           resources:
             requests:
-              cpu: 210m
+              cpu: 50m
               memory: 272Mi
             limits:
               memory: 368Mi

@@ -26,12 +26,29 @@ spec:
         chunksCache:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
+          resources:
+            requests:
+              cpu: 50m
+            limits:
+              memory: 9830Mi
         gateway:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
+          resources:
+            requests:
+              cpu: 25m
         lokiCanary:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
+          resources:
+            requests:
+              cpu: 25m
+        resultsCache:
+          resources:
+            requests:
+              cpu: 50m
+            limits:
+              memory: 1229Mi
         sidecar:
           image:
             repository: harbor.andreybondarenko.com/dockerhub/kiwigrid/k8s-sidecar

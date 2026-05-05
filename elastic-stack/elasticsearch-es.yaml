@@ -63,7 +63,7 @@ spec:
                   value: "no"
               resources:
                 requests:
-                  cpu: 100m
+                  cpu: 50m
                   memory: 50Mi
                 limits:
                   memory: 50Mi
@@ -122,7 +122,7 @@ spec:
             - name: elasticsearch
               resources:
                 requests:
-                  cpu: 500m
+                  cpu: 200m
                   memory: 4Gi
                 limits:
                   memory: 4Gi

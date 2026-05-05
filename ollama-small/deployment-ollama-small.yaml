@@ -61,7 +61,7 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: "1.15"
+              cpu: "100m"
               memory: 1664Mi
             limits:
               memory: 2304Mi
@@ -85,7 +85,7 @@ spec:
               value: http://127.0.0.1:11434
           resources:
             requests:
-              cpu: 100m
+              cpu: 25m
               memory: 128Mi
             limits:
               memory: 256Mi
