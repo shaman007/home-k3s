@@ -35,7 +35,7 @@ data:
           "title": "BTC/USD",
           "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_asset_price{symbol=\"BTC\",quote=\"USD\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_asset_price{symbol=\"BTC\",quote=\"USD\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 2},"overrides": []}
@@ -46,7 +46,7 @@ data:
           "title": "ETH/USD",
           "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_asset_price{symbol=\"ETH\",quote=\"USD\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_asset_price{symbol=\"ETH\",quote=\"USD\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 2},"overrides": []}
@@ -57,7 +57,7 @@ data:
           "title": "ZETA/USD",
           "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_asset_price{symbol=\"ZETA\",quote=\"USD\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_asset_price{symbol=\"ZETA\",quote=\"USD\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 2},"overrides": []}
@@ -68,7 +68,7 @@ data:
           "title": "USD/CZK",
           "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "1 / last_over_time(finance_fx_rate{base=\"CZK\",quote=\"USD\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "(1 / last_over_time(finance_fx_rate{base=\"CZK\",quote=\"USD\"}[$__range])) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 4},"overrides": []}
@@ -79,7 +79,7 @@ data:
           "title": "EUR/CZK",
           "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "1 / last_over_time(finance_fx_rate{base=\"CZK\",quote=\"EUR\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "(1 / last_over_time(finance_fx_rate{base=\"CZK\",quote=\"EUR\"}[$__range])) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 4},"overrides": []}
@@ -90,7 +90,7 @@ data:
           "title": "EUR/USD",
           "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "1 / last_over_time(finance_fx_rate{base=\"USD\",quote=\"EUR\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "(1 / last_over_time(finance_fx_rate{base=\"USD\",quote=\"EUR\"}[$__range])) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 4},"overrides": []}
@@ -101,7 +101,7 @@ data:
           "title": "Wallet ETH",
           "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_balance{asset=\"ETH\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_balance{asset=\"ETH\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "none","decimals": 6},"overrides": []}
@@ -112,7 +112,7 @@ data:
           "title": "Wallet USD",
           "gridPos": {"h": 4, "w": 6, "x": 6, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_value{asset=\"ETH\",quote=\"USD\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","decimals": 2},"overrides": []}
@@ -123,7 +123,7 @@ data:
           "title": "Wallet EUR",
           "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_value{asset=\"ETH\",quote=\"EUR\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyEUR","decimals": 2},"overrides": []}
@@ -134,7 +134,7 @@ data:
           "title": "Wallet CZK",
           "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range])", "instant": true, "range": false}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "last_over_time(finance_wallet_value{asset=\"ETH\",quote=\"CZK\",address=\"0xA906863d7ad7D14721e819bCA6f3c50CAbD0dA98\"}[$__range]) and on(instance) (up{job=\"kubernetes-service-endpoints\",kubernetes_name=\"finance-ticker-exporter\"} == 1)", "instant": true, "range": false}],
           "maxDataPoints": 1,
           "options": {"colorMode": "background","graphMode": "none","justifyMode": "auto","orientation": "auto","reduceOptions": {"calcs": ["lastNotNull"],"fields":"","limit": 1,"values": false}},
           "fieldConfig": {"defaults": {"unit": "currencyCZK","decimals": 2},"overrides": []}
@@ -474,5 +474,5 @@ data:
       "timezone": "",
       "title": "Finance Ticker",
       "uid": "finance-ticker",
-      "version": 101
+      "version": 102
     }
