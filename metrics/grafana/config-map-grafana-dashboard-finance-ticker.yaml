@@ -373,7 +373,7 @@ data:
           "title": "BMW",
           "gridPos": {"h": 6, "w": 6, "x": 12, "y": 49},
           "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
-          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"BMWYY\",quote=\"USD\"}", "legendFormat": "BMW"}],
+          "targets": [{"refId": "A", "editorMode": "code", "expr": "finance_asset_price{symbol=\"BAMXF\",quote=\"USD\"}", "legendFormat": "BMW"}],
           "options": {"legend": {"displayMode": "hidden", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
           "fieldConfig": {"defaults": {"unit": "currencyUSD","custom": {"drawStyle": "line","lineWidth": 2,"pointSize": 1,"showPoints": "auto","spanNulls": false}},"overrides": []}
         },

@@ -212,7 +212,7 @@ data:
             ("EADSY", "Airbus"),
             ("RNMBY", "Rheinmetall"),
             ("MBGYY", "Mercedes-Benz"),
-            ("BMWYY", "BMW"),
+            ("BAMXF", "BMW"),
             ("VWAGY", "Audi"),
             ("STLA", "Stellantis"),
             ("^GSPC", "S&P 500"),
@@ -221,17 +221,21 @@ data:
             ("^RUT", "Russell 2000"),
             ("^VIX", "VIX"),
         ]
-        return [
-            {
+        results = []
+        for symbol, name in assets:
+            try:
+                fetched = fetch_yahoo_price(symbol)
+            except Exception as exc:
+                print(f"Skipping Yahoo asset {symbol} ({name}): {exc}")
+                continue
+            results.append({
                 "symbol": symbol,
                 "name": name,
                 "price_usd": fetched["price_usd"],
                 "updated_at": fetched["updated_at"],
                 "source": fetched["source"],
-            }
-            for symbol, name in assets
-            for fetched in [fetch_yahoo_price(symbol)]
-        ]
+            })
+        return results
 
 
     def fetch_fx_rates():
