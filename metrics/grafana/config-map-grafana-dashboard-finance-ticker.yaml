@@ -464,5 +464,5 @@ data:
       "timezone": "",
       "title": "Finance Ticker",
       "uid": "finance-ticker",
-      "version": 1
+      "version": 100
     }
