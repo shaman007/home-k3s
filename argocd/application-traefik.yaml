@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://traefik.github.io/charts
-    targetRevision: 39.0.9
+    targetRevision: 40.0.0
     chart: traefik
     helm:
       releaseName: traefik
