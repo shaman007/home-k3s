@@ -13,5 +13,14 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: unifi
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: unifi
+      jsonPointers:
+        - /data
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true

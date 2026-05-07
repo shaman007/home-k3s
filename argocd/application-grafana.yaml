@@ -13,5 +13,14 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: monitoring
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: monitoring
+      jsonPointers:
+        - /data
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true

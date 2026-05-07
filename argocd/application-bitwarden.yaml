@@ -12,5 +12,14 @@ spec:
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: bitwarden
+      jsonPointers:
+        - /data
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true

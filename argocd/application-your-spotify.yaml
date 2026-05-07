@@ -14,5 +14,14 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: spotify
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: spotify
+      jsonPointers:
+        - /data
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true

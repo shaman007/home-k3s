@@ -13,5 +13,14 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: convertx
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: vault-token
+      namespace: convertx
+      jsonPointers:
+        - /data
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true
