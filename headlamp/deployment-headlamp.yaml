@@ -24,7 +24,7 @@ spec:
       serviceAccountName: headlamp
       containers:
         - name: headlamp
-          image: harbor.andreybondarenko.com/github/headlamp-k8s/headlamp:v0.41.0
+          image: harbor.andreybondarenko.com/github/headlamp-k8s/headlamp:v0.42.0
           imagePullPolicy: IfNotPresent
           args:
             - -in-cluster
