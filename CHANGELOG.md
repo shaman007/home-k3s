@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-08 – Weekly Highlights
+
+- **Highlights**
+  - Added and refined finance and cluster monitoring by introducing mode tickers, fixing Grafana finance panels to show the latest values only, and correcting the throttle graph.
+  - Reworked workload resources across the cluster after backing away from KRR-driven sizing, with broad memory and CPU tuning plus extra headroom for the Nextcloud cron job, ClamAV, and PHP-FPM.
+  - Tightened GitOps and service reliability by teaching Argo CD applications to ignore `vault-token` drift, making Keycloak wait for Postgres, and hardening ClamAV update and exporter behavior.
+  - Updated platform components including Dawarich, Ollama, Grafana Alloy, SeaweedFS, Longhorn, Elasticsearch, ECK operator, Harbor, Traefik, Synapse, Meilisearch, Minecraft server, and the Renovate GitHub Action.
+
+- **Key PR Links**
+  - [#192](https://github.com/shaman007/home-k3s/pull/192), [#193](https://github.com/shaman007/home-k3s/pull/193), [#194](https://github.com/shaman007/home-k3s/pull/194), [#195](https://github.com/shaman007/home-k3s/pull/195), [#196](https://github.com/shaman007/home-k3s/pull/196), [#197](https://github.com/shaman007/home-k3s/pull/197), [#198](https://github.com/shaman007/home-k3s/pull/198), [#199](https://github.com/shaman007/home-k3s/pull/199), [#200](https://github.com/shaman007/home-k3s/pull/200), [#201](https://github.com/shaman007/home-k3s/pull/201), [#202](https://github.com/shaman007/home-k3s/pull/202), [#203](https://github.com/shaman007/home-k3s/pull/203), [#204](https://github.com/shaman007/home-k3s/pull/204), [#205](https://github.com/shaman007/home-k3s/pull/205), [#206](https://github.com/shaman007/home-k3s/pull/206), [#207](https://github.com/shaman007/home-k3s/pull/207), [#208](https://github.com/shaman007/home-k3s/pull/208)
+
 ## 2026-04-24 – Weekly Highlights
 
 - **Highlights**
