@@ -26,7 +26,7 @@ data:
     alias_maps = lmdb:/etc/postfix/aliases
     alias_database = lmdb:/etc/postfix/aliases
     mailbox_size_limit = 0
-    message_size_limit = 20480000
+    message_size_limit = 134217728
     maillog_file = /var/log/mail.log
     smtputf8_enable = no
     strict_mailbox_ownership = no
