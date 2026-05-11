@@ -184,7 +184,10 @@ data:
       fi
 
       new_token="$(printf '%s' "$VAULT_BODY" | jq -r '.auth.client_token')"
-      patch="$(jq -cn --arg key "$secret_key" --arg value "$(printf '%s' "$new_token" | base64 | tr -d '\n')" '{data: {($key): $value}}')"
+      patch="$(jq -cn \
+        --arg key "$secret_key" \
+        --arg value "$(printf '%s' "$new_token" | base64 | tr -d '\n')" \
+        '{metadata: {annotations: {"argocd.argoproj.io/compare-options": "IgnoreExtraneous"}}, data: {($key): $value}}')"
       kubectl patch secret "$secret_name" -n "$secret_namespace" --type merge --patch "$patch" >/dev/null
       echo "rotated ${secret_namespace}/${secret_name} via ${store_kind}/${store_namespace}${store_namespace:+/}${store_name}"
     }
