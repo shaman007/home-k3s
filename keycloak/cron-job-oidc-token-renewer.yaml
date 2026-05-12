@@ -29,6 +29,7 @@ spec:
           securityContext:
             seccompProfile:
               type: RuntimeDefault
+            runAsNonRoot: true
           containers:
             - name: renew
               image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.6.1
@@ -58,6 +59,7 @@ spec:
                 limits:
                   memory: 512Mi
               securityContext:
+                runAsNonRoot: true
                 allowPrivilegeEscalation: false
                 capabilities:
                   drop: ["ALL"]
