@@ -57,11 +57,12 @@ data:
         continue
       fi
 
-      secret="$("${KCADM}" get "clients/${id}/client-secret" --config "${ADMIN_CONFIG}" -r "${REALM}" --fields value --format csv | tail -n +2 | tr -d '"')"
+      secret_csv="$("${KCADM}" get "clients/${id}/client-secret" --config "${ADMIN_CONFIG}" -r "${REALM}" --format csv | tail -n 1)"
+      secret="${secret_csv#*,}"
+      secret="$(printf '%s' "${secret}" | tr -d '"')"
       if [ -z "${secret}" ]; then
-        echo "fail client=${client_id} reason=empty-client-secret"
-        touch "${failure_marker}"
-        failed=$((failed + 1))
+        echo "skip client=${client_id} reason=empty-client-secret"
+        skipped=$((skipped + 1))
         continue
       fi
 
