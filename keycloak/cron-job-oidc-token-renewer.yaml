@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: oidc-token-renewer
+  namespace: keycloak
+  labels:
+    app: keycloak-oidc-token-renewer
+    app.kubernetes.io/name: keycloak-oidc-token-renewer
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "*/30 * * * *"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: keycloak-oidc-token-renewer
+            app.kubernetes.io/name: keycloak-oidc-token-renewer
+            app.kubernetes.io/instance: keycloak
+        spec:
+          enableServiceLinks: false
+          restartPolicy: Never
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: renew
+              image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.6.1
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - /scripts/renew-oidc-tokens.sh
+              env:
+                - name: KEYCLOAK_URL
+                  value: http://keycloak.keycloak.svc.cluster.local:8080
+                - name: REALM
+                  value: master
+                - name: KEYCLOAK_ADMIN_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-admin
+                      key: username
+                - name: KEYCLOAK_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: keycloak-admin
+                      key: password
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: oidc-token-renewer-scripts
+                defaultMode: 0555

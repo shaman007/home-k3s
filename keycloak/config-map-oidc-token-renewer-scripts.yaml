@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oidc-token-renewer-scripts
+  namespace: keycloak
+  labels:
+    app: keycloak-oidc-token-renewer
+    app.kubernetes.io/name: keycloak-oidc-token-renewer
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/managed-by: argoCD
+data:
+  renew-oidc-tokens.sh: |
+    #!/bin/sh
+    set -eu
+
+    KEYCLOAK_URL="${KEYCLOAK_URL:-http://keycloak.keycloak.svc.cluster.local:8080}"
+    REALM="${REALM:-master}"
+    KCADM="${KCADM:-/opt/keycloak/bin/kcadm.sh}"
+    ADMIN_CONFIG="${ADMIN_CONFIG:-/tmp/kcadm-admin.config}"
+    CLIENT_CONFIG_DIR="${CLIENT_CONFIG_DIR:-/tmp/kcadm-clients}"
+
+    echo "Logging in to ${KEYCLOAK_URL} realm ${REALM}"
+    "${KCADM}" config credentials \
+      --config "${ADMIN_CONFIG}" \
+      --server "${KEYCLOAK_URL}" \
+      --realm master \
+      --user "${KEYCLOAK_ADMIN_USERNAME}" \
+      --password "${KEYCLOAK_ADMIN_PASSWORD}"
+
+    mkdir -p "${CLIENT_CONFIG_DIR}"
+
+    clients="$("${KCADM}" get clients \
+      --config "${ADMIN_CONFIG}" \
+      -r "${REALM}" \
+      -q protocol=openid-connect \
+      --fields id,clientId,enabled,serviceAccountsEnabled \
+      --format csv)"
+
+    renewed=0
+    skipped=0
+    failed=0
+    failure_marker="/tmp/oidc-token-renewer-failed"
+
+    echo "${clients}" | tail -n +2 | while IFS=, read -r raw_id raw_client_id raw_enabled raw_service_accounts_enabled; do
+      id="$(printf '%s' "${raw_id}" | tr -d '"')"
+      client_id="$(printf '%s' "${raw_client_id}" | tr -d '"')"
+      enabled="$(printf '%s' "${raw_enabled}" | tr -d '"')"
+      service_accounts_enabled="$(printf '%s' "${raw_service_accounts_enabled}" | tr -d '"')"
+
+      if [ -z "${id}" ] || [ -z "${client_id}" ]; then
+        continue
+      fi
+
+      if [ "${enabled}" != "true" ] || [ "${service_accounts_enabled}" != "true" ]; then
+        echo "skip client=${client_id} enabled=${enabled} serviceAccountsEnabled=${service_accounts_enabled}"
+        skipped=$((skipped + 1))
+        continue
+      fi
+
+      secret="$("${KCADM}" get "clients/${id}/client-secret" --config "${ADMIN_CONFIG}" -r "${REALM}" --fields value --format csv | tail -n +2 | tr -d '"')"
+      if [ -z "${secret}" ]; then
+        echo "fail client=${client_id} reason=empty-client-secret"
+        touch "${failure_marker}"
+        failed=$((failed + 1))
+        continue
+      fi
+
+      client_config="${CLIENT_CONFIG_DIR}/${client_id}.config"
+
+      if "${KCADM}" config credentials \
+        --config "${client_config}" \
+        --server "${KEYCLOAK_URL}" \
+        --realm "${REALM}" \
+        --client "${client_id}" \
+        --secret "${secret}" >/dev/null 2>&1; then
+        echo "renewed client=${client_id}"
+        renewed=$((renewed + 1))
+      else
+        echo "fail client=${client_id} reason=client-credentials-login-failed"
+        touch "${failure_marker}"
+        failed=$((failed + 1))
+      fi
+    done
+
+    echo "OIDC service-account token renewal finished"
+    echo "Note: user/browser authorization-code callbacks are single-use and cannot be renewed cluster-side."
+
+    if [ -f "${failure_marker}" ]; then
+      exit 1
+    fi
