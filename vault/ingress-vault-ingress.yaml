@@ -6,6 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "traefik"
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - vault.w386.k8s.my.lan

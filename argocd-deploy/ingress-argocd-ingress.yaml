@@ -6,7 +6,10 @@ metadata:
   namespace: argocd
   annotations:
     kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - argocd.w386.k8s.my.lan
