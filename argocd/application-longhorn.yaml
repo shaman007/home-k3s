@@ -24,6 +24,8 @@ spec:
         values: |
           preUpgradeChecker:
             jobEnabled: false
+          defaultSettings:
+            createDefaultDiskLabeledNodes: true
           persistence:
             defaultClassReplicaCount: 1
             defaultDataLocality: best-effort
