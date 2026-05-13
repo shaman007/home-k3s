@@ -1,0 +1,12 @@
+preUpgradeChecker:
+  jobEnabled: false
+persistence:
+  defaultClassReplicaCount: 1
+  defaultDataLocality: best-effort
+  recurringJobSelector:
+    enable: true
+    jobList: '[{"name":"trim-daily-a","isGroup":false}]'
+defaultSettings:
+  createDefaultDiskLabeledNodes: true
+  defaultDataPath: /var/mnt/longhorn
+  storageReservedPercentageForDefaultDisk: 0

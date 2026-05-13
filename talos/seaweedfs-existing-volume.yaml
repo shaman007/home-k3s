@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: ExistingVolumeConfig
+name: storage
+discovery:
+  volumeSelector:
+    match: volume.partition_label == "primary"

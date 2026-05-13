@@ -1,0 +1,15 @@
+{
+  "spec": {
+    "disks": {
+      "wd-black-sn770": {
+        "allowScheduling": true,
+        "diskDriver": "",
+        "diskType": "filesystem",
+        "evictionRequested": false,
+        "path": "/var/mnt/longhorn",
+        "storageReserved": 0,
+        "tags": []
+      }
+    }
+  }
+}
