@@ -20,6 +20,13 @@ spec:
         app.kubernetes.io/component: exporter
         app.kubernetes.io/name: node-exporter
     spec:
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
       containers:
         - args:
             - --path.sysfs=/host/sys
