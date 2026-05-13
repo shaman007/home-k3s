@@ -1,0 +1,6 @@
+{
+  "spec": {
+    "backupTargetURL": "s3://backup@us-east-1/",
+    "credentialSecret": "longhorn-backup-s3"
+  }
+}
