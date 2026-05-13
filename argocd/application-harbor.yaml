@@ -29,6 +29,10 @@ spec:
                 memory: 1250Mi
         exporter:
           replicas: 1
+        expose:
+          type: clusterIP
+          tls:
+            enabled: false
         jobservice:
           initContainers:
             - name: wait-for-core
@@ -115,6 +119,9 @@ spec:
           persistentVolumeClaim:
             registry:
               existingClaim: harbor-registry
+            jobservice:
+              jobLog:
+                existingClaim: harbor-jobservice
         updateStrategy:
           type: Recreate
         externalURL: https://harbor.andreybondarenko.com
