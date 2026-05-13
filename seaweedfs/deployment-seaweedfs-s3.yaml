@@ -28,7 +28,7 @@ spec:
         fsGroup: 0
         fsGroupChangePolicy: "OnRootMismatch"
       nodeSelector:
-        kubernetes.io/hostname: "w386.k8s.my.lan"
+        kubernetes.io/hostname: "w386"
       containers:
         # MASTER
         - name: master
@@ -243,5 +243,5 @@ spec:
       volumes:
         - name: data
           hostPath:
-            path: /storage/k8s/seaweedfs
+            path: /var/mnt/storage/k8s/seaweedfs
             type: DirectoryOrCreate
