@@ -55,9 +55,9 @@ spec:
           resources:
             requests:
               cpu: "50m"
-              memory: "480Mi"
+              memory: "768Mi"
             limits:
-              memory: "896Mi"
+              memory: "2Gi"
           livenessProbe:
             httpGet:
               port: 10902

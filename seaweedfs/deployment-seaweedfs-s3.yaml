@@ -124,9 +124,9 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              memory: 336Mi
+              memory: 512Mi
             limits:
-              memory: 1792Mi
+              memory: 3Gi
         # FILER
         - name: filer
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.23
