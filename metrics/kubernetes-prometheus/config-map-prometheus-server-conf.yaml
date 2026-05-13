@@ -534,14 +534,11 @@ data:
           - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
             action: keep
             regex: exporter
-          - source_labels: [__meta_kubernetes_pod_container_port_number]
-            action: keep
-            regex: "9100"
-          - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_container_port_number]
+          - source_labels: [__meta_kubernetes_pod_ip]
             action: replace
             target_label: __address__
-            regex: (.+);(.+)
-            replacement: $1:$2
+            regex: (.+)
+            replacement: $1:9100
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: kubernetes_node
 

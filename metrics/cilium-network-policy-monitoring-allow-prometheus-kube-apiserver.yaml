@@ -1,0 +1,12 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: monitoring-allow-prometheus-kube-apiserver
+  namespace: monitoring
+spec:
+  endpointSelector:
+    matchLabels:
+      app: prometheus-server
+  egress:
+    - toEntities:
+        - kube-apiserver
