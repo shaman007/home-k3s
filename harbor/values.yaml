@@ -34,6 +34,11 @@ jobservice:
       cpu: 10m
     limits:
       memory: 100Mi
+
+expose:
+  type: clusterIP
+  tls:
+    enabled: false
 nginx:
   resources:
     requests:
@@ -103,6 +108,12 @@ persistence:
   persistentVolumeClaim:
     registry:
       existingClaim: "harbor-registry"
+    jobservice:
+      jobLog:
+        existingClaim: "harbor-jobservice"
+
+updateStrategy:
+  type: Recreate
 
 externalURL: https://harbor.andreybondarenko.com
 harborAdminPassword: Harbor12345
