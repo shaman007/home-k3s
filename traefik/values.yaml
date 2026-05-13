@@ -51,6 +51,9 @@ experimental:
     geoip2:
       moduleName: github.com/thiagotognoli/traefikgeoip
       version: v1.1.1
+    robotstxt:
+      moduleName: github.com/solution-libre/traefik-plugin-robots-txt
+      version: v0.2.2
 # Expose via MetalLB using a dedicated LAN VIP for router port-forwards.
 service:
   type: LoadBalancer
@@ -213,6 +216,8 @@ persistence:
   path: /data
   size: 1Gi
   accessMode: ReadWriteOnce
+  storageClass: longhorn
+  volumeName: pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e
 
 # Enable simple access logs
 logs:

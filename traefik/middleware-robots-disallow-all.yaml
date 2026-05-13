@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: robots-disallow-all
+  namespace: traefik
+spec:
+  plugin:
+    robotstxt:
+      overwrite: true
+      enableComment: false
+      customRules: |
+        User-agent: *
+        Disallow: /
