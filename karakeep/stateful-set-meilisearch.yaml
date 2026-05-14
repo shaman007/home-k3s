@@ -37,7 +37,7 @@ spec:
               value: "true"
             # Keep indexing memory below container limits to prevent OOM during import.
             - name: MEILI_MAX_INDEXING_MEMORY
-              value: "1000000000"
+              value: "268435456"
             - name: MEILI_NO_ANALYTICS
               value: "true"
             - name: MEILI_MASTER_KEY
@@ -72,9 +72,9 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 160Mi
+              memory: 512Mi
             limits:
-              memory: 432Mi
+              memory: 1Gi
       volumes:
         - name: meili-data
           persistentVolumeClaim:
