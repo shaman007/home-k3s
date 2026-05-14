@@ -18,7 +18,7 @@ spec:
     # Allow access to the current control-plane endpoint in case egress is enforced post-DNAT.
     - to:
         - ipBlock:
-            cidr: 192.168.1.209/32
+            cidr: 192.168.1.100/32
       ports:
         - protocol: TCP
           port: 6443

@@ -19,6 +19,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: vault-active
+                name: vault
                 port:
                   number: 8200
