@@ -63,7 +63,7 @@ spec:
                 - name: LOOKBACK_HOURS
                   value: "1"
                 - name: LOKI_QUERY_LIMIT
-                  value: "0"
+                  value: "80"
                 - name: MAX_SAMPLES_PER_QUERY
                   value: "0"
                 - name: LOKI_BATCH_LIMIT
