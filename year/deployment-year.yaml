@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: year
-          image: harbor.andreybondarenko.com/library/year:latest
+          image: harbor.andreybondarenko.com/library/year-vas3k-cloud:latest
           imagePullPolicy: Always
           ports:
             - name: http
