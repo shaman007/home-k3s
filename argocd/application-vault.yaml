@@ -21,6 +21,15 @@ spec:
           value: '2'
       values: |
         server:
+          affinity: |
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/instance: vault
+                      app.kubernetes.io/name: vault
+                      component: server
+                  topologyKey: kubernetes.io/hostname
           includeConfigAnnotation: true
           ha:
             raft:
