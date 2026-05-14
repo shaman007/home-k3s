@@ -28,8 +28,6 @@ spec:
           enableServiceLinks: false
           serviceAccountName: bookmarked-media-sync
           restartPolicy: Never
-          nodeSelector:
-            kubernetes.io/hostname: talos-d4h-k5m
           initContainers:
             - name: fetch-bookmarked-media
               image: alpine:3.23
@@ -47,10 +45,6 @@ spec:
                   value: "8"
                 - name: BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS
                   value: "15"
-                - name: KUBERNETES_SERVICE_HOST
-                  value: "192.168.1.100"
-                - name: KUBERNETES_SERVICE_PORT
-                  value: "6443"
               resources:
                 requests:
                   cpu: 10m
