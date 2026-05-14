@@ -94,6 +94,27 @@ spec:
           port: 9153
         - protocol: TCP
           port: 9187
+        - protocol: TCP
+          port: 9964
+    - to:
+        - ipBlock:
+            cidr: 192.168.1.100/32
+        - ipBlock:
+            cidr: 192.168.1.209/32
+        - ipBlock:
+            cidr: 192.168.1.242/32
+      ports:
+        - protocol: TCP
+          port: 9964
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: gpu-operator
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 9400
     - to:
         - namespaceSelector:
             matchLabels:
@@ -202,6 +223,8 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: wordpress
       ports:
+        - protocol: TCP
+          port: 9090
         - protocol: TCP
           port: 9104
         - protocol: TCP
