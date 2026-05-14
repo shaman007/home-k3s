@@ -98,7 +98,7 @@ spec:
             limits:
               memory: "576Mi"
         - name: nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:1.30.0
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
