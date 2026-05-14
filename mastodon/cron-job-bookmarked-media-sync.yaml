@@ -28,6 +28,8 @@ spec:
           enableServiceLinks: false
           serviceAccountName: bookmarked-media-sync
           restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: talos-d4h-k5m
           initContainers:
             - name: fetch-bookmarked-media
               image: alpine:3.23
