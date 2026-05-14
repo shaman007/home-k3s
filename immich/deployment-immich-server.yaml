@@ -27,7 +27,7 @@ spec:
     spec:
       enableServiceLinks: false
       nodeSelector:
-        kubernetes.io/hostname: w386.k8s.my.lan
+        kubernetes.io/hostname: talos-d4h-k5m
       containers:
         - name: immich-server
           image: harbor.andreybondarenko.com/github/immich-app/immich-server:v2.7.5

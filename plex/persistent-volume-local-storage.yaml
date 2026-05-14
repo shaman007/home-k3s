@@ -27,4 +27,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - w386.k8s.my.lan
+                - talos-d4h-k5m

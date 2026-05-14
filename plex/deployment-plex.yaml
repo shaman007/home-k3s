@@ -31,7 +31,7 @@ spec:
                   - key: kubernetes.io/hostname
                     operator: In
                     values:
-                      - w386.k8s.my.lan
+                      - talos-d4h-k5m
       containers:
         - name: plex
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.1
@@ -42,7 +42,7 @@ spec:
               value: claim-_UXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
             # Advertise both local and public endpoints for Plex clients.
             - name: ADVERTISE_IP
-              value: "http://192.168.1.209:32400/,https://plex.andreybondarenko.com/"
+              value: "http://192.168.1.242:32400/,https://plex.andreybondarenko.com/"
             - name: NVIDIA_DRIVER_CAPABILITIES
               value: compute,video,utility
           resources:
