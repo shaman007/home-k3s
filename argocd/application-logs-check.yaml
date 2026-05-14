@@ -12,7 +12,7 @@ spec:
     targetRevision: HEAD
     directory:
       recurse: false
-      include: "{config-map-logs-check-report.yaml,config-map-logs-check-scripts.yaml,cron-job-logs-check.yaml,network-policy-monitoring-allow-egress-logs-check-grafana.yaml,network-policy-monitoring-allow-egress-logs-check-kubernetes-api.yaml,network-policy-monitoring-allow-egress-logs-check-loki.yaml,network-policy-monitoring-allow-egress-logs-check-ollama.yaml,network-policy-monitoring-allow-egress-logs-check-smtp.yaml,role-binding-logs-check.yaml,role-logs-check.yaml,service-account-logs-check.yaml}"
+      include: "{cilium-network-policy-monitoring-allow-logs-check-kube-apiserver.yaml,config-map-logs-check-report.yaml,config-map-logs-check-scripts.yaml,cron-job-logs-check.yaml,network-policy-monitoring-allow-egress-logs-check-grafana.yaml,network-policy-monitoring-allow-egress-logs-check-kubernetes-api.yaml,network-policy-monitoring-allow-egress-logs-check-loki.yaml,network-policy-monitoring-allow-egress-logs-check-ollama.yaml,network-policy-monitoring-allow-egress-logs-check-smtp.yaml,role-binding-logs-check.yaml,role-logs-check.yaml,service-account-logs-check.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring

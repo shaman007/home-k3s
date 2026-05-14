@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: monitoring-allow-logs-check-kube-apiserver
+  namespace: monitoring
+spec:
+  endpointSelector:
+    matchLabels:
+      app: logs-check
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toServices:
+        - k8sService:
+            serviceName: kubernetes
+            namespace: default
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
