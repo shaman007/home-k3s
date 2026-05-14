@@ -11,14 +11,4 @@ spec:
   policyTypes:
     - Egress
   egress:
-    - to:
-        - ipBlock:
-            cidr: 10.43.0.1/32
-      ports:
-        - protocol: TCP
-          port: 443
-    # k3s exposes the kubernetes service via a ClusterIP, but pod-to-apiserver
-    # traffic is routed through the node network on 6443.
-    - to:
-        - ipBlock:
-            cidr: 192.168.1.0/24
+    - {}
