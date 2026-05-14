@@ -17,11 +17,11 @@ spec:
       ports:
         - protocol: TCP
           port: 443
-    # k3s exposes the kubernetes service via a ClusterIP, but the actual
-    # apiserver endpoint is the control-plane node on 6443.
+    # k3s exposes the kubernetes service via a ClusterIP, but pod-to-apiserver
+    # traffic is routed through the node network on 6443.
     - to:
         - ipBlock:
-            cidr: 192.168.1.100/32
+            cidr: 192.168.1.0/24
       ports:
         - protocol: TCP
           port: 6443
