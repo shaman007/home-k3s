@@ -117,7 +117,7 @@ mastodon:
         memory: 2052Mi
       requests:
         cpu: 75m
-        memory: 2052Mi
+        memory: 1024Mi
     # -- Affinity for all Sidekiq Deployments unless overwritten, overwrites .Values.affinity
     affinity: {}
     # -- Topology spread constraints for Sidekiq Pods, overwrites .Values.topologySpreadConstraints
@@ -216,7 +216,7 @@ mastodon:
         memory: 4115Mi
       requests:
         cpu: 200m
-        memory: 4115Mi
+        memory: 128Mi
     # -- Puma-specific options. Below values are based on default behavior in
     # config/puma.rb when no custom values are provided.
     minThreads: "5"
