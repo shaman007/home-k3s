@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: mastodon-bookmarked-media-sync-allow-kube-apiserver
+  namespace: mastodon
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: bookmarked-media-sync
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toServices:
+        - k8sService:
+            namespace: default
+            serviceName: kubernetes
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
