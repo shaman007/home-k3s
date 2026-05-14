@@ -53,10 +53,14 @@ spec:
               mountPath: /app/node_modules/.cache
             - name: npm-logs
               mountPath: /root/.npm/_logs
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
       volumes:
         - name: year-data
           emptyDir: {}
         - name: app-cache
           emptyDir: {}
         - name: npm-logs
+          emptyDir: {}
+        - name: nginx-cache
           emptyDir: {}
