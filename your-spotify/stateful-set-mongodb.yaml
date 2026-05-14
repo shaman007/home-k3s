@@ -73,7 +73,7 @@ spec:
             - name: mongodb-data
               mountPath: /data/db
         - name: mongo-exporter
-          image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.47.2
+          image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.51.0
           imagePullPolicy: IfNotPresent
           args:
             - --mongodb.uri=mongodb://127.0.0.1:27017
