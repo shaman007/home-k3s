@@ -406,7 +406,7 @@ data:
             - prometheus
         static_configs:
         - targets:
-          - vault-active.vault.svc.cluster.local:8200
+          - vault.vault.svc.cluster.local:8200
       - job_name: harbor-core
         scrape_interval: 45s
         scrape_timeout:  30s
