@@ -16,12 +16,16 @@ spec:
         prometheus:
           url: http://thanos-querier.monitoring.svc.cluster.local
           port: 9090
+        rules:
+          default: false
+          custom: []
+          external: []
         resources:
           requests:
             cpu: 10m
-            memory: 512Mi
+            memory: 64Mi
           limits:
-            memory: 2Gi
+            memory: 256Mi
         livenessProbe:
           initialDelaySeconds: 120
           timeoutSeconds: 10
