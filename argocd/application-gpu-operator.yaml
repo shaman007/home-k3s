@@ -18,6 +18,26 @@ spec:
           enabled: false
         hostPaths:
           driverInstallDir: /usr/local
+        devicePlugin:
+          config:
+            create: true
+            name: nvidia-device-plugin-config
+            default: default
+            data:
+              default: |-
+                version: v1
+                flags:
+                  migStrategy: none
+                  failOnInitError: true
+                  nvidiaDriverRoot: /
+                  plugin:
+                    deviceListStrategy: envvar
+                    deviceIDStrategy: uuid
+                sharing:
+                  timeSlicing:
+                    resources:
+                      - name: nvidia.com/gpu
+                        replicas: 8
   destination:
     server: https://kubernetes.default.svc
     namespace: gpu-operator
