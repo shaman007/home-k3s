@@ -25,8 +25,6 @@ spec:
         app.kubernetes.io/part-of: immich
     spec:
       enableServiceLinks: false
-      nodeSelector:
-        kubernetes.io/hostname: talos-d4h-k5m
       securityContext:
         fsGroup: 999
         runAsUser: 999
