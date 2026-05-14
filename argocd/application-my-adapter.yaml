@@ -16,6 +16,12 @@ spec:
         prometheus:
           url: http://thanos-querier.monitoring.svc.cluster.local
           port: 9090
+        resources:
+          requests:
+            cpu: 10m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: default
