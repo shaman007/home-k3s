@@ -18,22 +18,23 @@ spec:
       labels:
         app: year
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: year
           image: harbor.andreybondarenko.com/library/year-vas3k-cloud:latest
           imagePullPolicy: Always
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 80
           readinessProbe:
             tcpSocket:
-              port: 3000
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2
           livenessProbe:
             tcpSocket:
-              port: 3000
+              port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 2
@@ -55,6 +56,8 @@ spec:
               mountPath: /root/.npm/_logs
             - name: nginx-cache
               mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /run
       volumes:
         - name: year-data
           emptyDir: {}
@@ -63,4 +66,6 @@ spec:
         - name: npm-logs
           emptyDir: {}
         - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
           emptyDir: {}
