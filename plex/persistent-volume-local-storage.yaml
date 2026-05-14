@@ -19,7 +19,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-path
   local:
-    path: /storage/k8s/plex  # Path on the node
+    path: /var/mnt/storage/k8s/plex
   nodeAffinity:
     required:
       nodeSelectorTerms:

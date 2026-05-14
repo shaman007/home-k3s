@@ -1,0 +1,7 @@
+---
+apiVersion: v1alpha1
+kind: ExistingVolumeConfig
+name: storage
+discovery:
+  volumeSelector:
+    match: volume.uuid == "5f5cfcde-a0f3-475f-8ba7-c02f1a93846e"
