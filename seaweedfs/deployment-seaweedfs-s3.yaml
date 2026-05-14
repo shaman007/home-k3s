@@ -28,7 +28,7 @@ spec:
         fsGroup: 0
         fsGroupChangePolicy: "OnRootMismatch"
       nodeSelector:
-        kubernetes.io/hostname: "w386"
+        kubernetes.io/hostname: "talos-d4h-k5m"
       containers:
         # MASTER
         - name: master
