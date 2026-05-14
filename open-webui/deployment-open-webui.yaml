@@ -181,7 +181,7 @@ spec:
             tcpSocket:
               port: http
             periodSeconds: 10
-            failureThreshold: 30
+            failureThreshold: 90
           readinessProbe:
             tcpSocket:
               port: http
