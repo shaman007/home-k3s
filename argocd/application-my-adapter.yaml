@@ -19,9 +19,15 @@ spec:
         resources:
           requests:
             cpu: 10m
-            memory: 256Mi
+            memory: 512Mi
           limits:
-            memory: 1Gi
+            memory: 2Gi
+        livenessProbe:
+          initialDelaySeconds: 120
+          timeoutSeconds: 10
+        readinessProbe:
+          initialDelaySeconds: 120
+          timeoutSeconds: 10
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: default
