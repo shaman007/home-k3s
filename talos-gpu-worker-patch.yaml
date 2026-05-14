@@ -1,0 +1,9 @@
+machine:
+  install:
+    image: factory.talos.dev/installer/e6a68146e08bac983d34c6a621626ace2a768d6d5132e052dd3f5013d15d0b64:v1.13.2
+  kernel:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
