@@ -6,6 +6,7 @@ podSelector:
 policies:
   - type: default-deny
   - type: dns-egress
+  - type: web-egress
   - type: namespace-egress
     name: allow-egress-to-ollama
     namespace: ollama

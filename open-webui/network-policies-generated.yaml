@@ -42,6 +42,35 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  name: open-webui-allow-egress-web
+  namespace: open-webui
+spec:
+  podSelector:
+    matchLabels:
+      app: open-webui
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  - to:
+    - ipBlock:
+        cidr: ::/0
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
   name: open-webui-allow-egress-to-ollama
   namespace: open-webui
 spec:
