@@ -25,7 +25,7 @@ spec:
       runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:
-        kubernetes.io/hostname: w386.k8s.my.lan
+        kubernetes.io/hostname: talos-d4h-k5m
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
