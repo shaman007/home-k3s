@@ -12,7 +12,7 @@ spec:
     targetRevision: HEAD
     directory:
       recurse: false
-      include: network-policy-*.yaml
+      include: "{network-policy-*.yaml,cilium-network-policy-*.yaml,cluster-role-*.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: traefik
