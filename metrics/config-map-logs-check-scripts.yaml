@@ -103,8 +103,21 @@ data:
             request_headers["Content-Type"] = "application/json"
         request = urllib.request.Request(url, headers=request_headers, data=data, method=method)
         timeout_seconds = env_int("HTTP_TIMEOUT_SECONDS", 60)
-        with urllib.request.urlopen(request, timeout=timeout_seconds, context=ssl_context) as response:
-            return json.load(response)
+        max_attempts = max(1, env_int("HTTP_MAX_ATTEMPTS", 3))
+        retry_delay_seconds = max(0, env_int("HTTP_RETRY_DELAY_SECONDS", 5))
+
+        last_exc = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=timeout_seconds, context=ssl_context) as response:
+                    return json.load(response)
+            except (TimeoutError, urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError) as exc:
+                last_exc = exc
+                if attempt >= max_attempts:
+                    raise
+                log_progress(f"kubernetes API request failed, retrying attempt={attempt} error={exc}")
+                time.sleep(retry_delay_seconds * attempt)
+        raise last_exc  # pragma: no cover
 
 
     def get_window():
