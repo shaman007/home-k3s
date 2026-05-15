@@ -9,6 +9,17 @@ spec:
     - Egress
   egress:
     - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+              component: server
+      ports:
+        - protocol: TCP
+          port: 8200
+    - to:
         - ipBlock:
             cidr: 10.43.0.0/16
       ports:

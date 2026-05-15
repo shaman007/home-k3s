@@ -4,8 +4,34 @@ metadata:
   name: vault-allow-egress-vault-api
   namespace: vault
 spec:
-  endpointSelector: {}
+  endpointSelector:
+    matchExpressions:
+      - key: io.cilium.k8s.policy.serviceaccount
+        operator: In
+        values:
+          - vault-pki-renewer
+          - vault-token-rotator
   egress:
+    - toEntities:
+        - kube-apiserver
+    - toServices:
+        - k8sService:
+            serviceName: kubernetes
+            namespace: default
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: vault
@@ -22,6 +48,12 @@ spec:
         - k8sService:
             serviceName: vault-active
             namespace: vault
+      toPorts:
+        - ports:
+            - port: "8200"
+              protocol: TCP
+    - toCIDRSet:
+        - cidr: 10.42.0.0/16
       toPorts:
         - ports:
             - port: "8200"

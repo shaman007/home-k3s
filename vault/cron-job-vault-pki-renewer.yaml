@@ -51,7 +51,7 @@ spec:
                     payload_length="${#payload}"
 
                     exec 3<>"/dev/tcp/${host}/${port}"
-                    printf 'POST /v1/%s HTTP/1.1\r\n' "$path" >&3
+                    printf 'POST /v1/%s HTTP/1.0\r\n' "$path" >&3
                     printf 'Host: %s\r\n' "$host" >&3
                     printf 'X-Vault-Token: %s\r\n' "$VAULT_TOKEN" >&3
                     printf 'Content-Type: application/json\r\n' >&3
