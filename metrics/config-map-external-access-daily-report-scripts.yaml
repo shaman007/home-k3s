@@ -1276,12 +1276,17 @@ data:
 
 
     def collect_platform_health_report(base_url, token, ssl_context):
-        script_object = kube_json(
-            base_url,
-            "/api/v1/namespaces/monitoring/configmaps/platform-health-report-scripts",
-            token,
-            ssl_context,
-        )
+        try:
+            script_object = kube_json(
+                base_url,
+                "/api/v1/namespaces/monitoring/configmaps/platform-health-report-scripts",
+                token,
+                ssl_context,
+            )
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return {}
+            raise
         source = script_object.get("data", {}).get("platform-health-report.py", "")
         if not source:
             raise RuntimeError("platform-health-report-scripts ConfigMap does not contain platform-health-report.py")
