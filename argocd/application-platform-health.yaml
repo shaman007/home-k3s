@@ -1,0 +1,29 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-health
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: metrics
+    targetRevision: HEAD
+    directory:
+      recurse: false
+      include: "{cluster-role-binding-external-access-daily-report-platform-health.yaml,cluster-role-binding-platform-health-report.yaml,cluster-role-platform-health-report.yaml,config-map-platform-health-exporter.yaml,config-map-platform-health-report.yaml,config-map-platform-health-report-scripts.yaml,deployment-platform-health-exporter.yaml,role-binding-platform-health-report.yaml,role-platform-health-report.yaml,service-account-platform-health-report.yaml,service-platform-health-exporter.yaml}"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: monitoring
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: platform-health-report
+      namespace: monitoring
+      jsonPointers:
+        - /data/report.txt
+        - /data/report.html
+        - /data/metrics.prom
+  syncPolicy:
+    automated: {}
