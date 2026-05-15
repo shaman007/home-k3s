@@ -32,7 +32,7 @@ spec:
       containers:
         # MASTER
         - name: master
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.23
+          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.25
           imagePullPolicy: IfNotPresent
           args:
             - "master"
@@ -80,7 +80,7 @@ spec:
               memory: 192Mi
         # VOLUME
         - name: volume
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.23
+          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.25
           imagePullPolicy: IfNotPresent
           args:
             - "volume"
@@ -129,7 +129,7 @@ spec:
               memory: 3Gi
         # FILER
         - name: filer
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.23
+          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.25
           imagePullPolicy: IfNotPresent
           args:
             - "filer"
@@ -174,7 +174,7 @@ spec:
               memory: 1600Mi
         # S3 GATEWAY
         - name: s3
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.23
+          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.25
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
