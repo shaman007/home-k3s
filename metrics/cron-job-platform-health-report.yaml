@@ -1,0 +1,77 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: platform-health-report
+  namespace: monitoring
+  labels:
+    app: platform-health-report
+    app.kubernetes.io/name: platform-health-report
+    app.kubernetes.io/instance: platform-health-report
+    app.kubernetes.io/part-of: monitoring
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "10 6 * * *"
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: platform-health-report
+            app.kubernetes.io/name: platform-health-report
+            app.kubernetes.io/instance: platform-health-report
+            app.kubernetes.io/part-of: monitoring
+        spec:
+          enableServiceLinks: false
+          serviceAccountName: platform-health-report
+          restartPolicy: Never
+          containers:
+            - name: report
+              image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - python3
+                - /opt/platform-health-report/platform-health-report.py
+              env:
+                - name: KUBERNETES_API_URL
+                  value: https://192.168.1.100:6443
+                - name: LOKI_BASE_URL
+                  value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
+                - name: PROMETHEUS_BASE_URL
+                  value: http://prometheus-service.monitoring.svc.cluster.local:9090
+                - name: TRAEFIK_HTTPS_HOST
+                  value: traefik.traefik.svc.cluster.local
+                - name: SMTP_HOST
+                  value: andreybondarenko.com
+                - name: SMTP_PORT
+                  value: "25"
+                - name: MAIL_FROM
+                  value: platform-health-report@andreybondarenko.com
+                - name: MAIL_TO
+                  value: me@andreybondarenko.com
+                - name: REPORT_NAMESPACE
+                  value: monitoring
+                - name: REPORT_CONFIGMAP_NAME
+                  value: platform-health-report
+                - name: HTTP_TIMEOUT_SECONDS
+                  value: "180"
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 128Mi
+                limits:
+                  memory: 384Mi
+              volumeMounts:
+                - name: report-script
+                  mountPath: /opt/platform-health-report
+                  readOnly: true
+          volumes:
+            - name: report-script
+              configMap:
+                name: platform-health-report-scripts
+                defaultMode: 0755

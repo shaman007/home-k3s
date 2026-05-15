@@ -46,7 +46,7 @@ spec:
                   vault_post() {
                     path="$1"
                     payload="$2"
-                    host="vault.vault.svc"
+                    host="vault-active.vault.svc"
                     port="8200"
                     payload_length="${#payload}"
 
