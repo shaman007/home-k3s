@@ -28,7 +28,7 @@ spec:
             app.kubernetes.io/part-of: monitoring
         spec:
           enableServiceLinks: false
-          serviceAccountName: platform-health-report
+          serviceAccountName: external-access-daily-report
           restartPolicy: Never
           containers:
             - name: report
@@ -45,7 +45,7 @@ spec:
                 - name: PROMETHEUS_BASE_URL
                   value: http://prometheus-service.monitoring.svc.cluster.local:9090
                 - name: KUBERNETES_API_URL
-                  value: https://kubernetes.default.svc
+                  value: https://192.168.1.100:6443
                 - name: PUBLIC_HOST_SUFFIXES
                   value: andreybondarenko.com,shaman007.com
                 - name: HARBOR_HOST
