@@ -17,7 +17,7 @@ spec:
     # kube-router can enforce post-DNAT; allow the direct apiserver endpoint too.
     - to:
         - ipBlock:
-            cidr: 192.168.1.209/32
+            cidr: 192.168.1.100/32
       ports:
         - protocol: TCP
           port: 6443
