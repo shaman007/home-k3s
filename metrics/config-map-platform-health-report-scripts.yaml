@@ -564,11 +564,7 @@ data:
         ]
         checks.append(check("monitoring_stack", grafana_up >= 1 and prometheus_up >= 1 and thanos_up >= 1 and compactions > 0, f"Monitoring stack: grafana={grafana_up:.0f}, prometheus={prometheus_up:.0f}, thanos={thanos_up:.0f}, compactions_24h={compactions:.0f}.", stack_details))
 
-        vault_pods = kube("/api/v1/namespaces/vault/pods").get("items", [])
-        active_pod = next((pod for pod in vault_pods if pod.get("metadata", {}).get("labels", {}).get("vault-active") == "true"), None)
-        vault_sealed = 1.0
-        if active_pod and active_pod.get("metadata", {}).get("labels", {}).get("vault-sealed") == "false":
-            vault_sealed = 0.0
+        vault_sealed = 1.0 - prom_scalar('min(vault_core_unsealed{job="vault"})', 0.0)
         vault_up = prom_scalar('sum(up{job="vault"} == 1)', 0.0)
         vault_details = [
             {"namespace": "vault", "item": "sealed", "value": vault_sealed, "value_name": "vault_sealed"},
