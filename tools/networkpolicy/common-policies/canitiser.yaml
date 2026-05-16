@@ -12,9 +12,5 @@ policies:
       - ca-scanner
       - traefik
     port: 8080
-  - type: namespace-egresses
+  - type: kube-api-egress
     name: allow-egress-kube-api
-    namespaces:
-      - default
-      - kube-system
-    port: 443
