@@ -12,7 +12,7 @@ spec:
     targetRevision: HEAD
     directory:
       recurse: false
-      include: "{cluster-role-binding-external-access-daily-report-platform-health.yaml,cluster-role-binding-platform-health-report.yaml,cluster-role-platform-health-report.yaml,config-map-platform-health-exporter.yaml,config-map-platform-health-report.yaml,config-map-platform-health-report-scripts.yaml,cron-job-platform-health-report.yaml,deployment-platform-health-exporter.yaml,role-binding-platform-health-report.yaml,role-platform-health-report.yaml,service-account-platform-health-report.yaml,service-platform-health-exporter.yaml}"
+      include: "{cluster-role-binding-platform-health-report.yaml,cluster-role-platform-health-report.yaml,config-map-platform-health-exporter.yaml,config-map-platform-health-report.yaml,config-map-platform-health-report-scripts.yaml,cron-job-platform-health-report.yaml,deployment-platform-health-exporter.yaml,role-binding-platform-health-report.yaml,role-platform-health-report.yaml,service-account-platform-health-report.yaml,service-platform-health-exporter.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring
