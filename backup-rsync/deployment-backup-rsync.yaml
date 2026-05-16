@@ -31,9 +31,7 @@ spec:
           image: quay.io/panubo/sshd:1.10.0
           imagePullPolicy: IfNotPresent
           env:
-            - name: SSH_USERS
-              value: backup:0:0
-            - name: RSYNC_MODE
+            - name: SSH_ENABLE_ROOT
               value: "true"
           ports:
             - containerPort: 22
@@ -48,8 +46,8 @@ spec:
             - name: storage
               mountPath: /storage
             - name: authorized-keys
-              mountPath: /etc/authorized_keys/backup
-              subPath: backup
+              mountPath: /root/.ssh/authorized_keys
+              subPath: authorized_keys
               readOnly: true
             - name: host-keys
               mountPath: /etc/ssh/keys
