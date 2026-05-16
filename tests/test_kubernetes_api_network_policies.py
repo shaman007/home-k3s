@@ -22,6 +22,19 @@ def has_port(document: str, port: int) -> bool:
 
 
 class KubernetesApiNetworkPolicyTest(unittest.TestCase):
+    def test_redis_operator_has_cilium_kube_apiserver_policy(self):
+        source = (
+            ROOT
+            / "ot-operators"
+            / "cilium-network-policy-redis-operator-allow-kube-apiserver.yaml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("kind: CiliumNetworkPolicy", source)
+        self.assertIn("name: redis-operator", source)
+        self.assertIn("toEntities:", source)
+        self.assertIn("- kube-apiserver", source)
+        self.assertIn("serviceName: kubernetes", source)
+
     def test_kubernetes_api_policies_include_current_control_plane_endpoint(self):
         offenders = []
 
