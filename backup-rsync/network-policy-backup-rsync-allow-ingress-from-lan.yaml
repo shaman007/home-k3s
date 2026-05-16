@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backup-rsync-allow-ingress-from-lan
+  namespace: backup-rsync
+spec:
+  podSelector:
+    matchLabels:
+      app: backup-rsync
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 192.168.1.0/24
+      ports:
+        - protocol: TCP
+          port: 22

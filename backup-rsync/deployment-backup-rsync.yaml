@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backup-rsync
+  namespace: backup-rsync
+  labels:
+    app: backup-rsync
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: backup-rsync
+  template:
+    metadata:
+      labels:
+        app: backup-rsync
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - talos-d4h-k5m
+      containers:
+        - name: sshd
+          image: quay.io/panubo/sshd:1.10.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SSH_USERS
+              value: backup:0:0
+            - name: RSYNC_MODE
+              value: "true"
+          ports:
+            - containerPort: 22
+              name: ssh
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: storage
+              mountPath: /storage
+            - name: authorized-keys
+              mountPath: /etc/authorized_keys/backup
+              subPath: backup
+              readOnly: true
+            - name: host-keys
+              mountPath: /etc/ssh/keys
+      volumes:
+        - name: storage
+          hostPath:
+            path: /var/mnt/storage
+            type: Directory
+        - name: authorized-keys
+          configMap:
+            name: backup-rsync-authorized-keys
+            defaultMode: 0444
+        - name: host-keys
+          persistentVolumeClaim:
+            claimName: backup-rsync-host-keys

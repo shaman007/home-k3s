@@ -3,6 +3,20 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: namespace-quota
+  namespace: backup-rsync
+spec:
+  hard:
+    pods: "2"
+    services: "2"
+    secrets: "5"
+    configmaps: "5"
+    persistentvolumeclaims: "1"
+    requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
   namespace: argocd
 spec:
   hard:

@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backup-rsync
+  namespace: backup-rsync
+  labels:
+    app: backup-rsync
+spec:
+  type: LoadBalancer
+  loadBalancerClass: metallb-l2
+  loadBalancerIP: 192.168.1.211
+  externalTrafficPolicy: Local
+  selector:
+    app: backup-rsync
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      protocol: TCP
