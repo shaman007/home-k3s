@@ -34,6 +34,9 @@ WEB_PORTS = [
     {"protocol": "TCP", "port": 443},
 ]
 
+KUBERNETES_API_CLUSTER_IP = "10.43.0.1/32"
+KUBERNETES_API_CONTROL_PLANE = "192.168.1.100/32"
+
 
 class NoAliasDumper(yaml.SafeDumper):
     def ignore_aliases(self, data: Any) -> bool:
@@ -130,6 +133,21 @@ def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str,
         policy["spec"]["egress"] = [
             {"to": [ip_block_peer(cidr)], "ports": copy.deepcopy(WEB_PORTS)}
             for cidr in cidrs
+        ]
+        return policy
+
+    if policy_type == "kube-api-egress":
+        name = policy_spec.get("name", "allow-egress-kube-api")
+        policy = base_policy(spec, name, ["Egress"])
+        policy["spec"]["egress"] = [
+            {
+                "to": [ip_block_peer(KUBERNETES_API_CLUSTER_IP)],
+                "ports": [{"protocol": "TCP", "port": 443}],
+            },
+            {
+                "to": [ip_block_peer(KUBERNETES_API_CONTROL_PLANE)],
+                "ports": [{"protocol": "TCP", "port": 6443}],
+            },
         ]
         return policy
 
