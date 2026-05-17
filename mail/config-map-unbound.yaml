@@ -21,8 +21,7 @@ data:
       do-daemonize: no
       username: "_unbound"
       directory: "/opt/unbound/etc/unbound"
-      module-config: "validator iterator"
-      auto-trust-anchor-file: "/opt/unbound/etc/unbound/var/root.key"
+      module-config: "iterator"
 
       access-control: 127.0.0.0/8 allow
       access-control: 10.42.0.0/16 allow

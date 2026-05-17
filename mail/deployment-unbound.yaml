@@ -25,6 +25,12 @@ spec:
         - name: unbound
           image: mvance/unbound:1.22.0
           imagePullPolicy: IfNotPresent
+          command:
+            - /opt/unbound/sbin/unbound
+          args:
+            - -d
+            - -c
+            - /opt/unbound/etc/unbound/unbound.conf
           ports:
             - name: dns-udp
               containerPort: 53
@@ -58,8 +64,6 @@ spec:
                 - ALL
               add:
                 - CHOWN
-                - FOWNER
-                - MKNOD
                 - NET_BIND_SERVICE
           volumeMounts:
             - name: unbound-config
