@@ -175,6 +175,9 @@ data:
     # Keep Rspamd 4 content-derived URLs explicit so PDFs and other computed
     # parts participate in SURBL, phishing, and fuzzy-driven reputation checks.
     include_content_urls = true;
+    dns {
+      nameserver = ["10.43.0.10"];
+    }
   rspamd: |
     .include "$CONFDIR/common.conf"
     options {
