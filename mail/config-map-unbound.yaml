@@ -19,6 +19,7 @@ data:
       do-udp: yes
       do-tcp: yes
       do-daemonize: no
+      username: ""
       directory: "/opt/unbound/etc/unbound"
       chroot: ""
       pidfile: ""
