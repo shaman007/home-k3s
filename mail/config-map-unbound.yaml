@@ -54,3 +54,10 @@ data:
     forward-zone:
       name: "svc.cluster.local."
       forward-addr: 10.43.0.10
+
+    forward-zone:
+      name: "."
+      forward-addr: 1.1.1.1
+      forward-addr: 1.0.0.1
+      forward-addr: 9.9.9.9
+      forward-addr: 149.112.112.112

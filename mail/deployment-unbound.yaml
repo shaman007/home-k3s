@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: unbound
   namespace: mail
+  annotations:
+    configmap.reloader.stakater.com/auto: "true"
   labels:
     app: unbound
     tier: mail
