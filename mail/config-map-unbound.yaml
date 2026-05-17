@@ -19,9 +19,12 @@ data:
       do-udp: yes
       do-tcp: yes
       do-daemonize: no
-      username: "_unbound"
       directory: "/opt/unbound/etc/unbound"
+      chroot: ""
+      pidfile: ""
       module-config: "iterator"
+      use-syslog: no
+      logfile: ""
 
       access-control: 127.0.0.0/8 allow
       access-control: 10.42.0.0/16 allow
