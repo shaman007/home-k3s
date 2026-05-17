@@ -26,4 +26,5 @@ spec:
         - /data/report.html
         - /data/metrics.prom
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
