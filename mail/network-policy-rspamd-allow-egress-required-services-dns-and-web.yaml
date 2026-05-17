@@ -21,6 +21,17 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # Dedicated recursive resolver for Rspamd DNSBL/RBL lookups
+    - to:
+        - podSelector:
+            matchLabels:
+              app: unbound
+              tier: mail
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
     # Redis in mail namespace (history/bayes/greylist)
     - to:
         - namespaceSelector:

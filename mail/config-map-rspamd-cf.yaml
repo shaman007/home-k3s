@@ -176,7 +176,7 @@ data:
     # parts participate in SURBL, phishing, and fuzzy-driven reputation checks.
     include_content_urls = true;
     dns {
-      nameserver = ["10.43.0.10"];
+      nameserver = ["10.43.0.53"];
     }
   rspamd: |
     .include "$CONFDIR/common.conf"

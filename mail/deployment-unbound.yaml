@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unbound
+  namespace: mail
+  labels:
+    app: unbound
+    tier: mail
+    app.kubernetes.io/name: unbound
+    app.kubernetes.io/instance: mail-resolver
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unbound
+      tier: mail
+  template:
+    metadata:
+      labels:
+        app: unbound
+        tier: mail
+    spec:
+      containers:
+        - name: unbound
+          image: mvance/unbound:1.22.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 53
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 53
+            periodSeconds: 30
+            timeoutSeconds: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 96Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          volumeMounts:
+            - name: unbound-config
+              mountPath: /opt/unbound/etc/unbound/unbound.conf
+              subPath: unbound.conf
+              readOnly: true
+      volumes:
+        - name: unbound-config
+          configMap:
+            name: unbound
+            items:
+              - key: unbound.conf
+                path: unbound.conf

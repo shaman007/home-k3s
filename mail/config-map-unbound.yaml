@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unbound
+  namespace: mail
+  labels:
+    app: unbound
+    tier: mail
+    app.kubernetes.io/name: unbound
+    app.kubernetes.io/instance: mail-resolver
+    app.kubernetes.io/managed-by: argoCD
+data:
+  unbound.conf: |
+    server:
+      interface: 0.0.0.0
+      port: 53
+      do-ip4: yes
+      do-ip6: no
+      do-udp: yes
+      do-tcp: yes
+      do-daemonize: no
+      username: "_unbound"
+      directory: "/opt/unbound/etc/unbound"
+      module-config: "validator iterator"
+      auto-trust-anchor-file: "/opt/unbound/etc/unbound/var/root.key"
+
+      access-control: 127.0.0.0/8 allow
+      access-control: 10.42.0.0/16 allow
+      access-control: 10.43.0.0/16 allow
+
+      verbosity: 1
+      hide-identity: yes
+      hide-version: yes
+      harden-glue: yes
+      harden-dnssec-stripped: yes
+      harden-below-nxdomain: yes
+      qname-minimisation: yes
+      prefetch: yes
+      rrset-roundrobin: yes
+      minimal-responses: yes
+
+      cache-min-ttl: 60
+      cache-max-ttl: 86400
+      msg-cache-size: 32m
+      rrset-cache-size: 64m
+
+    forward-zone:
+      name: "cluster.local."
+      forward-addr: 10.43.0.10
+
+    forward-zone:
+      name: "svc.cluster.local."
+      forward-addr: 10.43.0.10
