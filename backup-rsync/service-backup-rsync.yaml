@@ -9,7 +9,7 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerClass: metallb-l2
-  loadBalancerIP: 192.168.1.211
+  loadBalancerIP: 192.168.1.213
   externalTrafficPolicy: Local
   selector:
     app: backup-rsync
