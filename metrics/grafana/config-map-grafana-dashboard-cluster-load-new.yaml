@@ -288,8 +288,8 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "100 * (node_filesystem_size_bytes{job=\"node-exporter\",mountpoint=\"/\",fstype!=\"rootfs\",kubernetes_node=~\"$node\"} - node_filesystem_free_bytes{job=\"node-exporter\",mountpoint=\"/\",fstype!=\"rootfs\",kubernetes_node=~\"$node\"}) / node_filesystem_size_bytes{job=\"node-exporter\",mountpoint=\"/\",fstype!=\"rootfs\",kubernetes_node=~\"$node\"}",
-              "legendFormat": "{{kubernetes_node}}",
+              "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"node-exporter\",fstype!~\"rootfs|tmpfs\",device!~\"rootfs|none\",mountpoint=~\"/var|/var/mnt/(longhorn|storage)\",kubernetes_node=~\"$node\"} / node_filesystem_size_bytes{job=\"node-exporter\",fstype!~\"rootfs|tmpfs\",device!~\"rootfs|none\",mountpoint=~\"/var|/var/mnt/(longhorn|storage)\",kubernetes_node=~\"$node\"})",
+              "legendFormat": "{{kubernetes_node}} {{mountpoint}}",
               "range": true,
               "refId": "A"
             }
