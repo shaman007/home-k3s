@@ -1,39 +1,19 @@
-## Install chart:
-
-add
-
-```
-- name: common
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 2.19.3
-```
-to che Chart.yaml and .lock
-
-```
-git clone https://github.com/mastodon/chart.git
-cd Chart
-helm dependency build
-helm install --namespace mastodon mastodon ./ -f ../mastodon-values.yaml
-```
-
 ## ArgoCD
 
-The tracked Mastodon namespace manifests can be managed by ArgoCD with:
+Mastodon is split across two ArgoCD Applications:
 
+* `argocd/application-mastodon.yaml`
 * `argocd/application-mastodon-custom.yaml`
 
-The main Helm release cannot be cleanly moved to ArgoCD from this repository yet,
-because the current chart lives under `mastodon/chart` and that path is ignored by
-Git in `mastodon/.gitignore`.
+The main release uses a vendored copy of the official chart in
+`mastodon/helm-chart` with values from `mastodon/mastodon-values.yaml`.
 
-That leaves two realistic paths:
+The custom app keeps local infrastructure that is not owned by the upstream
+chart: ExternalSecrets, dedicated Postgres, ingress, network policies, and the
+bookmarked media sync job.
 
-* start tracking the current vendored chart in Git and let ArgoCD render it from the repo
-* migrate to the newer official chart repo at `https://mastodon.github.io/helm-charts`
+The vendored chart includes the OIDC existingSecret patch from upstream PR #34.
 
-For now I recommend not switching charts yet. The newer official chart is promising,
-but its published Mastodon release is still behind the `v4.5.6` app version running
-here and requires a fuller values migration.
 # TODO
 
 * Metrics + Dashboard

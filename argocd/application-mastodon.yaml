@@ -1,0 +1,26 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mastodon
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: "https://github.com/shaman007/home-k3s.git"
+      path: mastodon/helm-chart
+      targetRevision: HEAD
+      helm:
+        releaseName: mastodon
+        valueFiles:
+          - $values/mastodon/mastodon-values.yaml
+    - repoURL: "https://github.com/shaman007/home-k3s.git"
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: mastodon
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
