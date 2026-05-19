@@ -122,7 +122,7 @@ spec:
             - name: RAILS_MIN_THREADS
               value: "1"
             - name: RAILS_MAX_THREADS
-              value: "1"
+              value: "10"
             - name: BACKGROUND_PROCESSING_CONCURRENCY
               value: "10"
             - name: APPLICATION_HOST
