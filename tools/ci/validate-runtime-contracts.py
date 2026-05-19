@@ -56,7 +56,7 @@ def tracked_yaml_files(root: Path) -> list[Path]:
     for entry in result.stdout.decode("utf-8").split("\0"):
         if not entry:
             continue
-        if entry.startswith(("DEPRECATED/", "mastodon/chart/")):
+        if entry.startswith(("DEPRECATED/", "mastodon/chart/", "mastodon/helm-chart/")):
             continue
         path = root / entry
         if not path.exists():
