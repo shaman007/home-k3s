@@ -18,6 +18,7 @@ repos:
       - id: check-yaml
         args:
           - --allow-multiple-documents
+        exclude: ^mastodon/helm-chart/templates/.*\.ya?ml$
       - id: check-added-large-files
       - id: detect-private-key
   - repo: https://github.com/gitleaks/gitleaks
