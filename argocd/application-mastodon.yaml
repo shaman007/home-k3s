@@ -24,3 +24,4 @@ spec:
     automated: {}
     syncOptions:
       - CreateNamespace=true
+      - Replace=true
