@@ -13,7 +13,6 @@ spec:
     directory:
       recurse: false
       include: network-policy-*.yaml
-      exclude: network-policy-*mastodon*.yaml
   destination:
     server: "https://kubernetes.default.svc"
     namespace: elastic-stack
