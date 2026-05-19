@@ -162,9 +162,6 @@ postgresql:
 redis:
   hostname: redis.mastodon.svc.cluster.local
   port: 6379
-  existingSecret: mastodon-redis
-  existingSecretKeys:
-    password: redis-password
 
 elasticsearch:
   enabled: false
