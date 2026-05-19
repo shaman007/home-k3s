@@ -88,19 +88,21 @@ OIDC secrets.
 Redis secrets.
 */}}
 {{- define "mastodon.secrets.redis" -}}
+{{- if or .Values.redis.existingSecret .Values.redis.password }}
 - name: "REDIS_PASSWORD"
   valueFrom:
     secretKeyRef:
       name: {{ include "mastodon.secrets.redisName" . }}
       key: {{ .Values.redis.existingSecretKeys.password }}
-{{- if .Values.redis.sidekiq.enabled }}
+{{- end }}
+{{- if and .Values.redis.sidekiq.enabled (or .Values.redis.sidekiq.existingSecret .Values.redis.sidekiq.password) }}
 - name: "SIDEKIQ_REDIS_PASSWORD"
   valueFrom:
     secretKeyRef:
       name: {{ include "mastodon.secrets.redisSidekiqName" . }}
       key: {{ .Values.redis.sidekiq.existingSecretKeys.password }}
 {{- end }}
-{{- if .Values.redis.cache.enabled }}
+{{- if and .Values.redis.cache.enabled (or .Values.redis.cache.existingSecret .Values.redis.cache.password) }}
 - name: "CACHE_REDIS_PASSWORD"
   valueFrom:
     secretKeyRef:
