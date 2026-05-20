@@ -34,7 +34,7 @@ spec:
                       - talos-d4h-k5m
       containers:
         - name: plex
-          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.1
+          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.2
           imagePullPolicy: IfNotPresent
           env:
             # valid for 4 minutes
