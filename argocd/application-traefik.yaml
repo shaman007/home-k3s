@@ -105,6 +105,7 @@ spec:
           enabled: true
           path: /data
           size: 1Gi
+        priorityClassName: homelab-critical
         podSecurityContext:
           fsGroup: 1000
           fsGroupChangePolicy: OnRootMismatch

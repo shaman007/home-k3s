@@ -19,6 +19,7 @@ spec:
       labels:
         app: convertx
     spec:
+      priorityClassName: homelab-best-effort
       containers:
         - name: convertx
           image: harbor.andreybondarenko.com/github/c4illin/convertx:v0.17.0

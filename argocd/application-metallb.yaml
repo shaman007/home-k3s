@@ -15,6 +15,10 @@ spec:
     helm:
       values: |
         loadBalancerClass: metallb-l2
+        controller:
+          priorityClassName: homelab-critical
+        speaker:
+          priorityClassName: homelab-critical
   destination:
     server: "https://kubernetes.default.svc"
     namespace: metallb-system

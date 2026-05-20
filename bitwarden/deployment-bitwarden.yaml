@@ -26,6 +26,7 @@ spec:
         service: bitwarden
         db-client: bitwarden-postgres
     spec:
+      priorityClassName: homelab-essential
       containers:
         - env:
             - name: BW_DOMAIN

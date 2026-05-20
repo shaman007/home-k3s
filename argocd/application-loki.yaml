@@ -23,6 +23,8 @@ spec:
           value: 'true'
       values: |
         deploymentMode: SingleBinary
+        global:
+          priorityClassName: homelab-essential
         chunksCache:
           image:
             registry: harbor.andreybondarenko.com/dockerhub
@@ -106,6 +108,7 @@ spec:
                   period: 24h
 
         singleBinary:
+          priorityClassName: homelab-essential
           replicas: 1
           extraEnv:
             # Prevent fallback to EC2 IMDS when S3 credentials are missing.

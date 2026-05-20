@@ -21,6 +21,7 @@ spec:
       labels:
         app: plex
     spec:
+      priorityClassName: homelab-standard
       runtimeClassName: nvidia
       affinity:
         # Prevent scheduling on a specific node

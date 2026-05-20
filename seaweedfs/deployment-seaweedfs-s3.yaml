@@ -21,6 +21,7 @@ spec:
       labels:
         app: seaweedfs-s3
     spec:
+      priorityClassName: homelab-essential
       enableServiceLinks: false
       securityContext:
         runAsUser: 0

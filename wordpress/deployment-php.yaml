@@ -26,6 +26,7 @@ spec:
         app: wordpress
         component: web
     spec:
+      priorityClassName: homelab-essential
       securityContext:
         runAsUser: 33
         runAsGroup: 33

@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/instance: external-access-analytics-exporter
         app.kubernetes.io/part-of: monitoring
     spec:
+      priorityClassName: homelab-essential
       containers:
         - name: nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.0

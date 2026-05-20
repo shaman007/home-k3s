@@ -27,6 +27,7 @@ spec:
         app: rspamd
         tier: mail
     spec:
+      priorityClassName: homelab-standard
       volumes:
         - name: rspamd-cf
           configMap:

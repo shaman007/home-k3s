@@ -13,6 +13,7 @@ spec:
     helm:
       releaseName: eck-operator
       values: |
+        priorityClassName: homelab-critical
         resources:
           requests:
             cpu: 25m

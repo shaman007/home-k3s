@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/instance: wordpress-analytics-exporter
         app.kubernetes.io/part-of: wordpress
     spec:
+      priorityClassName: homelab-essential
       containers:
         - name: nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.0

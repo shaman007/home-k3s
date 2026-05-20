@@ -18,6 +18,7 @@ spec:
       labels:
         app: year
     spec:
+      priorityClassName: homelab-best-effort
       automountServiceAccountToken: false
       containers:
         - name: year

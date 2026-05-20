@@ -21,6 +21,7 @@ spec:
       labels:
         app: thanos-compactor
     spec:
+      priorityClassName: homelab-standard
       initContainers:
         - name: volume-mount-hack
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37

@@ -25,6 +25,7 @@ spec:
         app.kubernetes.io/name: immich-machine-learning
         app.kubernetes.io/part-of: immich
     spec:
+      priorityClassName: homelab-essential
       runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:

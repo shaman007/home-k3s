@@ -25,6 +25,7 @@ spec:
         app: minecraft
         tier: backend
     spec:
+      priorityClassName: homelab-best-effort
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000

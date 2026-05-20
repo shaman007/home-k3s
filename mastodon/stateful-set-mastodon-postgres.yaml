@@ -22,6 +22,7 @@ spec:
       labels:
         app: mastodon-postgres
     spec:
+      priorityClassName: homelab-standard
       securityContext:
         fsGroup: 999
         runAsUser: 999

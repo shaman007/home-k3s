@@ -24,6 +24,7 @@ spec:
         app: mysql-wordpress
         tier: mysql
     spec:
+      priorityClassName: homelab-essential
       containers:
         - name: mysql
           image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.0

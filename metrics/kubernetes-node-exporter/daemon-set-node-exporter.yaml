@@ -20,6 +20,7 @@ spec:
         app.kubernetes.io/component: exporter
         app.kubernetes.io/name: node-exporter
     spec:
+      priorityClassName: homelab-essential
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists

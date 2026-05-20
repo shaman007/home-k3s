@@ -17,6 +17,7 @@ spec:
       labels:
         app: backup-rsync
     spec:
+      priorityClassName: homelab-essential
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

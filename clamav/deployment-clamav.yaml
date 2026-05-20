@@ -24,6 +24,7 @@ spec:
       labels:
         app: clamav
     spec:
+      priorityClassName: homelab-standard
       securityContext:
         runAsUser: 101
         runAsGroup: 103
@@ -113,6 +114,7 @@ spec:
             - "tcp://127.0.0.1:3200"
             - "--clamav.timeout=60s"
             - "--clamav.retries=1"
+            - "--log.level=fatal"
           volumeMounts:
             - mountPath: /run/clamav
               name: run

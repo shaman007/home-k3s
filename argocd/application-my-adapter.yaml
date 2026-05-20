@@ -13,6 +13,7 @@ spec:
     helm:
       releaseName: my-adapter
       values: |
+        priorityClassName: homelab-best-effort
         prometheus:
           url: http://thanos-querier.monitoring.svc.cluster.local
           port: 9090

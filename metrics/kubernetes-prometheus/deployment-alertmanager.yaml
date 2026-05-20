@@ -21,6 +21,7 @@ spec:
       labels:
         app: alertmanager
     spec:
+      priorityClassName: homelab-essential
       automountServiceAccountToken: false
       containers:
         - name: alertmanager

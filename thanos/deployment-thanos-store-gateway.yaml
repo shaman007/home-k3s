@@ -22,6 +22,7 @@ spec:
         app: thanos-store-gateway
         thanos-store-api: "true"
     spec:
+      priorityClassName: homelab-standard
       initContainers:
         - name: volume-mount-hack
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37

@@ -19,6 +19,7 @@ spec:
       labels:
         app: stirling-pdf
     spec:
+      priorityClassName: homelab-best-effort
       containers:
         - name: stirling-pdf
           image: harbor.andreybondarenko.com/dockerhub/stirlingtools/stirling-pdf:2.11.0-fat

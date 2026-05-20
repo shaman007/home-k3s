@@ -19,6 +19,7 @@ spec:
       labels:
         app: dawarich
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: dawarich
           env:

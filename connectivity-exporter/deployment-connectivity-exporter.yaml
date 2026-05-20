@@ -20,6 +20,7 @@ spec:
       labels:
         app: connectivity-exporter
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: exporter
           image: harbor.andreybondarenko.com/library/connectivity-exporter-local:latest

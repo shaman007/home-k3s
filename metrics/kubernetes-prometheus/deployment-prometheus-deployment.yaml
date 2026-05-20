@@ -23,6 +23,7 @@ spec:
       labels:
         app: prometheus-server
     spec:
+      priorityClassName: homelab-essential
       serviceAccountName: prometheus-server
       automountServiceAccountToken: true
       containers:

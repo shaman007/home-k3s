@@ -19,6 +19,7 @@ spec:
       labels:
         app: hister
     spec:
+      priorityClassName: homelab-best-effort
       enableServiceLinks: false
       securityContext:
         fsGroup: 65532

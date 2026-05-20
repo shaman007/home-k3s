@@ -17,6 +17,7 @@ spec:
       labels:
         app: ca-report-ui
     spec:
+      priorityClassName: homelab-best-effort
       serviceAccountName: ca-scanner
       containers:
         - name: ui

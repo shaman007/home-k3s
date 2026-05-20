@@ -26,6 +26,7 @@ spec:
         app: nextcloud
         component: web
     spec:
+      priorityClassName: homelab-standard
       securityContext:
         runAsUser: 33
         runAsGroup: 33

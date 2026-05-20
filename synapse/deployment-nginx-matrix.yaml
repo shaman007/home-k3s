@@ -24,6 +24,7 @@ spec:
         app: matrix
         tier: matrix
     spec:
+      priorityClassName: homelab-standard
       volumes:
         - name: config-matrix
           configMap:

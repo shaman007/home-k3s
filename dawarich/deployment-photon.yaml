@@ -20,6 +20,7 @@ spec:
       labels:
         app: photon
     spec:
+      priorityClassName: homelab-standard
       terminationGracePeriodSeconds: 120
       containers:
         - name: photon

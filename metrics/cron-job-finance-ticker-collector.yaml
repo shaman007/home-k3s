@@ -27,6 +27,7 @@ spec:
             app.kubernetes.io/instance: finance-ticker-collector
             app.kubernetes.io/part-of: monitoring
         spec:
+          priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: finance-ticker-collector
           restartPolicy: Never

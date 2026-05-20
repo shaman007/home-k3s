@@ -27,6 +27,7 @@ spec:
         app: postfix
         tier: mail
     spec:
+      priorityClassName: homelab-standard
       volumes:
         - name: mail-certs
           secret:

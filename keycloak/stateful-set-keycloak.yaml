@@ -25,6 +25,7 @@ spec:
       labels:
         app: keycloak
     spec:
+      priorityClassName: homelab-essential
       initContainers:
         - name: wait-for-postgres
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.37

@@ -25,6 +25,7 @@ spec:
             app.kubernetes.io/instance: bookmarked-media-sync
             app.kubernetes.io/part-of: mastodon
         spec:
+          priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: bookmarked-media-sync
           restartPolicy: Never

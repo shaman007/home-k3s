@@ -21,6 +21,7 @@ spec:
       labels:
         app: thanos-querier
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: thanos
           image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0

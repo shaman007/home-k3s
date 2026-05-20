@@ -14,6 +14,7 @@ spec:
     spec:
       template:
         spec:
+          priorityClassName: homelab-batch
           serviceAccountName: sync-le-tls
           restartPolicy: OnFailure
           containers:

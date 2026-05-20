@@ -24,6 +24,7 @@ spec:
             app.kubernetes.io/name: keycloak-oidc-token-renewer
             app.kubernetes.io/instance: keycloak
         spec:
+          priorityClassName: homelab-batch
           enableServiceLinks: false
           restartPolicy: Never
           securityContext:

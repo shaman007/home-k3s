@@ -20,6 +20,7 @@ spec:
         app.kubernetes.io/name: headlamp
         app.kubernetes.io/instance: headlamp
     spec:
+      priorityClassName: homelab-standard
       enableServiceLinks: false
       serviceAccountName: headlamp
       containers:

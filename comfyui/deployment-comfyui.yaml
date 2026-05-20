@@ -22,6 +22,7 @@ spec:
         app.kubernetes.io/name: comfyui
         app.kubernetes.io/instance: comfyui
     spec:
+      priorityClassName: homelab-best-effort
       runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:

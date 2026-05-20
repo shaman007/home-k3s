@@ -17,6 +17,7 @@ spec:
       labels:
         app: redis-exporter
     spec:
+      priorityClassName: homelab-essential
       securityContext:
         runAsNonRoot: true
         seccompProfile:

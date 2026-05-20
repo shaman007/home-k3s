@@ -27,6 +27,7 @@ spec:
             app.kubernetes.io/instance: external-access-daily-report
             app.kubernetes.io/part-of: monitoring
         spec:
+          priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: external-access-daily-report
           restartPolicy: Never

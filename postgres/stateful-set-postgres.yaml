@@ -20,6 +20,7 @@ spec:
       labels:
         app: postgres
     spec:
+      priorityClassName: homelab-standard
       securityContext:
         fsGroup: 999
         runAsUser: 999

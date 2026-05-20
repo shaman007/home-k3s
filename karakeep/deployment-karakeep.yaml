@@ -24,6 +24,7 @@ spec:
       labels:
         app: karakeep
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: web
           image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.32.0

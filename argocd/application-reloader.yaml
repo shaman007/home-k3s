@@ -16,6 +16,7 @@ spec:
           autoReloadAll: false
           reloadStrategy: annotations
           deployment:
+            priorityClassName: homelab-critical
             resources:
               requests:
                 cpu: 10m

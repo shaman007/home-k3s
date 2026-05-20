@@ -24,6 +24,7 @@ spec:
         app.kubernetes.io/name: immich-valkey
         app.kubernetes.io/part-of: immich
     spec:
+      priorityClassName: homelab-essential
       enableServiceLinks: false
       containers:
         - name: valkey

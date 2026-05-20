@@ -13,6 +13,7 @@ spec:
     helm:
       values: |
         core:
+          priorityClassName: homelab-essential
           resources:
             requests:
               memory: 213Mi
@@ -21,6 +22,7 @@ spec:
               memory: 213Mi
         database:
           internal:
+            priorityClassName: homelab-essential
             resources:
               requests:
                 memory: 1250Mi
@@ -28,12 +30,14 @@ spec:
               limits:
                 memory: 1250Mi
         exporter:
+          priorityClassName: homelab-essential
           replicas: 1
         expose:
           type: clusterIP
           tls:
             enabled: false
         jobservice:
+          priorityClassName: homelab-essential
           initContainers:
             - name: wait-for-core
               image: busybox:1.37
@@ -53,6 +57,7 @@ spec:
             limits:
               memory: 100Mi
         nginx:
+          priorityClassName: homelab-essential
           resources:
             requests:
               memory: 100Mi
@@ -60,6 +65,7 @@ spec:
             limits:
               memory: 100Mi
         portal:
+          priorityClassName: homelab-essential
           resources:
             requests:
               memory: 100Mi
@@ -68,6 +74,7 @@ spec:
               memory: 100Mi
         redis:
           internal:
+            priorityClassName: homelab-essential
             resources:
               requests:
                 memory: 113Mi
@@ -75,6 +82,7 @@ spec:
               limits:
                 memory: 113Mi
         registry:
+          priorityClassName: homelab-essential
           registry:
             resources:
               requests:
@@ -90,6 +98,7 @@ spec:
               limits:
                 memory: 100Mi
         trivy:
+          priorityClassName: homelab-essential
           resources:
             requests:
               memory: 1Gi

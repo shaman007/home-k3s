@@ -22,6 +22,7 @@ spec:
       labels:
         app: grafana
     spec:
+      priorityClassName: homelab-essential
       securityContext:
         fsGroup: 472
         supplementalGroups:

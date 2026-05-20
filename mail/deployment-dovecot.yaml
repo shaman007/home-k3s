@@ -27,6 +27,7 @@ spec:
         app: dovecot
         tier: mail
     spec:
+      priorityClassName: homelab-standard
       volumes:
         - name: mail-certs
           secret:

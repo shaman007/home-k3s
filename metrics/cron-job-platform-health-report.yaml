@@ -27,6 +27,7 @@ spec:
             app.kubernetes.io/instance: platform-health-report
             app.kubernetes.io/part-of: monitoring
         spec:
+          priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: platform-health-report
           restartPolicy: Never

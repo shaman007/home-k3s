@@ -23,6 +23,7 @@ spec:
         app: server
         tier: backend
     spec:
+      priorityClassName: homelab-standard
       containers:
         - env:
             - name: API_ENDPOINT

@@ -41,6 +41,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      priorityClassName: homelab-standard
       {{- include "mastodon.deployment.spec" . | trim | nindent 6 }}
       {{- with coalesce .Values.mastodon.streaming.podSecurityContext .Values.podSecurityContext }}
       securityContext:

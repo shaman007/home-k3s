@@ -13,6 +13,7 @@ spec:
     helm:
       releaseName: redis-operator
       values: |
+        priorityClassName: homelab-critical
         resources:
           requests:
             cpu: 50m

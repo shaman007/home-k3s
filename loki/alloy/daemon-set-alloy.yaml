@@ -20,6 +20,7 @@ spec:
       labels:
         app: alloy
     spec:
+      priorityClassName: homelab-essential
       serviceAccountName: alloy
       containers:
         - name: alloy

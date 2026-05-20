@@ -21,6 +21,7 @@ spec:
       labels:
         app: meilisearch
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: meilisearch
           image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.44.0

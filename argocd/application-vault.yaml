@@ -21,6 +21,7 @@ spec:
           value: '2'
       values: |
         server:
+          priorityClassName: homelab-critical
           affinity: |
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -55,6 +56,8 @@ spec:
                   prometheus_retention_time = "30s"
                   disable_hostname = true
                 }
+        csi:
+          priorityClassName: homelab-critical
     chart: vault
   destination:
     server: https://kubernetes.default.svc

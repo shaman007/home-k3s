@@ -25,6 +25,7 @@ spec:
         app.kubernetes.io/name: immich-server
         app.kubernetes.io/part-of: immich
     spec:
+      priorityClassName: homelab-essential
       enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: talos-d4h-k5m

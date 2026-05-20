@@ -23,6 +23,7 @@ spec:
         app: unbound
         tier: mail
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: unbound
           image: mvance/unbound:1.22.0

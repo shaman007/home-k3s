@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/name: ollama-small
         app.kubernetes.io/part-of: ollama
     spec:
+      priorityClassName: homelab-best-effort
       enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: w386

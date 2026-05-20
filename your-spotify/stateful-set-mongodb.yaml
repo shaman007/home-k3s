@@ -24,6 +24,7 @@ spec:
         app: mongodb
         selector: mongodb
     spec:
+      priorityClassName: homelab-standard
       containers:
         - name: mongodb
           image: harbor.andreybondarenko.com/dockerhub/mongo:7

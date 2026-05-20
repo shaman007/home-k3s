@@ -26,6 +26,13 @@ spec:
             jobEnabled: false
           defaultSettings:
             createDefaultDiskLabeledNodes: true
+            priorityClass: homelab-critical
+          longhornManager:
+            priorityClass: homelab-critical
+          longhornDriver:
+            priorityClass: homelab-critical
+          longhornUI:
+            priorityClass: homelab-critical
           persistence:
             defaultClassReplicaCount: 1
             defaultDataLocality: best-effort

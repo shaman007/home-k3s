@@ -53,6 +53,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      priorityClassName: homelab-batch
       {{- include "mastodon.deployment.spec" $context | nindent 6 }}
       {{- with coalesce $context.Values.mastodon.sidekiq.podSecurityContext $context.Values.podSecurityContext }}
       securityContext:

@@ -31,6 +31,7 @@ spec:
       labels:
         app.kubernetes.io/name: snapshot-controller
     spec:
+      priorityClassName: homelab-essential
       serviceAccountName: snapshot-controller
       containers:
         - name: snapshot-controller

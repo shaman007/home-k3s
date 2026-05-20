@@ -27,6 +27,7 @@ spec:
             app.kubernetes.io/instance: logs-check
             app.kubernetes.io/part-of: monitoring
         spec:
+          priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: logs-check
           restartPolicy: Never

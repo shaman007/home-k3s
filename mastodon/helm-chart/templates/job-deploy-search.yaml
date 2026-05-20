@@ -19,6 +19,7 @@ spec:
       annotations:
         {{- include "mastodon.userJobAnnotations" . | trim | nindent 8 }}
     spec:
+      priorityClassName: homelab-batch
       {{- include "mastodon.deployment.spec" . | trim | nindent 6 }}
       {{- with .Values.podSecurityContext }}
       securityContext:

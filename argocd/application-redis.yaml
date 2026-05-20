@@ -12,6 +12,7 @@ spec:
     chart: redis
     helm:
       values: |
+        priorityClassName: homelab-essential
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000

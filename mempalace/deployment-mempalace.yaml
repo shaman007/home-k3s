@@ -20,6 +20,7 @@ spec:
       labels:
         app: mempalace
     spec:
+      priorityClassName: homelab-standard
       enableServiceLinks: false
       securityContext:
         fsGroup: 65532
