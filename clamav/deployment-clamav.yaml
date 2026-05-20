@@ -110,9 +110,9 @@ spec:
               protocol: TCP
           args:
             - "--clamav.address"
-            - "unix:///run/clamav/clamd.sock"
+            - "tcp://127.0.0.1:3200"
             - "--clamav.timeout=60s"
-            - "--clamav.retries=0"
+            - "--clamav.retries=1"
           volumeMounts:
             - mountPath: /run/clamav
               name: run
