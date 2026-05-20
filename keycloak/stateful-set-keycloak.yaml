@@ -53,7 +53,7 @@ spec:
               memory: 32Mi
       containers:
         - name: keycloak
-          image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.6.1
+          image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.6.2
           args: ["start", "--metrics-enabled=true", "--event-metrics-user-enabled=true", "--event-metrics-user-events=login,logout,refresh_token"]
           env:
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
