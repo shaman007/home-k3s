@@ -29,7 +29,7 @@ data:
     FollowDirectorySymlinks false
     FollowFileSymlinks false
     ReadTimeout 180
-    MaxThreads 4
+    MaxThreads 8
     MaxConnectionQueueLength 15
     LogSyslog false
     LogRotate true
