@@ -78,9 +78,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 2560Mi
+              memory: 3584Mi
             limits:
-              memory: 3328Mi
+              memory: 5120Mi
       volumes:
         - name: library
           persistentVolumeClaim:

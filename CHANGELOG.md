@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-22 – Weekly Highlights
+
+- **Highlights**
+  - Split and hardened cluster reporting by separating the platform health mail, fixing kube-apiserver access for monitoring jobs and Loki, correcting the vault sealed/unsealed report, and fixing the filesystem usage dashboard.
+  - Migrated Mastodon to a new Helm chart, cleaned up unneeded Redis password handling, added missing secrets, and adjusted CI validation around the chart layout.
+  - Improved runtime stability and scheduling by introducing cluster priority classes, relaxing ClamAV and Prometheus config where needed, moving the ClamAV exporter to TCP, fixing mail DNSBL support through Unbound, and raising namespace resource limits.
+  - Updated platform components including Ollama, External Secrets, Dawarich, SeaweedFS, Meilisearch, Plex, Keycloak, Synapse, Stirling PDF, redis_exporter, and MetalLB.
+
+- **Key PR Links**
+  - [#228](https://github.com/shaman007/home-k3s/pull/228), [#230](https://github.com/shaman007/home-k3s/pull/230), [#231](https://github.com/shaman007/home-k3s/pull/231), [#232](https://github.com/shaman007/home-k3s/pull/232), [#233](https://github.com/shaman007/home-k3s/pull/233), [#234](https://github.com/shaman007/home-k3s/pull/234), [#235](https://github.com/shaman007/home-k3s/pull/235), [#236](https://github.com/shaman007/home-k3s/pull/236), [#237](https://github.com/shaman007/home-k3s/pull/237), [#238](https://github.com/shaman007/home-k3s/pull/238), [#239](https://github.com/shaman007/home-k3s/pull/239), [#240](https://github.com/shaman007/home-k3s/pull/240), [#241](https://github.com/shaman007/home-k3s/pull/241)
+
 ## 2026-05-08 – Weekly Highlights
 
 - **Highlights**
