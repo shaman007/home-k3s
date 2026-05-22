@@ -207,7 +207,7 @@ spec:
     secrets: "20"
     configmaps: "20"
     persistentvolumeclaims: "4"
-    requests.storage: 50Gi
+    requests.storage: 70Gi
 ---
 apiVersion: v1
 kind: ResourceQuota
