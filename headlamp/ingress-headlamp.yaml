@@ -13,10 +13,6 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - headlamp.w386.k8s.my.lan
-      secretName: headlamp-tls
   rules:
     - host: headlamp.w386.k8s.my.lan
       http:
