@@ -28,7 +28,7 @@ spec:
             - sh
             - -c
             - touch /data/acme.json; chmod -v 600 /data/acme.json
-            image: docker.io/library/busybox:1.37.0
+            image: docker.io/library/busybox:1.38.0
             name: volume-permissions
             volumeMounts:
             - mountPath: /data
@@ -61,7 +61,7 @@ spec:
               fi
               rm -f "$db_archive"
               test -s "$db_file"
-            image: docker.io/library/busybox:1.37.0
+            image: docker.io/library/busybox:1.38.0
             name: download-geoip-country-db
             volumeMounts:
             - mountPath: /data
