@@ -24,7 +24,7 @@ spec:
       priorityClassName: homelab-standard
       initContainers:
         - name: volume-mount-hack
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 1001:1001 /data"]
           volumeMounts:

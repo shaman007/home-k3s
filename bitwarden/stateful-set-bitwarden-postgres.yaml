@@ -29,7 +29,7 @@ spec:
         runAsGroup: 999
       initContainers:
         - name: volume-permissions
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 0
