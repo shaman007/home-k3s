@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: v4.5.9
+appVersion: v4.5.10
 description: 'Mastodon is a free, open-source social network server based on ActivityPub. '
 home: https://joinmastodon.org
 icon: https://avatars.githubusercontent.com/u/24979032
