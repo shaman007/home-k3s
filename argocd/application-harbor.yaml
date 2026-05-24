@@ -40,7 +40,7 @@ spec:
           priorityClassName: homelab-essential
           initContainers:
             - name: wait-for-core
-              image: busybox:1.37
+              image: busybox:1.38
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
