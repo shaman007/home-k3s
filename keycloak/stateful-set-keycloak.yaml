@@ -28,7 +28,7 @@ spec:
       priorityClassName: homelab-essential
       initContainers:
         - name: wait-for-postgres
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true

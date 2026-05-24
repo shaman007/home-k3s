@@ -81,7 +81,7 @@ spec:
               memory: "288Mi"
       initContainers:
         - name: fix-permissions
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 991:991 /data"]
           volumeMounts:

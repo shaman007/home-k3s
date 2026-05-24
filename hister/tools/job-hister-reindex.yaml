@@ -26,7 +26,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: fix-data-permissions
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           command: ["sh", "-c", "chown -R 65532:65532 /data"]
           securityContext:
             runAsUser: 0

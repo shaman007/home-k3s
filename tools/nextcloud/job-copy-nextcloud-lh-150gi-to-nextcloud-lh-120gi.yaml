@@ -20,7 +20,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: copy
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.37
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           command:
             - /bin/sh
             - -ec
