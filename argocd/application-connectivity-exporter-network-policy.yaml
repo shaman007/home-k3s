@@ -12,7 +12,7 @@ spec:
     targetRevision: HEAD
     directory:
       recurse: false
-      include: network-policy-*.yaml
+      include: "{network-policy-*.yaml,network-policies-generated.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: connectivity-exporter

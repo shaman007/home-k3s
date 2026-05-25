@@ -13,7 +13,7 @@ spec:
     directory:
       recurse: false
       include: "*-*.yaml"
-      exclude: network-policy-*.yaml
+      exclude: "{network-policy-*.yaml,network-policies-generated.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: connectivity-exporter
