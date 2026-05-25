@@ -19,6 +19,10 @@ spec:
           priorityClassName: homelab-critical
         speaker:
           priorityClassName: homelab-critical
+        frr-k8s:
+          prometheus:
+            serviceMonitor:
+              enabled: false
   destination:
     server: "https://kubernetes.default.svc"
     namespace: metallb-system
