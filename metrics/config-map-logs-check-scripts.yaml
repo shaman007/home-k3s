@@ -559,10 +559,19 @@ data:
 
 
     def is_false_positive(bucket, item):
-        if bucket != "real_fault_candidates":
-            return False
         line = item.get("line", "")
         lowered = line.lower()
+        if (
+            bucket == "platform_issue_candidates"
+            and item.get("namespace") == "clamav"
+            and item.get("container") == "exporter"
+            and "failed to read response" in lowered
+            and "127.0.0.1:3200" in lowered
+            and "i/o timeout" in lowered
+        ):
+            return True
+        if bucket != "real_fault_candidates":
+            return False
         if "panic.go:" in lowered and "\"http\"" in lowered and "resp=200" in lowered:
             return True
         if "debug -- : enqueued schedule:" in lowered and "\"exception_executions\":{}" in lowered:
