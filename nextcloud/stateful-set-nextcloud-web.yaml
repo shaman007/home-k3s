@@ -134,7 +134,7 @@ spec:
               cpu: "10m"
               memory: "576Mi"
             limits:
-              memory: "1088Mi"
+              memory: "1688Mi"
         - name: nextcloud-nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.1
           imagePullPolicy: IfNotPresent
