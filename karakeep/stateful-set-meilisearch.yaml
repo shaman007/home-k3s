@@ -24,7 +24,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: meilisearch
-          image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.45.0
+          image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.45.1
           ports:
             - name: http
               containerPort: 7700
