@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-05-29 – Weekly Highlights
+
+- **Highlights**
+  - Improved workload stability by fixing OOM pressure and raising memory for Immich and Nextcloud.
+  - Fixed GitOps and networking behavior by correcting a no-op network policy application, updating the MetalLB application, and filtering rare ClamAV timeouts.
+  - Updated platform releases including Harbor, Collabora Online, Reloader, and bumped the repo version to `4.5.10`.
+  - Refreshed container and platform dependencies including SeaweedFS, Meilisearch, NVIDIA device plugin, Dawarich, Minecraft server, kube-state-metrics, nginx, busybox, and Your Spotify.
+
+- **Key PR Links**
+  - [#242](https://github.com/shaman007/home-k3s/pull/242), [#243](https://github.com/shaman007/home-k3s/pull/243), [#244](https://github.com/shaman007/home-k3s/pull/244), [#245](https://github.com/shaman007/home-k3s/pull/245), [#246](https://github.com/shaman007/home-k3s/pull/246), [#247](https://github.com/shaman007/home-k3s/pull/247), [#248](https://github.com/shaman007/home-k3s/pull/248), [#249](https://github.com/shaman007/home-k3s/pull/249), [#250](https://github.com/shaman007/home-k3s/pull/250), [#251](https://github.com/shaman007/home-k3s/pull/251), [#252](https://github.com/shaman007/home-k3s/pull/252), [#253](https://github.com/shaman007/home-k3s/pull/253), [#254](https://github.com/shaman007/home-k3s/pull/254), [#255](https://github.com/shaman007/home-k3s/pull/255), [#256](https://github.com/shaman007/home-k3s/pull/256), [#257](https://github.com/shaman007/home-k3s/pull/257), [#258](https://github.com/shaman007/home-k3s/pull/258), [#259](https://github.com/shaman007/home-k3s/pull/259)
+
 ## 2026-05-22 – Weekly Highlights
 
 - **Highlights**
