@@ -553,7 +553,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum by (namespace, pod, container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\",namespace=~\"$namespace\"}[1h]))",
+              "expr": "sum by (namespace, pod, container) (kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\",namespace=~\"$namespace\"} and on (namespace, pod, container) (time() - kube_pod_container_status_last_terminated_timestamp{namespace=~\"$namespace\"} < 3600))",
               "legendFormat": "{{namespace}}/{{pod}}/{{container}}",
               "range": true,
               "refId": "A"
