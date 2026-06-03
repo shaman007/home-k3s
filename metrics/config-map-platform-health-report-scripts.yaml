@@ -575,8 +575,7 @@ data:
         pods = kube("/api/v1/pods").get("items", [])
         pod_issues = []
         for pod in pods:
-            owners = pod.get("metadata", {}).get("ownerReferences", [])
-            if pod.get("status", {}).get("phase") == "Succeeded" and any(owner.get("kind") == "Job" for owner in owners):
+            if pod.get("status", {}).get("phase") == "Succeeded":
                 continue
             if pod.get("status", {}).get("phase") not in {"Running", "Succeeded"}:
                 pod_issues.append({"namespace": pod["metadata"]["namespace"], "item": pod["metadata"]["name"], "value": 0})
