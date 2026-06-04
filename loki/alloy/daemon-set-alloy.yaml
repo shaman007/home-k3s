@@ -24,7 +24,7 @@ spec:
       serviceAccountName: alloy
       containers:
         - name: alloy
-          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.16.1
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.16.2
           imagePullPolicy: IfNotPresent
           env:
             - name: ALLOY_NODE_NAME
