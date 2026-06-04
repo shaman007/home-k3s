@@ -19,7 +19,7 @@ spec:
   sources:
     - chart: longhorn
       repoURL: https://charts.longhorn.io/
-      targetRevision: 1.11.2
+      targetRevision: 1.12.0
       helm:
         values: |
           preUpgradeChecker:
