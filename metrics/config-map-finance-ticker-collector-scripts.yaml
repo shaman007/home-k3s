@@ -266,9 +266,12 @@ data:
                 "ETH_RPC_URLS",
                 ",".join(
                     [
-                        env("ETH_RPC_URL", "https://cloudflare-eth.com"),
                         "https://ethereum-rpc.publicnode.com",
-                        "https://rpc.ankr.com/eth",
+                        "https://ethereum.publicnode.com",
+                        "https://eth-mainnet.g.alchemy.com/public",
+                        "https://ethereum-rpc.blockreq.com/v1/rpc/public",
+                        "https://rpcfree.com/ethereum-rpc",
+                        env("ETH_RPC_URL", "https://cloudflare-eth.com"),
                     ]
                 ),
             ).split(",")
