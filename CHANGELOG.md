@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-05 – Weekly Highlights
+
+- **Highlights**
+  - Improved monitoring accuracy by fixing the OOM dashboard and excluding completed NVIDIA CUDA validator pods from the platform health report.
+  - Tuned cluster reliability by increasing memory for Dawarich Postgres, fixing Traefik labels, and rotating Ethereum RPC providers in the finance ticker collector.
+  - Refreshed platform and tooling dependencies including GPU Operator, Prometheus, Minecraft server, SeaweedFS, Dawarich, Grafana, Meilisearch, Grafana Alloy, Hister, Ollama, Longhorn, and `actions/checkout`.
+
+- **Key PR Links**
+  - [#263](https://github.com/shaman007/home-k3s/pull/263), [#264](https://github.com/shaman007/home-k3s/pull/264), [#265](https://github.com/shaman007/home-k3s/pull/265), [#266](https://github.com/shaman007/home-k3s/pull/266), [#267](https://github.com/shaman007/home-k3s/pull/267), [#270](https://github.com/shaman007/home-k3s/pull/270), [#271](https://github.com/shaman007/home-k3s/pull/271), [#272](https://github.com/shaman007/home-k3s/pull/272), [#273](https://github.com/shaman007/home-k3s/pull/273), [#274](https://github.com/shaman007/home-k3s/pull/274), [#275](https://github.com/shaman007/home-k3s/pull/275), [#276](https://github.com/shaman007/home-k3s/pull/276), [#277](https://github.com/shaman007/home-k3s/pull/277)
+
 ## 2026-05-29 – Weekly Highlights
 
 - **Highlights**
