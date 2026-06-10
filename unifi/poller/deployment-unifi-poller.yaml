@@ -20,7 +20,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: unifi-poller
-          image: harbor.andreybondarenko.com/github/unpoller/unpoller:v3.2.0
+          image: harbor.andreybondarenko.com/github/unpoller/unpoller:v3.3.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
