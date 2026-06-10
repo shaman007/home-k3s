@@ -32,7 +32,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: model-downloader
-          image: alpine:3.23
+          image: alpine:3.24
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
