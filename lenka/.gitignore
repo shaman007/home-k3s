@@ -1,5 +1,6 @@
 lenka.key
 lenka.kubeconfig
 headlamp-token.txt
+*.der
 lenka.csr
 csr-lenka.yaml
