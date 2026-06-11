@@ -1,0 +1,260 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lenka-headlamp
+  namespace: lenka
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: lenka-headlamp-token
+  namespace: lenka
+  annotations:
+    kubernetes.io/service-account.name: lenka-headlamp
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lenka-headlamp-namespace-reader
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lenka-headlamp-namespace-reader
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: lenka-headlamp-namespace-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: lenka
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: argocd
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: longhorn-system
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: kube-system
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: kube-public
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: kube-node-lease
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: headlamp
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: monitoring
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: traefik
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: external-secrets
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: vault
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: metallb-system
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: cilium-secrets
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: elastic-system
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: gpu-operator
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lenka-headlamp-view
+  namespace: ot-operators
+subjects:
+  - kind: ServiceAccount
+    name: lenka-headlamp
+    namespace: lenka
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
