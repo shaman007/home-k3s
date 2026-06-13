@@ -25,7 +25,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: alertmanager
-          image: harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.32.2
+          image: harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.33.0
           imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/alertmanager/config.yml"
