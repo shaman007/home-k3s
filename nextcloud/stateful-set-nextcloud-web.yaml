@@ -172,7 +172,7 @@ spec:
             limits:
               memory: "256Mi"
         - name: alloy
-          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.16.3
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.17.0
           imagePullPolicy: IfNotPresent
           args:
             - run
