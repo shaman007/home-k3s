@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-12 – Weekly Highlights
+
+- **Highlights**
+  - Added GitOps-managed access for Lenka with dedicated RBAC, a Headlamp read-only token, an Argo CD application, and a follow-up read-permissions fix.
+  - Updated cluster platform components including Traefik, Vault, External Secrets, snapshot-controller, Headlamp, Alpine, kube-state-metrics, and the Renovate GitHub Action.
+  - Refreshed service and monitoring dependencies including Alertmanager, Grafana Alloy, SeaweedFS, Ollama, Dawarich, Meilisearch, Minecraft server, `redis_exporter`, Stirling PDF, Unpoller, Unifi Network Application, and Rspamd.
+
+- **Key PR Links**
+  - [#283](https://github.com/shaman007/home-k3s/pull/283), [#284](https://github.com/shaman007/home-k3s/pull/284), [#285](https://github.com/shaman007/home-k3s/pull/285), [#286](https://github.com/shaman007/home-k3s/pull/286), [#287](https://github.com/shaman007/home-k3s/pull/287), [#288](https://github.com/shaman007/home-k3s/pull/288), [#289](https://github.com/shaman007/home-k3s/pull/289), [#290](https://github.com/shaman007/home-k3s/pull/290), [#291](https://github.com/shaman007/home-k3s/pull/291), [#292](https://github.com/shaman007/home-k3s/pull/292), [#293](https://github.com/shaman007/home-k3s/pull/293), [#294](https://github.com/shaman007/home-k3s/pull/294), [#295](https://github.com/shaman007/home-k3s/pull/295), [#296](https://github.com/shaman007/home-k3s/pull/296), [#297](https://github.com/shaman007/home-k3s/pull/297), [#298](https://github.com/shaman007/home-k3s/pull/298), [#299](https://github.com/shaman007/home-k3s/pull/299), [#300](https://github.com/shaman007/home-k3s/pull/300), [#301](https://github.com/shaman007/home-k3s/pull/301), [#302](https://github.com/shaman007/home-k3s/pull/302), [#303](https://github.com/shaman007/home-k3s/pull/303), [#304](https://github.com/shaman007/home-k3s/pull/304), [#305](https://github.com/shaman007/home-k3s/pull/305), [#306](https://github.com/shaman007/home-k3s/pull/306), [#307](https://github.com/shaman007/home-k3s/pull/307)
+
 ## 2026-06-05 – Weekly Highlights
 
 - **Highlights**
