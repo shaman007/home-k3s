@@ -21,8 +21,6 @@ spec:
           value: '2'
       values: |
         server:
-          image:
-            tag: "2.0.2"
           priorityClassName: homelab-critical
           affinity: |
             podAntiAffinity:
