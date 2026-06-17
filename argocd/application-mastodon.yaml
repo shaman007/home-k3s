@@ -7,9 +7,9 @@ metadata:
 spec:
   project: default
   sources:
-    - repoURL: "https://github.com/shaman007/home-k3s.git"
-      path: mastodon/helm-chart
-      targetRevision: HEAD
+    - repoURL: "https://mastodon.github.io/helm-charts"
+      chart: mastodon
+      targetRevision: 0.5.1
       helm:
         releaseName: mastodon
         valueFiles:

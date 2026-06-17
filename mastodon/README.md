@@ -6,13 +6,15 @@ Mastodon is split across two ArgoCD Applications:
 * `argocd/application-mastodon-custom.yaml`
 
 The main release uses a vendored copy of the official chart in
-`mastodon/helm-chart` with values from `mastodon/mastodon-values.yaml`.
+the upstream Mastodon Helm repository with values from
+`mastodon/mastodon-values.yaml`.
 
 The custom app keeps local infrastructure that is not owned by the upstream
 chart: ExternalSecrets, dedicated Postgres, ingress, network policies, and the
 bookmarked media sync job.
 
-The vendored chart includes the OIDC existingSecret patch from upstream PR #34.
+The upstream chart includes OIDC `existingSecret` support, so no local chart
+fork is maintained here.
 
 # TODO
 

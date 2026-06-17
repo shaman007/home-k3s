@@ -12,8 +12,8 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 ## Mastodon
 
-* `application-mastodon.yaml` manages a vendored copy of the official Mastodon
-  Helm chart in `mastodon/helm-chart`.
+* `application-mastodon.yaml` manages the official Mastodon Helm chart from
+  `https://mastodon.github.io/helm-charts`.
 * `application-mastodon-custom.yaml` manages the local companion manifests:
   ExternalSecrets, Postgres, ingress, network policies, and the bookmarked media
   sync job.

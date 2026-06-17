@@ -12,7 +12,6 @@ from pathlib import Path
 EXCLUDED_PREFIXES = (
     "DEPRECATED/",
     "mastodon/chart/",
-    "mastodon/helm-chart/",
 )
 
 
