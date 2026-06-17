@@ -27,7 +27,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: mysql
-          image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.0
+          image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.1
           imagePullPolicy: IfNotPresent
           env:
             # Create this secret manually in-cluster; do not commit credentials.
