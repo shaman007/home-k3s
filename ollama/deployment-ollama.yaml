@@ -30,7 +30,7 @@ spec:
         kubernetes.io/hostname: talos-d4h-k5m
       containers:
         - name: ollama
-          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.30.8
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.30.9
           imagePullPolicy: IfNotPresent
           env:
             - name: OLLAMA_HOST
@@ -76,7 +76,7 @@ spec:
             - name: ollama-data
               mountPath: /root/.ollama
         - name: model-puller
-          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.30.8
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.30.9
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
