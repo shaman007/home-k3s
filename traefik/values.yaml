@@ -73,6 +73,15 @@ additionalArguments:
   - --entryPoints.web.http.redirections.entryPoint.to=websecure
   - --entryPoints.web.http.redirections.entryPoint.scheme=https
   - --entryPoints.web.http.redirections.entryPoint.permanent=true
+  - --log.level=INFO
+  - --accesslog=true
+  - --accesslog.format=json
+  - --accesslog.fields.defaultmode=keep
+  - --accesslog.fields.headers.defaultmode=drop
+  - --accesslog.fields.headers.names.CF-IPCountry=keep
+  - --accesslog.fields.headers.names.GeoIP-Country=keep
+  - --accesslog.fields.headers.names.GeoIP-Country-Code=keep
+  - --accesslog.fields.headers.names.X-Forwarded-For=keep
 
 ports:
   web:
@@ -221,21 +230,3 @@ persistence:
   accessMode: ReadWriteOnce
   storageClass: longhorn
   volumeName: pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e
-
-# Enable simple access logs
-logs:
-  general:
-    level: INFO
-  access:
-    enabled: true
-    format: json
-    fields:
-      general:
-        defaultmode: keep
-      headers:
-        defaultmode: drop
-        names:
-          CF-IPCountry: keep
-          GeoIP-Country: keep
-          GeoIP-Country-Code: keep
-          X-Forwarded-For: keep

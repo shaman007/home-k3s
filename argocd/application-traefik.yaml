@@ -84,22 +84,15 @@ spec:
         - --entryPoints.web.http.redirections.entryPoint.permanent=true
         - --entryPoints.websecure.http.encodedCharacters.allowEncodedPercent=true
         - --entryPoints.websecure.http.encodedCharacters.allowEncodedSlash=true
-        logs:
-          access:
-            enabled: true
-            fields:
-              general:
-                defaultmode: keep
-              headers:
-                defaultmode: drop
-                names:
-                  CF-IPCountry: keep
-                  GeoIP-Country: keep
-                  GeoIP-Country-Code: keep
-                  X-Forwarded-For: keep
-            format: json
-          general:
-            level: INFO
+        - --log.level=INFO
+        - --accesslog=true
+        - --accesslog.format=json
+        - --accesslog.fields.defaultmode=keep
+        - --accesslog.fields.headers.defaultmode=drop
+        - --accesslog.fields.headers.names.CF-IPCountry=keep
+        - --accesslog.fields.headers.names.GeoIP-Country=keep
+        - --accesslog.fields.headers.names.GeoIP-Country-Code=keep
+        - --accesslog.fields.headers.names.X-Forwarded-For=keep
         persistence:
           accessMode: ReadWriteOnce
           enabled: true
