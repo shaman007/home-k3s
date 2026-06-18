@@ -136,7 +136,7 @@ spec:
             limits:
               memory: "1688Mi"
         - name: nextcloud-nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.1
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.2
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
