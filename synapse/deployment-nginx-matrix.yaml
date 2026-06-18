@@ -40,7 +40,7 @@ spec:
             sizeLimit: 1Mi
       containers:
         - name: matrix-nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.1
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
