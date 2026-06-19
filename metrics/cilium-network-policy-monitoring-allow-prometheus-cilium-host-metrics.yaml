@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: monitoring-allow-prometheus-cilium-host-metrics
+  namespace: monitoring
+spec:
+  endpointSelector:
+    matchLabels:
+      app: prometheus-server
+  egress:
+    - toEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9963"
+              protocol: TCP
+            - port: "9964"
+              protocol: TCP
