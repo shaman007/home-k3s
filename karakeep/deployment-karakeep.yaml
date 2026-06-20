@@ -93,12 +93,12 @@ spec:
           resources:
             requests:
               cpu: 40m
-              memory: 512Mi
+              memory: 1Gi
             limits:
-              memory: 704Mi
+              memory: 1536Mi
       volumes:
         - name: dshm
-          emptyDir: {medium: Memory, sizeLimit: 512Mi}
+          emptyDir: {medium: Memory, sizeLimit: 1Gi}
         - name: chrome-data
           emptyDir: {}
         - name: karakeep-data

@@ -16,10 +16,10 @@ spec:
           priorityClassName: homelab-essential
           resources:
             requests:
-              memory: 213Mi
+              memory: 384Mi
               cpu: 10m
             limits:
-              memory: 213Mi
+              memory: 768Mi
         database:
           internal:
             priorityClassName: homelab-essential
@@ -52,35 +52,35 @@ spec:
                   done
           resources:
             requests:
-              memory: 100Mi
+              memory: 192Mi
               cpu: 10m
             limits:
-              memory: 100Mi
+              memory: 384Mi
         nginx:
           priorityClassName: homelab-essential
           resources:
             requests:
-              memory: 100Mi
+              memory: 128Mi
               cpu: 10m
             limits:
-              memory: 100Mi
+              memory: 256Mi
         portal:
           priorityClassName: homelab-essential
           resources:
             requests:
-              memory: 100Mi
+              memory: 128Mi
               cpu: 10m
             limits:
-              memory: 100Mi
+              memory: 256Mi
         redis:
           internal:
             priorityClassName: homelab-essential
             resources:
               requests:
-                memory: 113Mi
+                memory: 192Mi
                 cpu: 10m
               limits:
-                memory: 113Mi
+                memory: 384Mi
         registry:
           priorityClassName: homelab-essential
           registry:
@@ -93,10 +93,10 @@ spec:
           controller:
             resources:
               requests:
-                memory: 100Mi
+                memory: 192Mi
                 cpu: 10m
               limits:
-                memory: 100Mi
+                memory: 384Mi
         trivy:
           priorityClassName: homelab-essential
           resources:

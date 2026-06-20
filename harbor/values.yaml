@@ -1,10 +1,10 @@
 core:
   resources:
     requests:
-      memory: 213Mi
+      memory: 384Mi
       cpu: 10m
     limits:
-      memory: 213Mi
+      memory: 768Mi
 database:
   internal:
     resources:
@@ -30,10 +30,10 @@ jobservice:
           done
   resources:
     requests:
-      memory: 100Mi
+      memory: 192Mi
       cpu: 10m
     limits:
-      memory: 100Mi
+      memory: 384Mi
 
 expose:
   type: clusterIP
@@ -42,25 +42,25 @@ expose:
 nginx:
   resources:
     requests:
-      memory: 100Mi
+      memory: 128Mi
       cpu: 10m
     limits:
-      memory: 100Mi
+      memory: 256Mi
 portal:
   resources:
     requests:
-      memory: 100Mi
+      memory: 128Mi
       cpu: 10m
     limits:
-      memory: 100Mi
+      memory: 256Mi
 redis:
   internal:
     resources:
       requests:
-        memory: 113Mi
+        memory: 192Mi
         cpu: 10m
       limits:
-        memory: 113Mi
+        memory: 384Mi
 registry:
     registry:
       resources:
@@ -72,10 +72,10 @@ registry:
     controller:
       resources:
         requests:
-          memory: 100Mi
+          memory: 192Mi
           cpu: 10m
         limits:
-          memory: 100Mi
+          memory: 384Mi
 trivy:
   resources:
     requests:

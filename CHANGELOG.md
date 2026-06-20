@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-06-19 – Weekly Highlights
+
+- **Highlights**
+  - Expanded GitOps-managed access for Lenka with additional read-only RBAC, a Headlamp token, and the related Argo CD application updates.
+  - Improved secret and chart management by restoring Vault token-policy recovery annotations for SecretStores and moving Mastodon to the official chart with follow-up Redis secret fixes.
+  - Fixed platform networking and monitoring by allowing Vault egress to the Kubernetes API, correcting Traefik chart changes, and adding Prometheus access for scrape targets and Cilium host metrics.
+  - Refreshed platform and tooling dependencies including SeaweedFS, Meilisearch, MySQL, Ollama, nginx, Unpoller, Synapse, Traefik, Stirling PDF, and `actions/checkout`.
+
+- **Key PR Links**
+  - [#308](https://github.com/shaman007/home-k3s/pull/308), [#309](https://github.com/shaman007/home-k3s/pull/309), [#310](https://github.com/shaman007/home-k3s/pull/310), [#311](https://github.com/shaman007/home-k3s/pull/311), [#312](https://github.com/shaman007/home-k3s/pull/312), [#313](https://github.com/shaman007/home-k3s/pull/313), [#314](https://github.com/shaman007/home-k3s/pull/314), [#315](https://github.com/shaman007/home-k3s/pull/315), [#316](https://github.com/shaman007/home-k3s/pull/316), [#317](https://github.com/shaman007/home-k3s/pull/317), [#318](https://github.com/shaman007/home-k3s/pull/318)
+
 ## 2026-06-12 – Weekly Highlights
 
 - **Highlights**
