@@ -22,7 +22,7 @@ spec:
       priorityClassName: homelab-best-effort
       containers:
         - name: convertx
-          image: harbor.andreybondarenko.com/github/c4illin/convertx:v0.17.0
+          image: harbor.andreybondarenko.com/github/c4illin/convertx:v0.18.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
