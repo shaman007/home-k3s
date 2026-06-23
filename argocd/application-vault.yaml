@@ -53,7 +53,7 @@ spec:
                 service_registration "kubernetes" {}
 
                 telemetry {
-                  prometheus_retention_time = "30s"
+                  prometheus_retention_time = "2m"
                   disable_hostname = true
                 }
         csi:
