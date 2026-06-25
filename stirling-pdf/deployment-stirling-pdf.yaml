@@ -22,7 +22,7 @@ spec:
       priorityClassName: homelab-best-effort
       containers:
         - name: stirling-pdf
-          image: harbor.andreybondarenko.com/dockerhub/stirlingtools/stirling-pdf:2.13.1-fat
+          image: harbor.andreybondarenko.com/dockerhub/stirlingtools/stirling-pdf:2.13.2-fat
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
