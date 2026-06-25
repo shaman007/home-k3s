@@ -9,7 +9,7 @@ spec:
   sources:
     - repoURL: https://helm.cilium.io
       chart: cilium
-      targetRevision: 1.18.11
+      targetRevision: 1.19.5
       helm:
         releaseName: cilium
         valueFiles:
