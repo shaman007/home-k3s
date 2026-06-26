@@ -9,7 +9,7 @@ spec:
   sources:
     - repoURL: "https://mastodon.github.io/helm-charts"
       chart: mastodon
-      targetRevision: 1.0.1
+      targetRevision: 1.0.2
       helm:
         releaseName: mastodon
         valueFiles:
