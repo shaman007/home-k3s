@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: 'https://collaboraonline.github.io/online/'
-    targetRevision: 1.2.0
+    targetRevision: 1.2.1
     chart: collabora-online
     helm:
       values: |
