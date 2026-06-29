@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-06-26 – Weekly Highlights
+
+- **Highlights**
+  - Added GitOps-managed Cilium deployment with a new Argo CD application, dedicated Talos values, and the related upgrade to Cilium `1.19.5`.
+  - Restored Vault metrics scraping by targeting the active service and increasing Vault's Prometheus retention window.
+  - Raised memory allocations for Harbor components and Karakeep's browser workload to improve headroom.
+  - Updated Dawarich's Photon deployment to `2.3.0` and removed the no-longer-needed startup command override.
+  - Refreshed platform and tooling dependencies including Stirling PDF, Rspamd, Mastodon, Dawarich, Renovate GitHub Action, ConvertX, Minecraft server, ClamAV exporter, Meilisearch, NVIDIA device plugin, ECK operator, Grafana, redis-operator, curl, SeaweedFS, GPU Operator, and Collabora Online.
+
+- **Key PR Links**
+  - [#319](https://github.com/shaman007/home-k3s/pull/319), [#320](https://github.com/shaman007/home-k3s/pull/320), [#322](https://github.com/shaman007/home-k3s/pull/322), [#323](https://github.com/shaman007/home-k3s/pull/323), [#324](https://github.com/shaman007/home-k3s/pull/324), [#325](https://github.com/shaman007/home-k3s/pull/325), [#326](https://github.com/shaman007/home-k3s/pull/326), [#327](https://github.com/shaman007/home-k3s/pull/327), [#328](https://github.com/shaman007/home-k3s/pull/328), [#329](https://github.com/shaman007/home-k3s/pull/329), [#330](https://github.com/shaman007/home-k3s/pull/330), [#331](https://github.com/shaman007/home-k3s/pull/331), [#332](https://github.com/shaman007/home-k3s/pull/332), [#333](https://github.com/shaman007/home-k3s/pull/333), [#334](https://github.com/shaman007/home-k3s/pull/334), [#335](https://github.com/shaman007/home-k3s/pull/335), [#336](https://github.com/shaman007/home-k3s/pull/336), [#337](https://github.com/shaman007/home-k3s/pull/337), [#338](https://github.com/shaman007/home-k3s/pull/338), [#339](https://github.com/shaman007/home-k3s/pull/339), [#340](https://github.com/shaman007/home-k3s/pull/340), [#341](https://github.com/shaman007/home-k3s/pull/341), [#342](https://github.com/shaman007/home-k3s/pull/342), [#343](https://github.com/shaman007/home-k3s/pull/343), [#344](https://github.com/shaman007/home-k3s/pull/344), [#345](https://github.com/shaman007/home-k3s/pull/345)
+
 ## 2026-06-19 – Weekly Highlights
 
 - **Highlights**
