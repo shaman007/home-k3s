@@ -5,7 +5,6 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVICE_CIDR = "10.43.0.1/32"
-CURRENT_CONTROL_PLANE_CIDR = "192.168.1.100/32"
 CONTROL_PLANE_LAN_CIDR = "192.168.1.0/24"
 OLD_CONTROL_PLANE_CIDR = "192.168.1.209/32"
 
@@ -47,10 +46,7 @@ class KubernetesApiNetworkPolicyTest(unittest.TestCase):
                     continue
                 if not has_port(document, 443):
                     continue
-                if (
-                    CURRENT_CONTROL_PLANE_CIDR not in document
-                    and CONTROL_PLANE_LAN_CIDR not in document
-                ):
+                if CONTROL_PLANE_LAN_CIDR not in document:
                     offenders.append(str(path.relative_to(ROOT)))
 
         self.assertEqual([], sorted(set(offenders)))

@@ -18,7 +18,7 @@ spec:
     # Allow access to current Talos control-plane endpoint used by kubernetes service.
     - to:
         - ipBlock:
-            cidr: 192.168.1.100/32
+            cidr: 192.168.1.0/24
       ports:
         - protocol: TCP
           port: 6443

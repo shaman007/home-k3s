@@ -98,11 +98,7 @@ spec:
           port: 9964
     - to:
         - ipBlock:
-            cidr: 192.168.1.100/32
-        - ipBlock:
-            cidr: 192.168.1.209/32
-        - ipBlock:
-            cidr: 192.168.1.242/32
+            cidr: 192.168.1.0/24
       ports:
         - protocol: TCP
           port: 9963

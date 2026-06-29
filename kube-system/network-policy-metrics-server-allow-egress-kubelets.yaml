@@ -10,21 +10,6 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Fallback allow-list for the current LAN segment. The companion Cilium
-    # policy covers host/remote-node generically so node churn does not break
-    # metrics collection.
-    - to:
-        - ipBlock:
-            cidr: 192.168.1.209/32
-      ports:
-        - protocol: TCP
-          port: 10250
-    - to:
-        - ipBlock:
-            cidr: 192.168.1.100/32
-      ports:
-        - protocol: TCP
-          port: 10250
     - to:
         - ipBlock:
             cidr: 192.168.1.0/24
