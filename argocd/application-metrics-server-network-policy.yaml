@@ -1,0 +1,20 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metrics-server-network-policy
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/shaman007/home-k3s.git'
+    path: kube-system
+    targetRevision: HEAD
+    directory:
+      recurse: false
+      include: "{cilium-network-policy-metrics-server-allow-egress-kubelets.yaml,network-policy-metrics-server-allow-egress-dns.yaml,network-policy-metrics-server-allow-egress-kube-api.yaml,network-policy-metrics-server-allow-egress-kubelets.yaml,network-policy-metrics-server-allow-ingress-https.yaml,network-policy-metrics-server-default-deny.yaml}"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kube-system
+  syncPolicy:
+    automated: {}
