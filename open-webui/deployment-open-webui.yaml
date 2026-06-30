@@ -26,7 +26,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: open-webui
-          image: harbor.andreybondarenko.com/github/open-webui/open-webui:v0.9.6
+          image: harbor.andreybondarenko.com/github/open-webui/open-webui:v0.10.1
           imagePullPolicy: IfNotPresent
           env:
             - name: OLLAMA_BASE_URL
