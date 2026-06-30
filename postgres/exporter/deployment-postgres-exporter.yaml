@@ -22,7 +22,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: postgres-exporter
-          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.19.1
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.0
           args:
             - "--web.listen-address=0.0.0.0:9187"
           securityContext:
