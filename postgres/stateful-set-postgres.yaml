@@ -90,7 +90,7 @@ spec:
             #- name: backup
             #  mountPath: /backup
         - name: postgres-exporter
-          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.19.1
+          image: harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.0
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsNonRoot: true
