@@ -29,7 +29,7 @@ spec:
                 - bash
                 - -c
                 - /mnt/elastic-internal/scripts/prepare-fs.sh
-              image: docker.elastic.co/elasticsearch/elasticsearch:9.4.2
+              image: docker.elastic.co/elasticsearch/elasticsearch:9.4.3
               imagePullPolicy: IfNotPresent
               env:
                 - name: POD_IP
