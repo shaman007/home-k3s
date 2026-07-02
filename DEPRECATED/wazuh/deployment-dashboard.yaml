@@ -23,7 +23,7 @@ spec:
             secretName: dashboard-certs
       containers:
         - name: wazuh-dashboard
-          image: harbor.andreybondarenko.com/dockerhub/wazuh/wazuh-dashboard:4.14.5
+          image: harbor.andreybondarenko.com/dockerhub/wazuh/wazuh-dashboard:4.14.6
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: config
