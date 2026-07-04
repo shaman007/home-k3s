@@ -32,7 +32,7 @@ spec:
             secretName: wazuh-authd-pass
       containers:
         - name: wazuh-manager
-          image: harbor.andreybondarenko.com/dockerhub/wazuh/wazuh-manager:4.14.5
+          image: harbor.andreybondarenko.com/dockerhub/wazuh/wazuh-manager:4.14.6
           imagePullPolicy: IfNotPresent
           securityContext:
             capabilities:
