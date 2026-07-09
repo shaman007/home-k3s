@@ -79,7 +79,7 @@ spec:
             limits:
               memory: 6400Mi
         - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.41.0
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.0
           imagePullPolicy: IfNotPresent
           args:
             - "sidecar"
