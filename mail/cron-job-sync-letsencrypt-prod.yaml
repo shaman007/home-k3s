@@ -29,7 +29,7 @@ spec:
                 - name: TRAEFIK_NS
                   value: "traefik"
                 - name: TRAEFIK_LABEL
-                  value: "app.kubernetes.io/name=traefik"
+                  value: "app.kubernetes.io/name=traefik,app.kubernetes.io/instance=traefik-traefik"
                 - name: ACME_PATH
                   value: "/data/acme.json"
               args:
@@ -37,7 +37,7 @@ spec:
                   sleep 15
                   set -euo pipefail
 
-                  POD="$(kubectl -n "$TRAEFIK_NS" get pod -l "$TRAEFIK_LABEL" -o jsonpath='{.items[0].metadata.name}')"
+                  POD="$(kubectl -n "$TRAEFIK_NS" get pod -l "$TRAEFIK_LABEL" --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')"
                   kubectl -n "$TRAEFIK_NS" exec -c traefik "$POD" -- cat "$ACME_PATH" > /tmp/acme.json
 
                   jq -r --arg d "$DOMAIN" '
