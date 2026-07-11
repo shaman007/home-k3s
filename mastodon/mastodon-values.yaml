@@ -1,7 +1,6 @@
 ---
 image:
   repository: harbor.andreybondarenko.com/github/mastodon/mastodon
-  tag: v4.6.0
   pullPolicy: IfNotPresent
 
 mastodon:
@@ -46,7 +45,6 @@ mastodon:
     persistentTimeout: "20"
     image:
       repository: harbor.andreybondarenko.com/github/mastodon/mastodon
-      tag: v4.6.0
     resources:
       limits:
         memory: 4115Mi
@@ -77,7 +75,6 @@ mastodon:
           - scheduler
         image:
           repository: harbor.andreybondarenko.com/github/mastodon/mastodon
-          tag: v4.6.0
     extraEnvVars:
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
@@ -88,7 +85,6 @@ mastodon:
     baseUrl: null
     image:
       repository: harbor.andreybondarenko.com/github/mastodon/mastodon-streaming
-      tag: v4.6.0
     resources:
       limits:
         memory: 110Mi
