@@ -70,7 +70,7 @@ spec:
                     exit 0
                   fi
 
-                  npm install -g @immich/cli@2.5.6
+                  npm install -g @immich/cli@3.0.2
                   immich -d /config login-key "${IMMICH_INSTANCE_URL}" "${IMMICH_API_KEY}"
                   upload_args="--recursive --no-progress"
                   if [ "${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}" = "true" ]; then
