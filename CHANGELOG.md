@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-03 – Weekly Highlights
+
+- **Highlights**
+  - Added GitOps-managed metrics-server deployment and its companion network-policy application, then iterated on Cilium and Kubernetes API access rules until metrics-server could reach both kubelets and the API service.
+  - Tightened shared network-policy generation for Kubernetes API access and widened External Secrets egress to Vault ingress where needed.
+  - Refined the PostgreSQL Grafana dashboard queries so active and idle session panels aggregate cleanly across matching series.
+  - Refreshed platform and tooling dependencies including External Secrets, Keycloak, Dawarich, Renovate GitHub Action, Meilisearch, Grafana Alloy, Traefik, SeaweedFS, Ollama, postgres-exporter, and Open WebUI.
+
+- **Key PR Links**
+  - [#346](https://github.com/shaman007/home-k3s/pull/346), [#347](https://github.com/shaman007/home-k3s/pull/347), [#348](https://github.com/shaman007/home-k3s/pull/348), [#349](https://github.com/shaman007/home-k3s/pull/349), [#350](https://github.com/shaman007/home-k3s/pull/350), [#351](https://github.com/shaman007/home-k3s/pull/351), [#352](https://github.com/shaman007/home-k3s/pull/352), [#353](https://github.com/shaman007/home-k3s/pull/353), [#354](https://github.com/shaman007/home-k3s/pull/354), [#355](https://github.com/shaman007/home-k3s/pull/355), [#356](https://github.com/shaman007/home-k3s/pull/356), [#357](https://github.com/shaman007/home-k3s/pull/357)
+
 ## 2026-06-26 – Weekly Highlights
 
 - **Highlights**
