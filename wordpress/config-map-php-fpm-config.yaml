@@ -17,11 +17,11 @@ data:
     group = www-data
     listen = 0.0.0.0:9000
     pm = dynamic
-    pm.max_children = 120
-    pm.start_servers = 24
-    pm.min_spare_servers = 12
-    pm.max_spare_servers = 36
-    php_value[memory_limit] = -1
+    pm.max_children = 24
+    pm.start_servers = 4
+    pm.min_spare_servers = 2
+    pm.max_spare_servers = 8
+    php_value[memory_limit] = 192M
     php_value[upload_max_filesize] = 2048M
     ;listen.owner=daemon
     ;listen.group=daemon
@@ -162,12 +162,12 @@ data:
     zend_extension=opcache.so
     opcache.enable = 1
     opcache.enable_cli = 1
-    opcache.memory_consumption = 256
-    opcache.interned_strings_buffer = 32
+    opcache.memory_consumption = 128
+    opcache.interned_strings_buffer = 16
     opcache.max_accelerated_files = 4000
     opcache.revalidate_freq = 60
-    jit_buffer_size = 256M
-    opcache.jit_buffer_size = 256M
+    jit_buffer_size = 64M
+    opcache.jit_buffer_size = 64M
     [curl]
     [openssl]
     [ffi]

@@ -95,9 +95,9 @@ spec:
           resources:
             requests:
               cpu: "100m"
-              memory: "432Mi"
+              memory: "768Mi"
             limits:
-              memory: "576Mi"
+              memory: "1024Mi"
         - name: nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.2
           imagePullPolicy: IfNotPresent
