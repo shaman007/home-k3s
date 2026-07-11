@@ -28,7 +28,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: prometheus
-          image: harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.13.0
+          image: harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.13.1
           imagePullPolicy: IfNotPresent
           args:
             - "--config.file=/etc/prometheus/prometheus.yaml"
