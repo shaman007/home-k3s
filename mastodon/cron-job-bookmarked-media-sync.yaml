@@ -37,7 +37,7 @@ spec:
                 - /bin/sh
                 - -lc
                 - |
-                  apk add --no-cache ca-certificates coreutils curl kubectl
+                  apk add --no-cache ca-certificates coreutils curl jq kubectl
                   /scripts/fetch-bookmarked-media.sh
               env:
                 - name: BOOKMARKED_MEDIA_LOOKBACK_DAYS
@@ -80,6 +80,11 @@ spec:
                   # Deliberately word-split the composed option list.
                   # shellcheck disable=SC2086
                   immich -d /config upload ${upload_args} /import
+
+                  if [ "${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}" != "true" ]; then
+                    apk add --no-cache ca-certificates coreutils curl jq
+                    /scripts/apply-immich-descriptions.sh
+                  fi
               env:
                 - name: IMMICH_INSTANCE_URL
                   value: https://immich.andreybondarenko.com/api
@@ -99,9 +104,13 @@ spec:
                 limits:
                   memory: 512Mi
               volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
                 - name: work
                   mountPath: /import
                   subPath: import
+                - name: work
+                  mountPath: /work
                 - name: immich-config
                   mountPath: /config
           volumes:

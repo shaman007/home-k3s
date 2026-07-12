@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-12 – Weekly Highlights
+
+- **Highlights**
+  - Improved the log-check reporter workflow with repo-side script changes for clearer operational follow-up.
+  - Tuned WordPress PHP-FPM memory settings and deployment configuration.
+  - Added a new Immich CLI integration path through the Mastodon bookmarked-media sync cron job.
+  - Unpinned Mastodon chart values and refreshed platform dependencies including Vault, Keycloak, Prometheus, node-exporter, Thanos, SeaweedFS, Traefik, Mastodon, Ollama, Stirling PDF, Meilisearch, Synapse, and postgres-exporter.
+
+- **Key PR Links**
+  - [#367](https://github.com/shaman007/home-k3s/pull/367), [#369](https://github.com/shaman007/home-k3s/pull/369), [#370](https://github.com/shaman007/home-k3s/pull/370), [#371](https://github.com/shaman007/home-k3s/pull/371), [#375](https://github.com/shaman007/home-k3s/pull/375), [#376](https://github.com/shaman007/home-k3s/pull/376), [#377](https://github.com/shaman007/home-k3s/pull/377), [#378](https://github.com/shaman007/home-k3s/pull/378), [#379](https://github.com/shaman007/home-k3s/pull/379), [#380](https://github.com/shaman007/home-k3s/pull/380), [#381](https://github.com/shaman007/home-k3s/pull/381), [#382](https://github.com/shaman007/home-k3s/pull/382), [#383](https://github.com/shaman007/home-k3s/pull/383), [#384](https://github.com/shaman007/home-k3s/pull/384), [#385](https://github.com/shaman007/home-k3s/pull/385), [#386](https://github.com/shaman007/home-k3s/pull/386), [#387](https://github.com/shaman007/home-k3s/pull/387)
+
 ## 2026-07-03 – Weekly Highlights
 
 - **Highlights**

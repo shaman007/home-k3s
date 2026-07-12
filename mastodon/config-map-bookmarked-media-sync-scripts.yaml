@@ -13,11 +13,13 @@ data:
   list_bookmarked_media_s3.rb: |
     # script/list_bookmarked_media_s3.rb
     #
-    # Generate list of S3 URLs for media attached to bookmarked statuses.
-    # Output: export/bookmarked_media_s3_urls.txt
+    # Generate a JSONL manifest for media attached to bookmarked statuses.
+    # Output: export/bookmarked_media_manifest.jsonl
     # Set BOOKMARKED_MEDIA_LOOKBACK_DAYS to reduce the time window later.
 
     require "fileutils"
+    require "json"
+    require "nokogiri"
     require "uri"
 
     S3_HOST   = "https://s3.andreybondarenko.com"
@@ -25,7 +27,7 @@ data:
     LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "30"), 10)
 
     EXPORT_DIR  = Rails.root.join("export")
-    OUTPUT_PATH = EXPORT_DIR.join("bookmarked_media_s3_urls.txt")
+    OUTPUT_PATH = EXPORT_DIR.join("bookmarked_media_manifest.jsonl")
     LOOKBACK_CUTOFF = LOOKBACK_DAYS.days.ago
 
     FileUtils.mkdir_p(EXPORT_DIR)
@@ -40,6 +42,17 @@ data:
         .find_each do |bookmark|
           status = bookmark.status
           next unless status
+
+          fragment = Nokogiri::HTML.fragment(status.text.to_s)
+          fragment.css("a").remove
+          description = fragment.text
+            .gsub(%r{https?://\S+}, "")
+            .gsub(/(?<!\w)#[\p{L}\p{M}\p{N}_\u200c\u200d]+/u, "")
+            .lines
+            .map { |line| line.gsub(/[ \t]+/, " ").strip }
+            .join("\n")
+            .gsub(/\n{3,}/, "\n\n")
+            .strip
 
           status.media_attachments.each do |media|
             begin
@@ -89,7 +102,13 @@ data:
               end
 
               full_url = "#{S3_HOST}/#{S3_BUCKET}/#{key}"
-              out.puts(full_url)
+              out.puts({
+                id: media.id.to_s,
+                status_id: status.id.to_s,
+                url: full_url,
+                relative_path: key,
+                description: description,
+              }.to_json)
             rescue => e
               warn "Error for bookmark #{bookmark.id}, media #{media.id}: #{e.class} #{e.message}"
             end
@@ -104,10 +123,9 @@ data:
 
     pod_selector="app.kubernetes.io/component=web,app.kubernetes.io/instance=mastodon"
     remote_script_path="/tmp/list_bookmarked_media_s3.rb"
-    remote_output_path="/opt/mastodon/export/bookmarked_media_s3_urls.txt"
-    export_file="/work/export/bookmarked_media_s3_urls.txt"
+    remote_output_path="/opt/mastodon/export/bookmarked_media_manifest.jsonl"
+    export_file="/work/export/bookmarked_media_manifest.jsonl"
     download_dir="/work/import"
-    s3_prefix="https://s3.andreybondarenko.com/mastodon/"
     max_attempts="${BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS:-8}"
     retry_delay_seconds="${BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS:-15}"
 
@@ -136,13 +154,10 @@ data:
 
     sort -u "${export_file}" -o "${export_file}"
 
-    while IFS= read -r url; do
+    while IFS= read -r entry; do
+      url="$(printf '%s' "${entry}" | jq -r '.url')"
+      relative_path="$(printf '%s' "${entry}" | jq -r '.relative_path')"
       [ -n "${url}" ] || continue
-
-      relative_path="${url#${s3_prefix}}"
-      if [ "${relative_path}" = "${url}" ]; then
-        relative_path="$(basename "${url}")"
-      fi
 
       destination="${download_dir}/${relative_path}"
       mkdir -p "$(dirname "${destination}")"
@@ -180,3 +195,67 @@ data:
 
     file_count="$(find "${download_dir}" -type f | wc -l | tr -d ' ')"
     echo "Downloaded ${file_count} file(s)"
+  apply-immich-descriptions.sh: |
+    #!/bin/sh
+    set -eu
+
+    manifest="/work/export/bookmarked_media_manifest.jsonl"
+    import_dir="/work/import"
+    work_dir="/tmp/immich-description-sync"
+    checksums="${work_dir}/checksums.jsonl"
+    results="${work_dir}/results.jsonl"
+    updates="${work_dir}/updates.jsonl"
+
+    mkdir -p "${work_dir}"
+    : >"${checksums}"
+    : >"${results}"
+    : >"${updates}"
+
+    while IFS= read -r entry; do
+      media_id="$(printf '%s' "${entry}" | jq -r '.id')"
+      relative_path="$(printf '%s' "${entry}" | jq -r '.relative_path')"
+      file="${import_dir}/${relative_path}"
+      [ -f "${file}" ] || continue
+      checksum="$(sha1sum "${file}" | cut -d ' ' -f 1)"
+      jq -nc --arg id "${media_id}" --arg checksum "${checksum}" \
+        '{id: $id, checksum: $checksum}' >>"${checksums}"
+    done <"${manifest}"
+
+    jq -s '[range(0; length; 100) as $i | {assets: .[$i:$i+100]}] | .[]' -c "${checksums}" \
+      | while IFS= read -r payload; do
+          curl --fail --silent --show-error \
+            --retry 5 \
+            --retry-all-errors \
+            -H "content-type: application/json" \
+            -H "x-api-key: ${IMMICH_API_KEY}" \
+            -d "${payload}" \
+            "${IMMICH_INSTANCE_URL}/assets/bulk-upload-check" | jq -c '.results[]'
+        done >"${results}"
+
+    jq -n -c \
+      --slurpfile manifest "${manifest}" \
+      --slurpfile results "${results}" '
+        ($manifest | INDEX(.id)) as $items
+        | $results
+        | map(select(.assetId != null and (.isTrashed // false | not)))
+        | map({assetId, status_id: $items[.id].status_id, description: $items[.id].description})
+        | unique_by(.assetId)
+        | group_by([.status_id, .description])[]
+        | {ids: map(.assetId), description: .[0].description}
+      ' >"${updates}"
+
+    updated=0
+    while IFS= read -r payload; do
+      curl --fail --silent --show-error \
+        --retry 5 \
+        --retry-all-errors \
+        -o /dev/null \
+        -X PUT \
+        -H "content-type: application/json" \
+        -H "x-api-key: ${IMMICH_API_KEY}" \
+        -d "${payload}" \
+        "${IMMICH_INSTANCE_URL}/assets"
+      updated="$((updated + $(printf '%s' "${payload}" | jq '.ids | length')))"
+    done <"${updates}"
+
+    echo "Updated descriptions on ${updated} Immich asset(s)"
