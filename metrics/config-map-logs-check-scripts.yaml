@@ -16,6 +16,7 @@ data:
     import html
     import json
     import os
+    import re
     import smtplib
     import sys
     import time
@@ -572,6 +573,13 @@ data:
             return True
         if bucket != "real_fault_candidates":
             return False
+        if (
+            item.get("namespace") == "mastodon"
+            and "http::timeouterror" in lowered
+            and "read timed out" in lowered
+        ):
+            # Remote federation peers are outside cluster control; their timeouts are expected noise.
+            return True
         if "panic.go:" in lowered and "\"http\"" in lowered and "resp=200" in lowered:
             return True
         if "debug -- : enqueued schedule:" in lowered and "\"exception_executions\":{}" in lowered:
@@ -621,6 +629,49 @@ data:
             groups[key]["count"] += 1
             groups[key]["last"] = item
         return sorted(groups.items(), key=lambda item: item[1]["count"], reverse=True)
+
+
+    def render_authoritative_findings(grouped_entries):
+        """Render category counts from filtered Loki entries, not LLM inference."""
+        categories = (
+            ("real_fault_candidates", "Real problems found", "High"),
+            ("probe_instability_candidates", "Probe instability", "Medium"),
+            ("platform_issue_candidates", "Platform issues", "High"),
+        )
+        lines = [
+            "## Overall findings",
+            "",
+            "| Category | Count | Severity |",
+            "|---|---:|---|",
+        ]
+        for key, label, severity in categories:
+            lines.append(f"| {label} | {len(grouped_entries.get(key, []))} | {severity} |")
+
+        for key, heading, _ in categories:
+            entries = grouped_entries.get(key, [])
+            lines.extend(["", f"## {heading}", ""])
+            if not entries:
+                lines.append("None identified by the filtered Loki query.")
+                continue
+            for (namespace, pod, container), detail in group_entry_counts(entries)[:5]:
+                first = detail["first"]
+                lines.append(
+                    f"- `{namespace}/{pod}/{container}`: {detail['count']} entries; "
+                    f"example at {first['ts']}: `{trim_line(first['line'], 240)}`"
+                )
+        return "\n".join(lines)
+
+
+    def analyst_notes_are_contradictory(analysis, grouped_entries):
+        if not grouped_entries.get("real_fault_candidates"):
+            return False
+        return bool(
+            re.search(
+                r"\b(?:no|zero)\s+(?:new\s+)?(?:real\s+)?(?:problems?|faults?|issues?)\b",
+                analysis,
+                flags=re.IGNORECASE,
+            )
+        )
 
 
     def render_observed_evidence(grouped_entries, raw_entry_counts, false_positive_counts, false_positive_examples):
@@ -764,9 +815,9 @@ data:
             "Deduplicate repeated observations across batches.\n"
             "If something appears in the previous report, mention it as ongoing rather than new.\n"
             "Do not invent evidence beyond the provided batch summaries and preflight data.\n"
-            "Output Markdown with these sections: Overall findings, Real problems found, Platform issues, Noise filtered, Cross-batch recurrence, Smallest next action.\n"
-            "In Real problems found and Platform issues, explain what is failing, where it happened, why it matters, and cite example timestamps/pods.\n"
-            "Use a compact Markdown table only for the category/count/severity overview.\n"
+            "Do not state category totals or claim that there are no real problems; those are rendered separately from authoritative filtered Loki counts.\n"
+            "Output concise Markdown analyst notes only: impact, recurrence, and one smallest next action.\n"
+            "Cite example timestamps/pods for any issue you discuss.\n"
             "End with 'Smallest next action:' followed by one concrete next step."
         )
 
@@ -1008,13 +1059,23 @@ data:
             analysis = fallback_analysis(preflight, grouped_entries)
         if not analysis.strip():
             analysis = summarize_samples(grouped_entries)
+        authoritative_findings = render_authoritative_findings(grouped_entries)
+        if analyst_notes_are_contradictory(analysis, grouped_entries):
+            log_progress("suppressing contradictory Ollama analysis; authoritative findings contain real faults")
+            analysis = "LLM analyst notes were suppressed because they contradicted the authoritative filtered Loki counts."
         observed_evidence = render_observed_evidence(
             grouped_entries,
             raw_entry_counts,
             false_positive_counts,
             false_positive_examples,
         )
-        analysis = analysis.rstrip() + "\n\n" + observed_evidence
+        analysis = (
+            authoritative_findings
+            + "\n\n## Analyst notes\n\n"
+            + analysis.rstrip()
+            + "\n\n"
+            + observed_evidence
+        )
         report = "\n".join(
             [
                 "Home k3s logs check",
