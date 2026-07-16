@@ -26,7 +26,7 @@ spec:
       priorityClassName: homelab-essential
       containers:
         - name: nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.2
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.3
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
