@@ -31,7 +31,7 @@ spec:
         kubernetes.io/hostname: talos-d4h-k5m
       containers:
         - name: immich-server
-          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.0.2
+          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.0.3
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
