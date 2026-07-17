@@ -39,7 +39,7 @@ spec:
               memory: 32Mi
       containers:
         - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.0
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.2
           imagePullPolicy: IfNotPresent
           args:
             - "store"
