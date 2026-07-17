@@ -24,7 +24,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.0
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.2
           imagePullPolicy: IfNotPresent
           args:
             - query
