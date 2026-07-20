@@ -47,6 +47,12 @@ spec:
                   value: logs-check-report
                 - name: GRAFANA_BASE_URL
                   value: http://grafana.monitoring.svc.cluster.local:3000
+                - name: GRAFANA_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: logs-check-grafana-token
+                      key: token
+                      optional: true
                 - name: LOKI_BASE_URL
                   value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
                 - name: OLLAMA_BASE_URL

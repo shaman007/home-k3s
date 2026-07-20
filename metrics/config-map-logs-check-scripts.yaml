@@ -58,6 +58,12 @@ data:
         print(message, file=sys.stderr, flush=True)
 
 
+    def bearer_headers(token):
+        if not token:
+            return {}
+        return {"Authorization": f"Bearer {token}"}
+
+
     def http_json(url, *, headers=None, method="GET", payload=None):
         request_headers = dict(headers or {})
         data = None
@@ -196,11 +202,12 @@ data:
 
     def grafana_preflight():
         base_url = env("GRAFANA_BASE_URL", "http://grafana.monitoring.svc.cluster.local:3000")
+        token = env("GRAFANA_TOKEN", "")
         checks = []
-        for path in ("/api/health",):
+        for path in ("/api/health", "/api/user"):
             url = base_url.rstrip("/") + path
             try:
-                payload = http_json(url)
+                payload = http_json(url, headers=bearer_headers(token))
                 checks.append({"path": path, "ok": True, "payload": payload})
             except Exception as exc:  # noqa: BLE001
                 checks.append({"path": path, "ok": False, "error": str(exc)})
@@ -242,16 +249,21 @@ data:
         return checks
 
 
-    def grafana_datasource_preflight():
-        namespace = env("REPORT_NAMESPACE", "monitoring")
-        try:
-            payload = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/grafana-datasources")
-        except urllib.error.HTTPError as exc:
-            return {"ok": False, "error": f"{exc.code} {exc.reason}"}
-        except Exception as exc:  # noqa: BLE001
-            return {"ok": False, "error": str(exc)}
+    def extract_datasources(payload):
+        datasources = []
+        for item in payload:
+            datasources.append(
+                {
+                    "name": item.get("name", ""),
+                    "type": item.get("type", ""),
+                    "url": item.get("url", ""),
+                    "uid": item.get("uid", ""),
+                }
+            )
+        return datasources
 
-        raw = payload.get("data", {}).get("datasources.yaml", "")
+
+    def extract_datasources_from_configmap(raw):
         datasources = []
         current = {}
         for line in raw.splitlines():
@@ -264,9 +276,40 @@ data:
                 current["type"] = stripped.split(":", 1)[1].strip()
             elif stripped.startswith("url:"):
                 current["url"] = stripped.split(":", 1)[1].strip()
+            elif stripped.startswith("uid:"):
+                current["uid"] = stripped.split(":", 1)[1].strip()
         if current:
             datasources.append(current)
-        return {"ok": True, "datasources": datasources}
+        return datasources
+
+
+    def grafana_datasource_preflight():
+        base_url = env("GRAFANA_BASE_URL", "http://grafana.monitoring.svc.cluster.local:3000")
+        token = env("GRAFANA_TOKEN", "")
+        if token:
+            try:
+                payload = http_json(
+                    f"{base_url.rstrip('/')}/api/datasources",
+                    headers=bearer_headers(token),
+                )
+                return {"ok": True, "source": "grafana_api", "datasources": extract_datasources(payload)}
+            except Exception as exc:  # noqa: BLE001
+                log_progress(f"grafana datasource API request failed, falling back to configmap: {exc}")
+
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        try:
+            payload = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/grafana-datasources")
+        except urllib.error.HTTPError as exc:
+            return {"ok": False, "error": f"{exc.code} {exc.reason}"}
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": str(exc)}
+
+        raw = payload.get("data", {}).get("datasources.yaml", "")
+        return {
+            "ok": True,
+            "source": "kubernetes_configmap",
+            "datasources": extract_datasources_from_configmap(raw),
+        }
 
 
     def fetch_previous_report(name):
