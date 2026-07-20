@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-17 – Weekly Highlights
+
+- **Highlights**
+  - Updated the Renovate GitHub Action to `v46.1.19` to keep automated dependency management current.
+  - Refreshed application and service dependencies including Collabora Online `1.3.0`, Immich `3.0.3`, Ollama `0.32.0` and `0.32.1`, Plex `1.43.3`, Dawarich `1.10.0`, Photon `2.3.1`, and nginx `1.31.3`.
+  - Advanced platform and observability components including Loki `7.1.0`, node-exporter `1.12.1`, redis_exporter `1.87.0`, Thanos `0.42.2`, and Cilium `1.19.6`.
+
+- **Key PR Links**
+  - [#388](https://github.com/shaman007/home-k3s/pull/388), [#389](https://github.com/shaman007/home-k3s/pull/389), [#390](https://github.com/shaman007/home-k3s/pull/390), [#391](https://github.com/shaman007/home-k3s/pull/391), [#392](https://github.com/shaman007/home-k3s/pull/392), [#393](https://github.com/shaman007/home-k3s/pull/393), [#394](https://github.com/shaman007/home-k3s/pull/394), [#395](https://github.com/shaman007/home-k3s/pull/395), [#396](https://github.com/shaman007/home-k3s/pull/396), [#397](https://github.com/shaman007/home-k3s/pull/397), [#398](https://github.com/shaman007/home-k3s/pull/398), [#399](https://github.com/shaman007/home-k3s/pull/399), [#400](https://github.com/shaman007/home-k3s/pull/400), [#401](https://github.com/shaman007/home-k3s/pull/401)
+
 ## 2026-07-12 – Weekly Highlights
 
 - **Highlights**
