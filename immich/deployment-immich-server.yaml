@@ -84,7 +84,7 @@ spec:
       volumes:
         - name: library
           persistentVolumeClaim:
-            claimName: immich-library-lh
+            claimName: immich-library-hdd
         - name: stash-data
           hostPath:
             path: /var/mnt/storage/k8s/stash-data
