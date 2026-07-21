@@ -111,7 +111,7 @@ spec:
             - name: logs
               mountPath: /var/log/bitwarden
         - name: alloy
-          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.17.1
+          image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.18.0
           imagePullPolicy: IfNotPresent
           args:
             - run
