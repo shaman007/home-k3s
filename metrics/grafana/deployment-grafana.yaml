@@ -29,7 +29,7 @@ spec:
           - 0
       containers:
         - name: grafana
-          image: harbor.andreybondarenko.com/dockerhub/grafana/grafana:13.1.0
+          image: harbor.andreybondarenko.com/dockerhub/grafana/grafana:13.1.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
