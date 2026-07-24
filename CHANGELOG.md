@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-07-24 – Weekly Highlights
+
+- **Highlights**
+  - Moved Immich library storage to HDD by adding dedicated HDD-backed persistent volume and claim manifests and repointing the Immich server mount.
+  - Updated the logs-check job to read `GRAFANA_TOKEN` from a Vault-backed ExternalSecret, wired the new secret into the CronJob, and added coverage for Grafana access handling.
+  - Made the Mastodon bookmarked-media sync job tolerate missing bookmarks instead of failing the whole run.
+  - Refreshed platform and workflow dependencies including External Secrets `2.8.0`, Mastodon `1.1.0`, Elasticsearch `9.4.4`, Grafana `13.1.1`, Alloy `1.18.0`, SeaweedFS `4.40`, Synapse `1.157.1`, Ollama `0.32.3`, redis_exporter `1.88.0`, Dawarich `1.10.1`, and GitHub Actions `actions/checkout`, `actions/setup-python`, and Renovate GitHub Action.
+
+- **Key PR Links**
+  - PR links could not be verified from local repo history because GitHub CLI metadata is unavailable in this environment.
+
 ## 2026-07-17 – Weekly Highlights
 
 - **Highlights**
