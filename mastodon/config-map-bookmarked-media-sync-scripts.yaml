@@ -128,6 +128,7 @@ data:
     download_dir="/work/import"
     max_attempts="${BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS:-8}"
     retry_delay_seconds="${BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS:-15}"
+    skipped_count=0
 
     rm -rf /work/export /work/import
     mkdir -p /work/export "${download_dir}"
@@ -178,13 +179,15 @@ data:
           --output "${destination}" \
           "${url}"; then
           break
+        else
+          status="$?"
         fi
 
-        status="$?"
         rm -f "${destination}"
         if [ "${attempt}" -ge "${max_attempts}" ]; then
-          echo "Failed to download required object after ${max_attempts} attempts: ${url}" >&2
-          exit "${status}"
+          echo "Skipping unavailable federated object after ${max_attempts} attempts: ${url}" >&2
+          skipped_count=$((skipped_count + 1))
+          break
         fi
 
         echo "Download attempt ${attempt} failed with curl exit code ${status}; retrying in ${retry_delay_seconds}s" >&2
@@ -194,7 +197,7 @@ data:
     done < "${export_file}"
 
     file_count="$(find "${download_dir}" -type f | wc -l | tr -d ' ')"
-    echo "Downloaded ${file_count} file(s)"
+    echo "Downloaded ${file_count} file(s); skipped ${skipped_count} unavailable federated object(s)"
   apply-immich-descriptions.sh: |
     #!/bin/sh
     set -eu
