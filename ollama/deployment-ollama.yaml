@@ -86,6 +86,7 @@ spec:
                 sleep 2
               done
               ollama pull gpt-oss:20b
+              ollama pull gemma3:12b
               sleep infinity
           env:
             - name: OLLAMA_HOST

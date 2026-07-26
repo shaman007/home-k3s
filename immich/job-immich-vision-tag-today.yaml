@@ -1,0 +1,66 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: immich-vision-tag-today
+  namespace: immich
+  labels:
+    app.kubernetes.io/name: immich-vision-tagging
+    app.kubernetes.io/instance: immich-vision-tagging
+    app.kubernetes.io/part-of: immich
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 7200
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: immich-vision-tagging
+        app.kubernetes.io/instance: immich-vision-tagging
+        app.kubernetes.io/part-of: immich
+    spec:
+      priorityClassName: homelab-batch
+      enableServiceLinks: false
+      restartPolicy: Never
+      containers:
+        - name: tag-images
+          image: python:3.14-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -lc
+            - |
+              apk add --no-cache ca-certificates tzdata
+              python /scripts/tag-todays-images.py
+          env:
+            - name: IMMICH_URL
+              value: http://immich.immich.svc.cluster.local:2283/api
+            - name: IMMICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: immich-vision-tagging
+                  key: IMMICH_API_KEY
+            - name: OLLAMA_URL
+              value: http://ollama.ollama.svc.cluster.local:11434
+            - name: OLLAMA_MODEL
+              value: gemma3:12b
+            - name: TIME_ZONE
+              value: Europe/Prague
+            - name: REQUEST_TIMEOUT_SECONDS
+              value: "600"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: immich-vision-tagging-scripts
+            defaultMode: 0555

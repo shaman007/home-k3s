@@ -1,0 +1,226 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: immich-vision-tagging-scripts
+  namespace: immich
+  labels:
+    app.kubernetes.io/name: immich-vision-tagging
+    app.kubernetes.io/instance: immich-vision-tagging
+    app.kubernetes.io/part-of: immich
+    app.kubernetes.io/managed-by: argoCD
+data:
+  tag-todays-images.py: |
+    #!/usr/bin/env python3
+    import base64
+    import json
+    import os
+    import re
+    import sys
+    import time
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+    from datetime import datetime, time as datetime_time, timedelta
+    from zoneinfo import ZoneInfo
+
+    IMMICH_URL = os.environ["IMMICH_URL"].rstrip("/")
+    IMMICH_API_KEY = os.environ["IMMICH_API_KEY"]
+    OLLAMA_URL = os.environ["OLLAMA_URL"].rstrip("/")
+    OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "gemma3:12b")
+    TIME_ZONE = os.environ.get("TIME_ZONE", "Europe/Prague")
+    REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT_SECONDS", "600"))
+    TAG_PREFIX = "ollama/"
+    MARKER_TAG = f"{TAG_PREFIX}vision-tagged"
+    TAG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{1,39}$")
+
+
+    def request(url, *, method="GET", headers=None, payload=None, binary=False, timeout=None):
+        body = None if payload is None else json.dumps(payload).encode("utf-8")
+        request_headers = dict(headers or {})
+        if payload is not None:
+            request_headers["content-type"] = "application/json"
+        req = urllib.request.Request(url, data=body, headers=request_headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout or REQUEST_TIMEOUT) as response:
+                data = response.read()
+        except urllib.error.HTTPError as error:
+            detail = error.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"{method} {url} returned HTTP {error.code}: {detail}") from error
+        if binary:
+            return data
+        return json.loads(data) if data else None
+
+
+    def immich(path, *, method="GET", payload=None, binary=False):
+        return request(
+            f"{IMMICH_URL}{path}",
+            method=method,
+            headers={"x-api-key": IMMICH_API_KEY},
+            payload=payload,
+            binary=binary,
+        )
+
+
+    def wait_for_model():
+        deadline = time.monotonic() + 3600
+        while time.monotonic() < deadline:
+            try:
+                response = request(f"{OLLAMA_URL}/api/tags", timeout=10)
+                names = {model.get("name") for model in response.get("models", [])}
+                if OLLAMA_MODEL in names or f"{OLLAMA_MODEL}:latest" in names:
+                    print(f"Ollama model {OLLAMA_MODEL} is available", flush=True)
+                    return
+                print(f"Waiting for Ollama model {OLLAMA_MODEL} to be pulled", flush=True)
+            except Exception as error:
+                print(f"Waiting for Ollama: {error}", flush=True)
+            time.sleep(15)
+        raise RuntimeError(f"Ollama model {OLLAMA_MODEL} was not available after one hour")
+
+
+    def date_window():
+        zone = ZoneInfo(TIME_ZONE)
+        requested_date = os.environ.get("IMMICH_VISION_DATE", "").strip()
+        day = datetime.fromisoformat(requested_date).date() if requested_date else datetime.now(zone).date()
+        start = datetime.combine(day, datetime_time.min, tzinfo=zone)
+        end = start + timedelta(days=1)
+        return day, start.isoformat(), end.isoformat()
+
+
+    def find_images(owner_id, taken_after, taken_before):
+        page = 1
+        seen_pages = set()
+        while page not in seen_pages:
+            seen_pages.add(page)
+            response = immich(
+                "/search/metadata",
+                method="POST",
+                payload={
+                    "page": page,
+                    "size": 100,
+                    "takenAfter": taken_after,
+                    "takenBefore": taken_before,
+                    "type": "IMAGE",
+                    "withDeleted": False,
+                },
+            )
+            assets = response.get("assets", {})
+            items = assets.get("items", [])
+            for asset in items:
+                if asset.get("ownerId") == owner_id:
+                    yield asset
+            next_page = assets.get("nextPage")
+            if next_page in (None, "", 0, "0"):
+                return
+            page = int(next_page)
+
+
+    def normalize_tags(raw_tags):
+        normalized = []
+        for raw_tag in raw_tags:
+            tag = re.sub(r"[^a-z0-9]+", "-", str(raw_tag).strip().lower()).strip("-")
+            if TAG_PATTERN.fullmatch(tag) and tag not in normalized and tag != "vision-tagged":
+                normalized.append(tag)
+        return normalized[:8]
+
+
+    def describe_image(image):
+        schema = {
+            "type": "object",
+            "properties": {
+                "tags": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 3,
+                    "maxItems": 8,
+                }
+            },
+            "required": ["tags"],
+        }
+        response = request(
+            f"{OLLAMA_URL}/api/chat",
+            method="POST",
+            payload={
+                "model": OLLAMA_MODEL,
+                "stream": False,
+                "format": schema,
+                "options": {"temperature": 0.1},
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": (
+                            "Return 3 to 8 concise English tags describing visible objects, the scene, "
+                            "setting, activity, and broad visual style. Use lowercase nouns or short "
+                            "hyphenated phrases. Do not identify people, infer sensitive traits, use "
+                            "proper names, or include commentary."
+                        ),
+                        "images": [base64.b64encode(image).decode("ascii")],
+                    }
+                ],
+            },
+        )
+        content = response.get("message", {}).get("content", "")
+        tags = normalize_tags(json.loads(content).get("tags", []))
+        if not tags:
+            raise RuntimeError(f"Ollama returned no usable tags: {content!r}")
+        return tags
+
+
+    def existing_tag_values(asset_id):
+        asset = immich(f"/assets/{asset_id}")
+        return {tag.get("value", tag.get("name", "")) for tag in asset.get("tags", [])}
+
+
+    def apply_tags(asset_id, tags):
+        values = [f"{TAG_PREFIX}{tag}" for tag in tags] + [MARKER_TAG]
+        created = immich("/tags", method="PUT", payload={"tags": values})
+        tag_ids = [tag["id"] for tag in created]
+        immich(
+            "/tags/assets",
+            method="PUT",
+            payload={"assetIds": [asset_id], "tagIds": tag_ids},
+        )
+
+
+    def main():
+        user = immich("/users/me")
+        owner_id = user["id"]
+        day, taken_after, taken_before = date_window()
+        print(
+            f"Processing private images owned by {user.get('email', owner_id)} for {day} "
+            f"({taken_after} through {taken_before})",
+            flush=True,
+        )
+
+        wait_for_model()
+        images = list(find_images(owner_id, taken_after, taken_before))
+        print(f"Found {len(images)} image(s)", flush=True)
+
+        tagged = 0
+        skipped = 0
+        failures = []
+        for index, asset in enumerate(images, start=1):
+            asset_id = asset["id"]
+            filename = asset.get("originalFileName", asset_id)
+            try:
+                if MARKER_TAG in existing_tag_values(asset_id):
+                    print(f"[{index}/{len(images)}] Skipping already-tagged {filename}", flush=True)
+                    skipped += 1
+                    continue
+                query = urllib.parse.urlencode({"size": "preview"})
+                image = immich(f"/assets/{asset_id}/thumbnail?{query}", binary=True)
+                tags = describe_image(image)
+                apply_tags(asset_id, tags)
+                tagged += 1
+                print(f"[{index}/{len(images)}] Tagged {filename}: {', '.join(tags)}", flush=True)
+            except Exception as error:
+                failures.append(asset_id)
+                print(f"[{index}/{len(images)}] FAILED {filename}: {error}", file=sys.stderr, flush=True)
+
+        print(f"Result: tagged={tagged}, skipped={skipped}, failed={len(failures)}", flush=True)
+        if failures:
+            raise RuntimeError(f"Failed asset IDs: {', '.join(failures)}")
+
+
+    if __name__ == "__main__":
+        main()
