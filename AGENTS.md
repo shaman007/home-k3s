@@ -27,6 +27,16 @@
 - `docker compose up`
 - `docker run`
 
+## Working conventions
+- This repository is a GitOps-based Kubernetes home-lab. Prefer inspecting the app-specific manifest in its folder and the matching Argo CD application manifest before suggesting changes.
+- Keep changes minimal, reversible, and consistent with the surrounding YAML, docs, and naming conventions.
+- When troubleshooting a deployment, inspect the manifest, related ConfigMaps/Secrets, persistent volumes, and pod logs/events before proposing a fix.
+
+## MemPalace and MCP workflow
+- MemPalace is the preferred durable knowledge store for repo-related context, imported notes, and project snapshots.
+- Prefer reading and writing through the MemPalace pod under `/data/.mempalace`, `/data/imports`, and `/data/projects` when a task needs persistent memory.
+- MemPalace exposes an MCP server; use it when a workflow benefits from structured knowledge retrieval or long-lived context.
+
 ## Notes
 - Keep `kubectl`, `helm`, and `git` approvals scoped to verifiably read-only commands.
 - Ask before any `kubectl` or `helm` command that creates, updates, patches, deletes, rolls back, installs, upgrades, uninstalls, or otherwise changes live cluster state, unless it is listed under Never run.
