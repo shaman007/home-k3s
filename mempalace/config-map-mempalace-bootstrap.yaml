@@ -8,7 +8,7 @@ data:
     #!/bin/sh
     set -eu
 
-    MEMPALACE_VERSION="${MEMPALACE_VERSION:-3.6.6}"
+    MEMPALACE_VERSION="${MEMPALACE_VERSION:-3.6.0}"
     VENV_DIR="${VENV_DIR:-/data/venv}"
 
     export HOME=/data

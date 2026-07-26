@@ -55,6 +55,8 @@ spec:
             - reindex
             - --server-url
             - http://hister:8080
+            - --client-timeout
+            - "0"
           volumeMounts:
             - name: hister-data
               mountPath: /data
