@@ -131,6 +131,11 @@ curl -sfL https://get.k3s.io | \
   K3S_URL=https://master.k8s.my.lan:6443 K3S_TOKEN=<node-token> sh -
 ```
 
+The Talos nodes allow up to 200 pods each. Apply
+`talos/kubelet-max-pods.yaml` as a machine-config patch to every Talos node,
+rolling out host configuration one node at a time. Then verify that each node
+reports `200` under `.status.allocatable.pods`.
+
 4. Configure local `kubectl` access.
 
 ```bash
