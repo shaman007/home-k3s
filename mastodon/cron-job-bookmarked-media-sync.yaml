@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: mastodon
     app.kubernetes.io/managed-by: argoCD
 spec:
-  schedule: "30 3 * * *"
+  schedule: "0 */3 * * *"
   timeZone: Europe/Prague
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
