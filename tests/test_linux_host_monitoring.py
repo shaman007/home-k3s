@@ -27,9 +27,9 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         static_config = job["static_configs"][0]
 
         self.assertEqual(
-            static_config["targets"], ["backup.andreybondarenko.com:9100"]
+            static_config["targets"], ["192.168.1.112:9100"]
         )
-        self.assertEqual(static_config["labels"]["host"], "backup")
+        self.assertEqual(static_config["labels"]["host"], "fedora")
         self.assertEqual(static_config["labels"]["alert_on_down"], "false")
 
         target_down = next(

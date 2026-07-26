@@ -10,7 +10,7 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # backup.andreybondarenko.com:9090 and :9100 from the external host jobs
+    # External Prometheus and the Fedora workstation node exporter.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0

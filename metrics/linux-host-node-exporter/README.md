@@ -1,20 +1,26 @@
 # Linux host node exporter
 
-This directory defines the node exporter for `backup.andreybondarenko.com`.
-It publishes host CPU, memory, load, filesystem, disk, network, and OS metrics
-on TCP port `9100` for the `linux-host-node-exporter` Prometheus job.
+This directory defines the node exporter for the Fedora workstation at
+`192.168.1.112`. It publishes host CPU, memory, load, filesystem, disk,
+network, and OS metrics on TCP port `9100` for the
+`linux-host-node-exporter` Prometheus job.
 
-Copy `docker-compose.yaml` to the Linux host and start it there:
+Fedora uses the checked-in Podman Quadlet. Install it as a persistent user
+service:
 
 ```bash
-docker compose up -d
+podman quadlet install node-exporter.container
+systemctl --user daemon-reload
+systemctl --user start node-exporter.service
+sudo loginctl enable-linger "$USER"
 curl --fail http://127.0.0.1:9100/metrics
 ```
 
-Restrict inbound TCP/9100 at the host or perimeter firewall to the Prometheus
-source address. The exporter is read-only, uses the host network and PID
-namespace, and mounts `/` read-only so its metrics describe the host rather
-than the container.
+Enable the `node-exporter` firewalld service for the trusted LAN source or
+otherwise allow the Kubernetes nodes to reach TCP/9100. The exporter is
+read-only, uses the host network and PID namespace, and mounts `/` read-only
+so its metrics describe the host rather than the container. The existing
+`docker-compose.yaml` is retained as a portable alternative for Docker hosts.
 
 The scrape target carries `alert_on_down="false"`. The shared `TargetDown`
 rule excludes targets with that label, so shutting down this host or stopping

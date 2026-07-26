@@ -319,9 +319,9 @@ data:
         metrics_path: "/metrics"
         static_configs:
           - targets:
-              - backup.andreybondarenko.com:9100
+              - 192.168.1.112:9100
             labels:
-              host: backup
+              host: fedora
               alert_on_down: "false"
 
       - job_name: unifi

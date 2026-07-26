@@ -1,0 +1,22 @@
+[Unit]
+Description=Prometheus node exporter for the Fedora workstation
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
+ContainerName=node-exporter
+Network=host
+PodmanArgs=--pid=host
+ReadOnly=true
+SecurityLabelDisable=true
+NoNewPrivileges=true
+Volume=/:/host:ro,rslave
+Exec=--path.rootfs=/host --web.listen-address=:9100 --no-collector.wifi --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/) --collector.netclass.ignored-devices=^(veth.*)$
+
+[Service]
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
