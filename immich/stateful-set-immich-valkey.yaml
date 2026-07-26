@@ -67,7 +67,7 @@ spec:
               cpu: 40m
               memory: 64Mi
             limits:
-              memory: 128Mi
+              memory: 512Mi
       volumes:
         - name: data
           persistentVolumeClaim:
