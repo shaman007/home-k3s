@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect NVIDIA GPU metrics every 15 seconds
+
+[Timer]
+OnBootSec=15s
+OnUnitActiveSec=15s
+AccuracySec=1s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

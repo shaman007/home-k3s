@@ -45,7 +45,7 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         dashboard = json.loads(config_map["data"]["linux-host.json"])
 
         self.assertEqual(dashboard["uid"], "linux-host-overview")
-        self.assertEqual(len(dashboard["panels"]), 10)
+        self.assertEqual(len(dashboard["panels"]), 18)
         for panel in dashboard["panels"]:
             self.assertNotIn("alert", panel)
         self.assertIn(

@@ -13,7 +13,8 @@ ReadOnly=true
 SecurityLabelDisable=true
 NoNewPrivileges=true
 Volume=/:/host:ro,rslave
-Exec=--path.rootfs=/host --web.listen-address=:9100 --no-collector.wifi --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/) --collector.netclass.ignored-devices=^(veth.*)$
+Volume=/var/lib/node_exporter:/var/lib/node_exporter:ro
+Exec=--path.rootfs=/host --web.listen-address=:9100 --collector.textfile.directory=/var/lib/node_exporter --no-collector.wifi --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/) --collector.netclass.ignored-devices=^(veth.*)$
 
 [Service]
 Restart=always

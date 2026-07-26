@@ -1,0 +1,15 @@
+[Unit]
+Description=Export NVIDIA GPU metrics for node exporter
+After=local-fs.target
+ConditionPathIsExecutable=/usr/bin/nvidia-smi
+
+[Service]
+Type=oneshot
+StateDirectory=node_exporter
+ExecStart=/usr/bin/python3 /home/shaman007/git/home-k3s/metrics/linux-host-node-exporter/collect-hardware-metrics.py gpu /var/lib/node_exporter/gpu.prom
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadWritePaths=/var/lib/node_exporter

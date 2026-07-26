@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect SMART disk metrics every five minutes
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=5m
+AccuracySec=15s
+Persistent=true
+
+[Install]
+WantedBy=timers.target
