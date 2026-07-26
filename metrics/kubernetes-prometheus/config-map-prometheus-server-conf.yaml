@@ -137,7 +137,7 @@ data:
         annotations:
           summary: Node is unreachable.
       - alert: TargetDown
-        expr: 100 * (count by (cluster, job, namespace, service) (up == 0) / count by (cluster, job, namespace, service) (up)) > 10
+        expr: 100 * (count by (cluster, job, namespace, service) (up{alert_on_down!="false"} == 0) / count by (cluster, job, namespace, service) (up{alert_on_down!="false"})) > 10
         for: 1m
         labels:
           severity: mail
@@ -312,6 +312,17 @@ data:
         static_configs:
         - targets:
           - backup.andreybondarenko.com:9090
+
+      - job_name: linux-host-node-exporter
+        scrape_interval: 45s
+        scrape_timeout: 30s
+        metrics_path: "/metrics"
+        static_configs:
+          - targets:
+              - backup.andreybondarenko.com:9100
+            labels:
+              host: backup
+              alert_on_down: "false"
 
       - job_name: unifi
         scrape_interval: 45s

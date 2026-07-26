@@ -138,3 +138,5 @@ spec:
                   name: grafana-dashboard-platform-health
               - configMap:
                   name: grafana-dashboard-finance-ticker
+              - configMap:
+                  name: grafana-dashboard-linux-host

@@ -1,0 +1,18 @@
+services:
+  node-exporter:
+    image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
+    container_name: node-exporter
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=:9100
+      - --no-collector.wifi
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+)($|/)
+      - --collector.netclass.ignored-devices=^(veth.*)$
+    volumes:
+      - /:/host:ro,rslave

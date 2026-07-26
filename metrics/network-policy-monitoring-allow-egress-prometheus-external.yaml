@@ -10,16 +10,20 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # backup.andreybondarenko.com:9090 from the "external" scrape job
+    # backup.andreybondarenko.com:9090 and :9100 from the external host jobs
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
           port: 9090
+        - protocol: TCP
+          port: 9100
     - to:
         - ipBlock:
             cidr: ::/0
       ports:
         - protocol: TCP
           port: 9090
+        - protocol: TCP
+          port: 9100
