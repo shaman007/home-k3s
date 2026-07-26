@@ -6,6 +6,7 @@ Wants=network-online.target
 [Container]
 Image=harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
 ContainerName=node-exporter
+User=0
 Network=host
 PodmanArgs=--pid=host
 ReadOnly=true

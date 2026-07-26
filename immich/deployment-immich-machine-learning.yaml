@@ -26,13 +26,12 @@ spec:
         app.kubernetes.io/part-of: immich
     spec:
       priorityClassName: homelab-essential
-      runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: talos-d4h-k5m
       containers:
         - name: immich-machine-learning
-          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v3.0.3-cuda
+          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v3.0.3
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
@@ -56,8 +55,6 @@ spec:
               value: /cache/huggingface-xet
             - name: MPLCONFIGDIR
               value: /cache/matplotlib-config
-            - name: NVIDIA_DRIVER_CAPABILITIES
-              value: compute,utility
             - name: TZ
               value: Europe/Prague
           ports:
@@ -92,8 +89,7 @@ spec:
               cpu: 50m
               memory: 2304Mi
             limits:
-              memory: 4352Mi
-              nvidia.com/gpu: 1
+              memory: 6Gi
       volumes:
         - name: cache
           persistentVolumeClaim:

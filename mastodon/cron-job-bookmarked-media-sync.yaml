@@ -84,6 +84,18 @@ spec:
                   if [ "${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}" != "true" ]; then
                     apk add --no-cache ca-certificates coreutils curl jq
                     /scripts/apply-immich-descriptions.sh
+
+                    echo "Queueing face detection for assets missing face processing"
+                    curl --fail --silent --show-error \
+                      --retry 5 \
+                      --retry-all-errors \
+                      -o /dev/null \
+                      -X PUT \
+                      -H "content-type: application/json" \
+                      -H "x-api-key: ${IMMICH_API_KEY}" \
+                      -d '{"command":"start","force":false}' \
+                      "${IMMICH_INSTANCE_URL}/jobs/faceDetection"
+                    echo "Queued missing face detection jobs"
                   fi
               env:
                 - name: IMMICH_INSTANCE_URL

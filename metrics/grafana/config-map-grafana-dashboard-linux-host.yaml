@@ -132,7 +132,7 @@ data:
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
           "id": 10,
           "options": {"displayMode": "gradient", "maxVizHeight": 300, "minVizHeight": 16, "minVizWidth": 8, "namePlacement": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showUnfilled": true, "sizing": "auto", "valueMode": "color"},
-          "targets": [{"editorMode": "code", "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"linux-host-node-exporter\",host=~\"$host\",fstype!~\"tmpfs|devtmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"linux-host-node-exporter\",host=~\"$host\",fstype!~\"tmpfs|devtmpfs|overlay|squashfs\"})", "legendFormat": "{{mountpoint}}", "range": true, "refId": "A"}],
+          "targets": [{"editorMode": "code", "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"linux-host-node-exporter\",host=~\"$host\",device=~\"/dev/.+\",fstype!~\"tmpfs|devtmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"linux-host-node-exporter\",host=~\"$host\",device=~\"/dev/.+\",fstype!~\"tmpfs|devtmpfs|overlay|squashfs\"})", "legendFormat": "{{mountpoint}}", "range": true, "refId": "A"}],
           "title": "Filesystem Usage",
           "type": "bargauge"
         }
