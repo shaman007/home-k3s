@@ -38,7 +38,7 @@ spec:
               mountPath: /data
       containers:
         - name: reindex
-          image: harbor.andreybondarenko.com/github/asciimoo/hister:master
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.16.0
           imagePullPolicy: Always
           securityContext:
             runAsUser: 65532
@@ -53,6 +53,8 @@ spec:
           command:
             - /hister/hister
             - reindex
+            - --server-url
+            - http://hister:8080
           volumeMounts:
             - name: hister-data
               mountPath: /data
