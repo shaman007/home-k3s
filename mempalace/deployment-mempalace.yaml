@@ -37,6 +37,8 @@ spec:
               value: /data
             - name: PIP_NO_CACHE_DIR
               value: "1"
+            - name: MEMPALACE_VERSION
+              value: "3.6.6"
           securityContext:
             runAsUser: 65532
             runAsGroup: 65532
@@ -64,6 +66,8 @@ spec:
           env:
             - name: HOME
               value: /data
+            - name: MEMPALACE_VERSION
+              value: "3.6.6"
           securityContext:
             runAsUser: 65532
             runAsGroup: 65532

@@ -8,20 +8,28 @@ data:
     #!/bin/sh
     set -eu
 
+    MEMPALACE_VERSION="${MEMPALACE_VERSION:-3.6.6}"
+    VENV_DIR="${VENV_DIR:-/data/venv}"
+
     export HOME=/data
-    export PATH="/data/venv/bin:${PATH}"
+    export PATH="${VENV_DIR}/bin:${PATH}"
     expected_python="$(python3 -c 'import sys; print(str(sys.version_info.major) + "." + str(sys.version_info.minor))')"
     actual_python=""
+    installed_version=""
 
-    if [ -f /data/venv/pyvenv.cfg ]; then
-      actual_python="$(awk '/^version = / {print $3}' /data/venv/pyvenv.cfg | cut -d. -f1,2)"
+    if [ -f "${VENV_DIR}/pyvenv.cfg" ]; then
+      actual_python="$(awk '/^version = / {print $3}' "${VENV_DIR}/pyvenv.cfg" | cut -d. -f1,2)"
     fi
 
-    if [ ! -x /data/venv/bin/mempalace ] || [ "${actual_python}" != "${expected_python}" ]; then
-      rm -rf /data/venv
-      python3 -m venv /data/venv
-      /data/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
-      /data/venv/bin/pip install --no-cache-dir mempalace==3.0.0
+    if [ -x "${VENV_DIR}/bin/python" ]; then
+      installed_version="$(${VENV_DIR}/bin/python -c 'import importlib.metadata as metadata; print(metadata.version("mempalace"))' 2>/dev/null || true)"
+    fi
+
+    if [ ! -x "${VENV_DIR}/bin/mempalace" ] || [ "${actual_python}" != "${expected_python}" ] || [ "${installed_version}" != "${MEMPALACE_VERSION}" ]; then
+      rm -rf "${VENV_DIR}"
+      python3 -m venv "${VENV_DIR}"
+      "${VENV_DIR}/bin/pip" install --no-cache-dir --upgrade pip setuptools wheel
+      "${VENV_DIR}/bin/pip" install --no-cache-dir "mempalace==${MEMPALACE_VERSION}"
     fi
 
     mkdir -p /data/.mempalace
@@ -29,10 +37,12 @@ data:
     #!/bin/sh
     set -eu
 
-    export HOME=/data
-    export PATH="/data/venv/bin:${PATH}"
+    VENV_DIR="${VENV_DIR:-/data/venv}"
 
-    /data/venv/bin/python -c "import mempalace"
+    export HOME=/data
+    export PATH="${VENV_DIR}/bin:${PATH}"
+
+    "${VENV_DIR}/bin/python" -c "import mempalace"
     mkdir -p /data/.mempalace
 
     exec sleep infinity
