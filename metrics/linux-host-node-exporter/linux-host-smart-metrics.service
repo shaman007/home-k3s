@@ -6,7 +6,7 @@ ConditionPathIsExecutable=/usr/bin/smartctl
 [Service]
 Type=oneshot
 StateDirectory=node_exporter
-ExecStart=/usr/bin/python3 /home/shaman007/git/home-k3s/metrics/linux-host-node-exporter/collect-hardware-metrics.py smart /var/lib/node_exporter/smart.prom
+ExecStart=/usr/bin/python3 /usr/local/libexec/linux-host-collect-hardware-metrics smart /var/lib/node_exporter/smart.prom
 IOSchedulingClass=idle
 Nice=15
 NoNewPrivileges=true

@@ -21,7 +21,10 @@ their timers:
 
 ```bash
 sudo dnf install xorg-x11-drv-nvidia-cuda smartmontools
-sudo systemctl link "$PWD"/linux-host-{gpu,smart}-metrics.{service,timer}
+sudo install -m 0755 collect-hardware-metrics.py \
+  /usr/local/libexec/linux-host-collect-hardware-metrics
+sudo install -m 0644 linux-host-{gpu,smart}-metrics.{service,timer} \
+  /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now \
   linux-host-gpu-metrics.timer linux-host-smart-metrics.timer

@@ -10,6 +10,7 @@ import math
 import re
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 
@@ -135,20 +136,27 @@ def smart_metrics() -> list[str]:
 
     successful = 0
     for device in smart_devices():
-        completed = subprocess.run(
-            ["/usr/bin/smartctl", "-a", "-j", str(device)],
-            check=False, capture_output=True, text=True, timeout=45,
-        )
-        try:
-            data = json.loads(completed.stdout)
-        except json.JSONDecodeError:
+        data: dict[str, object] = {}
+        for attempt in range(2):
+            completed = subprocess.run(
+                ["/usr/bin/smartctl", "-a", "-j", str(device)],
+                check=False, capture_output=True, text=True, timeout=45,
+            )
+            try:
+                data = json.loads(completed.stdout)
+            except json.JSONDecodeError:
+                data = {}
+            if (data.get("smart_status") or {}).get("passed") is not None or attempt == 1:
+                break
+            time.sleep(1)
+        if not data:
             lines.append(sample("linux_host_smart_scrape_success", 0, {"device": device.name}) or "")
             continue
         model = data.get("model_name") or data.get("model_family") or "unknown"
         serial = data.get("serial_number") or "unknown"
         protocol = data.get("device", {}).get("protocol") or "unknown"
         labels = {"device": device.name, "model": model, "protocol": protocol, "serial": serial}
-        health = data.get("smart_status", {}).get("passed")
+        health = (data.get("smart_status") or {}).get("passed")
         available = health is not None
         lines.append(sample("linux_host_smart_scrape_success", int(available), labels) or "")
         if not available:

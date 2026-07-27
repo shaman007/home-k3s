@@ -6,7 +6,7 @@ ConditionPathIsExecutable=/usr/bin/nvidia-smi
 [Service]
 Type=oneshot
 StateDirectory=node_exporter
-ExecStart=/usr/bin/python3 /home/shaman007/git/home-k3s/metrics/linux-host-node-exporter/collect-hardware-metrics.py gpu /var/lib/node_exporter/gpu.prom
+ExecStart=/usr/bin/python3 /usr/local/libexec/linux-host-collect-hardware-metrics gpu /var/lib/node_exporter/gpu.prom
 Nice=10
 NoNewPrivileges=true
 PrivateTmp=true
