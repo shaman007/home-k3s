@@ -18,7 +18,7 @@ data:
         annotations:
           summary: High Memory Usage
       - alert: High Swap Usage
-        expr: ((node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes)/node_memory_SwapTotal_bytes)*100 > 40
+        expr: ((node_memory_SwapTotal_bytes{host!="fedora"} - node_memory_SwapFree_bytes{host!="fedora"})/node_memory_SwapTotal_bytes{host!="fedora"})*100 > 40
         for: 3m
         labels:
           severity: mail

@@ -40,6 +40,14 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         )
         self.assertIn('up{alert_on_down!="false"}', target_down["expr"])
 
+        high_swap = next(
+            rule
+            for group in self.rules["groups"]
+            for rule in group["rules"]
+            if rule["alert"] == "High Swap Usage"
+        )
+        self.assertEqual(high_swap["expr"].count('host!="fedora"'), 3)
+
     def test_linux_host_dashboard_is_valid_and_provisioned(self):
         config_map = yaml.safe_load(DASHBOARD.read_text(encoding="utf-8"))
         dashboard = json.loads(config_map["data"]["linux-host.json"])
