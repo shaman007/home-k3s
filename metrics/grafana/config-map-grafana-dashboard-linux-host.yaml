@@ -20,7 +20,7 @@ data:
           }
         ]
       },
-      "description": "Key Linux host metrics from node_exporter. Missing data is shown as no data and does not create alerts.",
+      "description": "Linux host, NVIDIA GPU, hardware sensor, and SMART metrics. Missing data is shown as no data and does not create alerts.",
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 1,
@@ -135,11 +135,115 @@ data:
           "targets": [{"editorMode": "code", "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"linux-host-node-exporter\",host=~\"$host\",device=~\"/dev/.+\",fstype!~\"tmpfs|devtmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{job=\"linux-host-node-exporter\",host=~\"$host\",device=~\"/dev/.+\",fstype!~\"tmpfs|devtmpfs|overlay|squashfs\"})", "legendFormat": "{{mountpoint}}", "range": true, "refId": "A"}],
           "title": "Filesystem Usage",
           "type": "bargauge"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "max": 100, "min": 0, "unit": "percent"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+          "id": 11,
+          "options": {"legend": {"calcs": ["lastNotNull", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "linux_host_gpu_utilization_percent{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "GPU", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "100 * linux_host_gpu_memory_used_bytes{job=\"linux-host-node-exporter\",host=~\"$host\"} / linux_host_gpu_memory_total_bytes{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "VRAM used", "range": true, "refId": "B"},
+            {"editorMode": "code", "expr": "linux_host_gpu_memory_utilization_percent{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Memory controller", "range": true, "refId": "C"}
+          ],
+          "title": "GPU Utilization",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "min": 0, "unit": "bytes"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+          "id": 12,
+          "options": {"legend": {"calcs": ["lastNotNull", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "linux_host_gpu_memory_used_bytes{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Used", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "linux_host_gpu_memory_free_bytes{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Free", "range": true, "refId": "B"}
+          ],
+          "title": "GPU Memory",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 12, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "unit": "celsius"}, "overrides": [{"matcher": {"id": "byName", "options": "Fan"}, "properties": [{"id": "unit", "value": "percent"}, {"id": "custom.axisPlacement", "value": "right"}]}]},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+          "id": 13,
+          "options": {"legend": {"calcs": ["lastNotNull", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "linux_host_gpu_temperature_celsius{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Temperature", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "linux_host_gpu_fan_percent{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Fan", "range": true, "refId": "B"}
+          ],
+          "title": "GPU Temperature and Fan",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "min": 0, "unit": "watt"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+          "id": 14,
+          "options": {"legend": {"calcs": ["lastNotNull", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "linux_host_gpu_power_watts{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Draw", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "linux_host_gpu_power_limit_watts{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "Limit", "range": true, "refId": "B"}
+          ],
+          "title": "GPU Power",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "unit": "celsius"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+          "id": 15,
+          "options": {"legend": {"calcs": ["lastNotNull", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "node_hwmon_temp_celsius{job=\"linux-host-node-exporter\",host=~\"$host\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}", "legendFormat": "CPU package", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "node_hwmon_temp_celsius{job=\"linux-host-node-exporter\",host=~\"$host\",chip=\"platform_asus_ec_sensors\",sensor=\"temp2\"}", "legendFormat": "VRM", "range": true, "refId": "B"},
+            {"editorMode": "code", "expr": "node_hwmon_temp_celsius{job=\"linux-host-node-exporter\",host=~\"$host\",chip=~\"nvme_.*\",sensor=\"temp1\"}", "legendFormat": "{{chip}}", "range": true, "refId": "C"},
+            {"editorMode": "code", "expr": "node_thermal_zone_temp{job=\"linux-host-node-exporter\",host=~\"$host\",type=\"iwlwifi_1\"}", "legendFormat": "Wi-Fi", "range": true, "refId": "D"}
+          ],
+          "title": "Component Temperatures",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"decimals": 0, "max": 1, "min": 0, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}, "unit": "bool"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+          "id": 16,
+          "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "horizontal", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
+          "targets": [{"editorMode": "code", "expr": "linux_host_smart_health_passed{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} {{model}}", "range": true, "refId": "A"}],
+          "title": "SMART Health",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "unit": "celsius"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 44},
+          "id": 17,
+          "options": {"legend": {"calcs": ["lastNotNull", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [{"editorMode": "code", "expr": "linux_host_smart_temperature_celsius{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} {{model}}", "range": true, "refId": "A"}],
+          "title": "Disk Temperatures",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "fieldConfig": {"defaults": {"custom": {"axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 8, "gradientMode": "none", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "min": 0, "unit": "short"}, "overrides": [{"matcher": {"id": "byRegexp", "options": "/.*wear.*/"}, "properties": [{"id": "unit", "value": "percent"}, {"id": "custom.axisPlacement", "value": "right"}]}]},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 44},
+          "id": 18,
+          "options": {"legend": {"calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"hideZeros": false, "mode": "multi", "sort": "desc"}},
+          "targets": [
+            {"editorMode": "code", "expr": "linux_host_smart_nvme_percentage_used{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} wear", "range": true, "refId": "A"},
+            {"editorMode": "code", "expr": "linux_host_smart_nvme_media_errors_total{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} media errors", "range": true, "refId": "B"},
+            {"editorMode": "code", "expr": "linux_host_smart_reallocated_sectors{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} reallocated", "range": true, "refId": "C"},
+            {"editorMode": "code", "expr": "linux_host_smart_pending_sectors{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} pending", "range": true, "refId": "D"},
+            {"editorMode": "code", "expr": "linux_host_smart_offline_uncorrectable_sectors{job=\"linux-host-node-exporter\",host=~\"$host\"}", "legendFormat": "{{device}} uncorrectable", "range": true, "refId": "E"}
+          ],
+          "title": "Disk Wear and Errors",
+          "type": "timeseries"
         }
       ],
       "refresh": "30s",
       "schemaVersion": 42,
-      "tags": ["linux", "node-exporter", "host"],
+      "tags": ["linux", "node-exporter", "nvidia", "smart", "host"],
       "templating": {
         "list": [
           {
@@ -175,5 +279,5 @@ data:
       "timezone": "browser",
       "title": "Linux Host Overview",
       "uid": "linux-host-overview",
-      "version": 1
+      "version": 2
     }

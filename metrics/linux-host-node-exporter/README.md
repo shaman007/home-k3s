@@ -15,6 +15,26 @@ sudo systemctl restart node-exporter.service
 curl --fail http://127.0.0.1:9100/metrics
 ```
 
+GPU and SMART metrics use node exporter's textfile collector. Install the
+matching NVIDIA utility package, link the checked-in systemd units, and start
+their timers:
+
+```bash
+sudo dnf install xorg-x11-drv-nvidia-cuda smartmontools
+sudo systemctl link "$PWD"/linux-host-{gpu,smart}-metrics.{service,timer}
+sudo systemctl daemon-reload
+sudo systemctl enable --now \
+  linux-host-gpu-metrics.timer linux-host-smart-metrics.timer
+```
+
+The GPU collector runs every 15 seconds and exports utilization, VRAM,
+temperature, power, fan percentage, and clocks. The SMART collector runs every
+five minutes and exports overall health, disk temperatures, power-on hours,
+NVMe wear/spare/error counters, and ATA reallocated/pending/uncorrectable
+sectors. Output is written atomically under `/var/lib/node_exporter` and mounted
+read-only into node exporter. Motherboard fan RPM is not exported because the
+current ASUS hwmon driver does not expose any `fan*_input` sensors.
+
 Enable the `node-exporter` firewalld service for the trusted LAN source or
 otherwise allow the Kubernetes nodes to reach TCP/9100. The exporter is
 read-only, uses the host network and PID namespace, and mounts `/` read-only.

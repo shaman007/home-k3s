@@ -64,12 +64,12 @@ def gpu_metrics() -> list[str]:
         "linux_host_gpu_fan_percent": ("NVIDIA GPU fan speed percentage.", "gauge"),
         "linux_host_gpu_graphics_clock_hertz": ("NVIDIA GPU graphics clock in hertz.", "gauge"),
         "linux_host_gpu_memory_clock_hertz": ("NVIDIA GPU memory clock in hertz.", "gauge"),
-        "linux_host_hardware_collector_success": ("Whether a hardware textfile collector completed successfully.", "gauge"),
+        "linux_host_gpu_collector_success": ("Whether NVIDIA GPU collection completed successfully.", "gauge"),
     }
     for name, (help_text, kind) in definitions.items():
         metric(lines, name, help_text, kind)
     if completed.returncode != 0:
-        lines.append('linux_host_hardware_collector_success{collector="gpu"} 0')
+        lines.append("linux_host_gpu_collector_success 0")
         return lines
 
     for row in csv.reader(completed.stdout.splitlines(), skipinitialspace=True):
@@ -96,7 +96,7 @@ def gpu_metrics() -> list[str]:
             rendered = sample(name, value * multiplier if value is not None else None, labels)
             if rendered:
                 lines.append(rendered)
-    lines.append('linux_host_hardware_collector_success{collector="gpu"} 1')
+    lines.append("linux_host_gpu_collector_success 1")
     return [line for line in lines if line]
 
 
@@ -128,7 +128,7 @@ def smart_metrics() -> list[str]:
         "linux_host_smart_nvme_media_errors_total": "NVMe media and data-integrity errors.",
         "linux_host_smart_nvme_error_log_entries_total": "NVMe error information log entries.",
         "linux_host_smart_nvme_unsafe_shutdowns_total": "NVMe unsafe shutdown count.",
-        "linux_host_hardware_collector_success": "Whether a hardware textfile collector completed successfully.",
+        "linux_host_smart_collector_success": "Whether SMART collection found at least one readable device.",
     }
     for name, help_text in definitions.items():
         metric(lines, name, help_text)
@@ -186,7 +186,7 @@ def smart_metrics() -> list[str]:
             rendered = sample(name, nvme.get(source), labels)
             if rendered:
                 lines.append(rendered)
-    lines.append(sample("linux_host_hardware_collector_success", int(successful > 0), {"collector": "smart"}) or "")
+    lines.append(sample("linux_host_smart_collector_success", int(successful > 0)) or "")
     return [line for line in lines if line]
 
 
@@ -195,6 +195,7 @@ def write_atomic(output: Path, lines: list[str]) -> None:
     with tempfile.NamedTemporaryFile("w", dir=output.parent, prefix=f".{output.name}.", delete=False) as temporary:
         temporary.write("\n".join(lines) + "\n")
         temporary_path = Path(temporary.name)
+    temporary_path.chmod(0o644)
     temporary_path.replace(output)
 
 
