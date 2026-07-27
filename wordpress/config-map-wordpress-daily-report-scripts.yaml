@@ -18,9 +18,8 @@ data:
     import os
     import re
     import smtplib
-    import subprocess
+    import ssl
     import sys
-    import tempfile
     import time
     import urllib.error
     import urllib.parse
@@ -28,8 +27,13 @@ data:
     from collections import Counter
     from datetime import datetime, timedelta
     from email.message import EmailMessage
+    from pathlib import Path
     from urllib.parse import urlparse, unquote
     from zoneinfo import ZoneInfo
+
+    SERVICE_ACCOUNT_DIR = Path("/var/run/secrets/kubernetes.io/serviceaccount")
+    SERVICE_ACCOUNT_TOKEN = SERVICE_ACCOUNT_DIR / "token"
+    SERVICE_ACCOUNT_CA = SERVICE_ACCOUNT_DIR / "ca.crt"
 
     BOT_PATTERNS = [
         (re.compile(pattern, re.IGNORECASE), label)
@@ -75,19 +79,10 @@ data:
         return value
 
 
-    def run_command(command, input_text=None):
-        result = subprocess.run(
-            command,
-            input=input_text,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(
-                f"Command failed ({result.returncode}): {' '.join(command)}\n{result.stderr.strip()}"
-            )
-        return result.stdout
+    def load_cluster_credentials():
+        token = SERVICE_ACCOUNT_TOKEN.read_text(encoding="utf-8").strip()
+        ssl_context = ssl.create_default_context(cafile=str(SERVICE_ACCOUNT_CA))
+        return token, ssl_context
 
 
     def env_int(name, default):
@@ -133,6 +128,29 @@ data:
                 time.sleep(sleep_seconds)
 
 
+    def kube_json(base_url, path, token, ssl_context, method="GET", payload=None):
+        body = None
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {token}",
+        }
+        if payload is not None:
+            body = json.dumps(payload).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        request = urllib.request.Request(
+            base_url.rstrip("/") + path,
+            data=body,
+            headers=headers,
+            method=method,
+        )
+        with urllib.request.urlopen(
+            request,
+            timeout=env_int("HTTP_TIMEOUT_SECONDS", 180),
+            context=ssl_context,
+        ) as response:
+            return json.load(response)
+
+
     def loki_query_iter(base_url, query, start_ns, end_ns, *, limit=5000):
         next_start_ns = start_ns
         while next_start_ns < end_ns:
@@ -176,24 +194,17 @@ data:
         return tz, start_local, end_local
 
 
-    def list_pods(namespace, selector):
-        output = run_command(
-            [
-                "kubectl",
-                "get",
-                "pods",
-                "-n",
-                namespace,
-                "-l",
-                selector,
-                "-o",
-                "name",
-            ]
+    def list_pods(base_url, token, ssl_context, namespace, selector):
+        query = urllib.parse.urlencode({"labelSelector": selector})
+        payload = kube_json(
+            base_url,
+            f"/api/v1/namespaces/{namespace}/pods?{query}",
+            token,
+            ssl_context,
         )
         return [
-            line.strip().split("/", 1)[-1]
-            for line in output.splitlines()
-            if line.strip()
+            item["metadata"]["name"]
+            for item in payload.get("items", [])
         ]
 
 
@@ -462,33 +473,39 @@ data:
         return "\n".join(lines).strip() + "\n"
 
 
-    def publish_metrics_configmap(namespace, configmap_name, metrics_text, report_text):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            metrics_path = os.path.join(temp_dir, "metrics.prom")
-            report_path = os.path.join(temp_dir, "report.txt")
-
-            with open(metrics_path, "w", encoding="utf-8") as handle:
-                handle.write(metrics_text)
-
-            with open(report_path, "w", encoding="utf-8") as handle:
-                handle.write(report_text)
-
-            rendered = run_command(
-                [
-                    "kubectl",
-                    "create",
-                    "configmap",
-                    configmap_name,
-                    "-n",
-                    namespace,
-                    "--from-file=metrics.prom=" + metrics_path,
-                    "--from-file=report.txt=" + report_path,
-                    "--dry-run=client",
-                    "-o",
-                    "yaml",
-                ]
-            )
-            run_command(["kubectl", "apply", "-f", "-"], input_text=rendered)
+    def publish_metrics_configmap(
+        base_url,
+        token,
+        ssl_context,
+        namespace,
+        configmap_name,
+        metrics_text,
+        report_text,
+    ):
+        object_path = f"/api/v1/namespaces/{namespace}/configmaps/{configmap_name}"
+        existing = kube_json(base_url, object_path, token, ssl_context)
+        body = {
+            "apiVersion": "v1",
+            "kind": "ConfigMap",
+            "metadata": {
+                "name": configmap_name,
+                "namespace": namespace,
+                "resourceVersion": existing["metadata"]["resourceVersion"],
+                "labels": existing["metadata"].get("labels", {}),
+            },
+            "data": {
+                "metrics.prom": metrics_text,
+                "report.txt": report_text,
+            },
+        }
+        return kube_json(
+            base_url,
+            object_path,
+            token,
+            ssl_context,
+            method="PUT",
+            payload=body,
+        )
 
 
     def render_report(
@@ -673,6 +690,7 @@ data:
             "LOKI_BASE_URL",
             "http://loki-gateway.loki.svc.cluster.local/loki/api/v1",
         )
+        kubernetes_api_url = env("KUBERNETES_API_URL", "https://kubernetes.default.svc")
         smtp_host = env("SMTP_HOST", required=True)
         smtp_port = int(env("SMTP_PORT", "25"))
         mail_from = env("MAIL_FROM", required=True)
@@ -685,10 +703,17 @@ data:
             if host.strip()
         }
 
+        token, ssl_context = load_cluster_credentials()
         tz, start_local, end_local = get_time_window(time_zone_name)
         start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
         end_ns = int(end_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
-        pods = list_pods(namespace, pod_selector)
+        pods = list_pods(
+            kubernetes_api_url,
+            token,
+            ssl_context,
+            namespace,
+            pod_selector,
+        )
         if not pods:
             raise SystemExit(f"No pods found for selector {pod_selector} in namespace {namespace}")
 
@@ -824,8 +849,17 @@ data:
             parse_failures=parse_failures,
         )
 
-        publish_metrics_configmap(namespace, metrics_configmap_name, metrics, body)
-        send_email(smtp_host, smtp_port, mail_from, mail_to, subject, body, html_body)
+        publish_metrics_configmap(
+            kubernetes_api_url,
+            token,
+            ssl_context,
+            namespace,
+            metrics_configmap_name,
+            metrics,
+            body,
+        )
+        if env("SEND_EMAIL", "true").strip().lower() in {"1", "true", "yes", "on"}:
+            send_email(smtp_host, smtp_port, mail_from, mail_to, subject, body, html_body)
         print(body)
 
 

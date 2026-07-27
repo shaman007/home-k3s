@@ -13,5 +13,15 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: wordpress
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: wordpress-daily-report-metrics
+      namespace: wordpress
+      jsonPointers:
+        - /data/metrics.prom
+        - /data/report.txt
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true

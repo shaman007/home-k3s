@@ -16,5 +16,16 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: monitoring
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: external-access-daily-report-metrics
+      namespace: monitoring
+      jsonPointers:
+        - /data/metrics.prom
+        - /data/report.txt
+        - /data/report.html
   syncPolicy:
     automated: {}
+    syncOptions:
+      - RespectIgnoreDifferences=true
