@@ -3,7 +3,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: podman-builder
-  namespace: harbor
+  namespace: image-builder
   labels:
     app.kubernetes.io/name: podman-builder
     app.kubernetes.io/instance: podman-builder
