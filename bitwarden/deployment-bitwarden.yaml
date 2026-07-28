@@ -72,8 +72,8 @@ spec:
                 secretKeyRef:
                   name: yubico-secret-key
                   key: secret-key
-          image: harbor.andreybondarenko.com/github/bitwarden/lite:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/github/bitwarden/lite:2026.7.0
+          imagePullPolicy: IfNotPresent
           name: bitwarden
           ports:
             - containerPort: 8080
