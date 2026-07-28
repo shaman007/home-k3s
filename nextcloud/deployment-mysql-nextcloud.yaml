@@ -63,8 +63,8 @@ spec:
             - name: mysql-nextcloud-lh
               mountPath: /var/lib/mysql
         - name: mysqld-exporter
-          image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:main
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:v0.19.0
+          imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
             - -ec
