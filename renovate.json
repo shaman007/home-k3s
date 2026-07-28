@@ -17,6 +17,12 @@
   },
   "packageRules": [
     {
+      "description": "Use calendar versioning for locally built images",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["harbor.andreybondarenko.com/library/**"],
+      "versioning": "regex:^(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})-(?<build>\\d{6})$"
+    },
+    {
       "matchDatasources": ["docker"],
       "matchPackageNames": ["index.docker.io/mongo"],
       "allowedVersions": "/^7(\\.|$)/"
