@@ -1,0 +1,81 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: podman-builder
+  namespace: harbor
+  labels:
+    app.kubernetes.io/name: podman-builder
+    app.kubernetes.io/instance: podman-builder
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "29 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 21600
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: podman-builder
+            app.kubernetes.io/instance: podman-builder
+        spec:
+          priorityClassName: homelab-batch
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/arch: amd64
+          initContainers:
+            - name: register-arm64-emulation
+              image: docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+              imagePullPolicy: IfNotPresent
+              args: ["--install", "arm64"]
+              securityContext:
+                privileged: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 64Mi
+          containers:
+            - name: build
+              # Self-hosting exception: this job rebuilds and then re-pulls its own image.
+              image: harbor.andreybondarenko.com/library/podman-builder:latest
+              imagePullPolicy: Always
+              securityContext:
+                privileged: true
+              env:
+                - name: HARBOR_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: podman-builder-harbor
+                      key: username
+                - name: HARBOR_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: podman-builder-harbor
+                      key: password
+                - name: STORAGE_DRIVER
+                  value: vfs
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+                limits:
+                  memory: 4Gi
+              volumeMounts:
+                - name: workspace
+                  mountPath: /workspace
+                - name: container-storage
+                  mountPath: /var/lib/containers
+          volumes:
+            - name: workspace
+              emptyDir:
+                sizeLimit: 2Gi
+            - name: container-storage
+              emptyDir:
+                sizeLimit: 80Gi
