@@ -28,19 +28,6 @@ spec:
           restartPolicy: Never
           nodeSelector:
             kubernetes.io/arch: amd64
-          initContainers:
-            - name: register-arm64-emulation
-              image: docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
-              imagePullPolicy: IfNotPresent
-              args: ["--install", "arm64"]
-              securityContext:
-                privileged: true
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 32Mi
-                limits:
-                  memory: 64Mi
           containers:
             - name: build
               # Self-hosting exception: this job rebuilds and then re-pulls its own image.
@@ -61,6 +48,8 @@ spec:
                       key: password
                 - name: STORAGE_DRIVER
                   value: vfs
+                - name: PLATFORMS
+                  value: linux/amd64
               resources:
                 requests:
                   cpu: 500m
