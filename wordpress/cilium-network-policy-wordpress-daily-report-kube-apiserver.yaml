@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: wordpress-daily-report-kube-apiserver
+  namespace: wordpress
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: wordpress-daily-report
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toServices:
+        - k8sService:
+            serviceName: kubernetes
+            namespace: default
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

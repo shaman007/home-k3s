@@ -48,7 +48,7 @@ spec:
                 - name: LOKI_BASE_URL
                   value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
                 - name: KUBERNETES_API_URL
-                  value: https://kubernetes.default.svc
+                  value: https://kubernetes.default.svc.cluster.local
                 - name: SITE_TITLE
                   value: andreybondarenko.com
                 - name: SITE_HOSTS
