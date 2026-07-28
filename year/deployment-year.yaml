@@ -22,8 +22,8 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: year
-          image: harbor.andreybondarenko.com/library/year-vas3k-cloud:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/library/year-vas3k-cloud:latest@sha256:8e9ee1c2c531d7bbda46fca5fc59d651269ae2138740f32eb496bcbb9ed1c276
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 80
