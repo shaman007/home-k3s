@@ -23,8 +23,8 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: exporter
-          image: harbor.andreybondarenko.com/library/connectivity-exporter-local:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/library/connectivity-exporter-local:2026-07-27-200859
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9090
               name: metrics

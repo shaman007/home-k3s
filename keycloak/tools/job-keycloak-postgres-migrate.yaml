@@ -22,8 +22,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: harbor.andreybondarenko.com/library/postgres-cli:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/library/postgres-cli:2026-07-27-200859
+          imagePullPolicy: IfNotPresent
           env:
             - name: SOURCE_PGHOST
               value: "postgres-postgresql.db.svc.cluster.local"

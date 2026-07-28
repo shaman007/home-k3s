@@ -66,7 +66,7 @@ spec:
             limits:
               memory: 1152Mi
         - name: chrome
-          image: harbor.andreybondarenko.com/library/alpine-chrome:latest@sha256:ae056a679f15f8f4026c31f9db6d231e751f62f327c5035f1bce748166ec6e26
+          image: harbor.andreybondarenko.com/library/alpine-chrome:2026-07-27-200859
           imagePullPolicy: IfNotPresent
           command: ["/usr/bin/chromium-browser"] # override ENTRYPOINT
           args:

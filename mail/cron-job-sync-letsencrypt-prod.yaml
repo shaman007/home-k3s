@@ -19,8 +19,8 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: sync
-              image: harbor.andreybondarenko.com/library/sync:latest
-              imagePullPolicy: Always
+              image: harbor.andreybondarenko.com/library/sync:2026-07-27-200859
+              imagePullPolicy: IfNotPresent
               env:
                 - name: DOMAIN
                   value: "andreybondarenko.com"

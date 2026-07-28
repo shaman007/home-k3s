@@ -89,8 +89,8 @@ spec:
             sizeLimit: 500Mi
       containers:
         - name: php-nextcloud
-          image: harbor.andreybondarenko.com/library/php:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/library/php:2026-07-27-200859
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: phpini
               mountPath: /etc/php/8.4/fpm/pool.d/php.ini

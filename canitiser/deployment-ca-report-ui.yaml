@@ -21,8 +21,8 @@ spec:
       serviceAccountName: ca-scanner
       containers:
         - name: ui
-          image: harbor.andreybondarenko.com/library/canitiser:latest
-          imagePullPolicy: Always
+          image: harbor.andreybondarenko.com/library/canitiser:2026-07-27-200859
+          imagePullPolicy: IfNotPresent
           command: ["python", "/app/ca-report-server.py"]
           env:
             # use "all" to show all namespaces, or "ca-scanner" to show only that ns

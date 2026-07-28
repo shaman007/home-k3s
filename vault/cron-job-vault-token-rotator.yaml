@@ -22,8 +22,8 @@ spec:
               type: RuntimeDefault
           containers:
             - name: rotate
-              image: harbor.andreybondarenko.com/library/sync:latest
-              imagePullPolicy: Always
+              image: harbor.andreybondarenko.com/library/sync:2026-07-27-200859
+              imagePullPolicy: IfNotPresent
               command: ["/bin/bash", "/scripts/rotate-tokens.sh"]
               securityContext:
                 allowPrivilegeEscalation: false
