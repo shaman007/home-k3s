@@ -85,14 +85,24 @@ spec:
                     common_name="$2"
                     cert_path="$3"
                     key_path="$4"
+                    alt_names="${5:-}"
+                    ca_path="${6:-}"
 
-                    payload="$(jq -cn --arg cn "$common_name" --arg ttl "$CERT_TTL" '{common_name: $cn, ttl: $ttl}')"
+                    payload="$(jq -cn \
+                      --arg cn "$common_name" \
+                      --arg ttl "$CERT_TTL" \
+                      --arg alt_names "$alt_names" \
+                      '{common_name: $cn, ttl: $ttl}
+                        + if $alt_names == "" then {} else {alt_names: $alt_names} end')"
                     response="$(vault_post "pki-root/issue/${role}" "$payload")"
 
                     printf '%s\n%s\n' \
                       "$(printf '%s' "$response" | jq -r '.data.certificate')" \
                       "$(printf '%s' "$response" | jq -r '.data.issuing_ca')" > "$cert_path"
                     printf '%s\n' "$(printf '%s' "$response" | jq -r '.data.private_key')" > "$key_path"
+                    if [ -n "$ca_path" ]; then
+                      printf '%s\n' "$(printf '%s' "$response" | jq -r '.data.issuing_ca')" > "$ca_path"
+                    fi
                   }
 
                   secret_needs_renewal() {
@@ -101,7 +111,8 @@ spec:
                     current_cert="/tmp/current-${namespace}-${name}.crt"
 
                     if ! kubectl get secret "$name" -n "$namespace" >/dev/null 2>&1; then
-                      return 0
+                      echo "Required TLS Secret ${namespace}/${name} is missing" >&2
+                      exit 1
                     fi
 
                     crt_b64="$(kubectl get secret "$name" -n "$namespace" -o jsonpath='{.data.tls\.crt}')"
@@ -117,16 +128,27 @@ spec:
                     return 0
                   }
 
-                  apply_secret() {
+                  patch_secret() {
                     namespace="$1"
                     name="$2"
                     cert_path="$3"
                     key_path="$4"
+                    ca_path="${5:-}"
 
-                    kubectl -n "$namespace" create secret tls "$name" \
-                      --cert="$cert_path" \
-                      --key="$key_path" \
-                      --dry-run=client -o yaml | kubectl apply -f -
+                    cert_b64="$(base64 < "$cert_path" | tr -d '\n')"
+                    key_b64="$(base64 < "$key_path" | tr -d '\n')"
+                    ca_b64=""
+                    if [ -n "$ca_path" ]; then
+                      ca_b64="$(base64 < "$ca_path" | tr -d '\n')"
+                    fi
+
+                    patch="$(jq -cn \
+                      --arg cert "$cert_b64" \
+                      --arg key "$key_b64" \
+                      --arg ca "$ca_b64" \
+                      '{data: ({"tls.crt": $cert, "tls.key": $key}
+                        + if $ca == "" then {} else {"ca.crt": $ca} end)}')"
+                    kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
                   }
 
                   wildcard_targets="argocd/argocd-tls longhorn-system/longhorn-tls mail/rspamd-tls mempalace/mempalace-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls nextcloud/office-tls"
@@ -146,7 +168,7 @@ spec:
                     for target in $wildcard_targets; do
                       namespace="${target%%/*}"
                       name="${target##*/}"
-                      apply_secret "$namespace" "$name" /tmp/wildcard.crt /tmp/wildcard.key
+                      patch_secret "$namespace" "$name" /tmp/wildcard.crt /tmp/wildcard.key
                     done
                     echo "Rotated wildcard TLS secrets"
                   else
@@ -155,8 +177,28 @@ spec:
 
                   if secret_needs_renewal "vault" "vault-tls"; then
                     issue_cert "vault-ingress" "vault.w386.k8s.my.lan" /tmp/vault.crt /tmp/vault.key
-                    apply_secret "vault" "vault-tls" /tmp/vault.crt /tmp/vault.key
+                    patch_secret "vault" "vault-tls" /tmp/vault.crt /tmp/vault.key
                     echo "Rotated vault ingress TLS secret"
                   else
                     echo "Vault ingress TLS secret still valid beyond renewal window"
+                  fi
+
+                  if secret_needs_renewal "vault" "vault-server-tls"; then
+                    vault_server_alt_names="vault,vault.vault,vault.vault.svc.cluster.local,vault-active,vault-active.vault,vault-active.vault.svc,vault-active.vault.svc.cluster.local,*.vault-internal,*.vault-internal.vault,*.vault-internal.vault.svc,*.vault-internal.vault.svc.cluster.local"
+                    issue_cert \
+                      "vault-server" \
+                      "vault.vault.svc" \
+                      /tmp/vault-server.crt \
+                      /tmp/vault-server.key \
+                      "$vault_server_alt_names" \
+                      /tmp/vault-server-ca.crt
+                    patch_secret \
+                      "vault" \
+                      "vault-server-tls" \
+                      /tmp/vault-server.crt \
+                      /tmp/vault-server.key \
+                      /tmp/vault-server-ca.crt
+                    echo "Rotated Vault API and Raft TLS secret"
+                  else
+                    echo "Vault API and Raft TLS secret still valid beyond renewal window"
                   fi

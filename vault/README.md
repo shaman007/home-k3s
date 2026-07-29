@@ -16,6 +16,20 @@ Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-
 
 Internal ingress TLS secrets are renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
 The CronJob expects a `vault-pki-renewer-token` secret in the `vault` namespace with a `token` key bound to a periodic Vault policy that can renew itself and issue `pki-root/issue/w386-k8s-my-lan-wildcard` plus `pki-root/issue/vault-ingress`.
+It also renews the internal `vault-server-tls` certificate through `pki-root/issue/vault-server` for the Vault API and Raft DNS names.
+
+All renewal targets must be created before the job runs. The renewer has no Secret `create` or `list` permission: namespace Roles restrict it to `get`, `update`, and `patch` on these fixed names:
+
+- `argocd/argocd-tls`
+- `longhorn-system/longhorn-tls`
+- `mail/rspamd-tls`
+- `mempalace/mempalace-tls`
+- `monitoring/alerts-tls`
+- `monitoring/grafana-tls`
+- `monitoring/prometheus-tls`
+- `nextcloud/office-tls`
+- `vault/vault-tls`
+- `vault/vault-server-tls`
 
 ## Token Rotation
 
