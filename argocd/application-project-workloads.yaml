@@ -1,0 +1,73 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: workloads
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    app.kubernetes.io/name: workloads
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/managed-by: argoCD
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Namespaced workloads sourced from the home-k3s GitOps repository
+  sourceRepos:
+    - https://github.com/shaman007/home-k3s.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: backup-rsync
+    - server: https://kubernetes.default.svc
+      namespace: bitwarden
+    - server: https://kubernetes.default.svc
+      namespace: ca-scanner
+    - server: https://kubernetes.default.svc
+      namespace: clamav
+    - server: https://kubernetes.default.svc
+      namespace: connectivity-exporter
+    - server: https://kubernetes.default.svc
+      namespace: convertx
+    - server: https://kubernetes.default.svc
+      namespace: dawarich
+    - server: https://kubernetes.default.svc
+      namespace: hister
+    - server: https://kubernetes.default.svc
+      namespace: homeassistant
+    - server: https://kubernetes.default.svc
+      namespace: image-builder
+    - server: https://kubernetes.default.svc
+      namespace: karakeep
+    - server: https://kubernetes.default.svc
+      namespace: keycloak
+    - server: https://kubernetes.default.svc
+      namespace: matrix
+    - server: https://kubernetes.default.svc
+      namespace: mempalace
+    - server: https://kubernetes.default.svc
+      namespace: minecraft
+    - server: https://kubernetes.default.svc
+      namespace: nextcloud
+    - server: https://kubernetes.default.svc
+      namespace: ollama
+    - server: https://kubernetes.default.svc
+      namespace: seaweedfs
+    - server: https://kubernetes.default.svc
+      namespace: spotify
+    - server: https://kubernetes.default.svc
+      namespace: stirling-pdf
+    - server: https://kubernetes.default.svc
+      namespace: unifi
+    - server: https://kubernetes.default.svc
+      namespace: wordpress
+    - server: https://kubernetes.default.svc
+      namespace: year
+  # An empty whitelist denies every cluster-scoped kind. Workloads may create
+  # namespaced resources only, and only in the destinations listed above.
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  orphanedResources:
+    warn: true

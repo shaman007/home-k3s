@@ -5,13 +5,14 @@ metadata:
   name: clamav
   namespace: argocd
 spec:
-  project: default
+  project: workloads
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: clamav
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
+    namespace: clamav
   syncPolicy:
     automated:
       selfHeal: true

@@ -18,6 +18,19 @@ Here we have some of services managed by the Argocd. If something is not here, t
   ExternalSecrets, Postgres, ingress, network policies, and the bookmarked media
   sync job.
 
+## Projects
+
+`application-project-workloads.yaml` defines the first least-privilege Argo CD
+project. Applications assigned to `workloads` may deploy namespaced resources
+from this repository only, to an explicit list of application namespaces in the
+local cluster. They cannot create cluster-scoped resources.
+
+Platform controllers, observability components, third-party Helm charts, and
+applications that require cluster-scoped resources remain in `default` until
+their permissions and rendered manifests are split into dedicated projects.
+Keep the project manifest on an earlier sync wave than its Applications so a
+fresh app-of-apps sync creates the project first.
+
 ## Repos
 
 ```bash

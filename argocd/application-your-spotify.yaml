@@ -6,7 +6,7 @@ metadata:
   name: your-spotify
   namespace: argocd
 spec:
-  project: default
+  project: workloads
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: your-spotify
