@@ -9,10 +9,10 @@ metadata:
 spec:
   ports:
     - port: 8200
-      name: http
+      name: https
       protocol: TCP
     - port: 8201
-      name: http-internal
+      name: https-internal
       protocol: TCP
   selector:
     component: server

@@ -15,7 +15,8 @@ Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-
 ## PKI Renewal
 
 Internal ingress TLS secrets are renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
-The CronJob expects a `vault-pki-renewer-token` secret in the `vault` namespace with a `token` key bound to a periodic Vault policy that can renew itself and issue `pki-root/issue/w386-k8s-my-lan-wildcard` plus `pki-root/issue/vault-ingress`.
+The CronJob authenticates through the `vault-pki-renewer` Kubernetes auth role with a projected, audience-bound ServiceAccount token. Vault issues a 15-minute token with a 30-minute maximum TTL and the `vault-pki-renewer` policy.
+That policy can issue `pki-root/issue/w386-k8s-my-lan-wildcard`, `pki-root/issue/vault-ingress`, and `pki-root/issue/vault-server`.
 It also renews the internal `vault-server-tls` certificate through `pki-root/issue/vault-server` for the Vault API and Raft DNS names.
 
 All renewal targets must be created before the job runs. The renewer has no Secret `create` or `list` permission: namespace Roles restrict it to `get`, `update`, and `patch` on these fixed names:
@@ -31,13 +32,8 @@ All renewal targets must be created before the job runs. The renewer has no Secr
 - `vault/vault-tls`
 - `vault/vault-server-tls`
 
-## Token Rotation
+## External Secrets Authentication
 
-Vault-backed External Secrets tokens are rotated by [`cron-job-vault-token-rotator.yaml`](./cron-job-vault-token-rotator.yaml).
-The CronJob connects to `vault-active.vault.svc:8200` and expects a `vault-token-rotator-token` secret in the `vault` namespace with a `token` key that can:
+Vault-backed SecretStores authenticate through namespace-bound `vault-auth` ServiceAccounts and Vault Kubernetes auth roles. The roles issue 15-minute tokens with 30-minute maximum TTLs and attach the application policy plus the minimal `external-secrets-token` lookup-self policy.
 
-- read and write `sys/policies/acl/external-secrets-token`
-- look up and create tokens under `auth/token/*`
-
-The job discovers Vault-backed `SecretStore` and `ClusterSecretStore` resources, reuses the current non-default token policies, appends a shared `external-secrets-token` policy for `auth/token/lookup-self`, and patches the referenced Kubernetes secret when the token is within the renewal window.
-If a token is already invalid, the job skips it unless the store declares a `vault.w386.k8s.my.lan/token-policies` annotation with a comma-separated policy list that can be used for recovery.
+The legacy token rotator is suspended, has no RBAC permissions, and does not reference its former bootstrap token. Its stub resources remain temporarily so Argo CD can reconcile the previous objects without relying on pruning.

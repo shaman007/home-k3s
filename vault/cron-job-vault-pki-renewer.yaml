@@ -30,16 +30,22 @@ spec:
                   drop: ["ALL"]
               env:
                 - name: VAULT_ADDR
-                  value: "http://vault.vault.svc:8200"
-                - name: VAULT_TOKEN
-                  valueFrom:
-                    secretKeyRef:
-                      name: vault-pki-renewer-token
-                      key: token
+                  value: "https://vault-active.vault.svc:8200"
+                - name: VAULT_CACERT
+                  value: /vault/tls/ca.crt
+                - name: VAULT_ROLE
+                  value: vault-pki-renewer
                 - name: CERT_TTL
                   value: "720h"
                 - name: RENEW_BEFORE_SECONDS
                   value: "604800"
+              volumeMounts:
+                - name: vault-ca
+                  mountPath: /vault/tls
+                  readOnly: true
+                - name: vault-jwt
+                  mountPath: /var/run/secrets/vault
+                  readOnly: true
               args:
                 - |
                   set -euo pipefail
@@ -51,18 +57,24 @@ spec:
                     port="8200"
                     payload_length="${#payload}"
 
-                    exec 3<>"/dev/tcp/${host}/${port}"
-                    printf 'POST /v1/%s HTTP/1.0\r\n' "$path" >&3
-                    printf 'Host: %s\r\n' "$host" >&3
-                    printf 'X-Vault-Token: %s\r\n' "$VAULT_TOKEN" >&3
-                    printf 'Content-Type: application/json\r\n' >&3
-                    printf 'Content-Length: %s\r\n' "$payload_length" >&3
-                    printf 'Connection: close\r\n\r\n' >&3
-                    printf '%s' "$payload" >&3
-
-                    response="$(cat <&3)"
-                    exec 3<&-
-                    exec 3>&-
+                    response="$(
+                      {
+                        printf 'POST /v1/%s HTTP/1.0\r\n' "$path"
+                        printf 'Host: %s\r\n' "$host"
+                        if [ -n "${VAULT_TOKEN:-}" ]; then
+                          printf 'X-Vault-Token: %s\r\n' "$VAULT_TOKEN"
+                        fi
+                        printf 'Content-Type: application/json\r\n'
+                        printf 'Content-Length: %s\r\n' "$payload_length"
+                        printf 'Connection: close\r\n\r\n'
+                        printf '%s' "$payload"
+                      } | openssl s_client \
+                        -quiet \
+                        -connect "${host}:${port}" \
+                        -servername "$host" \
+                        -CAfile "$VAULT_CACERT" \
+                        2>/dev/null
+                    )"
 
                     status_line="${response%%$'\r\n'*}"
                     body="${response#*$'\r\n\r\n'}"
@@ -78,7 +90,11 @@ spec:
                     printf '%s' "$body"
                   }
 
-                  vault_post "auth/token/renew-self" '{}' >/dev/null
+                  jwt="$(cat /var/run/secrets/vault/token)"
+                  login_payload="$(jq -cn --arg role "$VAULT_ROLE" --arg jwt "$jwt" '{role: $role, jwt: $jwt}')"
+                  VAULT_TOKEN=""
+                  login_response="$(vault_post "auth/kubernetes/login" "$login_payload")"
+                  VAULT_TOKEN="$(printf '%s' "$login_response" | jq -er '.auth.client_token')"
 
                   issue_cert() {
                     role="$1"
@@ -202,3 +218,17 @@ spec:
                   else
                     echo "Vault API and Raft TLS secret still valid beyond renewal window"
                   fi
+          volumes:
+            - name: vault-ca
+              secret:
+                secretName: vault-server-tls
+                items:
+                  - key: ca.crt
+                    path: ca.crt
+            - name: vault-jwt
+              projected:
+                sources:
+                  - serviceAccountToken:
+                      path: token
+                      audience: vault
+                      expirationSeconds: 3600

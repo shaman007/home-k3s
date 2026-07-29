@@ -11,6 +11,8 @@ spec:
     targetRevision: 0.34.0
     helm:
       parameters:
+        - name: global.tlsDisable
+          value: 'false'
         - name: injector.enabled
           value: 'false'
         - name: server.ha.enabled
@@ -20,8 +22,15 @@ spec:
         - name: server.ha.replicas
           value: '2'
       values: |
+        global:
+          tlsDisable: false
         server:
           priorityClassName: homelab-critical
+          extraEnvironmentVars:
+            VAULT_CACERT: /vault/userconfig/vault-server-tls/ca.crt
+          extraVolumes:
+            - type: secret
+              name: vault-server-tls
           affinity: |
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -33,14 +42,17 @@ spec:
                   topologyKey: kubernetes.io/hostname
           includeConfigAnnotation: true
           ha:
+            apiAddr: "https://$(HOSTNAME).vault-internal:8200"
             raft:
               config: |
                 ui = true
 
                 listener "tcp" {
-                  tls_disable = 1
+                  tls_disable = 0
                   address = "[::]:8200"
                   cluster_address = "[::]:8201"
+                  tls_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+                  tls_key_file = "/vault/userconfig/vault-server-tls/tls.key"
                   telemetry {
                     unauthenticated_metrics_access = "true"
                   }

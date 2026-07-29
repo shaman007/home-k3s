@@ -69,6 +69,9 @@ spec:
               mountPath: /prometheus/
             - name: prometheus-config-shared
               mountPath: /etc/prometheus-shared/
+            - name: vault-ca
+              mountPath: /etc/prometheus-vault-ca/
+              readOnly: true
           securityContext:
             runAsUser: 65534
             runAsGroup: 65534
@@ -148,6 +151,9 @@ spec:
         - name: prometheus-config-shared
           emptyDir:
             sizeLimit: 10Mi
+        - name: vault-ca
+          configMap:
+            name: vault-ca
         - name: objstoreyml
           secret:
             secretName: thanos-objstore-secret

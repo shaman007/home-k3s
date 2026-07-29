@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-ca
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: prometheus-server
+    app.kubernetes.io/instance: prometheus-server
+    app.kubernetes.io/managed-by: argoCD
+data:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDJzCCAg+gAwIBAgIULdXMImrMEUR3JhB0WqYk/0yjZ0swDQYJKoZIhvcNAQEL
+    BQAwGzEZMBcGA1UEAxMQdzM4NiBMYWIgUm9vdCBDQTAeFw0yNTExMjAxNzE1MDBa
+    Fw0zNTExMTgxNzE1MzBaMBsxGTAXBgNVBAMTEHczODYgTGFiIFJvb3QgQ0EwggEi
+    MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/+3R9Br/m43ebYZmMoyLq0avE
+    o4Wm6iA1h6EHb6eghiuKEHaepzfxX0+wc70uPDMQVAZp6HUa+7R5PyTBa5jx9H1M
+    u66qyiLXwUSMS0jmCkE1KhnY87/gsV0Dqx2f0mkgTdVsHwpC4C0V5WDYp43DofBu
+    oA9lT7CQz6HGAiFApxt5PWaBPK7bU8O7jsTYX4U8yXd2a9ddOv3ObRPDP+RNVlrd
+    yyCLJtF9/cqBoaD72j2V3SkCUOVvoH2lGf++uuyixHZPm9L4062sz113eGSk+r/s
+    BEwd4UN7nihueV91bOOp4qtNvbffLtwwzDrucmP1NYpp/KC0h15spQaHhjQzAgMB
+    AAGjYzBhMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQW
+    BBRDJ12XUuJxQDSQbpXj1T7ryCbcCDAfBgNVHSMEGDAWgBRDJ12XUuJxQDSQbpXj
+    1T7ryCbcCDANBgkqhkiG9w0BAQsFAAOCAQEAE/nSNi3eSq8dwtrJiRS0LCFPwJBG
+    cnGnSkwZpSZF5JdZMV98AMYO7IWry4hKfU+bFal0uSF6wIqgTynUnbnonpvG+hk9
+    79ob66NqRMNT54Mwso9R2AD0JRXRoD1gA9FrndLymMx7unubIE/2kCcdmWfkM7RQ
+    dNHXTEcudYEioJ6PcSiuNUtwLe7+dT1Pi4Adz2KLscWJcLXtsKkyynaAY0+lS9ci
+    J2NFpS+Lw57A/ee8AtJRtBxCLa7liQxlqTC/oGKKHByh5rTy3JqTazzm5VzvwoO+
+    8krwFOdHPAW9u8eSS6e5Rf/9Tmo9BjiLO4vm5uYfGzk2NCX6SRh/h1/17g==
+    -----END CERTIFICATE-----

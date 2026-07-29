@@ -1,22 +1,33 @@
+global:
+  tlsDisable: false
+
 injector:
   enabled: false
 
 server:
   includeConfigAnnotation: true
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/userconfig/vault-server-tls/ca.crt
+  extraVolumes:
+    - type: secret
+      name: vault-server-tls
   affinity: ""
   ha:
     enabled: true
     replicas: 2
-    clusterAddr: "http://$(HOSTNAME).vault-internal:8201"
+    apiAddr: "https://$(HOSTNAME).vault-internal:8200"
+    clusterAddr: "https://$(HOSTNAME).vault-internal:8201"
     raft:
       enabled: true
       config: |
         ui = true
 
         listener "tcp" {
-          tls_disable = 1
+          tls_disable = 0
           address = "[::]:8200"
           cluster_address = "[::]:8201"
+          tls_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+          tls_key_file = "/vault/userconfig/vault-server-tls/tls.key"
           telemetry {
             unauthenticated_metrics_access = "true"
           }
