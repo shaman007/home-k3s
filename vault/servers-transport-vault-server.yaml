@@ -9,5 +9,5 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   serverName: vault.vault.svc
-  rootCAsSecrets:
-    - vault-server-tls
+  rootCAs:
+    - secret: vault-server-tls

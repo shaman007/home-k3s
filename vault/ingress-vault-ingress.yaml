@@ -6,7 +6,6 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/service.serversscheme: "https"
-    traefik.ingress.kubernetes.io/service.serverstransport: vault-vault-server@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:

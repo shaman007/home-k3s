@@ -6,6 +6,9 @@ injector:
 
 server:
   includeConfigAnnotation: true
+  service:
+    annotations:
+      traefik.ingress.kubernetes.io/service.serverstransport: vault-vault-server@kubernetescrd
   extraEnvironmentVars:
     VAULT_CACERT: /vault/userconfig/vault-server-tls/ca.crt
   extraVolumes:
