@@ -14,6 +14,6 @@ The `podman-builder` image is self-hosted in Harbor and must be seeded once from
 the Dockerfiles repository with `./build.sh podman-builder`.
 
 The ExternalSecret maps `kv/harbor` properties `user` and `password` to the
-runtime-only `podman-builder-harbor` Secret. The associated SecretStore expects
-a `vault-token-image-builder` Secret containing a `token` key with a Vault
-policy that can read `kv/data/harbor` and `kv/metadata/harbor`.
+runtime-only `podman-builder-harbor` Secret. The associated SecretStore uses
+the namespace-bound `vault-auth` ServiceAccount and the
+`external-secrets-image-builder` Vault Kubernetes auth role.

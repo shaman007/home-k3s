@@ -16,12 +16,6 @@ spec:
   ignoreDifferences:
     - group: ""
       kind: Secret
-      name: vault-token
-      namespace: mail
-      jsonPointers:
-        - /data
-    - group: ""
-      kind: Secret
       name: letsencrypt-prod
       namespace: mail
       jsonPointers:

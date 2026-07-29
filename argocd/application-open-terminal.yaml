@@ -13,15 +13,7 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: open-terminal
-  ignoreDifferences:
-    - group: ""
-      kind: Secret
-      name: vault-token
-      namespace: open-terminal
-      jsonPointers:
-        - /data
   syncPolicy:
     automated: {}
     syncOptions:
       - CreateNamespace=true
-      - RespectIgnoreDifferences=true

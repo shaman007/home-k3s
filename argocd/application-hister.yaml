@@ -13,15 +13,7 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: hister
-  ignoreDifferences:
-  - group: ""
-    kind: Secret
-    name: vault-token
-    namespace: hister
-    jsonPointers:
-    - /data
   syncPolicy:
     automated: {}
     syncOptions:
     - ApplyOutOfSyncOnly=true
-    - RespectIgnoreDifferences=true
