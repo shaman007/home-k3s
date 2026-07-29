@@ -5,7 +5,7 @@ metadata:
   name: gpu-operator
   namespace: argocd
 spec:
-  project: default
+  project: platform
   source:
     repoURL: https://helm.ngc.nvidia.com/nvidia
     targetRevision: v26.3.3

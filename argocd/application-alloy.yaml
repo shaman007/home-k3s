@@ -5,12 +5,13 @@ metadata:
   name: alloy
   namespace: argocd
 spec:
-  project: default
+  project: observability
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: loki/alloy
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
+    namespace: monitoring
   syncPolicy:
     automated: {}

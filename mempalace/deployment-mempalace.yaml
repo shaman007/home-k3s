@@ -68,6 +68,11 @@ spec:
               value: /data
             - name: MEMPALACE_VERSION
               value: "3.6.0"
+            - name: MEMPALACE_MCP_HTTP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: mempalace-mcp-auth
+                  key: token
           securityContext:
             runAsUser: 65532
             runAsGroup: 65532
@@ -79,6 +84,9 @@ spec:
               memory: 2560Mi
             limits:
               memory: 3328Mi
+          ports:
+            - name: http
+              containerPort: 8765
           volumeMounts:
             - name: mempalace-data
               mountPath: /data
@@ -86,20 +94,16 @@ spec:
               mountPath: /bootstrap
               readOnly: true
           readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - /data/venv/bin/python -c "import mempalace"
+            httpGet:
+              path: /healthz
+              port: http
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2
           livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - /data/venv/bin/python -c "import mempalace"
+            httpGet:
+              path: /healthz
+              port: http
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 2

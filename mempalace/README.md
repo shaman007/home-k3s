@@ -1,10 +1,10 @@
 # MemPalace
 
-MemPalace is deployed here as a persistent toolbox pod rather than a public web app.
+MemPalace is deployed as a persistent MCP HTTP service and toolbox pod.
 
-The upstream project currently ships a CLI and MCP server, not an HTTP service, so this
-deployment keeps a writable volume with the virtual environment, MemPalace state, imports,
-and a mirrored project workspace under `/data`.
+The MCP server uses Streamable HTTP behind the internal Traefik ingress. Its authenticated
+endpoint is `http://mempalace.w386.k8s.my.lan/mcp`; the bearer token is sourced from
+`kv/mempalace` in Vault through External Secrets.
 
 Persistent paths:
 
@@ -30,4 +30,7 @@ kubectl -n mempalace exec deploy/mempalace -- /data/venv/bin/python -c "import i
 
 # list persisted data
 kubectl -n mempalace exec deploy/mempalace -- find /data/.mempalace -maxdepth 3 -type f | head
+
+# check the HTTP transport without authentication
+curl http://mempalace.w386.k8s.my.lan/healthz
 ```

@@ -15,7 +15,7 @@ spec:
       enabled: true
     syncOptions:
       - CreateNamespace=true
-  project: default
+  project: storage
   sources:
     - chart: longhorn
       repoURL: https://charts.longhorn.io/

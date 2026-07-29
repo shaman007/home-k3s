@@ -9,7 +9,7 @@ spec:
     automated: {}
     syncOptions:
       - CreateNamespace=true
-  project: default
+  project: observability
   source:
     repoURL: https://grafana.github.io/helm-charts
     targetRevision: 7.1.0

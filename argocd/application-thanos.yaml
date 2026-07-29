@@ -5,12 +5,13 @@ metadata:
   name: thanos
   namespace: argocd
 spec:
-  project: default
+  project: observability
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: thanos
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
+    namespace: monitoring
   syncPolicy:
     automated: {}

@@ -5,7 +5,7 @@ metadata:
   name: mastodon
   namespace: argocd
 spec:
-  project: default
+  project: applications
   sources:
     - repoURL: "https://mastodon.github.io/helm-charts"
       chart: mastodon

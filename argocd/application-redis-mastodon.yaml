@@ -5,7 +5,7 @@ metadata:
   name: redis-mastodon
   namespace: argocd
 spec:
-  project: default
+  project: storage
   source:
     repoURL: https://ot-container-kit.github.io/helm-charts/
     targetRevision: 0.16.9

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mempalace
+  namespace: mempalace
+  labels:
+    app: mempalace
+    app.kubernetes.io/name: mempalace
+    app.kubernetes.io/instance: mempalace
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  type: ClusterIP
+  selector:
+    app: mempalace
+  ports:
+    - name: http
+      port: 8765
+      targetPort: http

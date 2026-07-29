@@ -45,4 +45,8 @@ data:
     "${VENV_DIR}/bin/python" -c "import mempalace"
     mkdir -p /data/.mempalace
 
-    exec sleep infinity
+    exec "${VENV_DIR}/bin/mempalace-mcp" \
+      --palace /data/.mempalace \
+      --transport http \
+      --host 0.0.0.0 \
+      --port 8765

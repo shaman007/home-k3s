@@ -5,7 +5,7 @@ metadata:
   name: elastic-system
   namespace: argocd
 spec:
-  project: default
+  project: observability
   source:
     repoURL: https://helm.elastic.co
     targetRevision: 3.4.1

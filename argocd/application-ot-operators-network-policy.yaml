@@ -5,7 +5,7 @@ metadata:
   name: ot-operators-network-policy
   namespace: argocd
 spec:
-  project: default
+  project: storage
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: ot-operators

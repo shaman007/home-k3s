@@ -1,0 +1,53 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: storage
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    app.kubernetes.io/name: storage
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/managed-by: argoCD
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Persistent storage, snapshots, and shared data services
+  sourceRepos:
+    - https://charts.longhorn.io/
+    - https://github.com/shaman007/home-k3s.git
+    - https://ot-container-kit.github.io/helm-charts/
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: dawarich
+    - server: https://kubernetes.default.svc
+      namespace: kube-system
+    - server: https://kubernetes.default.svc
+      namespace: longhorn-system
+    - server: https://kubernetes.default.svc
+      namespace: mail
+    - server: https://kubernetes.default.svc
+      namespace: mastodon
+    - server: https://kubernetes.default.svc
+      namespace: nextcloud
+    - server: https://kubernetes.default.svc
+      namespace: ot-operators
+    - server: https://kubernetes.default.svc
+      namespace: seaweedfs
+    - server: https://kubernetes.default.svc
+      namespace: wordpress
+  clusterResourceWhitelist:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: scheduling.k8s.io
+      kind: PriorityClass
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  orphanedResources:
+    warn: true

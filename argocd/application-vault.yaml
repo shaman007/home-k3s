@@ -5,7 +5,7 @@ metadata:
   name: vault
   namespace: argocd
 spec:
-  project: default
+  project: platform
   source:
     repoURL: https://helm.releases.hashicorp.com
     targetRevision: 0.34.0

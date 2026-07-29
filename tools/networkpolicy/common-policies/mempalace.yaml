@@ -5,3 +5,8 @@ policies:
   - type: default-deny
   - type: dns-egress
   - type: web-egress
+  - type: namespace-ingress
+  - type: namespace-ingress
+    name: allow-ingress-from-traefik
+    namespace: traefik
+    port: 8765

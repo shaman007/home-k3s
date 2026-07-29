@@ -5,7 +5,7 @@ metadata:
   name: kube-node-exporter
   namespace: argocd
 spec:
-  project: default
+  project: observability
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: metrics/kubernetes-node-exporter

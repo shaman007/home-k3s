@@ -5,7 +5,7 @@ metadata:
   name: cilium
   namespace: argocd
 spec:
-  project: default
+  project: platform
   sources:
     - repoURL: https://helm.cilium.io
       chart: cilium

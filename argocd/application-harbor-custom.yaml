@@ -5,7 +5,7 @@ metadata:
   name: harbor-custom
   namespace: argocd
 spec:
-  project: default
+  project: applications
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: harbor

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mempalace
+  namespace: mempalace
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  labels:
+    app: mempalace
+    app.kubernetes.io/name: mempalace
+    app.kubernetes.io/instance: mempalace
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: mempalace.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mempalace
+                port:
+                  number: 8765

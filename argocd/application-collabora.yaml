@@ -5,7 +5,7 @@ metadata:
   name: collabora
   namespace: argocd
 spec:
-  project: default
+  project: applications
   source:
     repoURL: 'https://collaboraonline.github.io/online/'
     targetRevision: 1.3.0

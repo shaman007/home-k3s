@@ -5,7 +5,7 @@ metadata:
   name: harbor
   namespace: argocd
 spec:
-  project: default
+  project: applications
   source:
     repoURL: https://helm.goharbor.io
     targetRevision: 1.19.1

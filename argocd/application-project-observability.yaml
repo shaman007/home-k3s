@@ -1,0 +1,50 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: observability
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    app.kubernetes.io/name: observability
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/managed-by: argoCD
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Metrics, logs, dashboards, health checks, and telemetry exporters
+  sourceRepos:
+    - https://github.com/shaman007/home-k3s.git
+    - https://grafana.github.io/helm-charts
+    - https://helm.elastic.co
+    - https://prometheus-community.github.io/helm-charts
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: connectivity-exporter
+    - server: https://kubernetes.default.svc
+      namespace: default
+    - server: https://kubernetes.default.svc
+      namespace: elastic-stack
+    - server: https://kubernetes.default.svc
+      namespace: elastic-system
+    - server: https://kubernetes.default.svc
+      namespace: loki
+    - server: https://kubernetes.default.svc
+      namespace: monitoring
+    - server: https://kubernetes.default.svc
+      namespace: unifi
+  clusterResourceWhitelist:
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  orphanedResources:
+    warn: true

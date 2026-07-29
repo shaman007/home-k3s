@@ -5,12 +5,13 @@ metadata:
   name: plex
   namespace: argocd
 spec:
-  project: default
+  project: applications
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: plex
     targetRevision: HEAD
   destination:
     server: 'https://kubernetes.default.svc'
+    namespace: plex
   syncPolicy:
     automated: {}

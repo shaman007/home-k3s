@@ -4,7 +4,7 @@ metadata:
   name: ollama
   namespace: argocd
 spec:
-  project: workloads
+  project: applications
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: ollama

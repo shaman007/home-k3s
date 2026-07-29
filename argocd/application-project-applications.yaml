@@ -2,20 +2,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: workloads
+  name: applications
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
   labels:
-    app.kubernetes.io/name: workloads
+    app.kubernetes.io/name: applications
     app.kubernetes.io/part-of: argocd
     app.kubernetes.io/managed-by: argoCD
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Namespaced workloads sourced from the home-k3s GitOps repository
+  description: User-facing applications and their supporting namespaced resources
   sourceRepos:
+    - https://collaboraonline.github.io/online/
     - https://github.com/shaman007/home-k3s.git
+    - https://helm.goharbor.io
+    - https://mastodon.github.io/helm-charts
   destinations:
     - server: https://kubernetes.default.svc
       namespace: backup-rsync
@@ -26,11 +29,13 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: clamav
     - server: https://kubernetes.default.svc
-      namespace: connectivity-exporter
+      namespace: comfyui
     - server: https://kubernetes.default.svc
       namespace: convertx
     - server: https://kubernetes.default.svc
       namespace: dawarich
+    - server: https://kubernetes.default.svc
+      namespace: harbor
     - server: https://kubernetes.default.svc
       namespace: hister
     - server: https://kubernetes.default.svc
@@ -38,9 +43,17 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: image-builder
     - server: https://kubernetes.default.svc
+      namespace: immich
+    - server: https://kubernetes.default.svc
       namespace: karakeep
     - server: https://kubernetes.default.svc
       namespace: keycloak
+    - server: https://kubernetes.default.svc
+      namespace: lenka
+    - server: https://kubernetes.default.svc
+      namespace: mail
+    - server: https://kubernetes.default.svc
+      namespace: mastodon
     - server: https://kubernetes.default.svc
       namespace: matrix
     - server: https://kubernetes.default.svc
@@ -52,20 +65,30 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: ollama
     - server: https://kubernetes.default.svc
-      namespace: seaweedfs
+      namespace: open-terminal
+    - server: https://kubernetes.default.svc
+      namespace: open-webui
+    - server: https://kubernetes.default.svc
+      namespace: plex
     - server: https://kubernetes.default.svc
       namespace: spotify
     - server: https://kubernetes.default.svc
       namespace: stirling-pdf
     - server: https://kubernetes.default.svc
-      namespace: unifi
-    - server: https://kubernetes.default.svc
       namespace: wordpress
     - server: https://kubernetes.default.svc
       namespace: year
-  # An empty whitelist denies every cluster-scoped kind. Workloads may create
-  # namespaced resources only, and only in the destinations listed above.
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: ""
+      kind: PersistentVolume
+    - group: external-secrets.io
+      kind: ClusterSecretStore
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"

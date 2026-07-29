@@ -20,16 +20,23 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 ## Projects
 
-`application-project-workloads.yaml` defines the first least-privilege Argo CD
-project. Applications assigned to `workloads` may deploy namespaced resources
-from this repository only, to an explicit list of application namespaces in the
-local cluster. They cannot create cluster-scoped resources.
+Every child Application is assigned to one of four purpose-specific projects:
 
-Platform controllers, observability components, third-party Helm charts, and
-applications that require cluster-scoped resources remain in `default` until
-their permissions and rendered manifests are split into dedicated projects.
-Keep the project manifest on an earlier sync wave than its Applications so a
-fresh app-of-apps sync creates the project first.
+* `applications` contains user-facing services and their companion resources.
+* `platform` contains cluster networking, ingress, security, and controllers.
+* `storage` contains Longhorn, snapshots, Redis, and SeaweedFS.
+* `observability` contains metrics, logs, dashboards, and exporters.
+
+Each project permits only its declared source repositories, destination
+namespaces, and explicit cluster-scoped resource kinds. Namespaced resource
+kinds remain unrestricted within those destination namespaces. The project
+manifests use sync wave `-1`, so an app-of-apps sync creates or updates them
+before migrating their Applications.
+
+Do not assign child Applications to Argo CD's unrestricted `default` project.
+When adding an Application, update its project's repository, destination, or
+cluster-resource allowlist only when the rendered manifests require it, and add
+the Application to `tests/test_argocd_projects.py`.
 
 ## Repos
 

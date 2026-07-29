@@ -5,7 +5,7 @@ metadata:
   name: image-builder
   namespace: argocd
 spec:
-  project: workloads
+  project: applications
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: image-builder

@@ -5,7 +5,7 @@ metadata:
   name: unifi-exporter
   namespace: argocd
 spec:
-  project: workloads
+  project: observability
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: unifi/poller

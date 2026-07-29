@@ -5,7 +5,7 @@ metadata:
   name: metrics-server
   namespace: argocd
 spec:
-  project: default
+  project: platform
   source:
     repoURL: 'https://kubernetes-sigs.github.io/metrics-server/'
     targetRevision: 3.13.1
