@@ -58,8 +58,6 @@ PROJECT_MEMBERS = {
 }
 
 EXTRA_DESTINATIONS_BY_APPLICATION = {
-    # Temporary until cert-manager has pruned its former mail resources.
-    "cert-manager": {"mail"},
     "cilium": {"cilium-secrets"},
     "my-adapter": {"kube-system"},
 }
@@ -82,6 +80,7 @@ EXPECTED_CLUSTER_PERMISSIONS = {
         ("admissionregistration.k8s.io", "ValidatingWebhookConfiguration"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
         ("apiregistration.k8s.io", "APIService"),
+        ("cert-manager.io", "ClusterIssuer"),
         ("networking.k8s.io", "IngressClass"),
         ("nvidia.com", "ClusterPolicy"),
         ("rbac.authorization.k8s.io", "ClusterRole"),

@@ -219,8 +219,7 @@ certificatesResolvers:
     acme:
       email: "me@andreybondarenko.com"
       storage: "/data/acme.json"
-      httpChallenge:
-        entryPoint: web
+      tlsChallenge: {}
 
 # Persistent volume for acme.json (so certs survive restart)
 persistence:

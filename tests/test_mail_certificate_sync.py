@@ -12,6 +12,33 @@ def load_yaml(path: str) -> dict:
 
 
 class MailCertificateSyncTest(unittest.TestCase):
+    def test_cert_manager_transition_releases_http01_from_traefik(self):
+        application = load_yaml("argocd/application-cert-manager.yaml")
+        issuer = load_yaml(
+            "cert-manager/cluster-issuer-letsencrypt-prod.yaml"
+        )
+        staging_issuer = load_yaml(
+            "cert-manager/cluster-issuer-letsencrypt-staging.yaml"
+        )
+        traefik = (ROOT / "argocd/application-traefik.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("sources", application["spec"])
+        self.assertEqual(
+            application["metadata"]["finalizers"],
+            ["resources-finalizer.argocd.argoproj.io"],
+        )
+        self.assertEqual(issuer["kind"], "ClusterIssuer")
+        self.assertEqual(staging_issuer["kind"], "ClusterIssuer")
+        self.assertIn("acme-staging", staging_issuer["spec"]["acme"]["server"])
+        self.assertEqual(
+            issuer["spec"]["acme"]["solvers"],
+            [{"http01": {"ingress": {"ingressClassName": "traefik"}}}],
+        )
+        self.assertNotIn("httpChallenge:", traefik)
+        self.assertIn("tlsChallenge: {}", traefik)
+
     def test_exporter_reads_the_traefik_pvc_without_pod_exec(self):
         cron_job = load_yaml(
             "traefik-acme-exporter/cron-job-sync-letsencrypt-prod.yaml"
@@ -91,15 +118,6 @@ class MailCertificateSyncTest(unittest.TestCase):
         )
         self.assertNotIn("sync-le-tls-traefik-readexec", traefik)
         self.assertNotIn("pods/exec", traefik)
-
-    def test_cert_manager_has_a_cascading_cleanup_finalizer(self):
-        application = load_yaml("argocd/application-cert-manager.yaml")
-        self.assertEqual(
-            application["metadata"]["finalizers"],
-            ["resources-finalizer.argocd.argoproj.io"],
-        )
-        self.assertNotIn("sources", application["spec"])
-
 
 if __name__ == "__main__":
     unittest.main()

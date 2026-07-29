@@ -19,8 +19,7 @@ spec:
           letsencrypt:
             acme:
               email: me@andreybondarenko.com
-              httpChallenge:
-                entryPoint: web
+              tlsChallenge: {}
               storage: /data/acme.json
         deployment:
           initContainers:

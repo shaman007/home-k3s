@@ -40,9 +40,6 @@ spec:
       namespace: headlamp
     - server: https://kubernetes.default.svc
       namespace: kube-system
-    # Temporary: cert-manager must prune its former mail resources before removal.
-    - server: https://kubernetes.default.svc
-      namespace: mail
     - server: https://kubernetes.default.svc
       namespace: metallb-system
     - server: https://kubernetes.default.svc
@@ -58,6 +55,8 @@ spec:
       kind: ValidatingWebhookConfiguration
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
+    - group: cert-manager.io
+      kind: ClusterIssuer
     - group: apiregistration.k8s.io
       kind: APIService
     - group: networking.k8s.io

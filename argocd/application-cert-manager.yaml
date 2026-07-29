@@ -8,19 +8,22 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform
-  source:
-    repoURL: https://charts.jetstack.io
-    chart: cert-manager
-    targetRevision: v1.21.0
-    helm:
-      releaseName: cert-manager
-      values: |
-        crds:
-          enabled: true
-        global:
-          priorityClassName: homelab-critical
-        prometheus:
-          enabled: false
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.21.0
+      helm:
+        releaseName: cert-manager
+        values: |
+          crds:
+            enabled: true
+          global:
+            priorityClassName: homelab-critical
+          prometheus:
+            enabled: false
+    - repoURL: https://github.com/shaman007/home-k3s.git
+      path: cert-manager
+      targetRevision: main
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
