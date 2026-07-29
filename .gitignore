@@ -1,10 +1,28 @@
+# Local and generated secrets
 secret.yaml
-.tmp*
-# Secrets
 *.key
 *.pem
 *.crt
 *.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.venv/
+venv/
+
+# Local validation and temporary files
+manifest-files.txt
+.tmp*
+*.tmp
 
 # Kubeconfig
 kubeconfig
@@ -17,4 +35,5 @@ kubeconfig
 
 # OS
 .DS_Store
-Thumbs.dbyml
+Thumbs.db
+Desktop.ini
