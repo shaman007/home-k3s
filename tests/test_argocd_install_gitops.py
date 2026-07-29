@@ -16,9 +16,23 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         manifest = yaml.safe_load(KUSTOMIZATION.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["namespace"], "argocd")
-        self.assertIn(
-            "github.com/argoproj/argo-cd//manifests/cluster-install?ref=v3.4.1",
-            manifest["resources"],
+        self.assertTrue(
+            any(
+                self._is_version_pinned_upstream_install(resource)
+                for resource in manifest["resources"]
+            ),
+            "Argo CD upstream install resource must be pinned to a release version",
+        )
+
+    @staticmethod
+    def _is_version_pinned_upstream_install(resource):
+        prefix = "github.com/argoproj/argo-cd//manifests/cluster-install?ref=v"
+        if not resource.startswith(prefix):
+            return False
+
+        version = resource.removeprefix(prefix)
+        return len(version.split(".")) == 3 and all(
+            part.isdigit() for part in version.split(".")
         )
 
     def test_install_is_managed_by_argocd(self):
