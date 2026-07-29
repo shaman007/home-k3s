@@ -323,6 +323,12 @@ class ArgoCdProjectsTest(unittest.TestCase):
                     f'{application["metadata"]["name"]} must target main',
                 )
 
+    def test_chart_only_failed_sync_can_self_heal_after_project_change(self):
+        application = self.applications["my-adapter"]
+        automated = application["spec"]["syncPolicy"]["automated"]
+
+        self.assertTrue(automated["selfHeal"])
+
     def test_repository_manifests_fit_project_cluster_permissions(self):
         for project_name, members in PROJECT_MEMBERS.items():
             allowed = EXPECTED_CLUSTER_PERMISSIONS[project_name]

@@ -1,10 +1,13 @@
 from pathlib import Path
 import unittest
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_MANIFEST = ROOT / "metrics" / "config-map-external-access-daily-report-scripts.yaml"
 PLATFORM_APP = ROOT / "argocd" / "application-platform-health.yaml"
+ANALYTICS_APP = ROOT / "argocd" / "application-external-access-analytics.yaml"
 
 
 class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
@@ -26,6 +29,13 @@ class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
         source = PLATFORM_APP.read_text(encoding="utf-8")
 
         self.assertNotIn("cluster-role-binding-external-access-daily-report-platform-health.yaml", source)
+
+    def test_large_generated_configmap_uses_server_side_apply(self):
+        application = yaml.safe_load(ANALYTICS_APP.read_text(encoding="utf-8"))
+        sync_options = application["spec"]["syncPolicy"]["syncOptions"]
+
+        self.assertIn("RespectIgnoreDifferences=true", sync_options)
+        self.assertIn("ServerSideApply=true", sync_options)
 
 
 if __name__ == "__main__":
