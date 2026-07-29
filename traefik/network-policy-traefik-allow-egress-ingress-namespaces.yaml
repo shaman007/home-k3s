@@ -62,9 +62,6 @@ spec:
               kubernetes.io/metadata.name: matrix
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: mempalace
-        - namespaceSelector:
-            matchLabels:
               kubernetes.io/metadata.name: minecraft
         - namespaceSelector:
             matchLabels:
