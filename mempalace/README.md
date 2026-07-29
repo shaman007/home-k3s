@@ -6,6 +6,13 @@ The MCP server uses Streamable HTTP behind the internal Traefik ingress. Its aut
 endpoint is `http://mempalace.w386.k8s.my.lan/mcp`; the bearer token is sourced from
 `kv/mempalace` in Vault through External Secrets.
 
+Codex is configured to read the bearer token from `MEMPALACE_MCP_HTTP_TOKEN`. Export it
+before starting Codex:
+
+```sh
+export MEMPALACE_MCP_HTTP_TOKEN="$(vault kv get -field=mcp_http_token kv/mempalace)"
+```
+
 Persistent paths:
 
 - `/data/.mempalace` — MemPalace databases and palace data

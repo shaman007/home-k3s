@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: loki
-    targetRevision: HEAD
+    targetRevision: main
     directory:
       recurse: false
       include: network-policy-*.yaml

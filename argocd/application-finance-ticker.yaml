@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: metrics
-    targetRevision: HEAD
+    targetRevision: main
     directory:
       recurse: false
       include: "{config-map-finance-ticker-collector-scripts.yaml,config-map-finance-ticker-collector.yaml,config-map-finance-ticker-exporter.yaml,cron-job-finance-ticker-collector.yaml,deployment-finance-ticker-exporter.yaml,role-binding-finance-ticker-collector.yaml,role-finance-ticker-collector.yaml,service-account-finance-ticker-collector.yaml,service-finance-ticker-exporter.yaml}"

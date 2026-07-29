@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: metrics
-    targetRevision: HEAD
+    targetRevision: main
     directory:
       recurse: false
       include: "{cluster-role-binding-external-access-daily-report.yaml,cluster-role-external-access-daily-report.yaml,config-map-external-access-analytics-exporter.yaml,config-map-external-access-daily-report-metrics.yaml,config-map-external-access-daily-report-scripts.yaml,cron-job-external-access-daily-report.yaml,deployment-external-access-analytics-exporter.yaml,role-binding-external-access-daily-report.yaml,role-external-access-daily-report.yaml,service-account-external-access-daily-report.yaml,service-external-access-analytics-exporter.yaml}"

@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: mastodon
-    targetRevision: HEAD
+    targetRevision: main
     directory:
       recurse: false
       include: "{config-map-*.yaml,cron-job-*.yaml,external-secret-*.yaml,ingress-*.yaml,middleware-*.yaml,network-policy-*.yaml,persistent-volume-claim-data-mastodon-postgres-lh.yaml,role-*.yaml,role-binding-*.yaml,secret-store-*.yaml,service-account-*.yaml,service-mastodon-postgres*.yaml,stateful-set-mastodon-postgres.yaml}"

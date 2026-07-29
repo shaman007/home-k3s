@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: metrics
-    targetRevision: HEAD
+    targetRevision: main
     directory:
       recurse: false
       include: "{cluster-role-binding-platform-health-report.yaml,cluster-role-platform-health-report.yaml,config-map-platform-health-exporter.yaml,config-map-platform-health-report.yaml,config-map-platform-health-report-scripts.yaml,cron-job-platform-health-report.yaml,deployment-platform-health-exporter.yaml,role-binding-platform-health-report.yaml,role-platform-health-report.yaml,service-account-platform-health-report.yaml,service-platform-health-exporter.yaml}"

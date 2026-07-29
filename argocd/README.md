@@ -27,13 +27,22 @@ Every child Application is assigned to one of four purpose-specific projects:
 * `storage` contains Longhorn, snapshots, Redis, and SeaweedFS.
 * `observability` contains metrics, logs, dashboards, and exporters.
 
+The built-in `default` project is restricted to the `argocd-applications`
+bootstrap Application. It can read this repository and manage only `Application`
+and `AppProject` resources in the `argocd` namespace; it has no cluster-scoped
+resource permissions. This keeps the app-of-apps bootstrappable without leaving
+the default project open to arbitrary workloads.
+
 Each project permits only its declared source repositories, destination
 namespaces, and explicit cluster-scoped resource kinds. Namespaced resource
 kinds remain unrestricted within those destination namespaces. The project
 manifests use sync wave `-1`, so an app-of-apps sync creates or updates them
 before migrating their Applications.
 
-Do not assign child Applications to Argo CD's unrestricted `default` project.
+Git sources from this repository explicitly target the protected `main` branch;
+do not use the repository-default alias `HEAD` in Application manifests.
+
+Do not assign child Applications to the bootstrap-only `default` project.
 When adding an Application, update its project's repository, destination, or
 cluster-resource allowlist only when the rendered manifests require it, and add
 the Application to `tests/test_argocd_projects.py`.

@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
-    targetRevision: HEAD
+    targetRevision: main
     path: argocd
     directory:
       recurse: false

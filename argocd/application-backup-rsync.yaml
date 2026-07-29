@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: backup-rsync
-    targetRevision: HEAD
+    targetRevision: main
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: backup-rsync

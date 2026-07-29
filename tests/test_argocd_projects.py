@@ -7,6 +7,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 ARGOCD = ROOT / "argocd"
 CLUSTER = "https://kubernetes.default.svc"
+REPOSITORY = "https://github.com/shaman007/home-k3s.git"
 
 PROJECT_APPLICATIONS = {
     "backup-rsync", "bitwarden", "ca-scanner", "clamav", "collabora",
@@ -180,6 +181,58 @@ class ArgoCdProjectsTest(unittest.TestCase):
             }
             self.assertEqual(actual, expected)
             self.assertNotIn(("*", "*"), actual)
+
+    def test_default_project_is_bootstrap_only(self):
+        project = load_yaml(ARGOCD / "application-project-default.yaml")
+        self.assertEqual(project["metadata"]["name"], "default")
+        self.assertEqual(
+            project["spec"]["sourceRepos"],
+            [REPOSITORY],
+        )
+        self.assertEqual(
+            project["spec"]["destinations"],
+            [{"server": CLUSTER, "namespace": "argocd"}],
+        )
+        self.assertEqual(project["spec"]["clusterResourceWhitelist"], [])
+        self.assertEqual(
+            {
+                (permission["group"], permission["kind"])
+                for permission in project["spec"]["namespaceResourceWhitelist"]
+            },
+            {
+                ("argoproj.io", "Application"),
+                ("argoproj.io", "AppProject"),
+            },
+        )
+
+        bootstrap = load_yaml(ARGOCD / "applications-manager.yaml")
+        self.assertEqual(bootstrap["metadata"]["name"], "argocd-applications")
+        self.assertEqual(bootstrap["spec"]["project"], "default")
+        self.assertEqual(
+            source_repositories(bootstrap),
+            set(project["spec"]["sourceRepos"]),
+        )
+        self.assertEqual(
+            bootstrap["spec"]["destination"],
+            project["spec"]["destinations"][0],
+        )
+
+    def test_git_sources_use_explicit_main_branch(self):
+        manifests = list(self.applications.values())
+        manifests.append(load_yaml(ARGOCD / "applications-manager.yaml"))
+
+        for application in manifests:
+            sources = application["spec"].get("sources")
+            if sources is None:
+                sources = [application["spec"]["source"]]
+            for source in sources:
+                if source["repoURL"] != REPOSITORY:
+                    continue
+                self.assertEqual(
+                    source["targetRevision"],
+                    "main",
+                    f'{application["metadata"]["name"]} must target main',
+                )
 
     def test_repository_manifests_fit_project_cluster_permissions(self):
         for project_name, members in PROJECT_MEMBERS.items():

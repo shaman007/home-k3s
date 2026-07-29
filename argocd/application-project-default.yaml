@@ -1,0 +1,25 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    app.kubernetes.io/name: default
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  description: Bootstrap-only project for the argocd-applications app-of-apps
+  sourceRepos:
+    - https://github.com/shaman007/home-k3s.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: argoproj.io
+      kind: Application
+    - group: argoproj.io
+      kind: AppProject

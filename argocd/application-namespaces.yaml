@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: "https://github.com/shaman007/home-k3s.git"
     path: namespaces
-    targetRevision: HEAD
+    targetRevision: main
   destination:
     server: "https://kubernetes.default.svc"
     namespace: argocd
