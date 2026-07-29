@@ -1,0 +1,37 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-install
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: platform
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: argocd-install
+    targetRevision: main
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: argocd-secret
+      namespace: argocd
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: argocd-notifications-secret
+      namespace: argocd
+      jsonPointers:
+        - /data
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - RespectIgnoreDifferences=true
+      - ServerSideApply=true

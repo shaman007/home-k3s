@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+resources:
+  - github.com/argoproj/argo-cd//manifests/cluster-install?ref=v3.4.1
+patches:
+  # These ConfigMaps are customized by the separate argocd-deploy application.
+  - target:
+      kind: ConfigMap
+      name: argocd-cm
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-cm
+  - target:
+      kind: ConfigMap
+      name: argocd-cmd-params-cm
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-cmd-params-cm
+  - target:
+      kind: ConfigMap
+      name: argocd-rbac-cm
+    patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-rbac-cm

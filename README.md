@@ -75,6 +75,7 @@ Observability and security:
 ## Repository layout
 
 - `argocd/`: Argo CD `Application` manifests (main deployment entrypoint).
+- `argocd-install/`: Pinned upstream Argo CD installation managed with Kustomize.
 - `argocd-deploy/`: Argo CD post-install cluster manifests (ConfigMap and Ingress).
 - `<service>/`: Namespace-scoped manifests/charts for each service.
 - `DEPRECATED/`: Old manifests kept for reference.
@@ -147,10 +148,15 @@ chmod 600 ~/.kube/config
 
 ```bash
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side --force-conflicts -k argocd-install
 kubectl apply -f argocd-deploy/config-map-argocd-cmd-params-cm.yaml
 kubectl apply -f argocd-deploy/ingress-argocd-ingress.yaml
 ```
+
+The pinned Argo CD manifests are subsequently managed by the
+`argocd-install` Application. Renovate updates the version in
+`argocd-install/kustomization.yaml`; review Argo CD upgrade notes before
+merging minor or major upgrades.
 
 Apply all Argo CD Applications from this repo:
 

@@ -35,6 +35,14 @@
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["major-update"]
+    },
+    {
+      "description": "Require review for Argo CD minor and major upgrades",
+      "matchManagers": ["kustomize"],
+      "matchFileNames": ["argocd-install/kustomization.yaml"],
+      "matchUpdateTypes": ["minor", "major"],
+      "automerge": false,
+      "labels": ["argocd-upgrade"]
     }
   ]
 }

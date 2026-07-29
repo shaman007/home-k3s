@@ -20,8 +20,9 @@ PROJECT_APPLICATIONS = {
 }
 
 PROJECT_PLATFORM = {
-    "argocd-deploy", "cilium", "coredns-custom", "external-secrets",
-    "external-secrets-network-policy", "gpu-operator", "headlamp", "metallb",
+    "argocd-deploy", "argocd-install", "cilium", "coredns-custom",
+    "external-secrets", "external-secrets-network-policy", "gpu-operator",
+    "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
     "reloader", "traefik", "traefik-network-policy", "vault",
     "vault-custom", "vault-network-policy",
