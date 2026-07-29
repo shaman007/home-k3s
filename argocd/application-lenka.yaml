@@ -5,7 +5,7 @@ metadata:
   name: lenka
   namespace: argocd
 spec:
-  project: applications
+  project: access-management
   source:
     repoURL: 'https://github.com/shaman007/home-k3s.git'
     path: lenka

@@ -2,24 +2,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: applications
+  name: namespace-management
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
   labels:
-    app.kubernetes.io/name: applications
+    app.kubernetes.io/name: namespace-management
     app.kubernetes.io/part-of: argocd
     app.kubernetes.io/managed-by: argoCD
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: User-facing applications and their supporting namespaced resources
+  description: Namespace lifecycle, quotas, limits, and shared priority classes
   sourceRepos:
-    - https://collaboraonline.github.io/online/
     - https://github.com/shaman007/home-k3s.git
-    - https://helm.goharbor.io
-    - https://mastodon.github.io/helm-charts
   destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
     - server: https://kubernetes.default.svc
       namespace: backup-rsync
     - server: https://kubernetes.default.svc
@@ -29,11 +28,19 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: clamav
     - server: https://kubernetes.default.svc
-      namespace: comfyui
+      namespace: connectivity-exporter
     - server: https://kubernetes.default.svc
       namespace: convertx
     - server: https://kubernetes.default.svc
       namespace: dawarich
+    - server: https://kubernetes.default.svc
+      namespace: default
+    - server: https://kubernetes.default.svc
+      namespace: elastic-stack
+    - server: https://kubernetes.default.svc
+      namespace: elastic-system
+    - server: https://kubernetes.default.svc
+      namespace: external-secrets
     - server: https://kubernetes.default.svc
       namespace: harbor
     - server: https://kubernetes.default.svc
@@ -49,6 +56,12 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: keycloak
     - server: https://kubernetes.default.svc
+      namespace: kube-system
+    - server: https://kubernetes.default.svc
+      namespace: loki
+    - server: https://kubernetes.default.svc
+      namespace: longhorn-system
+    - server: https://kubernetes.default.svc
       namespace: mail
     - server: https://kubernetes.default.svc
       namespace: mastodon
@@ -57,21 +70,29 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: mempalace
     - server: https://kubernetes.default.svc
+      namespace: metallb-system
+    - server: https://kubernetes.default.svc
       namespace: minecraft
+    - server: https://kubernetes.default.svc
+      namespace: monitoring
     - server: https://kubernetes.default.svc
       namespace: nextcloud
     - server: https://kubernetes.default.svc
-      namespace: ollama
-    - server: https://kubernetes.default.svc
-      namespace: open-terminal
-    - server: https://kubernetes.default.svc
-      namespace: open-webui
+      namespace: ot-operators
     - server: https://kubernetes.default.svc
       namespace: plex
+    - server: https://kubernetes.default.svc
+      namespace: seaweedfs
     - server: https://kubernetes.default.svc
       namespace: spotify
     - server: https://kubernetes.default.svc
       namespace: stirling-pdf
+    - server: https://kubernetes.default.svc
+      namespace: traefik
+    - server: https://kubernetes.default.svc
+      namespace: unifi
+    - server: https://kubernetes.default.svc
+      namespace: vault
     - server: https://kubernetes.default.svc
       namespace: wordpress
     - server: https://kubernetes.default.svc
@@ -79,16 +100,12 @@ spec:
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
-    - group: ""
-      kind: PersistentVolume
-    - group: external-secrets.io
-      kind: ClusterSecretStore
-    - group: rbac.authorization.k8s.io
-      kind: ClusterRole
-    - group: rbac.authorization.k8s.io
-      kind: ClusterRoleBinding
+    - group: scheduling.k8s.io
+      kind: PriorityClass
   namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
+    - group: ""
+      kind: LimitRange
+    - group: ""
+      kind: ResourceQuota
   orphanedResources:
     warn: true

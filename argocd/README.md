@@ -20,12 +20,16 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 ## Projects
 
-Every child Application is assigned to one of four purpose-specific projects:
+Every child Application is assigned to a purpose-specific project:
 
 * `applications` contains user-facing services and their companion resources.
 * `platform` contains cluster networking, ingress, security, and controllers.
 * `storage` contains Longhorn, snapshots, Redis, and SeaweedFS.
 * `observability` contains metrics, logs, dashboards, and exporters.
+* `namespace-management` manages namespaces, quotas, limits, and priority
+  classes across an explicit namespace list.
+* `access-management` manages Lenka's read-only identities and RBAC across an
+  explicit infrastructure namespace list.
 
 The built-in `default` project is restricted to the `argocd-applications`
 bootstrap Application. It can read this repository and manage only `Application`
@@ -35,9 +39,10 @@ the default project open to arbitrary workloads.
 
 Each project permits only its declared source repositories, destination
 namespaces, and explicit cluster-scoped resource kinds. Namespaced resource
-kinds remain unrestricted within those destination namespaces. The project
-manifests use sync wave `-1`, so an app-of-apps sync creates or updates them
-before migrating their Applications.
+kinds remain unrestricted within those destination namespaces. Project
+manifests use negative sync waves so an app-of-apps sync creates or updates them
+before migrating their Applications. `namespace-management` uses wave `-2`
+because the `namespaces` Application itself runs at wave `-1`.
 
 Git sources from this repository explicitly target the protected `main` branch;
 do not use the repository-default alias `HEAD` in Application manifests.

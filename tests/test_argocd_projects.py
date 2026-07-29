@@ -13,7 +13,7 @@ PROJECT_APPLICATIONS = {
     "backup-rsync", "bitwarden", "ca-scanner", "clamav", "collabora",
     "comfyui", "conduit", "convertx", "dawarich", "harbor",
     "harbor-custom", "harbor-network-policy", "hister", "homeassistant",
-    "image-builder", "immich", "karakeep", "keycloak", "lenka", "mail",
+    "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
     "ollama", "ollama-small", "open-terminal", "open-webui", "plex",
     "stirling-pdf", "wordpress", "year", "your-spotify",
@@ -23,7 +23,7 @@ PROJECT_PLATFORM = {
     "argocd-deploy", "cilium", "coredns-custom", "external-secrets",
     "external-secrets-network-policy", "gpu-operator", "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
-    "namespaces", "reloader", "traefik", "traefik-network-policy", "vault",
+    "reloader", "traefik", "traefik-network-policy", "vault",
     "vault-custom", "vault-network-policy",
 }
 
@@ -44,11 +44,25 @@ PROJECT_OBSERVABILITY = {
     "my-adapter", "platform-health", "thanos", "unifi-exporter",
 }
 
+PROJECT_ACCESS_MANAGEMENT = {"lenka"}
+PROJECT_NAMESPACE_MANAGEMENT = {"namespaces"}
+
 PROJECT_MEMBERS = {
     "applications": PROJECT_APPLICATIONS,
     "platform": PROJECT_PLATFORM,
     "storage": PROJECT_STORAGE,
     "observability": PROJECT_OBSERVABILITY,
+    "access-management": PROJECT_ACCESS_MANAGEMENT,
+    "namespace-management": PROJECT_NAMESPACE_MANAGEMENT,
+}
+
+EXTRA_DESTINATIONS_BY_APPLICATION = {
+    "cilium": {"cilium-secrets"},
+    "my-adapter": {"kube-system"},
+}
+
+PROJECT_SYNC_WAVES = {
+    "namespace-management": "-2",
 }
 
 EXPECTED_CLUSTER_PERMISSIONS = {
@@ -68,7 +82,6 @@ EXPECTED_CLUSTER_PERMISSIONS = {
         ("nvidia.com", "ClusterPolicy"),
         ("rbac.authorization.k8s.io", "ClusterRole"),
         ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
-        ("scheduling.k8s.io", "PriorityClass"),
     },
     "storage": {
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
@@ -81,6 +94,27 @@ EXPECTED_CLUSTER_PERMISSIONS = {
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
         ("rbac.authorization.k8s.io", "ClusterRole"),
         ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
+    },
+    "access-management": {
+        ("", "Namespace"),
+        ("rbac.authorization.k8s.io", "ClusterRole"),
+        ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
+    },
+    "namespace-management": {
+        ("", "Namespace"),
+        ("scheduling.k8s.io", "PriorityClass"),
+    },
+}
+
+EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS = {
+    "access-management": {
+        ("", "Secret"),
+        ("", "ServiceAccount"),
+        ("rbac.authorization.k8s.io", "RoleBinding"),
+    },
+    "namespace-management": {
+        ("", "LimitRange"),
+        ("", "ResourceQuota"),
     },
 }
 
@@ -118,6 +152,24 @@ def api_group(document: dict) -> str:
     return api_version.split("/", 1)[0] if "/" in api_version else ""
 
 
+def repository_documents(application: dict):
+    sources = application["spec"].get("sources")
+    if sources is None:
+        sources = [application["spec"]["source"]]
+
+    for source in sources:
+        if source.get("repoURL") != REPOSITORY or "path" not in source:
+            continue
+        source_path = ROOT / source["path"]
+        for pattern in ("*.yaml", "*.yml"):
+            for manifest in source_path.rglob(pattern):
+                for document in yaml.safe_load_all(
+                    manifest.read_text(encoding="utf-8")
+                ):
+                    if isinstance(document, dict):
+                        yield manifest, document
+
+
 class ArgoCdProjectsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -149,7 +201,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
             self.assertEqual(project["metadata"]["name"], project_name)
             self.assertEqual(
                 project["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"],
-                "-1",
+                PROJECT_SYNC_WAVES.get(project_name, "-1"),
             )
 
             expected_repositories = set()
@@ -160,6 +212,17 @@ class ArgoCdProjectsTest(unittest.TestCase):
                 namespace = application["spec"]["destination"].get("namespace")
                 self.assertTrue(namespace, f"{name} must have an explicit namespace")
                 expected_destinations.add((CLUSTER, namespace))
+                expected_destinations.update(
+                    (CLUSTER, extra_namespace)
+                    for extra_namespace in EXTRA_DESTINATIONS_BY_APPLICATION.get(
+                        name, set()
+                    )
+                )
+                expected_destinations.update(
+                    (CLUSTER, document["metadata"]["namespace"])
+                    for _, document in repository_documents(application)
+                    if (document.get("metadata") or {}).get("namespace")
+                )
 
             self.assertEqual(set(project["spec"]["sourceRepos"]), expected_repositories)
             self.assertEqual(
@@ -181,6 +244,32 @@ class ArgoCdProjectsTest(unittest.TestCase):
             }
             self.assertEqual(actual, expected)
             self.assertNotIn(("*", "*"), actual)
+
+    def test_cross_namespace_projects_restrict_namespaced_kinds(self):
+        for project_name, expected in EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS.items():
+            project = load_yaml(
+                ARGOCD / f"application-project-{project_name}.yaml"
+            )
+            actual = {
+                (permission["group"], permission["kind"])
+                for permission in project["spec"]["namespaceResourceWhitelist"]
+            }
+            self.assertEqual(actual, expected)
+            self.assertNotIn(("*", "*"), actual)
+
+            for name in PROJECT_MEMBERS[project_name]:
+                for manifest, document in repository_documents(
+                    self.applications[name]
+                ):
+                    if not (document.get("metadata") or {}).get("namespace"):
+                        continue
+                    permission = (api_group(document), document.get("kind", ""))
+                    self.assertIn(
+                        permission,
+                        expected,
+                        f"{manifest.relative_to(ROOT)} requires {permission} "
+                        f"from project {project_name}",
+                    )
 
     def test_default_project_is_bootstrap_only(self):
         project = load_yaml(ARGOCD / "application-project-default.yaml")
@@ -239,31 +328,20 @@ class ArgoCdProjectsTest(unittest.TestCase):
             allowed = EXPECTED_CLUSTER_PERMISSIONS[project_name]
             for name in members:
                 application = self.applications[name]
-                source = application["spec"].get("source")
-                if not source or "path" not in source:
-                    continue
-
-                source_path = ROOT / source["path"]
-                for pattern in ("*.yaml", "*.yml"):
-                    for manifest in source_path.rglob(pattern):
-                        for document in yaml.safe_load_all(
-                            manifest.read_text(encoding="utf-8")
-                        ):
-                            if not isinstance(document, dict):
-                                continue
-                            kind = document.get("kind", "")
-                            if not (
-                                kind.startswith("Cluster")
-                                or kind in CLUSTER_SCOPED_KINDS
-                            ):
-                                continue
-                            permission = (api_group(document), kind)
-                            self.assertIn(
-                                permission,
-                                allowed,
-                                f"{manifest.relative_to(ROOT)} requires {permission} "
-                                f"from project {project_name}",
-                            )
+                for manifest, document in repository_documents(application):
+                    kind = document.get("kind", "")
+                    if not (
+                        kind.startswith("Cluster")
+                        or kind in CLUSTER_SCOPED_KINDS
+                    ):
+                        continue
+                    permission = (api_group(document), kind)
+                    self.assertIn(
+                        permission,
+                        allowed,
+                        f"{manifest.relative_to(ROOT)} requires {permission} "
+                        f"from project {project_name}",
+                    )
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 MemPalace is deployed as a persistent MCP HTTP service and toolbox pod.
 
 The MCP server uses Streamable HTTP behind the internal Traefik ingress. Its authenticated
-endpoint is `http://mempalace.w386.k8s.my.lan/mcp`; the bearer token is sourced from
+endpoint is `https://mempalace.w386.k8s.my.lan/mcp`; the bearer token is sourced from
 `kv/mempalace` in Vault through External Secrets.
 
 Codex is configured to read the bearer token from `MEMPALACE_MCP_HTTP_TOKEN`. Export it
@@ -39,5 +39,5 @@ kubectl -n mempalace exec deploy/mempalace -- /data/venv/bin/python -c "import i
 kubectl -n mempalace exec deploy/mempalace -- find /data/.mempalace -maxdepth 3 -type f | head
 
 # check the HTTP transport without authentication
-curl http://mempalace.w386.k8s.my.lan/healthz
+curl https://mempalace.w386.k8s.my.lan/healthz
 ```

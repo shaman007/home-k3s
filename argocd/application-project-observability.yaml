@@ -29,6 +29,8 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: elastic-system
     - server: https://kubernetes.default.svc
+      namespace: kube-system
+    - server: https://kubernetes.default.svc
       namespace: loki
     - server: https://kubernetes.default.svc
       namespace: monitoring
