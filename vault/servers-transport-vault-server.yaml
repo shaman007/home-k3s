@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: vault-server
+  namespace: vault
+  labels:
+    app.kubernetes.io/name: vault
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  serverName: vault.vault.svc
+  rootCAsSecrets:
+    - vault-server-tls

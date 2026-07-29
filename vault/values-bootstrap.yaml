@@ -15,7 +15,7 @@ server:
   ha:
     enabled: true
     replicas: 2
-    apiAddr: "https://$(HOSTNAME).vault-internal:8200"
+    apiAddr: "https://vault-active.vault.svc:8200"
     clusterAddr: "https://$(HOSTNAME).vault-internal:8201"
     raft:
       enabled: true

@@ -42,7 +42,7 @@ spec:
                   topologyKey: kubernetes.io/hostname
           includeConfigAnnotation: true
           ha:
-            apiAddr: "https://$(HOSTNAME).vault-internal:8200"
+            apiAddr: "https://vault-active.vault.svc:8200"
             raft:
               config: |
                 ui = true
