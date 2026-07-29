@@ -21,7 +21,7 @@ spec:
       serviceAccountName: ca-scanner
       containers:
         - name: ui
-          image: harbor.andreybondarenko.com/library/canitiser:2026-07-27-200859
+          image: harbor.andreybondarenko.com/library/canitiser:2026-07-29-022901
           imagePullPolicy: IfNotPresent
           command: ["python", "/app/ca-report-server.py"]
           env:
