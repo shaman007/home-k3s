@@ -32,6 +32,16 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: cert-manager
+  labels:
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: clamav
   labels:
     pod-security.kubernetes.io/warn: restricted

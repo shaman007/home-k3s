@@ -20,7 +20,7 @@ PROJECT_APPLICATIONS = {
 }
 
 PROJECT_PLATFORM = {
-    "argocd-deploy", "argocd-install", "cilium", "coredns-custom",
+    "argocd-deploy", "argocd-install", "cert-manager", "cilium", "coredns-custom",
     "external-secrets", "external-secrets-network-policy", "gpu-operator",
     "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
@@ -76,6 +76,7 @@ EXPECTED_CLUSTER_PERMISSIONS = {
     },
     "platform": {
         ("", "Namespace"),
+        ("admissionregistration.k8s.io", "MutatingWebhookConfiguration"),
         ("admissionregistration.k8s.io", "ValidatingWebhookConfiguration"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
         ("apiregistration.k8s.io", "APIService"),
