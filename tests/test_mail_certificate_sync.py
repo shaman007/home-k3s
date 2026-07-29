@@ -32,6 +32,42 @@ class MailCertificateSyncTest(unittest.TestCase):
             "requiredDuringSchedulingIgnoredDuringExecution",
             pod_spec["affinity"]["podAffinity"],
         )
+        self.assertEqual(
+            pod_spec["securityContext"],
+            {
+                "runAsNonRoot": True,
+                "runAsUser": 65532,
+                "runAsGroup": 65532,
+                "fsGroup": 1000,
+                "seccompProfile": {"type": "RuntimeDefault"},
+            },
+        )
+
+    def test_exporter_has_cilium_access_only_to_the_kubernetes_api(self):
+        policy = load_yaml(
+            "traefik-acme-exporter/"
+            "cilium-network-policy-sync-letsencrypt-prod-kube-apiserver.yaml"
+        )
+
+        self.assertEqual(policy["metadata"]["namespace"], "traefik")
+        self.assertEqual(
+            policy["spec"]["endpointSelector"]["matchLabels"],
+            {"app.kubernetes.io/name": "sync-letsencrypt-prod"},
+        )
+        self.assertEqual(policy["spec"]["egress"], [
+            {"toEntities": ["kube-apiserver"]},
+            {
+                "toServices": [{
+                    "k8sService": {
+                        "namespace": "default",
+                        "serviceName": "kubernetes",
+                    },
+                }],
+                "toPorts": [{
+                    "ports": [{"port": "443", "protocol": "TCP"}],
+                }],
+            },
+        ])
 
     def test_exporter_can_patch_only_the_mail_tls_secret(self):
         role = load_yaml("mail/role-sync-le-tls.yaml")

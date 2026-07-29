@@ -58,6 +58,8 @@ PROJECT_MEMBERS = {
 }
 
 EXTRA_DESTINATIONS_BY_APPLICATION = {
+    # Temporary until cert-manager has pruned its former mail resources.
+    "cert-manager": {"mail"},
     "cilium": {"cilium-secrets"},
     "my-adapter": {"kube-system"},
 }

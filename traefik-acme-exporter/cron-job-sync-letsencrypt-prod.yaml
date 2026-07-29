@@ -28,6 +28,10 @@ spec:
           serviceAccountName: sync-le-tls
           restartPolicy: OnFailure
           securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            fsGroup: 1000
             seccompProfile:
               type: RuntimeDefault
           affinity:

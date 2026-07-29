@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sync-letsencrypt-prod-allow-kube-apiserver
+  namespace: traefik
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: sync-letsencrypt-prod
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toServices:
+        - k8sService:
+            namespace: default
+            serviceName: kubernetes
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
