@@ -20,7 +20,14 @@ spec:
       namespace: mail
       jsonPointers:
         - /data
+    - group: ""
+      kind: Secret
+      name: letsencrypt-prod
+      namespace: mail
+      jsonPointers:
+        - /data
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
     syncOptions:
       - RespectIgnoreDifferences=true

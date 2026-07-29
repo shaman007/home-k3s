@@ -6,4 +6,5 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "create", "update", "patch"]
+    resourceNames: ["letsencrypt-prod"]
+    verbs: ["get", "patch"]
