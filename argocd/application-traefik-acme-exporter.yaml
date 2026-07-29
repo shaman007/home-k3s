@@ -1,0 +1,19 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-acme-exporter
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/shaman007/home-k3s.git
+    path: traefik-acme-exporter
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

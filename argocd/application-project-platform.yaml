@@ -41,8 +41,6 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: kube-system
     - server: https://kubernetes.default.svc
-      namespace: mail
-    - server: https://kubernetes.default.svc
       namespace: metallb-system
     - server: https://kubernetes.default.svc
       namespace: traefik

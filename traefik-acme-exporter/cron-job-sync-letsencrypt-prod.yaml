@@ -1,0 +1,102 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sync-letsencrypt-prod
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: sync-letsencrypt-prod
+    app.kubernetes.io/instance: sync-letsencrypt-prod
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: sync-letsencrypt-prod
+            app.kubernetes.io/instance: sync-letsencrypt-prod
+        spec:
+          priorityClassName: homelab-batch
+          serviceAccountName: sync-le-tls
+          restartPolicy: OnFailure
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: traefik
+                      app.kubernetes.io/instance: traefik-traefik
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: sync
+              image: harbor.andreybondarenko.com/library/sync:2026-07-27-200859
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: DOMAIN
+                  value: andreybondarenko.com
+                - name: SECRET_NAME
+                  value: letsencrypt-prod
+                - name: ACME_PATH
+                  value: /data/acme.json
+              args:
+                - |
+                  set -euo pipefail
+
+                  jq -r --arg d "$DOMAIN" '
+                    .. | objects | select(has("Certificates")) | .Certificates[]
+                    | select(.domain.main==$d or ((.domain.sans // []) | index($d)))
+                    | .certificate
+                  ' "$ACME_PATH" | head -n1 | base64 -d > /tmp/tls.crt
+
+                  jq -r --arg d "$DOMAIN" '
+                    .. | objects | select(has("Certificates")) | .Certificates[]
+                    | select(.domain.main==$d or ((.domain.sans // []) | index($d)))
+                    | .key
+                  ' "$ACME_PATH" | head -n1 | base64 -d > /tmp/tls.key
+
+                  test -s /tmp/tls.crt
+                  test -s /tmp/tls.key
+                  openssl x509 -in /tmp/tls.crt -noout -checkend $((7*24*3600)) \
+                    || echo "Certificate expires within seven days; refreshing the Secret."
+
+                  kubectl -n mail create secret tls "$SECRET_NAME" \
+                    --cert=/tmp/tls.crt --key=/tmp/tls.key \
+                    --dry-run=client -o yaml \
+                    | kubectl --cache-dir=/tmp/kube-cache apply -f -
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: acme-data
+                  mountPath: /data
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: acme-data
+              persistentVolumeClaim:
+                claimName: traefik
+                readOnly: true
+            - name: tmp
+              emptyDir:
+                sizeLimit: 32Mi

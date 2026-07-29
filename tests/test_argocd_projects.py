@@ -24,7 +24,7 @@ PROJECT_PLATFORM = {
     "external-secrets", "external-secrets-network-policy", "gpu-operator",
     "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
-    "reloader", "traefik", "traefik-network-policy", "vault",
+    "reloader", "traefik", "traefik-acme-exporter", "traefik-network-policy", "vault",
     "vault-custom", "vault-network-policy",
 }
 

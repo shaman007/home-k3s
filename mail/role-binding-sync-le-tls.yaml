@@ -6,7 +6,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: sync-le-tls
-    namespace: mail
+    namespace: traefik
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
