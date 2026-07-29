@@ -18,6 +18,7 @@ spec:
           serviceAccountName: vault-pki-renewer
           restartPolicy: OnFailure
           securityContext:
+            runAsNonRoot: true
             seccompProfile:
               type: RuntimeDefault
           containers:
