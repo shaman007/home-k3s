@@ -95,10 +95,12 @@ listener supplied the certificate.
 
 ## Phase 5: mail
 
-Issue `andreybondarenko.com` into a new Secret in the `mail` namespace. Once it
-is Ready, update Postfix and Dovecot to use it, verify SMTP submission and IMAPS,
-and update the platform-health certificate check. Do not let cert-manager and
-the exporter write the same Secret during the transition.
+Issue `andreybondarenko.com` into the new `mail-tls` Secret in the `mail`
+namespace while the exporter continues to maintain the legacy
+`letsencrypt-prod` Secret. Once `mail-tls` is Ready, update Postfix and Dovecot
+to use it, verify SMTP submission and IMAPS, and update the platform-health
+certificate check. Do not let cert-manager and the exporter write the same
+Secret during the transition.
 
 After mail verification, remove the exporter Application and manifests, its
 ServiceAccount/RBAC/Cilium policy, the placeholder `letsencrypt-prod` Secret,

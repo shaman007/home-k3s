@@ -45,6 +45,9 @@ class CertManagerMigrationTest(unittest.TestCase):
         "keycloak/certificate-keycloak-tls.yaml": (
             "keycloak", "keycloak-tls", ["sso.andreybondarenko.com"]
         ),
+        "mail/certificate-mail-tls.yaml": (
+            "mail", "mail-tls", ["andreybondarenko.com"]
+        ),
         "mastodon/certificate-mastodon-tls.yaml": (
             "mastodon", "mastodon-tls", ["mastodon.andreybondarenko.com"]
         ),
@@ -84,6 +87,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         "immich": "immich",
         "karakeep": "karakeep",
         "keycloak": "keycloak",
+        "mail": "mail",
         "mastodon": "mastodon",
         "nextcloud": "nextcloud",
         "plex": "plex",
