@@ -24,12 +24,12 @@ Vault and is protected by the Raft backup process.
    concrete DNS names rather than copying one wildcard certificate between
    namespaces.
 3. After every ingress serves its cert-manager Secret, remove those targets
-   and their cross-namespace RBAC from `vault-pki-renewer`. Application ingress
-   targets are complete; `vault-tls` is the final staged ingress candidate.
-4. After the Vault ingress cutover, retain the renewer only for
-   `vault-server-tls`, whose Vault API and Raft DNS names are not HTTP-01 ingress
-   endpoints. Remove the direct ingress role/policy capability, then rename and
-   simplify the renewer separately.
+   and their cross-namespace RBAC from `vault-pki-renewer`. This is complete for
+   application and Vault ingress certificates.
+4. Retain the renewer only for `vault-server-tls`, whose Vault API and Raft DNS
+   names are not HTTP-01 ingress endpoints. Its Kubernetes Role and
+   version-controlled Vault policy grant access only to that Secret and the
+   `pki-root/issue/vault-server` endpoint.
 
 Vault advertises the stable internal ingress URL so in-cluster and operator
 clients receive the same ACME endpoint links. The Vault servers need egress

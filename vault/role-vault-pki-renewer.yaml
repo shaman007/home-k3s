@@ -6,5 +6,5 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    resourceNames: ["vault-tls", "vault-server-tls"]
+    resourceNames: ["vault-server-tls"]
     verbs: ["get", "update", "patch"]

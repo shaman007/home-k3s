@@ -310,7 +310,7 @@ class VaultAcmeTest(unittest.TestCase):
         self.assertNotIn("w386-k8s-my-lan-wildcard", renewer)
         self.assertNotIn("wildcard_targets", renewer)
 
-    def test_vault_ingress_cutover_retains_direct_renewal_for_rollback(self):
+    def test_vault_ingress_cutover_removes_direct_renewal(self):
         certificate = load_yaml(
             "vault/certificate-vault-ingress-vault-acme-tls.yaml"
         )
@@ -338,12 +338,25 @@ class VaultAcmeTest(unittest.TestCase):
             ingress["spec"]["tls"][0]["secretName"],
             "vault-ingress-vault-acme-tls",
         )
-        self.assertIn('secret_needs_renewal "vault" "vault-tls"', renewer)
+        renewer_role = load_yaml("vault/role-vault-pki-renewer.yaml")
+        renewer_policy = (
+            ROOT / "vault/policy-vault-pki-renewer.hcl"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotIn('secret_needs_renewal "vault" "vault-tls"', renewer)
+        self.assertNotIn('issue_cert "vault-ingress"', renewer)
         self.assertIn(
             'secret_needs_renewal "vault" "vault-server-tls"',
             renewer,
         )
         self.assertNotIn("vault-ingress-vault-acme-tls", renewer)
+        self.assertEqual(
+            renewer_role["rules"][0]["resourceNames"],
+            ["vault-server-tls"],
+        )
+        self.assertIn('path "pki-root/issue/vault-server"', renewer_policy)
+        self.assertNotIn("w386-k8s-my-lan-wildcard", renewer_policy)
+        self.assertNotIn("pki-root/issue/vault-ingress", renewer_policy)
 
     def test_final_service_http01_paths_are_solver_scoped(self):
         for path in (

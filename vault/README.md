@@ -14,26 +14,26 @@ Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-
 
 ## PKI Renewal
 
-The Vault ingress and Vault API/Raft TLS secrets are renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
+The Vault API/Raft TLS Secret is renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
 The CronJob authenticates through the `vault-pki-renewer` Kubernetes auth role with a projected, audience-bound ServiceAccount token. Vault issues a 15-minute token with a 30-minute maximum TTL and the `vault-pki-renewer` policy.
-The CronJob uses `pki-root/issue/vault-ingress` and `pki-root/issue/vault-server`; the policy is narrowed after the final Vault ingress cutover.
-The internal `vault-server-tls` certificate uses `pki-root/issue/vault-server` for the Vault API and Raft DNS names.
+The version-controlled [`policy-vault-pki-renewer.hcl`](./policy-vault-pki-renewer.hcl) grants only `pki-root/issue/vault-server`. Apply it with `vault policy write vault-pki-renewer vault/policy-vault-pki-renewer.hcl` after changes are reviewed.
+The `vault-server-tls` certificate uses that role for the Vault API and Raft DNS names.
 
 All renewal targets must be created before the job runs. The renewer has no Secret `create` or `list` permission: namespace Roles restrict it to `get`, `update`, and `patch` on these fixed names:
 
-- `vault/vault-tls`
 - `vault/vault-server-tls`
 
 ## PKI ACME
 
 Internal ingress certificates use cert-manager with Vault's role-specific ACME
-directory backed by the `w386-lab-intermediate` issuer. All application ingress
-certificates have migrated; the remaining Vault ingress candidate is staged
-separately before `vault-tls` and its direct-issuance capability are retired.
+directory backed by the `w386-lab-intermediate` issuer. All application and
+Vault ingress certificates have migrated. The legacy ingress Secrets remain
+temporarily as rollback artifacts but are no longer renewed or writable by the
+renewer ServiceAccount.
 
 See [`docs/vault-acme-migration.md`](../docs/vault-acme-migration.md) for the
-security restrictions, network paths, validation sequence and later removal of
-the wildcard-copy targets.
+security restrictions, network paths, validation sequence, and completed
+removal of the wildcard-copy targets.
 
 ## External Secrets Authentication
 
