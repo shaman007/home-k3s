@@ -124,6 +124,21 @@ class CertManagerMigrationTest(unittest.TestCase):
         "mastodon/ingress-andreybondarenko-ingress.yaml": (
             "mastodon.andreybondarenko.com", "mastodon-tls"
         ),
+        "synapse/ingress-andreybondarenko-ingress.yaml": (
+            "shaman007.com", "matrix-tls"
+        ),
+        "nextcloud/ingress-andreybondarenko-ingress.yaml": (
+            "office.andreybondarenko.com", "nextcloud-tls"
+        ),
+        "nextcloud/ingress-collabora-blocked.yaml": (
+            "office.andreybondarenko.com", "nextcloud-tls"
+        ),
+        "nextcloud/ingress-nextcloud-ui.yaml": (
+            "cloud.andreybondarenko.com", "nextcloud-tls"
+        ),
+        "nextcloud/ingress-nextcloud-uploads.yaml": (
+            "cloud.andreybondarenko.com", "nextcloud-tls"
+        ),
         "open-webui/ingress-open-webui.yaml": (
             "chat.andreybondarenko.com", "open-webui-tls"
         ),
@@ -138,6 +153,12 @@ class CertManagerMigrationTest(unittest.TestCase):
         ),
         "wordpress/ingress-andreybondarenko-ingress.yaml": (
             "andreybondarenko.com", "wordpress-tls"
+        ),
+        "your-spotify/ingress-andreybondarenko-ingress.yaml": (
+            "spt-server.andreybondarenko.com", "spotify-tls"
+        ),
+        "your-spotify/ingress-andreybondarenko-web-ingress.yaml": (
+            "spt.andreybondarenko.com", "spotify-tls"
         ),
     }
 
@@ -160,6 +181,9 @@ class CertManagerMigrationTest(unittest.TestCase):
         "mastodon/ingress-route-sensitive-throttle.yaml": (
             "sensitive-path-throttle", "mastodon-tls"
         ),
+        "nextcloud/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "nextcloud-tls"
+        ),
         "open-webui/ingress-route-sensitive-throttle.yaml": (
             "sensitive-path-throttle", "open-webui-tls"
         ),
@@ -171,22 +195,9 @@ class CertManagerMigrationTest(unittest.TestCase):
         ),
     }
 
-    PENDING_INGRESS_ROUTES = (
-        "nextcloud/ingress-route-sensitive-throttle.yaml",
-    )
-
     INTERNAL_TLS_INGRESSES = (
         "comfyui/ingress-comfyui.yaml",
         "ollama/ingress-ollama-ingress.yaml",
-    )
-
-    PENDING_INGRESSES = (
-        "synapse/ingress-andreybondarenko-ingress.yaml",
-        "nextcloud/ingress-andreybondarenko-ingress.yaml",
-        "nextcloud/ingress-nextcloud-ui.yaml",
-        "nextcloud/ingress-nextcloud-uploads.yaml",
-        "your-spotify/ingress-andreybondarenko-ingress.yaml",
-        "your-spotify/ingress-andreybondarenko-web-ingress.yaml",
     )
 
     def test_year_uses_the_production_certificate(self):
@@ -241,16 +252,6 @@ class CertManagerMigrationTest(unittest.TestCase):
                 self.assertEqual(certificate["spec"]["dnsNames"], dns_names)
                 self.assertEqual(certificate["spec"]["issuerRef"], issuer_ref)
 
-        for path in self.PENDING_INGRESSES:
-            with self.subTest(path=path):
-                ingress = load_yaml(path)
-                self.assertEqual(
-                    ingress["metadata"]["annotations"][
-                        "traefik.ingress.kubernetes.io/router.tls.certresolver"
-                    ],
-                    "letsencrypt",
-                )
-
     def test_cutover_routes_use_cert_manager_secrets(self):
         resolver_annotation = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver"
@@ -283,20 +284,6 @@ class CertManagerMigrationTest(unittest.TestCase):
                     {"secretName": secret_name},
                 )
 
-    def test_pending_ingress_routes_still_use_native_acme(self):
-        for path in self.PENDING_INGRESS_ROUTES:
-            with self.subTest(path=path):
-                routes = [
-                    document
-                    for document in load_yaml_documents(path)
-                    if document["kind"] == "IngressRoute"
-                ]
-                self.assertEqual(len(routes), 1)
-                self.assertEqual(
-                    routes[0]["spec"]["tls"],
-                    {"certResolver": "letsencrypt"},
-                )
-
     def test_internal_tls_routes_do_not_request_public_certificates(self):
         resolver_annotation = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver"
@@ -312,7 +299,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 hosts = [rule["host"] for rule in ingress["spec"]["rules"]]
                 self.assertTrue(all(host.endswith(".k8s.my.lan") for host in hosts))
 
-    def test_native_acme_references_are_limited_to_pending_routes(self):
+    def test_native_acme_route_references_are_removed(self):
         resolver_markers = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver:",
             "certResolver: letsencrypt",
@@ -328,9 +315,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 if any(marker in content for marker in resolver_markers):
                     actual_paths.add(relative_path.as_posix())
 
-        expected_paths = set(self.PENDING_INGRESSES)
-        expected_paths.update(self.PENDING_INGRESS_ROUTES)
-        self.assertEqual(actual_paths, expected_paths)
+        self.assertEqual(actual_paths, set())
 
     def test_default_deny_namespaces_allow_only_traefik_to_solver(self):
         expected_from = [{

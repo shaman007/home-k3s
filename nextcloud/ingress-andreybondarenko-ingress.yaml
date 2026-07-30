@@ -10,8 +10,6 @@ metadata:
     # Collabora is serving TLS on 9980, so Traefik must use HTTPS to backend.
     traefik.ingress.kubernetes.io/service.serversscheme: "https"
 
-    # Use Traefik's ACME resolver
-    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     # Apply HSTS middleware
     traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,nextcloud-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 
@@ -25,6 +23,10 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - office.andreybondarenko.com
+      secretName: nextcloud-tls
   rules:
     - host: office.andreybondarenko.com
       http:

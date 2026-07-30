@@ -7,6 +7,10 @@ metadata:
     traefik.ingress.kubernetes.io/router.middlewares: nextcloud-collabora-deny-admin@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - office.andreybondarenko.com
+      secretName: nextcloud-tls
   rules:
     - host: office.andreybondarenko.com
       http:

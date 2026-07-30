@@ -81,8 +81,17 @@ be issued by public ACME. Remove their ineffective public cert-resolver use and
 leave them on Traefik's default certificate until an internal CA migration is
 handled separately.
 
-Perform the cutover in small batches and compare the externally served
-certificate serials with their Secrets after each batch.
+Perform the cutover in small batches. During coexistence, Traefik can have two
+valid certificates for the same DNS name: one from `acme.json` and one from the
+Kubernetes Secret. Certificate selection can therefore continue to return the
+native ACME certificate even after every live router references `tls.secretName`.
+At this phase, verify the live router configuration, Secret validity and SANs,
+and application health. After Phase 6 removes the native resolver and restarts
+Traefik, require every served certificate to match its Kubernetes Secret.
+
+When testing from the LAN, compare a direct connection to the MetalLB VIP with
+the public DNS path. A gateway or hairpin path can otherwise obscure which TLS
+listener supplied the certificate.
 
 ## Phase 5: mail
 
