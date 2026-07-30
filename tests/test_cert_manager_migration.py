@@ -106,6 +106,9 @@ class CertManagerMigrationTest(unittest.TestCase):
         "immich/ingress-andreybondarenko-ingress.yaml": (
             "immich.andreybondarenko.com", "immich-tls"
         ),
+        "karakeep/ingress-andreybondarenko-ingress.yaml": (
+            "keep.andreybondarenko.com", "karakeep-tls"
+        ),
         "open-webui/ingress-open-webui.yaml": (
             "chat.andreybondarenko.com", "open-webui-tls"
         ),
@@ -118,6 +121,9 @@ class CertManagerMigrationTest(unittest.TestCase):
     }
 
     CUTOVER_INGRESS_ROUTES = {
+        "karakeep/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "karakeep-tls"
+        ),
         "open-webui/ingress-route-sensitive-throttle.yaml": (
             "sensitive-path-throttle", "open-webui-tls"
         ),
@@ -127,7 +133,6 @@ class CertManagerMigrationTest(unittest.TestCase):
         "bitwarden/ingress-route-sensitive-throttle.yaml",
         "harbor/ingress-route-sensitive-throttle.yaml",
         "homeassistant/ingress-route-sensitive-throttle.yaml",
-        "karakeep/ingress-route-sensitive-throttle.yaml",
         "keycloak/ingress-route-sensitive-throttle.yaml",
         "mastodon/ingress-route-sensitive-throttle.yaml",
         "nextcloud/ingress-route-sensitive-throttle.yaml",
@@ -191,7 +196,6 @@ class CertManagerMigrationTest(unittest.TestCase):
             "bitwarden/ingress-andreybondarenko-ingress.yaml",
             "harbor/ingress-andreybondarenko-ingress.yaml",
             "homeassistant/ingress-ha-andreybondarenko.yaml",
-            "karakeep/ingress-andreybondarenko-ingress.yaml",
             "keycloak/ingress-andreybondarenko-ingress.yaml",
             "mastodon/ingress-andreybondarenko-ingress.yaml",
             "synapse/ingress-andreybondarenko-ingress.yaml",

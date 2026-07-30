@@ -34,4 +34,4 @@ spec:
           name: karakeep
           port: 3000
   tls:
-    certResolver: letsencrypt
+    secretName: karakeep-tls
