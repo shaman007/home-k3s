@@ -13,7 +13,7 @@ spec:
   tls:
     - hosts:
         - argocd.w386.k8s.my.lan
-      secretName: argocd-tls
+      secretName: argocd-vault-acme-tls
   rules:
     - host: argocd.w386.k8s.my.lan
       http:

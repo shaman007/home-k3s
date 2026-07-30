@@ -12,7 +12,7 @@ spec:
   tls:
     - hosts:
         - longhorn.w386.k8s.my.lan
-      secretName: longhorn-tls
+      secretName: longhorn-vault-acme-tls
   rules:
     - host: longhorn.w386.k8s.my.lan
       http:
