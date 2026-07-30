@@ -12,23 +12,14 @@ def load_yaml(path: str) -> dict:
 
 
 class CertManagerMigrationTest(unittest.TestCase):
-    def test_year_canaries_do_not_cut_over_the_ingress(self):
-        staging_certificate = load_yaml(
-            "year/certificate-year-tls-staging.yaml"
-        )
+    def test_year_uses_the_production_certificate(self):
         production_certificate = load_yaml("year/certificate-year-tls.yaml")
         ingress = load_yaml("year/ingress-year.yaml")
+        application = load_yaml("argocd/application-year.yaml")
 
-        self.assertEqual(staging_certificate["metadata"]["namespace"], "year")
-        self.assertEqual(staging_certificate["spec"], {
-            "secretName": "year-tls-staging",
-            "dnsNames": ["year.andreybondarenko.com"],
-            "issuerRef": {
-                "group": "cert-manager.io",
-                "kind": "ClusterIssuer",
-                "name": "letsencrypt-staging",
-            },
-        })
+        self.assertFalse(
+            (ROOT / "year/certificate-year-tls-staging.yaml").exists()
+        )
         self.assertEqual(production_certificate["metadata"]["namespace"], "year")
         self.assertEqual(production_certificate["spec"], {
             "secretName": "year-tls",
@@ -39,13 +30,17 @@ class CertManagerMigrationTest(unittest.TestCase):
                 "name": "letsencrypt-prod",
             },
         })
-        self.assertEqual(
-            ingress["metadata"]["annotations"][
-                "traefik.ingress.kubernetes.io/router.tls.certresolver"
-            ],
-            "letsencrypt",
+        self.assertNotIn(
+            "traefik.ingress.kubernetes.io/router.tls.certresolver",
+            ingress["metadata"]["annotations"],
         )
-        self.assertNotIn("tls", ingress["spec"])
+        self.assertEqual(ingress["spec"]["tls"], [{
+            "hosts": ["year.andreybondarenko.com"],
+            "secretName": "year-tls",
+        }])
+        self.assertTrue(
+            application["spec"]["syncPolicy"]["automated"]["prune"]
+        )
 
 
 if __name__ == "__main__":
