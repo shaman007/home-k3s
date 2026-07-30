@@ -4,6 +4,8 @@ kind: NetworkPolicy
 metadata:
   name: allow-cert-manager-http01-solver
   namespace: hister
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   podSelector:
     matchLabels:

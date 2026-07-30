@@ -188,6 +188,12 @@ class CertManagerMigrationTest(unittest.TestCase):
             with self.subTest(path=path):
                 policy = load_yaml(path)
                 self.assertEqual(policy["metadata"]["namespace"], namespace)
+                self.assertEqual(
+                    policy["metadata"]["annotations"][
+                        "argocd.argoproj.io/sync-wave"
+                    ],
+                    "-2",
+                )
                 self.assertEqual(policy["spec"]["podSelector"], {
                     "matchLabels": {
                         "acme.cert-manager.io/http01-solver": "true"
