@@ -24,9 +24,10 @@ spec:
         app.kubernetes.io/part-of: ollama
     spec:
       priorityClassName: homelab-best-effort
+      runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:
-        kubernetes.io/hostname: w386
+        nvidia.com/gpu.present: "true"
       containers:
         - name: ollama
           image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.5
@@ -40,6 +41,10 @@ spec:
               value: "1"
             - name: OLLAMA_NUM_PARALLEL
               value: "1"
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
             - name: TZ
               value: Europe/Prague
           ports:
@@ -66,6 +71,7 @@ spec:
               memory: 1664Mi
             limits:
               memory: 2304Mi
+              nvidia.com/gpu: 1
           volumeMounts:
             - name: ollama-small-data
               mountPath: /root/.ollama

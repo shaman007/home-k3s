@@ -27,7 +27,7 @@ spec:
       runtimeClassName: nvidia
       enableServiceLinks: false
       nodeSelector:
-        kubernetes.io/hostname: talos-d4h-k5m
+        nvidia.com/gpu.present: "true"
       containers:
         - name: ollama
           image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.5
