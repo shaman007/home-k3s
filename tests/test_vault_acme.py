@@ -57,6 +57,56 @@ class VaultAcmeTest(unittest.TestCase):
             },
         )
 
+    def test_first_service_candidates_do_not_replace_consumed_secrets(self):
+        candidates = {
+            "argocd-deploy/certificate-argocd-vault-acme-tls.yaml": {
+                "namespace": "argocd",
+                "secret": "argocd-vault-acme-tls",
+                "dns_name": "argocd.w386.k8s.my.lan",
+                "ingress": "argocd-deploy/ingress-argocd-ingress.yaml",
+                "consumed_secret": "argocd-tls",
+            },
+            "longhorn/ingress-certificate-longhorn-vault-acme-tls.yaml": {
+                "namespace": "longhorn-system",
+                "secret": "longhorn-vault-acme-tls",
+                "dns_name": "longhorn.w386.k8s.my.lan",
+                "ingress": "longhorn/ingress-longhorn-ingress.yaml",
+                "consumed_secret": "longhorn-tls",
+            },
+        }
+
+        for path, expected in candidates.items():
+            with self.subTest(path=path):
+                certificate = load_yaml(path)
+                ingress = load_yaml(expected["ingress"])
+
+                self.assertEqual(
+                    certificate["metadata"]["namespace"],
+                    expected["namespace"],
+                )
+                self.assertEqual(
+                    certificate["spec"],
+                    {
+                        "secretName": expected["secret"],
+                        "duration": "720h",
+                        "renewBefore": "168h",
+                        "dnsNames": [expected["dns_name"]],
+                        "issuerRef": {
+                            "group": "cert-manager.io",
+                            "kind": "ClusterIssuer",
+                            "name": "vault-acme",
+                        },
+                    },
+                )
+                self.assertNotEqual(
+                    expected["secret"],
+                    expected["consumed_secret"],
+                )
+                self.assertEqual(
+                    ingress["spec"]["tls"][0]["secretName"],
+                    expected["consumed_secret"],
+                )
+
     def test_network_policies_limit_acme_control_and_validation_paths(self):
         egress = load_yaml(
             "vault/network-policy-vault-allow-egress-acme-http01.yaml"
