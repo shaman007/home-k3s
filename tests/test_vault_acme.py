@@ -177,7 +177,7 @@ class VaultAcmeTest(unittest.TestCase):
             [{"protocol": "TCP", "port": 8089}],
         )
 
-    def test_second_service_cutover_retains_legacy_rollback_targets(self):
+    def test_second_service_cutover_removes_cronjob_permissions(self):
         candidates = {
             "mempalace/certificate-mempalace-vault-acme-tls.yaml": {
                 "namespace": "mempalace",
@@ -185,6 +185,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "mempalace.w386.k8s.my.lan",
                 "ingress": "mempalace/ingress-mempalace.yaml",
                 "legacy_secret": "mempalace-tls",
+                "renewer_role": "mempalace/role-vault-pki-renewer.yaml",
             },
             "nextcloud/certificate-office-vault-acme-tls.yaml": {
                 "namespace": "nextcloud",
@@ -192,6 +193,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "office.w386.k8s.my.lan",
                 "ingress": "nextcloud/ingress-office-ingress.yaml",
                 "legacy_secret": "office-tls",
+                "renewer_role": "nextcloud/role-vault-pki-renewer.yaml",
             },
         }
         renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
@@ -202,6 +204,9 @@ class VaultAcmeTest(unittest.TestCase):
             with self.subTest(path=path):
                 certificate = load_yaml(path)
                 ingress = load_yaml(expected["ingress"])
+                renewer_role = load_yaml_documents(
+                    expected["renewer_role"]
+                )[0]
 
                 self.assertEqual(
                     certificate["metadata"]["namespace"],
@@ -225,8 +230,9 @@ class VaultAcmeTest(unittest.TestCase):
                     ingress["spec"]["tls"][0]["secretName"],
                     expected["secret"],
                 )
-                self.assertIn(expected["legacy_secret"], renewer)
+                self.assertNotIn(expected["legacy_secret"], renewer)
                 self.assertNotIn(expected["secret"], renewer)
+                self.assertEqual(renewer_role["rules"], [])
 
     def test_vault_configuration_is_role_and_issuer_restricted(self):
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(

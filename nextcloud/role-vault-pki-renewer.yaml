@@ -3,11 +3,7 @@ kind: Role
 metadata:
   name: vault-pki-renewer
   namespace: nextcloud
-rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["office-tls"]
-    verbs: ["get", "update", "patch"]
+rules: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
