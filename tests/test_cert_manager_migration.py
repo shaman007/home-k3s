@@ -11,6 +11,11 @@ def load_yaml(path: str) -> dict:
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
+def load_yaml_documents(path: str) -> list[dict]:
+    content = (ROOT / path).read_text(encoding="utf-8")
+    return [document for document in yaml.safe_load_all(content) if document]
+
+
 class CertManagerMigrationTest(unittest.TestCase):
     PRODUCTION_CERTIFICATES = {
         "bitwarden/certificate-bitwarden-tls.yaml": (
@@ -101,6 +106,9 @@ class CertManagerMigrationTest(unittest.TestCase):
         "immich/ingress-andreybondarenko-ingress.yaml": (
             "immich.andreybondarenko.com", "immich-tls"
         ),
+        "open-webui/ingress-open-webui.yaml": (
+            "chat.andreybondarenko.com", "open-webui-tls"
+        ),
         "seaweedfs/ingress-andreybondarenko-ingress.yaml": (
             "s3.andreybondarenko.com", "seaweedfs-tls"
         ),
@@ -108,6 +116,24 @@ class CertManagerMigrationTest(unittest.TestCase):
             "pdf.andreybondarenko.com", "stirling-pdf-tls"
         ),
     }
+
+    CUTOVER_INGRESS_ROUTES = {
+        "open-webui/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "open-webui-tls"
+        ),
+    }
+
+    PENDING_INGRESS_ROUTES = (
+        "bitwarden/ingress-route-sensitive-throttle.yaml",
+        "harbor/ingress-route-sensitive-throttle.yaml",
+        "homeassistant/ingress-route-sensitive-throttle.yaml",
+        "karakeep/ingress-route-sensitive-throttle.yaml",
+        "keycloak/ingress-route-sensitive-throttle.yaml",
+        "mastodon/ingress-route-sensitive-throttle.yaml",
+        "nextcloud/ingress-route-sensitive-throttle.yaml",
+        "plex/ingress-route-sensitive-throttle.yaml",
+        "wordpress/ingress-route-sensitive-throttle.yaml",
+    )
 
     def test_year_uses_the_production_certificate(self):
         production_certificate = load_yaml("year/certificate-year-tls.yaml")
@@ -172,7 +198,6 @@ class CertManagerMigrationTest(unittest.TestCase):
             "nextcloud/ingress-andreybondarenko-ingress.yaml",
             "nextcloud/ingress-nextcloud-ui.yaml",
             "nextcloud/ingress-nextcloud-uploads.yaml",
-            "open-webui/ingress-open-webui.yaml",
             "plex/ingress-andreybondarenko-ingress.yaml",
             "your-spotify/ingress-andreybondarenko-ingress.yaml",
             "your-spotify/ingress-andreybondarenko-web-ingress.yaml",
@@ -204,6 +229,35 @@ class CertManagerMigrationTest(unittest.TestCase):
                     "hosts": [host],
                     "secretName": secret_name,
                 }])
+
+    def test_cutover_ingress_routes_use_cert_manager_secrets(self):
+        for path, (name, secret_name) in self.CUTOVER_INGRESS_ROUTES.items():
+            with self.subTest(path=path):
+                routes = [
+                    document
+                    for document in load_yaml_documents(path)
+                    if document["kind"] == "IngressRoute"
+                ]
+                self.assertEqual(len(routes), 1)
+                self.assertEqual(routes[0]["metadata"]["name"], name)
+                self.assertEqual(
+                    routes[0]["spec"]["tls"],
+                    {"secretName": secret_name},
+                )
+
+    def test_pending_ingress_routes_still_use_native_acme(self):
+        for path in self.PENDING_INGRESS_ROUTES:
+            with self.subTest(path=path):
+                routes = [
+                    document
+                    for document in load_yaml_documents(path)
+                    if document["kind"] == "IngressRoute"
+                ]
+                self.assertEqual(len(routes), 1)
+                self.assertEqual(
+                    routes[0]["spec"]["tls"],
+                    {"certResolver": "letsencrypt"},
+                )
 
     def test_default_deny_namespaces_allow_only_traefik_to_solver(self):
         expected_from = [{

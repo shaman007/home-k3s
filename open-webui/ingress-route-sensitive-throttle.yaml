@@ -34,4 +34,4 @@ spec:
           name: open-webui
           port: 8080
   tls:
-    certResolver: letsencrypt
+    secretName: open-webui-tls
