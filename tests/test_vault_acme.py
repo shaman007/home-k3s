@@ -63,6 +63,37 @@ class VaultAcmeTest(unittest.TestCase):
             },
         )
 
+    def test_headlamp_uses_vault_acme_certificate(self):
+        certificate = load_yaml(
+            "headlamp/certificate-headlamp-vault-acme-tls.yaml"
+        )
+        ingress = load_yaml("headlamp/ingress-headlamp.yaml")
+
+        self.assertEqual(certificate["metadata"]["namespace"], "headlamp")
+        self.assertEqual(
+            certificate["spec"],
+            {
+                "secretName": "headlamp-vault-acme-tls",
+                "duration": "720h",
+                "renewBefore": "168h",
+                "dnsNames": ["headlamp.w386.k8s.my.lan"],
+                "issuerRef": {
+                    "group": "cert-manager.io",
+                    "kind": "ClusterIssuer",
+                    "name": "vault-acme",
+                },
+            },
+        )
+        self.assertEqual(
+            ingress["spec"]["tls"],
+            [
+                {
+                    "hosts": ["headlamp.w386.k8s.my.lan"],
+                    "secretName": "headlamp-vault-acme-tls",
+                }
+            ],
+        )
+
     def test_first_service_cutover_removes_cronjob_permissions(self):
         candidates = {
             "argocd-deploy/certificate-argocd-vault-acme-tls.yaml": {
