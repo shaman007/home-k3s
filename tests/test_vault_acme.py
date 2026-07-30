@@ -150,6 +150,33 @@ class VaultAcmeTest(unittest.TestCase):
         }
         self.assertIn("cert-manager", allowed_namespaces)
 
+    def test_mempalace_http01_path_is_solver_scoped(self):
+        solver_ingress = load_yaml(
+            "mempalace/"
+            "network-policy-allow-cert-manager-http01-solver.yaml"
+        )
+        traefik_egress = load_yaml(
+            "traefik/network-policy-traefik-allow-egress-mempalace.yaml"
+        )
+
+        self.assertEqual(
+            solver_ingress["spec"]["podSelector"]["matchLabels"],
+            {"acme.cert-manager.io/http01-solver": "true"},
+        )
+        self.assertEqual(
+            solver_ingress["spec"]["ingress"][0]["ports"],
+            [{"protocol": "TCP", "port": 8089}],
+        )
+        solver_egress = traefik_egress["spec"]["egress"][1]
+        self.assertEqual(
+            solver_egress["to"][0]["podSelector"]["matchLabels"],
+            {"acme.cert-manager.io/http01-solver": "true"},
+        )
+        self.assertEqual(
+            solver_egress["ports"],
+            [{"protocol": "TCP", "port": 8089}],
+        )
+
     def test_vault_configuration_is_role_and_issuer_restricted(self):
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(
             encoding="utf-8"

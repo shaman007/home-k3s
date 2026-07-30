@@ -15,3 +15,13 @@ spec:
       ports:
         - protocol: TCP
           port: 8765
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mempalace
+          podSelector:
+            matchLabels:
+              acme.cert-manager.io/http01-solver: "true"
+      ports:
+        - protocol: TCP
+          port: 8089
