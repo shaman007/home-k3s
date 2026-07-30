@@ -17,6 +17,9 @@ spec:
               kubernetes.io/metadata.name: bitwarden
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: cert-manager
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: collabora
         - namespaceSelector:
             matchLabels:
