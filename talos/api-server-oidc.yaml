@@ -1,0 +1,7 @@
+cluster:
+  apiServer:
+    extraArgs:
+      oidc-issuer-url: https://sso.andreybondarenko.com/realms/master
+      oidc-client-id: headlamp
+      oidc-username-claim: preferred_username
+      oidc-username-prefix: "-"
