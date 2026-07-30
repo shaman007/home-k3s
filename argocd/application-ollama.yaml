@@ -15,5 +15,11 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/warn: restricted
+        pod-security.kubernetes.io/warn-version: latest
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/audit-version: latest
     syncOptions:
       - CreateNamespace=true
