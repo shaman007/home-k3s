@@ -18,13 +18,22 @@ spec:
         app: unifi-poller
     spec:
       priorityClassName: homelab-standard
+      automountServiceAccountToken: false
       containers:
         - name: unifi-poller
           image: harbor.andreybondarenko.com/github/unpoller/unpoller:v3.3.4
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: UP_UNIFI_DEFAULT_PASS
               valueFrom:

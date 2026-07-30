@@ -15,8 +15,15 @@ spec:
         reloader:
           autoReloadAll: false
           reloadStrategy: annotations
+          readOnlyRootFileSystem: true
           deployment:
             priorityClassName: homelab-critical
+            containerSecurityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: true
             resources:
               requests:
                 cpu: 10m

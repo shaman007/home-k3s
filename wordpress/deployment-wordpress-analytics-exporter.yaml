@@ -24,13 +24,25 @@ spec:
         app.kubernetes.io/part-of: wordpress
     spec:
       priorityClassName: homelab-essential
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 101
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: nginx
           image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.3
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 9090
               name: metrics
