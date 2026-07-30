@@ -21,7 +21,7 @@ spec:
               app.kubernetes.io/name: traefik
       ports:
         - protocol: TCP
-          port: 8000
+          port: 80
     - to:
         - ipBlock:
             cidr: 192.168.1.210/32

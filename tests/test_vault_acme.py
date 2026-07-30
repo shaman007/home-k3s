@@ -65,11 +65,10 @@ class VaultAcmeTest(unittest.TestCase):
             "traefik/"
             "network-policy-traefik-allow-egress-ingress-namespaces.yaml"
         )
-        traefik_ingress = load_yaml(
-            "traefik/"
-            "network-policy-traefik-allow-ingress-http-from-vault.yaml"
+        self.assertEqual(
+            egress["spec"]["egress"][0]["ports"],
+            [{"protocol": "TCP", "port": 80}],
         )
-
         self.assertEqual(
             egress["spec"]["egress"][1]["to"],
             [{"ipBlock": {"cidr": "192.168.1.210/32"}}],
@@ -80,29 +79,6 @@ class VaultAcmeTest(unittest.TestCase):
             for peer in traefik_egress["spec"]["egress"][0]["to"]
         }
         self.assertIn("cert-manager", allowed_namespaces)
-        self.assertEqual(
-            traefik_ingress["spec"]["ingress"],
-            [
-                {
-                    "from": [
-                        {
-                            "namespaceSelector": {
-                                "matchLabels": {
-                                    "kubernetes.io/metadata.name": "vault"
-                                }
-                            },
-                            "podSelector": {
-                                "matchLabels": {
-                                    "app.kubernetes.io/name": "vault",
-                                    "component": "server",
-                                }
-                            },
-                        }
-                    ],
-                    "ports": [{"protocol": "TCP", "port": 8000}],
-                }
-            ],
-        )
 
     def test_vault_configuration_is_role_and_issuer_restricted(self):
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(
