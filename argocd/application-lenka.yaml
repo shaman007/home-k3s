@@ -14,6 +14,7 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: lenka
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
     syncOptions:
       - CreateNamespace=true

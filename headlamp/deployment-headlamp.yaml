@@ -23,6 +23,9 @@ spec:
       priorityClassName: homelab-standard
       enableServiceLinks: false
       serviceAccountName: headlamp
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: headlamp
           image: harbor.andreybondarenko.com/github/headlamp-k8s/headlamp:v0.43.0
@@ -30,6 +33,26 @@ spec:
           args:
             - -in-cluster
             - -plugins-dir=/headlamp/plugins
+          env:
+            - name: HEADLAMP_CONFIG_OIDC_CLIENT_ID
+              value: headlamp
+            - name: HEADLAMP_CONFIG_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: headlamp-oidc-secret
+                  key: clientSecret
+            - name: HEADLAMP_CONFIG_OIDC_IDP_ISSUER_URL
+              value: https://sso.andreybondarenko.com/realms/master
+            - name: HEADLAMP_CONFIG_OIDC_SCOPES
+              value: openid,profile,email
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+            runAsUser: 100
+            runAsGroup: 101
           ports:
             - name: http
               containerPort: 4466

@@ -1,25 +1,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: lenka-readonly
-rules:
-  - apiGroups: ["*"]
-    resources: ["*"]
-    verbs: ["get", "list", "watch"]
-  - nonResourceURLs: ["*"]
-    verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: lenka-readonly
+  name: lenka-cluster-view
 subjects:
   - kind: User
     name: lenka
     apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
-  name: lenka-readonly
+  name: view
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
