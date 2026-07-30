@@ -85,7 +85,11 @@ spec:
               until ollama list >/dev/null 2>&1; do
                 sleep 2
               done
-              ollama pull gpt-oss:20b
+              if ollama show gpt-oss:20b >/dev/null 2>&1; then
+                echo "Model gpt-oss:20b is already present on persistent storage"
+              else
+                ollama pull gpt-oss:20b
+              fi
               sleep infinity
           env:
             - name: OLLAMA_HOST

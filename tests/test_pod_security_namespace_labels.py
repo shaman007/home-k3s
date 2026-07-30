@@ -45,6 +45,13 @@ class PodSecurityNamespaceLabelsTest(unittest.TestCase):
             self.assertNotIn("pod-security.kubernetes.io/enforce", labels)
             self.assertIn("CreateNamespace=true", sync_policy["syncOptions"])
 
+    def test_only_primary_ollama_application_manages_shared_namespace(self):
+        application = load_yaml("argocd/application-ollama-small.yaml")
+        sync_policy = application["spec"]["syncPolicy"]
+
+        self.assertNotIn("managedNamespaceMetadata", sync_policy)
+        self.assertNotIn("CreateNamespace=true", sync_policy.get("syncOptions", []))
+
 
 if __name__ == "__main__":
     unittest.main()

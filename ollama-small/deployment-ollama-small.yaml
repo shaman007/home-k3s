@@ -79,7 +79,11 @@ spec:
               until ollama list >/dev/null 2>&1; do
                 sleep 2
               done
-              ollama pull qwen2.5:1.5b
+              if ollama show qwen2.5:1.5b >/dev/null 2>&1; then
+                echo "Model qwen2.5:1.5b is already present on persistent storage"
+              else
+                ollama pull qwen2.5:1.5b
+              fi
               sleep infinity
           env:
             - name: OLLAMA_HOST
