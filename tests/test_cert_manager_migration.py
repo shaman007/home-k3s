@@ -98,6 +98,15 @@ class CertManagerMigrationTest(unittest.TestCase):
         "hister/ingress-andreybondarenko-ingress.yaml": (
             "hister.andreybondarenko.com", "hister-tls"
         ),
+        "immich/ingress-andreybondarenko-ingress.yaml": (
+            "immich.andreybondarenko.com", "immich-tls"
+        ),
+        "seaweedfs/ingress-andreybondarenko-ingress.yaml": (
+            "s3.andreybondarenko.com", "seaweedfs-tls"
+        ),
+        "stirling-pdf/ingress-andreybondarenko-ingress.yaml": (
+            "pdf.andreybondarenko.com", "stirling-pdf-tls"
+        ),
     }
 
     def test_year_uses_the_production_certificate(self):
@@ -156,7 +165,6 @@ class CertManagerMigrationTest(unittest.TestCase):
             "bitwarden/ingress-andreybondarenko-ingress.yaml",
             "harbor/ingress-andreybondarenko-ingress.yaml",
             "homeassistant/ingress-ha-andreybondarenko.yaml",
-            "immich/ingress-andreybondarenko-ingress.yaml",
             "karakeep/ingress-andreybondarenko-ingress.yaml",
             "keycloak/ingress-andreybondarenko-ingress.yaml",
             "mastodon/ingress-andreybondarenko-ingress.yaml",
@@ -166,10 +174,8 @@ class CertManagerMigrationTest(unittest.TestCase):
             "nextcloud/ingress-nextcloud-uploads.yaml",
             "open-webui/ingress-open-webui.yaml",
             "plex/ingress-andreybondarenko-ingress.yaml",
-            "seaweedfs/ingress-andreybondarenko-ingress.yaml",
             "your-spotify/ingress-andreybondarenko-ingress.yaml",
             "your-spotify/ingress-andreybondarenko-web-ingress.yaml",
-            "stirling-pdf/ingress-andreybondarenko-ingress.yaml",
             "wordpress/ingress-andreybondarenko-ingress.yaml",
         ]
         for path in pending_ingresses:

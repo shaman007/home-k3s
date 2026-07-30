@@ -7,7 +7,6 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,immich-chain@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
   labels:
     app: immich-server
@@ -17,6 +16,10 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - immich.andreybondarenko.com
+      secretName: immich-tls
   rules:
     - host: immich.andreybondarenko.com
       http:
