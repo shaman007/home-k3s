@@ -31,7 +31,7 @@ spec:
         fsGroup: 103
       containers:
         - name: clamd
-          image: harbor.andreybondarenko.com/library/clamav:2026-07-29-101520
+          image: harbor.andreybondarenko.com/library/clamav:2026-07-30-022902
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3200
@@ -77,7 +77,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
         - name: freshclam
-          image: harbor.andreybondarenko.com/library/clamav:2026-07-29-101520
+          image: harbor.andreybondarenko.com/library/clamav:2026-07-30-022902
           imagePullPolicy: IfNotPresent
           env:
             - name: UPDATE

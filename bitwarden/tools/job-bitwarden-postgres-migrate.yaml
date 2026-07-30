@@ -22,7 +22,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: harbor.andreybondarenko.com/library/postgres-cli:2026-07-27-200859
+          image: harbor.andreybondarenko.com/library/postgres-cli:2026-07-30-022902
           imagePullPolicy: IfNotPresent
           env:
             - name: SOURCE_PGHOST
