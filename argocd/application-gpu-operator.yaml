@@ -43,6 +43,7 @@ spec:
     namespace: gpu-operator
   syncPolicy:
     automated:
+      selfHeal: true
       enabled: true
     managedNamespaceMetadata:
       labels:

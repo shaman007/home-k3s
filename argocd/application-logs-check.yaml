@@ -25,4 +25,8 @@ spec:
         - /data/report.txt
         - /data/report.json
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - RespectIgnoreDifferences=true

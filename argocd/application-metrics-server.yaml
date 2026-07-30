@@ -25,4 +25,5 @@ spec:
     namespace: kube-system
   syncPolicy:
     automated:
+      selfHeal: true
       enabled: true

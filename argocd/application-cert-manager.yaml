@@ -21,6 +21,26 @@ spec:
             priorityClassName: homelab-critical
           prometheus:
             enabled: false
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          webhook:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 64Mi
+          cainjector:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 128Mi
     - repoURL: https://github.com/shaman007/home-k3s.git
       path: cert-manager
       targetRevision: main

@@ -15,4 +15,5 @@ spec:
     namespace: year
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true

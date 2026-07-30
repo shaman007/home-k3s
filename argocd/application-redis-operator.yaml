@@ -26,6 +26,7 @@ spec:
     namespace: ot-operators
   syncPolicy:
     automated:
+      selfHeal: true
       enabled: true
     syncOptions:
       - ServerSideApply=true

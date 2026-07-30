@@ -50,3 +50,14 @@ spec:
       kind: "*"
   orphanedResources:
     warn: true
+    ignore:
+      # Certificate Secrets and ad-hoc diagnostic Jobs are controller/user generated.
+      - group: ""
+        kind: Secret
+        name: "*-tls"
+      - group: ""
+        kind: Pod
+        name: "*-manual-*"
+      - group: batch
+        kind: Job
+        name: "*-manual-*"

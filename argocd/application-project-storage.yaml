@@ -51,3 +51,50 @@ spec:
       kind: "*"
   orphanedResources:
     warn: true
+    ignore:
+      # Longhorn controllers materialize runtime state as CRs and CSI workloads.
+      - group: longhorn.io
+        kind: "*"
+        name: "*"
+      - group: ""
+        kind: Pod
+        name: "csi-*"
+      - group: ""
+        kind: Pod
+        name: "engine-image-*"
+      - group: ""
+        kind: Pod
+        name: "instance-manager-*"
+      - group: ""
+        kind: Pod
+        name: "longhorn-csi-plugin-*"
+      - group: apps
+        kind: ControllerRevision
+        name: "engine-image-*"
+      - group: apps
+        kind: ControllerRevision
+        name: "longhorn-csi-plugin-*"
+      - group: apps
+        kind: DaemonSet
+        name: "engine-image-*"
+      - group: apps
+        kind: DaemonSet
+        name: longhorn-csi-plugin
+      - group: apps
+        kind: Deployment
+        name: "csi-*"
+      - group: apps
+        kind: ReplicaSet
+        name: "csi-*"
+      - group: policy
+        kind: PodDisruptionBudget
+        name: "csi-*"
+      - group: policy
+        kind: PodDisruptionBudget
+        name: "instance-manager-*"
+      - group: ""
+        kind: Secret
+        name: "*-tls"
+      - group: ""
+        kind: Secret
+        name: "sh.helm.release.v1.*"

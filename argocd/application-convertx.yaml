@@ -14,4 +14,6 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: convertx
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true

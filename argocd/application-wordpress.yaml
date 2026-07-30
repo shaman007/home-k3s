@@ -22,6 +22,7 @@ spec:
         - /data/metrics.prom
         - /data/report.txt
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true
     syncOptions:
       - RespectIgnoreDifferences=true

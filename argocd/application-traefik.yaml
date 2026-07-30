@@ -255,4 +255,5 @@ spec:
     namespace: traefik
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true

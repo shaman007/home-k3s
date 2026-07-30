@@ -150,6 +150,7 @@ spec:
     - .spec.template.metadata.annotations."checksum/secret-core"
     - .spec.template.metadata.annotations."checksum/secret-jobservice"
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true
     syncOptions:
     - RespectIgnoreDifferences=true

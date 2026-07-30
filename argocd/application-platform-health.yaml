@@ -27,4 +27,7 @@ spec:
         - /data/metrics.prom
   syncPolicy:
     automated:
+      selfHeal: true
       prune: true
+    syncOptions:
+      - RespectIgnoreDifferences=true

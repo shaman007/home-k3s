@@ -78,4 +78,5 @@ spec:
     server: https://kubernetes.default.svc
     namespace: vault
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true

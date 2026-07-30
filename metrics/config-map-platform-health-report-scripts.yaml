@@ -358,6 +358,7 @@ data:
         try:
             current = kube(path)
             body["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
+            body["metadata"]["annotations"] = current["metadata"].get("annotations", {})
             kube(path, method="PUT", payload=body)
         except urllib.error.HTTPError as exc:
             if exc.code != 404:

@@ -14,6 +14,8 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: hister
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
+      selfHeal: true
     syncOptions:
     - ApplyOutOfSyncOnly=true

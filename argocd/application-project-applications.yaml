@@ -92,3 +92,11 @@ spec:
       kind: "*"
   orphanedResources:
     warn: true
+    ignore:
+      # Certificate controllers and Helm intentionally own these generated Secrets.
+      - group: ""
+        kind: Secret
+        name: "*-tls"
+      - group: ""
+        kind: Secret
+        name: "sh.helm.release.v1.*"

@@ -57,6 +57,20 @@ PROJECT_MEMBERS = {
     "namespace-management": PROJECT_NAMESPACE_MANAGEMENT,
 }
 
+SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
+
+PRUNE_REQUIRED_APPLICATIONS = {
+    "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",
+    "convertx", "coredns-custom", "elastic-stack-network-policy",
+    "elastic-system-network-policy", "external-access-analytics",
+    "external-secrets-network-policy", "finance-ticker", "harbor-network-policy",
+    "headlamp", "hister", "homeassistant", "image-builder", "kube-node-exporter",
+    "kube-state-metrics", "logs-check", "loki-network-policy", "metallb-config",
+    "metrics-server-network-policy", "monitoring-ingress", "monitoring-network-policy",
+    "open-terminal", "ot-operators-network-policy", "platform-health",
+    "traefik-network-policy", "unifi-exporter", "vault-network-policy", "year",
+}
+
 EXTRA_DESTINATIONS_BY_APPLICATION = {
     "cilium": {"cilium-secrets"},
     "my-adapter": {"kube-system"},
@@ -325,6 +339,26 @@ class ArgoCdProjectsTest(unittest.TestCase):
                     "main",
                     f'{application["metadata"]["name"]} must target main',
                 )
+
+    def test_automated_applications_self_heal_live_drift(self):
+        for name, application in self.applications.items():
+            automated = application["spec"]["syncPolicy"]["automated"]
+            if name in SELF_HEAL_EXEMPT_APPLICATIONS:
+                self.assertFalse(automated.get("selfHeal", False))
+                continue
+            self.assertTrue(automated.get("selfHeal", False), name)
+
+    def test_stateless_and_companion_applications_prune(self):
+        for name in PRUNE_REQUIRED_APPLICATIONS:
+            automated = self.applications[name]["spec"]["syncPolicy"]["automated"]
+            self.assertTrue(automated.get("prune", False), name)
+
+    def test_self_healing_respects_ignored_runtime_fields(self):
+        for name, application in self.applications.items():
+            if not application["spec"].get("ignoreDifferences"):
+                continue
+            sync_options = application["spec"]["syncPolicy"].get("syncOptions", [])
+            self.assertIn("RespectIgnoreDifferences=true", sync_options, name)
 
     def test_chart_only_failed_sync_can_self_heal_after_project_change(self):
         application = self.applications["my-adapter"]

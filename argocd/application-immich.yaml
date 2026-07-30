@@ -19,7 +19,8 @@ spec:
       jsonPointers:
         - /spec/resources/requests/storage
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
       - RespectIgnoreDifferences=true

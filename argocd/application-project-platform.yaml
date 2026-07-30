@@ -72,3 +72,17 @@ spec:
       kind: "*"
   orphanedResources:
     warn: true
+    ignore:
+      # cert-manager and Helm create these after their parent resources reconcile.
+      - group: ""
+        kind: Secret
+        name: "*-tls"
+      - group: ""
+        kind: Secret
+        name: "*-account-key"
+      - group: ""
+        kind: Secret
+        name: "*-ca"
+      - group: ""
+        kind: Secret
+        name: "sh.helm.release.v1.*"

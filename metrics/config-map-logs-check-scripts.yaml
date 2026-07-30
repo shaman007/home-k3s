@@ -349,6 +349,7 @@ data:
         try:
             existing = kube_json(object_path)
             body["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
+            body["metadata"]["annotations"] = existing["metadata"].get("annotations", {})
             return kube_json(object_path, method="PUT", payload=body)
         except urllib.error.HTTPError as exc:
             if exc.code != 404:

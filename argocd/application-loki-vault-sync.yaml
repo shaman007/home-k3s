@@ -17,6 +17,7 @@ spec:
     server: "https://kubernetes.default.svc"
     namespace: loki
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true

@@ -1182,6 +1182,7 @@ data:
         try:
             existing = kube_json(base_url, object_path, token, ssl_context)
             body["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
+            body["metadata"]["annotations"] = existing["metadata"].get("annotations", {})
             return kube_json(
                 base_url,
                 object_path,

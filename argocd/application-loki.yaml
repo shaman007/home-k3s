@@ -6,7 +6,8 @@ metadata:
   namespace: argocd
 spec:
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
   project: observability

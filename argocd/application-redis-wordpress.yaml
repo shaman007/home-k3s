@@ -41,4 +41,5 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: wordpress
   syncPolicy:
-    automated: {}
+    automated:
+      selfHeal: true

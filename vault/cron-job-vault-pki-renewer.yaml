@@ -168,14 +168,6 @@ spec:
                     kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
                   }
 
-                  if secret_needs_renewal "vault" "vault-tls"; then
-                    issue_cert "vault-ingress" "vault.w386.k8s.my.lan" /tmp/vault.crt /tmp/vault.key
-                    patch_secret "vault" "vault-tls" /tmp/vault.crt /tmp/vault.key
-                    echo "Rotated vault ingress TLS secret"
-                  else
-                    echo "Vault ingress TLS secret still valid beyond renewal window"
-                  fi
-
                   if secret_needs_renewal "vault" "vault-server-tls"; then
                     vault_server_alt_names="vault,vault.vault,vault.vault.svc.cluster.local,vault-active,vault-active.vault,vault-active.vault.svc,vault-active.vault.svc.cluster.local,*.vault-internal,*.vault-internal.vault,*.vault-internal.vault.svc,*.vault-internal.vault.svc.cluster.local"
                     issue_cert \
