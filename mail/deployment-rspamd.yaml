@@ -28,6 +28,11 @@ spec:
         tier: mail
     spec:
       priorityClassName: homelab-standard
+      securityContext:
+        fsGroup: 11333
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
         - name: rspamd-cf
           configMap:
@@ -151,7 +156,13 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 3
           securityContext:
-            allowPrivilegeEscalation: true
+            runAsNonRoot: true
+            runAsUser: 11333
+            runAsGroup: 11333
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: false
           volumeMounts:
             - name: rspamd-cf
@@ -209,6 +220,17 @@ spec:
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 11333:11333 /var/lib/rspamd && chmod 755 /var/lib/rspamd"]
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - FOWNER
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: rspamd-local
               mountPath: /var/lib/rspamd

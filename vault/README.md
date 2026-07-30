@@ -27,9 +27,10 @@ All renewal targets must be created before the job runs. The renewer has no Secr
 
 Internal ingress certificates use cert-manager with Vault's role-specific ACME
 directory backed by the `w386-lab-intermediate` issuer. All application and
-Vault ingress certificates have migrated. The legacy ingress Secrets remain
-temporarily as rollback artifacts but are no longer renewed or writable by the
-renewer ServiceAccount.
+Vault ingress certificates have migrated. The legacy ingress Secrets and the
+retired `pki-root` wildcard/Vault-ingress issuance roles were removed after the
+cutover was verified. The renewer ServiceAccount retains access only to the
+Vault API/Raft certificate.
 
 See [`docs/vault-acme-migration.md`](../docs/vault-acme-migration.md) for the
 security restrictions, network paths, validation sequence, and completed

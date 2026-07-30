@@ -13,6 +13,9 @@ referenced by digest, so rebuilding or replacing `podman-builder:latest` cannot
 change the executable used by a later CronJob run. Updating the runtime is a
 separate review step: seed the new image, verify its digest in Harbor, and update
 the digest in `cron-job-podman-builder.yaml` through Git.
+The builder is also isolated by a workload-scoped default-deny NetworkPolicy;
+outbound traffic is limited to cluster DNS and HTTP/HTTPS for source downloads,
+base-image pulls, and Harbor pushes. It has no allowed inbound traffic.
 
 The `podman-builder` image is self-hosted in Harbor and must be seeded from the
 Dockerfiles repository with `./build.sh podman-builder`. Although the nightly

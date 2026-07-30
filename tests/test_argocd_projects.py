@@ -360,7 +360,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
             sync_options = application["spec"]["syncPolicy"].get("syncOptions", [])
             self.assertIn("RespectIgnoreDifferences=true", sync_options, name)
 
-    def test_chart_only_failed_sync_can_self_heal_after_project_change(self):
+    def test_adapter_failed_sync_can_self_heal_after_project_change(self):
         application = self.applications["my-adapter"]
         automated = application["spec"]["syncPolicy"]["automated"]
 

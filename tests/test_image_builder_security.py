@@ -7,6 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CRONJOB = ROOT / "image-builder" / "cron-job-podman-builder.yaml"
+NETWORK_POLICIES = ROOT / "image-builder" / "network-policy-podman-builder.yaml"
 
 
 class ImageBuilderSecurityTest(unittest.TestCase):
@@ -29,6 +30,27 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         digest = self.container["image"].split("@sha256:", 1)[1]
 
         self.assertFalse(re.fullmatch(r"([0-9a-f])\1{63}", digest))
+
+    def test_builder_network_policy_limits_traffic(self):
+        policies = {
+            document["metadata"]["name"]: document
+            for document in yaml.safe_load_all(NETWORK_POLICIES.read_text(encoding="utf-8"))
+        }
+        default_deny = policies["podman-builder-default-deny"]["spec"]
+        allow = policies["podman-builder-allow-build-egress"]["spec"]
+
+        self.assertEqual({"Ingress", "Egress"}, set(default_deny["policyTypes"]))
+        self.assertNotIn("ingress", default_deny)
+        self.assertNotIn("egress", default_deny)
+        allowed_ports = {
+            (port["protocol"], port["port"])
+            for rule in allow["egress"]
+            for port in rule["ports"]
+        }
+        self.assertEqual(
+            {("UDP", 53), ("TCP", 53), ("TCP", 80), ("TCP", 443)},
+            allowed_ports,
+        )
 
 
 if __name__ == "__main__":

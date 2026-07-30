@@ -6,33 +6,36 @@ metadata:
   namespace: argocd
 spec:
   project: observability
-  source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    targetRevision: 5.3.0
-    chart: prometheus-adapter
-    helm:
-      releaseName: my-adapter
-      values: |
-        priorityClassName: homelab-best-effort
-        prometheus:
-          url: http://thanos-querier.monitoring.svc.cluster.local
-          port: 9090
-        rules:
-          default: false
-          custom: []
-          external: []
-        resources:
-          requests:
-            cpu: 10m
-            memory: 64Mi
-          limits:
-            memory: 256Mi
-        livenessProbe:
-          initialDelaySeconds: 120
-          timeoutSeconds: 10
-        readinessProbe:
-          initialDelaySeconds: 120
-          timeoutSeconds: 10
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      targetRevision: 5.3.0
+      chart: prometheus-adapter
+      helm:
+        releaseName: my-adapter
+        values: |
+          priorityClassName: homelab-best-effort
+          prometheus:
+            url: http://thanos-querier.monitoring.svc.cluster.local
+            port: 9090
+          rules:
+            default: false
+            custom: []
+            external: []
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          livenessProbe:
+            initialDelaySeconds: 120
+            timeoutSeconds: 10
+          readinessProbe:
+            initialDelaySeconds: 120
+            timeoutSeconds: 10
+    - repoURL: https://github.com/shaman007/home-k3s.git
+      path: metrics/prometheus-adapter
+      targetRevision: main
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: default

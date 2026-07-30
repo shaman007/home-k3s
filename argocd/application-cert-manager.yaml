@@ -27,6 +27,8 @@ spec:
               memory: 64Mi
             limits:
               memory: 128Mi
+          networkPolicy:
+            enabled: true
           webhook:
             resources:
               requests:
@@ -34,6 +36,8 @@ spec:
                 memory: 32Mi
               limits:
                 memory: 64Mi
+            networkPolicy:
+              enabled: true
           cainjector:
             resources:
               requests:
@@ -41,6 +45,8 @@ spec:
                 memory: 64Mi
               limits:
                 memory: 128Mi
+            networkPolicy:
+              enabled: true
     - repoURL: https://github.com/shaman007/home-k3s.git
       path: cert-manager
       targetRevision: main
