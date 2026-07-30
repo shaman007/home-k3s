@@ -12,18 +12,31 @@ def load_yaml(path: str) -> dict:
 
 
 class CertManagerMigrationTest(unittest.TestCase):
-    def test_year_staging_canary_does_not_cut_over_the_ingress(self):
-        certificate = load_yaml("year/certificate-year-tls-staging.yaml")
+    def test_year_canaries_do_not_cut_over_the_ingress(self):
+        staging_certificate = load_yaml(
+            "year/certificate-year-tls-staging.yaml"
+        )
+        production_certificate = load_yaml("year/certificate-year-tls.yaml")
         ingress = load_yaml("year/ingress-year.yaml")
 
-        self.assertEqual(certificate["metadata"]["namespace"], "year")
-        self.assertEqual(certificate["spec"], {
+        self.assertEqual(staging_certificate["metadata"]["namespace"], "year")
+        self.assertEqual(staging_certificate["spec"], {
             "secretName": "year-tls-staging",
             "dnsNames": ["year.andreybondarenko.com"],
             "issuerRef": {
                 "group": "cert-manager.io",
                 "kind": "ClusterIssuer",
                 "name": "letsencrypt-staging",
+            },
+        })
+        self.assertEqual(production_certificate["metadata"]["namespace"], "year")
+        self.assertEqual(production_certificate["spec"], {
+            "secretName": "year-tls",
+            "dnsNames": ["year.andreybondarenko.com"],
+            "issuerRef": {
+                "group": "cert-manager.io",
+                "kind": "ClusterIssuer",
+                "name": "letsencrypt-prod",
             },
         })
         self.assertEqual(
