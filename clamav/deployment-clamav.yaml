@@ -25,10 +25,13 @@ spec:
         app: clamav
     spec:
       priorityClassName: homelab-standard
+      automountServiceAccountToken: false
       securityContext:
         runAsUser: 101
         runAsGroup: 103
         fsGroup: 103
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: clamd
           image: harbor.andreybondarenko.com/library/clamav:2026-07-30-022902
@@ -117,6 +120,14 @@ spec:
           volumeMounts:
             - mountPath: /run/clamav
               name: run
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
           livenessProbe:
             tcpSocket:
               port: metrics

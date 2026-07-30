@@ -25,6 +25,7 @@ spec:
         selector: mongodb
     spec:
       priorityClassName: homelab-standard
+      automountServiceAccountToken: false
       containers:
         - name: mongodb
           image: harbor.andreybondarenko.com/dockerhub/mongo:7
@@ -76,6 +77,17 @@ spec:
         - name: mongo-exporter
           image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.51.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65535
+            runAsGroup: 65535
+            seccompProfile:
+              type: RuntimeDefault
           args:
             - --mongodb.uri=mongodb://127.0.0.1:27017
             - --compatible-mode

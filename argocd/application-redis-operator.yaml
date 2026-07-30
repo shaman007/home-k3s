@@ -14,6 +14,21 @@ spec:
       releaseName: redis-operator
       values: |
         priorityClassName: homelab-critical
+        redisOperator:
+          imageName: harbor.andreybondarenko.com/quay/opstree/redis-operator
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
         resources:
           requests:
             cpu: 50m

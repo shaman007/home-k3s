@@ -12,6 +12,8 @@ spec:
     targetRevision: 2.2.14
     helm:
       values: |
+        image:
+          repository: harbor.andreybondarenko.com/github/stakater/reloader
         reloader:
           autoReloadAll: false
           reloadStrategy: annotations

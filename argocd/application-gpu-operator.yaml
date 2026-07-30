@@ -12,6 +12,10 @@ spec:
     chart: gpu-operator
     helm:
       values: |
+        operator:
+          repository: harbor.andreybondarenko.com/nvidia/nvidia
+        validator:
+          repository: harbor.andreybondarenko.com/nvidia/nvidia
         driver:
           enabled: false
         toolkit:
@@ -19,6 +23,7 @@ spec:
         hostPaths:
           driverInstallDir: /usr/local
         devicePlugin:
+          repository: harbor.andreybondarenko.com/nvidia/nvidia
           config:
             create: true
             name: nvidia-device-plugin-config
@@ -38,6 +43,15 @@ spec:
                     resources:
                       - name: nvidia.com/gpu
                         replicas: 8
+        dcgmExporter:
+          repository: harbor.andreybondarenko.com/nvidia/nvidia/k8s
+        gfd:
+          repository: harbor.andreybondarenko.com/nvidia/nvidia
+        migManager:
+          repository: harbor.andreybondarenko.com/nvidia/nvidia/cloud-native
+        node-feature-discovery:
+          image:
+            repository: harbor.andreybondarenko.com/k8s/nfd/node-feature-discovery
   destination:
     server: https://kubernetes.default.svc
     namespace: gpu-operator

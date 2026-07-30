@@ -21,6 +21,7 @@ spec:
         app.kubernetes.io/name: node-exporter
     spec:
       priorityClassName: homelab-essential
+      automountServiceAccountToken: false
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
@@ -39,6 +40,17 @@ spec:
           name: node-exporter
           image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 9100
               protocol: TCP

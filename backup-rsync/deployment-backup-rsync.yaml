@@ -29,7 +29,7 @@ spec:
                       - talos-d4h-k5m
       containers:
         - name: sshd
-          image: quay.io/panubo/sshd:1.10.0
+          image: harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0
           imagePullPolicy: IfNotPresent
           env:
             - name: SSH_ENABLE_ROOT

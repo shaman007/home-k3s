@@ -13,6 +13,8 @@ spec:
     helm:
       values: |
         priorityClassName: homelab-essential
+        redisStandalone:
+          image: harbor.andreybondarenko.com/quay/opstree/redis
         podSecurityContext:
           runAsNonRoot: true
           runAsUser: 1000
@@ -27,11 +29,13 @@ spec:
           runAsNonRoot: true
         redisExporter:
           enabled: true
+          image: harbor.andreybondarenko.com/quay/opstree/redis-exporter
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
       parameters:
       - name: redisExporter.enabled

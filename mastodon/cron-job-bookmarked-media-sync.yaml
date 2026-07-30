@@ -31,7 +31,7 @@ spec:
           restartPolicy: Never
           initContainers:
             - name: fetch-bookmarked-media
-              image: alpine:3.24
+              image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
@@ -59,7 +59,7 @@ spec:
                   mountPath: /work
           containers:
             - name: immich-upload
-              image: node:24-alpine
+              image: harbor.andreybondarenko.com/dockerhub/node:24-alpine
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh

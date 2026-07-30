@@ -15,6 +15,7 @@ spec:
       values: |
         priorityClassName: homelab-essential
         redisStandalone:
+          image: harbor.andreybondarenko.com/quay/opstree/redis
           redisSecret:
             secretName: mastodon-redis
             secretKey: redis-password
@@ -32,11 +33,13 @@ spec:
           runAsNonRoot: true
         redisExporter:
           enabled: true
+          image: harbor.andreybondarenko.com/quay/opstree/redis-exporter
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
       parameters:
       - name: redisExporter.enabled
