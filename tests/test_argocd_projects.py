@@ -42,7 +42,7 @@ PROJECT_OBSERVABILITY = {
     "finance-ticker", "grafana", "kube-node-exporter", "kube-state-metrics",
     "kubernetes-prometheus", "logs-check", "loki", "loki-external-secrets",
     "loki-network-policy", "monitoring-ingress", "monitoring-network-policy",
-    "my-adapter", "platform-health", "thanos", "unifi-exporter",
+    "platform-health", "thanos", "unifi-exporter",
 }
 
 PROJECT_ACCESS_MANAGEMENT = {"lenka"}
@@ -73,7 +73,14 @@ PRUNE_REQUIRED_APPLICATIONS = {
 
 EXTRA_DESTINATIONS_BY_APPLICATION = {
     "cilium": {"cilium-secrets"},
-    "my-adapter": {"kube-system"},
+}
+
+# Keep these only while the deleted my-adapter Application is finalizing.
+TRANSITIONAL_PROJECT_SOURCES = {
+    "observability": {"https://prometheus-community.github.io/helm-charts"},
+}
+TRANSITIONAL_PROJECT_DESTINATIONS = {
+    "observability": {(CLUSTER, "default")},
 }
 
 PROJECT_SYNC_WAVES = {
@@ -241,6 +248,13 @@ class ArgoCdProjectsTest(unittest.TestCase):
                     if (document.get("metadata") or {}).get("namespace")
                 )
 
+            expected_repositories.update(
+                TRANSITIONAL_PROJECT_SOURCES.get(project_name, set())
+            )
+            expected_destinations.update(
+                TRANSITIONAL_PROJECT_DESTINATIONS.get(project_name, set())
+            )
+
             self.assertEqual(set(project["spec"]["sourceRepos"]), expected_repositories)
             self.assertEqual(
                 {
@@ -359,12 +373,6 @@ class ArgoCdProjectsTest(unittest.TestCase):
                 continue
             sync_options = application["spec"]["syncPolicy"].get("syncOptions", [])
             self.assertIn("RespectIgnoreDifferences=true", sync_options, name)
-
-    def test_adapter_failed_sync_can_self_heal_after_project_change(self):
-        application = self.applications["my-adapter"]
-        automated = application["spec"]["syncPolicy"]["automated"]
-
-        self.assertTrue(automated["selfHeal"])
 
     def test_repository_manifests_fit_project_cluster_permissions(self):
         for project_name, members in PROJECT_MEMBERS.items():

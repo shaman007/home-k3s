@@ -741,7 +741,7 @@ data:
                 key = f"{item.get('namespace', '-')}/{item.get('pod', '-')}/{item.get('container', '-')}"
                 false_positive_groups[key] = false_positive_groups.get(key, 0) + 1
             lines.append(
-                "* **Why those were not real faults** - the removed examples were healthy `prometheus-adapter` HTTP audit lines from `panic.go` with `resp=200`, Dawarich Sidekiq debug schedule messages containing an empty `exception_executions` field, and Mastodon ffmpeg commands that set `-loglevel fatal` without reporting a failure."
+                "* **Why those were not real faults** - the removed examples were Dawarich Sidekiq debug schedule messages containing an empty `exception_executions` field and Mastodon ffmpeg commands that set `-loglevel fatal` without reporting a failure."
             )
 
         platform_entries = grouped_entries.get("platform_issue_candidates", [])
@@ -980,22 +980,10 @@ data:
                 "   Evidence: requests to `https://10.43.0.1:443` were refused while reading the Lease object."
             )
 
-        adapter_dns = find_first(platform_entries, "prometheus.default.svc")
-        if adapter_dns:
-            lines.append(
-                "2. [platform issue] `prometheus-adapter` is querying a non-resolving Prometheus hostname."
-            )
-            lines.append(
-                f"   Context: ns={adapter_dns['namespace']} pod={adapter_dns['pod']} at {adapter_dns['ts']}."
-            )
-            lines.append(
-                "   Evidence: DNS lookup for `prometheus.default.svc` failed."
-            )
-
         mastodon_timeout = find_first(real_fault_entries, "HTTP::TimeoutError")
         if mastodon_timeout:
             lines.append(
-                "3. [real fault] Mastodon background media redownload jobs are retrying due to upstream timeouts."
+                "2. [real fault] Mastodon background media redownload jobs are retrying due to upstream timeouts."
             )
             lines.append(
                 f"   Context: ns={mastodon_timeout['namespace']} pod={mastodon_timeout['pod']} at {mastodon_timeout['ts']}."
@@ -1007,7 +995,7 @@ data:
         mastodon_530 = find_first(real_fault_entries, "returned code 530")
         if mastodon_530:
             lines.append(
-                "4. [real fault] Mastodon also has repeated remote media fetch failures returning HTTP 530."
+                "3. [real fault] Mastodon also has repeated remote media fetch failures returning HTTP 530."
             )
             lines.append(
                 f"   Context: ns={mastodon_530['namespace']} pod={mastodon_530['pod']} at {mastodon_530['ts']}."
@@ -1016,7 +1004,7 @@ data:
         stirling_env = find_first(real_fault_entries, ".env")
         if stirling_env:
             lines.append(
-                "5. [noise] Stirling-PDF is logging scanner traffic for `/.env`-style paths as application errors."
+                "4. [noise] Stirling-PDF is logging scanner traffic for `/.env`-style paths as application errors."
             )
             lines.append(
                 f"   Context: ns={stirling_env['namespace']} pod={stirling_env['pod']} at {stirling_env['ts']}."
@@ -1028,7 +1016,7 @@ data:
         traefik_backend = find_first(platform_entries, "Error while dialing backend")
         if traefik_backend:
             lines.append(
-                "6. [platform issue] Traefik had at least one backend connection refusal."
+                "5. [platform issue] Traefik had at least one backend connection refusal."
             )
             lines.append(
                 f"   Context: ns={traefik_backend['namespace']} pod={traefik_backend['pod']} at {traefik_backend['ts']}."
