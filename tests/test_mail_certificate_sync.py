@@ -32,9 +32,16 @@ class MailCertificateSyncTest(unittest.TestCase):
         self.assertEqual(issuer["kind"], "ClusterIssuer")
         self.assertEqual(staging_issuer["kind"], "ClusterIssuer")
         self.assertIn("acme-staging", staging_issuer["spec"]["acme"]["server"])
+        expected_solvers = [{"http01": {"ingress": {
+            "ingressClassName": "traefik",
+            "podTemplate": {"spec": {"resources": {
+                "requests": {"cpu": "10m", "memory": "128Mi"},
+                "limits": {"cpu": "100m", "memory": "128Mi"},
+            }}},
+        }}}]
+        self.assertEqual(issuer["spec"]["acme"]["solvers"], expected_solvers)
         self.assertEqual(
-            issuer["spec"]["acme"]["solvers"],
-            [{"http01": {"ingress": {"ingressClassName": "traefik"}}}],
+            staging_issuer["spec"]["acme"]["solvers"], expected_solvers
         )
         self.assertNotIn("httpChallenge:", traefik)
         self.assertIn("tlsChallenge: {}", traefik)

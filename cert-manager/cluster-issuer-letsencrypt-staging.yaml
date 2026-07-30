@@ -15,3 +15,12 @@ spec:
       - http01:
           ingress:
             ingressClassName: traefik
+            podTemplate:
+              spec:
+                resources:
+                  requests:
+                    cpu: 10m
+                    memory: 128Mi
+                  limits:
+                    cpu: 100m
+                    memory: 128Mi
