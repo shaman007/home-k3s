@@ -1,0 +1,18 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rspamd-vault-acme-tls
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: rspamd-vault-acme-tls
+  duration: 720h
+  renewBefore: 168h
+  dnsNames:
+    - rspamd.w386.k8s.my.lan
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: vault-acme
