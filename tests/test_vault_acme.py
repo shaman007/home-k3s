@@ -310,7 +310,7 @@ class VaultAcmeTest(unittest.TestCase):
         self.assertNotIn("w386-k8s-my-lan-wildcard", renewer)
         self.assertNotIn("wildcard_targets", renewer)
 
-    def test_vault_ingress_candidate_does_not_replace_consumed_secret(self):
+    def test_vault_ingress_cutover_retains_direct_renewal_for_rollback(self):
         certificate = load_yaml(
             "vault/certificate-vault-ingress-vault-acme-tls.yaml"
         )
@@ -334,7 +334,10 @@ class VaultAcmeTest(unittest.TestCase):
                 },
             },
         )
-        self.assertEqual(ingress["spec"]["tls"][0]["secretName"], "vault-tls")
+        self.assertEqual(
+            ingress["spec"]["tls"][0]["secretName"],
+            "vault-ingress-vault-acme-tls",
+        )
         self.assertIn('secret_needs_renewal "vault" "vault-tls"', renewer)
         self.assertIn(
             'secret_needs_renewal "vault" "vault-server-tls"',

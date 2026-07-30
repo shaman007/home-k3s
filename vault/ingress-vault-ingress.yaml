@@ -11,7 +11,7 @@ spec:
   tls:
     - hosts:
         - vault.w386.k8s.my.lan
-      secretName: vault-tls
+      secretName: vault-ingress-vault-acme-tls
   rules:
     - host: vault.w386.k8s.my.lan
       http:
