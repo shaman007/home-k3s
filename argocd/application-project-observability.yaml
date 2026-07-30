@@ -18,14 +18,9 @@ spec:
     - https://github.com/shaman007/home-k3s.git
     - https://grafana.github.io/helm-charts
     - https://helm.elastic.co
-    # Transitional: remove after the my-adapter finalizer finishes cleanup.
-    - https://prometheus-community.github.io/helm-charts
   destinations:
     - server: https://kubernetes.default.svc
       namespace: connectivity-exporter
-    # Transitional: remove after the my-adapter finalizer finishes cleanup.
-    - server: https://kubernetes.default.svc
-      namespace: default
     - server: https://kubernetes.default.svc
       namespace: elastic-stack
     - server: https://kubernetes.default.svc

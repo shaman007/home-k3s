@@ -75,14 +75,6 @@ EXTRA_DESTINATIONS_BY_APPLICATION = {
     "cilium": {"cilium-secrets"},
 }
 
-# Keep these only while the deleted my-adapter Application is finalizing.
-TRANSITIONAL_PROJECT_SOURCES = {
-    "observability": {"https://prometheus-community.github.io/helm-charts"},
-}
-TRANSITIONAL_PROJECT_DESTINATIONS = {
-    "observability": {(CLUSTER, "default")},
-}
-
 PROJECT_SYNC_WAVES = {
     "namespace-management": "-2",
 }
@@ -247,13 +239,6 @@ class ArgoCdProjectsTest(unittest.TestCase):
                     for _, document in repository_documents(application)
                     if (document.get("metadata") or {}).get("namespace")
                 )
-
-            expected_repositories.update(
-                TRANSITIONAL_PROJECT_SOURCES.get(project_name, set())
-            )
-            expected_destinations.update(
-                TRANSITIONAL_PROJECT_DESTINATIONS.get(project_name, set())
-            )
 
             self.assertEqual(set(project["spec"]["sourceRepos"]), expected_repositories)
             self.assertEqual(
