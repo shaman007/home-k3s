@@ -67,7 +67,10 @@ class VaultAcmeTest(unittest.TestCase):
         )
         self.assertEqual(
             egress["spec"]["egress"][0]["ports"],
-            [{"protocol": "TCP", "port": 80}],
+            [
+                {"protocol": "TCP", "port": 80},
+                {"protocol": "TCP", "port": 443},
+            ],
         )
         self.assertEqual(
             egress["spec"]["egress"][1]["to"],
