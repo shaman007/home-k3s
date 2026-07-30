@@ -12,6 +12,25 @@ def load_yaml(path: str) -> dict:
 
 
 class OllamaModelPersistenceTest(unittest.TestCase):
+    def test_both_deployments_use_the_discovered_nvidia_gpu(self):
+        for path in (
+            "ollama/deployment-ollama.yaml",
+            "ollama-small/deployment-ollama-small.yaml",
+        ):
+            deployment = load_yaml(path)
+            pod_spec = deployment["spec"]["template"]["spec"]
+            ollama = next(
+                container
+                for container in pod_spec["containers"]
+                if container["name"] == "ollama"
+            )
+
+            self.assertEqual("nvidia", pod_spec["runtimeClassName"], path)
+            self.assertEqual(
+                {"nvidia.com/gpu.present": "true"}, pod_spec["nodeSelector"], path
+            )
+            self.assertEqual(1, ollama["resources"]["limits"]["nvidia.com/gpu"], path)
+
     def test_model_pullers_reuse_models_from_persistent_storage(self):
         deployments = (
             ("ollama/deployment-ollama.yaml", "ollama-data-lh", "gpt-oss:20b"),
