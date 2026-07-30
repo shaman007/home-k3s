@@ -177,7 +177,7 @@ class VaultAcmeTest(unittest.TestCase):
             [{"protocol": "TCP", "port": 8089}],
         )
 
-    def test_second_service_candidates_do_not_replace_consumed_secrets(self):
+    def test_second_service_cutover_retains_legacy_rollback_targets(self):
         candidates = {
             "mempalace/certificate-mempalace-vault-acme-tls.yaml": {
                 "namespace": "mempalace",
@@ -223,7 +223,7 @@ class VaultAcmeTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     ingress["spec"]["tls"][0]["secretName"],
-                    expected["legacy_secret"],
+                    expected["secret"],
                 )
                 self.assertIn(expected["legacy_secret"], renewer)
                 self.assertNotIn(expected["secret"], renewer)
