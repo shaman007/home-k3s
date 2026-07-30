@@ -168,7 +168,7 @@ spec:
                     kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
                   }
 
-                  wildcard_targets="argocd/argocd-tls longhorn-system/longhorn-tls mail/rspamd-tls mempalace/mempalace-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls nextcloud/office-tls"
+                  wildcard_targets="mail/rspamd-tls mempalace/mempalace-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls nextcloud/office-tls"
                   rotate_wildcard=false
 
                   for target in $wildcard_targets; do

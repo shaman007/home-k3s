@@ -12,6 +12,12 @@ def load_yaml(path: str) -> dict:
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
+def load_yaml_documents(path: str) -> list[dict]:
+    return list(
+        yaml.safe_load_all((ROOT / path).read_text(encoding="utf-8"))
+    )
+
+
 class VaultAcmeTest(unittest.TestCase):
     def test_cluster_issuer_uses_restricted_vault_role_directory(self):
         issuer = load_yaml("cert-manager/cluster-issuer-vault-acme.yaml")
@@ -57,7 +63,7 @@ class VaultAcmeTest(unittest.TestCase):
             },
         )
 
-    def test_first_service_cutover_avoids_cronjob_dual_writers(self):
+    def test_first_service_cutover_removes_cronjob_permissions(self):
         candidates = {
             "argocd-deploy/certificate-argocd-vault-acme-tls.yaml": {
                 "namespace": "argocd",
@@ -65,6 +71,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "argocd.w386.k8s.my.lan",
                 "ingress": "argocd-deploy/ingress-argocd-ingress.yaml",
                 "legacy_secret": "argocd-tls",
+                "renewer_role": "argocd-deploy/role-vault-pki-renewer.yaml",
             },
             "longhorn/ingress-certificate-longhorn-vault-acme-tls.yaml": {
                 "namespace": "longhorn-system",
@@ -72,6 +79,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "longhorn.w386.k8s.my.lan",
                 "ingress": "longhorn/ingress-longhorn-ingress.yaml",
                 "legacy_secret": "longhorn-tls",
+                "renewer_role": "longhorn/ingress-role-vault-pki-renewer.yaml",
             },
         }
         renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
@@ -82,6 +90,9 @@ class VaultAcmeTest(unittest.TestCase):
             with self.subTest(path=path):
                 certificate = load_yaml(path)
                 ingress = load_yaml(expected["ingress"])
+                renewer_role = load_yaml_documents(
+                    expected["renewer_role"]
+                )[0]
 
                 self.assertEqual(
                     certificate["metadata"]["namespace"],
@@ -109,8 +120,9 @@ class VaultAcmeTest(unittest.TestCase):
                     ingress["spec"]["tls"][0]["secretName"],
                     expected["secret"],
                 )
-                self.assertIn(expected["legacy_secret"], renewer)
+                self.assertNotIn(expected["legacy_secret"], renewer)
                 self.assertNotIn(expected["secret"], renewer)
+                self.assertEqual(renewer_role["rules"], [])
 
     def test_network_policies_limit_acme_control_and_validation_paths(self):
         egress = load_yaml(
