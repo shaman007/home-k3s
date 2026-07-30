@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: my-adapter
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: observability
   sources:
