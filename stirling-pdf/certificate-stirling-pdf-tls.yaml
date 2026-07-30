@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: stirling-pdf-tls
+  namespace: stirling-pdf
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: stirling-pdf-tls
+  dnsNames:
+    - pdf.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-prod

@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: keycloak-tls
+  namespace: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: keycloak-tls
+  dnsNames:
+    - sso.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-prod

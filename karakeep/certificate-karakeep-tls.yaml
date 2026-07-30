@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: karakeep-tls
+  namespace: karakeep
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: karakeep-tls
+  dnsNames:
+    - keep.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-prod
