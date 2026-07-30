@@ -22,10 +22,23 @@ spec:
         app: thanos-querier
     spec:
       priorityClassName: homelab-standard
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: thanos
           image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.2
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
           args:
             - query
             - --log.level=info

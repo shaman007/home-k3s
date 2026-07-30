@@ -22,11 +22,26 @@ spec:
         app: thanos-compactor
     spec:
       priorityClassName: homelab-standard
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: volume-mount-hack
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 1001:1001 /data"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+            readOnlyRootFilesystem: true
+            runAsUser: 0
           volumeMounts:
             - name: data
               mountPath: /data
@@ -40,6 +55,15 @@ spec:
         - name: thanos
           image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.2
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
           args:
             - "compact"
             - "--log.level=info"

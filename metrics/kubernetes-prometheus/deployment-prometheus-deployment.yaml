@@ -26,6 +26,11 @@ spec:
       priorityClassName: homelab-essential
       serviceAccountName: prometheus-server
       automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 65534
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: prometheus
           image: harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.13.1
@@ -73,6 +78,12 @@ spec:
               mountPath: /etc/prometheus-vault-ca/
               readOnly: true
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
             runAsUser: 65534
             runAsGroup: 65534
           resources:
@@ -118,6 +129,12 @@ spec:
             - name: objstoreyml
               mountPath: /etc/thanos/
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
             runAsUser: 65534
             runAsGroup: 65534
           resources:
@@ -131,6 +148,15 @@ spec:
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+            readOnlyRootFilesystem: true
+            runAsUser: 0
           volumeMounts:
             - name: prometheus-storage-volume
               mountPath: /prometheus
