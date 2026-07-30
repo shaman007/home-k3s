@@ -32,6 +32,17 @@ All renewal targets must be created before the job runs. The renewer has no Secr
 - `vault/vault-tls`
 - `vault/vault-server-tls`
 
+## PKI ACME
+
+The internal ingress certificate migration uses cert-manager with Vault's
+role-specific ACME directory backed by the `w386-lab-intermediate` issuer. The
+first GitOps stage creates only a non-consumed canary Secret; the renewer above
+continues to own every existing ingress Secret until the canary is verified.
+
+See [`docs/vault-acme-migration.md`](../docs/vault-acme-migration.md) for the
+security restrictions, network paths, validation sequence and later removal of
+the wildcard-copy targets.
+
 ## External Secrets Authentication
 
 Vault-backed SecretStores authenticate through namespace-bound `vault-auth` ServiceAccounts and Vault Kubernetes auth roles. The roles issue 15-minute tokens with 30-minute maximum TTLs and attach the application policy plus the minimal `external-secrets-token` lookup-self policy.
