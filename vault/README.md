@@ -14,30 +14,22 @@ Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-
 
 ## PKI Renewal
 
-Internal ingress TLS secrets are renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
+The Vault ingress and Vault API/Raft TLS secrets are renewed by [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml).
 The CronJob authenticates through the `vault-pki-renewer` Kubernetes auth role with a projected, audience-bound ServiceAccount token. Vault issues a 15-minute token with a 30-minute maximum TTL and the `vault-pki-renewer` policy.
-That policy can issue `pki-root/issue/w386-k8s-my-lan-wildcard`, `pki-root/issue/vault-ingress`, and `pki-root/issue/vault-server`.
-It also renews the internal `vault-server-tls` certificate through `pki-root/issue/vault-server` for the Vault API and Raft DNS names.
+The CronJob uses `pki-root/issue/vault-ingress` and `pki-root/issue/vault-server`; the policy is narrowed after the final Vault ingress cutover.
+The internal `vault-server-tls` certificate uses `pki-root/issue/vault-server` for the Vault API and Raft DNS names.
 
 All renewal targets must be created before the job runs. The renewer has no Secret `create` or `list` permission: namespace Roles restrict it to `get`, `update`, and `patch` on these fixed names:
 
-- `argocd/argocd-tls`
-- `longhorn-system/longhorn-tls`
-- `mail/rspamd-tls`
-- `mempalace/mempalace-tls`
-- `monitoring/alerts-tls`
-- `monitoring/grafana-tls`
-- `monitoring/prometheus-tls`
-- `nextcloud/office-tls`
 - `vault/vault-tls`
 - `vault/vault-server-tls`
 
 ## PKI ACME
 
-The internal ingress certificate migration uses cert-manager with Vault's
-role-specific ACME directory backed by the `w386-lab-intermediate` issuer. The
-first GitOps stage creates only a non-consumed canary Secret; the renewer above
-continues to own every existing ingress Secret until the canary is verified.
+Internal ingress certificates use cert-manager with Vault's role-specific ACME
+directory backed by the `w386-lab-intermediate` issuer. All application ingress
+certificates have migrated; the remaining Vault ingress candidate is staged
+separately before `vault-tls` and its direct-issuance capability are retired.
 
 See [`docs/vault-acme-migration.md`](../docs/vault-acme-migration.md) for the
 security restrictions, network paths, validation sequence and later removal of

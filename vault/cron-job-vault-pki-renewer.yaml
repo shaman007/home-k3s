@@ -168,30 +168,6 @@ spec:
                     kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
                   }
 
-                  wildcard_targets="mail/rspamd-tls monitoring/alerts-tls monitoring/grafana-tls monitoring/prometheus-tls"
-                  rotate_wildcard=false
-
-                  for target in $wildcard_targets; do
-                    namespace="${target%%/*}"
-                    name="${target##*/}"
-                    if secret_needs_renewal "$namespace" "$name"; then
-                      rotate_wildcard=true
-                      break
-                    fi
-                  done
-
-                  if [ "$rotate_wildcard" = true ]; then
-                    issue_cert "w386-k8s-my-lan-wildcard" "*.w386.k8s.my.lan" /tmp/wildcard.crt /tmp/wildcard.key
-                    for target in $wildcard_targets; do
-                      namespace="${target%%/*}"
-                      name="${target##*/}"
-                      patch_secret "$namespace" "$name" /tmp/wildcard.crt /tmp/wildcard.key
-                    done
-                    echo "Rotated wildcard TLS secrets"
-                  else
-                    echo "Wildcard TLS secrets still valid beyond renewal window"
-                  fi
-
                   if secret_needs_renewal "vault" "vault-tls"; then
                     issue_cert "vault-ingress" "vault.w386.k8s.my.lan" /tmp/vault.crt /tmp/vault.key
                     patch_secret "vault" "vault-tls" /tmp/vault.crt /tmp/vault.key

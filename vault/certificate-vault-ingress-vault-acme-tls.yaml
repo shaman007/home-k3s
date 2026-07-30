@@ -1,0 +1,18 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: vault-ingress-vault-acme-tls
+  namespace: vault
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: vault-ingress-vault-acme-tls
+  duration: 720h
+  renewBefore: 168h
+  dnsNames:
+    - vault.w386.k8s.my.lan
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: vault-acme

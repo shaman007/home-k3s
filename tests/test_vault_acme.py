@@ -234,7 +234,7 @@ class VaultAcmeTest(unittest.TestCase):
                 self.assertNotIn(expected["secret"], renewer)
                 self.assertEqual(renewer_role["rules"], [])
 
-    def test_final_service_cutover_retains_legacy_rollback_targets(self):
+    def test_final_service_cutover_removes_cronjob_permissions(self):
         candidates = {
             "metrics/ingress-certificate-alerts-vault-acme-tls.yaml": {
                 "namespace": "monitoring",
@@ -242,6 +242,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "alerts.w386.k8s.my.lan",
                 "ingress": "metrics/ingress-alerts-ingress.yaml",
                 "legacy_secret": "alerts-tls",
+                "renewer_role": "metrics/ingress-role-vault-pki-renewer.yaml",
             },
             "metrics/ingress-certificate-grafana-vault-acme-tls.yaml": {
                 "namespace": "monitoring",
@@ -249,6 +250,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "grafana.w386.k8s.my.lan",
                 "ingress": "metrics/ingress-grafana-ingress.yaml",
                 "legacy_secret": "grafana-tls",
+                "renewer_role": "metrics/ingress-role-vault-pki-renewer.yaml",
             },
             "metrics/ingress-certificate-prometheus-vault-acme-tls.yaml": {
                 "namespace": "monitoring",
@@ -256,6 +258,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "prometheus.w386.k8s.my.lan",
                 "ingress": "metrics/ingress-prometheus-ingress.yaml",
                 "legacy_secret": "prometheus-tls",
+                "renewer_role": "metrics/ingress-role-vault-pki-renewer.yaml",
             },
             "mail/certificate-rspamd-vault-acme-tls.yaml": {
                 "namespace": "mail",
@@ -263,6 +266,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "dns_name": "rspamd.w386.k8s.my.lan",
                 "ingress": "mail/ingress-rspamd-ingress.yaml",
                 "legacy_secret": "rspamd-tls",
+                "renewer_role": "mail/role-vault-pki-renewer.yaml",
             },
         }
         renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
@@ -273,6 +277,9 @@ class VaultAcmeTest(unittest.TestCase):
             with self.subTest(path=path):
                 certificate = load_yaml(path)
                 ingress = load_yaml(expected["ingress"])
+                renewer_role = load_yaml_documents(
+                    expected["renewer_role"]
+                )[0]
 
                 self.assertEqual(
                     certificate["metadata"]["namespace"],
@@ -296,13 +303,50 @@ class VaultAcmeTest(unittest.TestCase):
                     ingress["spec"]["tls"][0]["secretName"],
                     expected["secret"],
                 )
-                self.assertIn(expected["legacy_secret"], renewer)
+                self.assertNotIn(expected["legacy_secret"], renewer)
                 self.assertNotIn(expected["secret"], renewer)
+                self.assertEqual(renewer_role["rules"], [])
+
+        self.assertNotIn("w386-k8s-my-lan-wildcard", renewer)
+        self.assertNotIn("wildcard_targets", renewer)
+
+    def test_vault_ingress_candidate_does_not_replace_consumed_secret(self):
+        certificate = load_yaml(
+            "vault/certificate-vault-ingress-vault-acme-tls.yaml"
+        )
+        ingress = load_yaml("vault/ingress-vault-ingress.yaml")
+        renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(certificate["metadata"]["namespace"], "vault")
+        self.assertEqual(
+            certificate["spec"],
+            {
+                "secretName": "vault-ingress-vault-acme-tls",
+                "duration": "720h",
+                "renewBefore": "168h",
+                "dnsNames": ["vault.w386.k8s.my.lan"],
+                "issuerRef": {
+                    "group": "cert-manager.io",
+                    "kind": "ClusterIssuer",
+                    "name": "vault-acme",
+                },
+            },
+        )
+        self.assertEqual(ingress["spec"]["tls"][0]["secretName"], "vault-tls")
+        self.assertIn('secret_needs_renewal "vault" "vault-tls"', renewer)
+        self.assertIn(
+            'secret_needs_renewal "vault" "vault-server-tls"',
+            renewer,
+        )
+        self.assertNotIn("vault-ingress-vault-acme-tls", renewer)
 
     def test_final_service_http01_paths_are_solver_scoped(self):
         for path in (
             "mail/network-policy-allow-cert-manager-http01-solver.yaml",
             "metrics/ingress-network-policy-allow-cert-manager-http01-solver.yaml",
+            "vault/network-policy-vault-allow-cert-manager-http01-solver.yaml",
         ):
             with self.subTest(path=path):
                 policy = load_yaml(path)

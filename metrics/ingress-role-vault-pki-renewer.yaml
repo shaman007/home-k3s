@@ -3,11 +3,7 @@ kind: Role
 metadata:
   name: vault-pki-renewer
   namespace: monitoring
-rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["alerts-tls", "grafana-tls", "prometheus-tls"]
-    verbs: ["get", "update", "patch"]
+rules: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
