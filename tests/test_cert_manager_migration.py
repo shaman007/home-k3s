@@ -94,6 +94,9 @@ class CertManagerMigrationTest(unittest.TestCase):
     }
 
     CUTOVER_INGRESSES = {
+        "bitwarden/ingress-andreybondarenko-ingress.yaml": (
+            "bitwarden.andreybondarenko.com", "bitwarden-tls"
+        ),
         "convertx/ingress-andreybondarenko-ingress.yaml": (
             "convert.andreybondarenko.com", "convertx-tls"
         ),
@@ -103,14 +106,29 @@ class CertManagerMigrationTest(unittest.TestCase):
         "hister/ingress-andreybondarenko-ingress.yaml": (
             "hister.andreybondarenko.com", "hister-tls"
         ),
+        "harbor/ingress-andreybondarenko-ingress.yaml": (
+            "harbor.andreybondarenko.com", "harbor-tls"
+        ),
+        "homeassistant/ingress-ha-andreybondarenko.yaml": (
+            "ha.andreybondarenko.com", "homeassistant-tls"
+        ),
         "immich/ingress-andreybondarenko-ingress.yaml": (
             "immich.andreybondarenko.com", "immich-tls"
         ),
         "karakeep/ingress-andreybondarenko-ingress.yaml": (
             "keep.andreybondarenko.com", "karakeep-tls"
         ),
+        "keycloak/ingress-andreybondarenko-ingress.yaml": (
+            "sso.andreybondarenko.com", "keycloak-tls"
+        ),
+        "mastodon/ingress-andreybondarenko-ingress.yaml": (
+            "mastodon.andreybondarenko.com", "mastodon-tls"
+        ),
         "open-webui/ingress-open-webui.yaml": (
             "chat.andreybondarenko.com", "open-webui-tls"
+        ),
+        "plex/ingress-andreybondarenko-ingress.yaml": (
+            "plex.andreybondarenko.com", "plex-tls"
         ),
         "seaweedfs/ingress-andreybondarenko-ingress.yaml": (
             "s3.andreybondarenko.com", "seaweedfs-tls"
@@ -118,26 +136,57 @@ class CertManagerMigrationTest(unittest.TestCase):
         "stirling-pdf/ingress-andreybondarenko-ingress.yaml": (
             "pdf.andreybondarenko.com", "stirling-pdf-tls"
         ),
+        "wordpress/ingress-andreybondarenko-ingress.yaml": (
+            "andreybondarenko.com", "wordpress-tls"
+        ),
     }
 
     CUTOVER_INGRESS_ROUTES = {
+        "bitwarden/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "bitwarden-tls"
+        ),
+        "harbor/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "harbor-tls"
+        ),
+        "homeassistant/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "homeassistant-tls"
+        ),
         "karakeep/ingress-route-sensitive-throttle.yaml": (
             "sensitive-path-throttle", "karakeep-tls"
+        ),
+        "keycloak/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "keycloak-tls"
+        ),
+        "mastodon/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "mastodon-tls"
         ),
         "open-webui/ingress-route-sensitive-throttle.yaml": (
             "sensitive-path-throttle", "open-webui-tls"
         ),
+        "plex/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "plex-tls"
+        ),
+        "wordpress/ingress-route-sensitive-throttle.yaml": (
+            "sensitive-path-throttle", "wordpress-tls"
+        ),
     }
 
     PENDING_INGRESS_ROUTES = (
-        "bitwarden/ingress-route-sensitive-throttle.yaml",
-        "harbor/ingress-route-sensitive-throttle.yaml",
-        "homeassistant/ingress-route-sensitive-throttle.yaml",
-        "keycloak/ingress-route-sensitive-throttle.yaml",
-        "mastodon/ingress-route-sensitive-throttle.yaml",
         "nextcloud/ingress-route-sensitive-throttle.yaml",
-        "plex/ingress-route-sensitive-throttle.yaml",
-        "wordpress/ingress-route-sensitive-throttle.yaml",
+    )
+
+    INTERNAL_TLS_INGRESSES = (
+        "comfyui/ingress-comfyui.yaml",
+        "ollama/ingress-ollama-ingress.yaml",
+    )
+
+    PENDING_INGRESSES = (
+        "synapse/ingress-andreybondarenko-ingress.yaml",
+        "nextcloud/ingress-andreybondarenko-ingress.yaml",
+        "nextcloud/ingress-nextcloud-ui.yaml",
+        "nextcloud/ingress-nextcloud-uploads.yaml",
+        "your-spotify/ingress-andreybondarenko-ingress.yaml",
+        "your-spotify/ingress-andreybondarenko-web-ingress.yaml",
     )
 
     def test_year_uses_the_production_certificate(self):
@@ -192,22 +241,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 self.assertEqual(certificate["spec"]["dnsNames"], dns_names)
                 self.assertEqual(certificate["spec"]["issuerRef"], issuer_ref)
 
-        pending_ingresses = [
-            "bitwarden/ingress-andreybondarenko-ingress.yaml",
-            "harbor/ingress-andreybondarenko-ingress.yaml",
-            "homeassistant/ingress-ha-andreybondarenko.yaml",
-            "keycloak/ingress-andreybondarenko-ingress.yaml",
-            "mastodon/ingress-andreybondarenko-ingress.yaml",
-            "synapse/ingress-andreybondarenko-ingress.yaml",
-            "nextcloud/ingress-andreybondarenko-ingress.yaml",
-            "nextcloud/ingress-nextcloud-ui.yaml",
-            "nextcloud/ingress-nextcloud-uploads.yaml",
-            "plex/ingress-andreybondarenko-ingress.yaml",
-            "your-spotify/ingress-andreybondarenko-ingress.yaml",
-            "your-spotify/ingress-andreybondarenko-web-ingress.yaml",
-            "wordpress/ingress-andreybondarenko-ingress.yaml",
-        ]
-        for path in pending_ingresses:
+        for path in self.PENDING_INGRESSES:
             with self.subTest(path=path):
                 ingress = load_yaml(path)
                 self.assertEqual(
@@ -262,6 +296,41 @@ class CertManagerMigrationTest(unittest.TestCase):
                     routes[0]["spec"]["tls"],
                     {"certResolver": "letsencrypt"},
                 )
+
+    def test_internal_tls_routes_do_not_request_public_certificates(self):
+        resolver_annotation = (
+            "traefik.ingress.kubernetes.io/router.tls.certresolver"
+        )
+
+        for path in self.INTERNAL_TLS_INGRESSES:
+            with self.subTest(path=path):
+                ingress = load_yaml(path)
+                self.assertNotIn(
+                    resolver_annotation,
+                    ingress["metadata"].get("annotations", {}),
+                )
+                hosts = [rule["host"] for rule in ingress["spec"]["rules"]]
+                self.assertTrue(all(host.endswith(".k8s.my.lan") for host in hosts))
+
+    def test_native_acme_references_are_limited_to_pending_routes(self):
+        resolver_markers = (
+            "traefik.ingress.kubernetes.io/router.tls.certresolver:",
+            "certResolver: letsencrypt",
+        )
+        actual_paths = set()
+
+        for pattern in ("*.yaml", "*.yml"):
+            for path in ROOT.rglob(pattern):
+                relative_path = path.relative_to(ROOT)
+                if relative_path.parts[0] == "DEPRECATED":
+                    continue
+                content = path.read_text(encoding="utf-8")
+                if any(marker in content for marker in resolver_markers):
+                    actual_paths.add(relative_path.as_posix())
+
+        expected_paths = set(self.PENDING_INGRESSES)
+        expected_paths.update(self.PENDING_INGRESS_ROUTES)
+        self.assertEqual(actual_paths, expected_paths)
 
     def test_default_deny_namespaces_allow_only_traefik_to_solver(self):
         expected_from = [{

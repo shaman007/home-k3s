@@ -34,4 +34,4 @@ spec:
           name: ha-external
           port: 8123
   tls:
-    certResolver: letsencrypt
+    secretName: homeassistant-tls

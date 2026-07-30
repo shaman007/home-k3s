@@ -35,4 +35,4 @@ spec:
           name: keycloak
           port: 8080
   tls:
-    certResolver: letsencrypt
+    secretName: keycloak-tls

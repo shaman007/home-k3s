@@ -34,4 +34,4 @@ spec:
           name: harbor-core
           port: 80
   tls:
-    certResolver: letsencrypt
+    secretName: harbor-tls

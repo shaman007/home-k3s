@@ -34,4 +34,4 @@ spec:
           name: nginx
           port: 8080
   tls:
-    certResolver: letsencrypt
+    secretName: wordpress-tls

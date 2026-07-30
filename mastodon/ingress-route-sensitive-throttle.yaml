@@ -71,4 +71,4 @@ spec:
           name: mastodon-web
           port: 3000
   tls:
-    certResolver: letsencrypt
+    secretName: mastodon-tls

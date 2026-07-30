@@ -8,8 +8,6 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 
-    # Use Traefik's ACME resolver
-    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     # Apply HSTS middleware
     traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,keycloak-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
     # (optional) HTTP->HTTPS is handled globally on entryPoints (see above),
@@ -22,6 +20,10 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - sso.andreybondarenko.com
+      secretName: keycloak-tls
 
   rules:
     - host: sso.andreybondarenko.com

@@ -34,4 +34,4 @@ spec:
           name: plex
           port: 32400
   tls:
-    certResolver: letsencrypt
+    secretName: plex-tls

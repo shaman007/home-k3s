@@ -6,7 +6,6 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.certresolver: letsencrypt
     traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,homeassistant-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
   labels:
     app: homeassistant
@@ -16,6 +15,10 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - ha.andreybondarenko.com
+      secretName: homeassistant-tls
   rules:
     - host: ha.andreybondarenko.com
       http:
