@@ -234,7 +234,7 @@ class VaultAcmeTest(unittest.TestCase):
                 self.assertNotIn(expected["secret"], renewer)
                 self.assertEqual(renewer_role["rules"], [])
 
-    def test_final_service_candidates_do_not_replace_consumed_secrets(self):
+    def test_final_service_cutover_retains_legacy_rollback_targets(self):
         candidates = {
             "metrics/ingress-certificate-alerts-vault-acme-tls.yaml": {
                 "namespace": "monitoring",
@@ -294,7 +294,7 @@ class VaultAcmeTest(unittest.TestCase):
                 )
                 self.assertEqual(
                     ingress["spec"]["tls"][0]["secretName"],
-                    expected["legacy_secret"],
+                    expected["secret"],
                 )
                 self.assertIn(expected["legacy_secret"], renewer)
                 self.assertNotIn(expected["secret"], renewer)

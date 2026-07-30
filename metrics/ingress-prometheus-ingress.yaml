@@ -10,7 +10,7 @@ spec:
   tls:
     - hosts:
         - prometheus.w386.k8s.my.lan
-      secretName: prometheus-tls
+      secretName: prometheus-vault-acme-tls
   rules:
     - host: prometheus.w386.k8s.my.lan
       http:

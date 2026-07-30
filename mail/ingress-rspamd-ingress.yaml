@@ -10,7 +10,7 @@ spec:
   tls:
     - hosts:
         - rspamd.w386.k8s.my.lan
-      secretName: rspamd-tls
+      secretName: rspamd-vault-acme-tls
   rules:
     - host: rspamd.w386.k8s.my.lan
       http:

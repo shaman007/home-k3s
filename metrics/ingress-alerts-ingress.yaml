@@ -10,7 +10,7 @@ spec:
   tls:
     - hosts:
         - alerts.w386.k8s.my.lan
-      secretName: alerts-tls
+      secretName: alerts-vault-acme-tls
   rules:
     - host: alerts.w386.k8s.my.lan
       http:

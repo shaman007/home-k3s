@@ -10,7 +10,7 @@ spec:
   tls:
     - hosts:
         - grafana.w386.k8s.my.lan
-      secretName: grafana-tls
+      secretName: grafana-vault-acme-tls
   rules:
     - host: grafana.w386.k8s.my.lan
       http:
