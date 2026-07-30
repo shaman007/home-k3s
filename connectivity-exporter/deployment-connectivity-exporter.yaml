@@ -22,9 +22,6 @@ spec:
     spec:
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
-      securityContext:
-        fsGroup: 65534
-        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: exporter
           image: harbor.andreybondarenko.com/library/connectivity-exporter-local:2026-07-30-022902
@@ -35,9 +32,6 @@ spec:
               drop:
                 - ALL
             readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 65534
-            runAsGroup: 65534
             seccompProfile:
               type: RuntimeDefault
           ports:

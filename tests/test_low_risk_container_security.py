@@ -30,7 +30,6 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
 
     def test_stateless_workloads_have_explicit_restricted_contexts(self):
         workloads = (
-            ("connectivity-exporter/deployment-connectivity-exporter.yaml", 65534, 65534, 65534),
             ("canitiser/deployment-ca-report-ui.yaml", 10001, 100, 100),
             ("headlamp/deployment-headlamp.yaml", 100, 101, 101),
             ("unifi/poller/deployment-unifi-poller.yaml", 65532, 65532, None),
@@ -46,6 +45,18 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                         "OnRootMismatch",
                         pod_spec["securityContext"]["fsGroupChangePolicy"],
                     )
+
+    def test_connectivity_exporter_keeps_image_compatible_uid(self):
+        path = "connectivity-exporter/deployment-connectivity-exporter.yaml"
+        pod_spec = load_yaml(path)["spec"]["template"]["spec"]
+        security = pod_spec["containers"][0]["securityContext"]
+
+        self.assertFalse(security["allowPrivilegeEscalation"])
+        self.assertEqual(["ALL"], security["capabilities"]["drop"])
+        self.assertTrue(security["readOnlyRootFilesystem"])
+        self.assertEqual("RuntimeDefault", security["seccompProfile"]["type"])
+        self.assertNotIn("runAsUser", security)
+        self.assertNotIn("runAsNonRoot", security)
 
     def test_high_port_nginx_workloads_run_without_root(self):
         paths = (
