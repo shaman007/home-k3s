@@ -12,7 +12,7 @@ def load_yaml(path: str) -> dict:
 
 
 class CertManagerMigrationTest(unittest.TestCase):
-    PENDING_CERTIFICATES = {
+    PRODUCTION_CERTIFICATES = {
         "bitwarden/certificate-bitwarden-tls.yaml": (
             "bitwarden", "bitwarden-tls", ["bitwarden.andreybondarenko.com"]
         ),
@@ -88,6 +88,18 @@ class CertManagerMigrationTest(unittest.TestCase):
         "wordpress": "wordpress",
     }
 
+    CUTOVER_INGRESSES = {
+        "convertx/ingress-andreybondarenko-ingress.yaml": (
+            "convert.andreybondarenko.com", "convertx-tls"
+        ),
+        "dawarich/ingress-andreybondarenko-ingress.yaml": (
+            "dawarich.andreybondarenko.com", "dawarich-tls"
+        ),
+        "hister/ingress-andreybondarenko-ingress.yaml": (
+            "hister.andreybondarenko.com", "hister-tls"
+        ),
+    }
+
     def test_year_uses_the_production_certificate(self):
         production_certificate = load_yaml("year/certificate-year-tls.yaml")
         ingress = load_yaml("year/ingress-year.yaml")
@@ -118,14 +130,14 @@ class CertManagerMigrationTest(unittest.TestCase):
             application["spec"]["syncPolicy"]["automated"]["prune"]
         )
 
-    def test_pending_routes_have_production_certificates_without_cutover(self):
+    def test_routes_have_production_certificates(self):
         issuer_ref = {
             "group": "cert-manager.io",
             "kind": "ClusterIssuer",
             "name": "letsencrypt-prod",
         }
 
-        for path, (namespace, secret_name, dns_names) in self.PENDING_CERTIFICATES.items():
+        for path, (namespace, secret_name, dns_names) in self.PRODUCTION_CERTIFICATES.items():
             with self.subTest(path=path):
                 certificate = load_yaml(path)
                 self.assertEqual(certificate["metadata"]["name"], secret_name)
@@ -142,10 +154,7 @@ class CertManagerMigrationTest(unittest.TestCase):
 
         pending_ingresses = [
             "bitwarden/ingress-andreybondarenko-ingress.yaml",
-            "convertx/ingress-andreybondarenko-ingress.yaml",
-            "dawarich/ingress-andreybondarenko-ingress.yaml",
             "harbor/ingress-andreybondarenko-ingress.yaml",
-            "hister/ingress-andreybondarenko-ingress.yaml",
             "homeassistant/ingress-ha-andreybondarenko.yaml",
             "immich/ingress-andreybondarenko-ingress.yaml",
             "karakeep/ingress-andreybondarenko-ingress.yaml",
@@ -172,6 +181,23 @@ class CertManagerMigrationTest(unittest.TestCase):
                     ],
                     "letsencrypt",
                 )
+
+    def test_cutover_routes_use_cert_manager_secrets(self):
+        resolver_annotation = (
+            "traefik.ingress.kubernetes.io/router.tls.certresolver"
+        )
+
+        for path, (host, secret_name) in self.CUTOVER_INGRESSES.items():
+            with self.subTest(path=path):
+                ingress = load_yaml(path)
+                self.assertNotIn(
+                    resolver_annotation,
+                    ingress["metadata"].get("annotations", {}),
+                )
+                self.assertEqual(ingress["spec"]["tls"], [{
+                    "hosts": [host],
+                    "secretName": secret_name,
+                }])
 
     def test_default_deny_namespaces_allow_only_traefik_to_solver(self):
         expected_from = [{
