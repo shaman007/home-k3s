@@ -31,7 +31,7 @@ spec:
         kubernetes.io/hostname: talos-d4h-k5m
       containers:
         - name: immich-machine-learning
-          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v3.0.3
+          image: harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v3.1.0
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
