@@ -210,6 +210,30 @@ data:
         return bool(statuses) and all(status.get("ready", False) for status in statuses)
 
 
+    def cronjob_recently_succeeded(cronjob, cutoff):
+        if not cronjob or cronjob.get("spec", {}).get("suspend", False):
+            return False, None
+        last_success = parse_time(cronjob.get("status", {}).get("lastSuccessfulTime"))
+        return bool(last_success and last_success >= cutoff), last_success
+
+
+    def ingress_tls_hosts(ingress):
+        spec = ingress.get("spec", {})
+        rule_hosts = [rule.get("host") for rule in spec.get("rules", []) if rule.get("host")]
+        tls_entries = spec.get("tls") or []
+        if not tls_entries:
+            return []
+        declared_hosts = {
+            host
+            for entry in tls_entries
+            for host in entry.get("hosts", [])
+            if host
+        }
+        if not declared_hosts:
+            return rule_hosts
+        return [host for host in rule_hosts if host in declared_hosts]
+
+
     def render_report(checks):
         lines = [
             "Home k3s platform health report",
@@ -374,27 +398,30 @@ data:
         es_fail = [{"namespace": x["metadata"]["namespace"], "item": x["metadata"]["name"], "value": 0} for x in externalsecrets if not ready(x.get("status", {}).get("conditions", []))]
         checks.append(check("external_secrets", not es_fail, f"{len(externalsecrets) - len(es_fail)}/{len(externalsecrets)} ExternalSecrets are Ready.", es_fail))
 
-        vault_cron = kube("/apis/batch/v1/namespaces/vault/cronjobs").get("items", [])
-        vault_pods = kube("/api/v1/namespaces/vault/pods").get("items", [])
         recent_cutoff = utc_now() - timedelta(hours=24)
-        token_runs = []
-        cron_present = False
-        for item in vault_cron:
-            if item["metadata"]["name"] == "vault-token-rotator" and not item.get("spec", {}).get("suspend", False):
-                cron_present = True
-        for pod in vault_pods:
-            if not pod["metadata"]["name"].startswith("vault-token-rotator"):
-                continue
-            finished = None
-            for status in pod.get("status", {}).get("containerStatuses", []):
-                finished = parse_time(status.get("state", {}).get("terminated", {}).get("finishedAt"))
-                if finished:
-                    break
-            if pod.get("status", {}).get("phase") == "Succeeded" and finished and finished >= recent_cutoff:
-                token_runs.append({"namespace": "vault", "item": pod["metadata"]["name"], "value": int((utc_now() - finished).total_seconds() / 3600), "value_name": "vault_token_rotation_age_hours"})
-        token_ok = cron_present and bool(token_runs)
-        token_summary = "Vault token rotation has a CronJob and recent successful activity." if token_ok else "Vault token rotation does not show a recent successful run yet."
-        checks.append(check("vault_token_rotation", token_ok, token_summary, token_runs if not token_ok else token_runs[:5]))
+        keycloak_cronjobs = kube("/apis/batch/v1/namespaces/keycloak/cronjobs").get("items", [])
+        oidc_renewer = next(
+            (item for item in keycloak_cronjobs if item["metadata"]["name"] == "oidc-token-renewer"),
+            None,
+        )
+        token_ok, token_last_success = cronjob_recently_succeeded(oidc_renewer, recent_cutoff)
+        token_age_hours = (
+            int((utc_now() - token_last_success).total_seconds() / 3600)
+            if token_last_success
+            else -1
+        )
+        token_details = [{
+            "namespace": "keycloak",
+            "item": "oidc-token-renewer",
+            "value": token_age_hours,
+            "value_name": "oidc_token_renewal_age_hours",
+        }]
+        token_summary = (
+            f"Keycloak OIDC token renewal last succeeded {token_age_hours} hour(s) ago."
+            if token_ok
+            else "Keycloak OIDC token renewal is absent, suspended, or has no success in the last 24 hours."
+        )
+        checks.append(check("oidc_token_renewal", token_ok, token_summary, token_details))
 
         ingresses = kube("/apis/networking.k8s.io/v1/ingresses").get("items", [])
         ingressroutes = kube("/apis/traefik.io/v1alpha1/ingressroutes").get("items", [])
@@ -424,7 +451,7 @@ data:
             ingress_name = ingress["metadata"]["name"]
             annotations = ingress.get("metadata", {}).get("annotations", {})
             hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
-            for host in hosts:
+            for host in ingress_tls_hosts(ingress):
                 ingress_hosts.append((namespace, ingress_name, host))
             public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
@@ -466,7 +493,7 @@ data:
         checks.append(check(
             "ingress_certificates",
             not cert_issues,
-            f"{len(cert_details)}/{ingress_host_count} ingress host certificate(s) inspected, including {internal_host_count} internal host(s); warning below {warn_days} day(s).",
+            f"{len(cert_details)}/{ingress_host_count} TLS-enabled ingress host certificate(s) inspected, including {internal_host_count} internal host(s); warning below {warn_days} day(s).",
             cert_details,
             cert_issues,
         ))
