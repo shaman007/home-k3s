@@ -34,7 +34,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: report
-              image: harbor.andreybondarenko.com/library/external-access-daily-report:2026-07-30-022902
+              image: harbor.andreybondarenko.com/library/external-access-daily-report:2026-07-31-022908
               imagePullPolicy: IfNotPresent
               command:
                 - python3
