@@ -1,3 +1,10 @@
+# Keycloak
+
+Kubernetes deployment and database resources are managed by Argo CD. The live
+realm configuration that Keycloak stores in PostgreSQL is captured, without
+secrets or user identities, in `keycloak/config/master-realm.snapshot.json`.
+See `keycloak/config/README.md` for its scope and recovery limitations.
+
 ## Keycloak Postgres Migration (db namespace -> keycloak namespace)
 
 Dedicated Postgres for Keycloak is defined in:

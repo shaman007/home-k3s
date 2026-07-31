@@ -22,10 +22,14 @@ upstream repository path.
 For example, `registry.k8s.io/metrics-server/metrics-server:v0.8.1` becomes
 `harbor.andreybondarenko.com/k8s/metrics-server/metrics-server:v0.8.1`.
 
+The normalized non-secret database configuration is recorded in
+`harbor/config/harbor.snapshot.yaml`.
+
 Run `harbor/reconcile-proxy-caches.sh` with `HARBOR_USERNAME` and
 `HARBOR_PASSWORD` set to an administrative Harbor credential to recreate any
 missing endpoint/project pairs. The script never changes an existing endpoint
-or project.
+or project. Retention and project metadata are documented in the snapshot for
+deliberate API restoration.
 
 Bootstrap components intentionally keep upstream image references. Harbor,
 Argo CD, Cilium, cert-manager, Longhorn, MetalLB, Traefik, and Vault participate

@@ -94,15 +94,19 @@ class HarborProxyCacheTest(unittest.TestCase):
                 f"{HARBOR}/quay/opstree/redis-exporter",
             )
 
-    def test_proxy_reconciler_covers_nonstandard_upstreams(self):
+    def test_proxy_reconciler_covers_all_declared_upstreams(self):
         reconciler = (ROOT / "harbor" / "reconcile-proxy-caches.sh").read_text(
             encoding="utf-8"
         )
         for definition in (
-            "kubernetes k8s https://registry.k8s.io",
-            "elastic elastic https://docker.elastic.co",
-            "nvidia nvidia https://nvcr.io",
-            "ecr-public ecr https://public.ecr.aws",
+            "dockerhub dockerhub https://hub.docker.com docker-hub",
+            "quay quay https://quay.io quay",
+            "github github https://ghcr.io github-ghcr",
+            "google google https://gcr.io docker-registry",
+            "kubernetes k8s https://registry.k8s.io docker-registry",
+            "elastic elastic https://docker.elastic.co docker-registry",
+            "nvidia nvidia https://nvcr.io docker-registry",
+            "ecr-public ecr https://public.ecr.aws docker-registry",
         ):
             self.assertIn(f"reconcile_proxy {definition}", reconciler)
 

@@ -1,0 +1,143 @@
+snapshotVersion: 1
+
+# Non-secret application configuration captured from the live Harbor database.
+# Database IDs and next-run timestamps are intentionally normalized away.
+systemSettings:
+  authMode: oidc_auth
+  primaryAuthMode: true
+  projectCreationRestriction: adminonly
+  oidc:
+    name: Keycloak
+    endpoint: https://sso.andreybondarenko.com/realms/master
+    clientId: harbor
+    clientSecret: "<restore-from-vault>"
+    scope: openid,profile,email,offline_access
+    userClaim: preferred_username
+    groupsClaim: groups
+    adminGroup: harbor-admins
+    autoOnboard: true
+
+registries:
+  - name: dockerhub
+    url: https://hub.docker.com
+    type: docker-hub
+  - name: quay
+    url: https://quay.io
+    type: quay
+  - name: github
+    url: https://ghcr.io
+    type: github-ghcr
+  - name: google
+    url: https://gcr.io
+    type: docker-registry
+  - name: kubernetes
+    url: https://registry.k8s.io
+    type: docker-registry
+  - name: elastic
+    url: https://docker.elastic.co
+    type: docker-registry
+  - name: nvidia
+    url: https://nvcr.io
+    type: docker-registry
+  - name: ecr-public
+    url: https://public.ecr.aws
+    type: docker-registry
+
+projects:
+  - name: library
+    public: true
+    autoScan: true
+    autoSbomGeneration: true
+    preventVulnerableImages: false
+    reuseSystemCveAllowlist: true
+    severity: low
+    enableContentTrust: false
+    enableContentTrustCosign: false
+  - name: dockerhub
+    proxyRegistry: dockerhub
+    public: true
+    autoScan: true
+    autoSbomGeneration: true
+    preventVulnerableImages: false
+    reuseSystemCveAllowlist: true
+    severity: low
+    enableContentTrustCosign: false
+    proxySpeedKb: -1
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 30
+      includeUntagged: true
+  - name: quay
+    proxyRegistry: quay
+    public: true
+    autoScan: true
+    autoSbomGeneration: true
+    preventVulnerableImages: false
+    reuseSystemCveAllowlist: true
+    severity: low
+    enableContentTrustCosign: false
+    proxySpeedKb: -1
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 90
+      includeUntagged: true
+  - name: github
+    proxyRegistry: github
+    public: true
+    autoScan: true
+    autoSbomGeneration: true
+    preventVulnerableImages: false
+    reuseSystemCveAllowlist: true
+    severity: low
+    enableContentTrustCosign: false
+    proxySpeedKb: -1
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 30
+      includeUntagged: true
+  - name: google
+    proxyRegistry: google
+    public: true
+    proxySpeedKb: -1
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 7
+      includeUntagged: false
+  - name: k8s
+    proxyRegistry: kubernetes
+    public: true
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 7
+      includeUntagged: false
+  - name: elastic
+    proxyRegistry: elastic
+    public: true
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 7
+      includeUntagged: false
+  - name: nvidia
+    proxyRegistry: nvidia
+    public: true
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 7
+      includeUntagged: false
+  - name: ecr
+    proxyRegistry: ecr-public
+    public: true
+    retention:
+      cron: "0 0 0 * * *"
+      daysSinceLastPull: 7
+      includeUntagged: false
+
+scanner:
+  name: Trivy
+  url: http://harbor-trivy:8080
+  default: true
+  useInternalAddress: true
+  immutable: true
+
+replicationPolicies: []
+immutableTagRules: []
