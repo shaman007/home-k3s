@@ -75,7 +75,7 @@ spec:
             - name: mongodb-data
               mountPath: /data/db
         - name: mongo-exporter
-          image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.51.0
+          image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.52.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
