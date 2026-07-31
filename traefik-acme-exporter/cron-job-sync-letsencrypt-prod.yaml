@@ -44,7 +44,7 @@ spec:
                   topologyKey: kubernetes.io/hostname
           containers:
             - name: sync
-              image: harbor.andreybondarenko.com/library/sync:2026-07-27-200859
+              image: harbor.andreybondarenko.com/library/sync:2026-07-31-022908
               imagePullPolicy: IfNotPresent
               env:
                 - name: DOMAIN
