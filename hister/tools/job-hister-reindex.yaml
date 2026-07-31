@@ -38,7 +38,7 @@ spec:
               mountPath: /data
       containers:
         - name: reindex
-          image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.16.0
+          image: harbor.andreybondarenko.com/github/asciimoo/hister:v0.17.0
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 65532
