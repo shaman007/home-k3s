@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.2
+          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.4
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
