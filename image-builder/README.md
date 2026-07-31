@@ -1,9 +1,11 @@
 # Image builder
 
 The `podman-builder` CronJob rebuilds the custom images from the public
-Dockerfiles repository every day at 02:29 UTC. It currently runs privileged
-Podman with `vfs` storage and publishes AMD64 images, matching every current
-cluster node.
+Dockerfiles repository every two weeks, starting Monday 2026-08-03 at 02:29
+UTC. Kubernetes cron has no exact 14-day expression, so the CronJob triggers
+every Monday and a continuous Unix epoch-week parity guard exits successfully
+on alternate weeks. It currently runs privileged Podman with `vfs` storage and
+publishes AMD64 images, matching every current cluster node.
 Manual `build.sh` runs retain the default AMD64+ARM64 build contract; automated
 ARM64 builds would require Talos nodes installed with the `binfmt-misc` system
 extension or a native ARM64 builder node.
@@ -18,7 +20,7 @@ outbound traffic is limited to cluster DNS and HTTP/HTTPS for source downloads,
 base-image pulls, and Harbor pushes. It has no allowed inbound traffic.
 
 The `podman-builder` image is self-hosted in Harbor and must be seeded from the
-Dockerfiles repository with `./build.sh podman-builder`. Although the nightly
+Dockerfiles repository with `./build.sh podman-builder`. Although the scheduled
 source currently includes that image among its outputs, the output tag is not
 used as the CronJob runtime.
 
