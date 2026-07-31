@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: postgres-cli
-          image: harbor.andreybondarenko.com/library/postgres-cli:2026-07-30-022902
+          image: harbor.andreybondarenko.com/library/postgres-cli:2026-07-31-022908
           imagePullPolicy: IfNotPresent
           resources:
             requests:
