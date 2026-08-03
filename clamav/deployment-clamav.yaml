@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: clamd
-          image: harbor.andreybondarenko.com/library/clamav:2026-07-31-022908
+          image: harbor.andreybondarenko.com/library/clamav:2026-08-03-022902
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3200
@@ -80,7 +80,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
         - name: freshclam
-          image: harbor.andreybondarenko.com/library/clamav:2026-07-31-022908
+          image: harbor.andreybondarenko.com/library/clamav:2026-08-03-022902
           imagePullPolicy: IfNotPresent
           env:
             - name: UPDATE
