@@ -27,7 +27,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: web
-          image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.32.0
+          image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.33.1
           ports:
             - containerPort: 3000
           startupProbe:
