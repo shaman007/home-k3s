@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: mysql-cli
-          image: harbor.andreybondarenko.com/library/mysql-cli:2026-07-31-022908
+          image: harbor.andreybondarenko.com/library/mysql-cli:2026-08-03-022902
           imagePullPolicy: IfNotPresent
           resources:
             requests:
