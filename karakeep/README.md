@@ -12,14 +12,14 @@ curl -X PUT 'http://meilisearch.karakeep.svc.cluster.local:7700/indexes/bookmark
 --data-binary '["tags","createdAt"]'
 ```
 
-## Meilisearch upgrade: 1.38.1 -> 1.38.2 (dumpless)
+## Meilisearch database upgrades
 
-`stateful-set-meilisearch.yaml` is pinned to `v1.38.2` and keeps:
+`stateful-set-meilisearch.yaml` keeps:
 
 * `MEILI_DB_PATH=/meili_data/data-v1.37.0-r1.ms`
-* `MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE=true`
+* `MEILI_UPGRADE_DB=true`
 
-This rollout keeps the existing on-disk database and lets Meilisearch run its built-in one-shot upgrade task on startup.
+The upgrade flag remains enabled so Meilisearch automatically migrates the on-disk search index after future image upgrades. The index is disposable and can be rebuilt by Karakeep if a migration fails.
 
 ### Rollout
 
@@ -64,13 +64,6 @@ $headers = @{ Authorization = "Bearer $masterKey" }
 Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:7700/health" -Headers $headers
 Invoke-RestMethod -Method Get -Uri "http://127.0.0.1:7700/indexes/bookmarks/stats" -Headers $headers
 ```
-
-### Finalize
-
-After the `UpgradeDatabase` task succeeds:
-
-1. Remove `MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE` from `stateful-set-meilisearch.yaml`.
-2. Sync ArgoCD again so future restarts do not re-request the migration flag.
 
 ## Historical migration: 1.36.0 (Deployment) -> 1.37.0 (StatefulSet)
 

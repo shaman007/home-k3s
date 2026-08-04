@@ -30,9 +30,12 @@ spec:
               containerPort: 7700
               protocol: TCP
           env:
-            # Keep the existing data path for the in-place 1.38.2 upgrade.
+            # Keep the established data path across engine upgrades.
             - name: MEILI_DB_PATH
               value: /meili_data/data-v1.37.0-r1.ms
+            # Automatically migrate the disposable search index after image upgrades.
+            - name: MEILI_UPGRADE_DB
+              value: "true"
             # Keep indexing memory below container limits to prevent OOM during import.
             - name: MEILI_MAX_INDEXING_MEMORY
               value: "268435456"
