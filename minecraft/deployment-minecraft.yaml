@@ -47,9 +47,9 @@ spec:
             - name: ENABLE_RCON
               value: "TRUE"
             - name: TYPE
-              value: CUSTOM
-            - name: CUSTOM_SERVER
-              value: "/data/server.jar"
+              value: VANILLA
+            - name: VERSION
+              value: "26.2"
             - name: CREATE_CONSOLE_IN_PIPE
               value: "TRUE"
             - name: RCON_PASSWORD
