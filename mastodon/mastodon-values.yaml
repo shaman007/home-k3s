@@ -1,9 +1,13 @@
 ---
 image:
-  repository: harbor.andreybondarenko.com/github/mastodon/mastodon
+  repository: harbor.andreybondarenko.com/github/shaman007/mastodon
+  tag: v4.6.5
   pullPolicy: IfNotPresent
 
 mastodon:
+  extraEnvVars:
+    MAX_TOOT_CHARS: "5000"
+
   locale: en
   localDomain: mastodon.andreybondarenko.com
   webDomain: mastodon.andreybondarenko.com
@@ -44,7 +48,7 @@ mastodon:
     workers: "2"
     persistentTimeout: "20"
     image:
-      repository: harbor.andreybondarenko.com/github/mastodon/mastodon
+      repository: harbor.andreybondarenko.com/github/shaman007/mastodon
     resources:
       limits:
         memory: 4115Mi
@@ -74,7 +78,7 @@ mastodon:
           - fasp
           - scheduler
         image:
-          repository: harbor.andreybondarenko.com/github/mastodon/mastodon
+          repository: harbor.andreybondarenko.com/github/shaman007/mastodon
     extraEnvVars:
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
