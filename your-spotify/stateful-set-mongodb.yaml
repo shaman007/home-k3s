@@ -26,10 +26,23 @@ spec:
     spec:
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: mongodb
           image: harbor.andreybondarenko.com/dockerhub/mongo:7
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 27017
           startupProbe:
@@ -74,6 +87,8 @@ spec:
               readOnly: true
             - name: mongodb-data
               mountPath: /data/db
+            - name: tmp
+              mountPath: /tmp
         - name: mongo-exporter
           image: harbor.andreybondarenko.com/dockerhub/percona/mongodb_exporter:0.52.0
           imagePullPolicy: IfNotPresent
@@ -115,3 +130,5 @@ spec:
         - name: mongodb-data
           persistentVolumeClaim:
             claimName: mongo-lh
+        - name: tmp
+          emptyDir: {}

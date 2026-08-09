@@ -23,7 +23,35 @@ spec:
         app: web
         tier: backend
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-standard
+      initContainers:
+        - name: prepare-runtime-assets
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_client:1.20.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -ec
+            - |
+              cp /app/apps/client/build/variables-template.js /runtime-assets/variables.js
+              cp /app/apps/client/build/index.html /runtime-assets/index.html
+              cp /app/apps/client/scripts/run/serve.json /runtime-assets/serve.json
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: runtime-assets
+              mountPath: /runtime-assets
       containers:
         - env:
             - name: API_ENDPOINT
@@ -31,6 +59,16 @@ spec:
           image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_client:1.20.0
           imagePullPolicy: IfNotPresent
           name: web
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: "10m"
@@ -58,3 +96,24 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 1
             failureThreshold: 3
+          volumeMounts:
+            - name: runtime-assets
+              mountPath: /app/apps/client/build/variables.js
+              subPath: variables.js
+            - name: runtime-assets
+              mountPath: /app/apps/client/build/index.html
+              subPath: index.html
+            - name: runtime-assets
+              mountPath: /app/apps/client/scripts/run/serve.json
+              subPath: serve.json
+            - name: home
+              mountPath: /home/node
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: runtime-assets
+          emptyDir: {}
+        - name: home
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

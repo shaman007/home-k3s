@@ -23,6 +23,10 @@ spec:
         app: server
         tier: backend
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-standard
       containers:
         - env:
@@ -46,6 +50,16 @@ spec:
               value: "https://spt.andreybondarenko.com, https://spt-server.andreybondarenko.com"
           image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server:1.20.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: "20m"
@@ -74,3 +88,13 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 1
             failureThreshold: 3
+          volumeMounts:
+            - name: home
+              mountPath: /home/node
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: home
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
