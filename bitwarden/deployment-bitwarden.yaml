@@ -55,6 +55,8 @@ spec:
               name: runtime
             - mountPath: /tmp
               name: tmp
+            - mountPath: /var/lib/nginx
+              name: nginx-cache
       containers:
         - env:
             - name: BW_DOMAIN
