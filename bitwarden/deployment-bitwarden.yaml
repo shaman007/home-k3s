@@ -145,7 +145,6 @@ spec:
             - run
             - /etc/alloy/config.alloy
             - --server.http.listen-addr=0.0.0.0:12345
-            - --storage.path=/run/alloy
           resources:
             requests:
               cpu: "25m"

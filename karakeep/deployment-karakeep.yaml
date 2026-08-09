@@ -25,6 +25,24 @@ spec:
         app: karakeep
     spec:
       priorityClassName: homelab-standard
+      initContainers:
+        - name: init-chrome-writable-paths
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/chown", "-R", "1000:1000", "/data", "/tmp"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN"]
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - {name: chrome-data, mountPath: /data}
+            - {name: chrome-tmp, mountPath: /tmp}
       containers:
         - name: web
           image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.33.1
@@ -95,9 +113,10 @@ spec:
           env:
             - {name: DBUS_SYSTEM_BUS_ADDRESS, value: "disabled:"}
             - {name: DBUS_SESSION_BUS_ADDRESS, value: "disabled:"}
-            - {name: HOME, value: /data}
-            - {name: XDG_CONFIG_HOME, value: /data/config}
-            - {name: XDG_CACHE_HOME, value: /data/cache}
+            - {name: HOME, value: /tmp}
+            - {name: TMPDIR, value: /tmp}
+            - {name: XDG_CONFIG_HOME, value: /tmp/.chromium}
+            - {name: XDG_CACHE_HOME, value: /tmp/.chromium}
           volumeMounts:
             - {name: dshm, mountPath: /dev/shm}
             - {name: chrome-data, mountPath: /data}
