@@ -28,7 +28,8 @@ spec:
             - -ec
             - |
               mkdir -p /var/app/tmp/imports/watched
-              for path in /var/app/public /var/app/storage /var/app/tmp /var/app/log /tmp; do
+              touch /schema-dumps/schema.rb /schema-dumps/data_schema.rb
+              for path in /var/app/public /var/app/storage /var/app/tmp /var/app/log /tmp /schema-dumps; do
                 find "$path" -name lost+found -prune -o -exec chown 1000:1000 {} +
               done
           securityContext:
@@ -56,6 +57,8 @@ spec:
               name: app-log
             - mountPath: /tmp
               name: tmp
+            - mountPath: /schema-dumps
+              name: schema-dumps
       containers:
         - name: dawarich
           env:
@@ -63,13 +66,6 @@ spec:
               value: "Europe/Prague"
             - name: RAILS_ENV
               value: development
-            # Rails writes a schema dump after migrations. Keep that generated
-            # artifact on the writable tmp volume rather than the image source.
-            - name: SCHEMA
-              value: /tmp/schema.rb
-            # DataMigrate maintains a separate generated schema dump.
-            - name: DATA_SCHEMA
-              value: /tmp/data_schema.rb
             - name: REDIS_URL
               value: redis://redis-dawarich.dawarich.svc.cluster.local:6379
             - name: DATABASE_HOST
@@ -145,6 +141,12 @@ spec:
               name: app-log
             - mountPath: /tmp
               name: tmp
+            - mountPath: /var/app/db/schema.rb
+              name: schema-dumps
+              subPath: schema.rb
+            - mountPath: /var/app/db/data_schema.rb
+              name: schema-dumps
+              subPath: data_schema.rb
           command:
             - "web-entrypoint.sh"
           args:
@@ -224,6 +226,12 @@ spec:
               name: app-log
             - mountPath: /tmp
               name: tmp
+            - mountPath: /var/app/db/schema.rb
+              name: schema-dumps
+              subPath: schema.rb
+            - mountPath: /var/app/db/data_schema.rb
+              name: schema-dumps
+              subPath: data_schema.rb
           command:
             - "sidekiq-entrypoint.sh"
           args:
@@ -249,4 +257,6 @@ spec:
         - name: app-log
           emptyDir: {}
         - name: tmp
+          emptyDir: {}
+        - name: schema-dumps
           emptyDir: {}
