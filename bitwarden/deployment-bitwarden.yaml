@@ -26,7 +26,35 @@ spec:
         service: bitwarden
         db-client: bitwarden-postgres
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-essential
+      initContainers:
+        - name: prepare-runtime
+          image: harbor.andreybondarenko.com/library/bitwarden:2026.7.2-1
+          imagePullPolicy: IfNotPresent
+          command:
+            - /usr/local/bin/prepare-runtime.sh
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /etc/bitwarden
+              name: bitwarden-lh
+            - mountPath: /runtime
+              name: runtime
+            - mountPath: /tmp
+              name: tmp
       containers:
         - env:
             - name: BW_DOMAIN
@@ -72,7 +100,7 @@ spec:
                 secretKeyRef:
                   name: yubico-secret-key
                   key: secret-key
-          image: harbor.andreybondarenko.com/github/bitwarden/lite:2026.7.2
+          image: harbor.andreybondarenko.com/library/bitwarden:2026.7.2-1
           imagePullPolicy: IfNotPresent
           name: bitwarden
           ports:
@@ -97,6 +125,15 @@ spec:
             failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: "100m"
@@ -108,8 +145,30 @@ spec:
               name: bitwarden-lh
             - mountPath: /app/Notifications/.aspnet
               name: keys-lh
+            - name: logs-root
+              mountPath: /var/log
             - name: logs
               mountPath: /var/log/bitwarden
+            - name: nginx-cache
+              mountPath: /var/lib/nginx
+            - name: nginx-run
+              mountPath: /var/run/nginx
+            - name: runtime
+              mountPath: /etc/supervisor.d
+              subPath: supervisor
+            - name: runtime
+              mountPath: /etc/nginx/http.d
+              subPath: nginx
+            - name: runtime
+              mountPath: /app/Identity/identity.pfx
+              subPath: identity/identity.pfx
+            - name: runtime
+              mountPath: /app/Sso/identity.pfx
+              subPath: identity/sso-identity.pfx
+            - name: run
+              mountPath: /run
+            - name: tmp
+              mountPath: /tmp
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.18.1
           imagePullPolicy: IfNotPresent
@@ -146,4 +205,16 @@ spec:
         - name: alloy-run
           emptyDir: {}
         - name: logs
+          emptyDir: {}
+        - name: logs-root
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+        - name: runtime
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
