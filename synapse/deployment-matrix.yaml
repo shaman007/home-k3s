@@ -116,7 +116,7 @@ spec:
             - -ec
             - |
               chmod 1777 /tmp
-              chown -R 991:991 /data
+              find /data -path /data/lost+found -prune -o -exec chown 991:991 {} +
           volumeMounts:
             - name: matrix-lh
               mountPath: /data
