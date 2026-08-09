@@ -27,6 +27,7 @@ spec:
         tier: backend
     spec:
       priorityClassName: homelab-standard
+      automountServiceAccountToken: false
       volumes:
         - name: matrix-lh
           persistentVolumeClaim:
@@ -37,10 +38,23 @@ spec:
             items:
               - key: config.yaml
                 path: config.yaml
+        - name: tmp
+          emptyDir: {}
       containers:
         - name: synapse
           image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.158.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 991
+            runAsGroup: 991
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 6167
               name: federation
@@ -70,6 +84,8 @@ spec:
             - name: synapse-config
               mountPath: /data/config.yaml
               subPath: config.yaml
+            - name: tmp
+              mountPath: /tmp
           env:
             - name: SYNAPSE_CONFIG_PATH
               value: /data/config.yaml
@@ -83,10 +99,29 @@ spec:
         - name: fix-permissions
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "chown -R 991:991 /data"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - sh
+            - -ec
+            - |
+              chmod 1777 /tmp
+              chown -R 991:991 /data
           volumeMounts:
             - name: matrix-lh
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 10m
