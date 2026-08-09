@@ -35,7 +35,13 @@ spec:
           command:
             - /bin/sh
             - -ec
-            - find /data -path /data/lost+found -prune -o -exec chown 1000:1000 {} +
+            - >-
+              find /data -path /data/lost+found -prune -o -exec chown 1000:1000 {} +;
+              if [ ! -s /data/.webui_secret_key ]; then
+                umask 077;
+                head -c 48 /dev/urandom | base64 > /data/.webui_secret_key;
+                chown 1000:1000 /data/.webui_secret_key;
+              fi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -241,6 +247,10 @@ spec:
           volumeMounts:
             - name: open-webui-data
               mountPath: /app/backend/data
+            - name: open-webui-data
+              mountPath: /app/backend/.webui_secret_key
+              subPath: .webui_secret_key
+              readOnly: true
             - name: tmp
               mountPath: /tmp
       volumes:
