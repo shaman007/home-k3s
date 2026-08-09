@@ -38,6 +38,8 @@ spec:
             - -ec
             - |
               find /karakeep-data -path /karakeep-data/lost+found -prune -o -exec chown 1000:1000 {} +
+              chmod 0755 /run
+              chown 1000:1000 /run
               chmod 1777 /chrome-tmp /web-tmp
               chown -R 1000:1000 /chrome-data /chrome-tmp
           securityContext:
@@ -55,6 +57,7 @@ spec:
             - {name: chrome-data, mountPath: /chrome-data}
             - {name: chrome-tmp, mountPath: /chrome-tmp}
             - {name: tmp, mountPath: /web-tmp}
+            - {name: run, mountPath: /run}
       containers:
         - name: web
           image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.33.1
