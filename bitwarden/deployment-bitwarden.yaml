@@ -165,6 +165,9 @@ spec:
             - name: runtime
               mountPath: /app/Sso/identity.pfx
               subPath: identity/sso-identity.pfx
+            - name: runtime
+              mountPath: /app/Web/app-id.json
+              subPath: web/app-id.json
             - name: run
               mountPath: /run
             - name: tmp
