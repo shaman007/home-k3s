@@ -26,6 +26,21 @@ spec:
         - name: photon
           image: harbor.andreybondarenko.com/dockerhub/rtuszik/photon-docker:2.3.1
           imagePullPolicy: IfNotPresent
+          command:
+            - /photon/.venv/bin/python
+            - -m
+            - src.process_manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 9011
+            runAsGroup: 9011
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: UPDATE_STRATEGY
               value: SEQUENTIAL
