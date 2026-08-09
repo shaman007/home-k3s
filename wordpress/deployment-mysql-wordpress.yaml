@@ -65,6 +65,16 @@ spec:
         - name: mysqld-exporter
           image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:v0.19.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
           command:
             - /bin/sh
             - -ec
@@ -91,7 +101,13 @@ spec:
               cpu: "10m"
             limits:
               memory: "256Mi"
+          volumeMounts:
+            - name: mysqld-exporter-tmp
+              mountPath: /tmp
       volumes:
+        - name: mysqld-exporter-tmp
+          emptyDir:
+            sizeLimit: 16Mi
         - name: mysql-wordpress-lh
           persistentVolumeClaim:
             claimName: mysql-wordpress-lh

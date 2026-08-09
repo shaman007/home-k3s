@@ -27,6 +27,24 @@ spec:
         db-client: bitwarden-postgres
     spec:
       priorityClassName: homelab-essential
+      initContainers:
+        - name: init-alloy-run-permissions
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/chown", "65532:65532", "/run/alloy"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN"]
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: alloy-run
+              mountPath: /run/alloy
       containers:
         - env:
             - name: BW_DOMAIN
@@ -113,6 +131,16 @@ spec:
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.18.1
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           args:
             - run
             - /etc/alloy/config.alloy
@@ -129,10 +157,14 @@ spec:
               readOnly: true
             - name: alloy-run
               mountPath: /run/alloy
+            - name: alloy-tmp
+              mountPath: /tmp
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
+              readOnly: true
             - name: logs
               mountPath: /var/log/bitwarden
+              readOnly: true
       volumes:
         - name: bitwarden-lh
           persistentVolumeClaim:
@@ -145,5 +177,8 @@ spec:
             name: alloy-bitwarden-config
         - name: alloy-run
           emptyDir: {}
+        - name: alloy-tmp
+          emptyDir:
+            sizeLimit: 64Mi
         - name: logs
           emptyDir: {}

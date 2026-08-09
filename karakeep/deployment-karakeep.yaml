@@ -68,6 +68,16 @@ spec:
         - name: chrome
           image: harbor.andreybondarenko.com/library/alpine-chrome:2026-08-03-022902
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           command: ["/usr/bin/chromium-browser"] # override ENTRYPOINT
           args:
             - --no-sandbox
@@ -88,6 +98,7 @@ spec:
           volumeMounts:
             - {name: dshm, mountPath: /dev/shm}
             - {name: chrome-data, mountPath: /data}
+            - {name: chrome-tmp, mountPath: /tmp}
           ports:
             - {containerPort: 9222}
           resources:
@@ -101,6 +112,9 @@ spec:
           emptyDir: {medium: Memory, sizeLimit: 1Gi}
         - name: chrome-data
           emptyDir: {}
+        - name: chrome-tmp
+          emptyDir:
+            sizeLimit: 128Mi
         - name: karakeep-data
           persistentVolumeClaim:
             claimName: karakeep-data
