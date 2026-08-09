@@ -36,9 +36,9 @@ spec:
             - sh
             - -ec
             - |
-              cp /app/apps/client/build/variables-template.js /runtime-assets/variables.js
-              cp /app/apps/client/build/index.html /runtime-assets/index.html
-              cp /app/apps/client/scripts/run/serve.json /runtime-assets/serve.json
+              mkdir -p /runtime-assets/build /runtime-assets/run
+              cp -a /app/apps/client/build/. /runtime-assets/build/
+              cp -a /app/apps/client/scripts/run/. /runtime-assets/run/
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -98,14 +98,11 @@ spec:
             failureThreshold: 3
           volumeMounts:
             - name: runtime-assets
-              mountPath: /app/apps/client/build/variables.js
-              subPath: variables.js
+              mountPath: /app/apps/client/build
+              subPath: build
             - name: runtime-assets
-              mountPath: /app/apps/client/build/index.html
-              subPath: index.html
-            - name: runtime-assets
-              mountPath: /app/apps/client/scripts/run/serve.json
-              subPath: serve.json
+              mountPath: /app/apps/client/scripts/run
+              subPath: run
             - name: home
               mountPath: /home/node
             - name: tmp
