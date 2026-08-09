@@ -29,6 +29,7 @@ spec:
             - |
               mkdir -p /var/app/tmp/imports/watched
               touch /schema-dumps/schema.rb /schema-dumps/data_schema.rb
+              chmod 1777 /tmp
               for path in /var/app/public /var/app/storage /var/app/tmp /var/app/log /tmp /schema-dumps; do
                 find "$path" -name lost+found -prune -o -exec chown 1000:1000 {} +
               done
