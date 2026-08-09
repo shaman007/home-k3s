@@ -19,11 +19,28 @@ spec:
       labels:
         app: stirling-pdf
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-best-effort
       containers:
         - name: stirling-pdf
           image: harbor.andreybondarenko.com/dockerhub/stirlingtools/stirling-pdf:2.14.3-fat
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: HOME
+              value: /home/stirlingpdfuser
           ports:
             - containerPort: 8080
           startupProbe:
@@ -47,6 +64,20 @@ spec:
           volumeMounts:
             - name: configs
               mountPath: /configs
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /logs
+            - name: custom-files
+              mountPath: /customFiles
+            - name: pipeline
+              mountPath: /pipeline
+            - name: storage
+              mountPath: /storage
+            - name: home
+              mountPath: /home/stirlingpdfuser
+            - name: local-bin
+              mountPath: /usr/local/bin
           resources:
             requests:
               memory: 1344Mi
@@ -56,3 +87,17 @@ spec:
         - name: configs
           persistentVolumeClaim:
             claimName: stirling-pdf-configs
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: custom-files
+          emptyDir: {}
+        - name: pipeline
+          emptyDir: {}
+        - name: storage
+          emptyDir: {}
+        - name: home
+          emptyDir: {}
+        - name: local-bin
+          emptyDir: {}

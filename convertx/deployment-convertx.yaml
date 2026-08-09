@@ -19,20 +19,62 @@ spec:
       labels:
         app: convertx
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-best-effort
+      initContainers:
+        - name: prepare-data
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - find /data -path /data/lost+found -prune -o -exec chown 1000:1000 {} +
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN"]
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: convertx
           image: harbor.andreybondarenko.com/github/c4illin/convertx:v0.18.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: http
               containerPort: 3000
           envFrom:
             - secretRef:
                 name: convertx-env
+          env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
           volumeMounts:
             - name: data
               mountPath: /app/data
+            - name: tmp
+              mountPath: /tmp
           livenessProbe:
             httpGet:
               path: /healthcheck
@@ -55,3 +97,5 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: convertx-data
+        - name: tmp
+          emptyDir: {}

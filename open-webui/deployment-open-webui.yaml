@@ -22,12 +22,47 @@ spec:
         app.kubernetes.io/name: open-webui
         app.kubernetes.io/instance: open-webui
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-best-effort
       enableServiceLinks: false
+      initContainers:
+        - name: prepare-data
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - find /data -path /data/lost+found -prune -o -exec chown 1000:1000 {} +
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN"]
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: open-webui-data
+              mountPath: /data
       containers:
         - name: open-webui
           image: harbor.andreybondarenko.com/github/open-webui/open-webui:v0.11.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: OLLAMA_BASE_URL
               value: http://ollama.ollama.svc.cluster.local:11434
@@ -175,6 +210,10 @@ spec:
               value: "False"
             - name: TZ
               value: Europe/Prague
+            - name: HOME
+              value: /tmp
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
           ports:
             - name: http
               containerPort: 8080
@@ -202,7 +241,11 @@ spec:
           volumeMounts:
             - name: open-webui-data
               mountPath: /app/backend/data
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: open-webui-data
           persistentVolumeClaim:
             claimName: open-webui-data
+        - name: tmp
+          emptyDir: {}
