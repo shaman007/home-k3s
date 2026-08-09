@@ -57,6 +57,8 @@ spec:
               name: tmp
             - mountPath: /var/lib/nginx
               name: nginx-cache
+            - mountPath: /var/log
+              name: logs-root
       containers:
         - env:
             - name: BW_DOMAIN
