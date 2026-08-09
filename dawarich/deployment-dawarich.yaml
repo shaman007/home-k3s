@@ -67,6 +67,9 @@ spec:
             # artifact on the writable tmp volume rather than the image source.
             - name: SCHEMA
               value: /tmp/schema.rb
+            # DataMigrate maintains a separate generated schema dump.
+            - name: DATA_SCHEMA
+              value: /tmp/data_schema.rb
             - name: REDIS_URL
               value: redis://redis-dawarich.dawarich.svc.cluster.local:6379
             - name: DATABASE_HOST
