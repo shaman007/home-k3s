@@ -28,11 +28,54 @@ spec:
       enableServiceLinks: false
       nodeSelector:
         nvidia.com/gpu.present: "true"
+      initContainers:
+        - name: prepare-ollama-data
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              mkdir -p /ollama/.ollama /ollama/models
+              chmod 1777 /tmp
+              find /ollama -path /ollama/lost+found -prune -o -exec chown 65532:65532 {} +
+          volumeMounts:
+            - name: ollama-small-data
+              mountPath: /ollama
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: ollama
           image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.6
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           env:
+            - name: HOME
+              value: /ollama
+            - name: OLLAMA_MODELS
+              value: /ollama/models
             - name: OLLAMA_HOST
               value: 0.0.0.0:11434
             - name: OLLAMA_KEEP_ALIVE
@@ -74,10 +117,23 @@ spec:
               nvidia.com/gpu: 1
           volumeMounts:
             - name: ollama-small-data
-              mountPath: /root/.ollama
+              mountPath: /ollama
+            - name: tmp
+              mountPath: /tmp
         - name: model-puller
           image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.6
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           command:
             - /bin/sh
             - -c
@@ -92,6 +148,10 @@ spec:
               fi
               sleep infinity
           env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
             - name: OLLAMA_HOST
               value: http://127.0.0.1:11434
           resources:
@@ -101,9 +161,11 @@ spec:
             limits:
               memory: 256Mi
           volumeMounts:
-            - name: ollama-small-data
-              mountPath: /root/.ollama
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: ollama-small-data
           persistentVolumeClaim:
             claimName: ollama-small-data
+        - name: tmp
+          emptyDir: {}
