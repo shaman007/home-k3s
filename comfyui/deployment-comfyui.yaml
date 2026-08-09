@@ -54,13 +54,15 @@ spec:
               if [ ! -e /data/custom_nodes/ComfyUI-Manager ] && [ ! -L /data/custom_nodes/ComfyUI-Manager ]; then
                 ln -s /opt/comfyui-manager /data/custom_nodes/ComfyUI-Manager
               fi
-              chown 1000:1000 /data/models /data/output /data/input /data/user /data/custom_nodes /data/home
+              chown 1000:1000 /data/models /data/output /data/input /data/user /data/custom_nodes /data/home /opt/comfyui/temp
               chmod 1777 /tmp
           volumeMounts:
             - name: comfyui-data
               mountPath: /data
             - name: tmp
               mountPath: /tmp
+            - name: comfyui-temp
+              mountPath: /opt/comfyui/temp
         - name: model-downloader
           image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
           imagePullPolicy: IfNotPresent
@@ -182,9 +184,13 @@ spec:
               subPath: home
             - name: tmp
               mountPath: /tmp
+            - name: comfyui-temp
+              mountPath: /opt/comfyui/temp
       volumes:
         - name: comfyui-data
           persistentVolumeClaim:
             claimName: comfyui-data
         - name: tmp
+          emptyDir: {}
+        - name: comfyui-temp
           emptyDir: {}
