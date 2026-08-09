@@ -48,12 +48,12 @@ spec:
             - /bin/sh
             - -ec
             - |
-              mkdir -p /ollama/.ollama /ollama/models
+              mkdir -p /root/.ollama/models
               chmod 1777 /tmp
-              find /ollama -path /ollama/lost+found -prune -o -exec chown 65532:65532 {} +
+              find /root/.ollama -path /root/.ollama/lost+found -prune -o -exec chown 65532:65532 {} +
           volumeMounts:
             - name: ollama-data
-              mountPath: /ollama
+              mountPath: /root/.ollama
             - name: tmp
               mountPath: /tmp
       containers:
@@ -73,9 +73,9 @@ spec:
               type: RuntimeDefault
           env:
             - name: HOME
-              value: /ollama
+              value: /root
             - name: OLLAMA_MODELS
-              value: /ollama/models
+              value: /root/.ollama/models
             - name: OLLAMA_HOST
               value: 0.0.0.0:11434
             - name: OLLAMA_KEEP_ALIVE
@@ -117,7 +117,7 @@ spec:
               nvidia.com/gpu: 1
           volumeMounts:
             - name: ollama-data
-              mountPath: /ollama
+              mountPath: /root/.ollama
             - name: tmp
               mountPath: /tmp
         - name: model-puller
@@ -161,6 +161,8 @@ spec:
             limits:
               memory: 256Mi
           volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
             - name: tmp
               mountPath: /tmp
       volumes:
