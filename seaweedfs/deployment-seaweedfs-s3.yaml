@@ -23,13 +23,47 @@ spec:
     spec:
       priorityClassName: homelab-essential
       enableServiceLinks: false
+      automountServiceAccountToken: false
       securityContext:
-        runAsUser: 0
-        runAsGroup: 0
-        fsGroup: 0
+        fsGroup: 1000
         fsGroupChangePolicy: "OnRootMismatch"
+        seccompProfile:
+          type: RuntimeDefault
       nodeSelector:
         kubernetes.io/hostname: "talos-d4h-k5m"
+      initContainers:
+        - name: prepare-data-and-tmp
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              if [ "$(stat -c '%u:%g' /data)" != "1000:1000" ]; then
+                chown -R 1000:1000 /data
+              fi
+              chmod 1777 /tmp/master /tmp/volume /tmp/filer /tmp/s3
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, DAC_OVERRIDE]
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp-master
+              mountPath: /tmp/master
+            - name: tmp-volume
+              mountPath: /tmp/volume
+            - name: tmp-filer
+              mountPath: /tmp/filer
+            - name: tmp-s3
+              mountPath: /tmp/s3
       containers:
         # MASTER
         - name: master
@@ -42,6 +76,10 @@ spec:
             - "-volumeSizeLimitMB=1024"
             - "-metricsPort=9091"
           env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -60,6 +98,16 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp-master
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
           readinessProbe:
             httpGet:
               path: /cluster/status
@@ -91,6 +139,10 @@ spec:
             - "-mserver=127.0.0.1:9333"
             - "-metricsPort=9092"
           env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -109,6 +161,16 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp-volume
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
           readinessProbe:
             httpGet:
               path: /healthz
@@ -138,6 +200,10 @@ spec:
             - "-master=127.0.0.1:9333"
             - "-metricsPort=9093"
           env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -156,6 +222,16 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp-filer
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
           readinessProbe:
             tcpSocket:
               port: 8888
@@ -203,6 +279,10 @@ spec:
                 -filer=127.0.0.1:8888 \
                 -metricsPort=9094
           env:
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -241,8 +321,27 @@ spec:
               memory: 1088Mi
             limits:
               memory: 3Gi
+          volumeMounts:
+            - name: tmp-s3
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
       volumes:
         - name: data
           hostPath:
             path: /var/mnt/storage/k8s/seaweedfs
             type: DirectoryOrCreate
+        - name: tmp-master
+          emptyDir: {}
+        - name: tmp-volume
+          emptyDir: {}
+        - name: tmp-filer
+          emptyDir: {}
+        - name: tmp-s3
+          emptyDir: {}
