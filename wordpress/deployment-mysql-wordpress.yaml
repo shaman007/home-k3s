@@ -24,11 +24,25 @@ spec:
         app: mysql-wordpress
         tier: mysql
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-essential
       containers:
         - name: mysql
           image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.2
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            seccompProfile:
+              type: RuntimeDefault
           env:
             # Create this secret manually in-cluster; do not commit credentials.
             - name: MYSQL_ROOT_PASSWORD
@@ -62,6 +76,10 @@ spec:
           volumeMounts:
             - name: mysql-wordpress-lh
               mountPath: /var/lib/mysql
+            - name: mysql-run
+              mountPath: /var/run/mysqld
+            - name: mysql-tmp
+              mountPath: /tmp
         - name: mysqld-exporter
           image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:v0.19.0
           imagePullPolicy: IfNotPresent
@@ -111,3 +129,7 @@ spec:
         - name: mysql-wordpress-lh
           persistentVolumeClaim:
             claimName: mysql-wordpress-lh
+        - name: mysql-run
+          emptyDir: {}
+        - name: mysql-tmp
+          emptyDir: {}
