@@ -32,10 +32,21 @@ spec:
           enableServiceLinks: false
           serviceAccountName: external-access-daily-report
           restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           containers:
             - name: report
               image: harbor.andreybondarenko.com/library/external-access-daily-report:2026-08-03-022902
               imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: true
               command:
                 - python3
                 - /opt/external-access-daily-report/external-access-daily-report.py
@@ -68,6 +79,12 @@ spec:
                   value: "3"
                 - name: HTTP_RETRY_DELAY_SECONDS
                   value: "5"
+                - name: HOME
+                  value: /tmp
+                - name: TMPDIR
+                  value: /tmp
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
               resources:
                 requests:
                   cpu: 25m
@@ -75,10 +92,15 @@ spec:
                 limits:
                   memory: 384Mi
               volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
                 - name: report-script
                   mountPath: /opt/external-access-daily-report
                   readOnly: true
           volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi
             - name: report-script
               configMap:
                 name: external-access-daily-report-scripts

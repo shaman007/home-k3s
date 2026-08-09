@@ -32,10 +32,21 @@ spec:
           enableServiceLinks: false
           serviceAccountName: platform-health-report
           restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           containers:
             - name: report
               image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
               imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: true
               command:
                 - python3
                 - /opt/platform-health-report/platform-health-report.py
@@ -62,6 +73,12 @@ spec:
                   value: platform-health-report
                 - name: HTTP_TIMEOUT_SECONDS
                   value: "180"
+                - name: HOME
+                  value: /tmp
+                - name: TMPDIR
+                  value: /tmp
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
               resources:
                 requests:
                   cpu: 25m
@@ -69,10 +86,15 @@ spec:
                 limits:
                   memory: 384Mi
               volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
                 - name: report-script
                   mountPath: /opt/platform-health-report
                   readOnly: true
           volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi
             - name: report-script
               configMap:
                 name: platform-health-report-scripts

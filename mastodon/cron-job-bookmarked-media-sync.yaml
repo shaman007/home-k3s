@@ -86,16 +86,18 @@ spec:
                     /scripts/apply-immich-descriptions.sh
 
                     echo "Queueing face detection for assets missing face processing"
-                    curl --fail --silent --show-error \
+                    if curl --fail --silent --show-error \
                       --retry 5 \
-                      --retry-all-errors \
                       -o /dev/null \
                       -X PUT \
                       -H "content-type: application/json" \
                       -H "x-api-key: ${IMMICH_API_KEY}" \
                       -d '{"command":"start","force":false}' \
-                      "${IMMICH_INSTANCE_URL}/jobs/faceDetection"
-                    echo "Queued missing face detection jobs"
+                      "${IMMICH_INSTANCE_URL}/jobs/faceDetection"; then
+                      echo "Queued missing face detection jobs"
+                    else
+                      echo "Warning: could not queue face detection; the endpoint requires an Immich admin API key" >&2
+                    fi
                   fi
               env:
                 - name: IMMICH_INSTANCE_URL

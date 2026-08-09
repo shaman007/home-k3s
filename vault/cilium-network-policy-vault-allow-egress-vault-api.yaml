@@ -10,7 +10,6 @@ spec:
         operator: In
         values:
           - vault-pki-renewer
-          - vault-token-rotator
   egress:
     - toEntities:
         - kube-apiserver

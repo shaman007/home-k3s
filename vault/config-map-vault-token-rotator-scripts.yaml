@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vault-token-rotator-scripts
-  namespace: vault
-data:
-  rotate-tokens.sh: |
-    #!/bin/sh
-    echo "Disabled: External Secrets uses Vault Kubernetes auth"

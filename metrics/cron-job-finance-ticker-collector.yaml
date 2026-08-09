@@ -32,10 +32,21 @@ spec:
           enableServiceLinks: false
           serviceAccountName: finance-ticker-collector
           restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           containers:
             - name: finance-ticker-collector
               image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
               imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: true
               command:
                 - python3
                 - /scripts/finance-ticker-collector.py
@@ -56,6 +67,12 @@ spec:
                   value: "3"
                 - name: HTTP_RETRY_DELAY_SECONDS
                   value: "5"
+                - name: HOME
+                  value: /tmp
+                - name: TMPDIR
+                  value: /tmp
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
               resources:
                 requests:
                   cpu: 50m
@@ -63,10 +80,15 @@ spec:
                 limits:
                   memory: 96Mi
               volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
                 - name: scripts
                   mountPath: /scripts
                   readOnly: true
           volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 64Mi
             - name: scripts
               configMap:
                 name: finance-ticker-collector-scripts

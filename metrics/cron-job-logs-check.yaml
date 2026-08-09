@@ -32,10 +32,21 @@ spec:
           enableServiceLinks: false
           serviceAccountName: logs-check
           restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
           containers:
             - name: logs-check
               image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-alpine
               imagePullPolicy: IfNotPresent
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: true
               command:
                 - python3
                 - /scripts/logs-check.py
@@ -92,6 +103,12 @@ spec:
                   value: "3"
                 - name: HTTP_RETRY_DELAY_SECONDS
                   value: "5"
+                - name: HOME
+                  value: /tmp
+                - name: TMPDIR
+                  value: /tmp
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
               resources:
                 requests:
                   cpu: 25m
@@ -99,10 +116,15 @@ spec:
                 limits:
                   memory: 256Mi
               volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
                 - name: scripts
                   mountPath: /scripts
                   readOnly: true
           volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 128Mi
             - name: scripts
               configMap:
                 name: logs-check-scripts
