@@ -31,6 +31,36 @@ spec:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
+        - name: prepare-runtime-directories
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              mkdir -p /data/models /data/output /data/input /data/user /data/custom_nodes /data/home
+              if [ ! -e /data/custom_nodes/ComfyUI-Manager ] && [ ! -L /data/custom_nodes/ComfyUI-Manager ]; then
+                ln -s /opt/comfyui-manager /data/custom_nodes/ComfyUI-Manager
+              fi
+              chown 1000:1000 /data/models /data/output /data/input /data/user /data/custom_nodes /data/home
+              chmod 1777 /tmp
+          volumeMounts:
+            - name: comfyui-data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
         - name: model-downloader
           image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
           imagePullPolicy: IfNotPresent
@@ -67,11 +97,34 @@ spec:
         - name: comfyui
           image: harbor.andreybondarenko.com/github/lecode-official/comfyui-docker:0.6.3-comfyui-0.8.2-pytorch-2.9.1-cuda-12.8-cudnn-9
           imagePullPolicy: IfNotPresent
+          command:
+            - /opt/conda/bin/python
+            - main.py
+            - --port
+            - "8188"
+            - --listen
+            - 0.0.0.0
+            - --disable-auto-launch
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           env:
-            - name: USER_ID
-              value: "1000"
-            - name: GROUP_ID
-              value: "1000"
+            - name: HOME
+              value: /home/comfyui-user
+            - name: XDG_CACHE_HOME
+              value: /home/comfyui-user/.cache
+            - name: TMPDIR
+              value: /tmp
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
             - name: NVIDIA_VISIBLE_DEVICES
               value: all
             - name: NVIDIA_DRIVER_CAPABILITIES
@@ -79,10 +132,6 @@ spec:
             - name: TZ
               value: Europe/Prague
           args:
-            - --listen
-            - 0.0.0.0
-            - --port
-            - "8188"
             - --enable-cors-header
             - '*'
             - --disable-smart-memory
@@ -119,7 +168,23 @@ spec:
             - name: comfyui-data
               mountPath: /opt/comfyui/output
               subPath: output
+            - name: comfyui-data
+              mountPath: /opt/comfyui/input
+              subPath: input
+            - name: comfyui-data
+              mountPath: /opt/comfyui/user
+              subPath: user
+            - name: comfyui-data
+              mountPath: /opt/comfyui/custom_nodes
+              subPath: custom_nodes
+            - name: comfyui-data
+              mountPath: /home/comfyui-user
+              subPath: home
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: comfyui-data
           persistentVolumeClaim:
             claimName: comfyui-data
+        - name: tmp
+          emptyDir: {}
