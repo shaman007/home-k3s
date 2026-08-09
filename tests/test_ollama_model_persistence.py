@@ -48,19 +48,35 @@ class OllamaModelPersistenceTest(unittest.TestCase):
                 container["name"]: container for container in pod_spec["containers"]
             }
             puller = containers["model-puller"]
+            ollama = containers["ollama"]
             command = puller["command"][2]
 
             self.assertIn(f"ollama show {model}", command, path)
             self.assertIn(f"ollama pull {model}", command, path)
             self.assertLess(command.index("ollama show"), command.index("ollama pull"))
+            data_mount = next(
+                mount
+                for mount in ollama["volumeMounts"]
+                if mount["mountPath"] == "/ollama"
+            )
             self.assertIn(
-                {"name": puller["volumeMounts"][0]["name"], "persistentVolumeClaim": {"claimName": claim_name}},
+                {
+                    "name": data_mount["name"],
+                    "persistentVolumeClaim": {"claimName": claim_name},
+                },
                 pod_spec["volumes"],
             )
-            self.assertEqual("/root/.ollama", puller["volumeMounts"][0]["mountPath"])
+            self.assertNotIn(
+                data_mount["name"],
+                [mount["name"] for mount in puller["volumeMounts"]],
+            )
             self.assertEqual(
-                "/root/.ollama",
-                containers["ollama"]["volumeMounts"][0]["mountPath"],
+                "/ollama",
+                next(env["value"] for env in ollama["env"] if env["name"] == "HOME"),
+            )
+            self.assertEqual(
+                "http://127.0.0.1:11434",
+                next(env["value"] for env in puller["env"] if env["name"] == "OLLAMA_HOST"),
             )
 
 
