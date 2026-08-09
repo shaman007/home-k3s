@@ -25,10 +25,6 @@ spec:
           env:
             - name: TIME_ZONE
               value: "Europe/Prague"
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
@@ -87,19 +83,8 @@ spec:
               name: public
             - mountPath: /var/app/storage
               name: storage
-            - mountPath: /var/app/tmp
-              name: app-tmp
             - mountPath: /var/app/tmp/imports/watched
               name: watched
-            - mountPath: /var/app/log
-              name: app-log
-            - mountPath: /tmp
-              name: tmp
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            seccompProfile:
-              type: RuntimeDefault
           command:
             - "web-entrypoint.sh"
           args:
@@ -116,10 +101,6 @@ spec:
           env:
             - name: RAILS_ENV
               value: development
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
             - name: SELF_HOSTED
               value: "true"
             - name: STORE_GEODATA
@@ -164,19 +145,8 @@ spec:
               name: public
             - mountPath: /var/app/storage
               name: storage
-            - mountPath: /var/app/tmp
-              name: app-tmp
             - mountPath: /var/app/tmp/imports/watched
               name: watched
-            - mountPath: /var/app/log
-              name: app-log
-            - mountPath: /tmp
-              name: tmp
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            seccompProfile:
-              type: RuntimeDefault
           command:
             - "sidekiq-entrypoint.sh"
           args:
@@ -204,15 +174,6 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
       volumes:
-        - name: app-tmp
-          emptyDir:
-            sizeLimit: 512Mi
-        - name: app-log
-          emptyDir:
-            sizeLimit: 128Mi
-        - name: tmp
-          emptyDir:
-            sizeLimit: 256Mi
         - name: public
           persistentVolumeClaim:
             claimName: public

@@ -26,16 +26,6 @@ spec:
         - name: photon
           image: harbor.andreybondarenko.com/dockerhub/rtuszik/photon-docker:2.3.1
           imagePullPolicy: IfNotPresent
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 9011
-            runAsGroup: 9011
-            seccompProfile:
-              type: RuntimeDefault
           env:
             - name: UPDATE_STRATEGY
               value: SEQUENTIAL
@@ -70,8 +60,6 @@ spec:
           volumeMounts:
             - name: photon-data
               mountPath: /photon/data
-            - name: tmp
-              mountPath: /tmp
           resources:
             requests:
               memory: "2560Mi"
@@ -79,9 +67,6 @@ spec:
             limits:
               memory: "3584Mi"
       volumes:
-        - name: tmp
-          emptyDir:
-            sizeLimit: 256Mi
         - name: photon-data
           persistentVolumeClaim:
             claimName: photon-data
