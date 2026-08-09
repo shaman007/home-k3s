@@ -95,6 +95,9 @@ spec:
           env:
             - {name: DBUS_SYSTEM_BUS_ADDRESS, value: "disabled:"}
             - {name: DBUS_SESSION_BUS_ADDRESS, value: "disabled:"}
+            - {name: HOME, value: /data}
+            - {name: XDG_CONFIG_HOME, value: /data/config}
+            - {name: XDG_CACHE_HOME, value: /data/cache}
           volumeMounts:
             - {name: dshm, mountPath: /dev/shm}
             - {name: chrome-data, mountPath: /data}
