@@ -103,7 +103,6 @@ spec:
               mountPath: /data
             - name: stash-data
               mountPath: /external-libraries/stash-data
-              readOnly: true
             - name: tmp
               mountPath: /tmp
           securityContext:
