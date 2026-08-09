@@ -39,6 +39,7 @@ spec:
                 - ALL
               add:
                 - CHOWN
+                - DAC_OVERRIDE
             readOnlyRootFilesystem: true
             runAsUser: 0
             runAsGroup: 0
