@@ -26,6 +26,32 @@ spec:
     spec:
       priorityClassName: homelab-essential
       enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: prepare-data
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          command:
+            - sh
+            - -c
+            - >-
+              find /data -path /data/lost+found -prune -o
+              -exec chown 999:999 {} +
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: valkey
           image: harbor.andreybondarenko.com/dockerhub/valkey/valkey:9
@@ -62,6 +88,16 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: 40m
@@ -72,3 +108,5 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: immich-valkey-lh
+        - name: tmp
+          emptyDir: {}

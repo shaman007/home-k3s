@@ -27,8 +27,34 @@ spec:
     spec:
       priorityClassName: homelab-essential
       enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       nodeSelector:
         kubernetes.io/hostname: talos-d4h-k5m
+      initContainers:
+        - name: prepare-library
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          command:
+            - sh
+            - -c
+            - >-
+              find /data -path /data/lost+found -prune -o
+              -exec chown 1000:1000 {} +
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: library
+              mountPath: /data
       containers:
         - name: immich-server
           image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.1.0
@@ -51,6 +77,8 @@ spec:
               value: http://immich-machine-learning:3003
             - name: TZ
               value: Europe/Prague
+            - name: HOME
+              value: /tmp
           ports:
             - name: http
               containerPort: 2283
@@ -75,6 +103,17 @@ spec:
               mountPath: /data
             - name: stash-data
               mountPath: /external-libraries/stash-data
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
           resources:
             requests:
               cpu: 100m
@@ -89,3 +128,5 @@ spec:
           hostPath:
             path: /var/mnt/storage/k8s/stash-data
             type: Directory
+        - name: tmp
+          emptyDir: {}
