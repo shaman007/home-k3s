@@ -179,6 +179,17 @@ spec:
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.18.1
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 473
+            runAsNonRoot: true
+            runAsUser: 473
+            seccompProfile:
+              type: RuntimeDefault
           args:
             - run
             - /etc/alloy/config.alloy
@@ -195,6 +206,12 @@ spec:
               readOnly: true
             - name: alloy-run
               mountPath: /run/alloy
+            - name: alloy-data
+              mountPath: /var/lib/alloy
+            - name: alloy-component-data
+              mountPath: /data-alloy
+            - name: alloy-tmp
+              mountPath: /tmp
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
             - name: logs
@@ -210,6 +227,12 @@ spec:
           configMap:
             name: alloy-bitwarden-config
         - name: alloy-run
+          emptyDir: {}
+        - name: alloy-data
+          emptyDir: {}
+        - name: alloy-component-data
+          emptyDir: {}
+        - name: alloy-tmp
           emptyDir: {}
         - name: logs
           emptyDir: {}

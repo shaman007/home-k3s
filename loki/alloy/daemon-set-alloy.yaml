@@ -20,12 +20,25 @@ spec:
       labels:
         app: alloy
     spec:
+      securityContext:
+        fsGroup: 473
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-essential
       serviceAccountName: alloy
       containers:
         - name: alloy
           image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.18.1
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 473
+            runAsGroup: 473
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: ALLOY_NODE_NAME
               valueFrom:
@@ -59,6 +72,13 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/alloy
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/alloy
+            - name: component-data
+              mountPath: /data-alloy
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 50m
@@ -69,3 +89,9 @@ spec:
         - name: config
           configMap:
             name: alloy-config
+        - name: data
+          emptyDir: {}
+        - name: component-data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
