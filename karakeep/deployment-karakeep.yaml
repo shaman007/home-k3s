@@ -24,12 +24,22 @@ spec:
       labels:
         app: karakeep
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-standard
       initContainers:
-        - name: init-chrome-writable-paths
+        - name: init-writable-paths
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
-          command: ["/bin/chown", "-R", "1000:1000", "/data", "/tmp"]
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              find /karakeep-data -path /karakeep-data/lost+found -prune -o -exec chown 1000:1000 {} +
+              chown -R 1000:1000 /chrome-data /chrome-tmp
+              chmod 1777 /chrome-tmp /web-tmp
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -41,11 +51,23 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
-            - {name: chrome-data, mountPath: /data}
-            - {name: chrome-tmp, mountPath: /tmp}
+            - {name: karakeep-data, mountPath: /karakeep-data}
+            - {name: chrome-data, mountPath: /chrome-data}
+            - {name: chrome-tmp, mountPath: /chrome-tmp}
+            - {name: tmp, mountPath: /web-tmp}
       containers:
         - name: web
           image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.33.1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 3000
           startupProbe:
@@ -77,6 +99,10 @@ spec:
           volumeMounts:
             - name: karakeep-data
               mountPath: /data
+            - name: run
+              mountPath: /run
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 93m
@@ -140,3 +166,7 @@ spec:
         - name: karakeep-data
           persistentVolumeClaim:
             claimName: karakeep-data
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

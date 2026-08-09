@@ -21,10 +21,45 @@ spec:
       labels:
         app: meilisearch
     spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-standard
+      initContainers:
+        - name: init-meili-data
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - find /meili_data -path /meili_data/lost+found -prune -o -exec chown 1000:1000 {} +
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN"]
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: meili-data
+              mountPath: /meili_data
       containers:
         - name: meilisearch
           image: harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.52.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: http
               containerPort: 7700
@@ -70,6 +105,8 @@ spec:
           volumeMounts:
             - name: meili-data
               mountPath: /meili_data
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 10m
@@ -80,3 +117,5 @@ spec:
         - name: meili-data
           persistentVolumeClaim:
             claimName: meili-data
+        - name: tmp
+          emptyDir: {}
