@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: redis-cli
-          image: harbor.andreybondarenko.com/library/redis-cli:2026-08-03-022902
+          image: harbor.andreybondarenko.com/library/redis-cli:2026-08-09-150248
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: data
