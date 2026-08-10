@@ -61,7 +61,7 @@ spec:
             sizeLimit: 500Mi
       initContainers:
         - name: init-postfix-queue-perms
-          image: harbor.andreybondarenko.com/library/postfix:2026-08-03-022902
+          image: harbor.andreybondarenko.com/library/postfix:2026-08-09-150248
           imagePullPolicy: IfNotPresent
           command:
             - /usr/bin/sh
@@ -74,7 +74,7 @@ spec:
             allowPrivilegeEscalation: false
       containers:
         - name: postfix-mail
-          image: harbor.andreybondarenko.com/library/postfix:2026-08-03-022902
+          image: harbor.andreybondarenko.com/library/postfix:2026-08-09-150248
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 587
