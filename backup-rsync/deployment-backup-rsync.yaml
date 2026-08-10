@@ -17,7 +17,11 @@ spec:
       labels:
         app: backup-rsync
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-essential
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -32,7 +36,9 @@ spec:
           image: harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0
           imagePullPolicy: IfNotPresent
           env:
-            - name: SSH_ENABLE_ROOT
+            - name: SSH_USERS
+              value: "backup:1000:1000"
+            - name: RSYNC_MODE
               value: "true"
           ports:
             - containerPort: 22
@@ -43,19 +49,41 @@ spec:
               memory: 64Mi
             limits:
               memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
           volumeMounts:
-            - name: storage
-              mountPath: /storage
+            - name: plex
+              mountPath: /storage/k8s/plex
+            - name: pictures
+              mountPath: /storage/Pictures
+            - name: stash-data
+              mountPath: /storage/k8s/stash-data
+              readOnly: true
+            - name: immich
+              mountPath: /storage/k8s/immich
+              readOnly: true
             - name: authorized-keys
-              mountPath: /root/.ssh/authorized_keys
+              mountPath: /etc/authorized_keys/backup
               subPath: authorized_keys
               readOnly: true
             - name: host-keys
               mountPath: /etc/ssh/keys
       volumes:
-        - name: storage
+        - name: plex
           hostPath:
-            path: /var/mnt/storage
+            path: /var/mnt/storage/k8s/plex
+            type: Directory
+        - name: pictures
+          hostPath:
+            path: /var/mnt/storage/Pictures
+            type: Directory
+        - name: stash-data
+          hostPath:
+            path: /var/mnt/storage/k8s/stash-data
+            type: Directory
+        - name: immich
+          hostPath:
+            path: /var/mnt/storage/k8s/immich
             type: Directory
         - name: authorized-keys
           configMap:
