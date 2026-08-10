@@ -37,7 +37,7 @@ spec:
               # Keep the reviewed runtime immutable even though the build output
               # includes the movable podman-builder:latest tag. Digest updates are
               # deliberate Git changes, never an automatic self-update.
-              image: harbor.andreybondarenko.com/library/podman-builder@sha256:aca38400376f652d903584b28ca51177cac6d1745823143160c05c5c45129c97
+              image: harbor.andreybondarenko.com/library/podman-builder@sha256:c57e8ae659ebd7c9d0ff9f769ce2221f2d0ee8bebfbbdb6672ed3560ee6280c5
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
