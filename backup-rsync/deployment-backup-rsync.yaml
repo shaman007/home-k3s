@@ -63,7 +63,11 @@ spec:
               mountPath: /storage/k8s/immich
               readOnly: true
             - name: authorized-keys
-              mountPath: /etc/authorized_keys
+              mountPath: /mnt/authorized-keys
+              readOnly: true
+            - name: authorized-keys-setup
+              mountPath: /etc/entrypoint.d/10-copy-backup-key
+              subPath: copy-backup-key
               readOnly: true
             - name: host-keys
               mountPath: /etc/ssh/keys
@@ -88,6 +92,10 @@ spec:
           configMap:
             name: backup-rsync-authorized-keys
             defaultMode: 0444
+        - name: authorized-keys-setup
+          configMap:
+            name: backup-rsync-authorized-keys-setup
+            defaultMode: 0555
         - name: host-keys
           persistentVolumeClaim:
             claimName: backup-rsync-host-keys

@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-rsync-authorized-keys-setup
+  namespace: backup-rsync
+data:
+  copy-backup-key: |
+    #!/usr/bin/env sh
+    set -eu
+    cp /mnt/authorized-keys/backup /etc/authorized_keys/backup
+    chown root:root /etc/authorized_keys/backup
+    chmod 0644 /etc/authorized_keys/backup
