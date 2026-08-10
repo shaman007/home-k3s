@@ -103,7 +103,7 @@ spec:
             sizeLimit: 500Mi
       containers:
         - name: dovecot-mail
-          image: harbor.andreybondarenko.com/library/dovecot:2026-08-03-022902
+          image: harbor.andreybondarenko.com/library/dovecot:2026-08-09-150248
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 24
