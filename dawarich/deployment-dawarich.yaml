@@ -242,7 +242,7 @@ spec:
               memory: "512Mi"
               cpu: "100m"
             limits:
-              memory: "704Mi"
+              memory: "1Gi"
       volumes:
         - name: public
           persistentVolumeClaim:

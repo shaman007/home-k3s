@@ -63,7 +63,7 @@ spec:
               memory: 128Mi
               cpu: 10m
             limits:
-              memory: 256Mi
+              memory: 512Mi
         portal:
           priorityClassName: homelab-essential
           resources:
@@ -89,7 +89,7 @@ spec:
                 memory: 256Mi
                 cpu: 25m
               limits:
-                memory: 512Mi
+                memory: 1Gi
           controller:
             resources:
               requests:
