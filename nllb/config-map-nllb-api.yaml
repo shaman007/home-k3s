@@ -32,7 +32,7 @@ data:
         "arabic": "arb_Arab", "bengali": "ben_Beng", "bulgarian": "bul_Cyrl",
         "chinese": "zho_Hans", "chinese simplified": "zho_Hans",
         "chinese traditional": "zho_Hant", "croatian": "hrv_Latn",
-        "czech": "ces_Latn", "danish": "dan_Latn", "dutch": "nld_Latn",
+        "czech": "ces_Latn", "czeck": "ces_Latn", "danish": "dan_Latn", "dutch": "nld_Latn",
         "english": "eng_Latn", "estonian": "est_Latn", "finnish": "fin_Latn",
         "french": "fra_Latn", "german": "deu_Latn", "greek": "ell_Grek",
         "hebrew": "heb_Hebr", "hindi": "hin_Deva", "hungarian": "hun_Latn",
@@ -86,19 +86,43 @@ data:
         return source_code, target_code, text.strip()
 
 
+    def split_into_chunks(text, max_input_tokens=480):
+        """Keep every request below NLLB's 512-token source limit."""
+        chunks = []
+        current = []
+        paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
+        for paragraph in paragraphs:
+            sentences = re.split(r"(?<=[.!?…])\s+", paragraph)
+            for sentence in sentences:
+                if not sentence:
+                    continue
+                candidate = "\n\n".join(current + [sentence])
+                if current and len(tokenizer(candidate, add_special_tokens=True).input_ids) > max_input_tokens:
+                    chunks.append("\n\n".join(current))
+                    current = [sentence]
+                else:
+                    current.append(sentence)
+        if current:
+            chunks.append("\n\n".join(current))
+        return chunks
+
+
     def translate(messages, max_tokens):
         source, target, text = translation_request(messages)
-        tokenizer.src_lang = source
-        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to("cuda")
+        translated = []
         with generation_lock, torch.inference_mode():
-            generated = model.generate(
-                **inputs,
-                forced_bos_token_id=tokenizer.convert_tokens_to_ids(target),
-                max_new_tokens=max(1, min(int(max_tokens or 512), 1024)),
-                num_beams=4,
-                do_sample=False,
-            )
-        return tokenizer.batch_decode(generated, skip_special_tokens=True)[0]
+            tokenizer.src_lang = source
+            for chunk in split_into_chunks(text):
+                inputs = tokenizer(chunk, return_tensors="pt", truncation=True, max_length=512).to("cuda")
+                generated = model.generate(
+                    **inputs,
+                    forced_bos_token_id=tokenizer.convert_tokens_to_ids(target),
+                    max_new_tokens=max(1, min(int(max_tokens or 512), 1024)),
+                    num_beams=4,
+                    do_sample=False,
+                )
+                translated.append(tokenizer.batch_decode(generated, skip_special_tokens=True)[0])
+        return "\n\n".join(translated)
 
 
     class Handler(BaseHTTPRequestHandler):
