@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nllb
+  namespace: nllb
+  labels:
+    app: nllb
+    app.kubernetes.io/name: nllb
+    app.kubernetes.io/instance: nllb
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nllb
+  template:
+    metadata:
+      labels:
+        app: nllb
+        app.kubernetes.io/name: nllb
+        app.kubernetes.io/instance: nllb
+    spec:
+      automountServiceAccountToken: false
+      runtimeClassName: nvidia
+      priorityClassName: homelab-best-effort
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: talos-d4h-k5m
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: prepare-model-cache
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-ec", "mkdir -p /models/cache && chown -R 1000:1000 /models"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN"]
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: model-cache
+              mountPath: /models
+      containers:
+        - name: nllb
+          image: harbor.andreybondarenko.com/github/lecode-official/comfyui-docker:0.6.3-comfyui-0.8.2-pytorch-2.9.1-cuda-12.8-cudnn-9
+          imagePullPolicy: IfNotPresent
+          command: ["/opt/conda/bin/python", "/app/nllb_api.py"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: HF_HOME
+              value: /models/cache
+            - name: HF_HUB_DISABLE_TELEMETRY
+              value: "1"
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility
+            - name: TZ
+              value: Europe/Prague
+          ports:
+            - name: http
+              containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 6Gi
+            limits:
+              memory: 10Gi
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: model-cache
+              mountPath: /models
+            - name: nllb-api
+              mountPath: /app/nllb_api.py
+              subPath: nllb_api.py
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: nllb-model-cache
+        - name: nllb-api
+          configMap:
+            name: nllb-api
+        - name: tmp
+          emptyDir: {}

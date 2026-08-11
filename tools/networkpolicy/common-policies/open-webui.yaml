@@ -12,6 +12,10 @@ policies:
     namespace: ollama
     port: 11434
   - type: namespace-egress
+    name: allow-egress-to-nllb
+    namespace: nllb
+    port: 8080
+  - type: namespace-egress
     name: allow-egress-to-comfyui
     namespace: comfyui
     port: 8188

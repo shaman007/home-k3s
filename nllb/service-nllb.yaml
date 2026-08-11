@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nllb
+  namespace: nllb
+  labels:
+    app: nllb
+    app.kubernetes.io/name: nllb
+    app.kubernetes.io/instance: nllb
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  selector:
+    app: nllb
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

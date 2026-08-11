@@ -77,7 +77,13 @@ spec:
             - name: WEBUI_AUTH
               value: "True"
             - name: ENABLE_OPENAI_API
-              value: "False"
+              value: "True"
+            - name: OPENAI_API_BASE_URLS
+              value: http://nllb.nllb.svc.cluster.local:8080/v1
+            - name: OPENAI_API_KEYS
+              value: nllb-local
+            - name: OPENAI_API_CONFIGS
+              value: '{"0":{"enable":true,"prefix_id":"NLLB Translation · ","tags":["translation"]}}'
             - name: ENABLE_IMAGE_GENERATION
               value: "True"
             - name: TERMINAL_SERVER_CONNECTIONS
