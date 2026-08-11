@@ -13,7 +13,7 @@ spec:
   project: observability
   source:
     repoURL: https://grafana.github.io/helm-charts
-    targetRevision: 7.2.0
+    targetRevision: 7.3.0
     helm:
       parameters:
         - name: memcachedExporter.image.repository
