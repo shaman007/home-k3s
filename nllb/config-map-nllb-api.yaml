@@ -87,34 +87,22 @@ data:
 
 
     def split_into_chunks(text, max_input_tokens=480):
-        """Keep every request below NLLB's 512-token source limit."""
-        chunks = []
-        paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
-        for paragraph in paragraphs:
-            # Never merge paragraphs: NLLB can end generation early when a
-            # combined document approaches its source-context limit.
-            current = []
-            sentences = re.split(r"(?<=[.!?…])\s+", paragraph)
-            for sentence in sentences:
-                if not sentence:
-                    continue
-                candidate = "\n\n".join(current + [sentence])
-                if current and len(tokenizer(candidate, add_special_tokens=True).input_ids) > max_input_tokens:
-                    chunks.append("\n\n".join(current))
-                    current = [sentence]
-                else:
-                    current.append(sentence)
-            if current:
-                chunks.append("\n\n".join(current))
-        return chunks
+        """NLLB is sentence-oriented; avoid its early EOS on document inputs."""
+        sentences = [
+            sentence.strip()
+            for sentence in re.split(r"(?<=[.!?…])\s+", text)
+            if sentence.strip()
+        ]
+        return sentences
 
 
     def translate(messages, max_tokens):
         source, target, text = translation_request(messages)
         translated = []
+        chunks = split_into_chunks(text)
         with generation_lock, torch.inference_mode():
             tokenizer.src_lang = source
-            for chunk in split_into_chunks(text):
+            for chunk in chunks:
                 inputs = tokenizer(chunk, return_tensors="pt", truncation=True, max_length=512).to("cuda")
                 generated = model.generate(
                     **inputs,
@@ -128,7 +116,13 @@ data:
                     do_sample=False,
                 )
                 translated.append(tokenizer.batch_decode(generated, skip_special_tokens=True)[0])
-        return "\n\n".join(translated)
+        result = "\n\n".join(translated)
+        print(
+            f"translation source={source} target={target} chunks={len(chunks)} "
+            f"requested_max_tokens={max_tokens} output_chars={len(result)}",
+            flush=True,
+        )
+        return result
 
 
     class Handler(BaseHTTPRequestHandler):
@@ -170,9 +164,6 @@ data:
             completion_id = f"chatcmpl-{uuid.uuid4().hex}"
             created = int(time.time())
             if request.get("stream"):
-                event = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
-                         "model": "nllb-200-1.3b", "choices": [{"index": 0,
-                         "delta": {"content": result}, "finish_reason": None}]}
                 finished = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
                             "model": "nllb-200-1.3b", "choices": [{"index": 0,
                             "delta": {}, "finish_reason": "stop"}]}
@@ -180,9 +171,15 @@ data:
                 self.send_header("Content-Type", "text/event-stream")
                 self.send_header("Cache-Control", "no-cache")
                 self.end_headers()
-                self.wfile.write(
-                    f"data: {json.dumps(event)}\n\ndata: {json.dumps(finished)}\n\ndata: [DONE]\n\n".encode()
-                )
+                # OpenWebUI expects incremental deltas; a single document-sized
+                # delta can be clipped by chat-stream processing.
+                for piece in re.findall(r"\S+\s*", result):
+                    event = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
+                             "model": "nllb-200-1.3b", "choices": [{"index": 0,
+                             "delta": {"content": piece}, "finish_reason": None}]}
+                    self.wfile.write(f"data: {json.dumps(event)}\n\n".encode())
+                    self.wfile.flush()
+                self.wfile.write(f"data: {json.dumps(finished)}\n\ndata: [DONE]\n\n".encode())
                 return
             self.send_json(HTTPStatus.OK, {"id": completion_id, "object": "chat.completion", "created": created,
                 "model": "nllb-200-1.3b", "choices": [{"index": 0, "message": {"role": "assistant", "content": result},
