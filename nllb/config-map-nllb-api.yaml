@@ -89,9 +89,11 @@ data:
     def split_into_chunks(text, max_input_tokens=480):
         """Keep every request below NLLB's 512-token source limit."""
         chunks = []
-        current = []
         paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
         for paragraph in paragraphs:
+            # Never merge paragraphs: NLLB can end generation early when a
+            # combined document approaches its source-context limit.
+            current = []
             sentences = re.split(r"(?<=[.!?…])\s+", paragraph)
             for sentence in sentences:
                 if not sentence:
@@ -102,8 +104,8 @@ data:
                     current = [sentence]
                 else:
                     current.append(sentence)
-        if current:
-            chunks.append("\n\n".join(current))
+            if current:
+                chunks.append("\n\n".join(current))
         return chunks
 
 
