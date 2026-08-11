@@ -52,9 +52,10 @@ data:
 
 
     def language_code(value):
-        value = value.strip().lower().replace(" language", "").replace(" text", "")
-        if value in tokenizer.lang_code_to_id:
+        value = value.strip()
+        if re.fullmatch(r"[a-z]{3}_[A-Z][a-z]{3}", value):
             return value
+        value = value.lower().replace(" language", "").replace(" text", "")
         return LANGUAGES.get(value)
 
 

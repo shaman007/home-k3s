@@ -20,7 +20,7 @@ spec:
       annotations:
         # ConfigMap files mounted with subPath are immutable for a running pod.
         # Increment this version whenever the API script changes to roll the pod.
-        rollout.nllb-api-version: "2"
+        rollout.nllb-api-version: "3"
       labels:
         app: nllb
         app.kubernetes.io/name: nllb
