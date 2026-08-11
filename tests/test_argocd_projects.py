@@ -15,7 +15,7 @@ PROJECT_APPLICATIONS = {
     "harbor-custom", "harbor-network-policy", "hister", "homeassistant",
     "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
-    "ollama", "ollama-small", "open-terminal", "open-webui", "plex",
+    "nllb", "ollama", "ollama-small", "open-terminal", "open-webui", "plex",
     "stirling-pdf", "wordpress", "year", "your-spotify",
 }
 
