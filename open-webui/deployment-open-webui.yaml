@@ -55,6 +55,61 @@ spec:
           volumeMounts:
             - name: open-webui-data
               mountPath: /data
+        - name: reconcile-model-providers
+          image: harbor.andreybondarenko.com/github/open-webui/open-webui:v0.11.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              # On a fresh install, OpenWebUI initializes these ConfigVars from
+              # the ConfigMap environment. On an existing install, reconcile
+              # only the Git-managed model-provider settings.
+              if [ ! -f /app/backend/data/webui.db ]; then
+                exit 0
+              fi
+              python - <<'PY'
+              import json
+              import os
+              import sqlite3
+
+              database = "/app/backend/data/webui.db"
+              values = {
+                  "openai.enable": os.environ["ENABLE_OPENAI_API"].lower() == "true",
+                  "openai.api_base_urls": os.environ["OPENAI_API_BASE_URLS"].split(";"),
+                  "openai.api_keys": os.environ["OPENAI_API_KEYS"].split(";"),
+                  "openai.api_configs": json.loads(os.environ["OPENAI_API_CONFIGS"]),
+              }
+              with sqlite3.connect(database) as connection:
+                  connection.executemany(
+                      """
+                      INSERT INTO config (key, value, updated_at) VALUES (?, ?, unixepoch())
+                      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+                      """,
+                      [(key, json.dumps(value)) for key, value in values.items()],
+                  )
+              PY
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: "1"
+          envFrom:
+            - configMapRef:
+                name: open-webui-model-providers
+          volumeMounts:
+            - name: open-webui-data
+              mountPath: /app/backend/data
+            - name: tmp
+              mountPath: /tmp
       containers:
         - name: open-webui
           image: harbor.andreybondarenko.com/github/open-webui/open-webui:v0.11.0
@@ -70,20 +125,16 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           env:
+            # Keep infrastructure integrations declarative. Chats, accounts,
+            # and other user data remain on the persistent data volume.
+            - name: ENABLE_PERSISTENT_CONFIG
+              value: "False"
             - name: OLLAMA_BASE_URL
               value: http://ollama.ollama.svc.cluster.local:11434
             - name: OLLAMA_BASE_URLS
               value: http://ollama.ollama.svc.cluster.local:11434;http://ollama-small.ollama.svc.cluster.local:11434
             - name: WEBUI_AUTH
               value: "True"
-            - name: ENABLE_OPENAI_API
-              value: "True"
-            - name: OPENAI_API_BASE_URLS
-              value: http://nllb.nllb.svc.cluster.local:8080/v1
-            - name: OPENAI_API_KEYS
-              value: nllb-local
-            - name: OPENAI_API_CONFIGS
-              value: '{"0":{"enable":true,"prefix_id":"NLLB Translation · ","tags":["translation"]}}'
             - name: ENABLE_IMAGE_GENERATION
               value: "True"
             - name: TERMINAL_SERVER_CONNECTIONS
@@ -226,6 +277,9 @@ spec:
               value: /tmp
             - name: PYTHONDONTWRITEBYTECODE
               value: "1"
+          envFrom:
+            - configMapRef:
+                name: open-webui-model-providers
           ports:
             - name: http
               containerPort: 8080

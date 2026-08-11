@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open-webui-model-providers
+  namespace: open-webui
+  labels:
+    app: open-webui
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/instance: open-webui
+    app.kubernetes.io/managed-by: argoCD
+data:
+  # These settings are the GitOps source of truth for OpenAI-compatible model
+  # providers. They bootstrap fresh databases and reconcile existing ones.
+  ENABLE_OPENAI_API: "True"
+  OPENAI_API_BASE_URLS: http://nllb.nllb.svc.cluster.local:8080/v1
+  OPENAI_API_KEYS: nllb-local
+  OPENAI_API_CONFIGS: '{"0":{"enable":true,"prefix_id":"NLLB Translation · ","tags":["translation"]}}'
