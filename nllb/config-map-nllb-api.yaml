@@ -172,12 +172,17 @@ data:
             if request.get("stream"):
                 event = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
                          "model": "nllb-200-1.3b", "choices": [{"index": 0,
-                         "delta": {"content": result}, "finish_reason": "stop"}]}
+                         "delta": {"content": result}, "finish_reason": None}]}
+                finished = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
+                            "model": "nllb-200-1.3b", "choices": [{"index": 0,
+                            "delta": {}, "finish_reason": "stop"}]}
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-Type", "text/event-stream")
                 self.send_header("Cache-Control", "no-cache")
                 self.end_headers()
-                self.wfile.write(f"data: {json.dumps(event)}\n\ndata: [DONE]\n\n".encode())
+                self.wfile.write(
+                    f"data: {json.dumps(event)}\n\ndata: {json.dumps(finished)}\n\ndata: [DONE]\n\n".encode()
+                )
                 return
             self.send_json(HTTPStatus.OK, {"id": completion_id, "object": "chat.completion", "created": created,
                 "model": "nllb-200-1.3b", "choices": [{"index": 0, "message": {"role": "assistant", "content": result},
