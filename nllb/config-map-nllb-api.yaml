@@ -117,7 +117,11 @@ data:
                 generated = model.generate(
                     **inputs,
                     forced_bos_token_id=tokenizer.convert_tokens_to_ids(target),
-                    max_new_tokens=max(1, min(int(max_tokens or 512), 1024)),
+                    # OpenWebUI's chat max_tokens is commonly 128–512, which
+                    # truncates otherwise valid document translations. Chunks
+                    # are bounded by the input splitter, so reserve a full
+                    # translation budget for each one.
+                    max_new_tokens=1024,
                     num_beams=4,
                     do_sample=False,
                 )
