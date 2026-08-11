@@ -210,6 +210,15 @@ data:
         return bool(statuses) and all(status.get("ready", False) for status in statuses)
 
 
+    def active_job_pod(pod):
+        if pod.get("status", {}).get("phase") != "Running":
+            return False
+        return any(
+            owner.get("kind") == "Job"
+            for owner in pod.get("metadata", {}).get("ownerReferences", [])
+        )
+
+
     def cronjob_recently_succeeded(cronjob, cutoff):
         if not cronjob or cronjob.get("spec", {}).get("suspend", False):
             return False, None
@@ -604,6 +613,11 @@ data:
         pod_issues = []
         for pod in pods:
             if pod.get("status", {}).get("phase") == "Succeeded":
+                continue
+            # Batch pods commonly have no readiness probe and are expected to be
+            # Running while their Job is in progress. A failed or Pending Job pod
+            # remains reportable below.
+            if active_job_pod(pod):
                 continue
             if pod.get("status", {}).get("phase") not in {"Running", "Succeeded"}:
                 pod_issues.append({"namespace": pod["metadata"]["namespace"], "item": pod["metadata"]["name"], "value": 0})
