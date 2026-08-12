@@ -38,6 +38,12 @@ spec:
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.3
           imagePullPolicy: IfNotPresent
           env:
+            # Match the owner of the local media tree so Plex can traverse and
+            # read directories/files with owner-only permissions.
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
             # valid for 4 minutes
             - name: PLEX_CLAIM
               value: claim-_UXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
