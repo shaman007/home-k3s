@@ -1,6 +1,6 @@
 machine:
   install:
-    image: factory.talos.dev/installer/e6a68146e08bac983d34c6a621626ace2a768d6d5132e052dd3f5013d15d0b64:v1.13.2
+    image: factory.talos.dev/installer/f47285edf728acecc92122fa0752cc96dbd76d5063a552cc8468dadfa4b61660:v1.13.8
   kernel:
     modules:
       - name: nvidia

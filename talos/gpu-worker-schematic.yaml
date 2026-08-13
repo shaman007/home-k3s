@@ -1,0 +1,7 @@
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools
+      - siderolabs/nvidia-open-gpu-kernel-modules
+      - siderolabs/nvidia-container-toolkit
