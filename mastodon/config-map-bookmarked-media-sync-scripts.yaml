@@ -169,6 +169,23 @@ data:
       relative_path="$(printf '%s' "${entry}" | jq -r '.relative_path')"
       [ -n "${url}" ] || continue
 
+      # CarrierWave cannot always determine remote object existence without
+      # downloading it. Avoid the download/retry loop for a definitive S3 404,
+      # but keep retrying transient failures and authorization errors below.
+      http_status="$(curl \
+        --head \
+        --location \
+        --silent \
+        --output /dev/null \
+        --write-out '%{http_code}' \
+        --connect-timeout 15 \
+        "${url}" || true)"
+      if [ "${http_status}" = "404" ]; then
+        echo "Skipping missing S3 object: ${url}" >&2
+        skipped_count=$((skipped_count + 1))
+        continue
+      fi
+
       destination="${download_dir}/${relative_path}"
       mkdir -p "$(dirname "${destination}")"
 
