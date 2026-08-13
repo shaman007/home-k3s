@@ -59,6 +59,15 @@ data:
               uploader = media.file if media.respond_to?(:file)
               next unless uploader
 
+              # CarrierWave's storage file performs an S3 HEAD request here.
+              # Do this before writing the manifest so deleted objects never
+              # reach the downloader and consume its retry budget.
+              storage_file = uploader.file if uploader.respond_to?(:file)
+              if storage_file&.respond_to?(:exists?) && !storage_file.exists?
+                warn "Skipping missing S3 object for media #{media.id}, bookmark #{bookmark.id}"
+                next
+              end
+
               key = nil
 
               # 1) Try file.path (often S3 key or local path)
