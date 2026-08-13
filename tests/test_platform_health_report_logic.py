@@ -76,21 +76,21 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertEqual([], self.report["ingress_tls_hosts"](ingress))
 
     def test_active_job_pod_is_excluded_from_readiness_failures(self):
-        pod = {
-            "metadata": {"ownerReferences": [{"kind": "Job"}]},
-            "status": {"phase": "Running"},
-        }
-
-        self.assertTrue(self.report["active_job_pod"](pod))
-
-    def test_pending_or_failed_job_pod_remains_reportable(self):
-        for phase in ("Pending", "Failed"):
+        for phase in ("Pending", "Running"):
             with self.subTest(phase=phase):
                 pod = {
                     "metadata": {"ownerReferences": [{"kind": "Job"}]},
                     "status": {"phase": phase},
                 }
-                self.assertFalse(self.report["active_job_pod"](pod))
+                self.assertTrue(self.report["active_job_pod"](pod))
+
+    def test_failed_job_pod_remains_reportable(self):
+        pod = {
+            "metadata": {"ownerReferences": [{"kind": "Job"}]},
+            "status": {"phase": "Failed"},
+        }
+
+        self.assertFalse(self.report["active_job_pod"](pod))
 
 
 if __name__ == "__main__":
