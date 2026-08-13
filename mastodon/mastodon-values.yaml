@@ -55,6 +55,27 @@ mastodon:
       requests:
         cpu: 200m
         memory: 128Mi
+    # The upstream chart hard-codes a 500m CPU cap on its exporter.  Define the
+    # same container here so CPU remains requested but never throttled.
+    extraContainers:
+      - name: prometheus-exporter
+        image: harbor.andreybondarenko.com/github/shaman007/mastodon:v4.6.5
+        command:
+          - ./bin/prometheus_exporter
+        args:
+          - --bind
+          - 0.0.0.0
+          - --port
+          - "9394"
+        resources:
+          limits:
+            memory: 250M
+          requests:
+            cpu: 100m
+            memory: 180M
+        ports:
+          - name: prometheus
+            containerPort: 9394
     extraEnvVars:
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
@@ -131,7 +152,7 @@ mastodon:
 
   metrics:
     prometheus:
-      enabled: true
+      enabled: false
       port: 9394
       web:
         detailed: false

@@ -82,7 +82,6 @@ trivy:
       memory: 1Gi
       cpu: 100m
     limits:
-      cpu: "12"
       memory: 2Gi
 notary:
   enabled: false  # disable notary
