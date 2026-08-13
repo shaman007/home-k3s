@@ -36,7 +36,7 @@ class MailCertificateSyncTest(unittest.TestCase):
             "ingressClassName": "traefik",
             "podTemplate": {"spec": {"resources": {
                 "requests": {"cpu": "10m", "memory": "128Mi"},
-                "limits": {"cpu": "100m", "memory": "128Mi"},
+                "limits": {"memory": "128Mi"},
             }}},
         }}}]
         self.assertEqual(issuer["spec"]["acme"]["solvers"], expected_solvers)
