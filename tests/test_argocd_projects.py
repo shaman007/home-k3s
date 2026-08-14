@@ -54,7 +54,7 @@ PROJECT_MEMBERS = {
     "namespace-management": PROJECT_NAMESPACE_MANAGEMENT,
 }
 
-SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
+SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka", "vault"}
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",

@@ -58,7 +58,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertEqual({}, secret["data"])
         self.assertEqual("Opaque", secret["type"])
 
-    def test_source_vault_can_issue_only_openbao_server_names(self):
+    def test_cutover_pki_configuration_targets_openbao(self):
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(encoding="utf-8")
         policy = (ROOT / "vault/policy-vault-pki-renewer.hcl").read_text(
             encoding="utf-8"
@@ -70,7 +70,14 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertIn("pki-root/roles/openbao-server", script)
         self.assertIn('path "pki-root/issue/openbao-server"', policy)
         self.assertIn('"openbao" "openbao-server-tls"', renewer)
-        self.assertNotIn("openbao.w386.k8s.my.lan", script)
+        self.assertIn(
+            "path=https://openbao.w386.k8s.my.lan/v1/pki-int",
+            script,
+        )
+        self.assertNotIn(
+            "path=https://vault.w386.k8s.my.lan/v1/pki-int",
+            script,
+        )
 
     def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
         for path in (
