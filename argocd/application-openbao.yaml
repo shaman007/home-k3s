@@ -85,6 +85,11 @@ spec:
 
                 storage "raft" {
                   path = "/openbao/data"
+                  retry_join {
+                    leader_api_addr = "https://openbao-active.openbao.svc:8200"
+                    leader_ca_cert_file = "/openbao/userconfig/openbao-server-tls/ca.crt"
+                    leader_tls_servername = "openbao.openbao.svc"
+                  }
                 }
 
                 service_registration "kubernetes" {}

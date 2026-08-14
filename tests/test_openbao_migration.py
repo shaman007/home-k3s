@@ -28,11 +28,13 @@ class OpenBaoMigrationTest(unittest.TestCase):
             "https://openbao-active.openbao.svc:8200",
             values["server"]["ha"]["apiAddr"],
         )
-        # OpenBao 2.6.1 blocks its initialization API while retry_join has no
-        # leader. The rehearsal initializes and restores node 0 first; the
-        # active-Service retry_join block is added back before node 1 joins.
+        self.assertIn(
+            'leader_api_addr = "https://openbao-active.openbao.svc:8200"',
+            values["server"]["ha"]["raft"]["config"],
+        )
         self.assertNotIn(
-            "retry_join", values["server"]["ha"]["raft"]["config"]
+            'leader_api_addr = "https://openbao-0.',
+            values["server"]["ha"]["raft"]["config"],
         )
         self.assertEqual(
             {"whenDeleted": "Retain", "whenScaled": "Retain"},
@@ -83,6 +85,19 @@ class OpenBaoMigrationTest(unittest.TestCase):
                         "argocd.argoproj.io/sync-wave"
                     ],
                 )
+
+    def test_server_can_reach_kubernetes_service_registration_api(self):
+        policy = load_yaml(
+            "openbao/network-policy-openbao-allow-egress-kube-api-cilium.yaml"
+        )
+        self.assertEqual("CiliumNetworkPolicy", policy["kind"])
+        self.assertEqual(
+            ["kube-apiserver"], policy["spec"]["egress"][0]["toEntities"]
+        )
+        service = policy["spec"]["egress"][1]["toServices"][0]["k8sService"]
+        self.assertEqual(
+            {"namespace": "default", "serviceName": "kubernetes"}, service
+        )
 
     def test_production_consumers_remain_on_vault_during_rehearsal(self):
         secret_stores = [

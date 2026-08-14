@@ -44,12 +44,12 @@ Initialize only the new OpenBao cluster, restore the candidate snapshot with
 the existing Vault Shamir key. Remove stale `vault-*` peers from the restored
 Raft configuration and join both `openbao-0` and `openbao-1`.
 
-OpenBao 2.6.1 does not serve its initialization API while `retry_join` is
-configured without a reachable leader. The rehearsal manifest therefore
-omits `retry_join` while `openbao-0` is initialized and restored. After the
-restored node is unsealed, add back a `retry_join` block targeting the
-`openbao-active` Service before allowing `openbao-1` to join. Never target a
-pod directly: the active Service routes later replicas to the elected leader.
+Raft retry-join uses the `openbao-active` Service. Before initialization that
+Service has no active endpoint; after initialization it routes later replicas
+to the elected leader. Never target a pod directly. OpenBao service
+registration also requires the Cilium `kube-apiserver` entity policy in
+addition to the portable Kubernetes API egress policy; without it server
+startup blocks before the initialization API becomes available.
 
 The rehearsal passes only when:
 
