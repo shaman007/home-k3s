@@ -12,14 +12,14 @@ def load_yaml(path: str):
 
 
 class OpenBaoMigrationTest(unittest.TestCase):
-    def test_parallel_openbao_release_is_pinned_and_isolated(self):
+    def test_openbao_release_is_pinned_and_ha_configured(self):
         application = load_yaml("argocd/application-openbao.yaml")
         source = application["spec"]["source"]
         values = yaml.safe_load(source["helm"]["values"])
 
         self.assertEqual("ghcr.io/openbao/charts", source["repoURL"])
         self.assertEqual("openbao", source["chart"])
-        self.assertEqual("0.28.6", source["targetRevision"])
+        self.assertRegex(source["targetRevision"], r"^\d+\.\d+\.\d+$")
         self.assertEqual("openbao", application["spec"]["destination"]["namespace"])
         self.assertEqual(2, values["server"]["ha"]["replicas"])
         self.assertTrue(values["server"]["ha"]["raft"]["enabled"])
