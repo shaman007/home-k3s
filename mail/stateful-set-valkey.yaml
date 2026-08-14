@@ -121,4 +121,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: redis-redis-0
+            claimName: valkey-mail-lh
