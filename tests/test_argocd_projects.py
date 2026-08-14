@@ -25,7 +25,7 @@ PROJECT_PLATFORM = {
     "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
     "openbao", "openbao-custom", "openbao-network-policy", "reloader", "traefik",
-    "traefik-acme-exporter", "traefik-network-policy", "vault", "vault-custom",
+    "traefik-acme-exporter", "traefik-network-policy", "vault-custom",
     "vault-network-policy",
 }
 
@@ -54,7 +54,7 @@ PROJECT_MEMBERS = {
     "namespace-management": PROJECT_NAMESPACE_MANAGEMENT,
 }
 
-SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka", "vault"}
+SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",

@@ -156,23 +156,9 @@ class VaultAcmeTest(unittest.TestCase):
                 self.assertEqual(renewer_role["rules"], [])
 
     def test_network_policies_limit_acme_control_and_validation_paths(self):
-        egress = load_yaml(
-            "vault/network-policy-vault-allow-egress-acme-http01.yaml"
-        )
         traefik_egress = load_yaml(
             "traefik/"
             "network-policy-traefik-allow-egress-ingress-namespaces.yaml"
-        )
-        self.assertEqual(
-            egress["spec"]["egress"][0]["ports"],
-            [
-                {"protocol": "TCP", "port": 80},
-                {"protocol": "TCP", "port": 443},
-            ],
-        )
-        self.assertEqual(
-            egress["spec"]["egress"][1]["to"],
-            [{"ipBlock": {"cidr": "192.168.1.210/32"}}],
         )
         allowed_namespaces = {
             peer["namespaceSelector"]["matchLabels"]
@@ -341,33 +327,13 @@ class VaultAcmeTest(unittest.TestCase):
         self.assertNotIn("w386-k8s-my-lan-wildcard", renewer)
         self.assertNotIn("wildcard_targets", renewer)
 
-    def test_vault_ingress_cutover_removes_direct_renewal(self):
-        certificate = load_yaml(
-            "vault/certificate-vault-ingress-vault-acme-tls.yaml"
-        )
-        ingress = load_yaml("vault/ingress-vault-ingress.yaml")
+    def test_retired_vault_ingress_is_removed(self):
         renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
             encoding="utf-8"
         )
-
-        self.assertEqual(certificate["metadata"]["namespace"], "vault")
-        self.assertEqual(
-            certificate["spec"],
-            {
-                "secretName": "vault-ingress-vault-acme-tls",
-                "duration": "720h",
-                "renewBefore": "168h",
-                "dnsNames": ["vault.w386.k8s.my.lan"],
-                "issuerRef": {
-                    "group": "cert-manager.io",
-                    "kind": "ClusterIssuer",
-                    "name": "vault-acme",
-                },
-            },
-        )
-        self.assertEqual(
-            ingress["spec"]["tls"][0]["secretName"],
-            "vault-ingress-vault-acme-tls",
+        self.assertFalse((ROOT / "vault/ingress-vault-ingress.yaml").exists())
+        self.assertFalse(
+            (ROOT / "vault/certificate-vault-ingress-vault-acme-tls.yaml").exists()
         )
         renewer_role = load_yaml("vault/role-vault-pki-renewer.yaml")
         renewer_policy = (
@@ -393,7 +359,7 @@ class VaultAcmeTest(unittest.TestCase):
         for path in (
             "mail/network-policy-allow-cert-manager-http01-solver.yaml",
             "metrics/ingress-network-policy-allow-cert-manager-http01-solver.yaml",
-            "vault/network-policy-vault-allow-cert-manager-http01-solver.yaml",
+            "openbao/network-policy-allow-cert-manager-http01-solver.yaml",
         ):
             with self.subTest(path=path):
                 policy = load_yaml(path)

@@ -1,7 +1,7 @@
 # Vault (retired rollback source)
 
-The Vault StatefulSet is intentionally pinned to zero replicas. Its two PVCs
-remain retained as a rollback source; OpenBao is the production endpoint.
+The Vault Helm application and public runtime resources are removed. Its two
+PVCs remain retained as a rollback source; OpenBao is the production endpoint.
 
 ## Metrics
 
