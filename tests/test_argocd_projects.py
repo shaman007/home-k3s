@@ -24,8 +24,9 @@ PROJECT_PLATFORM = {
     "external-secrets", "external-secrets-network-policy", "gpu-operator",
     "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
-    "reloader", "traefik", "traefik-acme-exporter", "traefik-network-policy", "vault",
-    "vault-custom", "vault-network-policy",
+    "openbao", "openbao-custom", "openbao-network-policy", "reloader", "traefik",
+    "traefik-acme-exporter", "traefik-network-policy", "vault", "vault-custom",
+    "vault-network-policy",
 }
 
 PROJECT_STORAGE = {
@@ -40,7 +41,7 @@ PROJECT_OBSERVABILITY = {
     "finance-ticker", "grafana", "kube-node-exporter", "kube-state-metrics",
     "kubernetes-prometheus", "logs-check", "loki", "loki-external-secrets",
     "loki-network-policy", "monitoring-ingress", "monitoring-network-policy",
-    "platform-health", "thanos", "unifi-exporter",
+    "opensearch", "platform-health", "thanos", "unifi-exporter",
 }
 
 PROJECT_ACCESS_MANAGEMENT = {"lenka"}
@@ -65,7 +66,7 @@ PRUNE_REQUIRED_APPLICATIONS = {
     "headlamp", "hister", "homeassistant", "image-builder", "kube-node-exporter",
     "kube-state-metrics", "logs-check", "loki-network-policy", "metallb-config",
     "metrics-server-network-policy", "monitoring-ingress", "monitoring-network-policy",
-    "open-terminal", "platform-health",
+    "open-terminal", "openbao-network-policy", "platform-health",
     "traefik-network-policy", "unifi-exporter", "vault-network-policy", "year",
 }
 

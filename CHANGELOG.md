@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-14 – Mastodon search migration
+
+- Added a single-node, Apache-2.0-licensed OpenSearch deployment dedicated to
+  Mastodon search, retaining Elasticsearch/ECK temporarily for safe rollback.
+- Repointed Mastodon at OpenSearch without copying its rebuildable search index.
+- Added network isolation and a staged search-index rebuild and rollback
+  runbook.
+
 ## 2026-07-24 – Weekly Highlights
 
 - **Highlights**

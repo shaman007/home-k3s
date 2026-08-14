@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openbao-ingress
+  namespace: openbao
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/service.serversscheme: "https"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - openbao.w386.k8s.my.lan
+      secretName: openbao-ingress-vault-acme-tls
+  rules:
+    - host: openbao.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openbao
+                port:
+                  number: 8200

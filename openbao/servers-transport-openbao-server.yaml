@@ -1,0 +1,14 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: openbao-server
+  namespace: openbao
+  labels:
+    app.kubernetes.io/name: openbao
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  serverName: openbao.openbao.svc
+  rootCAs:
+    - secret: openbao-server-tls

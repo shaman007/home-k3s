@@ -143,6 +143,20 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: namespace-quota
+  namespace: opensearch
+spec:
+  hard:
+    pods: "6"
+    services: "5"
+    secrets: "20"
+    configmaps: "20"
+    persistentvolumeclaims: "4"
+    requests.storage: 30Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
   namespace: elastic-stack
 spec:
   hard:
@@ -501,6 +515,20 @@ spec:
     configmaps: "20"
     persistentvolumeclaims: "2"
     requests.storage: 1Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: openbao
+spec:
+  hard:
+    pods: "15"
+    services: "10"
+    secrets: "40"
+    configmaps: "40"
+    persistentvolumeclaims: "6"
+    requests.storage: 30Gi
 ---
 apiVersion: v1
 kind: ResourceQuota

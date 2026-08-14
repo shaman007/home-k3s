@@ -1,0 +1,108 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openbao
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: ghcr.io/openbao/charts
+    chart: openbao
+    targetRevision: 0.28.6
+    helm:
+      releaseName: openbao
+      parameters:
+        - name: global.tlsDisable
+          value: "false"
+        - name: injector.enabled
+          value: "false"
+        - name: server.ha.enabled
+          value: "true"
+        - name: server.ha.raft.enabled
+          value: "true"
+        - name: server.ha.raft.setNodeId
+          value: "true"
+        - name: server.ha.replicas
+          value: "2"
+      values: |
+        global:
+          tlsDisable: false
+        injector:
+          enabled: false
+        server:
+          priorityClassName: homelab-critical
+          service:
+            annotations:
+              traefik.ingress.kubernetes.io/service.serverstransport: openbao-openbao-server@kubernetescrd
+          extraEnvironmentVars:
+            BAO_CACERT: /openbao/userconfig/openbao-server-tls/ca.crt
+          extraVolumes:
+            - type: secret
+              name: openbao-server-tls
+          affinity: |
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/instance: openbao
+                      app.kubernetes.io/name: openbao
+                      component: server
+                  topologyKey: kubernetes.io/hostname
+          configAnnotation: true
+          dataStorage:
+            enabled: true
+            size: 10Gi
+            storageClass: longhorn
+            labels:
+              recurring-job.longhorn.io/source: enabled
+              recurring-job.longhorn.io/backup-daily-retain31-c: enabled
+              recurring-job.longhorn.io/trim-daily-c: enabled
+          persistentVolumeClaimRetentionPolicy:
+            whenDeleted: Retain
+            whenScaled: Retain
+          ha:
+            enabled: true
+            replicas: 2
+            apiAddr: "https://openbao-active.openbao.svc:8200"
+            clusterAddr: "https://$(HOSTNAME).openbao-internal:8201"
+            raft:
+              enabled: true
+              setNodeId: true
+              config: |
+                ui = true
+
+                listener "tcp" {
+                  tls_disable = 0
+                  address = "[::]:8200"
+                  cluster_address = "[::]:8201"
+                  tls_cert_file = "/openbao/userconfig/openbao-server-tls/tls.crt"
+                  tls_key_file = "/openbao/userconfig/openbao-server-tls/tls.key"
+                  telemetry {
+                    unauthenticated_metrics_access = "true"
+                  }
+                }
+
+                storage "raft" {
+                  path = "/openbao/data"
+                  retry_join {
+                    leader_api_addr = "https://openbao-0.openbao-internal.openbao.svc:8200"
+                    leader_ca_cert_file = "/openbao/userconfig/openbao-server-tls/ca.crt"
+                    leader_tls_servername = "openbao.openbao.svc"
+                  }
+                }
+
+                service_registration "kubernetes" {}
+
+                telemetry {
+                  prometheus_retention_time = "2m"
+                  disable_hostname = true
+                }
+        snapshotAgent:
+          enabled: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openbao
+  syncPolicy:
+    automated:
+      selfHeal: true

@@ -31,6 +31,20 @@ vault write "pki-int/roles/${role_name}" \
   max_ttl=720h \
   no_store=false
 
+vault write pki-root/roles/openbao-server \
+  allowed_domains="openbao,openbao.openbao,openbao.openbao.svc,openbao.openbao.svc.cluster.local,openbao-active,openbao-active.openbao,openbao-active.openbao.svc,openbao-active.openbao.svc.cluster.local,*.openbao-internal,*.openbao-internal.openbao,*.openbao-internal.openbao.svc,*.openbao-internal.openbao.svc.cluster.local" \
+  allow_bare_domains=true \
+  allow_glob_domains=true \
+  allow_subdomains=false \
+  allow_localhost=false \
+  allow_ip_sans=false \
+  enforce_hostnames=true \
+  server_flag=true \
+  client_flag=false \
+  key_type=rsa \
+  key_bits=2048 \
+  max_ttl=720h
+
 vault secrets tune \
   -allowed-response-headers=Link \
   -allowed-response-headers=Location \

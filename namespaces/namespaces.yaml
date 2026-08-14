@@ -82,6 +82,16 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: opensearch
+  labels:
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: elastic-stack
   labels:
     pod-security.kubernetes.io/warn: restricted
@@ -336,6 +346,16 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: unifi
+  labels:
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openbao
   labels:
     pod-security.kubernetes.io/warn: restricted
     pod-security.kubernetes.io/warn-version: latest

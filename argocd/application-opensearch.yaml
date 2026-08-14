@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opensearch
+  namespace: argocd
+spec:
+  project: observability
+  source:
+    repoURL: 'https://github.com/shaman007/home-k3s.git'
+    path: opensearch
+    targetRevision: main
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: opensearch
+  syncPolicy:
+    automated:
+      selfHeal: true

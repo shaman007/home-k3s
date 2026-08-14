@@ -40,6 +40,8 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: elastic-system
     - server: https://kubernetes.default.svc
+      namespace: opensearch
+    - server: https://kubernetes.default.svc
       namespace: external-secrets
     - server: https://kubernetes.default.svc
       namespace: harbor
@@ -77,6 +79,8 @@ spec:
       namespace: monitoring
     - server: https://kubernetes.default.svc
       namespace: nextcloud
+    - server: https://kubernetes.default.svc
+      namespace: openbao
     - server: https://kubernetes.default.svc
       namespace: plex
     - server: https://kubernetes.default.svc

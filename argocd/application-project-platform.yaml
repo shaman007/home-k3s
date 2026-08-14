@@ -15,6 +15,7 @@ metadata:
 spec:
   description: Cluster networking, security, ingress, and control-plane services
   sourceRepos:
+    - ghcr.io/openbao/charts
     - https://charts.external-secrets.io
     - https://charts.jetstack.io
     - https://github.com/shaman007/home-k3s.git
@@ -42,6 +43,8 @@ spec:
       namespace: kube-system
     - server: https://kubernetes.default.svc
       namespace: metallb-system
+    - server: https://kubernetes.default.svc
+      namespace: openbao
     - server: https://kubernetes.default.svc
       namespace: traefik
     - server: https://kubernetes.default.svc

@@ -189,14 +189,9 @@ redis:
 
 elasticsearch:
   enabled: false
-  hostname: es-es-http.elastic-stack.svc.cluster.local
+  hostname: opensearch.opensearch.svc.cluster.local
   port: 9200
   tls: false
-  username: elastic
-  existingSecret: elasticsearch-password
-  existingSecretKeys:
-    username: username
-    password: password
 
 externalAuth:
   oidc:

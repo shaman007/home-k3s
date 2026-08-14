@@ -1,0 +1,30 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openbao-custom
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: openbao
+    targetRevision: main
+    directory:
+      recurse: false
+      include: "*-*.yaml"
+      exclude: "network-policy-*.yaml"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: openbao
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: openbao-server-tls
+      jsonPointers:
+        - /data
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+      - RespectIgnoreDifferences=true

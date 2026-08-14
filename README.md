@@ -42,7 +42,8 @@ Data and messaging:
 - Valkey (app-local StatefulSets for WordPress, Nextcloud, Dawarich, Mastodon,
   and Rspamd)
 - SeaweedFS (S3-compatible object storage)
-- Elasticsearch (ECK operator + stack)
+- OpenSearch (Mastodon search target; Elasticsearch/ECK retained temporarily
+  for cutover rollback)
 
 User-facing apps:
 

@@ -187,6 +187,26 @@ spec:
                   else
                     echo "Vault API and Raft TLS secret still valid beyond renewal window"
                   fi
+
+                  if secret_needs_renewal "openbao" "openbao-server-tls"; then
+                    openbao_server_alt_names="openbao,openbao.openbao,openbao.openbao.svc.cluster.local,openbao-active,openbao-active.openbao,openbao-active.openbao.svc,openbao-active.openbao.svc.cluster.local,*.openbao-internal,*.openbao-internal.openbao,*.openbao-internal.openbao.svc,*.openbao-internal.openbao.svc.cluster.local"
+                    issue_cert \
+                      "openbao-server" \
+                      "openbao.openbao.svc" \
+                      /tmp/openbao-server.crt \
+                      /tmp/openbao-server.key \
+                      "$openbao_server_alt_names" \
+                      /tmp/openbao-server-ca.crt
+                    patch_secret \
+                      "openbao" \
+                      "openbao-server-tls" \
+                      /tmp/openbao-server.crt \
+                      /tmp/openbao-server.key \
+                      /tmp/openbao-server-ca.crt
+                    echo "Rotated OpenBao API and Raft TLS secret"
+                  else
+                    echo "OpenBao API and Raft TLS secret still valid beyond renewal window"
+                  fi
           volumes:
             - name: vault-ca
               secret:
