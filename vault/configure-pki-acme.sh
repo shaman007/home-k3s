@@ -52,7 +52,7 @@ vault secrets tune \
   pki-int/
 
 vault write pki-int/config/cluster \
-  path=https://vault.w386.k8s.my.lan/v1/pki-int
+  path=https://openbao.w386.k8s.my.lan/v1/pki-int
 
 vault write pki-int/config/acme \
   enabled=true \

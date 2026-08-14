@@ -160,7 +160,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         }
         self.assertIn("81.19.4.105/32", cidrs)
 
-    def test_production_consumers_remain_on_vault_during_rehearsal(self):
+    def test_production_consumers_use_openbao_after_cutover(self):
         secret_stores = [
             path
             for path in ROOT.rglob("*secret-store*.yaml")
@@ -171,7 +171,8 @@ class OpenBaoMigrationTest(unittest.TestCase):
             source = path.read_text(encoding="utf-8")
             if "provider:" in source and "vault:" in source:
                 with self.subTest(path=path.relative_to(ROOT)):
-                    self.assertIn("https://vault.vault.svc:8200", source)
+                    self.assertIn("https://openbao.openbao.svc:8200", source)
+                    self.assertNotIn("https://vault.vault.svc:8200", source)
 
 
 if __name__ == "__main__":

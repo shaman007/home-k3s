@@ -19,14 +19,14 @@ def load_yaml_documents(path: str) -> list[dict]:
 
 
 class VaultAcmeTest(unittest.TestCase):
-    def test_cluster_issuer_uses_restricted_vault_role_directory(self):
+    def test_cluster_issuer_uses_restricted_openbao_role_directory(self):
         issuer = load_yaml("cert-manager/cluster-issuer-vault-acme.yaml")
         acme = issuer["spec"]["acme"]
 
         self.assertEqual(issuer["metadata"]["name"], "vault-acme")
         self.assertEqual(
             acme["server"],
-            "https://vault.w386.k8s.my.lan/v1/pki-int/roles/"
+            "https://openbao.w386.k8s.my.lan/v1/pki-int/roles/"
             "w386-k8s-my-lan-acme/acme/directory",
         )
         self.assertIn(
