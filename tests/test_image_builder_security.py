@@ -37,6 +37,14 @@ class ImageBuilderSecurityTest(unittest.TestCase):
     def test_builder_does_not_receive_a_service_account_token(self):
         self.assertFalse(self.pod_spec["automountServiceAccountToken"])
 
+    def test_builder_uses_space_efficient_overlay_storage(self):
+        environment = {
+            item["name"]: item.get("value")
+            for item in self.container["env"]
+        }
+
+        self.assertEqual("overlay", environment["STORAGE_DRIVER"])
+
     def test_builder_digest_is_not_a_placeholder(self):
         digest = self.container["image"].split("@sha256:", 1)[1]
 
