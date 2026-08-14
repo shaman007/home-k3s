@@ -27,15 +27,19 @@ spec:
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
       securityContext:
-        runAsUser: 101
-        runAsGroup: 103
-        fsGroup: 103
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: clamd
-          image: harbor.andreybondarenko.com/library/clamav:2026-08-09-150248
+          image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.4-debian13-slim
           imagePullPolicy: IfNotPresent
+          command:
+            - clamd
+          args:
+            - --foreground
           ports:
             - containerPort: 3200
               name: api
@@ -80,11 +84,13 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
         - name: freshclam
-          image: harbor.andreybondarenko.com/library/clamav:2026-08-09-150248
+          image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.4-debian13-slim
           imagePullPolicy: IfNotPresent
-          env:
-            - name: UPDATE
-              value: "true"
+          command:
+            - freshclam
+          args:
+            - --daemon
+            - --foreground=true
           volumeMounts:
             - mountPath: /var/lib/clamav
               name: avdata

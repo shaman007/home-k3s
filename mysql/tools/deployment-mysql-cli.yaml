@@ -1,4 +1,35 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-cli-scripts
+  namespace: db
+  labels:
+    app.kubernetes.io/name: mysql-cli
+    app.kubernetes.io/instance: mysql-cli
+    app.kubernetes.io/managed-by: argoCD
+data:
+  backup: |
+    #!/bin/sh
+    set -eu
+
+    timestamp="$(date +%Y%m%d_%H%M%S)"
+    backup_file="${OUTPUT_DIR}/mysql_backup_${timestamp}.sql"
+    credentials_file="$(mktemp)"
+    trap 'rm -f "${credentials_file}"' EXIT
+    chmod 0600 "${credentials_file}"
+    printf '[client]\npassword=%s\n' "${MYSQL_ROOT_PASSWORD}" > "${credentials_file}"
+
+    mysqldump \
+      --defaults-extra-file="${credentials_file}" \
+      --user=root \
+      --host="${MYSQLHOST}" \
+      --all-databases \
+      --single-transaction \
+      --quick \
+      > "${backup_file}"
+    echo "Backup completed successfully: ${backup_file}"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,8 +50,11 @@ spec:
     spec:
       containers:
         - name: mysql-cli
-          image: harbor.andreybondarenko.com/library/mysql-cli:2026-08-09-150248
+          image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.2
           imagePullPolicy: IfNotPresent
+          command:
+            - sleep
+            - infinity
           resources:
             requests:
               cpu: 10m
@@ -35,3 +69,15 @@ spec:
                   key: password
             - name: MYSQLHOST
               value: "mysql.db.svc.cluster.local"
+            - name: OUTPUT_DIR
+              value: "/tmp"
+          volumeMounts:
+            - name: scripts
+              mountPath: /usr/local/bin/backup
+              subPath: backup
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: mysql-cli-scripts
+            defaultMode: 0555

@@ -1,4 +1,24 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-cli-scripts
+  namespace: db
+  labels:
+    app.kubernetes.io/name: postgres-cli
+    app.kubernetes.io/instance: postgres-cli
+    app.kubernetes.io/managed-by: argoCD
+data:
+  backup: |
+    #!/bin/sh
+    set -eu
+
+    timestamp="$(date +%Y%m%d_%H%M%S)"
+    backup_file="${OUTPUT_DIR}/postgres_backup_${timestamp}.sql"
+
+    pg_dumpall > "${backup_file}"
+    echo "Backup completed successfully: ${backup_file}"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,8 +39,11 @@ spec:
     spec:
       containers:
         - name: postgres-cli
-          image: harbor.andreybondarenko.com/library/postgres-cli:2026-08-09-150248
+          image: harbor.andreybondarenko.com/dockerhub/postgres:18
           imagePullPolicy: IfNotPresent
+          command:
+            - sleep
+            - infinity
           resources:
             requests:
               cpu: 10m
@@ -46,7 +69,15 @@ spec:
           volumeMounts:
             - name: data-export
               mountPath: "/data"
+            - name: scripts
+              mountPath: /usr/local/bin/backup
+              subPath: backup
+              readOnly: true
       volumes:
         - name: data-export
           persistentVolumeClaim:
             claimName: data-postgres-postgresql-0
+        - name: scripts
+          configMap:
+            name: postgres-cli-scripts
+            defaultMode: 0555
