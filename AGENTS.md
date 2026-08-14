@@ -31,11 +31,18 @@
 - This repository is a GitOps-based Kubernetes home-lab. Prefer inspecting the app-specific manifest in its folder and the matching Argo CD application manifest before suggesting changes.
 - Keep changes minimal, reversible, and consistent with the surrounding YAML, docs, and naming conventions.
 - When troubleshooting a deployment, inspect the manifest, related ConfigMaps/Secrets, persistent volumes, and pod logs/events before proposing a fix.
+- Whenever work leaves uncommitted repository changes, include a suggested commit
+  message in the final response by default. Base it only on the uncommitted diff,
+  use a concise imperative subject, and add a short body for multiple material
+  changes. Do not suggest one for a clean worktree, and never stage, commit, or push.
 
 ## MemPalace and MCP workflow
 - MemPalace is the preferred durable knowledge store for repo-related context, imported notes, and project snapshots.
 - Prefer reading and writing through the MemPalace pod under `/data/.mempalace`, `/data/imports`, and `/data/projects` when a task needs persistent memory.
 - MemPalace exposes an MCP server; use it when a workflow benefits from structured knowledge retrieval or long-lived context.
+- After completing a large or important repository change, checkpoint a concise durable summary to MemPalace by default, preferably in structured project memory or under `/data/projects`.
+- Include the objective, major decisions, affected applications or manifests, validation performed, operational caveats, and remaining work. Never store credentials, secret values, tokens, raw secret manifests, transient logs, or verbose diffs.
+- Treat multi-component, architectural, security, operational, data, and deployment-behavior changes as important. Skip minor or purely mechanical edits; if MemPalace is unavailable, note it briefly and continue without blocking the handoff.
 
 ## Notes
 - Keep `kubectl`, `helm`, and `git` approvals scoped to verifiably read-only commands.
