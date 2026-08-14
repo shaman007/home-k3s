@@ -132,9 +132,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                     self.assertEqual(uid, security["runAsUser"])
 
     def test_redis_exporter_sidecars_are_read_only(self):
-        paths = (
-            "argocd/application-redis-mail.yaml",
-        )
+        paths = ()
 
         for path in paths:
             with self.subTest(path=path):

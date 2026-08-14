@@ -13,13 +13,13 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 data:
   redis.conf: |
-    servers = "redis.mail.svc.cluster.local:6379";
-    write_servers = "redis.mail.svc.cluster.local:6379";
+    servers = "valkey.mail.svc.cluster.local:6379";
+    write_servers = "valkey.mail.svc.cluster.local:6379";
   logging: |
     type = file;
     filename = "/var/log/mail.log"
   history: |
-    servers = "redis.mail.svc.cluster.local:6379";
+    servers = "valkey.mail.svc.cluster.local:6379";
     #write_servers = "redis.mail.svc.cluster.local:6379";
     #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
     key_prefix = "rs_history"; # Default key name
@@ -40,8 +40,8 @@ data:
     action = "soft reject"; # default greylisted action
     ipv4_mask = 19; # Mask bits for ipv4
     ipv6_mask = 64; # Mask bits for ipv6
-    servers = "redis.mail.svc.cluster.local:6379";
-    write_servers = "redis.mail.svc.cluster.local:6379";
+    servers = "valkey.mail.svc.cluster.local:6379";
+    write_servers = "valkey.mail.svc.cluster.local:6379";
   greylist_whitelist_domains: |
     # Greylist-only whitelist. Keep this list intentionally small.
     # Local mail domains managed by Postfix mydestination.
@@ -54,8 +54,8 @@ data:
   neural: |
     #servers = 127.0.0.1:6379; # Redis server to store learning data and ANN
     enabled = true
-    servers = "redis.mail.svc.cluster.local:6379";
-    write_servers = "redis.mail.svc.cluster.local:6379";
+    servers = "valkey.mail.svc.cluster.local:6379";
+    write_servers = "valkey.mail.svc.cluster.local:6379";
     #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
     train {
       max_trains = 1k; # Number of trains per epoch
@@ -81,8 +81,8 @@ data:
     #per_user = true; # Enable per user classifier
     min_tokens = 11;
     backend = "redis";
-    servers = "redis.mail.svc.cluster.local:6379";
-    write_servers = "redis.mail.svc.cluster.local:6379";
+    servers = "valkey.mail.svc.cluster.local:6379";
+    write_servers = "valkey.mail.svc.cluster.local:6379";
     #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
     min_learns = 10;
 

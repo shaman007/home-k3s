@@ -34,9 +34,7 @@ EXPECTED_HELM_IMAGES = {
     },
 }
 
-REDIS_APPLICATIONS = {
-    "application-redis-mail.yaml",
-}
+REDIS_APPLICATIONS = set()
 
 
 def nested_value(values: dict, path: tuple[str, ...]):

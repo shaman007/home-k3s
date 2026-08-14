@@ -1,0 +1,124 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels:
+    app: valkey
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: mail-valkey
+spec:
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+    - name: redis-exporter
+      port: 9121
+      targetPort: redis-exporter
+  selector:
+    app: valkey
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: valkey
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  labels: &labels
+    app: valkey
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: mail-valkey
+spec:
+  serviceName: valkey
+  replicas: 1
+  selector:
+    matchLabels:
+      app: valkey
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      priorityClassName: homelab-essential
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: wait-for-redis-shutdown
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          command:
+            - sh
+            - -ec
+            - |
+              while nc -z -w 1 redis.mail.svc.cluster.local 6379; do
+                echo "Waiting for the old Redis server to stop"
+                sleep 2
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 64Mi
+      containers:
+        - name: valkey
+          image: harbor.andreybondarenko.com/dockerhub/valkey/valkey:9
+          imagePullPolicy: IfNotPresent
+          args: ["--appendonly", "yes", "--save", "60", "1"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe: &probe
+            exec:
+              command: [valkey-cli, ping]
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe: *probe
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          securityContext: &security
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 40m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+        - name: redis-exporter
+          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.89.0
+          env:
+            - name: REDIS_ADDR
+              value: redis://localhost:6379
+          ports:
+            - name: redis-exporter
+              containerPort: 9121
+          securityContext: *security
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redis-redis-0

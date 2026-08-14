@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-retired
+  namespace: mail
+data:
+  replacement: valkey.mail.svc.cluster.local

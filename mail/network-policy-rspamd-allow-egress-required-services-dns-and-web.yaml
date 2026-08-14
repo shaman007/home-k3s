@@ -32,7 +32,7 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Redis in mail namespace (history/bayes/greylist)
+    # Valkey in mail namespace (history/bayes/greylist)
     - to:
         - namespaceSelector:
             matchLabels:
