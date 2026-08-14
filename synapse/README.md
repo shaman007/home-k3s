@@ -6,7 +6,7 @@ Managed by ArgoCD.
 
 Synapse metrics are enabled in [synapse-configmap.yaml](synapse-configmap.yaml) and exposed through [service-metrics.yaml](service-metrics.yaml).
 
-Prometheus scrapes this endpoint through the existing `conduit` job in [`metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml`](../metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml).
+Prometheus scrapes this endpoint through the `element` job in [`metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml`](../metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml).
 
 ## Dashboard
 
