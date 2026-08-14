@@ -21,7 +21,6 @@ spec:
     - https://github.com/shaman007/home-k3s.git
     - https://helm.cilium.io
     - https://helm.ngc.nvidia.com/nvidia
-    - https://helm.releases.hashicorp.com
     - https://kubernetes-sigs.github.io/metrics-server/
     - https://metallb.github.io/metallb
     - https://stakater.github.io/stakater-charts
