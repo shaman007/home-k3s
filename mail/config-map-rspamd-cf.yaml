@@ -58,16 +58,29 @@ data:
     write_servers = "valkey.mail.svc.cluster.local:6379";
     #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
     train {
-      max_trains = 1k; # Number of trains per epoch
-      max_usages = 20; # Number of learn iterations while ANN data is valid
-      learning_rate = 0.01; # Rate of learning (Torch only)
-      max_iterations = 25; # Maximum iterations of learning (Torch only)
+      # This instance receives too little mail to fill the upstream 1k/class
+      # default: historical pools never produced a usable ANN.
+      max_trains = 200;
+      max_usages = 10;
+      learning_rate = 0.01;
+      max_iterations = 25;
     }
     timeout = 20; # Increase redis timeout
     # Legacy support
     .include(try=true,priority=5) "${DBDIR}/dynamic/fann_redis.conf"
     .include(try=true,priority=1,duplicate=merge) "$LOCAL_CONFDIR/local.d/fann_redis.conf"
     .include(try=true,priority=10) "$LOCAL_CONFDIR/override.d/fann_redis.conf"
+  neural_group: |
+    symbols = {
+      "NEURAL_SPAM" {
+        weight = 3.0;
+        description = "Neural network spam";
+      }
+      "NEURAL_HAM" {
+        weight = -3.0;
+        description = "Neural network ham";
+      }
+    }
   statistics: |
     classifier "bayes" {
      tokenizer {
@@ -84,7 +97,9 @@ data:
     servers = "valkey.mail.svc.cluster.local:6379";
     write_servers = "valkey.mail.svc.cluster.local:6379";
     #.include(try=true,priority=1) "/etc/rspamd/local.d/redis.conf"
-    min_learns = 10;
+    # Keep the classifier active with the current 193 spam / 166 ham corpus,
+    # while avoiding decisions based on a tiny initial sample.
+    min_learns = 100;
 
     statfile {
       symbol = "BAYES_HAM";
@@ -165,7 +180,7 @@ data:
         max_size = 20000000;
         symbol = "CLAM_VIRUS";
         type = "clamav";
-        log_clean = true;
+        log_clean = false;
         servers = "clamav.clamav.svc.cluster.local:3200";
       }
   surbl: |
@@ -175,6 +190,8 @@ data:
     # Keep Rspamd 4 content-derived URLs explicit so PDFs and other computed
     # parts participate in SURBL, phishing, and fuzzy-driven reputation checks.
     include_content_urls = true;
+    # Must exceed the longest symbol-cache timeout (currently 10 seconds).
+    task_timeout = 15s;
     dns {
       nameserver = ["10.43.0.53"];
     }

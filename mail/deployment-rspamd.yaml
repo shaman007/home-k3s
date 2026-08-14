@@ -82,6 +82,12 @@ spec:
             items:
               - key: neural
                 path: neural.conf
+        - name: neural-group-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: neural_group
+                path: neural_group.conf
         - name: statistics-cf
           configMap:
             name: rspamd-cf
@@ -187,6 +193,9 @@ spec:
             - name: neural-cf
               mountPath: /etc/rspamd/local.d/neural.conf
               subPath: neural.conf
+            - name: neural-group-cf
+              mountPath: /etc/rspamd/local.d/neural_group.conf
+              subPath: neural_group.conf
             - name: antivirus-cf
               mountPath: /etc/rspamd/local.d/antivirus.conf
               subPath: antivirus.conf
