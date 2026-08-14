@@ -17,9 +17,6 @@ BOOTSTRAP_IMAGE_FILES = {
 }
 
 EXPECTED_HELM_IMAGES = {
-    "application-elastic-system.yaml": {
-        ("image", "repository"): f"{HARBOR}/elastic/eck/eck-operator",
-    },
     "application-external-secrets.yaml": {
         ("global", "repository"): f"{HARBOR}/github/external-secrets/external-secrets",
     },

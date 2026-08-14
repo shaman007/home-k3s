@@ -35,9 +35,7 @@ PROJECT_STORAGE = {
 
 PROJECT_OBSERVABILITY = {
     "alloy", "connectivity-exporter-core",
-    "connectivity-exporter-network-policy", "elastic-stack-custom",
-    "elastic-stack-network-policy", "elastic-system",
-    "elastic-system-network-policy", "external-access-analytics",
+    "connectivity-exporter-network-policy", "external-access-analytics",
     "finance-ticker", "grafana", "kube-node-exporter", "kube-state-metrics",
     "kubernetes-prometheus", "logs-check", "loki", "loki-external-secrets",
     "loki-network-policy", "monitoring-ingress", "monitoring-network-policy",
@@ -60,8 +58,7 @@ SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",
-    "convertx", "coredns-custom", "elastic-stack-network-policy",
-    "elastic-system-network-policy", "external-access-analytics",
+    "convertx", "coredns-custom", "external-access-analytics",
     "external-secrets-network-policy", "finance-ticker", "harbor-network-policy",
     "headlamp", "hister", "homeassistant", "image-builder", "kube-node-exporter",
     "kube-state-metrics", "logs-check", "loki-network-policy", "metallb-config",
