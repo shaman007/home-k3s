@@ -12,7 +12,7 @@ spec:
     targetRevision: main
     directory:
       recurse: false
-      include: "{ingress-*.yaml,recurring-jobs-proposed.yaml}"
+      include: "{ingress-*.yaml,network-policy-*.yaml,recurring-jobs-proposed.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: longhorn-system
