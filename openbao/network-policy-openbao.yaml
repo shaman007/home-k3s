@@ -71,6 +71,11 @@ spec:
         - {protocol: TCP, port: 443}
         - {protocol: TCP, port: 80}
     - to:
+        - ipBlock:
+            cidr: 81.19.4.105/32
+      ports:
+        - {protocol: TCP, port: 443}
+    - to:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: keycloak

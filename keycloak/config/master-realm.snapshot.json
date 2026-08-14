@@ -778,6 +778,83 @@
       "adminUrl": "",
       "alwaysDisplayInConsole": false,
       "attributes": {
+        "backchannel.logout.session.required": "true",
+        "display.on.consent.screen": "false",
+        "frontchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "https://openbao.w386.k8s.my.lan/",
+        "use.refresh.tokens": "true"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "authorizationServicesEnabled": false,
+      "baseUrl": "https://openbao.w386.k8s.my.lan",
+      "bearerOnly": false,
+      "clientAuthenticatorType": "client-secret",
+      "clientId": "openbao",
+      "consentRequired": false,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "description": "OpenBao web UI and CLI OIDC login",
+      "directAccessGrantsEnabled": false,
+      "enabled": true,
+      "frontchannelLogout": true,
+      "fullScopeAllowed": true,
+      "implicitFlowEnabled": false,
+      "name": "openbao",
+      "nodeReRegistrationTimeout": -1,
+      "notBefore": 0,
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "organization",
+        "microprofile-jwt"
+      ],
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "config": {
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "introspection.token.claim": "true",
+            "lightweight.claim": "false",
+            "multivalued": "true",
+            "userinfo.token.claim": "true"
+          },
+          "consentRequired": false,
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper"
+        }
+      ],
+      "publicClient": false,
+      "redirectUris": [
+        "https://openbao.w386.k8s.my.lan/oidc/oidc/callback",
+        "https://openbao.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+        "http://127.0.0.1:8250/oidc/callback",
+        "http://localhost:8250/oidc/callback"
+      ],
+      "rootUrl": "https://openbao.w386.k8s.my.lan",
+      "serviceAccountsEnabled": false,
+      "standardFlowEnabled": true,
+      "surrogateAuthRequired": false,
+      "webOrigins": [
+        "https://openbao.w386.k8s.my.lan",
+        "http://127.0.0.1:8250",
+        "http://localhost:8250"
+      ]
+    },
+    {
+      "adminUrl": "",
+      "alwaysDisplayInConsole": false,
+      "attributes": {
         "access.token.header.type.rfc9068": "false",
         "acr.loa.map": "{}",
         "backchannel.logout.revoke.offline.tokens": "false",

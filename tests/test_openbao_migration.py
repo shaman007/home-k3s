@@ -139,6 +139,27 @@ class OpenBaoMigrationTest(unittest.TestCase):
         }
         self.assertIn("openbao", namespaces)
 
+    def test_openbao_can_reach_external_keycloak_discovery(self):
+        policies = list(
+            yaml.safe_load_all(
+                (ROOT / "openbao/network-policy-openbao.yaml").read_text(
+                    encoding="utf-8"
+                )
+            )
+        )
+        egress = next(
+            policy
+            for policy in policies
+            if policy["metadata"]["name"] == "openbao-allow-egress"
+        )
+        cidrs = {
+            target["ipBlock"]["cidr"]
+            for rule in egress["spec"]["egress"]
+            for target in rule.get("to", [])
+            if "ipBlock" in target
+        }
+        self.assertIn("81.19.4.105/32", cidrs)
+
     def test_production_consumers_remain_on_vault_during_rehearsal(self):
         secret_stores = [
             path

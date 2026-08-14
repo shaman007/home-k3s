@@ -184,12 +184,20 @@ data:
           - mysql-nextcloud.nextcloud.svc.cluster.local:9104
 
       - job_name: 'kubernetes-longhorn-manager'
+        scrape_interval: 30s
+        scrape_timeout: 20s
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: longhorn-system
           - source_labels: [__meta_kubernetes_pod_label_app]
             action: keep
             regex: longhorn-manager
+          - source_labels: [__meta_kubernetes_pod_phase]
+            action: keep
+            regex: Running
           - source_labels: [__address__]
             action: replace
             target_label: __address__

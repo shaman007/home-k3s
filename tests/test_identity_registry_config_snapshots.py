@@ -54,6 +54,7 @@ class IdentityRegistryConfigSnapshotsTest(unittest.TestCase):
                 "karakeep",
                 "mastodon",
                 "nextcloud",
+                "openbao",
                 "vault",
                 "wordpress",
             },
@@ -62,6 +63,13 @@ class IdentityRegistryConfigSnapshotsTest(unittest.TestCase):
         for client in snapshot["clients"]:
             self.assertNotIn("secret", client)
             self.assertNotIn("registrationAccessToken", client)
+        openbao = next(
+            client for client in snapshot["clients"] if client["clientId"] == "openbao"
+        )
+        self.assertIn(
+            "https://openbao.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+            openbao["redirectUris"],
+        )
         self.assertNotIn("password", snapshot["realm"].get("smtpServer", {}))
 
 
