@@ -60,7 +60,7 @@ spec:
                 secretKeyRef: {name: mastodon-redis, key: redis-password}
           ports: [{name: redis-exporter, containerPort: 9121}]
           securityContext: *security
-          resources: {requests: {cpu: 10m, memory: 24Mi}, limits: {memory: 64Mi}}
+          resources: {requests: {cpu: 10m, memory: 64Mi}, limits: {memory: 64Mi}}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], storageClassName: longhorn, resources: {requests: {storage: 1Gi}}}
