@@ -6,13 +6,13 @@
 
 ## MongoDB to FerretDB migration
 
-FerretDB 2.7.0 and PostgreSQL 17 with the DocumentDB extension are deployed in
-parallel with MongoDB. The `mongodb` Service continues to select the original
-MongoDB StatefulSet until the migration is validated.
+FerretDB 2.7.0 and PostgreSQL 17 with the DocumentDB extension are the active
+database. The original MongoDB StatefulSet and `mongo-lh` PVC are temporarily
+retained as a rollback source.
 
-Before syncing these manifests, add `FERRETDB_USERNAME` and
-`FERRETDB_PASSWORD` to the existing `kv/spotify` OpenBao secret. Use a username
-that is valid as a PostgreSQL role name and a URL-safe password.
+`FERRETDB_USERNAME` and `FERRETDB_PASSWORD` are stored in the existing
+`kv/spotify` OpenBao secret. Use a username that is valid as a PostgreSQL role
+name and a URL-safe password.
 
 Migration procedure:
 
@@ -33,3 +33,8 @@ Migration procedure:
 
 Do not run the migration while the server is writing to MongoDB. Re-running the
 Job replaces the target collections because `mongorestore --drop` is used.
+
+Your Spotify 1.20.0 logs its database connection URI during startup. Treat
+server logs as sensitive and always redact the URI user-info section when
+sharing diagnostic output. Rotate the FerretDB role password if an unredacted
+startup log is disclosed.

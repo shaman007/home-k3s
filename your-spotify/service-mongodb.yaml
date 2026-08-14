@@ -6,18 +6,15 @@ metadata:
   namespace: spotify
   labels:
     name: mongodb
-    app: mongodb
-    app.kubernetes.io/name: mongodb
-    app.kubernetes.io/instance: mongodb
-    app.kubernetes.io/version: "7"
+    app: ferretdb
+    app.kubernetes.io/name: ferretdb
+    app.kubernetes.io/instance: your-spotify
+    app.kubernetes.io/version: "2.7.0"
     app.kubernetes.io/managed-by: argoCD
 spec:
   ports:
     - name: mongodb
       port: 27017
       protocol: TCP
-    - name: metrics
-      port: 9216
-      protocol: TCP
   selector:
-    app: mongodb
+    app: ferretdb

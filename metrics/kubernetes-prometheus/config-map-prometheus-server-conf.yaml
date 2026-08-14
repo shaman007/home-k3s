@@ -305,13 +305,13 @@ data:
         - targets:
           - valkey-dawarich.dawarich.svc.cluster.local:9121
 
-      - job_name: mongodb
+      - job_name: ferretdb
         scrape_interval: 45s
         scrape_timeout:  30s
-        metrics_path: "/metrics"
+        metrics_path: "/debug/metrics"
         static_configs:
         - targets:
-          - mongodb.spotify.svc.cluster.local:9216
+          - ferretdb.spotify.svc.cluster.local:8088
 
       - job_name: external
         scrape_interval: 45s

@@ -6,7 +6,7 @@
 - Any read-only `kubectl` command that inspects cluster state without mutating resources.
 - Any read-only `helm` command that inspects releases, charts, values, rendered manifests, or history without mutating cluster state.
 - Any read-only `git` command that inspects repository state without changing the worktree, index, refs, stash, remotes, or commits.
-- Common approved `kubectl` examples: `get`, `describe`, `logs`, `top`, `events`, `explain`, `api-resources`, `api-versions`, `cluster-info`, `version`, `auth can-i`, `config get-contexts`, `config current-context`, `config view`.
+- Common approved `kubectl` examples: `get`, `describe`, `logs`, `top`, `events`, `explain`, `exec` for diagnostic/read-only commands, `api-resources`, `api-versions`, `cluster-info`, `version`, `auth can-i`, `config get-contexts`, `config current-context`, `config view`.
 - Common approved `helm` examples: `list`, `status`, `history`, `get`, `show`, `search`, `template`, `version`, `repo list`.
 - Common approved `git` examples: `status`, `diff`, `log`, `show`, `grep`, `rev-parse`, `branch --show-current`, `branch --list`, `tag --list`, `ls-files`, `blame`, `remote -v`, `reflog`, `config --get`.
 - `docker version`

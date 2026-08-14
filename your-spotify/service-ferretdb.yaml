@@ -17,3 +17,6 @@ spec:
     - name: mongodb
       port: 27017
       targetPort: mongodb
+    - name: metrics
+      port: 8088
+      targetPort: debug
