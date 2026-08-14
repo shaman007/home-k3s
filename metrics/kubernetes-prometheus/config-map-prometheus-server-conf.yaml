@@ -254,13 +254,13 @@ data:
         - targets:
           - redis.mail.svc.cluster.local:9121
 
-      - job_name: redis-nextcloud
+      - job_name: valkey-nextcloud
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - redis.nextcloud.svc.cluster.local:9121
+          - valkey.nextcloud.svc.cluster.local:9121
 
       - job_name: traefik
         scrape_interval: 45s
@@ -281,21 +281,21 @@ data:
           regex: (.+);(.+)
           replacement: $1:$2
 
-      - job_name: redis-mastodon
+      - job_name: valkey-mastodon
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - redis.mastodon.svc.cluster.local:9121
+          - valkey.mastodon.svc.cluster.local:9121
 
-      - job_name: redis-dawarich
+      - job_name: valkey-dawarich
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"
         static_configs:
         - targets:
-          - redis-dawarich.dawarich.svc.cluster.local:9121
+          - valkey-dawarich.dawarich.svc.cluster.local:9121
 
       - job_name: mongodb
         scrape_interval: 45s

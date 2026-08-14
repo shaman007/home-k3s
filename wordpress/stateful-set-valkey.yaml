@@ -1,0 +1,121 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+  namespace: wordpress
+  labels:
+    app: valkey
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: wordpress-valkey
+spec:
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+    - name: redis-exporter
+      port: 9121
+      targetPort: redis-exporter
+  selector:
+    app: valkey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey-headless
+  namespace: wordpress
+spec:
+  clusterIP: None
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+  selector:
+    app: valkey
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: valkey
+  namespace: wordpress
+  labels: &labels
+    app: valkey
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/instance: wordpress-valkey
+spec:
+  serviceName: valkey-headless
+  replicas: 1
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  selector:
+    matchLabels:
+      app: valkey
+  template:
+    metadata:
+      labels: *labels
+    spec:
+      priorityClassName: homelab-essential
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: valkey
+          image: harbor.andreybondarenko.com/dockerhub/valkey/valkey:9
+          imagePullPolicy: IfNotPresent
+          args: ["--appendonly", "yes", "--save", "60", "1"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe: &probe
+            exec:
+              command: ["valkey-cli", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe: *probe
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          securityContext: &securityContext
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 40m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+        - name: redis-exporter
+          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.89.0
+          env:
+            - name: REDIS_ADDR
+              value: redis://localhost:6379
+          ports:
+            - name: redis-exporter
+              containerPort: 9121
+          securityContext:
+            <<: *securityContext
+          resources:
+            requests:
+              cpu: 10m
+              memory: 24Mi
+            limits:
+              memory: 64Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: longhorn
+        resources:
+          requests:
+            storage: 1Gi

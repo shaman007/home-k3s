@@ -68,7 +68,7 @@ spec:
             - name: RAILS_ENV
               value: development
             - name: REDIS_URL
-              value: redis://redis-dawarich.dawarich.svc.cluster.local:6379
+              value: redis://valkey-dawarich.dawarich.svc.cluster.local:6379
             - name: DATABASE_HOST
               value: dawarich-postgres.dawarich.svc.cluster.local
             - name: DATABASE_PORT
@@ -169,7 +169,7 @@ spec:
             - name: STORE_GEODATA
               value: "true"
             - name: REDIS_URL
-              value: redis://redis-dawarich.dawarich.svc.cluster.local:6379
+              value: redis://valkey-dawarich.dawarich.svc.cluster.local:6379
             - name: DATABASE_HOST
               value: dawarich-postgres.dawarich.svc.cluster.local
             - name: DATABASE_PORT

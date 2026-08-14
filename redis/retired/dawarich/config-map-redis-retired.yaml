@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-retired
+  namespace: dawarich
+data:
+  replacement: valkey-dawarich.dawarich.svc.cluster.local

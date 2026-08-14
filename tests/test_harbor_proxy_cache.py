@@ -35,11 +35,7 @@ EXPECTED_HELM_IMAGES = {
 }
 
 REDIS_APPLICATIONS = {
-    "application-redis.yaml",
-    "application-redis-dawarich.yaml",
     "application-redis-mail.yaml",
-    "application-redis-mastodon.yaml",
-    "application-redis-wordpress.yaml",
 }
 
 

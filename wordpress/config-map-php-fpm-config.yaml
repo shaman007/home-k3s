@@ -140,7 +140,7 @@ data:
     [browscap]
     [Session]
     session.save_handler = redis
-    session.save_path = "tcp://redis.wordpress.svc.cluster.local:6379"
+    session.save_path = "tcp://valkey.wordpress.svc.cluster.local:6379"
     [Assertion]
     zend.assertions = -1
     [COM]

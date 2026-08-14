@@ -19,7 +19,7 @@ spec:
       ports:
         - protocol: TCP
           port: 3306
-    # Redis deployed in wordpress namespace (service: redis.wordpress.svc.cluster.local)
+    # Valkey deployed in wordpress namespace (service: valkey.wordpress.svc.cluster.local)
     - to:
         - namespaceSelector:
             matchLabels:

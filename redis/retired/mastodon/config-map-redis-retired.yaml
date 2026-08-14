@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-retired
+  namespace: mastodon
+data:
+  replacement: valkey.mastodon.svc.cluster.local

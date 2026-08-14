@@ -133,11 +133,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
 
     def test_redis_exporter_sidecars_are_read_only(self):
         paths = (
-            "argocd/application-redis.yaml",
-            "argocd/application-redis-dawarich.yaml",
             "argocd/application-redis-mail.yaml",
-            "argocd/application-redis-mastodon.yaml",
-            "argocd/application-redis-wordpress.yaml",
         )
 
         for path in paths:

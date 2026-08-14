@@ -181,7 +181,7 @@ postgresql:
     database: mastodon_production
 
 redis:
-  hostname: redis.mastodon.svc.cluster.local
+  hostname: valkey.mastodon.svc.cluster.local
   port: 6379
   existingSecret: mastodon-redis
   existingSecretKeys:
