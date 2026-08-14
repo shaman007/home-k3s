@@ -4,6 +4,8 @@ kind: Role
 metadata:
   name: vault-pki-renewer
   namespace: openbao
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 rules:
   - apiGroups: [""]
     resources: ["secrets"]

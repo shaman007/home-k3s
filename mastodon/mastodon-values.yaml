@@ -188,7 +188,7 @@ redis:
     password: redis-password
 
 elasticsearch:
-  enabled: false
+  enabled: true
   hostname: opensearch.opensearch.svc.cluster.local
   port: 9200
   tls: false

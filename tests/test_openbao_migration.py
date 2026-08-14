@@ -64,6 +64,20 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertIn('"openbao" "openbao-server-tls"', renewer)
         self.assertNotIn("openbao.w386.k8s.my.lan", script)
 
+    def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
+        for path in (
+            "openbao/role-vault-pki-renewer.yaml",
+            "openbao/role-binding-vault-pki-renewer.yaml",
+        ):
+            with self.subTest(path=path):
+                resource = load_yaml(path)
+                self.assertEqual(
+                    "-2",
+                    resource["metadata"]["annotations"][
+                        "argocd.argoproj.io/sync-wave"
+                    ],
+                )
+
     def test_production_consumers_remain_on_vault_during_rehearsal(self):
         secret_stores = [
             path

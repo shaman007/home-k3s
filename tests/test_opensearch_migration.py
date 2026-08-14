@@ -31,6 +31,7 @@ class OpenSearchMigrationTest(unittest.TestCase):
         self.assertEqual(
             search["hostname"], "opensearch.opensearch.svc.cluster.local"
         )
+        self.assertTrue(search["enabled"])
         self.assertFalse(search["tls"])
         self.assertNotIn("existingSecret", search)
         self.assertNotIn("username", search)
