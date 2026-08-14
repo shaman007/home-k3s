@@ -14,7 +14,7 @@ spec:
       releaseName: metrics-server
       values: |
         image:
-          repository: harbor.andreybondarenko.com/k8s/metrics-server/metrics-server
+          repository: registry.k8s.io/metrics-server/metrics-server
         apiService:
           create: true
           insecureSkipTLSVerify: true

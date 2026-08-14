@@ -13,7 +13,7 @@ spec:
     helm:
       values: |
         image:
-          repository: harbor.andreybondarenko.com/github/stakater/reloader
+          repository: ghcr.io/stakater/reloader
         reloader:
           autoReloadAll: false
           reloadStrategy: annotations

@@ -9,7 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 HARBOR = "harbor.andreybondarenko.com"
 
 BOOTSTRAP_IMAGE_FILES = {
+    Path("argocd/application-external-secrets.yaml"),
+    Path("argocd/application-gpu-operator.yaml"),
     Path("argocd/application-harbor.yaml"),
+    Path("argocd/application-metrics-server.yaml"),
+    Path("argocd/application-reloader.yaml"),
     Path("argocd/application-traefik.yaml"),
     Path("harbor/values.yaml"),
     Path("talos-gpu-worker-patch.yaml"),
@@ -18,13 +22,13 @@ BOOTSTRAP_IMAGE_FILES = {
 
 EXPECTED_HELM_IMAGES = {
     "application-external-secrets.yaml": {
-        ("global", "repository"): f"{HARBOR}/github/external-secrets/external-secrets",
+        ("global", "repository"): "ghcr.io/external-secrets/external-secrets",
     },
     "application-metrics-server.yaml": {
-        ("image", "repository"): f"{HARBOR}/k8s/metrics-server/metrics-server",
+        ("image", "repository"): "registry.k8s.io/metrics-server/metrics-server",
     },
     "application-reloader.yaml": {
-        ("image", "repository"): f"{HARBOR}/github/stakater/reloader",
+        ("image", "repository"): "ghcr.io/stakater/reloader",
     },
 }
 
@@ -49,7 +53,7 @@ class HarborProxyCacheTest(unittest.TestCase):
 
         for manifest in ROOT.rglob("*.yaml"):
             relative = manifest.relative_to(ROOT)
-            if relative.parts[0] in {"DEPRECATED", "tools"}:
+            if relative.parts[0] == "DEPRECATED":
                 continue
             for line_number, line in enumerate(
                 manifest.read_text(encoding="utf-8").splitlines(), start=1
@@ -62,7 +66,29 @@ class HarborProxyCacheTest(unittest.TestCase):
 
         self.assertEqual(violations, [])
 
-    def test_helm_managed_workloads_override_upstream_images(self):
+    def test_harbor_trivy_has_no_cpu_limit(self):
+        application = yaml.safe_load(
+            (ROOT / "argocd/application-harbor.yaml").read_text(encoding="utf-8")
+        )
+        values = yaml.safe_load(application["spec"]["source"]["helm"]["values"])
+
+        self.assertIsNone(values["trivy"]["resources"]["limits"]["cpu"])
+
+    def test_acme_solver_has_no_cpu_limit(self):
+        application = yaml.safe_load(
+            (ROOT / "argocd/application-cert-manager.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        values = yaml.safe_load(
+            application["spec"]["sources"][0]["helm"]["values"]
+        )
+
+        self.assertIn(
+            "--acme-http01-solver-resource-limits-cpu=0", values["extraArgs"]
+        )
+
+    def test_platform_helm_workloads_use_upstream_images(self):
         for application, expected in EXPECTED_HELM_IMAGES.items():
             values = helm_values(application)
             for path, image in expected.items():
