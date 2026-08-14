@@ -7,9 +7,7 @@ metadata:
   name: comfyui-default-deny
   namespace: comfyui
 spec:
-  podSelector:
-    matchLabels:
-      app: comfyui
+  podSelector: {}
   policyTypes:
   - Ingress
   - Egress

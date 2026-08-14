@@ -4,10 +4,7 @@ metadata:
   name: matrix-synapse-default-deny
   namespace: matrix
 spec:
-  podSelector:
-    matchLabels:
-      app: matrix
-      tier: backend
+  podSelector: {}
   policyTypes:
     - Ingress
     - Egress

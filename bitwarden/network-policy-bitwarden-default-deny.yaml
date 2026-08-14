@@ -6,9 +6,7 @@ metadata:
   name: bitwarden-default-deny
   namespace: bitwarden
 spec:
-  podSelector:
-    matchLabels:
-      service: bitwarden
+  podSelector: {}
   policyTypes:
     - Ingress
     - Egress

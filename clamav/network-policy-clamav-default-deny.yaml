@@ -5,9 +5,7 @@ metadata:
   name: clamav-default-deny
   namespace: clamav
 spec:
-  podSelector:
-    matchLabels:
-      app: clamav
+  podSelector: {}
   policyTypes:
     - Ingress
     - Egress

@@ -1,9 +1,8 @@
-# Network policy for Unifi poller in namespace unifi.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: unifi-poller-default-deny
-  namespace: unifi
+  name: mail-default-deny
+  namespace: mail
 spec:
   podSelector: {}
   policyTypes:

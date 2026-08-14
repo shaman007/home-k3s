@@ -7,9 +7,7 @@ metadata:
   name: nllb-default-deny
   namespace: nllb
 spec:
-  podSelector:
-    matchLabels:
-      app: nllb
+  podSelector: {}
   policyTypes:
   - Ingress
   - Egress

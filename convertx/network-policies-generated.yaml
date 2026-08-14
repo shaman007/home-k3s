@@ -7,9 +7,7 @@ metadata:
   name: convertx-default-deny
   namespace: convertx
 spec:
-  podSelector:
-    matchLabels:
-      app: convertx
+  podSelector: {}
   policyTypes:
   - Ingress
   - Egress

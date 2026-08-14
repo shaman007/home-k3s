@@ -4,10 +4,7 @@ metadata:
   name: podman-builder-default-deny
   namespace: image-builder
 spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: podman-builder
-      app.kubernetes.io/instance: podman-builder
+  podSelector: {}
   policyTypes:
     - Ingress
     - Egress

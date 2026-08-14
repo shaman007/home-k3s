@@ -119,7 +119,12 @@ def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str,
     policy_type = policy_spec["type"]
 
     if policy_type == "default-deny":
-        return base_policy(spec, "default-deny", ["Ingress", "Egress"])
+        policy = base_policy(spec, "default-deny", ["Ingress", "Egress"])
+        # A default-deny is a namespace safety net. Keep allow policies scoped
+        # to the workload selector, but isolate every pod in the namespace so
+        # newly added or temporarily unlabeled pods do not bypass policy.
+        policy["spec"]["podSelector"] = {}
+        return policy
 
     if policy_type == "dns-egress":
         policy = base_policy(spec, "allow-egress-dns", ["Egress"])
@@ -230,7 +235,13 @@ def process_catalog(path: Path, check: bool) -> int:
             return 1
         return 0
 
-    output_path.write_text(rendered, encoding="utf-8")
+    # Preserve the committed file's newline convention to avoid turning a
+    # one-policy change into a whole-file diff.
+    existing = output_path.read_bytes() if output_path.exists() else b""
+    if b"\r\n" in existing:
+        output_path.write_bytes(rendered.replace("\n", "\r\n").encode("utf-8"))
+    else:
+        output_path.write_text(rendered, encoding="utf-8")
     print(f"Wrote {output_path}")
     return 0
 
