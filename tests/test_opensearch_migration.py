@@ -33,7 +33,7 @@ class OpenSearchMigrationTest(unittest.TestCase):
         )
         self.assertTrue(search["enabled"])
         self.assertFalse(search["tls"])
-        self.assertNotIn("existingSecret", search)
+        self.assertEqual("elasticsearch-password", search["existingSecret"])
         self.assertNotIn("username", search)
 
     def test_opensearch_is_single_node_and_network_isolated(self):

@@ -192,6 +192,10 @@ elasticsearch:
   hostname: opensearch.opensearch.svc.cluster.local
   port: 9200
   tls: false
+  existingSecret: elasticsearch-password
+  existingSecretKeys:
+    username: username
+    password: password
 
 externalAuth:
   oidc:
