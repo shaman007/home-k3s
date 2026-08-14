@@ -38,6 +38,9 @@ metadata:
     app.kubernetes.io/part-of: mail
     app.kubernetes.io/managed-by: argo-cd
 data:
+  postfixadmin-apache.conf: |
+    ServerName postfixadmin.w386.k8s.my.lan
+    SetEnvIf X-Forwarded-Proto "^https$" HTTPS=on
   postfixadmin.ini: |
     display_errors = Off
     log_errors = On
@@ -285,6 +288,10 @@ spec:
             - name: configuration
               mountPath: /usr/local/etc/php/conf.d/postfixadmin.ini
               subPath: postfixadmin.ini
+              readOnly: true
+            - name: configuration
+              mountPath: /etc/apache2/conf-enabled/postfixadmin.conf
+              subPath: postfixadmin-apache.conf
               readOnly: true
       volumes:
         - name: configuration

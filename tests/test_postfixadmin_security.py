@@ -28,10 +28,12 @@ class PostfixAdminSecurityTest(unittest.TestCase):
 
         configuration = self.resources[("ConfigMap", "postfixadmin")]["data"]["config.local.php"]
         php_configuration = self.resources[("ConfigMap", "postfixadmin")]["data"]["postfixadmin.ini"]
+        apache_configuration = self.resources[("ConfigMap", "postfixadmin")]["data"]["postfixadmin-apache.conf"]
         self.assertIn("getenv('POSTFIXADMIN_DB_PASSWORD')", configuration)
         self.assertNotIn("database_password'] = 'postgres", configuration)
         self.assertIn("https://postfixadmin.w386.k8s.my.lan/", configuration)
         self.assertIn("display_errors = Off", php_configuration)
+        self.assertIn('SetEnvIf X-Forwarded-Proto "^https$" HTTPS=on', apache_configuration)
 
     def test_ingress_is_internal_and_lan_restricted(self):
         ingress = self.resources[("Ingress", "postfixadmin")]
