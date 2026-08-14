@@ -74,6 +74,9 @@ spec:
               kubernetes.io/metadata.name: nextcloud
         - namespaceSelector:
             matchLabels:
+              kubernetes.io/metadata.name: openbao
+        - namespaceSelector:
+            matchLabels:
               kubernetes.io/metadata.name: open-webui
         - namespaceSelector:
             matchLabels:

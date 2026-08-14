@@ -116,6 +116,29 @@ class OpenBaoMigrationTest(unittest.TestCase):
             {"namespace": "default", "serviceName": "kubernetes"}, service
         )
 
+    def test_traefik_can_reach_acme_solver_and_openbao(self):
+        solver_policy = load_yaml(
+            "openbao/network-policy-allow-cert-manager-http01-solver.yaml"
+        )
+        self.assertEqual(
+            {"acme.cert-manager.io/http01-solver": "true"},
+            solver_policy["spec"]["podSelector"]["matchLabels"],
+        )
+        self.assertEqual(
+            8089, solver_policy["spec"]["ingress"][0]["ports"][0]["port"]
+        )
+
+        traefik_policy = load_yaml(
+            "traefik/network-policy-traefik-allow-egress-ingress-namespaces.yaml"
+        )
+        namespaces = {
+            selector["namespaceSelector"]["matchLabels"][
+                "kubernetes.io/metadata.name"
+            ]
+            for selector in traefik_policy["spec"]["egress"][0]["to"]
+        }
+        self.assertIn("openbao", namespaces)
+
     def test_production_consumers_remain_on_vault_during_rehearsal(self):
         secret_stores = [
             path
