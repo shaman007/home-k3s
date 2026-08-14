@@ -260,26 +260,6 @@ volumePolicies:
       recurring-job-group.longhorn.io/backup-daily-retain30: enabled
     notes:
       - Volume was created from backup; keep restore semantics in mind before changing labels.
-  - namespace: elastic-stack
-    pvcName: elasticsearch-data-es-es-default-0
-    longhornVolume: pvc-77f4600c-6266-4fb3-be3c-be8d16bb8a88
-    workloadKinds:
-      - StatefulSet
-    fromBackup: false
-    restoreVolumeRecurringJob: ignored
-    currentRecurringJobs:
-      - c-p12632
-      - c-smg9hq
-    currentTasks:
-      - backup
-      - filesystem-trim
-    proposedRecurringJobGroups:
-      - trim-daily-b
-      - backup-daily-retain1
-    proposedLonghornVolumeLabels:
-      recurring-job-group.longhorn.io/trim-daily-b: enabled
-      recurring-job-group.longhorn.io/backup-daily-retain1: enabled
-    notes: []
   - namespace: harbor
     pvcName: data-harbor-redis-0
     longhornVolume: pvc-ea5c1612-3933-4232-8f0c-13e22c187e74
