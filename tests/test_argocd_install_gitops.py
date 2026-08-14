@@ -78,6 +78,11 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
             mastodon_custom_managers[0]["datasourceTemplate"], "docker"
         )
 
+    def test_renovate_ignores_deprecated_manifests(self):
+        config = json.loads(RENOVATE.read_text(encoding="utf-8"))
+
+        self.assertIn("DEPRECATED/**", config["ignorePaths"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,6 +9,7 @@
   },
   "gitAuthor": "Andrey Bondarenko <me@andreybondarenko.com>",
   "prHourlyLimit": 0,
+  "ignorePaths": ["DEPRECATED/**"],
   "argocd": {
     "managerFilePatterns": ["/^argocd\\/application-.*\\.ya?ml$/"]
   },
