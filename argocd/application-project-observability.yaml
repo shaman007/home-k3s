@@ -17,14 +17,9 @@ spec:
   sourceRepos:
     - https://github.com/shaman007/home-k3s.git
     - https://grafana.github.io/helm-charts
-    - https://helm.elastic.co
   destinations:
     - server: https://kubernetes.default.svc
       namespace: connectivity-exporter
-    - server: https://kubernetes.default.svc
-      namespace: elastic-stack
-    - server: https://kubernetes.default.svc
-      namespace: elastic-system
     - server: https://kubernetes.default.svc
       namespace: opensearch
     - server: https://kubernetes.default.svc

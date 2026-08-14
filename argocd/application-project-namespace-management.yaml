@@ -36,10 +36,6 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: default
     - server: https://kubernetes.default.svc
-      namespace: elastic-stack
-    - server: https://kubernetes.default.svc
-      namespace: elastic-system
-    - server: https://kubernetes.default.svc
       namespace: opensearch
     - server: https://kubernetes.default.svc
       namespace: external-secrets

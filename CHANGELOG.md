@@ -7,6 +7,8 @@
 - Repointed Mastodon at OpenSearch without copying its rebuildable search index.
 - Added network isolation and a staged search-index rebuild and rollback
   runbook.
+- Removed the retired Elasticsearch/ECK deployment and its Argo CD,
+  namespace, policy, quota, and access-control definitions after cutover.
 
 ## 2026-07-24 – Weekly Highlights
 

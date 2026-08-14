@@ -22,8 +22,6 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: cilium-secrets
     - server: https://kubernetes.default.svc
-      namespace: elastic-system
-    - server: https://kubernetes.default.svc
       namespace: external-secrets
     - server: https://kubernetes.default.svc
       namespace: gpu-operator
