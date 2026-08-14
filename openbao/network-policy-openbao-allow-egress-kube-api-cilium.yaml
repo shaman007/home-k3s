@@ -21,3 +21,24 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: openbao-pki-renewer-allow-egress-kube-api
+  namespace: openbao
+spec:
+  endpointSelector:
+    matchLabels:
+      io.cilium.k8s.policy.serviceaccount: vault-pki-renewer
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toServices:
+        - k8sService:
+            namespace: default
+            serviceName: kubernetes
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

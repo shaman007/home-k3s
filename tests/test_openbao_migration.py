@@ -111,17 +111,22 @@ class OpenBaoMigrationTest(unittest.TestCase):
         )
 
     def test_server_can_reach_kubernetes_service_registration_api(self):
-        policy = load_yaml(
-            "openbao/network-policy-openbao-allow-egress-kube-api-cilium.yaml"
+        policies = list(
+            yaml.safe_load_all(
+                (ROOT / "openbao/network-policy-openbao-allow-egress-kube-api-cilium.yaml")
+                .read_text(encoding="utf-8")
+            )
         )
-        self.assertEqual("CiliumNetworkPolicy", policy["kind"])
-        self.assertEqual(
-            ["kube-apiserver"], policy["spec"]["egress"][0]["toEntities"]
-        )
-        service = policy["spec"]["egress"][1]["toServices"][0]["k8sService"]
-        self.assertEqual(
-            {"namespace": "default", "serviceName": "kubernetes"}, service
-        )
+        self.assertEqual(2, len(policies))
+        for policy in policies:
+            self.assertEqual("CiliumNetworkPolicy", policy["kind"])
+            self.assertEqual(
+                ["kube-apiserver"], policy["spec"]["egress"][0]["toEntities"]
+            )
+            service = policy["spec"]["egress"][1]["toServices"][0]["k8sService"]
+            self.assertEqual(
+                {"namespace": "default", "serviceName": "kubernetes"}, service
+            )
 
     def test_traefik_can_reach_acme_solver_and_openbao(self):
         solver_policy = load_yaml(
