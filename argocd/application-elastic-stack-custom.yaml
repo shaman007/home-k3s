@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: elastic-stack-custom
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: observability
   source:

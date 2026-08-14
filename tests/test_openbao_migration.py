@@ -28,13 +28,11 @@ class OpenBaoMigrationTest(unittest.TestCase):
             "https://openbao-active.openbao.svc:8200",
             values["server"]["ha"]["apiAddr"],
         )
-        self.assertIn(
-            'leader_api_addr = "https://openbao-active.openbao.svc:8200"',
-            values["server"]["ha"]["raft"]["config"],
-        )
+        # OpenBao 2.6.1 blocks its initialization API while retry_join has no
+        # leader. The rehearsal initializes and restores node 0 first; the
+        # active-Service retry_join block is added back before node 1 joins.
         self.assertNotIn(
-            'leader_api_addr = "https://openbao-0.',
-            values["server"]["ha"]["raft"]["config"],
+            "retry_join", values["server"]["ha"]["raft"]["config"]
         )
         self.assertEqual(
             {"whenDeleted": "Retain", "whenScaled": "Retain"},

@@ -44,10 +44,12 @@ Initialize only the new OpenBao cluster, restore the candidate snapshot with
 the existing Vault Shamir key. Remove stale `vault-*` peers from the restored
 Raft configuration and join both `openbao-0` and `openbao-1`.
 
-Raft retry-join uses the `openbao-active` Service. Before initialization that
-Service has no active endpoint, which prevents the first node from attempting
-to join itself; after initialization it routes later replicas to the elected
-leader.
+OpenBao 2.6.1 does not serve its initialization API while `retry_join` is
+configured without a reachable leader. The rehearsal manifest therefore
+omits `retry_join` while `openbao-0` is initialized and restored. After the
+restored node is unsealed, add back a `retry_join` block targeting the
+`openbao-active` Service before allowing `openbao-1` to join. Never target a
+pod directly: the active Service routes later replicas to the elected leader.
 
 The rehearsal passes only when:
 
