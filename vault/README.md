@@ -15,10 +15,10 @@ Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-
 
 ## PKI Renewal
 
-The compatibility-named [`cron-job-vault-pki-renewer.yaml`](./cron-job-vault-pki-renewer.yaml)
-runs in the retained `vault` namespace but authenticates to OpenBao through the
+The compatibility-named [`cron-job-vault-pki-renewer.yaml`](../openbao/cron-job-vault-pki-renewer.yaml)
+runs in the `openbao` namespace and authenticates to OpenBao through the
 `vault-pki-renewer` Kubernetes auth role. Its policy permits only the dedicated
-Vault and OpenBao server-certificate issuance roles.
+OpenBao server-certificate issuance role.
 
 All renewal targets must be created before the job runs. The renewer has no Secret `create` or `list` permission: namespace Roles restrict it to `get`, `update`, and `patch` on these fixed names:
 

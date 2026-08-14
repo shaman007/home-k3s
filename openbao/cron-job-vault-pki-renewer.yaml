@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: vault-pki-renewer
-  namespace: vault
+  namespace: openbao
   labels:
     app.kubernetes.io/name: vault-pki-renewer
     app.kubernetes.io/instance: vault-pki-renewer
@@ -33,7 +33,7 @@ spec:
                 - name: VAULT_ADDR
                   value: "https://openbao-active.openbao.svc:8200"
                 - name: VAULT_CACERT
-                  value: /vault/tls/ca.crt
+                  value: /openbao/tls/ca.crt
                 - name: VAULT_ROLE
                   value: vault-pki-renewer
                 - name: CERT_TTL
@@ -42,7 +42,7 @@ spec:
                   value: "604800"
               volumeMounts:
                 - name: vault-ca
-                  mountPath: /vault/tls
+                  mountPath: /openbao/tls
                   readOnly: true
                 - name: vault-jwt
                   mountPath: /var/run/secrets/vault
@@ -168,26 +168,6 @@ spec:
                     kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
                   }
 
-                  if secret_needs_renewal "vault" "vault-server-tls"; then
-                    vault_server_alt_names="vault,vault.vault,vault.vault.svc.cluster.local,vault-active,vault-active.vault,vault-active.vault.svc,vault-active.vault.svc.cluster.local,*.vault-internal,*.vault-internal.vault,*.vault-internal.vault.svc,*.vault-internal.vault.svc.cluster.local"
-                    issue_cert \
-                      "vault-server" \
-                      "vault.vault.svc" \
-                      /tmp/vault-server.crt \
-                      /tmp/vault-server.key \
-                      "$vault_server_alt_names" \
-                      /tmp/vault-server-ca.crt
-                    patch_secret \
-                      "vault" \
-                      "vault-server-tls" \
-                      /tmp/vault-server.crt \
-                      /tmp/vault-server.key \
-                      /tmp/vault-server-ca.crt
-                    echo "Rotated Vault API and Raft TLS secret"
-                  else
-                    echo "Vault API and Raft TLS secret still valid beyond renewal window"
-                  fi
-
                   if secret_needs_renewal "openbao" "openbao-server-tls"; then
                     openbao_server_alt_names="openbao,openbao.openbao,openbao.openbao.svc.cluster.local,openbao-active,openbao-active.openbao,openbao-active.openbao.svc,openbao-active.openbao.svc.cluster.local,*.openbao-internal,*.openbao-internal.openbao,*.openbao-internal.openbao.svc,*.openbao-internal.openbao.svc.cluster.local"
                     issue_cert \
@@ -210,7 +190,7 @@ spec:
           volumes:
             - name: vault-ca
               secret:
-                secretName: vault-server-tls
+                secretName: openbao-server-tls
                 items:
                   - key: ca.crt
                     path: ca.crt

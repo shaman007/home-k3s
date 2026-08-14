@@ -3,8 +3,8 @@
 The production cutover to OpenBao 2.6.1 completed on 2026-08-14. OpenBao is
 authoritative; application SecretStores, cert-manager ACME, Prometheus, OIDC,
 and the PKI renewal job all use OpenBao. The retired Vault Helm application
-and external runtime resources are removed, while both original Vault PVCs
-are retained for rollback.
+and external runtime resources are removed. The final snapshots were copied to
+offline storage before the Vault namespace and its PVCs were deleted.
 
 ## Compatibility gate
 

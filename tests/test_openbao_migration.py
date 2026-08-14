@@ -63,7 +63,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         policy = (ROOT / "vault/policy-vault-pki-renewer.hcl").read_text(
             encoding="utf-8"
         )
-        renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
+        renewer = (ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text(
             encoding="utf-8"
         )
 

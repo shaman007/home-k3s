@@ -47,8 +47,6 @@ spec:
       namespace: opensearch
     - server: https://kubernetes.default.svc
       namespace: traefik
-    - server: https://kubernetes.default.svc
-      namespace: vault
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace

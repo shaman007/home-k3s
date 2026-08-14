@@ -25,8 +25,7 @@ PROJECT_PLATFORM = {
     "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
     "openbao", "openbao-custom", "openbao-network-policy", "reloader", "traefik",
-    "traefik-acme-exporter", "traefik-network-policy", "vault-custom",
-    "vault-network-policy",
+    "traefik-acme-exporter", "traefik-network-policy",
 }
 
 PROJECT_STORAGE = {
@@ -64,7 +63,7 @@ PRUNE_REQUIRED_APPLICATIONS = {
     "kube-state-metrics", "logs-check", "loki-network-policy", "metallb-config",
     "metrics-server-network-policy", "monitoring-ingress", "monitoring-network-policy",
     "open-terminal", "openbao-network-policy", "platform-health",
-    "traefik-network-policy", "unifi-exporter", "vault-network-policy", "year",
+    "traefik-network-policy", "unifi-exporter", "year",
 }
 
 EXTRA_DESTINATIONS_BY_APPLICATION = {

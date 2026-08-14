@@ -113,7 +113,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "renewer_role": "longhorn/ingress-role-vault-pki-renewer.yaml",
             },
         }
-        renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
+        renewer = (ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text(
             encoding="utf-8"
         )
 
@@ -213,7 +213,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "renewer_role": "nextcloud/role-vault-pki-renewer.yaml",
             },
         }
-        renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
+        renewer = (ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text(
             encoding="utf-8"
         )
 
@@ -286,7 +286,7 @@ class VaultAcmeTest(unittest.TestCase):
                 "renewer_role": "mail/role-vault-pki-renewer.yaml",
             },
         }
-        renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
+        renewer = (ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text(
             encoding="utf-8"
         )
 
@@ -328,30 +328,27 @@ class VaultAcmeTest(unittest.TestCase):
         self.assertNotIn("wildcard_targets", renewer)
 
     def test_retired_vault_ingress_is_removed(self):
-        renewer = (ROOT / "vault/cron-job-vault-pki-renewer.yaml").read_text(
+        renewer = (ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text(
             encoding="utf-8"
         )
         self.assertFalse((ROOT / "vault/ingress-vault-ingress.yaml").exists())
         self.assertFalse(
             (ROOT / "vault/certificate-vault-ingress-vault-acme-tls.yaml").exists()
         )
-        renewer_role = load_yaml("vault/role-vault-pki-renewer.yaml")
+        renewer_role = load_yaml("openbao/role-vault-pki-renewer.yaml")
         renewer_policy = (
             ROOT / "vault/policy-vault-pki-renewer.hcl"
         ).read_text(encoding="utf-8")
 
         self.assertNotIn('secret_needs_renewal "vault" "vault-tls"', renewer)
         self.assertNotIn('issue_cert "vault-ingress"', renewer)
-        self.assertIn(
-            'secret_needs_renewal "vault" "vault-server-tls"',
-            renewer,
-        )
+        self.assertNotIn('secret_needs_renewal "vault"', renewer)
         self.assertNotIn("vault-ingress-vault-acme-tls", renewer)
         self.assertEqual(
             renewer_role["rules"][0]["resourceNames"],
-            ["vault-server-tls"],
+            ["openbao-server-tls"],
         )
-        self.assertIn('path "pki-root/issue/vault-server"', renewer_policy)
+        self.assertNotIn('pki-root/issue/vault-server', renewer_policy)
         self.assertNotIn("w386-k8s-my-lan-wildcard", renewer_policy)
         self.assertNotIn("pki-root/issue/vault-ingress", renewer_policy)
 
