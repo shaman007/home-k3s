@@ -5,7 +5,7 @@ metadata:
   name: openbao-ingress-vault-acme-tls
   namespace: openbao
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   secretName: openbao-ingress-vault-acme-tls
   duration: 720h

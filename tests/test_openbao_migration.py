@@ -86,6 +86,23 @@ class OpenBaoMigrationTest(unittest.TestCase):
                     ],
                 )
 
+        certificate = load_yaml(
+            "openbao/certificate-openbao-ingress-vault-acme-tls.yaml"
+        )
+        ingress = load_yaml("openbao/ingress-openbao-ingress.yaml")
+        self.assertEqual(
+            "0",
+            certificate["metadata"]["annotations"][
+                "argocd.argoproj.io/sync-wave"
+            ],
+        )
+        self.assertEqual(
+            "0",
+            ingress["metadata"]["annotations"][
+                "argocd.argoproj.io/sync-wave"
+            ],
+        )
+
     def test_server_can_reach_kubernetes_service_registration_api(self):
         policy = load_yaml(
             "openbao/network-policy-openbao-allow-egress-kube-api-cilium.yaml"
