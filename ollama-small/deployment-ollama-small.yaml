@@ -59,7 +59,7 @@ spec:
               mountPath: /tmp
       containers:
         - name: ollama
-          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.9
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.11
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -122,7 +122,7 @@ spec:
             - name: tmp
               mountPath: /tmp
         - name: model-puller
-          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.9
+          image: harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.32.11
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
