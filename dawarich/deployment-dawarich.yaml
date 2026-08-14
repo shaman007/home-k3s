@@ -19,6 +19,7 @@ spec:
       labels:
         app: dawarich
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       initContainers:
         - name: prepare-writable-volumes

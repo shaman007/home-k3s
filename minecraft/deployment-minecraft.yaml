@@ -25,6 +25,7 @@ spec:
         app: minecraft
         tier: backend
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-best-effort
       securityContext:
         runAsUser: 1000

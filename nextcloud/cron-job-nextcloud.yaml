@@ -27,6 +27,7 @@ spec:
             app.kubernetes.io/name: nextcloud
             app.kubernetes.io/instance: nextcloud
         spec:
+          automountServiceAccountToken: false
           priorityClassName: homelab-batch
           containers:
             - name: previews

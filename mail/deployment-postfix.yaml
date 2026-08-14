@@ -27,6 +27,7 @@ spec:
         app: postfix
         tier: mail
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       volumes:
         - name: mail-certs

@@ -19,6 +19,7 @@ spec:
       labels:
         app: hister
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-best-effort
       enableServiceLinks: false
       securityContext:

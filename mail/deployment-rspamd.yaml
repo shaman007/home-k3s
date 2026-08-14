@@ -27,6 +27,7 @@ spec:
         app: rspamd
         tier: mail
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       securityContext:
         fsGroup: 11333

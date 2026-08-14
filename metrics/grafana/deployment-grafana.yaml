@@ -22,6 +22,7 @@ spec:
       labels:
         app: grafana
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-essential
       securityContext:
         runAsNonRoot: true

@@ -21,6 +21,7 @@ spec:
       labels:
         app: plex
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       runtimeClassName: nvidia
       affinity:
@@ -44,9 +45,6 @@ spec:
               value: "1000"
             - name: PGID
               value: "1000"
-            # valid for 4 minutes
-            - name: PLEX_CLAIM
-              value: claim-_UXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
             # Advertise both local and public endpoints for Plex clients.
             - name: ADVERTISE_IP
               value: "http://192.168.1.242:32400/,https://plex.andreybondarenko.com/"

@@ -22,6 +22,7 @@ spec:
       labels:
         app: bitwarden-postgres
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-essential
       securityContext:
         fsGroup: 999

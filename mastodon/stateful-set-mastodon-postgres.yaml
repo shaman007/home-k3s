@@ -22,6 +22,7 @@ spec:
       labels:
         app: mastodon-postgres
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       securityContext:
         fsGroup: 999

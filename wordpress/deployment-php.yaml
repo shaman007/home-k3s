@@ -26,6 +26,7 @@ spec:
         app: wordpress
         component: web
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-essential
       securityContext:
         runAsUser: 33

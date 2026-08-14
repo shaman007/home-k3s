@@ -20,6 +20,7 @@ spec:
       labels:
         app: mempalace
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       enableServiceLinks: false
       securityContext:

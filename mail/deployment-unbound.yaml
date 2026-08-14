@@ -23,6 +23,7 @@ spec:
         app: unbound
         tier: mail
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       containers:
         - name: unbound

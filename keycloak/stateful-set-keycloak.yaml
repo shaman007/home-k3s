@@ -25,6 +25,7 @@ spec:
       labels:
         app: keycloak
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-essential
       initContainers:
         - name: wait-for-postgres
@@ -58,8 +59,6 @@ spec:
           args: ["start", "--metrics-enabled=true", "--event-metrics-user-enabled=true", "--event-metrics-user-events=login,logout,refresh_token"]
           env:
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
-              value: "admin"
-            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
               value: "admin"
             # the client or Keycloak, or to encrypt the traffic between your proxy and Keycloak.
 

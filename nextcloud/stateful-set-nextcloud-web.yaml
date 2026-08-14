@@ -26,6 +26,7 @@ spec:
         app: nextcloud
         component: web
     spec:
+      automountServiceAccountToken: false
       priorityClassName: homelab-standard
       securityContext:
         runAsUser: 33
