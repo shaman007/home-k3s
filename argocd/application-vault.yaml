@@ -8,7 +8,7 @@ spec:
   project: platform
   source:
     repoURL: https://helm.releases.hashicorp.com
-    targetRevision: 0.34.0
+    targetRevision: 0.34.1
     helm:
       parameters:
         - name: global.tlsDisable
