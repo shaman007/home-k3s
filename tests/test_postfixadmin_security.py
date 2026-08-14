@@ -25,8 +25,13 @@ class PostfixAdminSecurityTest(unittest.TestCase):
             image,
             r"^harbor\.andreybondarenko\.com/dockerhub/postfixadmin@sha256:[0-9a-f]{64}$",
         )
-        self.assertIn("[REDACTED]", container["command"][2])
-        self.assertIn("docker-entrypoint.sh apache2-foreground", container["command"][2])
+
+        configuration = self.resources[("ConfigMap", "postfixadmin")]["data"]["config.local.php"]
+        php_configuration = self.resources[("ConfigMap", "postfixadmin")]["data"]["postfixadmin.ini"]
+        self.assertIn("getenv('POSTFIXADMIN_DB_PASSWORD')", configuration)
+        self.assertNotIn("database_password'] = 'postgres", configuration)
+        self.assertIn("https://postfixadmin.w386.k8s.my.lan/", configuration)
+        self.assertIn("display_errors = Off", php_configuration)
 
     def test_ingress_is_internal_and_lan_restricted(self):
         ingress = self.resources[("Ingress", "postfixadmin")]

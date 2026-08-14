@@ -28,6 +28,39 @@ spec:
         property: postfixadmin-setup-password-hash
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postfixadmin
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+data:
+  postfixadmin.ini: |
+    display_errors = Off
+    log_errors = On
+    error_reporting = E_ALL
+  config.local.php: |
+    <?php
+    $CONF['database_type'] = 'pgsql';
+    $CONF['database_host'] = getenv('POSTFIXADMIN_DB_HOST');
+    $CONF['database_port'] = '5432';
+    $CONF['database_user'] = getenv('POSTFIXADMIN_DB_USER');
+    $CONF['database_password'] = getenv('POSTFIXADMIN_DB_PASSWORD');
+    $CONF['database_name'] = getenv('POSTFIXADMIN_DB_NAME');
+    $CONF['setup_password'] = getenv('POSTFIXADMIN_SETUP_PASSWORD');
+    $CONF['site_url'] = 'https://postfixadmin.w386.k8s.my.lan/';
+    $CONF['admin_email'] = 'Postmaster <postmaster@andreybondarenko.com>';
+    $CONF['smtp_server'] = 'localhost';
+    $CONF['smtp_port'] = '25';
+    $CONF['encrypt'] = 'md5crypt';
+    $CONF['configured'] = true;
+    $CONF['dkim'] = 'NO';
+    $CONF['dkim_all_admins'] = 'NO';
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postfixadmin-postgres-lh
@@ -204,12 +237,6 @@ spec:
         - name: postfixadmin
           image: harbor.andreybondarenko.com/dockerhub/postfixadmin@sha256:eb08f47ec17e9fbfdff93b4b6f654c6277360dad0ccf17c7de73d34db2be7eb3
           imagePullPolicy: IfNotPresent
-          command:
-            - /bin/bash
-            - -c
-            - |
-              exec > >(sed -u "/database_password/s/'[^']*';/'[REDACTED]';/") 2>&1
-              exec /usr/local/bin/docker-entrypoint.sh apache2-foreground
           ports:
             - name: http
               containerPort: 80
@@ -250,6 +277,19 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
+          volumeMounts:
+            - name: configuration
+              mountPath: /var/www/html/config.local.php
+              subPath: config.local.php
+              readOnly: true
+            - name: configuration
+              mountPath: /usr/local/etc/php/conf.d/postfixadmin.ini
+              subPath: postfixadmin.ini
+              readOnly: true
+      volumes:
+        - name: configuration
+          configMap:
+            name: postfixadmin
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
