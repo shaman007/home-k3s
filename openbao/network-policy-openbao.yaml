@@ -31,6 +31,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: traefik
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
       ports:
         - protocol: TCP
           port: 8200

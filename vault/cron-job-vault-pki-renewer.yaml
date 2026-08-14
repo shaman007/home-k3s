@@ -31,7 +31,7 @@ spec:
                   drop: ["ALL"]
               env:
                 - name: VAULT_ADDR
-                  value: "https://vault-active.vault.svc:8200"
+                  value: "https://openbao-active.openbao.svc:8200"
                 - name: VAULT_CACERT
                   value: /vault/tls/ca.crt
                 - name: VAULT_ROLE
@@ -54,7 +54,7 @@ spec:
                   vault_post() {
                     path="$1"
                     payload="$2"
-                    host="vault-active.vault.svc"
+                    host="openbao-active.openbao.svc"
                     port="8200"
                     payload_length="${#payload}"
 

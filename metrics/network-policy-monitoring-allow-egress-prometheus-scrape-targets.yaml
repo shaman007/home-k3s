@@ -212,7 +212,7 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: vault
+              kubernetes.io/metadata.name: openbao
       ports:
         - protocol: TCP
           port: 8200

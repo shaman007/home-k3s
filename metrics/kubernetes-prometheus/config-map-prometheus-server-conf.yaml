@@ -416,20 +416,20 @@ data:
         static_configs:
         - targets:
           - keycloak.keycloak.svc.cluster.local:9000
-      - job_name: vault
+      - job_name: openbao
         scrape_interval: 45s
         scrape_timeout: 30s
         scheme: https
         metrics_path: "/v1/sys/metrics"
         tls_config:
           ca_file: /etc/prometheus-vault-ca/ca.crt
-          server_name: vault-active.vault.svc.cluster.local
+          server_name: openbao.openbao.svc
         params:
           format:
             - prometheus
         static_configs:
         - targets:
-          - vault-active.vault.svc.cluster.local:8200
+          - openbao-active.openbao.svc.cluster.local:8200
       - job_name: harbor-core
         scrape_interval: 45s
         scrape_timeout:  30s
