@@ -44,6 +44,11 @@ Initialize only the new OpenBao cluster, restore the candidate snapshot with
 the existing Vault Shamir key. Remove stale `vault-*` peers from the restored
 Raft configuration and join both `openbao-0` and `openbao-1`.
 
+Raft retry-join uses the `openbao-active` Service. Before initialization that
+Service has no active endpoint, which prevents the first node from attempting
+to join itself; after initialization it routes later replicas to the elected
+leader.
+
 The rehearsal passes only when:
 
 * KV inventory, policies, Kubernetes roles, PKI issuers and roles, OIDC, and

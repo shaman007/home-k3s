@@ -28,6 +28,14 @@ class OpenBaoMigrationTest(unittest.TestCase):
             "https://openbao-active.openbao.svc:8200",
             values["server"]["ha"]["apiAddr"],
         )
+        self.assertIn(
+            'leader_api_addr = "https://openbao-active.openbao.svc:8200"',
+            values["server"]["ha"]["raft"]["config"],
+        )
+        self.assertNotIn(
+            'leader_api_addr = "https://openbao-0.',
+            values["server"]["ha"]["raft"]["config"],
+        )
         self.assertEqual(
             {"whenDeleted": "Retain", "whenScaled": "Retain"},
             values["server"]["persistentVolumeClaimRetentionPolicy"],
