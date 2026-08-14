@@ -16,6 +16,12 @@ bookmarked media sync job.
 The upstream chart includes OIDC `existingSecret` support, so no local chart
 fork is maintained here.
 
+Mastodon's Redis-protocol endpoint is the application-local
+`valkey.mastodon.svc.cluster.local` StatefulSet. The chart keeps its
+`redis`, `REDIS_*`, and `mastodon-redis` configuration names because
+Mastodon and the upstream chart use Redis-compatible terminology; these names
+do not imply that a Redis server is still deployed.
+
 # TODO
 
 * Metrics + Dashboard

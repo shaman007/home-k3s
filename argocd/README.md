@@ -24,7 +24,8 @@ Every child Application is assigned to a purpose-specific project:
 
 * `applications` contains user-facing services and their companion resources.
 * `platform` contains cluster networking, ingress, security, and controllers.
-* `storage` contains Longhorn, snapshots, Redis, and SeaweedFS.
+* `storage` contains Longhorn, snapshots, and SeaweedFS. Application-local
+  Valkey instances are deployed by their owning application.
 * `observability` contains metrics, logs, dashboards, and exporters.
 * `namespace-management` manages namespaces, quotas, limits, and priority
   classes across an explicit namespace list.

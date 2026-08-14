@@ -39,7 +39,8 @@ Data and messaging:
 
 - PostgreSQL
 - MySQL
-- Redis (operator + app-specific instances)
+- Valkey (app-local StatefulSets for WordPress, Nextcloud, Dawarich, Mastodon,
+  and Rspamd)
 - SeaweedFS (S3-compatible object storage)
 - Elasticsearch (ECK operator + stack)
 
@@ -80,6 +81,8 @@ Observability and security:
 - `<service>/`: Namespace-scoped manifests/charts for each service.
 - `DEPRECATED/`: Old manifests kept for reference.
 - `docs/upgrade-playbook.md`: Pre-merge runtime checklist for upgrades.
+- `docs/valkey-cutover.md`: Valkey topology, persistence, queue-drain, and
+  Redis-retirement runbook.
 - `k3s-config.yaml`: Baseline k3s server config used by this cluster.
 
 
