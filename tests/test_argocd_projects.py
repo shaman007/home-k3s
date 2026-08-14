@@ -29,9 +29,7 @@ PROJECT_PLATFORM = {
 }
 
 PROJECT_STORAGE = {
-    "kubernetes-snapshot-controller", "longhorn", "longhorn-custom",
-    "ot-operators-network-policy", "redis", "redis-dawarich", "redis-mail",
-    "redis-mastodon", "redis-operator", "redis-wordpress", "seaweedfs",
+    "kubernetes-snapshot-controller", "longhorn", "longhorn-custom", "seaweedfs",
 }
 
 PROJECT_OBSERVABILITY = {
@@ -67,7 +65,7 @@ PRUNE_REQUIRED_APPLICATIONS = {
     "headlamp", "hister", "homeassistant", "image-builder", "kube-node-exporter",
     "kube-state-metrics", "logs-check", "loki-network-policy", "metallb-config",
     "metrics-server-network-policy", "monitoring-ingress", "monitoring-network-policy",
-    "open-terminal", "ot-operators-network-policy", "platform-health",
+    "open-terminal", "platform-health",
     "traefik-network-policy", "unifi-exporter", "vault-network-policy", "year",
 }
 

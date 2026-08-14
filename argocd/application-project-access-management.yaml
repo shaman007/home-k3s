@@ -46,8 +46,6 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: monitoring
     - server: https://kubernetes.default.svc
-      namespace: ot-operators
-    - server: https://kubernetes.default.svc
       namespace: traefik
     - server: https://kubernetes.default.svc
       namespace: vault

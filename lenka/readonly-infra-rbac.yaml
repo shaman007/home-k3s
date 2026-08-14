@@ -220,17 +220,3 @@ roleRef:
   kind: ClusterRole
   name: view
   apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: lenka-view
-  namespace: ot-operators
-subjects:
-  - kind: User
-    name: lenka
-    apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: ClusterRole
-  name: view
-  apiGroup: rbac.authorization.k8s.io

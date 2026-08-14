@@ -26,16 +26,10 @@ EXPECTED_HELM_IMAGES = {
     "application-metrics-server.yaml": {
         ("image", "repository"): f"{HARBOR}/k8s/metrics-server/metrics-server",
     },
-    "application-redis-operator.yaml": {
-        ("redisOperator", "imageName"): f"{HARBOR}/quay/opstree/redis-operator",
-    },
     "application-reloader.yaml": {
         ("image", "repository"): f"{HARBOR}/github/stakater/reloader",
     },
 }
-
-REDIS_APPLICATIONS = set()
-
 
 def nested_value(values: dict, path: tuple[str, ...]):
     current = values
@@ -76,17 +70,6 @@ class HarborProxyCacheTest(unittest.TestCase):
             values = helm_values(application)
             for path, image in expected.items():
                 self.assertEqual(nested_value(values, path), image)
-
-        for application in REDIS_APPLICATIONS:
-            values = helm_values(application)
-            self.assertEqual(
-                values["redisStandalone"]["image"],
-                f"{HARBOR}/quay/opstree/redis",
-            )
-            self.assertEqual(
-                values["redisExporter"]["image"],
-                f"{HARBOR}/quay/opstree/redis-exporter",
-            )
 
     def test_proxy_reconciler_covers_all_declared_upstreams(self):
         reconciler = (ROOT / "harbor" / "reconcile-proxy-caches.sh").read_text(

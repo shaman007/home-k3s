@@ -17,26 +17,13 @@ spec:
   sourceRepos:
     - https://charts.longhorn.io/
     - https://github.com/shaman007/home-k3s.git
-    - https://ot-container-kit.github.io/helm-charts/
   destinations:
-    - server: https://kubernetes.default.svc
-      namespace: dawarich
     - server: https://kubernetes.default.svc
       namespace: kube-system
     - server: https://kubernetes.default.svc
       namespace: longhorn-system
     - server: https://kubernetes.default.svc
-      namespace: mail
-    - server: https://kubernetes.default.svc
-      namespace: mastodon
-    - server: https://kubernetes.default.svc
-      namespace: nextcloud
-    - server: https://kubernetes.default.svc
-      namespace: ot-operators
-    - server: https://kubernetes.default.svc
       namespace: seaweedfs
-    - server: https://kubernetes.default.svc
-      namespace: wordpress
   clusterResourceWhitelist:
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition

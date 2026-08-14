@@ -131,34 +131,5 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                 if uid is not None:
                     self.assertEqual(uid, security["runAsUser"])
 
-    def test_redis_exporter_sidecars_are_read_only(self):
-        paths = ()
-
-        for path in paths:
-            with self.subTest(path=path):
-                application = load_yaml(path)
-                values = yaml.safe_load(application["spec"]["source"]["helm"]["values"])
-                security = values["redisExporter"]["securityContext"]
-
-                self.assertFalse(security["allowPrivilegeEscalation"])
-                self.assertEqual(["ALL"], security["capabilities"]["drop"])
-                self.assertTrue(security["readOnlyRootFilesystem"])
-                self.assertTrue(security["runAsNonRoot"])
-
-    def test_redis_operator_uses_chart_supported_restricted_context(self):
-        application = load_yaml("argocd/application-redis-operator.yaml")
-        values = yaml.safe_load(application["spec"]["source"]["helm"]["values"])
-        pod_security = values["podSecurityContext"]
-        security = values["securityContext"]
-
-        self.assertTrue(pod_security["runAsNonRoot"])
-        self.assertEqual(65532, pod_security["runAsUser"])
-        self.assertEqual("RuntimeDefault", pod_security["seccompProfile"]["type"])
-        self.assertFalse(security["allowPrivilegeEscalation"])
-        self.assertEqual(["ALL"], security["capabilities"]["drop"])
-        self.assertTrue(security["readOnlyRootFilesystem"])
-        self.assertTrue(security["runAsNonRoot"])
-
-
 if __name__ == "__main__":
     unittest.main()

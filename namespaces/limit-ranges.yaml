@@ -554,25 +554,6 @@ apiVersion: v1
 kind: LimitRange
 metadata:
   name: default-resource-requests
-  namespace: ot-operators
-spec:
-  limits:
-    - type: Container
-      defaultRequest:
-        cpu: 25m
-        memory: 128Mi
-      default:
-        memory: 1Gi
-      min:
-        cpu: 5m
-        memory: 32Mi
-      max:
-        memory: 2Gi
----
-apiVersion: v1
-kind: LimitRange
-metadata:
-  name: default-resource-requests
   namespace: plex
 spec:
   limits:

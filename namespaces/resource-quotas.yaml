@@ -422,20 +422,6 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: namespace-quota
-  namespace: ot-operators
-spec:
-  hard:
-    pods: "5"
-    services: "5"
-    secrets: "20"
-    configmaps: "20"
-    persistentvolumeclaims: "2"
-    requests.storage: 1Gi
----
-apiVersion: v1
-kind: ResourceQuota
-metadata:
-  name: namespace-quota
   namespace: plex
 spec:
   hard:
