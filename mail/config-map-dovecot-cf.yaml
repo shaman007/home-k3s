@@ -118,8 +118,8 @@ data:
 
   10-ssl: |
     ssl = required
-    ssl_server_cert_file = /var/certs/tls.crt
-    ssl_server_key_file  = /var/certs/tls.key
+    ssl_server_cert_file = /etc/dovecot/ssl/tls.crt
+    ssl_server_key_file  = /etc/dovecot/ssl/tls.key
   15-lda: |
     protocol lda {
       mail_plugins {

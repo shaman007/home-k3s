@@ -130,7 +130,7 @@ spec:
             - name: mail-lh
               mountPath: /var/mail
             - name: mail-certs
-              mountPath: "/var/certs"
+              mountPath: /etc/dovecot/ssl
               readOnly: true
             - name: dovecot-cf
               mountPath: /etc/dovecot/dovecot.conf
