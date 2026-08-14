@@ -1,8 +1,9 @@
 # OpenBao migration
 
-Vault 2.0.3 remains the production endpoint while OpenBao is deployed in
-parallel. Do not point clients at OpenBao until the snapshot rehearsal in this
-document succeeds.
+The production cutover to OpenBao 2.6.1 completed on 2026-08-14. OpenBao is
+authoritative; application SecretStores, cert-manager ACME, Prometheus, OIDC,
+and the PKI renewal job all use OpenBao. The Vault StatefulSet is pinned to
+zero replicas, while both original Vault PVCs are retained for rollback.
 
 ## Compatibility gate
 
@@ -37,7 +38,7 @@ ignore it during the rehearsal; otherwise the migration stops and the
 production Vault cluster remains authoritative. Do not edit Raft storage or
 strip the mount from a snapshot.
 
-## Rehearsal
+## Completed rehearsal
 
 Initialize only the new OpenBao cluster, restore the candidate snapshot with
 `bao operator raft snapshot restore -force`, restart it, and unseal it with
@@ -58,20 +59,25 @@ The rehearsal passes only when:
 * Disposable KV, Kubernetes-auth, PKI, ACME, OIDC, and SSH-signing tests pass.
 * Both Raft voters have matching committed/applied indexes and survive a
   restart/unseal cycle.
-* No production SecretStore or ClusterIssuer has been changed.
+* During rehearsal, no production SecretStore or ClusterIssuer was changed.
 
 Two voters require both nodes for write quorum. This is an accepted deployment
 constraint, not high availability against a node loss.
 
-## Cutover and rollback
+## Completed cutover and rollback
 
-Pause External Secrets, cert-manager, the PKI renewer, administrative writes,
-and new logins. Take the final snapshot, stop Vault, restore and validate
-OpenBao, then introduce the compatibility aliases before resuming controllers.
+External Secrets, cert-manager, and the PKI renewer were paused for the final
+snapshot. Vault was then stopped, the final Raft snapshot was restored into
+OpenBao, and OpenBao-specific OIDC and PKI cluster URLs were restored. All 28
+SecretStores and the `vault-acme` ClusterIssuer were validated Ready before
+normal reconciliation resumed. The existing issuer, ServiceAccount, policy,
+and SecretStore names intentionally remain for compatibility; their endpoints
+now target OpenBao.
 
-Until ordinary writes are reopened, rollback is to stop OpenBao, restart and
-unseal Vault, and restore the old routes. After OpenBao accepts writes, rollback
-must restore an OpenBao snapshot or it will lose post-cutover changes.
+Because ordinary writes have reopened, rollback must start from a current
+OpenBao snapshot. Restarting the retained Vault PVCs alone would lose all
+post-cutover writes. Stop writers first, snapshot OpenBao, then either repair
+OpenBao or deliberately restore that snapshot to the rollback target.
 
 Retain the Vault PVCs for at least seven days and until an OpenBao Raft snapshot
 restore and Longhorn restore have both been tested.

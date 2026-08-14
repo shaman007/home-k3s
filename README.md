@@ -83,6 +83,8 @@ Observability and security:
 - `docs/upgrade-playbook.md`: Pre-merge runtime checklist for upgrades.
 - `docs/valkey-cutover.md`: Valkey topology, persistence, queue-drain, and
   Redis-retirement runbook.
+- `docs/openbao-migration.md`: completed Vault-to-OpenBao cutover and rollback
+  boundary.
 - `k3s-config.yaml`: Baseline k3s server config used by this cluster.
 
 
