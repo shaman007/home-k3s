@@ -1,0 +1,367 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: postfixadmin
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+spec:
+  refreshInterval: 15m
+  secretStoreRef:
+    name: vault-secret-store
+    kind: SecretStore
+  target:
+    name: postfixadmin
+    creationPolicy: Owner
+  data:
+    - secretKey: database-password
+      remoteRef:
+        key: mail
+        property: postfixadmin-database-password
+    - secretKey: setup-password-hash
+      remoteRef:
+        key: mail
+        property: postfixadmin-setup-password-hash
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postfixadmin-postgres-lh
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+    app.kubernetes.io/component: database
+    recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-a: enabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postfixadmin-postgres
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+    app.kubernetes.io/component: database
+spec:
+  selector:
+    app: postfixadmin-postgres
+  ports:
+    - name: tcp-postgres
+      port: 5432
+      targetPort: tcp-postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postfixadmin-postgres
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+    app.kubernetes.io/component: database
+spec:
+  serviceName: postfixadmin-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postfixadmin-postgres
+  template:
+    metadata:
+      labels:
+        app: postfixadmin-postgres
+        app.kubernetes.io/name: postfixadmin-postgres
+        app.kubernetes.io/instance: postfixadmin
+        app.kubernetes.io/part-of: mail
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: homelab-essential
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+      initContainers:
+        - name: volume-permissions
+          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data"]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 32Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      containers:
+        - name: postgres
+          image: harbor.andreybondarenko.com/dockerhub/postgres:18
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: tcp-postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: postfixadmin
+            - name: POSTGRES_USER
+              value: postfixadmin
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postfixadmin
+                  key: database-password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-U", "postfixadmin", "-d", "postfixadmin"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-U", "postfixadmin", "-d", "postfixadmin"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postfixadmin-postgres-lh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postfixadmin
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+spec:
+  selector:
+    app: postfixadmin
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postfixadmin
+  namespace: mail
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postfixadmin
+  template:
+    metadata:
+      labels:
+        app: postfixadmin
+        app.kubernetes.io/name: postfixadmin
+        app.kubernetes.io/instance: postfixadmin
+        app.kubernetes.io/part-of: mail
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: homelab-standard
+      containers:
+        - name: postfixadmin
+          image: harbor.andreybondarenko.com/dockerhub/postfixadmin@sha256:eb08f47ec17e9fbfdff93b4b6f654c6277360dad0ccf17c7de73d34db2be7eb3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: POSTFIXADMIN_DB_TYPE
+              value: pgsql
+            - name: POSTFIXADMIN_DB_HOST
+              value: postfixadmin-postgres
+            - name: POSTFIXADMIN_DB_USER
+              value: postfixadmin
+            - name: POSTFIXADMIN_DB_NAME
+              value: postfixadmin
+            - name: POSTFIXADMIN_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postfixadmin
+                  key: database-password
+            - name: POSTFIXADMIN_SETUP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postfixadmin
+                  key: setup-password-hash
+          readinessProbe:
+            httpGet:
+              path: /login.php
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /login.php
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: postfixadmin-vault-acme-tls
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: postfixadmin-vault-acme-tls
+  duration: 720h
+  renewBefore: 168h
+  dnsNames:
+    - postfixadmin.w386.k8s.my.lan
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: vault-acme
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: postfixadmin-local-network-only
+  namespace: mail
+spec:
+  ipAllowList:
+    sourceRange:
+      - 192.168.1.0/24
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: postfixadmin
+  namespace: mail
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: mail-postfixadmin-local-network-only@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
+  labels:
+    app.kubernetes.io/name: postfixadmin
+    app.kubernetes.io/instance: postfixadmin
+    app.kubernetes.io/part-of: mail
+    app.kubernetes.io/managed-by: argo-cd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - postfixadmin.w386.k8s.my.lan
+      secretName: postfixadmin-vault-acme-tls
+  rules:
+    - host: postfixadmin.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: postfixadmin
+                port:
+                  name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postfixadmin-allow-required-traffic
+  namespace: mail
+spec:
+  podSelector:
+    matchLabels:
+      app: postfixadmin
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postfixadmin-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postfixadmin-postgres-allow-application
+  namespace: mail
+spec:
+  podSelector:
+    matchLabels:
+      app: postfixadmin-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: postfixadmin
+      ports:
+        - protocol: TCP
+          port: 5432
