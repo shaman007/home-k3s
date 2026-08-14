@@ -1,7 +1,7 @@
 ---
 image:
   repository: harbor.andreybondarenko.com/github/shaman007/mastodon
-  tag: v4.6.5
+  tag: v4.6.6
   pullPolicy: IfNotPresent
 
 mastodon:
@@ -59,7 +59,7 @@ mastodon:
     # same container here so CPU remains requested but never throttled.
     extraContainers:
       - name: prometheus-exporter
-        image: harbor.andreybondarenko.com/github/shaman007/mastodon:v4.6.5
+        image: harbor.andreybondarenko.com/github/shaman007/mastodon:v4.6.6
         command:
           - ./bin/prometheus_exporter
         args:
