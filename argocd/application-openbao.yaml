@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: ghcr.io/openbao/charts
     chart: openbao
-    targetRevision: 0.28.6
+    targetRevision: 0.29.1
     helm:
       releaseName: openbao
       parameters:
