@@ -81,7 +81,7 @@ spec:
             - name: mysql-tmp
               mountPath: /tmp
         - name: mysqld-exporter
-          image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:v0.19.0
+          image: harbor.andreybondarenko.com/quay/prometheus/mysqld-exporter:v0.20.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
