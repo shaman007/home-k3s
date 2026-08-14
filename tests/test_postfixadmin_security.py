@@ -18,12 +18,15 @@ class PostfixAdminSecurityTest(unittest.TestCase):
 
     def test_official_image_is_pinned_by_digest(self):
         deployment = self.resources[("Deployment", "postfixadmin")]
-        image = deployment["spec"]["template"]["spec"]["containers"][0]["image"]
+        container = deployment["spec"]["template"]["spec"]["containers"][0]
+        image = container["image"]
 
         self.assertRegex(
             image,
             r"^harbor\.andreybondarenko\.com/dockerhub/postfixadmin@sha256:[0-9a-f]{64}$",
         )
+        self.assertIn("[REDACTED]", container["command"][2])
+        self.assertIn("docker-entrypoint.sh apache2-foreground", container["command"][2])
 
     def test_ingress_is_internal_and_lan_restricted(self):
         ingress = self.resources[("Ingress", "postfixadmin")]

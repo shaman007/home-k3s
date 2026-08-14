@@ -204,6 +204,12 @@ spec:
         - name: postfixadmin
           image: harbor.andreybondarenko.com/dockerhub/postfixadmin@sha256:eb08f47ec17e9fbfdff93b4b6f654c6277360dad0ccf17c7de73d34db2be7eb3
           imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - |
+              exec > >(sed -u "/database_password/s/'[^']*';/'[REDACTED]';/") 2>&1
+              exec /usr/local/bin/docker-entrypoint.sh apache2-foreground
           ports:
             - name: http
               containerPort: 80
