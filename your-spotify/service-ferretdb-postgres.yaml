@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ferretdb-postgres
+  namespace: spotify
+  labels:
+    app: ferretdb-postgres
+spec:
+  selector:
+    app: ferretdb-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres

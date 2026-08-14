@@ -1,0 +1,4 @@
+cluster:
+  controllerManager:
+    extraArgs:
+      terminated-pod-gc-threshold: "20"

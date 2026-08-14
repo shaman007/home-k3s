@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ferretdb
+  namespace: spotify
+  labels:
+    app: ferretdb
+    app.kubernetes.io/name: ferretdb
+    app.kubernetes.io/instance: your-spotify
+    app.kubernetes.io/version: "2.7.0"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ferretdb
+  template:
+    metadata:
+      labels:
+        app: ferretdb
+    spec:
+      priorityClassName: homelab-standard
+      automountServiceAccountToken: false
+      containers:
+        - name: ferretdb
+          image: harbor.andreybondarenko.com/github/ferretdb/ferretdb:2.7.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: FERRETDB_POSTGRESQL_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ferretdb-credentials
+                  key: postgresql-url
+            - name: FERRETDB_TELEMETRY
+              value: disable
+          ports:
+            - name: mongodb
+              containerPort: 27017
+            - name: debug
+              containerPort: 8088
+          startupProbe:
+            tcpSocket:
+              port: mongodb
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: mongodb
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: mongodb
+            periodSeconds: 30
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: state
+              mountPath: /state
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: state
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

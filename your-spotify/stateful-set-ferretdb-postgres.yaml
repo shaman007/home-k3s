@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ferretdb-postgres
+  namespace: spotify
+  labels:
+    app: ferretdb-postgres
+    app.kubernetes.io/name: ferretdb-postgres
+    app.kubernetes.io/instance: your-spotify
+    app.kubernetes.io/version: "17-0.107.0-ferretdb-2.7.0"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  serviceName: ferretdb-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ferretdb-postgres
+  template:
+    metadata:
+      labels:
+        app: ferretdb-postgres
+    spec:
+      priorityClassName: homelab-standard
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: postgres
+          image: harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ferretdb-credentials
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ferretdb-credentials
+                  key: password
+            - name: POSTGRES_DB
+              value: postgres
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d postgres
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d postgres
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ferretdb-postgres-lh

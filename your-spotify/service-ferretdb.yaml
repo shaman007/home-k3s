@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ferretdb
+  namespace: spotify
+  labels:
+    app: ferretdb
+    app.kubernetes.io/name: ferretdb
+    app.kubernetes.io/instance: your-spotify
+    app.kubernetes.io/version: "2.7.0"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  selector:
+    app: ferretdb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: mongodb

@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ferretdb-postgres-lh
+  namespace: spotify
+  labels:
+    app: ferretdb-postgres
+    app.kubernetes.io/name: ferretdb-postgres
+    app.kubernetes.io/instance: your-spotify
+    app.kubernetes.io/managed-by: argoCD
+    recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-c: enabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi

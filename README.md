@@ -142,6 +142,10 @@ The Talos nodes allow up to 200 pods each. Apply
 rolling out host configuration one node at a time. Then verify that each node
 reports `200` under `.status.allocatable.pods`.
 
+Apply `talos/controller-manager-pod-gc.yaml` to control-plane nodes so the
+built-in Kubernetes garbage collector removes old terminated pods after the
+cluster accumulates more than 20 of them.
+
 4. Configure local `kubectl` access.
 
 ```bash
