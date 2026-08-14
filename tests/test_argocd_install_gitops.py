@@ -60,6 +60,24 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         self.assertEqual(rules[0]["matchUpdateTypes"], ["minor", "major"])
         self.assertFalse(rules[0]["automerge"])
 
+    def test_renovate_scans_mastodon_helm_values(self):
+        config = json.loads(RENOVATE.read_text(encoding="utf-8"))
+
+        self.assertIn(
+            "/^mastodon\\/mastodon-values\\.ya?ml$/",
+            config["helm-values"]["managerFilePatterns"],
+        )
+        mastodon_custom_managers = [
+            manager
+            for manager in config["customManagers"]
+            if "/^mastodon\\/mastodon-values\\.ya?ml$/"
+            in manager["managerFilePatterns"]
+        ]
+        self.assertEqual(len(mastodon_custom_managers), 1)
+        self.assertEqual(
+            mastodon_custom_managers[0]["datasourceTemplate"], "docker"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
