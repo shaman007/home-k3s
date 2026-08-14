@@ -42,8 +42,12 @@ data:
     passdb passwd-file {
       passwd_file_path = /etc/dovecot/passwd
     }
-    userdb passwd {
-      # optional overrides here
+    userdb static {
+      fields {
+        uid = 1000
+        gid = 1000
+        home = /var/mail/boxes/%{user | username}
+      }
     }
   10-mail: |
    # Dovecot 2.4+
