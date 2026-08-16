@@ -117,7 +117,7 @@ spec:
               #OIDC_AUTO_REGISTER=true # optional, default is false
               #OIDC_PROVIDER_NAME=YourProviderName # optional, default is OpenID Connect
               #ALLOW_EMAIL_PASSWORD_REGISTRATION=false # optional, default is true
-          image: harbor.andreybondarenko.com/library/dawarich@sha256:6575c8ce22a44dfafacb732250948b52a43e137f2454094d73d795c36e796af4
+          image: harbor.andreybondarenko.com/library/dawarich@sha256:f1c9cbb384bae91668b5d0da6bc460f0d3f089a170c5dfc18b663185ba1b9081
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -202,7 +202,7 @@ spec:
               value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
               value: "false"
-          image: harbor.andreybondarenko.com/library/dawarich@sha256:6575c8ce22a44dfafacb732250948b52a43e137f2454094d73d795c36e796af4
+          image: harbor.andreybondarenko.com/library/dawarich@sha256:f1c9cbb384bae91668b5d0da6bc460f0d3f089a170c5dfc18b663185ba1b9081
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
