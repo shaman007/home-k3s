@@ -33,7 +33,16 @@ data:
     info_log_path = /dev/stdout
     # If not set, use the value from info_log_path
     debug_log_path = /dev/stdout
-    !include conf.d/*.conf
+    # Include only GitOps-managed fragments. The official image ships additional
+    # conf.d files (for example FTS/Flatcurve) that must not be enabled implicitly.
+    !include conf.d/10-auth.conf
+    !include conf.d/10-mail.conf
+    !include conf.d/10-master.conf
+    !include conf.d/10-ssl.conf
+    !include conf.d/15-lda.conf
+    !include conf.d/20-lmtp.conf
+    !include conf.d/20-managesieve.conf
+    !include conf.d/90-sieve.conf
     !include_try local.conf
   10-auth: |
     auth_username_format = %{user | username}
