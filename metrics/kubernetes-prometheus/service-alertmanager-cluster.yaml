@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-cluster
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: alertmanager
+  ports:
+    - name: cluster-tcp
+      port: 9094
+      targetPort: cluster-tcp
+      protocol: TCP
+    - name: cluster-udp
+      port: 9094
+      targetPort: cluster-udp
+      protocol: UDP

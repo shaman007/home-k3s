@@ -12,7 +12,7 @@ metadata:
   name: snapshot-controller
   namespace: kube-system
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app.kubernetes.io/name: snapshot-controller
@@ -33,6 +33,17 @@ spec:
     spec:
       priorityClassName: homelab-essential
       serviceAccountName: snapshot-controller
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: snapshot-controller
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: snapshot-controller
           image: harbor.andreybondarenko.com/k8s/sig-storage/snapshot-controller:v8.6.0

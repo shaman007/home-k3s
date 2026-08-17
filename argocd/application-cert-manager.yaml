@@ -19,6 +19,22 @@ spec:
             enabled: true
           global:
             priorityClassName: homelab-critical
+          replicaCount: 3
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/instance: cert-manager
+                      app.kubernetes.io/component: controller
+                  topologyKey: kubernetes.io/hostname
+          podDisruptionBudget:
+            enabled: true
+            minAvailable: 2
           prometheus:
             enabled: false
           extraArgs:
@@ -32,6 +48,22 @@ spec:
           networkPolicy:
             enabled: true
           webhook:
+            replicaCount: 3
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
+            affinity:
+              podAntiAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  - labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/instance: cert-manager
+                        app.kubernetes.io/component: webhook
+                    topologyKey: kubernetes.io/hostname
+            podDisruptionBudget:
+              enabled: true
+              minAvailable: 2
             resources:
               requests:
                 cpu: 10m
@@ -41,6 +73,22 @@ spec:
             networkPolicy:
               enabled: true
           cainjector:
+            replicaCount: 3
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
+            affinity:
+              podAntiAffinity:
+                requiredDuringSchedulingIgnoredDuringExecution:
+                  - labelSelector:
+                      matchLabels:
+                        app.kubernetes.io/instance: cert-manager
+                        app.kubernetes.io/component: cainjector
+                    topologyKey: kubernetes.io/hostname
+            podDisruptionBudget:
+              enabled: true
+              minAvailable: 2
             resources:
               requests:
                 cpu: 10m

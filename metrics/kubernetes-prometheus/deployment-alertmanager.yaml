@@ -11,7 +11,7 @@ metadata:
   annotations:
     configmap.reloader.stakater.com/auto: "true"
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: alertmanager
@@ -23,6 +23,17 @@ spec:
     spec:
       priorityClassName: homelab-essential
       automountServiceAccountToken: false
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: alertmanager
+              topologyKey: kubernetes.io/hostname
       securityContext:
         fsGroup: 65534
         fsGroupChangePolicy: OnRootMismatch
@@ -45,9 +56,17 @@ spec:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"
             - "--web.external-url=https://alerts.w386.k8s.my.lan"
+            - "--cluster.listen-address=0.0.0.0:9094"
+            - "--cluster.peer=alertmanager-cluster.monitoring.svc:9094"
           ports:
             - name: alertmanager
               containerPort: 9093
+            - name: cluster-tcp
+              containerPort: 9094
+              protocol: TCP
+            - name: cluster-udp
+              containerPort: 9094
+              protocol: UDP
           readinessProbe:
             httpGet:
               path: /-/ready
