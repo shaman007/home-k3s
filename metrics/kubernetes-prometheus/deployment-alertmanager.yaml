@@ -30,7 +30,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: alertmanager
-          image: harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.33.1
+          image: harbor.andreybondarenko.com/dockerhub/prom/alertmanager:v0.34.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
