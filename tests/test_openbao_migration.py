@@ -21,7 +21,15 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertEqual("openbao", source["chart"])
         self.assertRegex(source["targetRevision"], r"^\d+\.\d+\.\d+$")
         self.assertEqual("openbao", application["spec"]["destination"]["namespace"])
-        self.assertEqual(2, values["server"]["ha"]["replicas"])
+        self.assertEqual(3, values["server"]["ha"]["replicas"])
+        self.assertIn(
+            {
+                "key": "node-role.kubernetes.io/control-plane",
+                "operator": "Exists",
+                "effect": "NoSchedule",
+            },
+            values["server"]["tolerations"],
+        )
         self.assertTrue(values["server"]["ha"]["raft"]["enabled"])
         self.assertTrue(values["server"]["ha"]["raft"]["setNodeId"])
         self.assertEqual(

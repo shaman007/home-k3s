@@ -28,8 +28,13 @@ spec:
           defaultSettings:
             createDefaultDiskLabeledNodes: true
             priorityClass: homelab-critical
+            taintToleration: node-role.kubernetes.io/control-plane:NoSchedule
           longhornManager:
             priorityClass: homelab-critical
+            tolerations:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+                effect: NoSchedule
           longhornDriver:
             priorityClass: homelab-critical
           longhornUI:

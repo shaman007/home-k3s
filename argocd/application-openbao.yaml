@@ -24,7 +24,7 @@ spec:
         - name: server.ha.raft.setNodeId
           value: "true"
         - name: server.ha.replicas
-          value: "2"
+          value: "3"
       values: |
         global:
           tlsDisable: false
@@ -32,6 +32,10 @@ spec:
           enabled: false
         server:
           priorityClassName: homelab-critical
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
           service:
             annotations:
               traefik.ingress.kubernetes.io/service.serverstransport: openbao-openbao-server@kubernetescrd
@@ -63,7 +67,7 @@ spec:
             whenScaled: Retain
           ha:
             enabled: true
-            replicas: 2
+            replicas: 3
             apiAddr: "https://openbao-active.openbao.svc:8200"
             clusterAddr: "https://$(HOSTNAME).openbao-internal:8201"
             raft:
