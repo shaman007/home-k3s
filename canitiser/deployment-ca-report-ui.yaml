@@ -24,7 +24,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: ui
-          image: harbor.andreybondarenko.com/library/canitiser:2026-08-16-083440
+          image: harbor.andreybondarenko.com/library/canitiser:2026-08-17-022902
           imagePullPolicy: IfNotPresent
           command: ["python", "/app/ca-report-server.py"]
           securityContext:
