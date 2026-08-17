@@ -20,6 +20,11 @@ spec:
           global:
             priorityClassName: homelab-critical
           replicaCount: 3
+          strategy:
+            type: RollingUpdate
+            rollingUpdate:
+              maxSurge: 0
+              maxUnavailable: 1
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
@@ -49,6 +54,11 @@ spec:
             enabled: true
           webhook:
             replicaCount: 3
+            strategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxSurge: 0
+                maxUnavailable: 1
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
@@ -74,6 +84,11 @@ spec:
               enabled: true
           cainjector:
             replicaCount: 3
+            strategy:
+              type: RollingUpdate
+              rollingUpdate:
+                maxSurge: 0
+                maxUnavailable: 1
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
