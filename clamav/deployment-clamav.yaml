@@ -112,7 +112,7 @@ spec:
             limits:
               memory: "1536Mi"
         - name: exporter
-          image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:v2.1.5
+          image: harbor.andreybondarenko.com/github/sergeymakinen/clamav_exporter:v2.1.8
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9906
