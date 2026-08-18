@@ -25,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 120
       containers:
         - name: photon
-          image: harbor.andreybondarenko.com/dockerhub/rtuszik/photon-docker:2.3.1
+          image: harbor.andreybondarenko.com/dockerhub/rtuszik/photon-docker:2.4.0
           imagePullPolicy: IfNotPresent
           command:
             - /photon/.venv/bin/python
