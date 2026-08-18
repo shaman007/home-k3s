@@ -31,7 +31,7 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - name: mysql
-          image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.2
+          image: harbor.andreybondarenko.com/dockerhub/mariadb:11.4.12
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -45,13 +45,16 @@ spec:
               type: RuntimeDefault
           env:
             # Create this secret manually in-cluster; do not commit credentials.
-            - name: MYSQL_ROOT_PASSWORD
+            - name: MARIADB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: mysql-nextcloud-auth
                   key: password
-            - name: MYSQL_DATABASE
+            - name: MARIADB_DATABASE
               value: nextcloud
+          args:
+            - --transaction-isolation=READ-COMMITTED
+            - --binlog-format=ROW
           ports:
             - containerPort: 3306
               name: mysql
@@ -74,7 +77,7 @@ spec:
             limits:
               memory: "1472Mi"
           volumeMounts:
-            - name: mysql-nextcloud-lh
+            - name: mariadb-nextcloud-lh
               mountPath: /var/lib/mysql
             - name: mysql-run
               mountPath: /var/run/mysqld
@@ -126,9 +129,9 @@ spec:
         - name: mysqld-exporter-tmp
           emptyDir:
             sizeLimit: 16Mi
-        - name: mysql-nextcloud-lh
+        - name: mariadb-nextcloud-lh
           persistentVolumeClaim:
-            claimName: mysql-nextcloud-lh
+            claimName: mariadb-nextcloud-lh
         - name: mysql-run
           emptyDir: {}
         - name: mysql-tmp

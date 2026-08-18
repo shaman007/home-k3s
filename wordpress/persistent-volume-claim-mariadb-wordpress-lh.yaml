@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-wordpress-lh
+  namespace: wordpress
+  labels:
+    app: mysql-wordpress
+    tier: mysql
+    recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/snapshot-daily-retain1: enabled
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
