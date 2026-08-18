@@ -603,13 +603,13 @@ data:
         ]
         checks.append(check("monitoring_stack", grafana_up >= 1 and prometheus_up >= 1 and thanos_up >= 1 and compactions > 0, f"Monitoring stack: grafana={grafana_up:.0f}, prometheus={prometheus_up:.0f}, thanos={thanos_up:.0f}, compactions_24h={compactions:.0f}.", stack_details))
 
-        vault_sealed = 1.0 - prom_scalar('min(vault_core_unsealed{job="vault"})', 0.0)
-        vault_up = prom_scalar('sum(up{job="vault"} == 1)', 0.0)
-        vault_details = [
-            {"namespace": "vault", "item": "sealed", "value": vault_sealed, "value_name": "vault_sealed"},
-            {"namespace": "vault", "item": "healthy-targets", "value": vault_up, "value_name": "vault_healthy_targets"},
+        openbao_sealed = 1.0 - prom_scalar('min(vault_core_unsealed{job="openbao"})', 0.0)
+        openbao_up = prom_scalar('sum(up{job="openbao"} == 1)', 0.0)
+        openbao_details = [
+            {"namespace": "openbao", "item": "sealed", "value": openbao_sealed, "value_name": "openbao_sealed"},
+            {"namespace": "openbao", "item": "healthy-targets", "value": openbao_up, "value_name": "openbao_healthy_targets"},
         ]
-        checks.append(check("vault", vault_sealed == 0 and vault_up >= 1, f"Vault status: sealed={vault_sealed:.0f}, healthy_targets={vault_up:.0f}.", vault_details))
+        checks.append(check("openbao", openbao_sealed == 0 and openbao_up >= 1, f"OpenBao status: sealed={openbao_sealed:.0f}, healthy_targets={openbao_up:.0f}.", openbao_details))
 
         pods = kube("/api/v1/pods").get("items", [])
         pod_issues = []

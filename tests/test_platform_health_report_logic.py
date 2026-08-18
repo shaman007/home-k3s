@@ -92,6 +92,17 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
 
         self.assertFalse(self.report["active_job_pod"](pod))
 
+    def test_openbao_health_check_uses_openbao_scrape_job(self):
+        source = yaml.safe_load(SCRIPT_CONFIGMAP.read_text(encoding="utf-8"))["data"][
+            "platform-health-report.py"
+        ]
+
+        self.assertIn('vault_core_unsealed{job="openbao"}', source)
+        self.assertIn('up{job="openbao"}', source)
+        self.assertIn('check("openbao"', source)
+        self.assertNotIn('job="vault"', source)
+        self.assertNotIn('check("vault"', source)
+
 
 if __name__ == "__main__":
     unittest.main()
