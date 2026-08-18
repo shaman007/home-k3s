@@ -31,7 +31,7 @@ spec:
       priorityClassName: homelab-essential
       containers:
         - name: mysql
-          image: harbor.andreybondarenko.com/dockerhub/mariadb:11.8.8
+          image: harbor.andreybondarenko.com/dockerhub/mariadb:12.3.2
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
