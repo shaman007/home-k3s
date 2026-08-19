@@ -99,15 +99,6 @@
         "file":  "2BCgsldGz-Longhorn-Example-v1.1.0.json"
     },
     {
-        "title":  "MongoDB Exporter + Go/Process",
-        "uid":  "mongodb-exporter-go-process",
-        "version":  1,
-        "folder":  "General",
-        "updated":  "2026-01-02T13:42:11Z",
-        "url":  "https://grafana.w386.k8s.my.lan/d/mongodb-exporter-go-process/mongodb-exporter-2b-go-process",
-        "file":  "mongodb-exporter-go-process-MongoDB-Exporter-Go-Process.json"
-    },
-    {
         "title":  "MySQL Dashboard",
         "uid":  "r4uc0hUGk",
         "version":  1,

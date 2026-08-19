@@ -38,13 +38,6 @@ data:
           severity: mail
         annotations:
           summary: High Filesystem Usage
-      - alert: Mongo is down
-        expr: mongodb_up < 1
-        for: 1m
-        labels:
-          severity: mail
-        annotations:
-          summary: Mongo is down
       - alert: Mysql is down
         expr: mysql_up < 1
         for: 1m

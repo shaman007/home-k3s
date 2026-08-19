@@ -1108,22 +1108,6 @@ spec:
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
-  name: c-mk58lp
-  namespace: longhorn-system
-spec:
-  concurrency: 1
-  cron: 0 0 * * *
-  groups: []
-  labels:
-    app: mongo
-  name: c-mk58lp
-  parameters: {}
-  retain: 0
-  task: filesystem-trim
----
-apiVersion: longhorn.io/v1beta2
-kind: RecurringJob
-metadata:
   name: c-mmxz1w
   namespace: longhorn-system
 spec:
@@ -1492,22 +1476,6 @@ spec:
   groups: []
   labels: {}
   name: c-sxbmyk
-  parameters: {}
-  retain: 31
-  task: backup
----
-apiVersion: longhorn.io/v1beta2
-kind: RecurringJob
-metadata:
-  name: c-symhsl
-  namespace: longhorn-system
-spec:
-  concurrency: 1
-  cron: 0 5 * * *
-  groups: []
-  labels:
-    app: mongo
-  name: c-symhsl
   parameters: {}
   retain: 31
   task: backup

@@ -866,27 +866,6 @@ volumePolicies:
       recurring-job-group.longhorn.io/backup-daily-retain31-b: enabled
     notes:
       - Volume was created from backup; keep restore semantics in mind before changing labels.
-  - namespace: spotify
-    pvcName: mongo-lh
-    longhornVolume: pvc-fc091030-bf31-4b8e-99fd-545d963b766a
-    workloadKinds:
-      - StatefulSet
-    fromBackup: true
-    restoreVolumeRecurringJob: enabled
-    currentRecurringJobs:
-      - c-78r2nf
-      - c-ohqoar
-    currentTasks:
-      - backup
-      - filesystem-trim
-    proposedRecurringJobGroups:
-      - trim-daily-b
-      - backup-daily-retain31-c
-    proposedLonghornVolumeLabels:
-      recurring-job-group.longhorn.io/trim-daily-b: enabled
-      recurring-job-group.longhorn.io/backup-daily-retain31-c: enabled
-    notes:
-      - Volume was created from backup; keep restore semantics in mind before changing labels.
   - namespace: stirling-pdf
     pvcName: stirling-pdf-configs
     longhornVolume: pvc-5dcfa8ee-00f1-4fbf-bb1a-9556cd569ab1

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-19 – Retired datastore cleanup
+
+- Removed the obsolete Elasticsearch and MongoDB Argo CD manifests.
+- Removed Your Spotify's post-migration MongoDB rollback workload, volume
+  declaration, migration job, monitoring, and Mongo-specific policies; retained
+  completed Longhorn backups for disaster recovery.
+- Refreshed the network-policy inventory and renamed the remaining Spotify
+  policies for their FerretDB-era purpose.
+
 ## 2026-08-14 – Mastodon search migration
 
 - Added a single-node, Apache-2.0-licensed OpenSearch deployment dedicated to

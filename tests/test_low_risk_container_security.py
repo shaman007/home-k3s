@@ -110,7 +110,6 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                 65534,
             ),
             ("clamav/deployment-clamav.yaml", "exporter", None),
-            ("your-spotify/stateful-set-mongodb.yaml", "mongo-exporter", 65535),
         )
 
         for path, container_name, uid in workload_specs:

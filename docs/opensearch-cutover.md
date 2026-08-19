@@ -21,18 +21,15 @@ the Elasticsearch data directory must not be copied or attached to OpenSearch.
 
 6. Confirm search works from Mastodon and check the web and Sidekiq logs for
    OpenSearch client errors.
-7. In a follow-up revision, remove the retired `elastic-stack-*` and
-   `elastic-system*` Argo CD Applications and their repository manifests. Let
-   the parent Application prune them, then confirm their managed resources are
-   gone before deleting the old Elasticsearch Longhorn volume.
+7. Confirm the retired `elastic-stack-*` and `elastic-system*` Argo CD
+   Applications, namespaces, ECK custom resources, and old Elasticsearch
+   Longhorn volume are gone. These resources were removed after the cutover.
 
 ## Rollback
 
-Before the old Elasticsearch resources are removed, rollback consists of
-restoring the previous Mastodon endpoint and credentials and resyncing its
-Applications. After Elasticsearch is retired, redeploy it and rebuild its
-index from PostgreSQL; the OpenSearch volume is not a compatible rollback
-source.
+Elasticsearch is retired. To roll back, redeploy it, restore the previous
+Mastodon endpoint and credentials, and rebuild its index from PostgreSQL. The
+OpenSearch volume is not a compatible rollback source.
 
 ## Security boundary
 
