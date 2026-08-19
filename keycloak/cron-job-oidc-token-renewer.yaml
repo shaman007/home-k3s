@@ -34,7 +34,7 @@ spec:
             runAsNonRoot: true
           containers:
             - name: renew
-              image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.7.1
+              image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.7.2
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
