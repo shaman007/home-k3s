@@ -15,7 +15,7 @@ class MetricsServerGitopsTest(unittest.TestCase):
         self.assertIn("name: metrics-server", source)
         self.assertIn("repoURL: 'https://kubernetes-sigs.github.io/metrics-server/'", source)
         self.assertIn("chart: metrics-server", source)
-        self.assertIn("targetRevision: 3.13.1", source)
+        self.assertIn("targetRevision: 3.14.0", source)
         self.assertIn("releaseName: metrics-server", source)
         self.assertIn("k8s-app: metrics-server", source)
         self.assertIn("--kubelet-insecure-tls", source)
