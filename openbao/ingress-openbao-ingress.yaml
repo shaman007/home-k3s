@@ -8,6 +8,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
     kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/service.serversscheme: "https"
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:

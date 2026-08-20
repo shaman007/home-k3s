@@ -6,6 +6,7 @@ metadata:
   namespace: monitoring
   annotations:
     kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
 spec:
   tls:
     - hosts:

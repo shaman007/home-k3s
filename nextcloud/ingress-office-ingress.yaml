@@ -6,7 +6,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/service.serversscheme: "https"
-    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-hsts@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,nextcloud-hsts@kubernetescrd
 spec:
   tls:
     - hosts:

@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: mempalace
   namespace: mempalace
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
   labels:
     app: mempalace
     app.kubernetes.io/name: mempalace

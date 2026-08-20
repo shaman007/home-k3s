@@ -453,7 +453,12 @@ data:
         warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 7, int)
         public_suffixes = (".andreybondarenko.com", ".shaman007.com")
         internal_suffixes = (".k8s.my.lan",)
+        internal_guard_refs = (
+            "traefik-internal-clients-only@kubernetescrd",
+            "headlamp-local-network-only@kubernetescrd",
+        )
         host_guard_state = {}
+        internal_guard_issues = []
         cert_details = []
         cert_issues = []
         ingress_hosts = []
@@ -461,18 +466,30 @@ data:
             namespace = ingress["metadata"]["namespace"]
             ingress_name = ingress["metadata"]["name"]
             annotations = ingress.get("metadata", {}).get("annotations", {})
+            is_http01_solver = annotations.get("acme.cert-manager.io/http01-solver") == "true"
             hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
             for host in ingress_tls_hosts(ingress):
                 ingress_hosts.append((namespace, ingress_name, host))
             public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
+            internal_hosts = [host for host in hosts if host.endswith(internal_suffixes)]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
             has_robots_guard = "traefik-robots-disallow-all@kubernetescrd" in middleware_ref
+            has_internal_guard = any(ref in middleware_ref for ref in internal_guard_refs)
             for host in public_hosts:
                 state = host_guard_state.setdefault((namespace, host), {"has_robots_guard": False})
                 state["has_robots_guard"] = state["has_robots_guard"] or has_robots_guard
             for host in public_hosts:
                 if host in throttle_routes.get(namespace, set()):
                     continue
+            for host in internal_hosts:
+                if is_http01_solver:
+                    continue
+                if not has_internal_guard:
+                    internal_guard_issues.append({
+                        "namespace": namespace,
+                        "item": f"missing internal client guard: {ingress_name}/{host}",
+                        "value": 0,
+                    })
         seen_ingress_hosts = set()
         for namespace, ingress_name, host in sorted(ingress_hosts):
             key = (namespace, ingress_name, host)
@@ -501,6 +518,12 @@ data:
             if host.endswith(internal_suffixes)
         )
         checks.append(check("external_ingress_guards", not guard_issues, "External ingress middleware checks completed.", guard_issues))
+        checks.append(check(
+            "internal_ingress_guards",
+            not internal_guard_issues,
+            "Internal ingress client restrictions checked.",
+            internal_guard_issues,
+        ))
         checks.append(check(
             "ingress_certificates",
             not cert_issues,

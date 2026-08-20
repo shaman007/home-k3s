@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: open-webui
+  name: open-webui-internal
   namespace: open-webui
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: open-webui-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,open-webui-hsts@kubernetescrd
   labels:
     app: open-webui
     app.kubernetes.io/name: open-webui
@@ -14,12 +14,8 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - chat.andreybondarenko.com
-      secretName: open-webui-tls
   rules:
-    - host: chat.andreybondarenko.com
+    - host: chat.w386.k8s.my.lan
       http:
         paths:
           - path: /
