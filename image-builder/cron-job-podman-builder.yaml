@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/instance: podman-builder
     app.kubernetes.io/managed-by: argoCD
 spec:
-  # Cron has no exact every-two-weeks expression. Trigger each Monday and use
-  # a continuous Unix epoch-week parity check before starting the build.
+  # Rebuild every Monday. Reusable build layers are imported from and exported
+  # to Harbor by the Dockerfiles repository's build script.
   schedule: "29 2 * * 1"
   timeZone: Etc/UTC
   concurrencyPolicy: Forbid
@@ -39,16 +39,6 @@ spec:
               # deliberate Git changes, never an automatic self-update.
               image: harbor.andreybondarenko.com/library/podman-builder@sha256:20a9d97d05ba46fd1287c2dbf58328cdfa06a7719bdfa97f4dd8719e8b0c0ae2
               imagePullPolicy: IfNotPresent
-              command:
-                - /bin/sh
-                - -ec
-                - |
-                  current_epoch_week=$(($(date -u +%s) / 604800))
-                  if [ $(((current_epoch_week - 2952) % 2)) -ne 0 ]; then
-                    echo "Skipping alternate week; next image rebuild is in seven days."
-                    exit 0
-                  fi
-                  exec /usr/local/bin/nightly-build
               securityContext:
                 privileged: true
               env:

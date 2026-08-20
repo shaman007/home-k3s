@@ -1,13 +1,13 @@
 # Image builder
 
 The `podman-builder` CronJob rebuilds the custom images from the public
-Dockerfiles repository every two weeks, starting Monday 2026-08-03 at 02:29
-UTC. Kubernetes cron has no exact 14-day expression, so the CronJob triggers
-every Monday and a continuous Unix epoch-week parity guard exits successfully
-on alternate weeks. It currently runs privileged Podman with `overlay` storage
-on an XFS-backed EmptyDir and publishes AMD64 images, matching every current
-cluster node. Overlay storage preserves shared image layers and keeps large
-base-image rebuilds within the configured 80 GiB ephemeral-storage limit.
+Dockerfiles repository every Monday at 02:29 UTC. It currently runs privileged
+Podman with `overlay` storage on an XFS-backed EmptyDir and publishes AMD64
+images, matching every current cluster node. The local container store remains
+ephemeral; reusable build layers are imported from and exported to per-image
+cache repositories under `harbor.andreybondarenko.com/library/build-cache/`.
+Overlay storage preserves shared layers within a build and keeps large builds
+within the configured 80 GiB ephemeral-storage limit.
 Manual `build.sh` runs retain the default AMD64+ARM64 build contract; automated
 ARM64 builds would require Talos nodes installed with the `binfmt-misc` system
 extension or a native ARM64 builder node.

@@ -23,16 +23,13 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.assertNotIn(":latest", image)
         self.assertEqual("IfNotPresent", self.container["imagePullPolicy"])
 
-    def test_builder_runs_every_two_weeks(self):
+    def test_builder_runs_weekly(self):
         spec = self.cronjob["spec"]
         container = spec["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
-        guard = container["command"][2]
 
         self.assertEqual("29 2 * * 1", spec["schedule"])
         self.assertEqual("Etc/UTC", spec["timeZone"])
-        self.assertIn("current_epoch_week", guard)
-        self.assertIn("% 2", guard)
-        self.assertIn("exec /usr/local/bin/nightly-build", guard)
+        self.assertNotIn("command", container)
 
     def test_builder_does_not_receive_a_service_account_token(self):
         self.assertFalse(self.pod_spec["automountServiceAccountToken"])
