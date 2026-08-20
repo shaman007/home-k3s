@@ -195,6 +195,22 @@ data:
     dns {
       nameserver = ["10.43.0.53"];
     }
+  settings: |
+    # Alertmanager legitimately links to the cluster's private .lan services.
+    # Scope these score overrides to its envelope sender and the pod CIDR so an
+    # external sender cannot obtain the same treatment by spoofing the address.
+    alertmanager_k8s {
+      priority = high;
+      from = "alert@andreybondarenko.com";
+      ip = "10.42.0.0/16";
+
+      apply {
+        URL_NO_TLD = 0.0;
+        MIME_MA_MISSING_TEXT = 0.0;
+        MIME_HTML_ONLY = 0.0;
+        URI_COUNT_ODD = 0.0;
+      }
+    }
   rspamd: |
     .include "$CONFDIR/common.conf"
     options {

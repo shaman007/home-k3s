@@ -23,3 +23,4 @@ data:
         from: alert@andreybondarenko.com
         smarthost: traefik.traefik.svc.cluster.local:587
         require_tls: false
+        text: '{{ template "email.default.text" . }}'

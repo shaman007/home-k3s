@@ -119,6 +119,12 @@ spec:
             items:
               - key: options
                 path: options.inc
+        - name: settings-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: settings
+                path: settings.conf
         - name: privater-cf
           secret:
             secretName: andreybondarenko.key
@@ -225,6 +231,9 @@ spec:
             - name: options-cf
               mountPath: /etc/rspamd/local.d/options.inc
               subPath: options.inc
+            - name: settings-cf
+              mountPath: /etc/rspamd/local.d/settings.conf
+              subPath: settings.conf
       initContainers:
         - name: fix-perms
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
