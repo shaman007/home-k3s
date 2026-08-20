@@ -1,7 +1,7 @@
 ---
 image:
-  repository: harbor.andreybondarenko.com/github/shaman007/mastodon
-  tag: v4.6.6-1
+  repository: harbor.andreybondarenko.com/library/mastodon
+  tag: 2026-08-20-151447
   pullPolicy: IfNotPresent
 
 mastodon:
@@ -48,7 +48,7 @@ mastodon:
     workers: "2"
     persistentTimeout: "20"
     image:
-      repository: harbor.andreybondarenko.com/github/shaman007/mastodon
+      repository: harbor.andreybondarenko.com/library/mastodon
     resources:
       limits:
         memory: 4115Mi
@@ -59,7 +59,7 @@ mastodon:
     # same container here so CPU remains requested but never throttled.
     extraContainers:
       - name: prometheus-exporter
-        image: harbor.andreybondarenko.com/github/shaman007/mastodon:v4.6.6-1
+        image: harbor.andreybondarenko.com/library/mastodon:2026-08-20-151447
         command:
           - ./bin/prometheus_exporter
         args:
@@ -99,7 +99,7 @@ mastodon:
           - fasp
           - scheduler
         image:
-          repository: harbor.andreybondarenko.com/github/shaman007/mastodon
+          repository: harbor.andreybondarenko.com/library/mastodon
     extraEnvVars:
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
