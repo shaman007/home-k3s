@@ -25,6 +25,7 @@ spec:
       labels:
         app: nextcloud
         component: web
+        app.kubernetes.io/component: web
     spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-standard

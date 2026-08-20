@@ -15,6 +15,7 @@ spec:
   selector:
     app: nextcloud
     component: web
+    app.kubernetes.io/component: web
   ports:
     - protocol: TCP
       port: 9000
