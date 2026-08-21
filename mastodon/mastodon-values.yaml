@@ -111,7 +111,7 @@ mastodon:
     baseUrl: null
     image:
       repository: harbor.andreybondarenko.com/github/mastodon/mastodon-streaming
-      tag: v4.6.6
+      tag: v4.7.0
     resources:
       limits:
         memory: 110Mi
