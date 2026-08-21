@@ -33,7 +33,7 @@ spec:
       priorityClassName: homelab-essential
       initContainers:
         - name: prepare-runtime
-          image: harbor.andreybondarenko.com/library/bitwarden:2026-08-17-022902
+          image: harbor.andreybondarenko.com/library/bitwarden:2026-08-20-163827
           imagePullPolicy: IfNotPresent
           command:
             - /usr/local/bin/prepare-runtime.sh
@@ -104,7 +104,7 @@ spec:
                 secretKeyRef:
                   name: yubico-secret-key
                   key: secret-key
-          image: harbor.andreybondarenko.com/library/bitwarden:2026-08-17-022902
+          image: harbor.andreybondarenko.com/library/bitwarden:2026-08-20-163827
           imagePullPolicy: IfNotPresent
           name: bitwarden
           ports:
