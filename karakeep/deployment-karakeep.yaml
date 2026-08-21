@@ -113,7 +113,7 @@ spec:
             limits:
               memory: 1152Mi
         - name: chrome
-          image: harbor.andreybondarenko.com/library/alpine-chrome:2026-08-17-022902
+          image: harbor.andreybondarenko.com/library/alpine-chrome:2026-08-20-163827
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
