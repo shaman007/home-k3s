@@ -1,7 +1,7 @@
 ---
 image:
   repository: harbor.andreybondarenko.com/library/mastodon
-  tag: 2026-08-20-151447
+  tag: 2026-08-20-163827
   pullPolicy: Always
 
 mastodon:
@@ -59,7 +59,7 @@ mastodon:
     # same container here so CPU remains requested but never throttled.
     extraContainers:
       - name: prometheus-exporter
-        image: harbor.andreybondarenko.com/library/mastodon:2026-08-20-151447
+        image: harbor.andreybondarenko.com/library/mastodon:2026-08-20-163827
         imagePullPolicy: Always
         command:
           - ./bin/prometheus_exporter
