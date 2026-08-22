@@ -42,8 +42,6 @@ spec:
             minAvailable: 2
           prometheus:
             enabled: false
-          extraArgs:
-            - --acme-http01-solver-resource-limits-cpu=0
           resources:
             requests:
               cpu: 10m

@@ -84,8 +84,9 @@ class HarborProxyCacheTest(unittest.TestCase):
             application["spec"]["sources"][0]["helm"]["values"]
         )
 
-        self.assertIn(
-            "--acme-http01-solver-resource-limits-cpu=0", values["extraArgs"]
+        self.assertNotIn(
+            "--acme-http01-solver-resource-limits-cpu=0",
+            values.get("extraArgs", []),
         )
 
     def test_platform_helm_workloads_use_upstream_images(self):
