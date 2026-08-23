@@ -51,6 +51,12 @@ spec:
             items:
               - key: access
                 path: sender_access
+        - name: virtual-aliases
+          configMap:
+            name: main-cf
+            items:
+              - key: virtual
+                path: virtual
         - name: mail-lh
           persistentVolumeClaim:
             claimName: mail-lh
@@ -111,6 +117,9 @@ spec:
             - name: sender-access
               mountPath: /etc/postfix/sender_access
               subPath: sender_access
+            - name: virtual-aliases
+              mountPath: /etc/postfix/virtual
+              subPath: virtual
             - name: queue
               mountPath: /var/lib/postfix
             - name: spool

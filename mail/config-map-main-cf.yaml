@@ -25,6 +25,7 @@ data:
     smtpd_banner = $myhostname ESMTP $mail_name
     alias_maps = lmdb:/etc/postfix/aliases
     alias_database = lmdb:/etc/postfix/aliases
+    virtual_alias_maps = texthash:/etc/postfix/virtual
     mailbox_size_limit = 0
     message_size_limit = 134217728
     maillog_file = /var/log/mail.log
@@ -69,6 +70,8 @@ data:
     #relayhost = smtp.faster.cz:25
   access: |
     andreybondarenko.com OK
+  virtual: |
+    elena@andreybondarenko.com elenabondarenko@email.cz
   master: |
     #127.0.0.1:submission inet n -   n       -       -       smtpd
     submission inet n       -       n       -       -       smtpd
