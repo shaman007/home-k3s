@@ -75,6 +75,15 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
 
         self.assertEqual([], self.report["ingress_tls_hosts"](ingress))
 
+    def test_http01_solver_is_detected_from_cert_manager_label(self):
+        ingress = {
+            "metadata": {
+                "labels": {"acme.cert-manager.io/http01-solver": "true"},
+            }
+        }
+
+        self.assertTrue(self.report["is_http01_solver_ingress"](ingress))
+
     def test_active_job_pod_is_excluded_from_readiness_failures(self):
         for phase in ("Pending", "Running"):
             with self.subTest(phase=phase):

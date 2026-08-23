@@ -70,6 +70,7 @@ resources:
     memory: 2Gi
 
 additionalArguments:
+  - --entryPoints.web.allowACMEByPass=true
   - --entryPoints.web.http.redirections.entryPoint.to=websecure
   - --entryPoints.web.http.redirections.entryPoint.scheme=https
   - --entryPoints.web.http.redirections.entryPoint.permanent=true

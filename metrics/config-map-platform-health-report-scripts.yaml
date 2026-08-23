@@ -245,6 +245,15 @@ data:
         return [host for host in rule_hosts if host in declared_hosts]
 
 
+    def is_http01_solver_ingress(ingress):
+        metadata = ingress.get("metadata", {})
+        marker = "acme.cert-manager.io/http01-solver"
+        return (
+            metadata.get("labels", {}).get(marker) == "true"
+            or metadata.get("annotations", {}).get(marker) == "true"
+        )
+
+
     def render_report(checks):
         lines = [
             "Home k3s platform health report",
@@ -466,7 +475,7 @@ data:
             namespace = ingress["metadata"]["namespace"]
             ingress_name = ingress["metadata"]["name"]
             annotations = ingress.get("metadata", {}).get("annotations", {})
-            is_http01_solver = annotations.get("acme.cert-manager.io/http01-solver") == "true"
+            is_http01_solver = is_http01_solver_ingress(ingress)
             hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
             for host in ingress_tls_hosts(ingress):
                 ingress_hosts.append((namespace, ingress_name, host))
