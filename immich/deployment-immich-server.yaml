@@ -25,6 +25,7 @@ spec:
         app.kubernetes.io/name: immich-server
         app.kubernetes.io/part-of: immich
     spec:
+      runtimeClassName: nvidia
       priorityClassName: homelab-essential
       enableServiceLinks: false
       automountServiceAccountToken: false
@@ -75,6 +76,8 @@ spec:
               value: immich-valkey
             - name: IMMICH_MACHINE_LEARNING_URL
               value: http://immich-machine-learning:3003
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,video,utility
             - name: TZ
               value: Europe/Prague
             - name: HOME
@@ -119,6 +122,7 @@ spec:
               memory: 3584Mi
             limits:
               memory: 5120Mi
+              nvidia.com/gpu: 1
       volumes:
         - name: library
           persistentVolumeClaim:
