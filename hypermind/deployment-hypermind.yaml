@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: hypermind
     app.kubernetes.io/instance: hypermind
-    app.kubernetes.io/version: "1.0.1"
+    app.kubernetes.io/version: "1.6.1"
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
@@ -21,6 +21,7 @@ spec:
         app: hypermind
         app.kubernetes.io/name: hypermind
         app.kubernetes.io/instance: hypermind
+        app.kubernetes.io/version: "1.6.1"
     spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-best-effort
@@ -32,7 +33,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: hypermind
-          image: harbor.andreybondarenko.com/github/lklynet/hypermind:1.0.1@sha256:74b7a0335214fea872c578fcf2f04432fd5b29c5340fadcae2e2572a5a611959
+          image: harbor.andreybondarenko.com/github/lklynet/hypermind-swarm:1.6.1@sha256:1c63e7f2b6425be6bceb747d5fd8e4f5894e0fda409f2de9073ffd518a80517f
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -46,41 +47,45 @@ spec:
           env:
             - name: PORT
               value: "3000"
-            - name: ENABLE_CHAT
+            - name: DEVICE_PERSISTENCE
               value: "false"
-            - name: ENABLE_MAP
+            - name: MEGA_NODE
               value: "false"
-            - name: ENABLE_THEMES
-              value: "true"
+            - name: STORAGE_PATH
+              value: /app/storage
             - name: HOME
               value: /tmp
             - name: TMPDIR
               value: /tmp
           volumeMounts:
+            - name: storage
+              mountPath: /app/storage
             - name: tmp
               mountPath: /tmp
           startupProbe:
             httpGet:
-              path: /api/stats
+              path: /api/health
               port: http
             failureThreshold: 30
             periodSeconds: 2
           readinessProbe:
             httpGet:
-              path: /api/stats
+              path: /api/health
               port: http
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /api/stats
+              path: /api/health
               port: http
             periodSeconds: 30
           resources:
             requests:
-              cpu: 25m
-              memory: 64Mi
+              cpu: 50m
+              memory: 128Mi
             limits:
-              memory: 256Mi
+              memory: 512Mi
       volumes:
+        - name: storage
+          emptyDir: {}
         - name: tmp
           emptyDir: {}
