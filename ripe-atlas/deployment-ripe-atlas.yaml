@@ -23,6 +23,8 @@ spec:
     spec:
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 60
       nodeSelector:
         kubernetes.io/arch: amd64

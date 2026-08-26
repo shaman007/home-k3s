@@ -25,6 +25,8 @@ spec:
             app.kubernetes.io/instance: ooniprobe
         spec:
           automountServiceAccountToken: false
+          hostNetwork: true
+          dnsPolicy: ClusterFirstWithHostNet
           priorityClassName: homelab-batch
           restartPolicy: Never
           nodeSelector:
