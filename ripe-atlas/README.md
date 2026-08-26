@@ -18,8 +18,9 @@ Register that key at <https://atlas.ripe.net/apply/swprobe/>. Approval is manual
 the pod can remain running while RIPE NCC processes the application.
 
 The probe requires its upstream setuid measurement helper and `NET_RAW` for ICMP
-measurements. For that reason, its namespace enforces the Kubernetes Pod Security
-Baseline profile and audits/warns against Restricted rather than enforcing it.
+measurements. Host networking is also forbidden by the Baseline and Restricted
+Pod Security profiles, so this dedicated namespace enforces Privileged while still
+auditing and warning against Restricted violations.
 
 The pod uses the node network so it can measure both IPv4 and IPv6 even though the
 cluster pod network is IPv4-only. Kubernetes NetworkPolicy does not isolate a

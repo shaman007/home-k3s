@@ -24,7 +24,9 @@ enabled in `config-map-ooniprobe.yaml`.
 The job uses the node network so it can measure both IPv4 and IPv6 even though
 the cluster pod network is IPv4-only. Kubernetes NetworkPolicy does not isolate
 a host-networked job, so it shares the selected node's network namespace while
-active.
+active. Because host networking is forbidden by the Baseline and Restricted Pod
+Security profiles, this dedicated namespace enforces Privileged while retaining
+Restricted warnings and auditing.
 
 The CronJob pins the reviewed Harbor image by its immutable timestamp tag. After
 rebuilding the image, update `cron-job-ooniprobe.yaml` to the new timestamp tag
