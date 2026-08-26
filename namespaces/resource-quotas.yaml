@@ -212,6 +212,20 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: namespace-quota
+  namespace: ripe-atlas
+spec:
+  hard:
+    pods: "3"
+    services: "0"
+    secrets: "5"
+    configmaps: "5"
+    persistentvolumeclaims: "2"
+    requests.storage: 2Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
   namespace: hister
 spec:
   hard:
