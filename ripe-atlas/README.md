@@ -25,3 +25,8 @@ auditing and warning against Restricted violations.
 The pod uses the node network so it can measure both IPv4 and IPv6 even though the
 cluster pod network is IPv4-only. Kubernetes NetworkPolicy does not isolate a
 host-networked pod, so the probe shares the selected node's network namespace.
+
+The image bootstraps its RIPE Atlas control registration through the official IPv4
+registration endpoints. RIPE derives a NATed probe's public IPv4 address from that
+connection, while the probe continues to report its global IPv6 address and execute
+measurements over both address families.
