@@ -35,11 +35,6 @@ spec:
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: true
-            capabilities:
-              drop:
-                - ALL
-              add:
-                - NET_RAW
             readOnlyRootFilesystem: true
           env:
             - name: RXTXRPT
