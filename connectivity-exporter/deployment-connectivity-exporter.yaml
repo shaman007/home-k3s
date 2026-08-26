@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: exporter
-          image: harbor.andreybondarenko.com/library/connectivity-exporter-local:2026-08-24-022909
+          image: harbor.andreybondarenko.com/library/connectivity-exporter-local:2026-08-26-081148
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
