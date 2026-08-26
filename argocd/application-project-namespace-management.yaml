@@ -80,6 +80,8 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: ooni
     - server: https://kubernetes.default.svc
+      namespace: ripe-atlas
+    - server: https://kubernetes.default.svc
       namespace: plex
     - server: https://kubernetes.default.svc
       namespace: seaweedfs
