@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hypermind-storage
+  namespace: hypermind
+  labels:
+    app.kubernetes.io/name: hypermind
+    app.kubernetes.io/instance: hypermind
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi

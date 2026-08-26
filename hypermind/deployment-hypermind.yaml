@@ -26,6 +26,8 @@ spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-best-effort
       securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
@@ -50,7 +52,7 @@ spec:
             - name: DEVICE_PERSISTENCE
               value: "false"
             - name: MEGA_NODE
-              value: "false"
+              value: "true"
             - name: STORAGE_PATH
               value: /app/storage
             - name: HOME
@@ -86,6 +88,7 @@ spec:
               memory: 512Mi
       volumes:
         - name: storage
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: hypermind-storage
         - name: tmp
           emptyDir: {}
