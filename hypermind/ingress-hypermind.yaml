@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hypermind
+  namespace: hypermind
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,hypermind-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
+  labels:
+    app.kubernetes.io/name: hypermind
+    app.kubernetes.io/instance: hypermind
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - hypermind.andreybondarenko.com
+      secretName: hypermind-tls
+  rules:
+    - host: hypermind.andreybondarenko.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hypermind
+                port:
+                  name: http

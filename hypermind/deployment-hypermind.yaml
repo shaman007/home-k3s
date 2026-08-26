@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hypermind
+  namespace: hypermind
+  labels:
+    app.kubernetes.io/name: hypermind
+    app.kubernetes.io/instance: hypermind
+    app.kubernetes.io/version: "1.0.1"
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hypermind
+  template:
+    metadata:
+      labels:
+        app: hypermind
+        app.kubernetes.io/name: hypermind
+        app.kubernetes.io/instance: hypermind
+    spec:
+      automountServiceAccountToken: false
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      priorityClassName: homelab-best-effort
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: hypermind
+          image: harbor.andreybondarenko.com/github/lklynet/hypermind:1.0.1@sha256:74b7a0335214fea872c578fcf2f04432fd5b29c5340fadcae2e2572a5a611959
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          ports:
+            - name: http
+              containerPort: 3000
+              hostPort: 3000
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3000"
+            - name: ENABLE_CHAT
+              value: "false"
+            - name: ENABLE_MAP
+              value: "false"
+            - name: ENABLE_THEMES
+              value: "true"
+            - name: HOME
+              value: /tmp
+            - name: TMPDIR
+              value: /tmp
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /api/stats
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /api/stats
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/stats
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}

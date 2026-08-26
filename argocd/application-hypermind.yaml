@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hypermind
+  namespace: argocd
+spec:
+  project: applications
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: hypermind
+    targetRevision: main
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: hypermind
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
