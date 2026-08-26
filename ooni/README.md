@@ -22,3 +22,7 @@ The probe database and local measurement artifacts persist in the
 enabled in `config-map-ooniprobe.yaml`. NetworkPolicy permits DNS through
 CoreDNS and unrestricted protocols to public IPv4/IPv6 destinations, while
 excluding private, loopback, link-local, and multicast address ranges.
+
+The CronJob pins the reviewed Harbor image by its immutable timestamp tag. After
+rebuilding the image, update `cron-job-ooniprobe.yaml` to the new timestamp tag
+explicitly.
