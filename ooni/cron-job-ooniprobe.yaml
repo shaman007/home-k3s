@@ -43,7 +43,6 @@ spec:
               args:
                 - --config=/config/config.json
                 - --batch
-                - --log-handler=batch
                 - run
                 - unattended
               securityContext:
