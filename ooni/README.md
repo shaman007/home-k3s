@@ -1,21 +1,20 @@
 # OONI Probe
 
-This directory contains a self-built OONI Probe CLI image and a daily Kubernetes
-CronJob. The probe runs the upstream `unattended` test suite at 03:17 in the
-`Europe/Prague` time zone and publishes measurements to OONI.
+This directory contains a daily Kubernetes CronJob for the OONI Probe CLI. The
+probe runs the upstream `unattended` test suite at 03:17 in the `Europe/Prague`
+time zone and publishes measurements to OONI.
 
-The image contains the official, statically linked OONI Probe CLI v3.30.0 binary
-and CA certificates only. The upstream binary download is protected by the
-SHA-256 digest published with the GitHub release. The resulting container runs
-as UID/GID 65532 with no Linux capabilities and a read-only root filesystem.
+The image is defined in the sibling `Dockerfiles/ooniprobe` repository folder.
+It contains the official, statically linked OONI Probe CLI v3.30.0 binary and CA
+certificates only. The upstream binary download is protected by the SHA-256
+digest published with the GitHub release. The resulting container runs as
+UID/GID 65532 with no Linux capabilities and a read-only root filesystem.
 
-Build and publish the image before enabling the Argo CD application:
+Build and publish the image from the `Dockerfiles` repository before enabling
+the Argo CD application:
 
 ```sh
-podman build --platform linux/amd64 \
-  --tag harbor.andreybondarenko.com/library/ooniprobe:3.30.0 \
-  --file ooni/Containerfile ooni
-podman push harbor.andreybondarenko.com/library/ooniprobe:3.30.0
+PLATFORMS=linux/amd64 TAG=3.30.0 ./build.sh ooniprobe
 ```
 
 The probe database and local measurement artifacts persist in the
