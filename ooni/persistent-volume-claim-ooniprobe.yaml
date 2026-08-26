@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ooniprobe-data
+  namespace: ooni
+  labels:
+    app.kubernetes.io/name: ooniprobe
+    app.kubernetes.io/instance: ooniprobe
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

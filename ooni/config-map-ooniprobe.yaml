@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ooniprobe-config
+  namespace: ooni
+  labels:
+    app.kubernetes.io/name: ooniprobe
+    app.kubernetes.io/instance: ooniprobe
+    app.kubernetes.io/managed-by: argoCD
+data:
+  config.json: |
+    {
+      "_": "",
+      "_version": 1,
+      "_informed_consent": true,
+      "sharing": {
+        "upload_results": true
+      },
+      "nettests": {
+        "websites_max_runtime": 0,
+        "websites_url_limit": 0,
+        "websites_enabled_category_codes": null
+      },
+      "advanced": {}
+    }

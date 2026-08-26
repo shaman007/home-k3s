@@ -1,0 +1,20 @@
+FROM docker.io/library/alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1 AS certificates
+
+RUN apk add --no-cache ca-certificates
+
+FROM scratch
+
+ADD --checksum=sha256:53099f967a7ab0374c5c8c1c2c04ba028f09ff737b369caf6bcf10c34541fcf3 \
+    --chmod=0555 \
+    https://github.com/ooni/probe-cli/releases/download/v3.30.0/ooniprobe-linux-amd64 \
+    /usr/local/bin/ooniprobe
+COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+ENV HOME=/data \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
+WORKDIR /data
+USER 65532:65532
+
+ENTRYPOINT ["/usr/local/bin/ooniprobe"]
+CMD ["version"]

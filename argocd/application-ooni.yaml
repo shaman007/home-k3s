@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ooni
+  namespace: argocd
+spec:
+  project: applications
+  source:
+    repoURL: "https://github.com/shaman007/home-k3s.git"
+    path: ooni
+    targetRevision: main
+    directory:
+      include: "*.yaml"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: ooni
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

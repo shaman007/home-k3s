@@ -78,6 +78,8 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: openbao
     - server: https://kubernetes.default.svc
+      namespace: ooni
+    - server: https://kubernetes.default.svc
       namespace: plex
     - server: https://kubernetes.default.svc
       namespace: seaweedfs
