@@ -33,7 +33,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ripe-atlas
-          image: harbor.andreybondarenko.com/library/ripe-atlas:latest
+          image: harbor.andreybondarenko.com/library/ripe-atlas:2026-08-26-091220
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: true
