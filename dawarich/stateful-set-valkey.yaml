@@ -41,7 +41,7 @@ spec:
           securityContext: &security {runAsUser: 999, runAsGroup: 999, runAsNonRoot: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}, readOnlyRootFilesystem: true}
           resources: {requests: {cpu: 40m, memory: 64Mi}, limits: {memory: 512Mi}}
         - name: redis-exporter
-          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.89.0
+          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.90.0
           env: [{name: REDIS_ADDR, value: "redis://localhost:6379"}]
           ports: [{name: redis-exporter, containerPort: 9121}]
           securityContext: *security
