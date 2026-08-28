@@ -74,6 +74,8 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           volumeMounts:
+            - name: photon-tmp
+              mountPath: /tmp
             - name: photon-data
               mountPath: /photon/data
           resources:
@@ -83,6 +85,8 @@ spec:
             limits:
               memory: "3584Mi"
       volumes:
+        - name: photon-tmp
+          emptyDir: {}
         - name: photon-data
           persistentVolumeClaim:
             claimName: photon-data
