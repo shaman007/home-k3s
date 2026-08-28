@@ -58,6 +58,8 @@ spec:
             allowPrivilegeEscalation: true
             readOnlyRootFilesystem: true
           env:
+            - name: PATH
+              value: /usr/libexec/ripe-atlas/measurement:/usr/libexec/ripe-atlas:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             - name: RXTXRPT
               value: "yes"
             - name: TELNETD_PORT
