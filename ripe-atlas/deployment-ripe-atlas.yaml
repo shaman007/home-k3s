@@ -31,6 +31,25 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+      initContainers:
+        - name: prepare-atlas-runtime
+          image: harbor.andreybondarenko.com/library/ripe-atlas:2026-08-26-091220
+          imagePullPolicy: Always
+          command:
+            - /usr/bin/mkdir
+            - -p
+            - /run/ripe-atlas/status
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: run
+              mountPath: /run/ripe-atlas
       containers:
         - name: ripe-atlas
           image: harbor.andreybondarenko.com/library/ripe-atlas:2026-08-26-091220
@@ -56,8 +75,14 @@ spec:
               mountPath: /etc/ripe-atlas
             - name: spool
               mountPath: /var/spool/ripe-atlas
+            - name: spool
+              mountPath: /home/atlas/data
+              subPath: data
             - name: run
               mountPath: /run/ripe-atlas
+            - name: run
+              mountPath: /home/atlas/status
+              subPath: status
             - name: tmp
               mountPath: /tmp
       volumes:
