@@ -54,10 +54,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/ripe-atlas
-            - name: config-file
-              mountPath: /etc/ripe-atlas/config.txt
-              subPath: config.txt
-              readOnly: true
             - name: spool
               mountPath: /var/spool/ripe-atlas
             - name: run
@@ -68,9 +64,6 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: ripe-atlas-config
-        - name: config-file
-          configMap:
-            name: ripe-atlas-settings
         - name: spool
           persistentVolumeClaim:
             claimName: ripe-atlas-spool
