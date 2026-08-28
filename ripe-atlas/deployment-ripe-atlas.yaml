@@ -40,7 +40,7 @@ spec:
             readOnlyRootFilesystem: true
           env:
             - name: RXTXRPT
-              value: "no"
+              value: "yes"
             - name: TELNETD_PORT
               value: "2023"
             - name: HTTP_POST_PORT
@@ -54,6 +54,10 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/ripe-atlas
+            - name: config-file
+              mountPath: /etc/ripe-atlas/config.txt
+              subPath: config.txt
+              readOnly: true
             - name: spool
               mountPath: /var/spool/ripe-atlas
             - name: run
@@ -64,6 +68,9 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: ripe-atlas-config
+        - name: config-file
+          configMap:
+            name: ripe-atlas-settings
         - name: spool
           persistentVolumeClaim:
             claimName: ripe-atlas-spool
