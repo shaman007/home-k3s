@@ -1,0 +1,33 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-allow-egress-bastioncam
+  namespace: traefik
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bastioncam
+          podSelector:
+            matchLabels:
+              app: bastioncam
+      ports:
+        - protocol: TCP
+          port: 8787
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bastioncam
+          podSelector:
+            matchLabels:
+              acme.cert-manager.io/http01-solver: "true"
+      ports:
+        - protocol: TCP
+          port: 8089
