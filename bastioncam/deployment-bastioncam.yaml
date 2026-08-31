@@ -28,7 +28,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: server
-          image: harbor.andreybondarenko.com/library/bastioncam:2026-08-31-093037
+          image: harbor.andreybondarenko.com/library/bastioncam:2026-08-31-130430
           imagePullPolicy: IfNotPresent
           args: ["--db", "/data/history.db", "serve", "--host", "0.0.0.0", "--port", "8787", "--ollama-url", "http://ollama.ollama.svc.cluster.local:11434", "--embed-model", "nomic-embed-text"]
           ports:
@@ -58,7 +58,7 @@ spec:
             - {name: data, mountPath: /data}
             - {name: tmp, mountPath: /tmp}
         - name: enricher
-          image: harbor.andreybondarenko.com/library/bastioncam:2026-08-31-093037
+          image: harbor.andreybondarenko.com/library/bastioncam:2026-08-31-130430
           imagePullPolicy: IfNotPresent
           args: ["--db", "/data/history.db", "enrich-loop", "--url", "http://ollama.ollama.svc.cluster.local:11434", "--chat-model", "qwen3:4b", "--embed-model", "nomic-embed-text", "--batch", "4", "--interval", "60", "--settle", "45"]
           resources:
