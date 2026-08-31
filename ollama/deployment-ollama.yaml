@@ -143,13 +143,21 @@ spec:
               until ollama list >/dev/null 2>&1; do
                 sleep 2
               done
-              for model in gpt-oss:20b qwen3:4b nomic-embed-text; do
-                if ollama show "$model" >/dev/null 2>&1; then
-                  echo "Model $model is already present on persistent storage"
-                else
-                  ollama pull "$model"
-                fi
-              done
+              if ollama show gpt-oss:20b >/dev/null 2>&1; then
+                echo "Model gpt-oss:20b is already present on persistent storage"
+              else
+                ollama pull gpt-oss:20b
+              fi
+              if ollama show qwen3:4b >/dev/null 2>&1; then
+                echo "Model qwen3:4b is already present on persistent storage"
+              else
+                ollama pull qwen3:4b
+              fi
+              if ollama show nomic-embed-text >/dev/null 2>&1; then
+                echo "Model nomic-embed-text is already present on persistent storage"
+              else
+                ollama pull nomic-embed-text
+              fi
               sleep infinity
           env:
             - name: HOME

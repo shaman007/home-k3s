@@ -10,7 +10,7 @@ CLUSTER = "https://kubernetes.default.svc"
 REPOSITORY = "https://github.com/shaman007/home-k3s.git"
 
 PROJECT_APPLICATIONS = {
-    "backup-rsync", "bitwarden", "ca-scanner", "clamav", "collabora",
+    "backup-rsync", "bastioncam", "bitwarden", "ca-scanner", "clamav", "collabora",
     "comfyui", "convertx", "dawarich", "element", "harbor",
     "harbor-custom", "harbor-network-policy", "hister", "homeassistant",
     "hypermind", "image-builder", "immich", "karakeep", "keycloak", "mail",
