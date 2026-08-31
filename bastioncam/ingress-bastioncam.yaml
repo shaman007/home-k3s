@@ -5,10 +5,13 @@ metadata:
   name: bastioncam
   namespace: bastioncam
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-robots-disallow-all@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - bastioncam.w386.k8s.my.lan
+      secretName: bastioncam-vault-acme-tls
   rules:
     - host: bastioncam.w386.k8s.my.lan
       http:

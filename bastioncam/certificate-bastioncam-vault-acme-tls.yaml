@@ -1,0 +1,18 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bastioncam-vault-acme-tls
+  namespace: bastioncam
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  secretName: bastioncam-vault-acme-tls
+  duration: 720h
+  renewBefore: 168h
+  dnsNames:
+    - bastioncam.w386.k8s.my.lan
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: vault-acme
