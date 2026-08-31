@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bastioncam
+  namespace: bastioncam
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-robots-disallow-all@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: bastioncam.w386.k8s.my.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bastioncam
+                port: {name: http}

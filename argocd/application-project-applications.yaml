@@ -21,6 +21,8 @@ spec:
     - https://mastodon.github.io/helm-charts
   destinations:
     - server: https://kubernetes.default.svc
+      namespace: bastioncam
+    - server: https://kubernetes.default.svc
       namespace: backup-rsync
     - server: https://kubernetes.default.svc
       namespace: bitwarden
