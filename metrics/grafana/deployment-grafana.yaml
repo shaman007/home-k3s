@@ -34,7 +34,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: grafana
-          image: harbor.andreybondarenko.com/dockerhub/grafana/grafana:13.2.0
+          image: harbor.andreybondarenko.com/dockerhub/grafana/grafana:13.2.1
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
