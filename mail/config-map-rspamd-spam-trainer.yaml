@@ -21,8 +21,8 @@ data:
     service auth {
       unix_listener auth-userdb {
         mode = 0660
-        user = 1000
-        group = 1000
+        user = vmail
+        group = vmail
       }
     }
 
