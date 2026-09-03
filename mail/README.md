@@ -2,6 +2,18 @@
 
 * Harden authentication
 
+## Manual spam training
+
+Forward unwanted messages to `spam@andreybondarenko.com`. The
+`rspamd-spam-trainer` CronJob runs at minute 7 of every hour, teaches each
+message to Rspamd as spam, and removes it from the training mailbox only after
+Rspamd accepts the learning request. A failed message remains in the mailbox
+for the next run.
+
+Forwarding the unwanted message as an attachment preserves its original
+headers and gives Rspamd the best training sample. An ordinary inline forward
+is also accepted, but includes the forwarding wrapper in the learned content.
+
 ## Rspamd Valkey
 
 Rspamd stores learned and operational Redis-protocol data in the

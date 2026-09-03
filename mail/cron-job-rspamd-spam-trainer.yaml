@@ -1,0 +1,86 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rspamd-spam-trainer
+  namespace: mail
+  labels:
+    tier: mail
+    app: rspamd-spam-trainer
+    app.kubernetes.io/name: rspamd-spam-trainer
+    app.kubernetes.io/instance: rspamd-spam-trainer
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  schedule: "7 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            tier: mail
+            app: rspamd-spam-trainer
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          priorityClassName: homelab-standard
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: trainer
+              image: harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - /config/train-spam.sh
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 96Mi
+              volumeMounts:
+                - name: config
+                  mountPath: /etc/dovecot/dovecot.conf
+                  subPath: dovecot.conf
+                  readOnly: true
+                - name: config
+                  mountPath: /config/train-spam.sh
+                  subPath: train-spam.sh
+                  readOnly: true
+                - name: mail-lh
+                  mountPath: /var/mail
+                - name: runtime
+                  mountPath: /run/dovecot
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: config
+              configMap:
+                name: rspamd-spam-trainer
+                defaultMode: 0555
+            - name: mail-lh
+              persistentVolumeClaim:
+                claimName: mail-lh
+            - name: runtime
+              emptyDir:
+                sizeLimit: 16Mi
+            - name: tmp
+              emptyDir:
+                sizeLimit: 140Mi
+          nodeSelector:
+            kubernetes.io/hostname: w386

@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rspamd-spam-trainer
+  namespace: mail
+  labels:
+    tier: mail
+    app: rspamd-spam-trainer
+    app.kubernetes.io/name: rspamd-spam-trainer
+    app.kubernetes.io/instance: rspamd-spam-trainer
+    app.kubernetes.io/managed-by: argoCD
+data:
+  dovecot.conf: |
+    dovecot_config_version = 2.4.0
+    dovecot_storage_version = 2.4.0
+
+    userdb static {
+      fields {
+        uid = 1000
+        gid = 1000
+        home = /var/mail/boxes/%{user | username}
+      }
+    }
+
+    mail_driver = mbox
+    mail_path = /var/mail/boxes/%{user | username}
+    mail_inbox_path = /var/mail/%{user | username}
+    mbox_write_locks = fcntl
+
+    namespace inbox {
+      inbox = yes
+    }
+  train-spam.sh: |
+    #!/bin/sh
+    set -eu
+
+    pending=/tmp/pending-messages
+    message=/tmp/message.eml
+    learned=0
+
+    doveadm search -u spam mailbox INBOX all > "${pending}"
+
+    while read -r mailbox_guid uid; do
+      [ -n "${mailbox_guid}" ] || continue
+
+      # doveadm prefixes the fetched value with a "text:" field marker.
+      doveadm fetch -u spam text mailbox-guid "${mailbox_guid}" uid "${uid}" \
+        | sed '1d' > "${message}"
+
+      curl --fail --silent --show-error \
+        --header 'Content-Type: message/rfc822' \
+        --data-binary "@${message}" \
+        http://rspamd.mail.svc.cluster.local:11334/learnspam > /dev/null
+
+      # Delete only after Rspamd confirms that this message was learned.
+      doveadm expunge -u spam mailbox-guid "${mailbox_guid}" uid "${uid}"
+      learned=$((learned + 1))
+    done < "${pending}"
+
+    doveadm purge -u spam
+    echo "Learned and removed ${learned} spam message(s)."

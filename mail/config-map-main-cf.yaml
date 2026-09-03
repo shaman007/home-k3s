@@ -72,6 +72,7 @@ data:
     andreybondarenko.com OK
   virtual: |
     elena@andreybondarenko.com elenabondarenko@email.cz
+    spam@andreybondarenko.com spam
   master: |
     #127.0.0.1:submission inet n -   n       -       -       smtpd
     submission inet n       -       n       -       -       smtpd
