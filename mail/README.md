@@ -14,6 +14,10 @@ Forwarding the unwanted message as an attachment preserves its original
 headers and gives Rspamd the best training sample. An ordinary inline forward
 is also accepted, but includes the forwarding wrapper in the learned content.
 
+Postfix delivers all other addresses at `andreybondarenko.com` to the `me`
+mailbox. The explicit `spam@andreybondarenko.com` mapping takes precedence over
+that domain catch-all.
+
 ## Rspamd Valkey
 
 Rspamd stores learned and operational Redis-protocol data in the
