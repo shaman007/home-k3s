@@ -52,6 +52,7 @@ data:
       passwd_file_path = /etc/dovecot/passwd
     }
     userdb static {
+      userdb_static_allow_all_users = yes
       fields {
         uid = 1000
         gid = 1000

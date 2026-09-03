@@ -16,6 +16,7 @@ data:
     dovecot_storage_version = 2.4.0
 
     userdb static {
+      userdb_static_allow_all_users = yes
       fields {
         uid = 1000
         gid = 1000
