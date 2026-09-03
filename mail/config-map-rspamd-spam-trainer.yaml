@@ -14,6 +14,17 @@ data:
   dovecot.conf: |
     dovecot_config_version = 2.4.0
     dovecot_storage_version = 2.4.0
+    protocols =
+    base_dir = /run/dovecot
+    log_path = /dev/stderr
+
+    service auth {
+      unix_listener auth-userdb {
+        mode = 0660
+        user = 1000
+        group = 1000
+      }
+    }
 
     userdb static {
       userdb_static_allow_all_users = yes
@@ -40,6 +51,22 @@ data:
     message=/tmp/message.eml
     learned=0
 
+    # doveadm resolves the static user through Dovecot's auth-userdb socket.
+    # Start a private master in this pod; protocols are disabled above, so it
+    # does not expose IMAP, LMTP, or ManageSieve listeners.
+    dovecot
+    trap 'dovecot stop >/dev/null 2>&1 || true' EXIT
+
+    attempts=0
+    until [ -S /run/dovecot/auth-userdb ]; do
+      attempts=$((attempts + 1))
+      if [ "${attempts}" -ge 50 ]; then
+        echo "Dovecot auth-userdb socket did not become ready." >&2
+        exit 1
+      fi
+      sleep 0.1
+    done
+
     doveadm search -u spam mailbox INBOX all > "${pending}"
 
     while read -r mailbox_guid uid; do
@@ -60,4 +87,6 @@ data:
     done < "${pending}"
 
     doveadm purge -u spam
+    dovecot stop
+    trap - EXIT
     echo "Learned and removed ${learned} spam message(s)."

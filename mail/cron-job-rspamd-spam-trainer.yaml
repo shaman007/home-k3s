@@ -28,9 +28,6 @@ spec:
           automountServiceAccountToken: false
           priorityClassName: homelab-standard
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
             fsGroup: 1000
             seccompProfile:
               type: RuntimeDefault
@@ -43,9 +40,6 @@ spec:
                 - /config/train-spam.sh
               securityContext:
                 allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
                 readOnlyRootFilesystem: true
               resources:
                 requests:
@@ -66,6 +60,8 @@ spec:
                   mountPath: /var/mail
                 - name: runtime
                   mountPath: /run/dovecot
+                - name: state
+                  mountPath: /var/lib/dovecot
                 - name: tmp
                   mountPath: /tmp
           volumes:
@@ -77,6 +73,9 @@ spec:
               persistentVolumeClaim:
                 claimName: mail-lh
             - name: runtime
+              emptyDir:
+                sizeLimit: 16Mi
+            - name: state
               emptyDir:
                 sizeLimit: 16Mi
             - name: tmp
