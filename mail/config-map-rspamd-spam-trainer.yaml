@@ -17,7 +17,6 @@ data:
     protocols =
     base_dir = /run/dovecot
     log_path = /dev/stderr
-    auth_mechanisms =
 
     service auth {
       unix_listener auth-userdb {
@@ -25,6 +24,10 @@ data:
         user = vmail
         group = vmail
       }
+    }
+
+    passdb static {
+      password = unused
     }
 
     userdb static {
