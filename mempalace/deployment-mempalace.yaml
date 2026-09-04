@@ -28,7 +28,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: mempalace
-          image: harbor.andreybondarenko.com/github/mempalace/mempalace:3.6.0
+          image: harbor.andreybondarenko.com/github/mempalace/mempalace:3.9.0
           imagePullPolicy: IfNotPresent
           args:
             - mcp
