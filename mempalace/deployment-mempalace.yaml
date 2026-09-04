@@ -24,59 +24,31 @@ spec:
       priorityClassName: homelab-standard
       enableServiceLinks: false
       securityContext:
-        fsGroup: 65532
+        fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
-      initContainers:
-        - name: bootstrap-mempalace
-          image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-slim
-          imagePullPolicy: IfNotPresent
-          command:
-            - /bin/sh
-            - /bootstrap/bootstrap-mempalace.sh
-          env:
-            - name: HOME
-              value: /data
-            - name: PIP_NO_CACHE_DIR
-              value: "1"
-            - name: MEMPALACE_VERSION
-              value: "3.6.0"
-          securityContext:
-            runAsUser: 65532
-            runAsGroup: 65532
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-          resources:
-            requests:
-              cpu: 25m
-              memory: 256Mi
-            limits:
-              memory: 1Gi
-          volumeMounts:
-            - name: mempalace-data
-              mountPath: /data
-            - name: bootstrap
-              mountPath: /bootstrap
-              readOnly: true
       containers:
         - name: mempalace
-          image: harbor.andreybondarenko.com/dockerhub/library/python:3.14-slim
+          image: harbor.andreybondarenko.com/github/mempalace/mempalace:3.6.0
           imagePullPolicy: IfNotPresent
-          command:
-            - /bin/sh
-            - /bootstrap/run-host.sh
+          args:
+            - mcp
+            - --palace
+            - /data/.mempalace
+            - --transport
+            - http
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8765"
           env:
-            - name: HOME
-              value: /data
-            - name: MEMPALACE_VERSION
-              value: "3.6.0"
             - name: MEMPALACE_MCP_HTTP_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: mempalace-mcp-auth
                   key: token
           securityContext:
-            runAsUser: 65532
-            runAsGroup: 65532
+            runAsUser: 1000
+            runAsGroup: 1000
             runAsNonRoot: true
             allowPrivilegeEscalation: false
           resources:
@@ -91,9 +63,6 @@ spec:
           volumeMounts:
             - name: mempalace-data
               mountPath: /data
-            - name: bootstrap
-              mountPath: /bootstrap
-              readOnly: true
           readinessProbe:
             httpGet:
               path: /healthz
@@ -112,7 +81,3 @@ spec:
         - name: mempalace-data
           persistentVolumeClaim:
             claimName: mempalace-data
-        - name: bootstrap
-          configMap:
-            name: mempalace-bootstrap
-            defaultMode: 0555

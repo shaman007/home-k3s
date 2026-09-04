@@ -1,6 +1,8 @@
 # MemPalace
 
 MemPalace is deployed as a persistent MCP HTTP service and toolbox pod.
+The application runs from the official, version-pinned MemPalace container image;
+Renovate discovers updates through the image tag in the Deployment.
 
 The MCP server uses Streamable HTTP behind the internal Traefik ingress. Its authenticated
 endpoint is `https://mempalace.w386.k8s.my.lan/mcp`; the bearer token is sourced from
@@ -18,7 +20,9 @@ Persistent paths:
 - `/data/.mempalace` — MemPalace databases and palace data
 - `/data/imports` — import sources such as markdown or YAML files
 - `/data/projects` — a workspace mirror for repositories and project content
-- `/data/venv` — the pinned virtualenv for the installed MemPalace version
+
+The legacy `/data/venv` directory from the former bootstrap installation is no longer
+used and can be removed manually after a successful rollout and data check.
 
 Recommended usage:
 
@@ -33,7 +37,7 @@ Useful commands:
 
 ```sh
 # inspect the current store
-kubectl -n mempalace exec deploy/mempalace -- /data/venv/bin/python -c "import importlib.metadata as m; print(m.version('mempalace'))"
+kubectl -n mempalace exec deploy/mempalace -- mempalace --version
 
 # list persisted data
 kubectl -n mempalace exec deploy/mempalace -- find /data/.mempalace -maxdepth 3 -type f | head
