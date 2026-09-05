@@ -32,33 +32,36 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       priorityClassName: homelab-essential
       initContainers:
-        - name: prepare-runtime
-          image: harbor.andreybondarenko.com/library/bitwarden:2026-08-31-022907
+        - name: prepare-permissions
+          image: ghcr.io/bitwarden/lite:2026.8.1@sha256:c30be950f4339c2224a2af2dacc5689271aecd52b54607594d28938188bc60ff
           imagePullPolicy: IfNotPresent
           command:
-            - /usr/local/bin/prepare-runtime.sh
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              chown -R 1000:1000 /etc/bitwarden /var/log/bitwarden /keys
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
             readOnlyRootFilesystem: true
-            runAsGroup: 1000
-            runAsNonRoot: true
-            runAsUser: 1000
+            runAsGroup: 0
+            runAsUser: 0
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
             - mountPath: /etc/bitwarden
               name: bitwarden-lh
-            - mountPath: /runtime
-              name: runtime
-            - mountPath: /tmp
-              name: tmp
-            - mountPath: /var/lib/nginx
-              name: nginx-cache
-            - mountPath: /var/log
-              name: logs-root
+            - mountPath: /var/log/bitwarden
+              name: logs
+            - mountPath: /keys
+              name: keys-lh
       containers:
         - env:
             - name: BW_DOMAIN
@@ -104,7 +107,7 @@ spec:
                 secretKeyRef:
                   name: yubico-secret-key
                   key: secret-key
-          image: harbor.andreybondarenko.com/library/bitwarden:2026-08-31-022907
+          image: ghcr.io/bitwarden/lite:2026.8.1@sha256:c30be950f4339c2224a2af2dacc5689271aecd52b54607594d28938188bc60ff
           imagePullPolicy: IfNotPresent
           name: bitwarden
           ports:
@@ -149,31 +152,8 @@ spec:
               name: bitwarden-lh
             - mountPath: /app/Notifications/.aspnet
               name: keys-lh
-            - name: logs-root
-              mountPath: /var/log
             - name: logs
               mountPath: /var/log/bitwarden
-            - name: nginx-cache
-              mountPath: /var/lib/nginx
-            - name: nginx-run
-              mountPath: /var/run/nginx
-            - name: runtime
-              mountPath: /etc/supervisor.d
-              subPath: supervisor
-            - name: runtime
-              mountPath: /etc/nginx/http.d
-              subPath: nginx
-            - name: runtime
-              mountPath: /app/Identity/identity.pfx
-              subPath: identity/identity.pfx
-            - name: runtime
-              mountPath: /app/Sso/identity.pfx
-              subPath: identity/sso-identity.pfx
-            - name: runtime
-              mountPath: /app/Web/app-id.json
-              subPath: web/app-id.json
-            - name: run
-              mountPath: /run
             - name: tmp
               mountPath: /tmp
         - name: alloy
@@ -235,16 +215,6 @@ spec:
         - name: alloy-tmp
           emptyDir: {}
         - name: logs
-          emptyDir: {}
-        - name: logs-root
-          emptyDir: {}
-        - name: nginx-cache
-          emptyDir: {}
-        - name: nginx-run
-          emptyDir: {}
-        - name: run
-          emptyDir: {}
-        - name: runtime
           emptyDir: {}
         - name: tmp
           emptyDir: {}
