@@ -32,13 +32,47 @@ spec:
           restartPolicy: Never
           nodeSelector:
             kubernetes.io/arch: amd64
+          initContainers:
+            - name: checkout
+              image: registry.k8s.io/git-sync/git-sync:v4.5.0@sha256:0e64aedb0d0ae0a3bab880349a5109b2a31891d646dd61e433ca36ed220dff1f
+              imagePullPolicy: IfNotPresent
+              args:
+                - --repo=https://github.com/shaman007/Dockerfiles.git
+                - --ref=main
+                - --root=/workspace
+                - --link=Dockerfiles
+                - --depth=1
+                - --one-time
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                readOnlyRootFilesystem: true
+                runAsUser: 0
+                runAsGroup: 0
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - name: workspace
+                  mountPath: /workspace
+                - name: git-tmp
+                  mountPath: /tmp
           containers:
             - name: build
-              # Keep the reviewed runtime immutable even though the build output
-              # includes the movable podman-builder:latest tag. Digest updates are
-              # deliberate Git changes, never an automatic self-update.
-              image: harbor.andreybondarenko.com/library/podman-builder@sha256:11ab7bf05b9323128c07c0b99b3cfdc0657a8a3e05c19f86044cf0465fae391e
+              image: quay.io/podman/stable:v5.8.4@sha256:6297a84090f6d51863f17c644b5248619706943bc14540764886b019f3ae78e0
               imagePullPolicy: IfNotPresent
+              workingDir: /workspace/Dockerfiles
+              command:
+                - /bin/bash
+                - -c
+              args:
+                - |
+                  set -Eeuo pipefail
+                  printf '%s' "$HARBOR_PASSWORD" | podman login "$REGISTRY" \
+                    --username "$HARBOR_USERNAME" \
+                    --password-stdin
+                  unset HARBOR_PASSWORD
+                  exec ./build.sh
               securityContext:
                 privileged: true
               env:
@@ -56,6 +90,16 @@ spec:
                   value: overlay
                 - name: PLATFORMS
                   value: linux/amd64
+                - name: CONTAINER_ENGINE
+                  value: podman
+                - name: LOGIN
+                  value: "0"
+                - name: PULL
+                  value: "0"
+                - name: REGISTRY
+                  value: harbor.andreybondarenko.com
+                - name: NAMESPACE
+                  value: library
               resources:
                 requests:
                   cpu: 500m
@@ -74,3 +118,6 @@ spec:
             - name: container-storage
               emptyDir:
                 sizeLimit: 80Gi
+            - name: git-tmp
+              emptyDir:
+                sizeLimit: 128Mi

@@ -1,9 +1,10 @@
 # Image builder
 
-The `podman-builder` CronJob rebuilds the custom images from the public
-Dockerfiles repository every Monday at 02:29 UTC. It currently runs privileged
-Podman with `overlay` storage on an XFS-backed EmptyDir and publishes AMD64
-images, matching every current cluster node. The local container store remains
+The `podman-builder` CronJob checks out the public Dockerfiles repository with
+the upstream Kubernetes `git-sync` image every Monday at 02:29 UTC, then builds
+it with the upstream Podman stable image. It runs privileged Podman with
+`overlay` storage on an XFS-backed EmptyDir and publishes AMD64 images, matching
+every current cluster node. The local container store remains
 ephemeral; reusable build layers are imported from and exported to per-image
 cache repositories under `harbor.andreybondarenko.com/library/build-cache/`.
 Overlay storage preserves shared layers within a build and keeps large builds
@@ -21,10 +22,8 @@ The builder is also isolated by a workload-scoped default-deny NetworkPolicy;
 outbound traffic is limited to cluster DNS and HTTP/HTTPS for source downloads,
 base-image pulls, and Harbor pushes. It has no allowed inbound traffic.
 
-The `podman-builder` image is self-hosted in Harbor and must be seeded from the
-Dockerfiles repository with `./build.sh podman-builder`. Although the scheduled
-source currently includes that image among its outputs, the output tag is not
-used as the CronJob runtime.
+Both runtime images are pinned by digest. No self-hosted builder image needs to
+be seeded before the scheduled job can run.
 
 ## Remaining privileged-builder controls
 
