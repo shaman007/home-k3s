@@ -1,0 +1,3 @@
+[mcp_servers.homeassistant]
+url = "https://ha.andreybondarenko.com/api/mcp"
+bearer_token_env_var = "HOME_ASSISTANT_TOKEN"
