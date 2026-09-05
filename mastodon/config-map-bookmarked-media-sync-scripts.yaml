@@ -255,6 +255,8 @@ data:
           curl --fail --silent --show-error \
             --retry 5 \
             --retry-all-errors \
+            --connect-timeout 15 \
+            --max-time 60 \
             -H "content-type: application/json" \
             -H "x-api-key: ${IMMICH_API_KEY}" \
             -d "${payload}" \
@@ -274,17 +276,32 @@ data:
       ' >"${updates}"
 
     updated=0
+    update_failed=0
+    update_requests=0
     while IFS= read -r payload; do
-      curl --fail --silent --show-error \
-        --retry 5 \
-        --retry-all-errors \
-        -o /dev/null \
-        -X PUT \
-        -H "content-type: application/json" \
-        -H "x-api-key: ${IMMICH_API_KEY}" \
-        -d "${payload}" \
-        "${IMMICH_INSTANCE_URL}/assets"
-      updated="$((updated + $(printf '%s' "${payload}" | jq '.ids | length')))"
+      asset_count="$(printf '%s' "${payload}" | jq '.ids | length')"
+      update_requests="$((update_requests + 1))"
+
+      if curl --fail --silent --show-error \
+          --retry 5 \
+          --retry-all-errors \
+          --connect-timeout 15 \
+          --max-time 60 \
+          -o /dev/null \
+          -X PUT \
+          -H "content-type: application/json" \
+          -H "x-api-key: ${IMMICH_API_KEY}" \
+          -d "${payload}" \
+          "${IMMICH_INSTANCE_URL}/assets"; then
+        updated="$((updated + asset_count))"
+      else
+        echo "Warning: description update request ${update_requests} failed for ${asset_count} asset(s); continuing" >&2
+        update_failed="$((update_failed + asset_count))"
+      fi
+
+      if [ "$((update_requests % 100))" -eq 0 ]; then
+        echo "Processed ${update_requests} description update request(s)"
+      fi
     done <"${updates}"
 
-    echo "Updated descriptions on ${updated} Immich asset(s)"
+    echo "Updated descriptions on ${updated} Immich asset(s); failed for ${update_failed} asset(s)"

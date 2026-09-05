@@ -17,6 +17,7 @@ spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 3300
       backoffLimit: 2
       template:
         metadata:
@@ -88,6 +89,8 @@ spec:
                     echo "Queueing face detection for assets missing face processing"
                     if curl --fail --silent --show-error \
                       --retry 5 \
+                      --connect-timeout 15 \
+                      --max-time 60 \
                       -o /dev/null \
                       -X PUT \
                       -H "content-type: application/json" \
