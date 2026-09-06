@@ -111,7 +111,7 @@ spec:
             limits:
               memory: 1536Mi
         - name: chrome
-          image: ghcr.io/karakeep-app/karakeep-chrome:151.0.7922.47-r1@sha256:5b19bbb160e9ff60681a3abd97e1c4ec9f64212301410de658c3900ab7ef31e7
+          image: ghcr.io/karakeep-app/karakeep-chrome:151.0.7922.47-r1
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
