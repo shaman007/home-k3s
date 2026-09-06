@@ -59,7 +59,7 @@ spec:
                   mountPath: /tmp
           containers:
             - name: build
-              image: quay.io/podman/stable:v5.8.4@sha256:6297a84090f6d51863f17c644b5248619706943bc14540764886b019f3ae78e0
+              image: quay.io/podman/stable:v5.8.4
               imagePullPolicy: IfNotPresent
               workingDir: /workspace/Dockerfiles
               command:

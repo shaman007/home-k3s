@@ -13,23 +13,20 @@ Manual `build.sh` runs retain the default AMD64+ARM64 build contract; automated
 ARM64 builds would require Talos nodes installed with the `binfmt-misc` system
 extension or a native ARM64 builder node.
 
-The workload does not receive a Kubernetes API token. Its runtime image is
-referenced by digest, so rebuilding or replacing `podman-builder:latest` cannot
-change the executable used by a later CronJob run. Updating the runtime is a
-separate review step: seed the new image, verify its digest in Harbor, and update
-the digest in `cron-job-podman-builder.yaml` through Git.
+The workload does not receive a Kubernetes API token. Both runtime images use
+explicit version tags so upgrades remain visible and reviewable in Git without
+duplicating the registries' immutable digest metadata.
 The builder is also isolated by a workload-scoped default-deny NetworkPolicy;
 outbound traffic is limited to cluster DNS and HTTP/HTTPS for source downloads,
 base-image pulls, and Harbor pushes. It has no allowed inbound traffic.
 
-Both runtime images are pinned by digest. No self-hosted builder image needs to
-be seeded before the scheduled job can run.
+No self-hosted builder image needs to be seeded before the scheduled job can
+run.
 
 ## Remaining privileged-builder controls
 
 Privileged mode remains an explicit exception until the Dockerfiles build has
-been proven with rootless Podman or rootless BuildKit on Talos. Do not remove the
-digest pin while testing rootless operation.
+been proven with rootless Podman or rootless BuildKit on Talos.
 
 Before adding a builder node, label and taint it specifically for this workload,
 then add the matching required node affinity and toleration here. Do not add a

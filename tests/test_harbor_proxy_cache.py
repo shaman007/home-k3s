@@ -32,6 +32,23 @@ EXPECTED_HELM_IMAGES = {
     },
 }
 
+EXPECTED_DIRECT_UPSTREAM_IMAGES = {
+    Path("image-builder/cron-job-podman-builder.yaml"): {
+        "quay.io/podman/stable",
+        "registry.k8s.io/git-sync/git-sync",
+    },
+    Path("karakeep/deployment-karakeep.yaml"): {
+        "ghcr.io/karakeep-app/karakeep-chrome",
+    },
+}
+
+
+def is_expected_direct_upstream(relative: Path, image: str) -> bool:
+    return "@sha256:" not in image and any(
+        image.startswith(f"{repository}:")
+        for repository in EXPECTED_DIRECT_UPSTREAM_IMAGES.get(relative, set())
+    )
+
 def nested_value(values: dict, path: tuple[str, ...]):
     current = values
     for key in path:
@@ -47,7 +64,7 @@ def helm_values(application_name: str) -> dict:
 
 
 class HarborProxyCacheTest(unittest.TestCase):
-    def test_direct_image_declarations_use_harbor_or_are_bootstrap_exceptions(self):
+    def test_direct_image_declarations_use_harbor_or_are_approved_exceptions(self):
         image_pattern = re.compile(r"^\s*(?:-\s*)?image:\s*['\"]?([^'\"#\s]+)")
         violations = []
 
@@ -61,7 +78,10 @@ class HarborProxyCacheTest(unittest.TestCase):
                 match = image_pattern.match(line)
                 if not match or match.group(1).startswith(f"{HARBOR}/"):
                     continue
-                if relative not in BOOTSTRAP_IMAGE_FILES:
+                if (
+                    relative not in BOOTSTRAP_IMAGE_FILES
+                    and not is_expected_direct_upstream(relative, match.group(1))
+                ):
                     violations.append(f"{relative}:{line_number}: {match.group(1)}")
 
         self.assertEqual(violations, [])

@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 import unittest
 
 import yaml
@@ -16,11 +15,12 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.pod_spec = self.cronjob["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         self.container = self.pod_spec["containers"][0]
 
-    def test_builder_runtime_is_pinned_by_digest(self):
+    def test_builder_uses_versioned_upstream_runtime(self):
         image = self.container["image"]
 
-        self.assertRegex(image, r"^harbor\.andreybondarenko\.com/library/podman-builder@sha256:[0-9a-f]{64}$")
+        self.assertRegex(image, r"^quay\.io/podman/stable:v\d+\.\d+\.\d+$")
         self.assertNotIn(":latest", image)
+        self.assertNotIn("@sha256:", image)
         self.assertEqual("IfNotPresent", self.container["imagePullPolicy"])
 
     def test_builder_runs_weekly(self):
@@ -29,7 +29,8 @@ class ImageBuilderSecurityTest(unittest.TestCase):
 
         self.assertEqual("29 2 * * 1", spec["schedule"])
         self.assertEqual("Etc/UTC", spec["timeZone"])
-        self.assertNotIn("command", container)
+        self.assertEqual(["/bin/bash", "-c"], container["command"])
+        self.assertIn("exec ./build.sh", container["args"][0])
 
     def test_builder_does_not_receive_a_service_account_token(self):
         self.assertFalse(self.pod_spec["automountServiceAccountToken"])
@@ -42,10 +43,14 @@ class ImageBuilderSecurityTest(unittest.TestCase):
 
         self.assertEqual("overlay", environment["STORAGE_DRIVER"])
 
-    def test_builder_digest_is_not_a_placeholder(self):
-        digest = self.container["image"].split("@sha256:", 1)[1]
+    def test_checkout_uses_versioned_upstream_git_sync(self):
+        checkout = self.pod_spec["initContainers"][0]
 
-        self.assertFalse(re.fullmatch(r"([0-9a-f])\1{63}", digest))
+        self.assertRegex(
+            checkout["image"],
+            r"^registry\.k8s\.io/git-sync/git-sync:v\d+\.\d+\.\d+$",
+        )
+        self.assertNotIn("@sha256:", checkout["image"])
 
     def test_builder_network_policy_limits_traffic(self):
         policies = {
