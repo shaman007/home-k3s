@@ -135,9 +135,10 @@ data:
     remote_output_path="/opt/mastodon/export/bookmarked_media_manifest.jsonl"
     export_file="/work/export/bookmarked_media_manifest.jsonl"
     download_dir="/work/import"
-    max_attempts="${BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS:-8}"
+    max_attempts="${BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS:-3}"
     retry_delay_seconds="${BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS:-15}"
     skipped_count=0
+    failed_count=0
 
     rm -rf /work/export /work/import
     mkdir -p /work/export "${download_dir}"
@@ -179,6 +180,7 @@ data:
         --output /dev/null \
         --write-out '%{http_code}' \
         --connect-timeout 15 \
+        --max-time 30 \
         "${url}" || true)"
       if [ "${http_status}" = "404" ]; then
         echo "Skipping missing S3 object: ${url}" >&2
@@ -196,10 +198,8 @@ data:
           --fail \
           --location \
           --continue-at - \
-          --retry 5 \
-          --retry-all-errors \
-          --retry-delay 5 \
           --connect-timeout 15 \
+          --max-time 120 \
           --speed-limit 1024 \
           --speed-time 30 \
           --output "${destination}" \
@@ -211,8 +211,8 @@ data:
 
         rm -f "${destination}"
         if [ "${attempt}" -ge "${max_attempts}" ]; then
-          echo "Skipping unavailable federated object after ${max_attempts} attempts: ${url}" >&2
-          skipped_count=$((skipped_count + 1))
+          echo "Download failed after ${max_attempts} attempts: ${url}" >&2
+          failed_count=$((failed_count + 1))
           break
         fi
 
@@ -223,7 +223,8 @@ data:
     done < "${export_file}"
 
     file_count="$(find "${download_dir}" -type f | wc -l | tr -d ' ')"
-    echo "Downloaded ${file_count} file(s); skipped ${skipped_count} unavailable federated object(s)"
+    echo "Downloaded ${file_count} file(s); skipped ${skipped_count} missing object(s); failed ${failed_count} download(s)"
+    [ "${failed_count}" -eq 0 ]
   apply-immich-descriptions.sh: |
     #!/bin/sh
     set -eu
@@ -234,6 +235,8 @@ data:
     checksums="${work_dir}/checksums.jsonl"
     results="${work_dir}/results.jsonl"
     updates="${work_dir}/updates.jsonl"
+    batches="${work_dir}/batches.jsonl"
+    response="${work_dir}/response.json"
 
     mkdir -p "${work_dir}"
     : >"${checksums}"
@@ -250,18 +253,22 @@ data:
         '{id: $id, checksum: $checksum}' >>"${checksums}"
     done <"${manifest}"
 
-    jq -s '[range(0; length; 100) as $i | {assets: .[$i:$i+100]}] | .[]' -c "${checksums}" \
-      | while IFS= read -r payload; do
-          curl --fail --silent --show-error \
-            --retry 5 \
-            --retry-all-errors \
-            --connect-timeout 15 \
-            --max-time 60 \
-            -H "content-type: application/json" \
-            -H "x-api-key: ${IMMICH_API_KEY}" \
-            -d "${payload}" \
-            "${IMMICH_INSTANCE_URL}/assets/bulk-upload-check" | jq -c '.results[]'
-        done >"${results}"
+    jq -s '[range(0; length; 100) as $i | {assets: .[$i:$i+100]}] | .[]' -c "${checksums}" >"${batches}"
+    while IFS= read -r payload; do
+      curl --fail --silent --show-error \
+        --retry 2 \
+        --retry-all-errors \
+        --retry-max-time 180 \
+        --connect-timeout 15 \
+        --max-time 60 \
+        -H "content-type: application/json" \
+        -H "x-api-key: ${IMMICH_API_KEY}" \
+        -d "${payload}" \
+        -o "${response}" \
+        "${IMMICH_INSTANCE_URL}/assets/bulk-upload-check"
+      jq -e '.results | type == "array"' "${response}" >/dev/null
+      jq -c '.results[]' "${response}" >>"${results}"
+    done <"${batches}"
 
     jq -n -c \
       --slurpfile manifest "${manifest}" \
@@ -283,8 +290,9 @@ data:
       update_requests="$((update_requests + 1))"
 
       if curl --fail --silent --show-error \
-          --retry 5 \
+          --retry 2 \
           --retry-all-errors \
+          --retry-max-time 180 \
           --connect-timeout 15 \
           --max-time 60 \
           -o /dev/null \
@@ -305,3 +313,4 @@ data:
     done <"${updates}"
 
     echo "Updated descriptions on ${updated} Immich asset(s); failed for ${update_failed} asset(s)"
+    [ "${update_failed}" -eq 0 ]

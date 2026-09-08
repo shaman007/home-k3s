@@ -12,6 +12,8 @@ from pathlib import Path
 EXCLUDED_PREFIXES = (
     "DEPRECATED/",
     "mastodon/chart/",
+    "talos/",  # Talos machine configuration is not a Kubernetes API resource.
+    "talos-existing-storage-volume.yaml",
 )
 
 

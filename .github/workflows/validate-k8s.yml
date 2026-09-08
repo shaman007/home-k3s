@@ -16,17 +16,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.x"
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pyyaml
+          python -m pip install pyyaml jsonschema regex
 
       - name: Install kubeconform
         env:
@@ -34,18 +34,20 @@ jobs:
         run: |
           curl -fsSL -o kubeconform.tar.gz \
             "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3  kubeconform.tar.gz" | sha256sum --check --strict
           tar -xzf kubeconform.tar.gz kubeconform
           sudo mv kubeconform /usr/local/bin/kubeconform
           rm -f kubeconform.tar.gz
 
-      - name: Discover Kubernetes manifests
-        run: |
-          python tools/ci/list-k8s-manifest-files.py --print0 > manifest-files.txt
-          manifest_count="$(tr '\0' '\n' < manifest-files.txt | sed '/^$/d' | wc -l | tr -d ' ')"
-          echo "Discovered ${manifest_count} Kubernetes manifest files."
-          if [ "${manifest_count}" -gt 0 ]; then
-            tr '\0' '\n' < manifest-files.txt
-          fi
+      - name: Set up Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        with:
+          version: v3.21.0
+
+      - name: Set up kubectl for Kustomize
+        uses: azure/setup-kubectl@c0c8b32d33a5244f1e5947304550403b63930415 # v4
+        with:
+          version: v1.36.4
 
       - name: Validate runtime contracts
         run: |
@@ -61,14 +63,10 @@ jobs:
         run: |
           python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
 
-      - name: Validate tracked manifests with kubeconform
+      - name: Render Argo CD applications
         run: |
-          if [ ! -s manifest-files.txt ]; then
-            echo "No Kubernetes manifests discovered."
-            exit 0
-          fi
+          python tools/ci/render-applications.py --output "${RUNNER_TEMP}/rendered-applications"
 
-          xargs -0 -a manifest-files.txt kubeconform \
-            -summary \
-            -strict \
-            -ignore-missing-schemas
+      - name: Validate rendered and tracked manifests
+        run: |
+          python tools/ci/validate-rendered.py --rendered "${RUNNER_TEMP}/rendered-applications"

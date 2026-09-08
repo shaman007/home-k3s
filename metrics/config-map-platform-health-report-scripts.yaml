@@ -149,6 +149,84 @@ data:
         }
 
 
+    def longhorn_backup_check(volumes, recurring, backups, cutoff):
+        """Check coverage per opted-in volume using completed backup creation times."""
+        backup_jobs = [job for job in recurring if job.get("spec", {}).get("task") in {"backup", "backup-force"}]
+        latest = {}
+        for backup in backups:
+            status = backup.get("status", {})
+            created = parse_time(status.get("backupCreatedAt"))
+            if status.get("state") != "Completed" or not created:
+                continue
+            labels = backup.get("metadata", {}).get("labels", {})
+            key = (status.get("volumeName") or labels.get("backup-volume"),
+                   status.get("backupTargetName") or labels.get("backup-target", "default"))
+            latest[key] = max(latest.get(key, created), created)
+        details, issues = [], []
+        for volume in volumes:
+            metadata = volume["metadata"]
+            labels = metadata.get("labels", {})
+            selected = any(
+                labels.get("recurring-job.longhorn.io/" + job["metadata"]["name"]) == "enabled"
+                or any(labels.get("recurring-job-group.longhorn.io/" + group) == "enabled"
+                       for group in job.get("spec", {}).get("groups", []))
+                for job in backup_jobs
+            )
+            # A deleted named backup policy must not silently opt a volume out.
+            selected = selected or any(
+                key.startswith("recurring-job.longhorn.io/backup-") and value == "enabled"
+                for key, value in labels.items()
+            )
+            if not selected:
+                continue
+            target = volume.get("spec", {}).get("backupTargetName") or "default"
+            created = latest.get((metadata["name"], target))
+            detail = {"namespace": "longhorn-system", "item": metadata["name"],
+                      "value": int((utc_now() - created).total_seconds() / 3600) if created else -1,
+                      "value_name": "longhorn_backup_age_hours"}
+            details.append(detail)
+            if not created or created < cutoff:
+                issues.append(detail)
+        return check("longhorn_backups", bool(details) and not issues,
+                     f"Backup coverage: {len(details) - len(issues)}/{len(details)} expected volume(s) have a recent completed backup; age -1 means missing.",
+                     details, issues)
+
+
+    def longhorn_maintenance_check(recurring, cronjobs, cutoff):
+        """CronJob status survives Job history and terminated-Pod garbage collection."""
+        by_owner = {}
+        for cronjob in cronjobs:
+            for owner in cronjob.get("metadata", {}).get("ownerReferences", []):
+                if owner.get("kind") == "RecurringJob" and owner.get("apiVersion", "").startswith("longhorn.io/"):
+                    by_owner[owner["name"]] = cronjob
+        details, issues = [], []
+        counts = {"backup": 0, "filesystem-trim": 0}
+        expected = set()
+        for job in recurring:
+            task = job.get("spec", {}).get("task")
+            task = "backup" if task == "backup-force" else task
+            if task not in counts:
+                continue
+            expected.add(task)
+            name = job["metadata"]["name"]
+            cronjob = by_owner.get(name, {})
+            succeeded, _ = cronjob_recently_succeeded(cronjob, cutoff)
+            detail = {"namespace": "longhorn-system", "item": name,
+                      "value": int(succeeded), "value_name": "longhorn_recurring_job_recent_success"}
+            details.append(detail)
+            if succeeded:
+                counts[task] += 1
+            else:
+                issues.append(detail)
+        details.extend([
+            {"namespace": "longhorn-system", "item": "recent-backups-24h", "value": counts["backup"], "value_name": "longhorn_recent_backups_24h"},
+            {"namespace": "longhorn-system", "item": "recent-trims-24h", "value": counts["filesystem-trim"], "value_name": "longhorn_recent_trims_24h"},
+        ])
+        return check("longhorn_maintenance", len(expected) == 2 and not issues,
+                     f"Recurring jobs successful in the last 24h: backups={counts['backup']}, trims={counts['filesystem-trim']}.",
+                     details, issues)
+
+
     def ready(conditions, kind="Ready"):
         return any(item.get("type") == kind and item.get("status") == "True" for item in conditions or [])
 
@@ -547,43 +625,12 @@ data:
         checks.append(check("pvc_usage", not pvc_issues, f"{len(pvc_issues)} PVC(s) are above {int(pvc_limit)}% utilization.", pvc_usage[:20]))
 
         recurring = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/recurringjobs").get("items", [])
-        lh_pods = kube("/api/v1/namespaces/longhorn-system/pods").get("items", [])
-        backup_jobs = [item for item in recurring if item.get("spec", {}).get("task") == "backup"]
-        trim_jobs = [item for item in recurring if item.get("spec", {}).get("task") == "filesystem-trim"]
-        recent_backups = 0
-        recent_trims = 0
-        for pod in lh_pods:
-            if pod.get("status", {}).get("phase") != "Succeeded":
-                continue
-            finished = None
-            for status in pod.get("status", {}).get("containerStatuses", []):
-                finished = parse_time(status.get("state", {}).get("terminated", {}).get("finishedAt"))
-                if finished:
-                    break
-            if not finished or finished < recent_cutoff:
-                continue
-            if pod["metadata"]["name"].startswith("backup-"):
-                recent_backups += 1
-            if pod["metadata"]["name"].startswith("trim-"):
-                recent_trims += 1
-        maintenance_details = [
-            {"namespace": "longhorn-system", "item": "recent-backups-24h", "value": recent_backups, "value_name": "longhorn_recent_backups_24h"},
-            {"namespace": "longhorn-system", "item": "recent-trims-24h", "value": recent_trims, "value_name": "longhorn_recent_trims_24h"},
-        ]
-        checks.append(check("longhorn_maintenance", bool(backup_jobs) and bool(trim_jobs) and recent_backups > 0 and recent_trims > 0, f"Longhorn maintenance runs in the last 24h: backups={recent_backups}, trims={recent_trims}.", maintenance_details))
+        lh_cronjobs = kube("/apis/batch/v1/namespaces/longhorn-system/cronjobs").get("items", [])
+        checks.append(longhorn_maintenance_check(recurring, lh_cronjobs, recent_cutoff))
 
+        volumes = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/volumes").get("items", [])
         backups = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/backups").get("items", [])
-        backup_detail = []
-        backup_bad = []
-        for item in backups:
-            synced = parse_time(item.get("status", {}).get("lastSyncedAt"))
-            if not synced or synced < recent_cutoff:
-                continue
-            detail = {"namespace": "longhorn-system", "item": item["metadata"]["name"], "value": int((utc_now() - synced).total_seconds() / 3600), "value_name": "longhorn_backup_age_hours"}
-            backup_detail.append(detail)
-            if item.get("status", {}).get("state") != "Completed":
-                backup_bad.append(detail)
-        checks.append(check("longhorn_backups", bool(backup_detail) and not backup_bad, f"Recent Longhorn backups found: {len(backup_detail)}.", backup_bad or backup_detail[:10]))
+        checks.append(longhorn_backup_check(volumes, recurring, backups, recent_cutoff))
 
         mail_services = kube("/api/v1/namespaces/mail/services").get("items", [])
         mail_pods = kube("/api/v1/namespaces/mail/pods").get("items", [])

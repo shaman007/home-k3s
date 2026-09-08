@@ -30,5 +30,6 @@ rules:
   - apiGroups: ["longhorn.io"]
     resources:
       - backups
+      - volumes
       - recurringjobs
     verbs: ["get", "list"]

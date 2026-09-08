@@ -1,0 +1,7 @@
+# Keep aligned with the cluster when upgrading Kubernetes.
+kubernetesVersion: "1.36.4"
+# Cilium installs its CRDs through the agent, not Helm templates. Fetch this
+# schema from the same upstream release as application-cilium.yaml.
+additionalCRDs:
+  - application: cilium
+    url: "https://raw.githubusercontent.com/cilium/cilium/v{version}/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml"

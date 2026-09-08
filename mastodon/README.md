@@ -52,3 +52,18 @@ Cutover order:
 3. Run migration job and wait for completion.
 4. Update `mastodon-env` `DB_HOST` to `mastodon-postgres.mastodon.svc.cluster.local`.
 5. Scale workloads back to `1`.
+
+## Bookmarked media sync failures
+
+The importer skips definite S3 404s. Other exhausted downloads fail the fetch
+stage, and CLI installation, login, upload, bulk lookup and description update
+errors fail the Job. Face-detection queueing remains best-effort because that API
+requires additional privileges. A failed description update is reported after the
+remaining updates have been attempted.
+
+Each HEAD request has a 30-second total timeout. Downloads use three attempts by
+default, each limited to 120 seconds, with a 15-second delay between attempts and
+no nested curl retries (at most 420 seconds per object including HEAD). The Job's
+3,300-second deadline remains the overall bound. API description requests have
+60-second attempt timeouts and a bounded retry window. Kubernetes retries a failed
+Job; duplicate uploads continue to use Immich's deduplication.

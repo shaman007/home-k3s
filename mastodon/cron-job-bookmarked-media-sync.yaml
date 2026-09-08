@@ -38,13 +38,14 @@ spec:
                 - /bin/sh
                 - -lc
                 - |
+                  set -eu
                   apk add --no-cache ca-certificates coreutils curl jq kubectl
                   /scripts/fetch-bookmarked-media.sh
               env:
                 - name: BOOKMARKED_MEDIA_LOOKBACK_DAYS
                   value: "30"
                 - name: BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS
-                  value: "8"
+                  value: "3"
                 - name: BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS
                   value: "15"
               resources:
@@ -66,6 +67,7 @@ spec:
                 - /bin/sh
                 - -lc
                 - |
+                  set -eu
                   if ! find /import -type f -print -quit | grep -q .; then
                     echo "No bookmarked media files to upload"
                     exit 0
