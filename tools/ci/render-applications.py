@@ -9,6 +9,7 @@ import fnmatch
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 
@@ -87,7 +88,14 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
     if source.keys() - {"repoURL", "targetRevision", "chart", "helm", "path", "directory", "ref"}:
         raise ValueError("Unsupported application source options")
     if "chart" in source:
-        return run(helm_args(app, source, sources, root, scratch, kubernetes_version), cwd=scratch)
+        args = helm_args(app, source, sources, root, scratch, kubernetes_version)
+        output = run(args, cwd=scratch)
+        if args[3].startswith("oci://"):
+            # Helm 4 writes OCI pull metadata to stdout before the YAML stream.
+            # Remove only its known preamble, never arbitrary non-manifest YAML.
+            output = re.sub(r"\APulled: [^\r\n]+\r?\nDigest: sha256:[0-9a-f]{64}\r?\n",
+                            "", output, count=1)
+        return output
     if source["repoURL"] != REPO:
         raise ValueError("External Git sources need explicit support before use")
     if "path" not in source and "ref" in source:
