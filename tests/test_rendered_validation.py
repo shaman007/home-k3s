@@ -58,6 +58,19 @@ class RenderValidationTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             render.local_path(self.root, '../escape')
 
+    def test_oci_pull_metadata_is_removed_without_changing_manifests(self):
+        source = {'repoURL': 'ghcr.io/openbao/charts', 'chart': 'openbao', 'targetRevision': '0.29.4'}
+        manifest = '---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: test\ndata:\n  Pulled: keep\n  Digest: keep\n'
+        preamble = 'Pulled: ghcr.io/openbao/charts/openbao:0.29.4\nDigest: sha256:' + 'a' * 64 + '\n'
+        for prefix in ['', preamble, preamble.replace('\n', '\r\n')]:
+            with self.subTest(prefix=prefix), patch.object(render, 'run', return_value=prefix + manifest):
+                output = render.render_source(self.app, source, [source], self.root, self.root, '1.36.4')
+                self.assertEqual(manifest, output)
+                self.assertEqual(['ConfigMap'], [doc['kind'] for doc in validate.documents(output)])
+        unexpected = 'unexpected: output\n' + manifest
+        with patch.object(render, 'run', return_value=unexpected):
+            self.assertEqual(unexpected, render.render_source(self.app, source, [source], self.root, self.root, '1.36.4'))
+
     def test_directory_include_exclude_and_recursion(self):
         appdir = self.root / 'app'
         appdir.mkdir()
