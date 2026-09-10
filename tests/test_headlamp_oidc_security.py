@@ -17,6 +17,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
         container = deployment["spec"]["template"]["spec"]["containers"][0]
         env = {item["name"]: item for item in container["env"]}
 
+        self.assertIn("-in-cluster-context-name=home-k8s", container["args"])
         self.assertEqual("headlamp", env["HEADLAMP_CONFIG_OIDC_CLIENT_ID"]["value"])
         self.assertEqual(
             "https://sso.andreybondarenko.com/realms/master",
@@ -26,6 +27,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
             "headlamp-oidc-secret",
             env["HEADLAMP_CONFIG_OIDC_CLIENT_SECRET"]["valueFrom"]["secretKeyRef"]["name"],
         )
+        self.assertEqual("profile,email", env["HEADLAMP_CONFIG_OIDC_SCOPES"]["value"])
 
     def test_headlamp_container_uses_restricted_security_context(self):
         deployment = documents(ROOT / "headlamp" / "deployment-headlamp.yaml")[0]

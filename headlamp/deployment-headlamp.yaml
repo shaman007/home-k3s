@@ -34,6 +34,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - -in-cluster
+            - -in-cluster-context-name=home-k8s
             - -plugins-dir=/headlamp/plugins
           env:
             - name: HEADLAMP_CONFIG_OIDC_CLIENT_ID
@@ -46,7 +47,7 @@ spec:
             - name: HEADLAMP_CONFIG_OIDC_IDP_ISSUER_URL
               value: https://sso.andreybondarenko.com/realms/master
             - name: HEADLAMP_CONFIG_OIDC_SCOPES
-              value: openid,profile,email
+              value: profile,email
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
