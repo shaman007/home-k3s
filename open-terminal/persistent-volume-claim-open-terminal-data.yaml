@@ -3,6 +3,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: open-terminal-data
   namespace: open-terminal
+  labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-c: enabled
 spec:
   accessModes:
     - ReadWriteOnce
