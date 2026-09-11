@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: searxng-config
+  namespace: searxng
+  labels:
+    app: searxng
+    app.kubernetes.io/name: searxng
+    app.kubernetes.io/instance: searxng
+    app.kubernetes.io/managed-by: argoCD
+data:
+  settings.yml: |
+    use_default_settings: true
+    server:
+      secret_key: "__SEARXNG_SECRET_KEY__"
+      limiter: false
+      image_proxy: false
+    search:
+      safe_search: 0
+      formats:
+        - json

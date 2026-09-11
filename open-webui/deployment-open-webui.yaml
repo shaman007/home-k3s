@@ -79,6 +79,10 @@ spec:
                   "openai.api_base_urls": os.environ["OPENAI_API_BASE_URLS"].split(";"),
                   "openai.api_keys": os.environ["OPENAI_API_KEYS"].split(";"),
                   "openai.api_configs": json.loads(os.environ["OPENAI_API_CONFIGS"]),
+                  "web.search.enable": os.environ["ENABLE_WEB_SEARCH"].lower() == "true",
+                  "web.search.engine": os.environ["WEB_SEARCH_ENGINE"],
+                  "web.search.result_count": int(os.environ["WEB_SEARCH_RESULT_COUNT"]),
+                  "web.search.searxng_query_url": os.environ["SEARXNG_QUERY_URL"],
               }
               with sqlite3.connect(database) as connection:
                   connection.executemany(
@@ -133,6 +137,26 @@ spec:
               value: http://ollama.ollama.svc.cluster.local:11434
             - name: OLLAMA_BASE_URLS
               value: http://ollama.ollama.svc.cluster.local:11434;http://ollama-small.ollama.svc.cluster.local:11434
+            - name: ENABLE_WEB_SEARCH
+              valueFrom:
+                configMapKeyRef:
+                  name: open-webui-model-providers
+                  key: ENABLE_WEB_SEARCH
+            - name: WEB_SEARCH_ENGINE
+              valueFrom:
+                configMapKeyRef:
+                  name: open-webui-model-providers
+                  key: WEB_SEARCH_ENGINE
+            - name: WEB_SEARCH_RESULT_COUNT
+              valueFrom:
+                configMapKeyRef:
+                  name: open-webui-model-providers
+                  key: WEB_SEARCH_RESULT_COUNT
+            - name: SEARXNG_QUERY_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: open-webui-model-providers
+                  key: SEARXNG_QUERY_URL
             - name: WEBUI_AUTH
               value: "True"
             - name: ENABLE_IMAGE_GENERATION

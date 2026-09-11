@@ -23,6 +23,10 @@ policies:
     name: allow-egress-to-open-terminal
     namespace: open-terminal
     port: 8000
+  - type: namespace-egress
+    name: allow-egress-to-searxng
+    namespace: searxng
+    port: 8080
   - type: namespace-ingress
     name: allow-ingress-from-traefik
     namespace: traefik

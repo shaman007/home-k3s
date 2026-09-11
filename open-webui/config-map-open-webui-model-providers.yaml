@@ -15,3 +15,7 @@ data:
   OPENAI_API_BASE_URLS: http://nllb.nllb.svc.cluster.local:8080/v1
   OPENAI_API_KEYS: nllb-local
   OPENAI_API_CONFIGS: '{"0":{"enable":true,"prefix_id":"NLLB Translation · ","tags":["translation"]}}'
+  ENABLE_WEB_SEARCH: "True"
+  WEB_SEARCH_ENGINE: searxng
+  WEB_SEARCH_RESULT_COUNT: "3"
+  SEARXNG_QUERY_URL: http://searxng.searxng.svc.cluster.local:8080/search?q=<query>
