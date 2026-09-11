@@ -16,7 +16,8 @@ PROJECT_APPLICATIONS = {
     "hypermind", "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
     "nllb", "ollama", "ollama-small", "ooni", "open-terminal", "open-webui",
-    "plex", "ripe-atlas", "stirling-pdf", "wordpress", "year", "your-spotify",
+    "plex", "ripe-atlas", "searxng", "stirling-pdf", "wordpress", "year",
+    "your-spotify",
 }
 
 PROJECT_PLATFORM = {
