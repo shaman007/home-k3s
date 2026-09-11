@@ -36,7 +36,7 @@ spec:
                       - talos-d4h-k5m
       containers:
         - name: plex
-          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.3
+          image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.4
           imagePullPolicy: IfNotPresent
           env:
             # Match the owner of the local media tree so Plex can traverse and
