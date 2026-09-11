@@ -122,7 +122,7 @@ spec:
             - "--clamav.address"
             - "tcp://127.0.0.1:3200"
             - "--clamav.timeout=60s"
-            - "--clamav.retries=1"
+            - "--clamav.retries=0"
           volumeMounts:
             - mountPath: /run/clamav
               name: run
