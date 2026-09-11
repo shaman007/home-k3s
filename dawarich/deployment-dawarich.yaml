@@ -117,7 +117,7 @@ spec:
               #OIDC_AUTO_REGISTER=true # optional, default is false
               #OIDC_PROVIDER_NAME=YourProviderName # optional, default is OpenID Connect
               #ALLOW_EMAIL_PASSWORD_REGISTRATION=false # optional, default is true
-          image: harbor.andreybondarenko.com/library/dawarich:2026-09-07-100655
+          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.14.4
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -202,7 +202,7 @@ spec:
               value: photon.dawarich.svc.cluster.local
             - name: PHOTON_API_USE_HTTPS
               value: "false"
-          image: harbor.andreybondarenko.com/library/dawarich:2026-09-07-100655
+          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.14.4
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -236,8 +236,6 @@ spec:
               subPath: data_schema.rb
           command:
             - "sidekiq-entrypoint.sh"
-          args:
-            - "bsidekiq"
           resources:
             requests:
               memory: "512Mi"
