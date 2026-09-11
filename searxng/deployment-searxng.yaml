@@ -38,16 +38,15 @@ spec:
             - |
               secret_key="$(tr -dc 'a-f0-9' </dev/urandom | head -c 64)"
               sed "s/__SEARXNG_SECRET_KEY__/${secret_key}/" /config-template/settings.yml > /config/settings.yml
-              chown 977:977 /config/settings.yml
               chmod 0600 /config/settings.yml
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-              add: ["CHOWN"]
             readOnlyRootFilesystem: true
-            runAsUser: 0
-            runAsGroup: 0
+            runAsNonRoot: true
+            runAsUser: 977
+            runAsGroup: 977
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:

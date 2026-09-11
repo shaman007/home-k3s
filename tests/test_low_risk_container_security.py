@@ -64,6 +64,20 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
 
         self.assertEqual("64Mi", tmp["emptyDir"]["sizeLimit"])
 
+    def test_searxng_config_init_uses_volume_group_identity(self):
+        pod_spec = load_yaml("searxng/deployment-searxng.yaml")["spec"]["template"]["spec"]
+        init = pod_spec["initContainers"][0]
+        security = init["securityContext"]
+
+        self.assertEqual(977, pod_spec["securityContext"]["fsGroup"])
+        self.assertFalse(security["allowPrivilegeEscalation"])
+        self.assertEqual(["ALL"], security["capabilities"]["drop"])
+        self.assertNotIn("add", security["capabilities"])
+        self.assertTrue(security["readOnlyRootFilesystem"])
+        self.assertTrue(security["runAsNonRoot"])
+        self.assertEqual(977, security["runAsUser"])
+        self.assertEqual(977, security["runAsGroup"])
+
     def test_high_port_nginx_workloads_run_without_root(self):
         paths = (
             "metrics/deployment-external-access-analytics-exporter.yaml",
