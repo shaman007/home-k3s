@@ -22,3 +22,7 @@ policies:
     name: allow-ingress-from-bastioncam
     namespace: bastioncam
     port: 11434
+  - type: namespace-ingress
+    name: allow-ingress-from-karakeep
+    namespace: karakeep
+    port: 11434

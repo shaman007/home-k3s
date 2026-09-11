@@ -17,6 +17,15 @@ data:
   KARAKEEP_VERSION: release
   CRAWLER_NUM_WORKERS: "1"
   CRAWLER_PARSER_MEM_LIMIT_MB: "768"
+  OLLAMA_BASE_URL: http://ollama.ollama.svc.cluster.local:11434
+  OLLAMA_KEEP_ALIVE: 5m
+  INFERENCE_TEXT_MODEL: qwen3:4b
+  INFERENCE_IMAGE_MODEL: gemma3:4b
+  INFERENCE_OUTPUT_SCHEMA: json
+  INFERENCE_JOB_TIMEOUT_SEC: "120"
+  EMBEDDING_ENABLE_AUTO_INDEXING: "true"
+  EMBEDDING_TEXT_MODEL: nomic-embed-text
+  EMBEDDING_DIMENSIONS: "768"
   NEXTAUTH_URL: https://keep.andreybondarenko.com
   OAUTH_WELLKNOWN_URL: https://sso.andreybondarenko.com/realms/master/.well-known/openid-configuration
   OAUTH_CLIENT_ID: karakeep

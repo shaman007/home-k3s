@@ -153,6 +153,11 @@ spec:
               else
                 ollama pull qwen3:4b
               fi
+              if ollama show gemma3:4b >/dev/null 2>&1; then
+                echo "Model gemma3:4b is already present on persistent storage"
+              else
+                ollama pull gemma3:4b
+              fi
               if ollama show nomic-embed-text >/dev/null 2>&1; then
                 echo "Model nomic-embed-text is already present on persistent storage"
               else
