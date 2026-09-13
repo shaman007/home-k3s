@@ -26,6 +26,7 @@ spec:
           preUpgradeChecker:
             jobEnabled: false
           defaultSettings:
+            allowRecurringJobWhileVolumeDetached: true
             createDefaultDiskLabeledNodes: true
             priorityClass: homelab-critical
             taintToleration: node-role.kubernetes.io/control-plane:NoSchedule
