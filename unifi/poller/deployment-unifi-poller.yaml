@@ -21,7 +21,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: unifi-poller
-          image: harbor.andreybondarenko.com/github/unpoller/unpoller:v5.2.4
+          image: harbor.andreybondarenko.com/github/unpoller/unpoller:v5.2.5
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
