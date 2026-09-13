@@ -168,6 +168,51 @@ spec:
                     kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
                   }
 
+                  reload_openbao_tls() {
+                    expected_fingerprint="$(
+                      openssl x509 -in /tmp/openbao-server.crt -noout -fingerprint -sha256
+                    )"
+                    pods="$(
+                      kubectl get pods -n openbao \
+                        -l 'app.kubernetes.io/instance=openbao,app.kubernetes.io/name=openbao,component=server' \
+                        -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+                    )"
+
+                    for pod in $pods; do
+                      attempt=0
+                      while :; do
+                        mounted_fingerprint="$(
+                          kubectl exec -n openbao "$pod" -- \
+                            cat /openbao/userconfig/openbao-server-tls/tls.crt 2>/dev/null |
+                            openssl x509 -noout -fingerprint -sha256 2>/dev/null || true
+                        )"
+                        if [ "$mounted_fingerprint" = "$expected_fingerprint" ]; then
+                          break
+                        fi
+                        attempt=$((attempt + 1))
+                        if [ "$attempt" -ge 36 ]; then
+                          echo "Timed out waiting for renewed TLS certificate in $pod" >&2
+                          return 1
+                        fi
+                        sleep 5
+                      done
+
+                      kubectl exec -n openbao "$pod" -- sh -ec '
+                        for comm in /proc/[0-9]*/comm; do
+                          if [ "$(cat "$comm")" = bao ]; then
+                            pid=${comm#/proc/}
+                            pid=${pid%/comm}
+                            kill -HUP "$pid"
+                            exit 0
+                          fi
+                        done
+                        echo "OpenBao process not found" >&2
+                        exit 1
+                      '
+                      echo "Reloaded renewed TLS certificate in $pod"
+                    done
+                  }
+
                   if secret_needs_renewal "openbao" "openbao-server-tls"; then
                     openbao_server_alt_names="openbao,openbao.openbao,openbao.openbao.svc.cluster.local,openbao-active,openbao-active.openbao,openbao-active.openbao.svc,openbao-active.openbao.svc.cluster.local,*.openbao-internal,*.openbao-internal.openbao,*.openbao-internal.openbao.svc,*.openbao-internal.openbao.svc.cluster.local"
                     issue_cert \
@@ -183,6 +228,7 @@ spec:
                       /tmp/openbao-server.crt \
                       /tmp/openbao-server.key \
                       /tmp/openbao-server-ca.crt
+                    reload_openbao_tls
                     echo "Rotated OpenBao API and Raft TLS secret"
                   else
                     echo "OpenBao API and Raft TLS secret still valid beyond renewal window"

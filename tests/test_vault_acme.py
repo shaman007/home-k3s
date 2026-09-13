@@ -348,6 +348,10 @@ class VaultAcmeTest(unittest.TestCase):
             renewer_role["rules"][0]["resourceNames"],
             ["openbao-server-tls"],
         )
+        self.assertEqual(renewer_role["rules"][1]["resources"], ["pods"])
+        self.assertEqual(renewer_role["rules"][1]["verbs"], ["get", "list"])
+        self.assertEqual(renewer_role["rules"][2]["resources"], ["pods/exec"])
+        self.assertEqual(renewer_role["rules"][2]["verbs"], ["create"])
         self.assertNotIn('pki-root/issue/vault-server', renewer_policy)
         self.assertNotIn("w386-k8s-my-lan-wildcard", renewer_policy)
         self.assertNotIn("pki-root/issue/vault-ingress", renewer_policy)

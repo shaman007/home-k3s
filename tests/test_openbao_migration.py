@@ -78,6 +78,8 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertIn("pki-root/roles/openbao-server", script)
         self.assertIn('path "pki-root/issue/openbao-server"', policy)
         self.assertIn('"openbao" "openbao-server-tls"', renewer)
+        self.assertIn("reload_openbao_tls", renewer)
+        self.assertIn('kill -HUP "$pid"', renewer)
         self.assertIn(
             "path=https://openbao.w386.k8s.my.lan/v1/pki-int",
             script,
