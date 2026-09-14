@@ -40,7 +40,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: ooniprobe
-              image: harbor.andreybondarenko.com/library/ooniprobe:2026-09-07-022931
+              image: harbor.andreybondarenko.com/library/ooniprobe:2026-09-14-022903
               imagePullPolicy: IfNotPresent
               args:
                 - --config=/config/config.json
