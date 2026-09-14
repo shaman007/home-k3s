@@ -91,7 +91,7 @@ spec:
             sizeLimit: 500Mi
       containers:
         - name: php-nextcloud
-          image: harbor.andreybondarenko.com/library/php:2026-09-07-022931
+          image: harbor.andreybondarenko.com/library/php:2026-09-14-022903
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: phpini
