@@ -41,7 +41,7 @@ spec:
           longhornUI:
             priorityClass: homelab-critical
           persistence:
-            defaultClassReplicaCount: 1
+            defaultClassReplicaCount: 2
             defaultDataLocality: best-effort
             recurringJobSelector:
               enable: true
