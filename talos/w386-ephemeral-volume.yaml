@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+provisioning:
+  diskSelector:
+    match: disk.serial == "S7U4NU1Y803047W"
+  grow: true
+  minSize: 900GB

@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: longhorn
+provisioning:
+  diskSelector:
+    match: disk.serial == "2126GD440501"
+  grow: true
+  minSize: 1.8TB
+filesystem:
+  type: xfs
