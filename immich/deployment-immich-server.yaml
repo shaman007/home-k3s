@@ -58,7 +58,7 @@ spec:
               mountPath: /data
       containers:
         - name: immich-server
-          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.2.1
+          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.2.2
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
