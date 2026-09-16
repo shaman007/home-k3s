@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/name: comfyui
     app.kubernetes.io/instance: comfyui
     app.kubernetes.io/managed-by: argoCD
+    recurring-job.longhorn.io/trim-daily-a: enabled
 spec:
   accessModes:
     - ReadWriteOnce

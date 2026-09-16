@@ -13,6 +13,7 @@ metadata:
     app.kubernetes.io/managed-by: helm
     recurring-job.longhorn.io/source: enabled
     recurring-job.longhorn.io/backup-daily-retain1: enabled
+    recurring-job.longhorn.io/trim-daily-b: enabled
 spec:
   accessModes:
     - ReadWriteOnce
