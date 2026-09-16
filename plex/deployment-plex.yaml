@@ -103,7 +103,7 @@ spec:
       volumes:
         - name: plex-conf-lh2
           persistentVolumeClaim:
-            claimName: plex-conf-lh2
+            claimName: plex-conf-lh3
         - name: plex-lib
           persistentVolumeClaim:
             claimName: plex-lib

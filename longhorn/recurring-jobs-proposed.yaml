@@ -132,6 +132,38 @@ spec:
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
+  name: backup-monthly-retain60-mempalace
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 15 4 1 * *
+  groups:
+    - backup-monthly-retain60-mempalace
+  labels: {}
+  name: backup-monthly-retain60-mempalace
+  parameters: {}
+  retain: 60
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: backup-monthly-retain60-hister
+  namespace: longhorn-system
+spec:
+  concurrency: 1
+  cron: 45 4 1 * *
+  groups:
+    - backup-monthly-retain60-hister
+  labels: {}
+  name: backup-monthly-retain60-hister
+  parameters: {}
+  retain: 60
+  task: backup
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
   name: backup-daily-retain30
   namespace: longhorn-system
 spec:

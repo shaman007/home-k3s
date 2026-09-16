@@ -1,15 +1,16 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mempalace-data
-  namespace: mempalace
+  namespace: plex
+  name: plex-conf-lh3
   labels:
+    storage.k8s.io/name: longhorn
     recurring-job.longhorn.io/source: enabled
     recurring-job.longhorn.io/backup-daily-retain31-b: enabled
-    recurring-job.longhorn.io/backup-monthly-retain60-mempalace: enabled
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: longhorn
   resources:
     requests:
-      storage: 10Gi
+      storage: 15Gi

@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: matrix-lh
           persistentVolumeClaim:
-            claimName: matrix-lh
+            claimName: matrix-lh-v2
         - name: synapse-config
           secret:
             secretName: config-synapse

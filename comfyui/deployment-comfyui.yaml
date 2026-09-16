@@ -193,7 +193,7 @@ spec:
       volumes:
         - name: comfyui-data
           persistentVolumeClaim:
-            claimName: comfyui-data
+            claimName: comfyui-data-v2
         - name: tmp
           emptyDir: {}
         - name: comfyui-temp

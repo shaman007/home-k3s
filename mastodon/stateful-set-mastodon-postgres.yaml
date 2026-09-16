@@ -127,4 +127,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data-mastodon-postgres-lh
+            claimName: data-mastodon-postgres-v2

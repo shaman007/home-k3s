@@ -6,6 +6,7 @@ metadata:
   labels:
     recurring-job.longhorn.io/source: enabled
     recurring-job.longhorn.io/backup-daily-retain31-c: enabled
+    recurring-job.longhorn.io/backup-monthly-retain60-hister: enabled
 spec:
   accessModes:
     - ReadWriteOnce
