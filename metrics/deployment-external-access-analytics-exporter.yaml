@@ -30,7 +30,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: nginx
-          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.5
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.6
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
