@@ -52,6 +52,8 @@ spec:
                   key: password
             - name: MARIADB_DATABASE
               value: wordpress
+            - name: MARIADB_AUTO_UPGRADE
+              value: "1"
           args:
             - --transaction-isolation=READ-COMMITTED
           ports:
