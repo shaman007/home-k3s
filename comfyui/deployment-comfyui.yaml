@@ -25,6 +25,16 @@ spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-best-effort
       enableServiceLinks: false
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - talos-d4h-k5m
       securityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
@@ -128,6 +138,7 @@ spec:
             - name: TZ
               value: Europe/Prague
           args:
+            - --cpu
             - --enable-cors-header
             - '*'
             - --disable-smart-memory
@@ -153,7 +164,7 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 10Gi
+              memory: 4Gi
             limits:
               memory: 16Gi
           volumeMounts:

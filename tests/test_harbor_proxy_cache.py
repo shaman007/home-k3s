@@ -17,6 +17,7 @@ BOOTSTRAP_IMAGE_FILES = {
     Path("argocd/application-traefik.yaml"),
     Path("harbor/values.yaml"),
     Path("talos-gpu-worker-patch.yaml"),
+    Path("talos/w386-install.yaml"),
     Path("traefik/values.yaml"),
 }
 
