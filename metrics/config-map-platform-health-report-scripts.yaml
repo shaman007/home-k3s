@@ -210,9 +210,13 @@ data:
             expected.add(task)
             name = job["metadata"]["name"]
             cronjob = by_owner.get(name, {})
-            succeeded, _ = cronjob_recently_succeeded(cronjob, cutoff)
+            due_cutoff = recurring_job_due_cutoff(job, cronjob, cutoff)
+            if cronjob and not cronjob.get("spec", {}).get("suspend", False) and due_cutoff is None:
+                succeeded = True
+            else:
+                succeeded, _ = cronjob_recently_succeeded(cronjob, due_cutoff or cutoff)
             detail = {"namespace": "longhorn-system", "item": name,
-                      "value": int(succeeded), "value_name": "longhorn_recurring_job_recent_success"}
+                      "value": int(succeeded), "value_name": "longhorn_recurring_job_schedule_healthy"}
             details.append(detail)
             if succeeded:
                 counts[task] += 1
@@ -223,7 +227,7 @@ data:
             {"namespace": "longhorn-system", "item": "recent-trims-24h", "value": counts["filesystem-trim"], "value_name": "longhorn_recent_trims_24h"},
         ])
         return check("longhorn_maintenance", len(expected) == 2 and not issues,
-                     f"Recurring jobs successful in the last 24h: backups={counts['backup']}, trims={counts['filesystem-trim']}.",
+                     f"Recurring jobs healthy for their schedules: backups={counts['backup']}, trims={counts['filesystem-trim']}.",
                      details, issues)
 
 
@@ -304,6 +308,41 @@ data:
             return False, None
         last_success = parse_time(cronjob.get("status", {}).get("lastSuccessfulTime"))
         return bool(last_success and last_success >= cutoff), last_success
+
+
+    def recurring_job_due_cutoff(recurring_job, cronjob, default_cutoff):
+        """Return None when a fixed monthly job is not due yet; otherwise its freshness cutoff."""
+        fields = recurring_job.get("spec", {}).get("cron", "").split()
+        if len(fields) != 5:
+            return default_cutoff
+        minute, hour, day, month, weekday = fields
+        if not (minute.isdigit() and hour.isdigit() and day.isdigit() and month == "*" and weekday == "*"):
+            return default_cutoff
+
+        now = utc_now()
+        scheduled_day = int(day)
+
+        def occurrence(year, month_number):
+            try:
+                return datetime(year, month_number, scheduled_day, int(hour), int(minute), tzinfo=timezone.utc)
+            except ValueError:
+                return None
+
+        due = occurrence(now.year, now.month)
+        if due is None or due > now:
+            year = now.year if now.month > 1 else now.year - 1
+            month_number = now.month - 1 if now.month > 1 else 12
+            due = occurrence(year, month_number)
+        if due is None:
+            return default_cutoff
+
+        created = parse_time(
+            cronjob.get("metadata", {}).get("creationTimestamp")
+            or recurring_job.get("metadata", {}).get("creationTimestamp")
+        )
+        if (created and created > due) or now < due + timedelta(hours=12):
+            return None
+        return due
 
 
     def ingress_tls_hosts(ingress):

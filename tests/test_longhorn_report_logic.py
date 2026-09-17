@@ -18,8 +18,11 @@ class LonghornReportTest(unittest.TestCase):
         self.cutoff = self.now - timedelta(hours=24)
         self.jobs = [self.job('daily', 'backup', ['protected']), self.job('trim', 'filesystem-trim')]
 
-    def job(self, name, task, groups=None):
-        return {'metadata': {'name': name}, 'spec': {'task': task, 'groups': groups or []}}
+    def job(self, name, task, groups=None, cron='0 1 * * *', created=None):
+        metadata = {'name': name}
+        if created:
+            metadata['creationTimestamp'] = created.isoformat()
+        return {'metadata': metadata, 'spec': {'task': task, 'groups': groups or [], 'cron': cron}}
 
     def volume(self, name, labels=None):
         return {'metadata': {'name': name, 'labels': labels if labels is not None else {'recurring-job.longhorn.io/daily': 'enabled'}}}
@@ -59,9 +62,12 @@ class LonghornReportTest(unittest.TestCase):
     def test_no_expected_volumes_is_not_healthy(self):
         self.assertFalse(self.check_backups([], [])['passed'])
 
-    def cronjob(self, name, age=1, suspended=False):
-        return {'metadata': {'name': name, 'ownerReferences': [{'kind': 'RecurringJob', 'apiVersion': 'longhorn.io/v1beta2', 'name': name}]},
-                'spec': {'suspend': suspended}, 'status': {'lastSuccessfulTime': (self.now-timedelta(hours=age)).isoformat()}}
+    def cronjob(self, name, age=1, suspended=False, created=None, successful=True):
+        metadata = {'name': name, 'ownerReferences': [{'kind': 'RecurringJob', 'apiVersion': 'longhorn.io/v1beta2', 'name': name}]}
+        if created:
+            metadata['creationTimestamp'] = created.isoformat()
+        status = {'lastSuccessfulTime': (self.now-timedelta(hours=age)).isoformat()} if successful else {}
+        return {'metadata': metadata, 'spec': {'suspend': suspended}, 'status': status}
 
     def test_maintenance_passes_without_any_pod_history(self):
         result = self.report['longhorn_maintenance_check'](self.jobs, [self.cronjob('daily'), self.cronjob('trim')], self.cutoff)
@@ -73,6 +79,27 @@ class LonghornReportTest(unittest.TestCase):
             result = self.report['longhorn_maintenance_check'](self.jobs, cronjobs, self.cutoff)
             self.assertFalse(result['passed'])
             self.assertEqual(['daily'], [d['item'] for d in result['review_details']])
+
+    def test_new_monthly_job_is_healthy_until_its_first_due_run(self):
+        monthly = self.job('monthly', 'backup', cron='15 4 1 * *', created=self.now)
+        cronjob = self.cronjob('monthly', created=self.now, successful=False)
+        result = self.report['longhorn_maintenance_check'](
+            [monthly, self.job('trim', 'filesystem-trim')],
+            [cronjob, self.cronjob('trim')],
+            self.cutoff,
+        )
+        self.assertTrue(result['passed'])
+
+    def test_overdue_monthly_job_without_success_fails(self):
+        monthly = self.job('monthly', 'backup', cron='15 4 1 * *', created=self.now - timedelta(days=90))
+        cronjob = self.cronjob('monthly', created=self.now - timedelta(days=90), successful=False)
+        result = self.report['longhorn_maintenance_check'](
+            [monthly, self.job('trim', 'filesystem-trim')],
+            [cronjob, self.cronjob('trim')],
+            self.cutoff,
+        )
+        self.assertFalse(result['passed'])
+        self.assertEqual(['monthly'], [d['item'] for d in result['review_details']])
 
     def test_report_role_can_read_volume_inventory(self):
         role = yaml.safe_load((ROOT / 'metrics/cluster-role-platform-health-report.yaml').read_text())
