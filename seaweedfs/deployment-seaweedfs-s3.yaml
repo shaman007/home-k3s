@@ -194,11 +194,28 @@ spec:
         - name: filer
           image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.47
           imagePullPolicy: IfNotPresent
-          args:
-            - "filer"
-            - "-ip=0.0.0.0"
-            - "-master=127.0.0.1:9333"
-            - "-metricsPort=9093"
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              # A replacement pod can briefly race the previous filer's LevelDB lock.
+              # Retry only short-lived startup failures; propagate later failures so
+              # Kubernetes still records and restarts a genuinely crashed filer.
+              attempt=1
+              while true; do
+                started_at="$(date +%s)"
+                set +e
+                weed filer -ip=0.0.0.0 -master=127.0.0.1:9333 -metricsPort=9093
+                status="$?"
+                set -e
+                runtime="$(( $(date +%s) - started_at ))"
+                if [ "${runtime}" -ge 60 ] || [ "${attempt}" -ge 12 ]; then
+                  exit "${status}"
+                fi
+                echo "filer exited during startup; retrying in 5 seconds (attempt ${attempt}/12)"
+                attempt="$(( attempt + 1 ))"
+                sleep 5
+              done
           env:
             - name: HOME
               value: /tmp
@@ -237,6 +254,12 @@ spec:
               port: 8888
             initialDelaySeconds: 15
             periodSeconds: 60
+          startupProbe:
+            tcpSocket:
+              port: 8888
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 60
           livenessProbe:
             tcpSocket:
               port: 8888
@@ -269,9 +292,18 @@ spec:
                 sleep 5
               done
 
-              printf 's3.configure -user=admin -actions=Read,Write,List,Tagging,Admin -access_key=%s -secret_key=%s -apply\ns3.configure -user=anonymous -actions=Read -buckets=mastodon -apply\nexit\n' \
-                "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}" \
-                | weed shell -master=127.0.0.1:9333 -filer=127.0.0.1:8888 >/dev/null
+              for i in $(seq 1 60); do
+                if printf 's3.configure -user=admin -actions=Read,Write,List,Tagging,Admin -access_key=%s -secret_key=%s -apply\ns3.configure -user=anonymous -actions=Read -buckets=mastodon -apply\nexit\n' \
+                  "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}" \
+                  | weed shell -master=127.0.0.1:9333 -filer=127.0.0.1:8888 >/dev/null 2>&1; then
+                  break
+                fi
+                if [ "${i}" -eq 60 ]; then
+                  echo "failed to configure S3 identities after 5 minutes"
+                  exit 1
+                fi
+                sleep 5
+              done
 
               exec weed s3 \
                 -ip.bind=0.0.0.0 \
