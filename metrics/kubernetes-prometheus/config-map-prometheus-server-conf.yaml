@@ -88,7 +88,10 @@ data:
         annotations:
           summary: Postgresql-mastodon is down
       - alert: KubeJobFailed
-        expr: kube_job_failed{job="kube-state-metrics",namespace=~".*"} > 0
+        expr: |
+          (kube_job_failed{job="kube-state-metrics",condition="true",namespace=~".*"} > 0)
+          and on (namespace, job_name)
+          ((time() - kube_job_status_start_time{job="kube-state-metrics",namespace=~".*"}) < 3600)
         for: 10m
         labels:
           severity: mail
