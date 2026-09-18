@@ -138,8 +138,12 @@ def smart_metrics() -> list[str]:
     for device in smart_devices():
         data: dict[str, object] = {}
         for attempt in range(2):
+            command = ["/usr/bin/smartctl"]
+            if device.name.startswith("sd"):
+                command.extend(("-n", "standby"))
+            command.extend(("-a", "-j", str(device)))
             completed = subprocess.run(
-                ["/usr/bin/smartctl", "-a", "-j", str(device)],
+                command,
                 check=False, capture_output=True, text=True, timeout=45,
             )
             try:
