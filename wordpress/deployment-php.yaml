@@ -62,7 +62,7 @@ spec:
             sizeLimit: 500Mi
       containers:
         - name: php
-          image: harbor.andreybondarenko.com/library/php:2026-09-14-022903
+          image: harbor.andreybondarenko.com/library/php:2026-09-21-022930
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
