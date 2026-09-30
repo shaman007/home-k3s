@@ -66,6 +66,13 @@ spec:
             - mountPath: /data
               name: data
           replicas: 1
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: node.kubernetes.io/exclude-from-external-load-balancers
+                  operator: DoesNotExist
         experimental:
           plugins:
             geoip2:
