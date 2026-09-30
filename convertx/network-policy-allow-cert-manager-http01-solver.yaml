@@ -3,6 +3,8 @@ kind: NetworkPolicy
 metadata:
   name: allow-cert-manager-http01-solver
   namespace: convertx
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   podSelector:
     matchLabels:
@@ -14,6 +16,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
       ports:
         - protocol: TCP
           port: 8089

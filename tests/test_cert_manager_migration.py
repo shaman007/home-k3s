@@ -82,6 +82,8 @@ class CertManagerMigrationTest(unittest.TestCase):
     }
 
     NAMESPACES_REQUIRING_SOLVER_POLICY = {
+        "bitwarden": "bitwarden",
+        "convertx": "convertx",
         "harbor": "harbor",
         "hister": "hister",
         "immich": "immich",
@@ -90,11 +92,13 @@ class CertManagerMigrationTest(unittest.TestCase):
         "mail": "mail",
         "mastodon": "mastodon",
         "nextcloud": "nextcloud",
+        "open-webui": "open-webui",
         "plex": "plex",
         "seaweedfs": "seaweedfs",
         "your-spotify": "spotify",
         "stirling-pdf": "stirling-pdf",
         "wordpress": "wordpress",
+        "year": "year",
     }
 
     CUTOVER_INGRESSES = {
