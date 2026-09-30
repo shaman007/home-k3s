@@ -86,6 +86,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         "convertx": "convertx",
         "harbor": "harbor",
         "hister": "hister",
+        "hypermind": "hypermind",
         "immich": "immich",
         "karakeep": "karakeep",
         "keycloak": "keycloak",
@@ -95,6 +96,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         "open-webui": "open-webui",
         "plex": "plex",
         "seaweedfs": "seaweedfs",
+        "synapse": "matrix",
         "your-spotify": "spotify",
         "stirling-pdf": "stirling-pdf",
         "wordpress": "wordpress",
@@ -356,6 +358,29 @@ class CertManagerMigrationTest(unittest.TestCase):
                     "from": expected_from,
                     "ports": [{"protocol": "TCP", "port": 8089}],
                 }])
+
+    def test_every_solver_policy_has_safe_sync_order_and_source(self):
+        expected_from = [{
+            "namespaceSelector": {
+                "matchLabels": {"kubernetes.io/metadata.name": "traefik"}
+            },
+            "podSelector": {
+                "matchLabels": {"app.kubernetes.io/name": "traefik"}
+            },
+        }]
+        paths = sorted(ROOT.rglob("*network-policy-allow-cert-manager-http01-solver.yaml"))
+        self.assertTrue(paths)
+
+        for path in paths:
+            with self.subTest(path=path.relative_to(ROOT).as_posix()):
+                policy = load_yaml(path.relative_to(ROOT).as_posix())
+                self.assertEqual(
+                    policy["metadata"]["annotations"][
+                        "argocd.argoproj.io/sync-wave"
+                    ],
+                    "-2",
+                )
+                self.assertEqual(policy["spec"]["ingress"][0]["from"], expected_from)
 
     def test_mastodon_application_includes_certificates(self):
         application = load_yaml("argocd/application-mastodon-custom.yaml")

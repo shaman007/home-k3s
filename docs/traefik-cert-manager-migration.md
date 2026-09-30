@@ -68,6 +68,12 @@ solver ingress policy allowing Traefik Pods to TCP port 8089 on Pods labelled
 
 Issue and verify the Certificates before changing any routers. Use Argo sync
 waves if a Certificate and its router must be in the same Application sync.
+Every HTTP-01 solver NetworkPolicy must use sync wave `-2`, before Certificates
+at wave `-1`; otherwise an in-progress renewal can block the policy required to
+complete that renewal. Restrict the policy source with both the `traefik`
+namespace selector and `app.kubernetes.io/name: traefik` Pod selector. The
+repository contract test applies this rule automatically to future solver
+policies.
 
 ## Phase 4: switch routers
 
