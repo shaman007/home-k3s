@@ -54,6 +54,11 @@ spec:
         - name: ripe-atlas
           image: harbor.andreybondarenko.com/library/ripe-atlas:2026-09-28-022902
           imagePullPolicy: Always
+          command:
+            - /usr/bin/tini
+            - --
+            - /usr/bin/bash
+            - /opt/atlas-transfer/entrypoint.sh
           securityContext:
             allowPrivilegeEscalation: true
             readOnlyRootFilesystem: true
@@ -73,6 +78,9 @@ spec:
             limits:
               memory: 256Mi
           volumeMounts:
+            - name: transfer
+              mountPath: /opt/atlas-transfer
+              readOnly: true
             - name: config
               mountPath: /etc/ripe-atlas
             - name: spool
@@ -88,6 +96,9 @@ spec:
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: transfer
+          configMap:
+            name: ripe-atlas-transfer
         - name: config
           persistentVolumeClaim:
             claimName: ripe-atlas-config

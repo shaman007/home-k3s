@@ -30,3 +30,9 @@ The image bootstraps its RIPE Atlas control registration through the official IP
 registration endpoints. RIPE derives a NATed probe's public IPv4 address from that
 connection, while the probe continues to report its global IPv6 address and execute
 measurements over both address families.
+
+The transfer entrypoint repairs group write access on persisted spool files for
+the separate measurement user. It also translates controller schedules using
+legacy `/home/atlas/data` and `/home/atlas/status` paths to the RPM's validated
+spool and runtime paths, requesting a scheduler reload after each translation.
+Mount aliases alone do not satisfy the package's literal-path validation.

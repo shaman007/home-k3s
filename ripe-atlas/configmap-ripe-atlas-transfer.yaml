@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ripe-atlas-transfer
+  namespace: ripe-atlas
+data:
+  entrypoint.sh: |
+    #!/usr/bin/bash
+    set -Eeuo pipefail
+
+    # The measurement helper runs as a separate user in the ripe-atlas group.
+    # Older persisted files can lack group write access.
+    chmod -R g+rwX /var/spool/ripe-atlas
+    umask 002
+
+    normalize_schedules() {
+      while true; do
+        for schedule in /var/spool/ripe-atlas/crons/*/root; do
+          [[ -f "$schedule" ]] || continue
+          if grep -qE '/home/atlas/(data|status)' "$schedule"; then
+            # The RPM validates the literal path, even when aliases are mounted.
+            sed -i \
+              -e 's|/home/atlas/data|/var/spool/ripe-atlas/data|g' \
+              -e 's|/home/atlas/status|/run/ripe-atlas/status|g' \
+              "$schedule"
+            printf 'root\n' > "${schedule%/*}/cron.update"
+          fi
+        done
+        sleep 10
+      done
+    }
+    if [[ "${1:-}" == "--normalize-only" ]]; then
+      normalize_schedules
+      exit
+    fi
+    normalize_schedules &
+    exec /usr/local/bin/ripe-atlas-entrypoint
