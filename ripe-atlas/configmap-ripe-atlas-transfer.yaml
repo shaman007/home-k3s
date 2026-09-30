@@ -12,6 +12,10 @@ data:
     # Older persisted files can lack group write access.
     chmod -R g+rwX /var/spool/ripe-atlas
     umask 002
+    # telnetd cannot accept periodic schedules until this directory exists.
+    # The upstream missing-PID check does not recover a failed initial start.
+    install -d -o ripe-atlas -g ripe-atlas -m 2775 \
+      /var/spool/ripe-atlas/crons/7
 
     normalize_schedules() {
       while true; do

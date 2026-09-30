@@ -36,3 +36,5 @@ the separate measurement user. It also translates controller schedules using
 legacy `/home/atlas/data` and `/home/atlas/status` paths to the RPM's validated
 spool and runtime paths, requesting a scheduler reload after each translation.
 Mount aliases alone do not satisfy the package's literal-path validation.
+The wrapper also creates the periodic scheduler's `crons/7` directory before
+Atlas starts, so the scheduler can start and accept controller assignments.
