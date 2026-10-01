@@ -12,6 +12,9 @@ data:
     http {
       client_body_temp_path /tmp/client_temp;
       proxy_temp_path /tmp/proxy_temp;
+      fastcgi_temp_path /tmp/fastcgi_temp;
+      uwsgi_temp_path /tmp/uwsgi_temp;
+      scgi_temp_path /tmp/scgi_temp;
       # Keep forwarded addresses as evidence, without treating arbitrary headers
       # as authenticated identities. Traefik is the only allowed ingress source.
       log_format honeypot_json escape=json '{'

@@ -21,6 +21,11 @@ class HypermindCrawlerAccessTest(unittest.TestCase):
             {"name": "storage", "mountPath": "/app/storage"}, proxy["volumeMounts"]
         )
         config = load("config-map-access-proxy.yaml")["data"]["nginx.conf"]
+        # Nginx initializes even unused protocol temp directories at startup.
+        # Every default must point into the writable emptyDir, not its image.
+        for name in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"):
+            directory = "client_temp" if name == "client_body" else name + "_temp"
+            self.assertIn(f"{name}_temp_path /tmp/{directory};", config)
         self.assertIn("access_log /app/storage/http-logs/access.log honeypot_json;", config)
         for field in ("$http_x_forwarded_for", "$remote_addr", "$http_user_agent"):
             self.assertIn(field, config)
