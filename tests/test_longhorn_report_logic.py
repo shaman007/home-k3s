@@ -14,7 +14,10 @@ class LonghornReportTest(unittest.TestCase):
         exec(compile(source, 'report', 'exec'), cls.report)
 
     def setUp(self):
-        self.now = datetime.now(timezone.utc)
+        self.now = datetime(2026, 9, 17, 12, tzinfo=timezone.utc)
+        self.original_utc_now = self.report['utc_now']
+        self.report['utc_now'] = lambda: self.now
+        self.addCleanup(self.report.__setitem__, 'utc_now', self.original_utc_now)
         self.cutoff = self.now - timedelta(hours=24)
         self.jobs = [self.job('daily', 'backup', ['protected']), self.job('trim', 'filesystem-trim')]
 
@@ -100,6 +103,23 @@ class LonghornReportTest(unittest.TestCase):
         )
         self.assertFalse(result['passed'])
         self.assertEqual(['monthly'], [d['item'] for d in result['review_details']])
+
+    def test_monthly_job_grace_period_boundary(self):
+        due = datetime(2026, 10, 1, 4, 15, tzinfo=timezone.utc)
+        for elapsed, passed in [(timedelta(hours=12, microseconds=-1), True),
+                                (timedelta(hours=12), False)]:
+            with self.subTest(elapsed=elapsed):
+                self.now = due + elapsed
+                created = due - timedelta(days=90)
+                result = self.report['longhorn_maintenance_check'](
+                    [self.job('monthly', 'backup', cron='15 4 1 * *', created=created),
+                     self.job('trim', 'filesystem-trim')],
+                    [self.cronjob('monthly', created=created, successful=False), self.cronjob('trim')],
+                    self.now - timedelta(hours=24),
+                )
+                self.assertEqual(passed, result['passed'])
+                self.assertEqual([] if passed else ['monthly'],
+                                 [d['item'] for d in result['review_details']])
 
     def test_report_role_can_read_volume_inventory(self):
         role = yaml.safe_load((ROOT / 'metrics/cluster-role-platform-health-report.yaml').read_text())
