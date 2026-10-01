@@ -7,17 +7,23 @@ EVE JSON, including rotated gzip files. Outputs and configuration are under
 `/var/lib/network-daily-report` on NVMe. The report is sent to the configured
 recipient using STARTTLS on the existing mail server.
 
-Evidence is aggregated by client IP, with top DNS/TLS/QUIC names, destination
-IPs, protocols and alert signatures. Full aggregated evidence is attached to
-mail and saved alongside plain-text reports. Measured totals and per-client activity are rendered directly by code. Model
-interpretations use structured JSON; every cited domain or alert must occur
-in that client's evidence, and unsupported findings are omitted.
+The email is an executive brief, not a client-by-client telemetry dump. It opens
+with a deterministic assessment, prioritizes issues and next actions, states
+confidence, and reports monitoring coverage. Code checks sensor services,
+NVMe headroom, event freshness and capture loss. Informational signatures and
+routine domains are suppressed. Higher-priority alerts trigger triage, never
+an automatic claim of compromise. Device attribution behind NAT is explicitly
+reported as an actionable monitoring gap.
 
-Requests to local Ollama use
-`gemma3:4b`, 32K context, bounded batches and streaming responses. Empty,
-incomplete and token-limit responses are rejected; failures produce a warning
-email with measured evidence rather than invented conclusions. A sent marker
-prevents a second submission on the same local calendar date.
+Ollama `gemma3:4b` receives a small list of measured issues and writes short
+plain-language impact explanations. It cannot choose the overall status,
+change actions, or add issues. Requests use structured JSON, 32K context,
+streaming and bounded output. Model failures fall back to deterministic
+explanations. Raw IPs, signatures and counters stay in the evidence attachment.
+A previous complete report is required before claiming day-over-day changes.
+The HTML email uses a status heading and short action cards; plain text is
+included for other mail clients. `--preview` explicitly resends a preview
+without altering the daily sent marker.
 
 IPv4 WAN traffic is predominantly after NAT. Shared public-IP activity cannot
 be attributed to a specific client. Absent traffic does not establish safety
@@ -44,4 +50,5 @@ sudo journalctl -u network-daily-report.service
 sudo /usr/local/sbin/network-daily-report --collect-only
 sudo /usr/local/sbin/network-daily-report  # generate without sending
 sudo /usr/local/sbin/network-daily-report --send
+sudo /usr/local/sbin/network-daily-report --preview  # explicit preview resend
 ```
