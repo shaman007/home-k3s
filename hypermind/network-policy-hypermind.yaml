@@ -27,7 +27,7 @@ spec:
               kubernetes.io/metadata.name: traefik
       ports:
         - protocol: TCP
-          port: 3000
+          port: 8080
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

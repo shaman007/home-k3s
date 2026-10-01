@@ -13,5 +13,5 @@ spec:
   ports:
     - name: http
       port: 3000
-      targetPort: http
+      targetPort: proxy-http
       protocol: TCP

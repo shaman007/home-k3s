@@ -6,7 +6,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,hypermind-hsts@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,hypermind-hsts@kubernetescrd
   labels:
     app.kubernetes.io/name: hypermind
     app.kubernetes.io/instance: hypermind

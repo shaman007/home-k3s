@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hypermind-access-proxy
+  namespace: hypermind
+data:
+  nginx.conf: |
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    error_log /dev/stderr warn;
+    events { worker_connections 1024; }
+    http {
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path /tmp/proxy_temp;
+      # Keep forwarded addresses as evidence, without treating arbitrary headers
+      # as authenticated identities. Traefik is the only allowed ingress source.
+      log_format honeypot_json escape=json '{'
+        '"time_iso8601":"$time_iso8601",'
+        '"remote_addr":"$remote_addr",'
+        '"x_forwarded_for":"$http_x_forwarded_for",'
+        '"geoip_country":"$http_geoip_country",'
+        '"geoip_country_code":"$http_geoip_country_code",'
+        '"method":"$request_method",'
+        '"path":"$uri",'
+        '"status":$status,'
+        '"user_agent":"$http_user_agent"'
+      '}';
+      access_log /app/storage/http-logs/access.log honeypot_json;
+      server {
+        listen 8080;
+        client_max_body_size 1m;
+        location = /health {
+          access_log off;
+          return 200 "ok\n";
+        }
+        location / {
+          proxy_pass http://127.0.0.1:3000;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header Connection "";
+          # Pass Traefik's original chain unchanged, including to IP rate limits.
+          proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+          proxy_buffering off;
+          proxy_cache off;
+          proxy_read_timeout 1h;
+        }
+      }
+    }

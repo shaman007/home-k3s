@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: hypermind
   namespace: hypermind
+  annotations:
+    configmap.reloader.stakater.com/auto: "true"
   labels:
     app.kubernetes.io/name: hypermind
     app.kubernetes.io/instance: hypermind
@@ -86,7 +88,51 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
+        - name: access-proxy
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.6
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -ceu
+            - |
+              mkdir -p /app/storage/http-logs
+              exec nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          ports:
+            - name: proxy-http
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - name: storage
+              mountPath: /app/storage
+            - name: access-proxy-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: proxy-http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: proxy-http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
       volumes:
+        - name: access-proxy-config
+          configMap:
+            name: hypermind-access-proxy
         - name: storage
           persistentVolumeClaim:
             claimName: hypermind-storage
