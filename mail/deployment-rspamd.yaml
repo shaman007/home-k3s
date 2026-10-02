@@ -141,7 +141,7 @@ spec:
           emptyDir: {}
       containers:
         - name: rspamd
-          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.0
+          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.1
           imagePullPolicy: IfNotPresent
           resources:
             requests:
