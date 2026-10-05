@@ -233,13 +233,6 @@ affinity:
             - key: node.kubernetes.io/exclude-from-external-load-balancers
               operator: DoesNotExist
 
-certificatesResolvers:
-  letsencrypt:
-    acme:
-      email: "me@andreybondarenko.com"
-      storage: "/data/acme.json"
-      tlsChallenge: {}
-
 # Persistent volume for acme.json (so certs survive restart)
 persistence:
   enabled: true

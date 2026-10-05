@@ -125,3 +125,26 @@ Only after every public router and mail consumer is verified:
 Final checks: no Traefik ACME resolver arguments, no exporter RBAC, every
 Certificate Ready, no failed Orders or Challenges, all Argo Applications
 Synced/Healthy, and external HTTPS/SMTP/IMAPS certificate checks passing.
+
+## Completion on 2026-10-05
+
+The July 30 route cutover left Phase 5 and Phase 6 unfinished. Renewed
+cert-manager Secrets coexisted with native certificates expiring October 9;
+Traefik could serve either certificate. Mail still consumed the legacy exporter
+Secret. Complete the cutover by mounting `mail-tls` in Postfix and Dovecot,
+watching that Secret with Reloader, and removing the native resolver from both
+Traefik values sources. The exporter and its RBAC are archived under DEPRECATED.
+Keep the existing Traefik PVC and its `acme.json` for rollback; without a native
+resolver, Traefik does not load those old certificates. Verify every served
+HTTPS certificate fingerprint against its namespaced Secret and SMTP/IMAPS/
+ManageSieve against `mail/mail-tls`, including after a Traefik restart.
+
+Live recovery temporarily sets `argocd.argoproj.io/skip-reconcile=true` on
+`traefik`, `mail`, `platform-health`, and the retired `traefik-acme-exporter`
+Application until these repository changes are merged. After merging, remove
+the annotation from the first three Applications and request a normal Argo
+sync. Remove the retired exporter Application if the parent does not prune it;
+its CronJob, ServiceAccount, Cilium policy, mail Role/RoleBinding, and legacy
+Secret were already removed during recovery. Do not resume the exporter.
+The persisted daily report still reflects the previous run until its next
+scheduled execution; direct live TLS checks verified the recovery.

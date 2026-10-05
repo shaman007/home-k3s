@@ -13,6 +13,7 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
   annotations:
     configmap.reloader.stakater.com/auto: "true"
+    secret.reloader.stakater.com/reload: "mail-tls"
 spec:
   replicas: 1
   strategy:
@@ -32,7 +33,7 @@ spec:
       volumes:
         - name: mail-certs
           secret:
-            secretName: letsencrypt-prod
+            secretName: mail-tls
         - name: main-cf
           configMap:
             name: main-cf

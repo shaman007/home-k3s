@@ -673,7 +673,7 @@ data:
 
         mail_services = kube("/api/v1/namespaces/mail/services").get("items", [])
         mail_pods = kube("/api/v1/namespaces/mail/pods").get("items", [])
-        mail_secret = kube("/api/v1/namespaces/mail/secrets/letsencrypt-prod")
+        mail_secret = kube("/api/v1/namespaces/mail/secrets/mail-tls")
         mail_pem = base64.b64decode(mail_secret.get("data", {}).get("tls.crt", "")).decode("utf-8")
         mail_cert_days = cert_days_left(mail_pem) if mail_pem else 0
         service_map = {item["metadata"]["name"]: item for item in mail_services}

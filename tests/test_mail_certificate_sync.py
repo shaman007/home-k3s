@@ -44,80 +44,31 @@ class MailCertificateSyncTest(unittest.TestCase):
             staging_issuer["spec"]["acme"]["solvers"], expected_solvers
         )
         self.assertNotIn("httpChallenge:", traefik)
-        self.assertIn("tlsChallenge: {}", traefik)
+        self.assertNotIn("certificatesResolvers:", traefik)
+        self.assertNotIn("certificatesResolvers:", (ROOT / "traefik/values.yaml").read_text())
 
-    def test_exporter_reads_the_traefik_pvc_without_pod_exec(self):
-        cron_job = load_yaml(
-            "traefik-acme-exporter/cron-job-sync-letsencrypt-prod.yaml"
-        )
-        pod_spec = cron_job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-        container = pod_spec["containers"][0]
+    def test_mail_consumers_use_cert_manager_and_reload_on_renewal(self):
+        for name in ("postfix", "dovecot"):
+            with self.subTest(name=name):
+                deployment = load_yaml(f"mail/deployment-{name}.yaml")
+                volumes = deployment["spec"]["template"]["spec"]["volumes"]
+                certs = next(v for v in volumes if v["name"] == "mail-certs")
+                self.assertEqual(certs["secret"]["secretName"], "mail-tls")
+                self.assertEqual(deployment["metadata"]["annotations"][
+                    "secret.reloader.stakater.com/reload"], "mail-tls")
 
-        self.assertEqual(cron_job["metadata"]["namespace"], "traefik")
-        self.assertEqual(pod_spec["serviceAccountName"], "sync-le-tls")
-        self.assertIn('"$ACME_PATH"', container["args"][0])
-        self.assertNotIn("kubectl exec", container["args"][0])
-        self.assertEqual(
-            pod_spec["volumes"][0]["persistentVolumeClaim"],
-            {"claimName": "traefik", "readOnly": True},
-        )
-        self.assertTrue(container["volumeMounts"][0]["readOnly"])
-        self.assertIn(
-            "requiredDuringSchedulingIgnoredDuringExecution",
-            pod_spec["affinity"]["podAffinity"],
-        )
-        self.assertEqual(
-            pod_spec["securityContext"],
-            {
-                "runAsNonRoot": True,
-                "runAsUser": 65532,
-                "runAsGroup": 65532,
-                "fsGroup": 1000,
-                "seccompProfile": {"type": "RuntimeDefault"},
-            },
-        )
-
-    def test_exporter_has_cilium_access_only_to_the_kubernetes_api(self):
-        policy = load_yaml(
-            "traefik-acme-exporter/"
-            "cilium-network-policy-sync-letsencrypt-prod-kube-apiserver.yaml"
-        )
-
-        self.assertEqual(policy["metadata"]["namespace"], "traefik")
-        self.assertEqual(
-            policy["spec"]["endpointSelector"]["matchLabels"],
-            {"app.kubernetes.io/name": "sync-letsencrypt-prod"},
-        )
-        self.assertEqual(policy["spec"]["egress"], [
-            {"toEntities": ["kube-apiserver"]},
-            {
-                "toServices": [{
-                    "k8sService": {
-                        "namespace": "default",
-                        "serviceName": "kubernetes",
-                    },
-                }],
-                "toPorts": [{
-                    "ports": [{"port": "443", "protocol": "TCP"}],
-                }],
-            },
-        ])
-
-    def test_exporter_can_patch_only_the_mail_tls_secret(self):
-        role = load_yaml("mail/role-sync-le-tls.yaml")
-        binding = load_yaml("mail/role-binding-sync-le-tls.yaml")
-
-        self.assertEqual(role["rules"], [{
-            "apiGroups": [""],
-            "resources": ["secrets"],
-            "resourceNames": ["letsencrypt-prod"],
-            "verbs": ["get", "patch"],
-        }])
-        self.assertEqual(binding["subjects"], [{
-            "kind": "ServiceAccount",
-            "name": "sync-le-tls",
-            "namespace": "traefik",
-        }])
+    def test_legacy_exporter_is_retired(self):
+        for path in (
+            "argocd/application-traefik-acme-exporter.yaml",
+            "traefik-acme-exporter",
+            "mail/secret-letsencrypt-prod.yaml",
+            "mail/role-sync-le-tls.yaml",
+            "mail/role-binding-sync-le-tls.yaml",
+        ):
+            self.assertFalse((ROOT / path).exists(), path)
+        report = (ROOT / "metrics/config-map-platform-health-report-scripts.yaml").read_text()
+        self.assertIn("/api/v1/namespaces/mail/secrets/mail-tls", report)
+        self.assertNotIn("/api/v1/namespaces/mail/secrets/letsencrypt-prod", report)
 
     def test_traefik_no_longer_grants_mail_pod_exec(self):
         traefik = (ROOT / "argocd/application-traefik.yaml").read_text(

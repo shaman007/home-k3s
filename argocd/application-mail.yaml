@@ -13,16 +13,7 @@ spec:
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: mail
-  ignoreDifferences:
-    - group: ""
-      kind: Secret
-      name: letsencrypt-prod
-      namespace: mail
-      jsonPointers:
-        - /data
   syncPolicy:
     automated:
       selfHeal: true
       prune: true
-    syncOptions:
-      - RespectIgnoreDifferences=true

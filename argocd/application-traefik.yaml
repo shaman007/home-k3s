@@ -15,12 +15,6 @@ spec:
     helm:
       releaseName: traefik
       values: |
-        certificatesResolvers:
-          letsencrypt:
-            acme:
-              email: me@andreybondarenko.com
-              tlsChallenge: {}
-              storage: /data/acme.json
         deployment:
           initContainers:
           - command:
