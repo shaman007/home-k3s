@@ -44,9 +44,6 @@ spec:
               kubernetes.io/metadata.name: homeassistant
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: hypermind
-        - namespaceSelector:
-            matchLabels:
               kubernetes.io/metadata.name: immich
         - namespaceSelector:
             matchLabels:

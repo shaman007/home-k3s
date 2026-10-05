@@ -86,7 +86,6 @@ class CertManagerMigrationTest(unittest.TestCase):
         "convertx": "convertx",
         "harbor": "harbor",
         "hister": "hister",
-        "hypermind": "hypermind",
         "immich": "immich",
         "karakeep": "karakeep",
         "keycloak": "keycloak",

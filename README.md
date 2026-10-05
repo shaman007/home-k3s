@@ -192,7 +192,8 @@ required features.
 ## Deprecated manifests
 
 Historical manifests are kept under [`DEPRECATED/`](DEPRECATED/README.md).
-This now includes the retired Wazuh stack and its related helper manifests.
+This includes the retired Wazuh stack and Hypermind Swarm.
+See [the retirement notes](DEPRECATED/hypermind/README.md).
 
 ## License
 
