@@ -9,4 +9,4 @@ disabled; use Vault and External Secrets for active secret management.
 
 Hypermind Swarm was deprecated on 2026-10-05. Its application, workload manifests,
 and crawler-access tests are archived in `hypermind/`; see its README for retained
-storage and the separate live shutdown procedure.
+retirement details, including the authorized deletion of storage.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-05 – Hypermind Swarm deprecation
+
+- Archived Hypermind Swarm manifests, Argo CD application, and crawler-access tests.
+- Removed its namespace management, project destinations, and Traefik egress allowance.
+- Deleted the live application and namespace, including PVC data, with user authorization.
+
 ## 2026-08-19 – Retired datastore cleanup
 
 - Removed the obsolete Elasticsearch and MongoDB Argo CD manifests.
