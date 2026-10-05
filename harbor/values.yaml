@@ -106,6 +106,8 @@ persistence:
   enabled: true
   resourcePolicy: "keep"
   persistentVolumeClaim:
+    trivy:
+      size: 10Gi
     registry:
       existingClaim: "harbor-registry"
     jobservice:
