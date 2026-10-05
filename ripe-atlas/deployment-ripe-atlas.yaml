@@ -33,7 +33,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: prepare-atlas-runtime
-          image: harbor.andreybondarenko.com/library/ripe-atlas:2026-10-02-144935
+          image: harbor.andreybondarenko.com/library/ripe-atlas:2026-10-05-022927
           imagePullPolicy: Always
           command:
             - /usr/bin/mkdir
@@ -52,7 +52,7 @@ spec:
               mountPath: /run/ripe-atlas
       containers:
         - name: ripe-atlas
-          image: harbor.andreybondarenko.com/library/ripe-atlas:2026-10-02-144935
+          image: harbor.andreybondarenko.com/library/ripe-atlas:2026-10-05-022927
           imagePullPolicy: Always
           command:
             - /usr/bin/tini
