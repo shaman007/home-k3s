@@ -26,7 +26,7 @@ spec:
       priorityClassName: homelab-best-effort
       containers:
         - name: stirling-pdf
-          image: harbor.andreybondarenko.com/dockerhub/stirlingtools/stirling-pdf:3.0.2-fat
+          image: harbor.andreybondarenko.com/dockerhub/stirlingtools/stirling-pdf:3.1.0-fat
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
