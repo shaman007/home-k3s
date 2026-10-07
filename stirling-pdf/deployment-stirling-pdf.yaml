@@ -96,7 +96,8 @@ spec:
         - name: pipeline
           emptyDir: {}
         - name: storage
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: stirling-pdf-storage
         - name: home
           emptyDir: {}
         - name: local-bin
