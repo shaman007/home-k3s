@@ -51,6 +51,7 @@ data:
     milter_mail_macros = i {mail_addr} {client_addr} {client_name} {auth_type} {auth_authen}
     milter_rcpt_macros = i {rcpt_addr}
     smtpd_relay_restrictions = permit_sasl_authenticated, reject_unauth_destination
+    smtpd_sender_restrictions = check_sender_access texthash:/etc/postfix/sender_access
     smtpd_data_restrictions = reject_unauth_pipelining
     #smtpd_client_restrictions = permit_sasl_authenticated, reject_invalid_hostname, reject_unauth_destination, reject_unknown_client, permit
     smtpd_client_restrictions = permit_sasl_authenticated, reject_unauth_destination, permit
@@ -70,6 +71,7 @@ data:
     #relayhost = smtp.faster.cz:25
   access: |
     andreybondarenko.com OK
+    tryeden.com REJECT Mail from tryeden.com is not accepted
   virtual: |
     elena@andreybondarenko.com elenabondarenko@email.cz
     spam@andreybondarenko.com spam
