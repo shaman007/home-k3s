@@ -28,7 +28,13 @@ spec:
       initContainers:
         - name: fix-data-permissions
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
-          command: ["sh", "-c", "chown -R 65532:65532 /data"]
+          command:
+            - sh
+            - -c
+            - |
+              if [ "$(stat -c '%u:%g' /data)" != "65532:65532" ]; then
+                chown -R 65532:65532 /data
+              fi
           securityContext:
             runAsUser: 0
             runAsGroup: 0
