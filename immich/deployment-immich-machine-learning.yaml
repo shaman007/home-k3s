@@ -51,7 +51,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
-              add: [CHOWN]
+              add: [CHOWN, DAC_READ_SEARCH]
             readOnlyRootFilesystem: true
           volumeMounts:
             - name: cache
