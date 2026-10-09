@@ -140,10 +140,12 @@ data:
         annotations:
           summary: One or more targets are unreachable.
       - alert: PVC is full!
-        expr: longhorn_volume_actual_size_bytes/longhorn_volume_capacity_bytes > 0.95
+        expr: max by (namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.95
         for: 1m
         labels:
           severity: mail
+          pvc: '{{ $labels.persistentvolumeclaim }}'
+          pvc_namespace: '{{ $labels.namespace }}'
         annotations:
           summary: One or more PVC is >95% utilized.
 
