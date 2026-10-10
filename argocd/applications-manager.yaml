@@ -15,6 +15,7 @@ spec:
     directory:
       recurse: false
       include: application-*.yaml
+      exclude: "{application-hypermind.yaml,application-omni.yaml}"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: argocd
