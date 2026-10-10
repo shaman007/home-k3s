@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: omni
+  namespace: argocd
+spec:
+  project: platform
+  sources:
+  - repoURL: ghcr.io/siderolabs/charts
+    chart: omni
+    targetRevision: 2.12.4
+    helm:
+      releaseName: omni
+      valueFiles:
+      - $values/omni/values.yaml
+  - repoURL: https://github.com/shaman007/home-k3s.git
+    targetRevision: main
+    ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: omni
+  syncPolicy:
+    automated:
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/warn: privileged
+        pod-security.kubernetes.io/audit: privileged

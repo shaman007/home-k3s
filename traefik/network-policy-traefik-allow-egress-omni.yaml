@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-allow-egress-omni
+  namespace: traefik
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: omni
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8090
+        - protocol: TCP
+          port: 8095
+        # cert-manager HTTP-01 solver
+        - protocol: TCP
+          port: 8089
