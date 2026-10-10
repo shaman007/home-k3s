@@ -32,7 +32,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: talos-backup
-              image: ghcr.io/siderolabs/talos-backup@sha256:7fc186ff37a3137f470082cb609bf1dc3bcece13dd9a6421ec09cfdf4f33ae6c
+              image: harbor.andreybondarenko.com/github/siderolabs/talos-backup@sha256:7fc186ff37a3137f470082cb609bf1dc3bcece13dd9a6421ec09cfdf4f33ae6c
               command: [/talos-backup]
               workingDir: /tmp
               envFrom:

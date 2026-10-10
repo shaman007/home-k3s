@@ -15,7 +15,8 @@ and the age private key securely outside the cluster and outside this disk.
 
 ## Prepared, not activated
 
-The Argo application uses manual sync and the hourly CronJob is suspended.
+The Argo application uses automatic sync with self-healing, and the hourly
+CronJob is suspended. Syncing manifests does not activate scheduled backups.
 No bucket, credentials, keys, Talos permissions, or live resources have been
 created by preparing these manifests. The Talos ServiceAccount CRD is currently
 absent; enable the Talos API integration before syncing the application.

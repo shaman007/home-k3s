@@ -13,5 +13,7 @@ spec:
     server: 'https://kubernetes.default.svc'
     namespace: talos-backup
   syncPolicy:
+    automated:
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true

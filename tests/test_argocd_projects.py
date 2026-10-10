@@ -16,7 +16,7 @@ PROJECT_APPLICATIONS = {
     "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
     "nllb", "ollama", "ollama-small", "ooni", "open-terminal", "open-webui",
-    "plex", "ripe-atlas", "searxng", "stirling-pdf", "wordpress", "year",
+    "plex", "ripe-atlas", "searxng", "stirling-pdf", "talos-backup", "wordpress", "year",
     "your-spotify",
 }
 
