@@ -5,3 +5,7 @@ kubernetesVersion: "1.36.4"
 additionalCRDs:
   - application: cilium
     url: "https://raw.githubusercontent.com/cilium/cilium/v{version}/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml"
+  # Talos installs this CRD when Kubernetes API access is enabled. Keep the
+  # pinned schema aligned with the Talos node release.
+  - version: "1.14.2"
+    url: "https://raw.githubusercontent.com/siderolabs/talos/v{version}/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates/testdata/talos-service-account-crd.yaml"

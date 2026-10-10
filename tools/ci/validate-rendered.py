@@ -133,6 +133,17 @@ def custom_errors(doc, schemas):
             for e in CRDValidator(schemas[key]).iter_errors(doc)]
 
 
+def additional_crd_url(source):
+    # Runtime-installed APIs such as Talos have no Helm application version.
+    if "version" in source:
+        version = source["version"]
+    else:
+        app = load((ROOT / "argocd" / ("application-" + source["application"] + ".yaml")).read_text())
+        sources = app["spec"].get("sources", [app["spec"].get("source", {})])
+        version = next(s["targetRevision"] for s in sources if "chart" in s)
+    return source["url"].format(version=str(version).removeprefix("v"))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
@@ -161,10 +172,7 @@ def main():
                 inputs.append((str(path.relative_to(ROOT)), doc))
     crds = [doc for _, doc in inputs if doc.get("kind") == "CustomResourceDefinition"]
     for source in config.get("additionalCRDs", []):
-        app = load((ROOT / "argocd" / ("application-" + source["application"] + ".yaml")).read_text())
-        sources = app["spec"].get("sources", [app["spec"].get("source", {})])
-        version = next(s["targetRevision"] for s in sources if "chart" in s).removeprefix("v")
-        url = source["url"].format(version=version)
+        url = additional_crd_url(source)
         result = subprocess.run(["curl", "-fsSL", "--connect-timeout", "15", "--max-time", "120", url], capture_output=True, text=True, timeout=130, check=True)
         crds.extend(documents(result.stdout))
     errors = []

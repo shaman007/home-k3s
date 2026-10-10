@@ -22,6 +22,17 @@ validate = module('validate', 'validate-rendered.py')
 
 
 class RenderValidationTest(unittest.TestCase):
+    def test_additional_crd_url_supports_pinned_runtime_controller_release(self):
+        source = {'version': 'v1.14.2', 'url': 'https://example.invalid/v{version}/crd.yaml'}
+        self.assertEqual('https://example.invalid/v1.14.2/crd.yaml', validate.additional_crd_url(source))
+
+    def test_additional_crd_url_uses_helm_controller_release(self):
+        app = {'spec': {'source': {'chart': 'controller', 'targetRevision': 'v1.2.3'}}}
+        with patch.object(validate, 'load', return_value=app):
+            with patch.object(Path, 'read_text', return_value='unused'):
+                self.assertEqual('https://example.invalid/v1.2.3/crd.yaml', validate.additional_crd_url(
+                    {'application': 'controller', 'url': 'https://example.invalid/v{version}/crd.yaml'}))
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
