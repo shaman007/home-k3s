@@ -397,12 +397,3 @@ metadata:
     pod-security.kubernetes.io/warn-version: latest
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/audit-version: latest
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: omni
-  labels:
-    pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/warn: privileged
-    pod-security.kubernetes.io/audit: privileged
