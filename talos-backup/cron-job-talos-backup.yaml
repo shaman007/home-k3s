@@ -1,0 +1,83 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: talos-backup
+  namespace: talos-backup
+spec:
+  schedule: "17 * * * *"
+  timeZone: Etc/UTC
+  # Enable only after the API, bucket, credentials, and encryption key are ready.
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: talos-backup
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: talos-backup
+              image: ghcr.io/siderolabs/talos-backup@sha256:7fc186ff37a3137f470082cb609bf1dc3bcece13dd9a6421ec09cfdf4f33ae6c
+              command: [/talos-backup]
+              workingDir: /tmp
+              envFrom:
+                - secretRef:
+                    name: talos-backup-config
+              env:
+                - name: AWS_REGION
+                  value: us-east-1
+                - name: CUSTOM_S3_ENDPOINT
+                  value: http://s3.seaweedfs.svc.cluster.local:8333
+                - name: USE_PATH_STYLE
+                  value: "true"
+                - name: BUCKET
+                  value: talos-etcd
+                - name: CLUSTER_NAME
+                  value: home-k8s
+                - name: S3_PREFIX
+                  value: home-k8s
+                - name: ENABLE_COMPRESSION
+                  value: "true"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  memory: 1Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: talos
+                  mountPath: /.talos
+                - name: talos-secrets
+                  mountPath: /var/run/secrets/talos.dev
+                  readOnly: true
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 2Gi
+            - name: talos
+              emptyDir: {}
+            - name: talos-secrets
+              secret:
+                secretName: talos-backup-secrets
