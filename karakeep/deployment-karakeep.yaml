@@ -145,7 +145,7 @@ spec:
           emptyDir: {medium: Memory, sizeLimit: 1Gi}
         - name: chrome-tmp
           emptyDir:
-            sizeLimit: 128Mi
+            sizeLimit: 1Gi
         - name: karakeep-data
           persistentVolumeClaim:
             claimName: karakeep-data
