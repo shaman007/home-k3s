@@ -12,6 +12,12 @@ if [ ! -f "${source_dir}/setup.py" ]; then
 fi
 cd "${source_dir}"
 if [ ! -x .venv/bin/python ]; then
+  # A persisted venv may point to Python from an earlier container image.
+  if [ -d .venv/bin ]; then
+    for interpreter in python python3 python3.12; do
+      ln -sfn "$(command -v python3)" ".venv/bin/${interpreter}"
+    done
+  fi
   python3 -m venv .venv
 fi
 if [ ! -f strata-iq2_xs.json ]; then
