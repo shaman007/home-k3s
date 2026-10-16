@@ -3,7 +3,7 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 umask 077
 apt-get update
-apt-get install -y --no-install-recommends ca-certificates curl git unzip libgomp1 libatomic1
+apt-get install -y --no-install-recommends ca-certificates curl git unzip libgomp1 libatomic1 python3 python3-venv build-essential
 source_dir="/data/source-${STRATA_REVISION}"
 if [ ! -f "${source_dir}/setup.py" ]; then
   mkdir -p "${source_dir}"

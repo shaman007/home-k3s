@@ -28,6 +28,7 @@ metadata:
   name: strata
 spec:
   replicas: 1
+  progressDeadlineSeconds: 86400
   strategy:
     type: Recreate
   selector:
@@ -47,7 +48,7 @@ spec:
       terminationGracePeriodSeconds: 120
       containers:
         - name: strata
-          image: python:3.12-slim-bookworm
+          image: nvidia/cuda:13.0.0-devel-ubuntu24.04
           command: [/bin/bash, /scripts/bootstrap.sh]
           securityContext:
             allowPrivilegeEscalation: false

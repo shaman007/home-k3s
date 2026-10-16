@@ -1,0 +1,437 @@
+{
+  "provider": "ollama",
+  "model": "gpt-oss:20b",
+  "context_limit": 32768,
+  "runs": [
+    {
+      "case": "short_chat",
+      "repeat": 1,
+      "elapsed_s": 59.831679317001544,
+      "ttft_including_reasoning_s": 55.86997499200152,
+      "first_visible_answer_s": 56.29086525100138,
+      "usage": {
+        "prompt_tokens": 79,
+        "completion_tokens": 111
+      },
+      "native": {
+        "load_duration": 32038275478,
+        "prompt_eval_duration": 23630838000,
+        "eval_duration": 4135631999,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.76582777918421,
+      "answer": "Kubernetes readiness probes determine whether a pod\u2019s containers are ready to receive traffic; if a probe fails, the pod is removed from the service\u2019s load\u2011balancing pool until it passes again. Liveness probes check whether a container is still alive; a failure triggers a restart of the container to recover from a stuck or crashed state. Both probes can be configured with HTTP, TCP, or exec checks, timeouts, and thresholds to fine\u2011tune application health monitoring.",
+      "reasoning": "Need concise 3 sentences.",
+      "native_decode_tokens_s": 26.839912261738935,
+      "native_prompt_tokens_s": 3.343089229421318
+    },
+    {
+      "case": "short_chat",
+      "repeat": 2,
+      "elapsed_s": 4.28090107800017,
+      "ttft_including_reasoning_s": 0.284373829003016,
+      "first_visible_answer_s": 0.7102540150008281,
+      "usage": {
+        "prompt_tokens": 79,
+        "completion_tokens": 111
+      },
+      "native": {
+        "load_duration": 2007755,
+        "prompt_eval_duration": 111906000,
+        "eval_duration": 4114398000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.523895909280295,
+      "answer": "Kubernetes readiness probes determine whether a pod\u2019s containers are ready to receive traffic; if a probe fails, the pod is removed from the service\u2019s load\u2011balancing pool until it passes again. Liveness probes check whether a container is still alive; a failure triggers a restart of the container to recover from a stuck or crashed state. Both probes can be configured with HTTP, TCP, or exec checks, timeouts, and thresholds to fine\u2011tune application health monitoring.",
+      "reasoning": "Need concise 3 sentences.",
+      "native_decode_tokens_s": 26.978430380337535,
+      "native_prompt_tokens_s": 705.9496363018962
+    },
+    {
+      "case": "short_chat",
+      "repeat": 3,
+      "elapsed_s": 4.0787007350008935,
+      "ttft_including_reasoning_s": 0.2609128160002001,
+      "first_visible_answer_s": 0.6962598230020376,
+      "usage": {
+        "prompt_tokens": 79,
+        "completion_tokens": 111
+      },
+      "native": {
+        "load_duration": 968491,
+        "prompt_eval_duration": 124395000,
+        "eval_duration": 3929410000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 28.81249622393706,
+      "answer": "Kubernetes readiness probes determine whether a pod\u2019s containers are ready to receive traffic; if a probe fails, the pod is removed from the service\u2019s load\u2011balancing pool until it passes again. Liveness probes check whether a container is still alive; a failure triggers a restart of the container to recover from a stuck or crashed state. Both probes can be configured with HTTP, TCP, or exec checks, timeouts, and thresholds to fine\u2011tune application health monitoring.",
+      "reasoning": "Need concise 3 sentences.",
+      "native_decode_tokens_s": 28.248515680471115,
+      "native_prompt_tokens_s": 635.0737569838016
+    },
+    {
+      "case": "json_extraction",
+      "repeat": 1,
+      "elapsed_s": 2.7511099849980383,
+      "ttft_including_reasoning_s": 0.763892979000957,
+      "first_visible_answer_s": 2.1617002569983015,
+      "usage": {
+        "prompt_tokens": 98,
+        "completion_tokens": 58
+      },
+      "native": {
+        "load_duration": 813293,
+        "prompt_eval_duration": 626375000,
+        "eval_duration": 2100746999,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 28.683329413941074,
+      "answer": "{\"name\":\"lantern\",\"replicas\":3,\"port\":8080}",
+      "reasoning": "We need to output JSON with keys name, replicas, port. Values: name: \"lantern\", replicas: 3, port: 8080.",
+      "native_decode_tokens_s": 27.60922663586297,
+      "native_prompt_tokens_s": 156.45579724605867
+    },
+    {
+      "case": "json_extraction",
+      "repeat": 2,
+      "elapsed_s": 2.2210078310017707,
+      "ttft_including_reasoning_s": 0.23839801700160024,
+      "first_visible_answer_s": 1.6507862090002163,
+      "usage": {
+        "prompt_tokens": 98,
+        "completion_tokens": 58
+      },
+      "native": {
+        "load_duration": 890817,
+        "prompt_eval_duration": 107986000,
+        "eval_duration": 2090763000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 28.74998378273694,
+      "answer": "{\"name\":\"lantern\",\"replicas\":3,\"port\":8080}",
+      "reasoning": "We need to output JSON with keys name, replicas, port. Values: name: \"lantern\", replicas: 3, port: 8080.",
+      "native_decode_tokens_s": 27.741068691190726,
+      "native_prompt_tokens_s": 907.5250495434593
+    },
+    {
+      "case": "json_extraction",
+      "repeat": 3,
+      "elapsed_s": 2.149708361001103,
+      "ttft_including_reasoning_s": 0.24061158100084867,
+      "first_visible_answer_s": 1.5942230830005428,
+      "usage": {
+        "prompt_tokens": 98,
+        "completion_tokens": 58
+      },
+      "native": {
+        "load_duration": 894072,
+        "prompt_eval_duration": 105984000,
+        "eval_duration": 2022945000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 29.857051039598108,
+      "answer": "{\"name\":\"lantern\",\"replicas\":3,\"port\":8080}",
+      "reasoning": "We need to output JSON with keys name, replicas, port. Values: name: \"lantern\", replicas: 3, port: 8080.",
+      "native_decode_tokens_s": 28.67107113638779,
+      "native_prompt_tokens_s": 924.6678743961353
+    },
+    {
+      "case": "code_review",
+      "repeat": 1,
+      "elapsed_s": 17.084336490002897,
+      "ttft_including_reasoning_s": 0.801305349003087,
+      "first_visible_answer_s": 2.6483448290018714,
+      "usage": {
+        "prompt_tokens": 103,
+        "completion_tokens": 452
+      },
+      "native": {
+        "load_duration": 920832,
+        "prompt_eval_duration": 666860000,
+        "eval_duration": 16386725999,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.69754575144218,
+      "answer": "**Corrected implementation**\n\n```python\ndef unique(xs):\n    \"\"\"\n    Return a list containing the elements of *xs* in the order of their first\n    appearance, but with duplicates removed.\n\n    The function works for any hashable element *and* for dictionaries\n    (which are normally unhashable).  For dictionaries we use a\n    ``frozenset`` of their items as a hashable proxy \u2013 this preserves\n    the dictionary\u2019s contents while still allowing us to detect\n    duplicates.\n\n    Parameters\n    ----------\n    xs : iterable\n        Any iterable of elements (hashable or dictionaries).\n\n    Returns\n    -------\n    list\n        A list of the unique elements, preserving the original order.\n    \"\"\"\n    seen = set()\n    result = []\n\n    for x in xs:\n        # Create a hashable key that represents the element.\n        # For dictionaries we use a frozenset of their items.\n        key = frozenset(x.items()) if isinstance(x, dict) else x\n\n        if key not in seen:\n            seen.add(key)\n            result.append(x)\n\n    return result\n```\n\n**Explanation**\n\n1. **Order preservation** \u2013 We iterate over the input in its original order and only append an element to `result` the first time we encounter it.  \n2. **Handling dictionaries** \u2013 Dictionaries are unhashable, so they cannot be added directly to a `set`.  \n   * We detect `dict` instances and replace them with a `frozenset` of their `items()` (which is hashable).  \n   * This proxy preserves the dictionary\u2019s contents; two dictionaries with the same key/value pairs will produce the same `frozenset`, so duplicates are correctly identified.  \n3. **General case** \u2013 For all other hashable objects we use the object itself as the key.  \n\nThe function now satisfies both requirements: it keeps the first occurrence order and supports dictionaries as elements.",
+      "reasoning": "Need to preserve order, support dicts as elements (unhashable). Use list and seen set of tuples of items? For dicts, convert to frozenset of items. Use key function. Provide corrected code.",
+      "native_decode_tokens_s": 27.583301266377635,
+      "native_prompt_tokens_s": 154.455207989683
+    },
+    {
+      "case": "code_review",
+      "repeat": 2,
+      "elapsed_s": 16.44623962100013,
+      "ttft_including_reasoning_s": 0.2648576600004162,
+      "first_visible_answer_s": 2.1075399319997814,
+      "usage": {
+        "prompt_tokens": 103,
+        "completion_tokens": 452
+      },
+      "native": {
+        "load_duration": 1476216,
+        "prompt_eval_duration": 118821000,
+        "eval_duration": 16295989000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.871537862896872,
+      "answer": "**Corrected implementation**\n\n```python\ndef unique(xs):\n    \"\"\"\n    Return a list containing the elements of *xs* in the order of their first\n    appearance, but with duplicates removed.\n\n    The function works for any hashable element *and* for dictionaries\n    (which are normally unhashable).  For dictionaries we use a\n    ``frozenset`` of their items as a hashable proxy \u2013 this preserves\n    the dictionary\u2019s contents while still allowing us to detect\n    duplicates.\n\n    Parameters\n    ----------\n    xs : iterable\n        Any iterable of elements (hashable or dictionaries).\n\n    Returns\n    -------\n    list\n        A list of the unique elements, preserving the original order.\n    \"\"\"\n    seen = set()\n    result = []\n\n    for x in xs:\n        # Create a hashable key that represents the element.\n        # For dictionaries we use a frozenset of their items.\n        key = frozenset(x.items()) if isinstance(x, dict) else x\n\n        if key not in seen:\n            seen.add(key)\n            result.append(x)\n\n    return result\n```\n\n**Explanation**\n\n1. **Order preservation** \u2013 We iterate over the input in its original order and only append an element to `result` the first time we encounter it.  \n2. **Handling dictionaries** \u2013 Dictionaries are unhashable, so they cannot be added directly to a `set`.  \n   * We detect `dict` instances and replace them with a `frozenset` of their `items()` (which is hashable).  \n   * This proxy preserves the dictionary\u2019s contents; two dictionaries with the same key/value pairs will produce the same `frozenset`, so duplicates are correctly identified.  \n3. **General case** \u2013 For all other hashable objects we use the object itself as the key.  \n\nThe function now satisfies both requirements: it keeps the first occurrence order and supports dictionaries as elements.",
+      "reasoning": "Need to preserve order, support dicts as elements (unhashable). Use list and seen set of tuples of items? For dicts, convert to frozenset of items. Use key function. Provide corrected code.",
+      "native_decode_tokens_s": 27.736886665792422,
+      "native_prompt_tokens_s": 866.8501359187348
+    },
+    {
+      "case": "code_review",
+      "repeat": 3,
+      "elapsed_s": 16.36838747600268,
+      "ttft_including_reasoning_s": 0.25587042400002247,
+      "first_visible_answer_s": 2.148167454000941,
+      "usage": {
+        "prompt_tokens": 103,
+        "completion_tokens": 452
+      },
+      "native": {
+        "load_duration": 943615,
+        "prompt_eval_duration": 113686000,
+        "eval_duration": 16225081000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.990660834952802,
+      "answer": "**Corrected implementation**\n\n```python\ndef unique(xs):\n    \"\"\"\n    Return a list containing the elements of *xs* in the order of their first\n    appearance, but with duplicates removed.\n\n    The function works for any hashable element *and* for dictionaries\n    (which are normally unhashable).  For dictionaries we use a\n    ``frozenset`` of their items as a hashable proxy \u2013 this preserves\n    the dictionary\u2019s contents while still allowing us to detect\n    duplicates.\n\n    Parameters\n    ----------\n    xs : iterable\n        Any iterable of elements (hashable or dictionaries).\n\n    Returns\n    -------\n    list\n        A list of the unique elements, preserving the original order.\n    \"\"\"\n    seen = set()\n    result = []\n\n    for x in xs:\n        # Create a hashable key that represents the element.\n        # For dictionaries we use a frozenset of their items.\n        key = frozenset(x.items()) if isinstance(x, dict) else x\n\n        if key not in seen:\n            seen.add(key)\n            result.append(x)\n\n    return result\n```\n\n**Explanation**\n\n1. **Order preservation** \u2013 We iterate over the input in its original order and only append an element to `result` the first time we encounter it.  \n2. **Handling dictionaries** \u2013 Dictionaries are unhashable, so they cannot be added directly to a `set`.  \n   * We detect `dict` instances and replace them with a `frozenset` of their `items()` (which is hashable).  \n   * This proxy preserves the dictionary\u2019s contents; two dictionaries with the same key/value pairs will produce the same `frozenset`, so duplicates are correctly identified.  \n3. **General case** \u2013 For all other hashable objects we use the object itself as the key.  \n\nThe function now satisfies both requirements: it keeps the first occurrence order and supports dictionaries as elements.",
+      "reasoning": "Need to preserve order, support dicts as elements (unhashable). Use list and seen set of tuples of items? For dicts, convert to frozenset of items. Use key function. Provide corrected code.",
+      "native_decode_tokens_s": 27.858104375565212,
+      "native_prompt_tokens_s": 906.0042573403937
+    },
+    {
+      "case": "kubernetes_diagnosis",
+      "repeat": 1,
+      "elapsed_s": 18.150208653001755,
+      "ttft_including_reasoning_s": 0.7992211300006602,
+      "first_visible_answer_s": 2.0884887610009173,
+      "usage": {
+        "prompt_tokens": 122,
+        "completion_tokens": 483
+      },
+      "native": {
+        "load_duration": 839150,
+        "prompt_eval_duration": 657446000,
+        "eval_duration": 17459158000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.779398686157972,
+      "answer": "**Why the second PVC fails**\n\n| Item | Value | Reason |\n|------|-------|--------|\n| Namespace quota | 15\u202fGi | The namespace has a hard limit of 15\u202fGi for the *requests.storage* resource. |\n| First PVC | 10\u202fGi | Consumes 10\u202fGi of the quota. |\n| Second PVC | 10\u202fGi | Would bring the total to 20\u202fGi, exceeding the 15\u202fGi limit. Kubernetes therefore rejects the creation with a \u201cquota exceeded\u201d error. |\n\n**Minimum quota change**\n\nTo allow the second PVC to be created you must raise the namespace\u2019s *requests.storage* quota by **at least 5\u202fGi** (so that 10\u202fGi + 10\u202fGi = 20\u202fGi \u2264 new quota).  \nA safe, minimal change is:\n\n```yaml\napiVersion: v1\nkind: ResourceQuota\nmetadata:\n  name: storage-quota\n  namespace: <your\u2011namespace>\nspec:\n  hard:\n    requests.storage: 20Gi   # 10Gi (first PVC) + 10Gi (second PVC) + 0Gi buffer\n```\n\nApply it with:\n\n```bash\nkubectl apply -f storage-quota.yaml\n```\n\n**Read\u2011only commands to verify the situation**\n\n1. **Check the current quota**\n\n   ```bash\n   kubectl get quota storage-quota -n <your\u2011namespace> -o yaml\n   ```\n\n2. **Show the PVCs and their requested sizes**\n\n   ```bash\n   kubectl get pvc -n <your\u2011namespace> -o wide\n   ```\n\n3. **Describe the quota to see usage**\n\n   ```bash\n   kubectl describe quota storage-quota -n <your\u2011namespace>\n   ```\n\n4. **Describe the failing PVC (if it was attempted)**\n\n   ```bash\n   kubectl describe pvc <second-pvc-name> -n <your\u2011namespace>\n   ```\n\nThese commands let you confirm that the namespace quota is the limiting factor and that raising it to 20\u202fGi (or higher) resolves the issue without deleting any data.",
+      "reasoning": "Need explain quota, need increase by at least 5Gi. Provide kubectl describe quota, kubectl get pvc, kubectl describe pvc.",
+      "native_decode_tokens_s": 27.664564350697784,
+      "native_prompt_tokens_s": 185.56657124691608
+    },
+    {
+      "case": "kubernetes_diagnosis",
+      "repeat": 2,
+      "elapsed_s": 17.038944817999436,
+      "ttft_including_reasoning_s": 0.25203305200193427,
+      "first_visible_answer_s": 1.514291225001216,
+      "usage": {
+        "prompt_tokens": 122,
+        "completion_tokens": 468
+      },
+      "native": {
+        "load_duration": 906476,
+        "prompt_eval_duration": 115537000,
+        "eval_duration": 16899391000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.81929198829325,
+      "answer": "**Why the second PVC fails**\n\n| Item | Value | Reason |\n|------|-------|--------|\n| Namespace quota | 15\u202fGi | The namespace is limited to a total of 15\u202fGi of persistent\u2011volume\u2011claim storage. |\n| First PVC | 10\u202fGi | Consumes 10\u202fGi of the quota. |\n| Second PVC | 10\u202fGi | Would bring the total to 20\u202fGi, exceeding the 15\u202fGi limit. |  \n\nBecause the namespace quota is a hard limit, the API server rejects the creation of the second PVC.\n\n---\n\n**Minimum quota change**\n\nTo allow the second PVC to be created you must increase the quota by **at least 5\u202fGi** (so that the total requested storage can reach 20\u202fGi).  \nExample patch:\n\n```bash\nkubectl patch quota <quota-name> -n <namespace> \\\n  -p '{\"spec\":{\"hard\":{\"requests.storage\":\"20Gi\"}}}'\n```\n\n---\n\n**Read\u2011only commands to verify the situation**\n\n1. **Show the current quota**\n\n   ```bash\n   kubectl get quota <quota-name> -n <namespace> -o yaml\n   ```\n\n2. **Show the quota status (used vs hard)**\n\n   ```bash\n   kubectl describe quota <quota-name> -n <namespace>\n   ```\n\n3. **List all PVCs in the namespace and their sizes**\n\n   ```bash\n   kubectl get pvc -n <namespace> -o wide\n   ```\n\n4. **Show the details of the PVC that failed to create (if it exists in a pending state)**\n\n   ```bash\n   kubectl describe pvc <failed-pvc-name> -n <namespace>\n   ```\n\n5. **Check the namespace\u2019s resource usage for storage**\n\n   ```bash\n   kubectl describe namespace <namespace>\n   ```\n\nThese commands let you confirm that the quota is the limiting factor and that the total requested storage would exceed the current 15\u202fGi limit. No data is deleted or modified by any of these read\u2011only queries.",
+      "reasoning": "Need explain quota, need increase by at least 5Gi. Provide kubectl describe quota, kubectl get pvc, kubectl describe pvc.",
+      "native_decode_tokens_s": 27.693305634504817,
+      "native_prompt_tokens_s": 1055.938790171114
+    },
+    {
+      "case": "kubernetes_diagnosis",
+      "repeat": 3,
+      "elapsed_s": 17.397614434998104,
+      "ttft_including_reasoning_s": 0.2511986169993179,
+      "first_visible_answer_s": 1.5831161319983948,
+      "usage": {
+        "prompt_tokens": 122,
+        "completion_tokens": 468
+      },
+      "native": {
+        "load_duration": 899343,
+        "prompt_eval_duration": 112305000,
+        "eval_duration": 17256724000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 27.236012759575377,
+      "answer": "**Why the second PVC fails**\n\n| Item | Value | Reason |\n|------|-------|--------|\n| Namespace quota | 15\u202fGi | The namespace is limited to a total of 15\u202fGi of persistent\u2011volume\u2011claim storage. |\n| First PVC | 10\u202fGi | Consumes 10\u202fGi of the quota. |\n| Second PVC | 10\u202fGi | Would bring the total to 20\u202fGi, exceeding the 15\u202fGi limit. |  \n\nBecause the namespace quota is a hard limit, the API server rejects the creation of the second PVC.\n\n---\n\n**Minimum quota change**\n\nTo allow the second PVC to be created you must increase the quota by **at least 5\u202fGi** (so that the total requested storage can reach 20\u202fGi).  \nExample patch:\n\n```bash\nkubectl patch quota <quota-name> -n <namespace> \\\n  -p '{\"spec\":{\"hard\":{\"requests.storage\":\"20Gi\"}}}'\n```\n\n---\n\n**Read\u2011only commands to verify the situation**\n\n1. **Show the current quota**\n\n   ```bash\n   kubectl get quota <quota-name> -n <namespace> -o yaml\n   ```\n\n2. **Show the quota status (used vs hard)**\n\n   ```bash\n   kubectl describe quota <quota-name> -n <namespace>\n   ```\n\n3. **List all PVCs in the namespace and their sizes**\n\n   ```bash\n   kubectl get pvc -n <namespace> -o wide\n   ```\n\n4. **Show the details of the PVC that failed to create (if it exists in a pending state)**\n\n   ```bash\n   kubectl describe pvc <failed-pvc-name> -n <namespace>\n   ```\n\n5. **Check the namespace\u2019s resource usage for storage**\n\n   ```bash\n   kubectl describe namespace <namespace>\n   ```\n\nThese commands let you confirm that the quota is the limiting factor and that the total requested storage would exceed the current 15\u202fGi limit. No data is deleted or modified by any of these read\u2011only queries.",
+      "reasoning": "Need explain quota, need increase by at least 5Gi. Provide kubectl describe quota, kubectl get pvc, kubectl describe pvc.",
+      "native_decode_tokens_s": 27.119863538409724,
+      "native_prompt_tokens_s": 1086.3274119585058
+    },
+    {
+      "case": "context_about_4096",
+      "repeat": 1,
+      "elapsed_s": 3.70628016900082,
+      "ttft_including_reasoning_s": 2.8847672440024326,
+      "first_visible_answer_s": 3.580972630999895,
+      "usage": {
+        "prompt_tokens": 3835,
+        "completion_tokens": 26
+      },
+      "native": {
+        "load_duration": 2139038,
+        "prompt_eval_duration": 2710353000,
+        "eval_duration": 923787000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 30.431657542148923,
+      "answer": "BLUE-731",
+      "reasoning": "We need to return the access code only: BLUE-731.",
+      "native_decode_tokens_s": 28.145016113021725,
+      "native_prompt_tokens_s": 1414.944842978018
+    },
+    {
+      "case": "context_about_4096",
+      "repeat": 2,
+      "elapsed_s": 1.0313359370011312,
+      "ttft_including_reasoning_s": 0.22806422800204018,
+      "first_visible_answer_s": 0.9222268720004649,
+      "usage": {
+        "prompt_tokens": 3835,
+        "completion_tokens": 26
+      },
+      "native": {
+        "load_duration": 1209901,
+        "prompt_eval_duration": 39629000,
+        "eval_duration": 914802000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 31.122719398584334,
+      "answer": "BLUE-731",
+      "reasoning": "We need to return the access code only: BLUE-731.",
+      "native_decode_tokens_s": 28.421450762022822,
+      "native_prompt_tokens_s": 96772.5655454339
+    },
+    {
+      "case": "context_about_4096",
+      "repeat": 3,
+      "elapsed_s": 1.0165973549992486,
+      "ttft_including_reasoning_s": 0.21310654300032184,
+      "first_visible_answer_s": 0.9015948810010741,
+      "usage": {
+        "prompt_tokens": 3835,
+        "completion_tokens": 26
+      },
+      "native": {
+        "load_duration": 1266546,
+        "prompt_eval_duration": 40658000,
+        "eval_duration": 913900000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 31.114232579467743,
+      "answer": "BLUE-731",
+      "reasoning": "We need to return the access code only: BLUE-731.",
+      "native_decode_tokens_s": 28.44950213371266,
+      "native_prompt_tokens_s": 94323.38039254268
+    },
+    {
+      "case": "context_about_16384",
+      "repeat": 1,
+      "elapsed_s": 15.980511293000745,
+      "ttft_including_reasoning_s": 15.133189436000976,
+      "first_visible_answer_s": 15.858886559999519,
+      "usage": {
+        "prompt_tokens": 15099,
+        "completion_tokens": 26
+      },
+      "native": {
+        "load_duration": 5641932,
+        "prompt_eval_duration": 6887548000,
+        "eval_duration": 8879853000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 29.504726915131133,
+      "answer": "BLUE-731",
+      "reasoning": "We just need to output the access code: BLUE-731.",
+      "native_decode_tokens_s": 2.927976397807486,
+      "native_prompt_tokens_s": 2192.2170270174524
+    },
+    {
+      "case": "context_about_16384",
+      "repeat": 2,
+      "elapsed_s": 1.1548845370016352,
+      "ttft_including_reasoning_s": 0.3543907269995543,
+      "first_visible_answer_s": 1.0482123629990383,
+      "usage": {
+        "prompt_tokens": 15099,
+        "completion_tokens": 26
+      },
+      "native": {
+        "load_duration": 5333587,
+        "prompt_eval_duration": 39971000,
+        "eval_duration": 909096000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 31.230722446104878,
+      "answer": "BLUE-731",
+      "reasoning": "We just need to output the access code: BLUE-731.",
+      "native_decode_tokens_s": 28.59983984089689,
+      "native_prompt_tokens_s": 377748.8679292487
+    },
+    {
+      "case": "context_about_16384",
+      "repeat": 3,
+      "elapsed_s": 1.1939296109994757,
+      "ttft_including_reasoning_s": 0.3616726619984547,
+      "first_visible_answer_s": 1.0760100959996635,
+      "usage": {
+        "prompt_tokens": 15099,
+        "completion_tokens": 26
+      },
+      "native": {
+        "load_duration": 11701278,
+        "prompt_eval_duration": 40124000,
+        "eval_duration": 934407000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 30.038799952356218,
+      "answer": "BLUE-731",
+      "reasoning": "We just need to output the access code: BLUE-731.",
+      "native_decode_tokens_s": 27.825134015477197,
+      "native_prompt_tokens_s": 376308.4438241451
+    }
+  ],
+  "method": "Sequential requests, temperature 0, low reasoning, 512 output token cap; repeated prompts can reuse cache. Capture GPU contention separately. Both first reasoning token and first visible answer are measured. Actual input tokens are authoritative; intended lengths are approximate.",
+  "environment": {
+    "date": "2026-10-16",
+    "node": "talos-d4h-k5m",
+    "gpu": "RTX 4070 Ti 12 GB",
+    "driver": "580.178.04",
+    "cpu": "AMD Ryzen 7 5700G",
+    "ollama": "0.40.5",
+    "model_id": "9ba9cc2b4e02",
+    "quantization": "MXFP4",
+    "model_parameters": "20.9B",
+    "strata_state": "Installing dependencies; model not loaded",
+    "background_gpu_memory_mib_before_load": 2835,
+    "offload": "Ollama log reported 25/25 layers on GPU",
+    "notes": "Shared production GPU; no existing service was stopped. First request includes cold load; subsequent requests reuse model and prompt caches."
+  }
+}

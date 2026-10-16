@@ -34,6 +34,9 @@ rendered Kustomize bundle. Do not use `kubectl apply` (forbidden here).
 The Argo Application uses manual sync during evaluation; do not create it
 against unpublished files. No commit, push or Argo sync is part of preparation.
 
+The CUDA development image supplies the toolkit needed to compile the Linux
+engine when no prebuilt release asset exists. Bootstrap installs Python and
+the C++ compiler; source and built artifacts persist with the model cache.
 The container bootstraps dependencies and downloads the pinned source and model
 on its first start. It reuses `/data` on subsequent starts. No liveness probe
 interrupts the potentially long first download. Runtime authentication config
@@ -76,4 +79,5 @@ Report cold first runs separately from repeated prompts. Check extraction JSON,
 order-preserving code with dictionary inputs, safe storage-quota diagnosis, and
 long-context recall. Retain responses for manual review. These small tasks are
 usability checks, not a broad model-quality benchmark or proof of tool-calling
-reliability. No performance or quality result has been measured yet.
+reliability. The [2026-10-16 baseline report](results/2026-10-16/README.md)
+contains measured GPT-OSS results; the Strata comparison is still pending setup.
