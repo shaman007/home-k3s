@@ -51,8 +51,8 @@ spec:
           command: [/bin/bash, /scripts/bootstrap.sh]
           securityContext:
             allowPrivilegeEscalation: false
-            capabilities:
-              add: [IPC_LOCK]
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
