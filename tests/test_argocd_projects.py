@@ -16,7 +16,7 @@ PROJECT_APPLICATIONS = {
     "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
     "nllb", "ollama", "ollama-small", "ooni", "open-terminal", "open-webui",
-    "plex", "ripe-atlas", "searxng", "stirling-pdf", "talos-backup", "wordpress", "year",
+    "plex", "ripe-atlas", "searxng", "stirling-pdf", "strata", "talos-backup", "wordpress", "year",
     "your-spotify",
 }
 
@@ -55,6 +55,8 @@ PROJECT_MEMBERS = {
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
+# Evaluation models must be stoppable between benchmark runs without auto-sync.
+MANUAL_SYNC_APPLICATIONS = {"strata"}
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",
@@ -337,6 +339,9 @@ class ArgoCdProjectsTest(unittest.TestCase):
 
     def test_automated_applications_self_heal_live_drift(self):
         for name, application in self.applications.items():
+            if name in MANUAL_SYNC_APPLICATIONS:
+                self.assertNotIn("automated", application["spec"]["syncPolicy"], name)
+                continue
             automated = application["spec"]["syncPolicy"]["automated"]
             if name in SELF_HEAL_EXEMPT_APPLICATIONS:
                 self.assertFalse(automated.get("selfHeal", False))

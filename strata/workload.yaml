@@ -48,7 +48,7 @@ spec:
       terminationGracePeriodSeconds: 120
       containers:
         - name: strata
-          image: nvidia/cuda:13.0.0-devel-ubuntu24.04
+          image: harbor.andreybondarenko.com/dockerhub/nvidia/cuda:13.0.0-devel-ubuntu24.04
           command: [/bin/bash, /scripts/bootstrap.sh]
           securityContext:
             allowPrivilegeEscalation: false
