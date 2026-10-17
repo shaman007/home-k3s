@@ -3,8 +3,16 @@
 Pinned Strata revision: `296b59d2f73c8f04a805df29c2fa97655adace78`.
 Model: original Qwen3.8-Flash-Next IQ2_XS, context 32,768, images disabled.
 
-The GPU node has about 62 GiB allocatable RAM and currently reserves about
-48 GiB for existing pods. This deployment requests and caps RAM at 12 GiB,
+Default operation is **on demand** (`replicas: 0`). The manifests retain the
+downloaded model PVC and API Secret while releasing the 12 GiB memory request
+and GPU allocation between evaluations. Use GPT-OSS as the interactive default.
+Two complete Strata short answers took 17.5–22.6 minutes; its resident allocation
+also forced GPT-OSS to CPU offload. Full details and limitations are in the
+[evaluation report](results/2026-10-16/README.md).
+
+The GPU node has about 62 GiB allocatable RAM. The October 17 snapshot reserved
+about 46.1 GiB for other pods and 12 GiB for Strata (93% total). This deployment
+requests and caps RAM at 12 GiB,
 caps CPU at four cores, uses best-effort priority, and explicitly selects
 `--low-ram mmap`. The generic `on` setting is insufficient: setup sees host
 RAM and may select a resident expert cache exceeding the container limit.
@@ -16,7 +24,7 @@ inference alongside GPT-OSS and effects on other services remain unverified.
 `--vram-reserve-mib 3072` leaves a margin for the other GPU consumers. A 4096 MiB
 reserve failed engine validation because no expert-cache slots remained; the
 3072 MiB setting starts successfully and has generated complete responses;
-coexistence validation is still pending. Kubernetes
+the measured coexistence test forced GPT-OSS to CPU offload. Kubernetes
 GPU time slicing does not isolate VRAM or guarantee throughput. GPT-OSS may need
 CPU offload while Strata is loaded. Compare models sequentially, stopping Strata
 for the GPT-OSS baseline, then test coexistence separately before recommending
@@ -30,6 +38,26 @@ the model data under the current StorageClass reclaim policy. There is no
 configured backup of this reproducible model cache.
 
 ## Deployment
+
+The runtime image is pinned by digest to the CUDA 13.0.0 image used for these
+measurements. CUDA 13.4.3 has not been runtime-tested in this deployment.
+Keep source, image, and configuration versions explicit when comparing results.
+
+After the prepared manifests are pushed and manually synced, start and stop an
+evaluation with the following operator-approved live changes:
+
+```sh
+kubectl scale -n strata deployment/strata --replicas=1
+kubectl rollout status -n strata deployment/strata --timeout=30m
+# Run the evaluation, then release shared compute resources:
+kubectl scale -n strata deployment/strata --replicas=0
+kubectl wait -n strata --for=delete pod -l app=strata --timeout=180s
+```
+
+Scaling up intentionally differs from Git's zero-replica default. The Argo
+Application is manual-sync; syncing it again stops the evaluation. Scaling down
+preserves the model PVC and Secret. Confirm actual generation after starting;
+readiness alone does not validate an inference request.
 
 Live resource creation requires approval under the repository instructions.
 Create namespace `strata`, then a Secret `strata-api-key` with a random `key`
@@ -57,10 +85,12 @@ change and must preserve existing providers.
 
 ## Benchmark and usability review
 
-Run upstream `tools/strata_bench.py --url http://127.0.0.1:8080 --runs 3`
-inside the deployment with its key supplied through `STRATA_KEY`, not command
-arguments. Save reports under `/data/results` and export sanitized reports.
-Review report fields for secrets before exporting.
+This evaluation uses the matched comparison client below, including explicit
+request limits and retained outputs. The upstream benchmark was not run as an
+additional suite. For an optional upstream diagnostic, run
+`tools/strata_bench.py --url http://127.0.0.1:8080 --runs 3` inside the deployment
+with its key supplied through `STRATA_KEY`, not command arguments. Save reports
+under `/data/results` and review fields for secrets before exporting.
 
 The repository comparison tool uses Ollama's native API so its 32K context is
 explicit rather than relying on server defaults. For Strata it uses the OpenAI
@@ -88,7 +118,10 @@ reliability. The [2026-10-16 baseline report](results/2026-10-16/README.md)
 contains measured GPT-OSS results and two completed Strata short-chat responses.
 Strata took 22.6 minutes cold and 17.5 minutes warm, with about 0.194 tokens/s
 decode; these results do not support replacing GPT-OSS for interactive use.
-The remaining comparison cases and coexistence checks are still in progress.
+The bounded comparison and tool checks hit their latency limits. A same-version
+GPT-OSS control recovered to about 4 seconds and 28.5–28.8 tokens/s warm after
+Strata stopped, compared with 12.7–17.6 seconds and 6.9–9.2 tokens/s while Strata
+was resident. Timeouts leave eventual answer quality unverified.
 The bounded suite retains partial responses with `incomplete: true` and
 `finish_reason: client_deadline`; do not score them as complete answers.
 This optional deadline requires POSIX signals and runs in the main thread.

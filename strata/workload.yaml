@@ -27,7 +27,8 @@ kind: Deployment
 metadata:
   name: strata
 spec:
-  replicas: 1
+  # Start explicitly for evaluations; release shared GPU/RAM when idle.
+  replicas: 0
   progressDeadlineSeconds: 86400
   strategy:
     type: Recreate
@@ -48,7 +49,7 @@ spec:
       terminationGracePeriodSeconds: 120
       containers:
         - name: strata
-          image: harbor.andreybondarenko.com/dockerhub/nvidia/cuda:13.4.3-devel-ubuntu24.04
+          image: harbor.andreybondarenko.com/dockerhub/nvidia/cuda:13.0.0-devel-ubuntu24.04@sha256:1e8ac7a54c184a1af8ef2167f28fa98281892a835c981ebcddb1fad04bdd452d
           command: [/bin/bash, /scripts/bootstrap.sh]
           securityContext:
             allowPrivilegeEscalation: false

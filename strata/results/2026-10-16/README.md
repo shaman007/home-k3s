@@ -1,7 +1,23 @@
-# Shared-cluster evaluation — 2026-10-16
+# Shared-cluster evaluation — October 16–17, 2026
 
-Status: GPT-OSS baseline complete; Strata setup still in progress. This is not
-yet a comparison or a recommendation to replace GPT-OSS.
+Measurements are complete. **Keep GPT-OSS as the interactive default and run
+Strata only on demand.** Strata generated correct short answers but required
+17.5–22.6 minutes at about 0.194 tokens/s. Its resident GPU allocation also
+degraded GPT-OSS; stopping Strata restored normal GPT-OSS performance.
+
+| Configuration | Warm short-answer total | Decode tokens/s | GPU layers (GPT-OSS) |
+| --- | ---: | ---: | ---: |
+| Strata IQ2_XS, 12 GiB host cap | 1050.29 s (one warm sample) | 0.194 estimated | n/a |
+| GPT-OSS 0.40.6, Strata resident | 17.63 / 12.68 s | 6.87 / 9.15 native | 1/25 |
+| GPT-OSS 0.40.6, Strata stopped | 4.00 / 4.03 s | 28.83 / 28.51 native | 25/25 |
+
+These are small deployment usability tests, not a model-quality ranking.
+Native Ollama and client-estimated Strata decode rates use different methods.
+Strata is stopped live with data and authentication preserved. The prepared
+GitOps change sets zero replicas and pins the tested CUDA image; push and
+manual sync are still required to make that default durable remotely.
+
+## Original GPT-OSS baseline
 
 GPT-OSS 20B MXFP4 (`9ba9cc2b4e02`) ran through Ollama 0.40.5 on the shared
 RTX 4070 Ti, driver 580.178.04, Ryzen 7 5700G. Ollama reported 25/25 layers
@@ -47,11 +63,16 @@ first request includes model loading; warm short-chat totals were 4.28 and
   to support dictionaries therefore needs review. Generated code was inspected,
   not executed.
 
-## Remaining work
+## Scope and limitations
 
-Verify Strata model load, authenticated API, actual resource use and existing
-service health; run the same comparison prompts and upstream Strata benchmark;
-then assess latency, response correctness and coexistence with GPT-OSS.
+Strata model discovery required authentication (401 without a key), reported
+IQ2_XS loaded at 32768 context, and generated two correct complete responses.
+The six matched cases were attempted with bounded latency; transport failures
+were preserved and retried separately. Timed-out JSON/code/quota/context/tool
+requests do not establish eventual answer correctness or unsupported features.
+The upstream benchmark was not run as a duplicate suite; these measurements
+use the repository comparison clients. No broad quality superiority or fully
+saturated simultaneous-generation performance is claimed.
 
 ## Supplemental tool check
 
@@ -94,7 +115,7 @@ tokens, approximately 0.1 tokens/second, with a 19.3% expert-cache hit rate.
 During this request the engine had read about 18.2 GiB from storage and was
 observed waiting on disk I/O. No cgroup OOM events were recorded. GPU use was
 about 9067 MiB with 2809 MiB free. This failed first request must remain part of
-the comparison; matched streaming benchmarks are still pending.
+the comparison alongside the completed streaming measurements below.
 
 The [first completed matched streaming run](strata.json) answered the probe
 question correctly in three sentences. It took **1355.47 seconds** total,
@@ -102,7 +123,7 @@ with first reasoning at 263.54 seconds and first visible answer at 910.76
 seconds. Usage was 53 prompt tokens and 212 completion tokens; the client
 decode estimate was **0.193 tokens/second**. The engine reported a 31.8%
 expert-cache hit rate. This is one completed run, not a median or a complete
-suite; warm repeats and other cases remain pending. GPT-OSS's corresponding
+suite. GPT-OSS's corresponding
 measured warm median was 4.28 seconds total and 26.98 native decode tokens/second
 (the decode measurement methods differ).
 
@@ -122,7 +143,7 @@ be scored as complete answers or assigned a completed decode rate without
 final token usage. The two original completed runs above remain unchanged.
 The deadline implementation was checked against both a stalled stream after
 partial output and a stalled connection-opening call; both were interrupted
-and the process alarm was cleared. The bounded suite is still running.
+and the process alarm was cleared. The bounded suite has finished.
 The [first bounded row](strata-bounded.json) ended at 300.000 seconds with
 `client_deadline`, retained reasoning, and no visible answer. The server
 confirmed cancellation at 306 seconds and the next request started. This is
@@ -133,8 +154,7 @@ answer. Only the second produced visible answer text before the limit (at
 also reached the deadline without a complete answer. All three code-review
 repeats reached the deadline without a visible implementation. All three quota
 diagnosis repeats also reached the deadline without a visible answer. The
-approximately 4K context cases are now running; approximately 16K cases remain
-pending. These extraction
+context outcomes and transport retries are recorded below. These extraction
 timeouts do not establish whether the model would eventually return valid JSON.
 
 The first approximately 4K request was observed as **4152 actual prompt tokens**.
@@ -158,13 +178,73 @@ usage, or answer; the original client incorrectly wrote `incomplete: false`.
 Treat it as a transport failure, not a completed generation. The client now
 marks a missing terminal finish reason `unexpected_eof` and incomplete; targeted
 checks cover both empty streams and normal terminal responses. Raw original
-results are preserved. A separate 4K retry is running after restoring the
-port-forward; the 16K cases still require a connected run. Do not interpret the
+results are preserved. Separate connected context retries followed restoration
+of the port-forward. Do not interpret the
 three connection-refused rows as model inference or context-quality failures.
+The separate [connected 4K retry](strata-4k-retry.json) reached its 300-second
+deadline without output. Its server-side cancellation completed at 447 seconds.
+All context retries used the original CUDA 13.0.0 container. A merged CUDA
+13.4.3 image update was not synced or runtime-validated; the prepared manifest
+pins the measured 13.0.0 image by its verified digest instead.
+All three [connected 16K retries](strata-16k-retry.json) reached 300 seconds
+without output. The server observed 16440 prompt tokens. Cancellation of the
+first two took 377 and 403 seconds of engine time respectively, adding queue
+time to later requests. These are latency-limit failures, not evidence that
+the model cannot represent the configured context or answer the recall task.
+
+## GPT-OSS with Strata resident (October 17)
+
+[Three short-chat requests](gpt-oss-coexist.json) completed correctly with
+Strata still loaded. Ollama was now **0.40.6**, versus 0.40.5 for the original
+baseline; the model ID remained `9ba9cc2b4e02` and context was explicitly 32768.
+The first request overlapped Strata's final cancelled prefill draining; warm
+requests ran with Strata resident and idle. This is not a saturated simultaneous
+generation-throughput test.
+
+| Repeat | Total seconds | First visible seconds | Native decode tokens/s |
+| --- | ---: | ---: | ---: |
+| Cold | 258.06 | 227.26 | 2.91 |
+| Warm 1 | 17.63 | 4.00 | 6.87 |
+| Warm 2 | 12.68 | 2.35 | 9.15 |
+
+Ollama logged only **1/25 layers offloaded to GPU**, with 768 MiB non-SWA and
+18 MiB SWA KV buffers on CPU; the original baseline logged 25/25 GPU layers.
+Total GPU use reached 10790 MiB with 1085 MiB free. Ollama's cgroup recorded
+memory-limit reclaim events but zero OOM events or kills. The same-version
+control below measures recovery after unloading Strata. Ollama unloaded naturally after its
+30-second keep-alive, verified with `ollama ps`, before the Strata tool test.
+
+The October 17 node allocation snapshot shows 59516 MiB of requested RAM
+(93% of allocatable), including Strata's 12288 MiB request. Allocatable RAM is
+64950100 KiB, leaving only about 3.82 GiB of unreserved scheduling capacity.
+A substantially larger guaranteed host cache would therefore crowd existing
+reservations; the low observed CPU usage alone does not establish room for it.
+
+## Strata tool test and recovery control (October 17)
+
+All three [synthetic tool attempts](strata-tools.json) timed out during selection
+after about 300 seconds, before a tool call was returned. No real cluster tool
+was executed. Synthesis was not reached; this establishes a latency failure,
+not absence of tool support or incorrect tool arguments.
+
+After the tool tests, Strata was scaled to zero. Its pod disappeared, the 160 GiB
+PVC remained Bound, and the API Secret remained present. Total GPU usage fell
+to 2835 MiB with 9040 MiB free. All three requests in the
+[Ollama 0.40.6 recovery control](gpt-oss-control-0406.json) completed correctly:
+
+| Repeat | Total seconds | First visible seconds | Native decode tokens/s |
+| --- | ---: | ---: | ---: |
+| Cold | 60.81 | 57.28 | 22.17 |
+| Warm 1 | 4.00 | 0.68 | 28.83 |
+| Warm 2 | 4.03 | 0.69 | 28.51 |
+
+Ollama restored 25/25 GPU layers and GPU KV buffers (768 MiB plus 18 MiB).
+No other workload was scaled. Node memory requests fell from 59516 MiB (93%)
+to 47228 MiB (74%), releasing Strata's entire 12 GiB reservation.
 
 During the second bounded request, total GPU usage rose to **10592 MiB** with
 **1283 MiB free**. Strata's process reported 6328 MiB; Ollama reported no loaded
 model. Cgroup OOM counters remained zero. The startup reserve is therefore not
 an ongoing VRAM isolation guarantee: later allocations by other workloads can
-consume the remaining margin. Concurrent GPT-OSS operation still needs a real
-generation test before any coexistence claim.
+consume the remaining margin. The measured coexistence and recovery tests
+above confirm that leaving Strata resident materially affects GPT-OSS here.

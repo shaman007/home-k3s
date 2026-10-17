@@ -1,0 +1,81 @@
+{
+  "provider": "ollama",
+  "model": "gpt-oss:20b",
+  "context_limit": 32768,
+  "runs": [
+    {
+      "case": "short_chat",
+      "repeat": 1,
+      "elapsed_s": 258.06099717799225,
+      "ttft_including_reasoning_s": 222.74258176999865,
+      "first_visible_answer_s": 227.26409697599593,
+      "usage": {
+        "prompt_tokens": 79,
+        "completion_tokens": 111
+      },
+      "native": {
+        "load_duration": 199276466540,
+        "prompt_eval_duration": 20565967000,
+        "eval_duration": 38149456000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "incomplete": false,
+      "client_decode_tokens_s_estimate": 3.1145225155006178,
+      "answer": "Kubernetes readiness probes determine whether a pod\u2019s containers are ready to receive traffic; if a probe fails, the pod is removed from the service\u2019s load\u2011balancing pool until it passes again. Liveness probes check whether a container is still alive; a failure triggers a restart of the container to recover from a stuck or crashed state. Both probes can be configured with HTTP, TCP, or exec checks, timeouts, and thresholds to fine\u2011tune application health monitoring.",
+      "reasoning": "Need concise 3 sentences.",
+      "native_decode_tokens_s": 2.90960898629852,
+      "native_prompt_tokens_s": 3.841297615619047
+    },
+    {
+      "case": "short_chat",
+      "repeat": 2,
+      "elapsed_s": 17.634048715000972,
+      "ttft_including_reasoning_s": 1.8957984529988607,
+      "first_visible_answer_s": 3.997861906012986,
+      "usage": {
+        "prompt_tokens": 79,
+        "completion_tokens": 111
+      },
+      "native": {
+        "load_duration": 2240990,
+        "prompt_eval_duration": 1420253000,
+        "eval_duration": 16163215000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "incomplete": false,
+      "client_decode_tokens_s_estimate": 6.989341138231879,
+      "answer": "Kubernetes readiness probes determine whether a pod\u2019s containers are ready to receive traffic; if a probe fails, the pod is removed from the service\u2019s load\u2011balancing pool until it passes again. Liveness probes check whether a container is still alive; a failure triggers a restart of the container to recover from a stuck or crashed state. Both probes can be configured with HTTP, TCP, or exec checks, timeouts, and thresholds to fine\u2011tune application health monitoring.",
+      "reasoning": "Need concise 3 sentences.",
+      "native_decode_tokens_s": 6.867445616481622,
+      "native_prompt_tokens_s": 55.62389236283958
+    },
+    {
+      "case": "short_chat",
+      "repeat": 3,
+      "elapsed_s": 12.684716552990722,
+      "ttft_including_reasoning_s": 0.9292935189878335,
+      "first_visible_answer_s": 2.3493492580018938,
+      "usage": {
+        "prompt_tokens": 79,
+        "completion_tokens": 111
+      },
+      "native": {
+        "load_duration": 1864770,
+        "prompt_eval_duration": 538073000,
+        "eval_duration": 12125380000,
+        "done_reason": "stop"
+      },
+      "finish_reason": "stop",
+      "incomplete": false,
+      "client_decode_tokens_s_estimate": 9.357383369515665,
+      "answer": "Kubernetes readiness probes determine whether a pod\u2019s containers are ready to receive traffic; if a probe fails, the pod is removed from the service\u2019s load\u2011balancing pool until it passes again. Liveness probes check whether a container is still alive; a failure triggers a restart of the container to recover from a stuck or crashed state. Both probes can be configured with HTTP, TCP, or exec checks, timeouts, and thresholds to fine\u2011tune application health monitoring.",
+      "reasoning": "Need concise 3 sentences.",
+      "native_decode_tokens_s": 9.154352275969908,
+      "native_prompt_tokens_s": 146.82022699522184
+    }
+  ],
+  "request_deadline_s": 300.0,
+  "method": "Sequential requests, temperature 0, low reasoning, 512 output token cap; repeated prompts can reuse cache. Capture GPU contention separately. Both first reasoning token and first visible answer are measured. Actual input tokens are authoritative; intended lengths are approximate."
+}

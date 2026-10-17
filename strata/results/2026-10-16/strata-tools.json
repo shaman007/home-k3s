@@ -1,0 +1,33 @@
+{
+  "model": "qwen3.8-flash-next-iq2_xs",
+  "provider": "openai",
+  "context_limit": null,
+  "prompt": "Use the available read-only tool to check namespace bench-demo. I want to add a PVC requesting 10Gi. Tell me whether its storage quota permits that and the minimum total quota needed if it does not. Do not change anything.",
+  "fixture": {
+    "namespace": "bench-demo",
+    "requests_storage_used_gib": 10,
+    "requests_storage_hard_gib": 15
+  },
+  "request_timeout_s": 300.0,
+  "method": "Synthetic tool selection and result synthesis; no real tool executed. Temperature zero, low reasoning, 1024 output token cap. Tool choice is automatic, not forced. Repeats may reuse cache.",
+  "runs": [
+    {
+      "repeat": 1,
+      "error": "TimeoutError: timed out",
+      "failure_stage": "selection",
+      "elapsed_s": 300.0656592620071
+    },
+    {
+      "repeat": 2,
+      "error": "TimeoutError: timed out",
+      "failure_stage": "selection",
+      "elapsed_s": 300.0025609199947
+    },
+    {
+      "repeat": 3,
+      "error": "TimeoutError: timed out",
+      "failure_stage": "selection",
+      "elapsed_s": 300.09965580199787
+    }
+  ]
+}

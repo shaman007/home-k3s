@@ -1,0 +1,23 @@
+{
+  "provider": "strata",
+  "model": "qwen3.8-flash-next-iq2_xs",
+  "context_limit": 32768,
+  "runs": [
+    {
+      "case": "context_about_4096",
+      "repeat": 1,
+      "elapsed_s": 300.000174618006,
+      "ttft_including_reasoning_s": null,
+      "first_visible_answer_s": null,
+      "usage": {},
+      "native": {},
+      "finish_reason": "client_deadline",
+      "incomplete": true,
+      "client_decode_tokens_s_estimate": null,
+      "answer": "",
+      "reasoning": ""
+    }
+  ],
+  "request_deadline_s": 300.0,
+  "method": "Sequential requests, temperature 0, low reasoning, 512 output token cap; repeated prompts can reuse cache. Capture GPU contention separately. Both first reasoning token and first visible answer are measured. Actual input tokens are authoritative; intended lengths are approximate."
+}
