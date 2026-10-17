@@ -33,7 +33,7 @@ spec:
       priorityClassName: homelab-essential
       initContainers:
         - name: prepare-permissions
-          image: harbor.andreybondarenko.com/github/bitwarden/lite:2026.9.2@sha256:f42c5a256face5c59990d515e7d672ff4f029c6d03acb8f0cb0c5839cd27fe2a
+          image: harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.0@sha256:94484fe9382df51ad755151ea360663e922e60a32385500454dd1f38045bf6a6
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -107,7 +107,7 @@ spec:
                 secretKeyRef:
                   name: yubico-secret-key
                   key: secret-key
-          image: harbor.andreybondarenko.com/github/bitwarden/lite:2026.9.2@sha256:f42c5a256face5c59990d515e7d672ff4f029c6d03acb8f0cb0c5839cd27fe2a
+          image: harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.0@sha256:94484fe9382df51ad755151ea360663e922e60a32385500454dd1f38045bf6a6
           imagePullPolicy: IfNotPresent
           name: bitwarden
           ports:
