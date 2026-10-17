@@ -10,9 +10,13 @@ caps CPU at four cores, uses best-effort priority, and explicitly selects
 RAM and may select a resident expert cache exceeding the container limit.
 File cache is charged to the container; cold reads and cache eviction may
 substantially reduce inference speed. This is an evaluation of the deployment
-that can coexist with the current services, not full-RAM peak performance.
+under a restricted resource budget, not full-RAM peak performance. Successful
+inference alongside GPT-OSS and effects on other services remain unverified.
 
-`--vram-reserve-mib 4096` leaves a margin for the other GPU consumers. Kubernetes
+`--vram-reserve-mib 3072` leaves a margin for the other GPU consumers. A 4096 MiB
+reserve failed engine validation because no expert-cache slots remained; the
+3072 MiB setting starts successfully and has generated complete responses;
+coexistence validation is still pending. Kubernetes
 GPU time slicing does not isolate VRAM or guarantee throughput. GPT-OSS may need
 CPU offload while Strata is loaded. Compare models sequentially, stopping Strata
 for the GPT-OSS baseline, then test coexistence separately before recommending
@@ -70,7 +74,8 @@ python3 tools/benchmark-local-llm.py --provider ollama \
 python3 tools/benchmark-local-llm.py --provider strata \
   --url http://127.0.0.1:18080 --model strata \
   --kubernetes-secret strata/strata-api-key \
-  --out /tmp/llm-comparison/strata.json
+  --request-deadline-s 300 \
+  --out /tmp/llm-comparison/strata-bounded.json
 ```
 
 Compare first visible answer latency, full response latency, actual prompt and
@@ -80,4 +85,19 @@ order-preserving code with dictionary inputs, safe storage-quota diagnosis, and
 long-context recall. Retain responses for manual review. These small tasks are
 usability checks, not a broad model-quality benchmark or proof of tool-calling
 reliability. The [2026-10-16 baseline report](results/2026-10-16/README.md)
-contains measured GPT-OSS results; the Strata comparison is still pending setup.
+contains measured GPT-OSS results and two completed Strata short-chat responses.
+Strata took 22.6 minutes cold and 17.5 minutes warm, with about 0.194 tokens/s
+decode; these results do not support replacing GPT-OSS for interactive use.
+The remaining comparison cases and coexistence checks are still in progress.
+The bounded suite retains partial responses with `incomplete: true` and
+`finish_reason: client_deadline`; do not score them as complete answers.
+This optional deadline requires POSIX signals and runs in the main thread.
+
+For a synthetic tool round trip, use `tools/benchmark-llm-tools.py` with the same
+URL, model and secret options. Add `--provider ollama --context 32768` for the
+Ollama baseline; the default OpenAI-compatible mode uses the context configured
+on the server. This test supplies fixture data and never executes a real cluster
+tool. Review the final quota answer as well as the tool arguments. Retain API
+failures and cold-load timings alongside successful warm runs.
+Use `--request-timeout-s 300` to bound socket inactivity on each non-streaming
+tool-selection or synthesis request; reports identify the stage of any failure.

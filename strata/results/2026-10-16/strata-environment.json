@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-16",
+  "node": "talos-d4h-k5m",
+  "gpu": "NVIDIA GeForce RTX 4070 Ti",
+  "driver_version": "580.178.04",
+  "gpu_total_mib": 12282,
+  "gpu_snapshot_used_mib": 9169,
+  "gpu_snapshot_free_mib": 2707,
+  "gpu_snapshot_scope": "During second short-chat request; includes other GPU workloads, not a peak measurement",
+  "source_revision": "296b59d2f73c8f04a805df29c2fa97655adace78",
+  "image": "harbor.andreybondarenko.com/dockerhub/nvidia/cuda:13.0.0-devel-ubuntu24.04",
+  "model": "qwen3.8-flash-next-iq2_xs",
+  "context": 32768,
+  "kv": "int8",
+  "experts": "mmap",
+  "vram_reserve_mib": 3072,
+  "startup_expert_cache_slots": 570,
+  "memory_limit": "12Gi",
+  "cpu_request": "1",
+  "cpu_limit": "4",
+  "priority_class": "homelab-best-effort",
+  "storage": {
+    "provider": "Longhorn",
+    "capacity": "160Gi",
+    "replicas": 2,
+    "locality": "best-effort",
+    "local_replica_observed": true,
+    "health_observed": "healthy"
+  },
+  "limitations": [
+    "GPU time slicing does not isolate VRAM",
+    "Only one complete Strata benchmark response was available when this snapshot was recorded",
+    "No concurrent GPT-OSS inference validation yet",
+    "Snapshot resource values are not peak measurements"
+  ]
+}

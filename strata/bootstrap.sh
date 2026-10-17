@@ -23,7 +23,7 @@ fi
 if [ ! -f strata-iq2_xs.json ]; then
   .venv/bin/python setup.py --yes --family qwen --model IQ2_XS \
     --backend cuda --gpu 0 --context 32768 --vision no \
-    --low-ram mmap --vram-reserve-mib 4096 \
+    --low-ram mmap --vram-reserve-mib 3072 \
     --data-dir /data/model --host 127.0.0.1 --no-start
 fi
 # The key is supplied by Kubernetes, never passed on a command line or printed.
@@ -33,6 +33,9 @@ mkdir -p /run/strata
 import json
 from pathlib import Path
 cfg = json.loads(Path('strata-iq2_xs.json').read_text())
+# Apply the current reserve even when setup reuses its persisted model config.
+args = cfg['args']
+args[args.index('--vram-reserve-mib') + 1] = '3072'
 cfg['host'] = '0.0.0.0'
 cfg['api_key'] = Path('/run/strata-secret/key').read_text().strip()
 cfg['open_browser'] = False

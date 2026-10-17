@@ -1,0 +1,48 @@
+{
+  "provider": "strata",
+  "model": "qwen3.8-flash-next-iq2_xs",
+  "context_limit": 32768,
+  "runs": [
+    {
+      "case": "short_chat",
+      "repeat": 1,
+      "elapsed_s": 1355.4706694060005,
+      "ttft_including_reasoning_s": 263.54193611200026,
+      "first_visible_answer_s": 910.7599154889976,
+      "usage": {
+        "prompt_tokens": 53,
+        "completion_tokens": 212,
+        "total_tokens": 265,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "native": {},
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 0.19323605430134655,
+      "answer": "A **liveness probe** determines whether a container is running correctly, and if it fails, Kubernetes restarts the container to recover from a deadlocked or crashed state. A **readiness probe** determines whether a container is ready to accept traffic, and if it fails, Kubernetes removes the pod from service endpoints so requests are not routed to it. Together, they ensure that unhealthy containers are restarted and unready containers are temporarily taken out of the load-balancing rotation.",
+      "reasoning": "The user wants a concise explanation of Kubernetes readiness and liveness probes in exactly three sentences. I need to cover both probes clearly and concisely. Let me think about what's essential:\n\n- Liveness probe: checks if a container is alive; if it fails, the container is restarted.\n- Readiness probe: checks if a container is ready to receive traffic; if it fails, the pod is removed from service endpoints.\n\nI can structure this as: one sentence for liveness, one for readiness, and one for their combined purpose or distinction.\n"
+    },
+    {
+      "case": "short_chat",
+      "repeat": 2,
+      "elapsed_s": 1050.2924116030044,
+      "ttft_including_reasoning_s": 23.808642399002565,
+      "first_visible_answer_s": 633.0901939169999,
+      "usage": {
+        "prompt_tokens": 53,
+        "completion_tokens": 200,
+        "total_tokens": 253,
+        "prompt_tokens_details": {
+          "cached_tokens": 48
+        }
+      },
+      "native": {},
+      "finish_reason": "stop",
+      "client_decode_tokens_s_estimate": 0.1938657054015737,
+      "answer": "A **liveness probe** determines whether a container is running correctly, and if it fails, Kubernetes restarts the container to recover from a broken state. A **readiness probe** determines whether a container is ready to receive traffic, and if it fails, Kubernetes removes the pod from service endpoints so requests are not routed to it. Together, they ensure that unhealthy containers are restarted while unready containers are temporarily taken out of the load-balancing rotation.",
+      "reasoning": "The user wants a concise explanation of Kubernetes readiness and liveness probes in exactly three sentences. I need to cover both probes clearly and concisely. Let me think about what's most important:\n\n- Liveness probe: checks if a container is running properly; if it fails, the container is restarted.\n- Readiness probe: checks if a container is ready to accept traffic; if it fails, the pod is removed from service endpoints.\n\nI'll craft three sentences that cover both probes and their distinct purposes.\n"
+    }
+  ],
+  "method": "Sequential requests, temperature 0, low reasoning, 512 output token cap; repeated prompts can reuse cache. Capture GPU contention separately. Both first reasoning token and first visible answer are measured. Actual input tokens are authoritative; intended lengths are approximate."
+}

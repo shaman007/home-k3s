@@ -6,15 +6,48 @@ native API to explicitly set num_ctx and record engine timing. Strata uses its
 OpenAI API. Client decode rates are estimates; Ollama also exposes native rates.
 """
 import argparse
+from contextlib import contextmanager
 import json
 import os
+import signal
 from pathlib import Path
 import subprocess
 import time
 import urllib.request
 
 
-def request(base, provider, model, prompt, key, context, max_tokens):
+class BenchmarkDeadline(Exception):
+    pass
+
+
+@contextmanager
+def request_deadline(seconds):
+    """Bound the entire request, including a blocked read (POSIX main thread)."""
+    state = {"exceeded": False}
+    if not seconds:
+        yield state
+        return
+    if not hasattr(signal, "SIGALRM"):
+        raise RuntimeError("Request deadlines require POSIX signals")
+    if signal.getitimer(signal.ITIMER_REAL)[0]:
+        raise RuntimeError("Cannot replace an existing process alarm")
+    previous = signal.getsignal(signal.SIGALRM)
+
+    def expired(signum, frame):
+        raise BenchmarkDeadline()
+
+    signal.signal(signal.SIGALRM, expired)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield state
+    except BenchmarkDeadline:
+        state["exceeded"] = True
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+
+def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=0):
     if provider == "ollama":
         path = "/api/chat"
         payload = {
@@ -38,7 +71,7 @@ def request(base, provider, model, prompt, key, context, max_tokens):
     first = first_visible = None
     content, reasoning, usage, native = [], [], {}, {}
     finish_reason = None
-    with urllib.request.urlopen(req, timeout=1800) as response:
+    with request_deadline(deadline_s) as deadline, urllib.request.urlopen(req, timeout=1800) as response:
         for line in response:
             line = line.decode().strip()
             if line.startswith("data:"):
@@ -79,7 +112,9 @@ def request(base, provider, model, prompt, key, context, max_tokens):
         "ttft_including_reasoning_s": first - started if first else None,
         "first_visible_answer_s": first_visible - started if first_visible else None,
         "usage": usage, "native": native,
-        "finish_reason": finish_reason,
+        "finish_reason": ("client_deadline" if deadline["exceeded"] else
+                          finish_reason or "unexpected_eof"),
+        "incomplete": deadline["exceeded"] or finish_reason is None,
         "client_decode_tokens_s_estimate": (
             (output_tokens - 1) / (ended - first)
             if output_tokens and output_tokens > 1 and first and ended > first else None),
@@ -100,8 +135,14 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--context", type=int, default=32768)
+    parser.add_argument("--case", action="append", dest="selected_cases",
+                        help="Run only this named case; repeat to select several")
+    parser.add_argument("--request-deadline-s", type=float, default=0,
+                        help="Stop streaming after this many seconds; retain partial output as incomplete (0 disables)")
     parser.add_argument("--kubernetes-secret", help="namespace/name; reads key without printing it")
     args = parser.parse_args()
+    if args.request_deadline_s < 0:
+        parser.error("--request-deadline-s must be nonnegative")
     key = os.environ.get("LLM_API_KEY", "")
     if args.kubernetes_secret:
         import base64
@@ -127,9 +168,15 @@ def main():
         prompt += '\nThe access code in this document is BLUE-731.\n'
         prompt += 'Return the access code only.'
         cases.append((f"context_about_{size}", prompt))
+    if args.selected_cases:
+        unknown = set(args.selected_cases) - {name for name, _ in cases}
+        if unknown:
+            parser.error("Unknown benchmark cases: " + ", ".join(sorted(unknown)))
+        cases = [(name, prompt) for name, prompt in cases if name in args.selected_cases]
     report = {
         "provider": args.provider, "model": args.model,
         "context_limit": args.context, "runs": [],
+        "request_deadline_s": args.request_deadline_s,
         "method": "Sequential requests, temperature 0, low reasoning, 512 output token cap; "
                   "repeated prompts can reuse cache. Capture GPU contention separately. "
                   "Both first reasoning token and first visible answer are measured. "
@@ -142,7 +189,7 @@ def main():
             row = {"case": name, "repeat": repeat + 1}
             try:
                 row.update(request(args.url, args.provider, args.model, prompt, key,
-                                   args.context, 512))
+                                   args.context, 512, args.request_deadline_s))
             except Exception as error:
                 # Never retain request headers or key-bearing request objects.
                 row["error"] = f"{type(error).__name__}: {error}"
