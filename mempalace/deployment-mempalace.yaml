@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   strategy:
     type: Recreate
   selector:
@@ -41,6 +42,9 @@ spec:
             - --port
             - "8765"
           env:
+            # Keep the persistent HTTP server running between MCP requests.
+            - name: MEMPALACE_MCP_IDLE_HOURS
+              value: "0"
             - name: MEMPALACE_MCP_HTTP_TOKEN
               valueFrom:
                 secretKeyRef:
