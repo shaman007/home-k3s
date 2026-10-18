@@ -41,6 +41,8 @@ configured backup of this reproducible model cache.
 
 The runtime image is pinned by digest to the CUDA 13.0.0 image used for these
 measurements. CUDA 13.4.3 has not been runtime-tested in this deployment.
+Retain this digest until a replacement is runtime-validated; update this document
+and the results provenance in the same change as any image upgrade.
 Keep source, image, and configuration versions explicit when comparing results.
 
 After the prepared manifests are pushed and manually synced, start and stop an
