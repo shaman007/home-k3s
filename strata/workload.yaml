@@ -49,9 +49,7 @@ spec:
       terminationGracePeriodSeconds: 120
       containers:
         - name: strata
-          # Retain the measured CUDA 13.0.0 digest until a replacement is runtime-validated.
-          # Update README.md and results provenance in the same change as the image.
-          image: harbor.andreybondarenko.com/dockerhub/nvidia/cuda:13.0.0-devel-ubuntu24.04@sha256:1e8ac7a54c184a1af8ef2167f28fa98281892a835c981ebcddb1fad04bdd452d
+          image: harbor.andreybondarenko.com/dockerhub/nvidia/cuda:13.4.3-devel-ubuntu24.04@sha256:5626a7d0ecafe3e7c115a452f6b05f20f214f8509346196a7835b205dc5b7fd9
           command: [/bin/bash, /scripts/bootstrap.sh]
           securityContext:
             allowPrivilegeEscalation: false
