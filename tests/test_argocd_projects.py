@@ -16,7 +16,7 @@ PROJECT_APPLICATIONS = {
     "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
     "nllb", "ollama", "ollama-small", "ooni", "open-terminal", "open-webui",
-    "plex", "ripe-atlas", "searxng", "stirling-pdf", "strata", "talos-backup", "wordpress", "year",
+    "plex", "ripe-atlas", "searxng", "stirling-pdf", "talos-backup", "wordpress", "year",
     "your-spotify",
 }
 
@@ -55,8 +55,7 @@ PROJECT_MEMBERS = {
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
-# Evaluation models must be stoppable between benchmark runs without auto-sync.
-MANUAL_SYNC_APPLICATIONS = {"strata"}
+MANUAL_SYNC_APPLICATIONS = set()
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",

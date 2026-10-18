@@ -1,4 +1,13 @@
-# Strata evaluation on the shared RTX 4070 Ti
+# Strata evaluation on the shared RTX 4070 Ti (retired)
+
+Retired from this cluster on 2026-10-18. The Argo CD application, namespace,
+workload, API Secret, and 160 GiB model-cache PVC have been removed. Deployment
+manifests and bootstrap scripts are no longer maintained here. Benchmark reports
+are retained in [results/2026-10-16](results/2026-10-16/README.md).
+GPT-OSS remains the recommended interactive model for this shared cluster.
+
+The following describes the historical evaluation environment and commands;
+it is not a currently installed service or a supported deployment procedure.
 
 Pinned Strata revision: `296b59d2f73c8f04a805df29c2fa97655adace78`.
 Model: original Qwen3.8-Flash-Next IQ2_XS, context 32,768, images disabled.

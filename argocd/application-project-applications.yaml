@@ -83,8 +83,6 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: stirling-pdf
     - server: https://kubernetes.default.svc
-      namespace: strata
-    - server: https://kubernetes.default.svc
       namespace: talos-backup
     - server: https://kubernetes.default.svc
       namespace: wordpress
