@@ -293,7 +293,7 @@ spec:
               done
 
               for i in $(seq 1 60); do
-                if printf 's3.configure -user=admin -actions=Read,Write,List,Tagging,Admin -access_key=%s -secret_key=%s -apply\ns3.configure -user=anonymous -actions=Read -buckets=mastodon -apply\nexit\n' \
+                if printf 's3.configure -user=admin -actions=Read,Write,List,Tagging,Admin -access_key=%s -secret_key=%s -apply\ns3.configure -user=anonymous -actions=Read -buckets=mastodon,share -apply\nexit\n' \
                   "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}" \
                   | weed shell -master=127.0.0.1:9333 -filer=127.0.0.1:8888 >/dev/null 2>&1; then
                   break
