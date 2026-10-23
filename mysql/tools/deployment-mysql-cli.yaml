@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
         - name: mysql-cli
-          image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.2
+          image: harbor.andreybondarenko.com/dockerhub/mysql:9.7.4
           imagePullPolicy: IfNotPresent
           command:
             - sleep
