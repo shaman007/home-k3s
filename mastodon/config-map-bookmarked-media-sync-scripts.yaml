@@ -26,6 +26,43 @@ data:
     S3_BUCKET = "mastodon" # path-style bucket as you described
     LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "30"), 10)
 
+    # Exact, case-insensitive matches only; preserve tags absent from this list.
+    # Keep in sync with bookmarked-media-strip-tags.txt.
+    STRIP_HASHTAGS = %w[
+      adult adultcontent amateur artisticnude artnude artphoto ass aypapi
+      babe beautiful beautifulwomen beauty bigboobs bigbreasts bigtits blackandwhite
+      blonde boobs booty breasts brunette busty butt clit
+      cute daddylikes ero erotic erotica explicit femalebeauty femalebody
+      femalenude fitbody fotografie freyja fuckdoll fullnude fyp girls
+      glamour hornybabe hotasfuck hotgirls justyourtype kinky lingerie love
+      lust metart misskey写真部 model naked nakedoutdoors naughty nbwvideos
+      nipples nsfw nude nudeart nudebeach nudegirlmodel nudeinnature nudemodel
+      nudephotography nudes nudewoman nudistgirl nudity onlyfans perfectbody petite
+      petitetits photographer photography playboy porn pornstar princess pussy
+      pussylips reddit redhead redlib sex sexy sexygirl shaved
+      softcore studiophoto tanlines teen tits veryhot vintage wataa
+      wetbody wifeymaterial womansart womenschoice yummy
+    ].to_h { |tag| [tag, true] }.freeze
+
+    def media_description(html)
+      fragment = Nokogiri::HTML.fragment(html.to_s)
+      fragment.css("a").each do |anchor|
+        # Unwrap hashtag links, but continue removing ordinary links/mentions.
+        text = anchor.text
+        replacement = text.match?(/\A#[\p{L}\p{M}\p{N}_\u200c\u200d]+\z/u) ? " #{text} " : " "
+        anchor.replace(Nokogiri::XML::Text.new(replacement, fragment.document))
+      end
+      fragment.css("br").each { |node| node.replace(Nokogiri::XML::Text.new("\n", fragment.document)) }
+      fragment.text
+        .gsub(%r{https?://\S+}, "")
+        .gsub(/(?<!\w)#([\p{L}\p{M}\p{N}_\u200c\u200d]+)/u) { |tag| STRIP_HASHTAGS.key?(Regexp.last_match(1).downcase) ? "" : tag }
+        .lines
+        .map { |line| line.gsub(/[ \t]+/, " ").strip }
+        .join("\n")
+        .gsub(/\n{3,}/, "\n\n")
+        .strip
+    end
+
     EXPORT_DIR  = Rails.root.join("export")
     OUTPUT_PATH = EXPORT_DIR.join("bookmarked_media_manifest.jsonl")
     LOOKBACK_CUTOFF = LOOKBACK_DAYS.days.ago
@@ -43,16 +80,7 @@ data:
           status = bookmark.status
           next unless status
 
-          fragment = Nokogiri::HTML.fragment(status.text.to_s)
-          fragment.css("a").remove
-          description = fragment.text
-            .gsub(%r{https?://\S+}, "")
-            .gsub(/(?<!\w)#[\p{L}\p{M}\p{N}_\u200c\u200d]+/u, "")
-            .lines
-            .map { |line| line.gsub(/[ \t]+/, " ").strip }
-            .join("\n")
-            .gsub(/\n{3,}/, "\n\n")
-            .strip
+          description = media_description(status.text)
 
           status.media_attachments.each do |media|
             begin

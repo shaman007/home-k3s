@@ -67,3 +67,12 @@ no nested curl retries (at most 420 seconds per object including HEAD). The Job'
 3,300-second deadline remains the overall bound. API description requests have
 60-second attempt timeouts and a bounded retry window. Kubernetes retries a failed
 Job; duplicate uploads continue to use Immich's deduplication.
+
+## Bookmarked media description tags
+
+The exporter strips only exact, case-insensitive matches from the 101 selected
+tags in `bookmarked-media-strip-tags.txt`. Other hashtags, including linked
+names, retain their original spelling and hash. Ordinary links and mentions
+continue to be removed. The list is embedded in the Ruby exporter in
+`config-map-bookmarked-media-sync-scripts.yaml`; keep both lists in sync.
+See `bookmarked-media-strip-tags-analysis.md` for selection and frequency counts.
