@@ -32,13 +32,17 @@ showed three voting members, matching applied indexes, no errors, and leader `.2
 The canonical Kubernetes API remains `https://192.168.1.100:6443`.
 Cilium uses the Talos local API proxy (`localhost:7445`) and VXLAN.
 
-The hourly `talos-backup` CronJob is suspended and has never scheduled. Therefore
-there is **no verified migration recovery backup yet**. The existing design is in
-`../../talos-etcd-backup.md`; activating it is separate work.
+Backup repair on 2026-10-26 enabled the hourly CronJob. A scheduled job completed,
+and an encrypted snapshot was downloaded to the workstation, decrypted in memory,
+checked with etcdutl and restored into isolated tmpfs. See
+`../../talos-etcd-backup.md` for key location, independent copy, alerts and GitOps
+handoff. A full disposable Talos-cluster recovery rehearsal and the owner's offline
+key copy remain required before migration.
 Attached Longhorn volumes were healthy. Detached volume
 `pvc-ac9d6cd7-76b1-43c7-a4f5-81e6c597811c` reported unknown robustness:
 it belongs to `ooni/ooniprobe-data`, last used by a Succeeded Job. Confirm its retained-data requirements before proceeding.
-Neither `age` nor `etcdutl` was found on this workstation's PATH during preparation.
+Backup repair used temporary Python age/zstd libraries and checksum-verified etcdutl
+v3.7.1 under `/tmp`; these temporary tools must be re-provisioned after cleanup.
 
 Before the first live change:
 
@@ -191,4 +195,6 @@ and negative cross-VLAN tests and restore normal TTLs. Retain independent backup
 Preparation validation: cutover diffs checked against current files; YAML parsed;
 network template validated with pinned provider in an isolated configuration. None
 of the live cutover, backup creation/decryption, restore rehearsal, endpoint change,
-or firewall enforcement tests has been executed by this preparation.
+or firewall enforcement tests was executed by the initial preparation. Backup
+creation, decryption, snapshot validation and isolated etcdutl restore were later
+verified during the backup repair; full Talos recovery remains untested.

@@ -6,8 +6,8 @@ metadata:
 spec:
   schedule: "17 * * * *"
   timeZone: Etc/UTC
-  # Enable only after the API, bucket, credentials, and encryption key are ready.
-  suspend: true
+  # Snapshot upload, decryption, integrity and isolated etcdutl restore verified.
+  suspend: false
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 600
   successfulJobsHistoryLimit: 1

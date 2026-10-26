@@ -97,6 +97,27 @@ data:
           severity: mail
         annotations:
           summary: Job failed to complete.
+      - alert: TalosEtcdBackupMissing
+        expr: |
+          (time() - kube_cronjob_status_last_successful_time{namespace="talos-backup",cronjob="talos-backup"} > 7200)
+          or
+          (kube_cronjob_info{namespace="talos-backup",cronjob="talos-backup"}
+            unless on (namespace, cronjob)
+            kube_cronjob_status_last_successful_time{namespace="talos-backup",cronjob="talos-backup"})
+          or
+          absent(kube_cronjob_info{namespace="talos-backup",cronjob="talos-backup"})
+        for: 10m
+        labels:
+          severity: mail
+        annotations:
+          summary: Talos etcd backup has no successful scheduled run in the last two hours.
+      - alert: TalosEtcdBackupSuspended
+        expr: kube_cronjob_spec_suspend{namespace="talos-backup",cronjob="talos-backup"} == 1
+        for: 15m
+        labels:
+          severity: mail
+        annotations:
+          summary: Talos etcd backup scheduling is suspended.
       - alert: CPUThrottlingHigh
         expr: sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) / sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_periods_total[5m])) > (25 / 100)
         for: 5m
