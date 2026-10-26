@@ -1,5 +1,7 @@
 # values-traefik.yaml
 deployment:
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
   replicas: 1
   initContainers:
     # The "volume-permissions" init container is required if you run into permission issues.
@@ -58,6 +60,8 @@ experimental:
 service:
   type: LoadBalancer
   single: true
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
   spec:
     externalTrafficPolicy: Local
     loadBalancerClass: metallb-l2

@@ -16,6 +16,8 @@ spec:
       releaseName: traefik
       values: |
         deployment:
+          annotations:
+            argocd.argoproj.io/sync-options: ServerSideApply=true
           initContainers:
           - command:
             - sh
@@ -255,6 +257,8 @@ spec:
                       name: restart-traefik
         service:
           single: true
+          annotations:
+            argocd.argoproj.io/sync-options: ServerSideApply=true
           spec:
             externalTrafficPolicy: Local
             loadBalancerClass: metallb-l2

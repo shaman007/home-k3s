@@ -6,6 +6,12 @@ VIP, `192.168.1.210`. The public entrypoint NetworkPolicy permits both protocols
 The authoritative Helm values are in `argocd/application-traefik.yaml`;
 `traefik/values.yaml` carries the matching standalone configuration.
 
+The Deployment and Service use the Argo CD annotation
+`argocd.argoproj.io/sync-options: ServerSideApply=true`. Client-side strategic
+merge can collapse TCP and UDP entries sharing port 443, leaving UDP absent
+even when Argo CD reports Synced. Check the live Service and container port
+lists after deployment; both must include UDP/443.
+
 For Internet access, forward WAN **UDP/443** to **192.168.1.210:443** on the
 router, alongside the existing TCP/443 forward. TCP forwarding alone does not
 carry QUIC. Any intervening firewall must also permit UDP/443.
