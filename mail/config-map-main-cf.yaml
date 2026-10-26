@@ -44,6 +44,8 @@ data:
     smtpd_tls_loglevel = 1
     smtp_tls_note_starttls_offer = yes
     smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+    # Prefer hybrid post-quantum TLS while retaining classical client/server compatibility.
+    tls_eecdh_auto_curves = X25519MLKEM768 X25519 X448 prime256v1 secp384r1 secp521r1
     milter_default_action = accept
     milter_protocol = 6
     smtpd_milters = inet:rspamd.mail.svc.cluster.local:11332
