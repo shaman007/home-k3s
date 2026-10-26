@@ -57,6 +57,7 @@ experimental:
 # Expose via MetalLB using a dedicated LAN VIP for router port-forwards.
 service:
   type: LoadBalancer
+  single: true
   spec:
     externalTrafficPolicy: Local
     loadBalancerClass: metallb-l2
@@ -91,6 +92,9 @@ ports:
   websecure:
     port: 443
     exposedPort: 443
+    http3:
+      enabled: true
+      advertisedPort: 443
     http:
       tls:
         enabled: true

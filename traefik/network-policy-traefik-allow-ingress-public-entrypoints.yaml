@@ -13,6 +13,8 @@ spec:
           port: 80
         - protocol: TCP
           port: 443
+        - protocol: UDP
+          port: 443
         - protocol: TCP
           port: 587
         - protocol: TCP

@@ -136,6 +136,9 @@ spec:
           websecure:
             exposedPort: 443
             port: 443
+            http3:
+              enabled: true
+              advertisedPort: 443
             http:
               tls:
                 enabled: true
@@ -251,6 +254,7 @@ spec:
                       imagePullPolicy: IfNotPresent
                       name: restart-traefik
         service:
+          single: true
           spec:
             externalTrafficPolicy: Local
             loadBalancerClass: metallb-l2
