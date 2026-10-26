@@ -103,7 +103,7 @@ uplinks. Ensure VLAN 30 is tagged end-to-end before changing native VLAN on a no
 Use switch access/native VLAN changes; don't add Talos VLAN subinterfaces for a
 single untagged server network. Verify no client Virtual Network Override conflicts.
 
-Prepare local DNS `api.home.arpa -> 192.168.1.100` with a short TTL. The staged
+Prepare local DNS `api.k8s.my.lan -> 192.168.1.100` with a short TTL. The staged
 `talos-api-endpoint.patch.yaml` changes the canonical endpoint to this stable name
 and adds the current and future IP SANs. Merge with each complete config preserving
 all existing SANs and documents; don't replace existing SAN lists blindly. Validate
@@ -147,7 +147,7 @@ and verify an eligible Traefik endpoint/MetalLB advertiser remaining on the old 
 or explicitly schedule ingress downtime. Do the same for backup-rsync. Do not
 promise that a router will forward ARP advertisements between VLANs.
 
-Before moving `.100`, change `api.home.arpa` to an already migrated healthy
+Before moving `.100`, change `api.k8s.my.lan` to an already migrated healthy
 control-plane address and verify access from all nodes/admin clients. After `.100`
 is healthy on its new address, point DNS to `192.168.30.100`, verify TLS and update
 client endpoint lists. Never point DNS to `.30.100` before it is serving.
