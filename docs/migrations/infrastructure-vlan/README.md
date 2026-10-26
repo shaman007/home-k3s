@@ -7,7 +7,38 @@ Network IaC belongs in `/home/shaman007/git/unifi-infra`, outside this repositor
 ## Target addresses
 
 VLAN 30, gateway `192.168.30.1/24`; DHCP dynamic range `.50`–`.99`.
-Disable IPv6 initially rather than leaving an unreviewed routing path.
+**Mandatory requirement: working outbound IPv6. An IPv4-only Infrastructure
+VLAN is not an acceptable migration outcome.** Use dual-stack host networking:
+IPv4 `192.168.30.0/24` plus IPv6 `2a02:e98:c0:181e::/64`, with gateway
+`2a02:e98:c0:181e::1`, SLAAC and router advertisements. This /64 is within
+Faster's statically routed `2a02:e98:c0:1800::/56`, confirmed in the ISP email
+“Re: IPv4 adresa Francouzska 95” dated 17 June 2021. Verify upstream routing
+still works before moving production hosts; no DHCPv6-PD or WAN change is assumed.
+
+IPv6 acceptance is a hard stop gate for the first node move, each subsequent
+node move, HA cutover and final sign-off:
+
+- From a test client on VLAN 30, then from every migrated node and HA, verify a
+  global IPv6 address in the new /64, a usable default route, working DNS and an
+  IPv6-forced HTTPS request to a known externally reachable IPv6 destination.
+  Record destination, source address and result. Test DNS resolution separately
+  from IPv6 connectivity so IPv4 fallback cannot hide a broken IPv6 path.
+- Permit outbound IPv6 and established/related replies. Allow necessary ICMPv6
+  for neighbor/router discovery and path-MTU discovery; do not block ICMPv6
+  wholesale. Test larger transfers and connections beyond only the gateway.
+- Enforce equivalent IPv4/IPv6 inter-VLAN isolation and block unsolicited inbound
+  WAN IPv6. Verify these with external and cross-VLAN probes, not only rule review.
+- Verify IPv6 egress from each application workload that requires it. IPv6 on
+  nodes does not provide native IPv6 connectivity to IPv4-only Pods automatically.
+  Before migration, identify those workloads and validate an explicit supported
+  egress design (dual-stack Pod networking or an appropriate application proxy).
+  Keeping Pod/Service CIDRs unchanged is conditional on meeting this requirement;
+  any required CNI/CIDR change needs a separate reviewed migration plan.
+- Do not accept disabling IPv6 as a workaround for a failed cutover; stop and
+  repair the path or roll back the affected host.
+
+Public IPv6 ingress and public AAAA records are optional and outside this
+requirement. Existing IPv4 ingress must keep working.
 Keep Kubernetes Pod `10.42.0.0/16` and Service `10.43.0.0/16` networks unchanged.
 
 | Device/service | Current | Target | Switch port |
@@ -80,7 +111,8 @@ rules that permit the following, with established/related return traffic:
 - Admin LAN/authorized VPN clients to Infrastructure management and application ports.
 - Infrastructure to gateway DNS/NTP and the Dream Machine Protect API/stream services
   HA actually uses. Keep recorder on gateway; cameras stay on IoT VLAN 20.
-- Infrastructure outbound Internet for current workloads; restrict later from evidence.
+- Infrastructure outbound Internet over both IPv4 and IPv6 for current workloads;
+  outbound IPv6 must pass the mandatory acceptance gate above.
 - Temporary old/new node IP sets to each other for the migration. Prefer a temporary
   all-protocol rule scoped to the six exact old/new node IPs over an incomplete port
   guess; include Pod-network routed traffic if the observed Cilium path needs it.
@@ -133,7 +165,8 @@ For each node, align DHCP reservation and native VLAN in the maintenance window,
 then force lease renewal using the validated Talos procedure. Do not move the next
 node until the current node has all of:
 
-- Direct Talos management access at the new IP, expected interface/routes and DNS.
+- Direct Talos management access at the new IP, expected interface/routes and DNS,
+  plus verified outbound IPv6 meeting the mandatory gate above.
 - Updated etcd peer/client URLs and all three healthy members with caught-up indexes.
 - Kubernetes Ready with the correct InternalIP; working Cilium cross-node Pod traffic,
   service DNS, API access, and no stale tunnel/node address failures.
