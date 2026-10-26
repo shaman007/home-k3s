@@ -1,0 +1,10 @@
+# STAGED ONLY. Merge into each node's COMPLETE configuration; preserve existing SANs.
+# First create api.home.arpa -> 192.168.1.100 and verify DNS from every node.
+cluster:
+  controlPlane:
+    endpoint: https://api.home.arpa:6443
+  apiServer:
+    certSANs:
+      - api.home.arpa
+      - 192.168.1.100
+      - 192.168.30.100

@@ -1,0 +1,43 @@
+--- a/metallb/ip-address-pool-public-ingress.yaml
++++ b/metallb/ip-address-pool-public-ingress.yaml
+@@ -6,5 +6,5 @@
+   namespace: metallb-system
+ spec:
+   addresses:
+-    - 192.168.1.210/32
+-    - 192.168.1.213/32
++    - 192.168.30.210/32
++    - 192.168.30.213/32
+--- a/argocd/application-traefik.yaml
++++ b/argocd/application-traefik.yaml
+@@ -262,7 +262,7 @@
+           spec:
+             externalTrafficPolicy: Local
+             loadBalancerClass: metallb-l2
+-            loadBalancerIP: 192.168.1.210
++            loadBalancerIP: 192.168.30.210
+           type: LoadBalancer
+         resources:
+           requests:
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -65,7 +65,7 @@
+   spec:
+     externalTrafficPolicy: Local
+     loadBalancerClass: metallb-l2
+-    loadBalancerIP: 192.168.1.210
++    loadBalancerIP: 192.168.30.210
+
+ resources:
+   requests:
+--- a/backup-rsync/service-backup-rsync.yaml
++++ b/backup-rsync/service-backup-rsync.yaml
+@@ -9,7 +9,7 @@
+ spec:
+   type: LoadBalancer
+   loadBalancerClass: metallb-l2
+-  loadBalancerIP: 192.168.1.213
++  loadBalancerIP: 192.168.30.213
+   externalTrafficPolicy: Local
+   selector:
+     app: backup-rsync

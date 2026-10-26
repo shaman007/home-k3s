@@ -1,0 +1,458 @@
+[
+  {
+    "file": "CHANGELOG.md",
+    "lines": [
+      760,
+      778,
+      1123,
+      1386,
+      1393,
+      1426,
+      1609,
+      1610,
+      1612,
+      1700,
+      1832,
+      2055,
+      2214,
+      2863,
+      3497,
+      3668,
+      3818,
+      3888,
+      3901,
+      3935,
+      3960,
+      4567,
+      5397,
+      5398,
+      6168,
+      6228,
+      6327,
+      6441,
+      6776,
+      6777,
+      6778,
+      6779,
+      6991,
+      7602,
+      7603,
+      7917,
+      7918,
+      7935,
+      7937,
+      7959,
+      7977,
+      7978,
+      8027,
+      8041,
+      8058,
+      8193,
+      8249,
+      8471,
+      11167,
+      11268,
+      11270,
+      11458,
+      11992
+    ]
+  },
+  {
+    "file": "argocd/application-traefik.yaml",
+    "lines": [
+      161,
+      265
+    ]
+  },
+  {
+    "file": "backup-rsync/config-map-authorized-keys.yaml",
+    "lines": [
+      8
+    ]
+  },
+  {
+    "file": "backup-rsync/network-policy-backup-rsync-allow-ingress-from-lan.yaml",
+    "lines": [
+      16
+    ]
+  },
+  {
+    "file": "backup-rsync/service-backup-rsync.yaml",
+    "lines": [
+      12
+    ]
+  },
+  {
+    "file": "bitwarden/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "canitiser/network-policies-generated.yaml",
+    "lines": [
+      87
+    ]
+  },
+  {
+    "file": "docs/traefik-http3.md",
+    "lines": [
+      5,
+      15,
+      24
+    ]
+  },
+  {
+    "file": "external-secrets/network-policy-external-secrets-allow-egress-kube-api.yaml",
+    "lines": [
+      21
+    ]
+  },
+  {
+    "file": "external-secrets/network-policy-external-secrets-allow-egress-vault-ingress.yaml",
+    "lines": [
+      13
+    ]
+  },
+  {
+    "file": "harbor/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "headlamp/middleware-local-network-only.yaml",
+    "lines": [
+      9
+    ]
+  },
+  {
+    "file": "headlamp/network-policy-headlamp-allow-egress-kubernetes-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "homeassistant/endpoint-slice-ha-external-manual.yaml",
+    "lines": [
+      16
+    ]
+  },
+  {
+    "file": "homeassistant/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "karakeep/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "keycloak/config/master-realm.snapshot.json",
+    "lines": [
+      773
+    ]
+  },
+  {
+    "file": "keycloak/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      27
+    ]
+  },
+  {
+    "file": "kube-system/network-policy-kube-state-metrics-allow-egress-kube-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "kube-system/network-policy-metrics-server-allow-egress-kube-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "kube-system/network-policy-metrics-server-allow-egress-kubelets.yaml",
+    "lines": [
+      15
+    ]
+  },
+  {
+    "file": "kube-system/network-policy-metrics-server-allow-ingress-https.yaml",
+    "lines": [
+      16
+    ]
+  },
+  {
+    "file": "loki/network-policy-loki-allow-egress-kube-api.yaml",
+    "lines": [
+      20
+    ]
+  },
+  {
+    "file": "mastodon/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      48,
+      63
+    ]
+  },
+  {
+    "file": "mastodon/network-policy-mastodon-bookmarked-media-sync-allow-egress-kube-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "metallb/README.md",
+    "lines": [
+      4,
+      9,
+      11,
+      23
+    ]
+  },
+  {
+    "file": "metallb/ip-address-pool-public-ingress.yaml",
+    "lines": [
+      9,
+      10
+    ]
+  },
+  {
+    "file": "metrics/cron-job-external-access-daily-report.yaml",
+    "lines": [
+      61
+    ]
+  },
+  {
+    "file": "metrics/cron-job-platform-health-report.yaml",
+    "lines": [
+      55
+    ]
+  },
+  {
+    "file": "metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml",
+    "lines": [
+      328
+    ]
+  },
+  {
+    "file": "metrics/linux-host-node-exporter/README.md",
+    "lines": [
+      4
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-alloy-kubernetes-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-external-access-daily-report-kubernetes-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-finance-ticker-collector-kubernetes-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-logs-check-kubernetes-api.yaml",
+    "lines": [
+      22
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-platform-health-report-kubernetes-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-prometheus-kubernetes-api.yaml",
+    "lines": [
+      23
+    ]
+  },
+  {
+    "file": "metrics/network-policy-monitoring-allow-egress-prometheus-scrape-targets.yaml",
+    "lines": [
+      101
+    ]
+  },
+  {
+    "file": "nextcloud/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "open-webui/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "openbao/network-policy-openbao.yaml",
+    "lines": [
+      68
+    ]
+  },
+  {
+    "file": "plex/deployment-plex.yaml",
+    "lines": [
+      50
+    ]
+  },
+  {
+    "file": "plex/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  },
+  {
+    "file": "plex/network-policy-plex-allow-egress-discovery.yaml",
+    "lines": [
+      13
+    ]
+  },
+  {
+    "file": "plex/network-policy-plex-allow-ingress-from-lan.yaml",
+    "lines": [
+      13
+    ]
+  },
+  {
+    "file": "plex/service-plex.yaml",
+    "lines": [
+      40
+    ]
+  },
+  {
+    "file": "talos-backup/network-policy-talos-backup.yaml",
+    "lines": [
+      31,
+      32,
+      33
+    ]
+  },
+  {
+    "file": "tests/test_internal_ingress_guards.py",
+    "lines": [
+      58
+    ]
+  },
+  {
+    "file": "tests/test_kubernetes_api_network_policies.py",
+    "lines": [
+      8,
+      9
+    ]
+  },
+  {
+    "file": "tests/test_linux_host_monitoring.py",
+    "lines": [
+      30
+    ]
+  },
+  {
+    "file": "tests/test_network_daily_report.py",
+    "lines": [
+      58
+    ]
+  },
+  {
+    "file": "tools/network-daily-report.py",
+    "lines": [
+      78
+    ]
+  },
+  {
+    "file": "tools/networkpolicy/generate_common_networkpolicies.py",
+    "lines": [
+      38
+    ]
+  },
+  {
+    "file": "tools/networkpolicy/networkpolicies-live.svg",
+    "lines": [
+      570,
+      717,
+      720,
+      726,
+      772,
+      788,
+      810,
+      837,
+      858,
+      885,
+      900,
+      1052,
+      1074,
+      1259,
+      1353,
+      1378,
+      1830,
+      1876,
+      1886,
+      2296,
+      2360,
+      2419,
+      2449,
+      2454,
+      2459,
+      2508,
+      2666
+    ]
+  },
+  {
+    "file": "traefik/ingress-route-block-external-env-probes.yaml",
+    "lines": [
+      15
+    ]
+  },
+  {
+    "file": "traefik/network-policy-traefik-allow-egress-homeassistant-external.yaml",
+    "lines": [
+      14
+    ]
+  },
+  {
+    "file": "traefik/network-policy-traefik-allow-egress-kube-api.yaml",
+    "lines": [
+      21
+    ]
+  },
+  {
+    "file": "traefik/values.yaml",
+    "lines": [
+      68,
+      146
+    ]
+  },
+  {
+    "file": "unifi/poller/deployment-unifi-poller.yaml",
+    "lines": [
+      44
+    ]
+  },
+  {
+    "file": "unifi/poller/network-policy-unifi-poller-allow-egress-to-unifi-controller.yaml",
+    "lines": [
+      15
+    ]
+  },
+  {
+    "file": "wordpress/ingress-route-sensitive-throttle.yaml",
+    "lines": [
+      26
+    ]
+  }
+]

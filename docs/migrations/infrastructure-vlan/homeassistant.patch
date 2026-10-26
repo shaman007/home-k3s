@@ -1,0 +1,19 @@
+--- a/homeassistant/endpoint-slice-ha-external-manual.yaml
++++ b/homeassistant/endpoint-slice-ha-external-manual.yaml
+@@ -13,4 +13,4 @@
+     port: 8123
+ endpoints:
+   - addresses:
+-      - 192.168.1.247
++      - 192.168.30.246
+--- a/traefik/network-policy-traefik-allow-egress-homeassistant-external.yaml
++++ b/traefik/network-policy-traefik-allow-egress-homeassistant-external.yaml
+@@ -11,7 +11,7 @@
+     # Home Assistant external endpoint behind service homeassistant/ha-external.
+     - to:
+         - ipBlock:
+-            cidr: 192.168.1.247/32
++            cidr: 192.168.30.246/32
+       ports:
+         - protocol: TCP
+           port: 8123
