@@ -62,10 +62,14 @@ service:
   single: true
   annotations:
     argocd.argoproj.io/sync-options: ServerSideApply=true
+    metallb.io/loadBalancerIPs: "192.168.30.210,2a02:e98:c0:181e::210"
   spec:
     externalTrafficPolicy: Local
     loadBalancerClass: metallb-l2
-    loadBalancerIP: 192.168.30.210
+    ipFamilyPolicy: RequireDualStack
+    ipFamilies:
+      - IPv4
+      - IPv6
 
 resources:
   requests:
@@ -90,6 +94,12 @@ additionalArguments:
   - --accesslog.fields.headers.names.X-Forwarded-For=keep
 
 ports:
+  smtp:
+    port: 25
+    exposedPort: 25
+    expose:
+      default: true
+    protocol: TCP
   web:
     port: 80
     exposedPort: 80
@@ -144,8 +154,10 @@ extraObjects:
       ipAllowList:
         sourceRange:
           - 192.168.30.0/24
+          - 2a02:e98:c0:181e::/64
           - 192.168.4.0/24
           - 10.42.0.0/16
+          - fd74:67a:1fcf:4200::/56
   - apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:

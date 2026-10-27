@@ -10,6 +10,8 @@ spec:
   ingress:
     - ports:
         - protocol: TCP
+          port: 25
+        - protocol: TCP
           port: 80
         - protocol: TCP
           port: 443

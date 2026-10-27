@@ -1,0 +1,12 @@
+# IPv4 stays primary. IPv6 Pod CIDRs are explicitly assigned through Cilium node annotations.
+machine:
+  kubelet:
+    nodeIP:
+      validSubnets:
+      - 192.168.30.0/24
+      - 2a02:e98:c0:181e::/64
+cluster:
+  network:
+    serviceSubnets:
+    - 10.43.0.0/16
+    - fd74:67a:1fcf:4300::/112

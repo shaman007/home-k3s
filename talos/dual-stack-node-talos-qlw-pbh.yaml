@@ -1,0 +1,3 @@
+machine:
+  nodeAnnotations:
+    network.cilium.io/ipv6-pod-cidr: fd74:67a:1fcf:4201::/64

@@ -1,23 +1,14 @@
 # MetalLB
 
-MetalLB is staged here as the first step toward moving ingress exposure away
-from the single node at `192.168.1.209`.
+MetalLB advertises reserved Layer 2 VIPs on Infrastructure VLAN 30, using
+`loadBalancerClass: metallb-l2`:
 
-Current intent:
+- `192.168.30.210` and `2a02:e98:c0:181e::210`: shared Traefik ingress.
+- `192.168.30.213`: backup-rsync, IPv4 only.
 
-- install MetalLB in `metallb-system`
-- advertise a single Layer 2 VIP for ingress: `192.168.1.210`
-- keep MetalLB scoped behind `loadBalancerClass: metallb-l2`
-- have Traefik claim `192.168.1.210` explicitly via `loadBalancerIP`
+Traefik requests its two addresses through `metallb.io/loadBalancerIPs` and keeps
+IPv4 primary with `RequireDualStack`. The pool and L2 advertisement are reconciled
+by the `metallb-config` Argo application.
 
-Files:
-
-- `namespace-metallb-system.yaml`: namespace with Pod Security labels required
-  by the MetalLB speaker
-- `ip-address-pool-public-ingress.yaml`: reserved ingress VIP pool
-- `l2-advertisement-public-ingress.yaml`: enables Layer 2 announcements for
-  that pool
-
-Before applying the Traefik change live, verify that all k3s server nodes are
-configured with `--disable=servicelb`, then update the router port forwards to
-target `192.168.1.210`.
+See [dual-stack ingress](../docs/migrations/dual-stack-ingress/README.md) for the
+Cilium/Talos allocation model, firewall rules, verification and rollback order.
