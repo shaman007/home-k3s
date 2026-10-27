@@ -1,0 +1,56 @@
+[
+  {
+    "kind": "Deployment",
+    "name": "harbor-core",
+    "node": "talos-qlw-pbh",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "Deployment",
+    "name": "harbor-exporter",
+    "node": "talos-qlw-pbh",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "Deployment",
+    "name": "harbor-jobservice",
+    "node": "talos-qlw-pbh",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "Deployment",
+    "name": "harbor-nginx",
+    "node": "talos-qlw-pbh",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "Deployment",
+    "name": "harbor-portal",
+    "node": "talos-qlw-pbh",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "Deployment",
+    "name": "harbor-registry",
+    "node": "w386",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "StatefulSet",
+    "name": "harbor-database",
+    "node": "w386",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "StatefulSet",
+    "name": "harbor-redis",
+    "node": "w386",
+    "originalNodeSelector": null
+  },
+  {
+    "kind": "StatefulSet",
+    "name": "harbor-trivy",
+    "node": "talos-qlw-pbh",
+    "originalNodeSelector": null
+  }
+]
