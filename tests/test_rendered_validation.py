@@ -154,4 +154,9 @@ class RenderValidationTest(unittest.TestCase):
         files = discovery.tracked_yaml_files(ROOT)
         self.assertNotIn(ROOT / 'talos-existing-storage-volume.yaml', files)
         self.assertFalse(any(p.is_relative_to(ROOT / 'talos') for p in files))
+        migration = ROOT / 'docs/migrations/infrastructure-vlan'
+        hostname_patches = sorted(migration.glob('talos-*-hostname.patch.yaml'))
+        self.assertEqual(3, len(hostname_patches))
+        for path in hostname_patches:
+            self.assertNotIn(path, files)
         self.assertIn(ROOT / 'metrics/cluster-role-platform-health-report.yaml', files)

@@ -13,6 +13,7 @@ EXCLUDED_PREFIXES = (
     "DEPRECATED/",
     "mastodon/chart/",
     "talos/",  # Talos machine configuration is not a Kubernetes API resource.
+    "docs/migrations/infrastructure-vlan/talos-",  # Talos host-config patch artifacts.
     "talos-existing-storage-volume.yaml",
 )
 

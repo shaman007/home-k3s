@@ -52,7 +52,8 @@ spec:
               port: 9090
             periodSeconds: 10
             timeoutSeconds: 2
-            failureThreshold: 30
+            # Allow cold index loading and WAL replay after storage recovery.
+            failureThreshold: 120
           readinessProbe:
             httpGet:
               path: /-/ready
@@ -105,6 +106,12 @@ spec:
               containerPort: 10902
             - name: grpc
               containerPort: 10901
+          startupProbe:
+            tcpSocket:
+              port: grpc
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 120
           readinessProbe:
             tcpSocket:
               port: grpc
