@@ -21,6 +21,9 @@ Home Assistant remains on its old LAN addresses; its migration is deferred by th
   recovered. This does not establish independent external reachability.
 - Added Infrastructure to both the shared internal ingress guard and Headlamp's
   separate LAN guard. Both Argo CD and Headlamp returned 200 from `.30.79`.
+  WireGuard clients (`192.168.4.0/24`) are also included in both guards. The VPN
+  gateway DNS resolver returned `.30.210`, and the user verified Headlamp opens
+  from a WireGuard-connected client.
 - Restored recorded replica counts, scheduled jobs and migration reconciliation
   holds. The pre-existing `karakeep` and `mempalace` Argo holds remain. Removed all
   temporary migration NetworkPolicies after checking their permanent replacements,
@@ -38,7 +41,10 @@ Home Assistant remains on its old LAN addresses; its migration is deferred by th
   NetworkPolicy bundle checks. Ingress guard tests now require the new subnet.
 - Cilium completed its reconciliation rollout with 3/3 agents and Envoy pods ready.
   Longhorn recovery included read-only mounts and automatic detach/reattach of the
-  Prometheus and Harbor registry volumes; monitor their recovery and replica rebuilds.
+  Prometheus and Harbor registry volumes. Registry logs showed eight-second I/O
+  timeouts during rebuilding; reduced replica rebuild concurrency from five per node
+  to one. Prometheus/Thanos startup grace is twenty minutes to allow cold index and
+  WAL recovery. Monitor volume recovery and replica rebuilds.
 
 The sections below record preparation and earlier execution stages. Their old
 addresses, temporary rules and incomplete-stage statements are historical.
