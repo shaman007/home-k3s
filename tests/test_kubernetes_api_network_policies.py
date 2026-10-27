@@ -33,7 +33,7 @@ class KubernetesApiNetworkPolicyTest(unittest.TestCase):
                     continue
                 if not has_port(document, 443):
                     continue
-                if CONTROL_PLANE_LAN_CIDR not in document:
+                if any(cidr not in document for cidr in (CONTROL_PLANE_LAN_CIDR, "192.168.30.0/24")):
                     offenders.append(str(path.relative_to(ROOT)))
 
         self.assertEqual([], sorted(set(offenders)))

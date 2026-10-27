@@ -56,6 +56,37 @@ All production node/HA addresses and their access-port assignments, MetalLB VIPs
 port forwards and ingress DNS targets remain on their original network. Current
 Pod/Service networks remain IPv4-only. HA migration has not started.
 
+## Rolling migration checkpoint — 2026-10-27 10:27 UTC
+
+The owner confirmed console access and completed PVC backups, and authorized changes
+with predictable service downtime. A fresh encrypted etcd snapshot was downloaded at
+10:08 UTC, revision 123887914, SHA256
+`443273a30ea9ecda7f386a021455776488b34bb502270e515928a47aaf3b676d`.
+Decryption, integrity inspection and an isolated etcdutl restore passed.
+
+Expanded 18 node-address NetworkPolicy manifests and their common generator to allow
+both node subnets. Installed equivalent temporary supplemental live policies labeled
+`migration=infrastructure-vlan30`, preserving the original policies and their Argo
+ownership. Remove these supplements after the changed manifests are pushed and synced.
+
+Traefik reconciliation is temporarily paused (`skip-reconcile=true`). Its Deployment
+has a temporary `kubernetes.io/hostname=talos-qlw-pbh` nodeSelector to retain the old
+VIP during migration. Removed that node's persistent Talos load-balancer exclusion
+using `talos-enable-ingress.patch.yaml`; a Kubernetes label removal alone was restored
+by Talos. Verified the relocated endpoint, MetalLB L2 advertisement and HTTPS 200.
+
+Requested a graceful reboot of w386 and changed its reservation/port 16 to VLAN 30.
+It continued answering ARP on its old address while the new address remained absent.
+Restored only w386's original reservation and native port to preserve its shutdown
+network path. The other two etcd members remained healthy with matching indexes.
+w386 recovered at its original address; Talos services, Kubernetes Ready and three-member
+etcd synchronization were verified. Its restarted OpenBao member was unsealed using
+protected workstation recovery material. Longhorn replicas are rebuilding; wait for
+healthy storage before further moves. The owner reports that the console is unreliable.
+Validate a timed, automatically reversible explicit network configuration before
+retrying; do not assume shutdown has finished when a reboot request returns. Encrypted per-node rollback
+state is outside Git under `~/.local/state/infrastructure-vlan-migration/`.
+
 ## Target addresses
 
 VLAN 30, gateway `192.168.30.1/24`; DHCP dynamic range `.50`–`.99`.

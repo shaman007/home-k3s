@@ -35,7 +35,7 @@ WEB_PORTS = [
 ]
 
 KUBERNETES_API_CLUSTER_IP = "10.43.0.1/32"
-KUBERNETES_API_CONTROL_PLANE = "192.168.1.0/24"
+KUBERNETES_API_CONTROL_PLANES = ("192.168.1.0/24", "192.168.30.0/24")
 
 
 class NoAliasDumper(yaml.SafeDumper):
@@ -150,7 +150,7 @@ def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str,
                 "ports": [{"protocol": "TCP", "port": 443}],
             },
             {
-                "to": [ip_block_peer(KUBERNETES_API_CONTROL_PLANE)],
+                "to": [ip_block_peer(cidr) for cidr in KUBERNETES_API_CONTROL_PLANES],
                 "ports": [{"protocol": "TCP", "port": 6443}],
             },
         ]

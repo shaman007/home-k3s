@@ -14,6 +14,8 @@ spec:
     - from:
         - ipBlock:
             cidr: 192.168.1.0/24
+        - ipBlock:
+            cidr: 192.168.30.0/24
       ports:
         - protocol: TCP
           port: 10250

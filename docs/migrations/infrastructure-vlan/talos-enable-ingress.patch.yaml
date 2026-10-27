@@ -1,0 +1,6 @@
+# Remove Talos's persistent control-plane exclusion from the temporary ingress host.
+# Apply only to talos-qlw-pbh; its original configuration carried this label.
+machine:
+  nodeLabels:
+    node.kubernetes.io/exclude-from-external-load-balancers:
+      $patch: delete
