@@ -1,7 +1,43 @@
-# Infrastructure VLAN migration — phase 1 in progress
+# Infrastructure VLAN migration
 
 Prepared 2026-10-26; migration started 2026-10-27. Network IaC is in
 `/home/shaman007/git/unifi-infra`, outside this repository.
+
+## Current checkpoint — 2026-10-27
+
+The three Talos nodes have moved to VLAN 30 using DHCP reservations and SLAAC:
+`talos-qlw-pbh` `.30.100`, `w386` `.30.209`, and `talos-d4h-k5m` `.30.242`.
+The canonical API `api.k8s.my.lan` now points to `.30.100`; ingress uses `.30.210`
+and backup-rsync uses `.30.213`. Existing etcd member identities were preserved.
+Home Assistant remains on its old LAN addresses; its migration is deferred by the user.
+
+- Updated DNS records and port forwards to the new targets. The separate UniFi
+  OpenTofu configuration adopted the existing reservations and switch ports; its
+  final plan showed no changes. Preserved the full switch port-override array,
+  including unmanaged false/empty flags. Disabled the obsolete old-node transition
+  allowance. IDS/IPS remains disabled.
+- Allowed Infrastructure TCP/443 to its own ingress VIP for gateway hairpin traffic.
+  Public-hostname Harbor HTTPS from VLAN 30 returned 200. Application image pulls
+  recovered. This does not establish independent external reachability.
+- Added Infrastructure to both the shared internal ingress guard and Headlamp's
+  separate LAN guard. Both Argo CD and Headlamp returned 200 from `.30.79`.
+- Restored recorded replica counts, scheduled jobs and migration reconciliation
+  holds. The pre-existing `karakeep` and `mempalace` Argo holds remain. Removed all
+  temporary migration NetworkPolicies after checking their permanent replacements,
+  and restored original Harbor/Traefik workload placement.
+- Post-migration etcd backup `home-k8s-2026-10-27T11:32:34Z.snap.zst.age` was
+  downloaded to the workstation, decrypted, integrity-checked, and restored using
+  isolated etcdutl in tmpfs. Snapshot revision: `123976744`. This remains an isolated
+  snapshot restore, not a full Talos-cluster recovery rehearsal.
+- Loki returned historical canary logs from before maintenance and fresh entries
+  after recovery. Retain PVC policy and discovery of not-ready members are now
+  configured. These checks do not prove recovery of the deleted local WAL.
+- Cilium completed its reconciliation rollout with 3/3 agents and Envoy pods ready.
+  Longhorn recovery included read-only mounts and automatic detach/reattach of the
+  Prometheus and Harbor registry volumes; monitor their recovery and replica rebuilds.
+
+The sections below record preparation and earlier execution stages. Their old
+addresses, temporary rules and incomplete-stage statements are historical.
 
 ## Execution checkpoint — 2026-10-27
 
