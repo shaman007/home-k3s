@@ -55,3 +55,8 @@ Existing Karakeep and MemPalace holds were removed during this change. Fresh
 Longhorn backups completed for both Karakeep PVCs before its queued upgrades.
 Karakeep 0.34.1, Chrome 156 and Meilisearch 1.56.0 became ready; the database
 upgrade tasks succeeded and the existing search indexes remained present.
+
+Internal AI routes have explicit private-CA certificates, rather than relying on
+another controller's certificate store. ComfyUI and Ollama permit TCP 8089 only
+to HTTP-01 solver Pods; a private-controller egress exception reaches Ollama's
+solver without broadening its application policy.

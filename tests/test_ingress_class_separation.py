@@ -43,6 +43,20 @@ class IngressClassSeparationTest(unittest.TestCase):
         self.assertTrue(required)
         self.assertTrue(required.issubset(set(private_flags)))
 
+    def test_every_private_ingress_declares_its_own_tls_secret(self):
+        for path in ROOT.rglob("ingress*.yaml"):
+            if "DEPRECATED" in path.parts:
+                continue
+            for doc in yaml.safe_load_all(path.read_text()):
+                if not isinstance(doc, dict) or doc.get("kind") != "Ingress":
+                    continue
+                if doc["spec"].get("ingressClassName") != "traefik-private":
+                    continue
+                hosts = {rule["host"] for rule in doc["spec"].get("rules", [])}
+                tls = doc["spec"].get("tls", [])
+                covered = {host for entry in tls if entry.get("secretName") for host in entry.get("hosts", [])}
+                self.assertTrue(hosts.issubset(covered), str(path))
+
     def test_every_route_is_explicitly_classified(self):
         count = 0
         for path in ROOT.rglob("*.yaml"):
