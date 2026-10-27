@@ -620,10 +620,14 @@ data:
             target_label: kubernetes_pod_name
 
       - job_name: 'kube-state-metrics'
+        scrape_interval: 30s
+        scrape_timeout: 20s
         static_configs:
           - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
 
       - job_name: 'kubernetes-cadvisor'
+        scrape_interval: 30s
+        scrape_timeout: 20s
         scheme: https
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
