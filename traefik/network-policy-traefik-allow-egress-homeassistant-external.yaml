@@ -11,7 +11,7 @@ spec:
     # Home Assistant external endpoint behind service homeassistant/ha-external.
     - to:
         - ipBlock:
-            cidr: 192.168.1.247/32
+            cidr: 192.168.30.246/32
       ports:
         - protocol: TCP
           port: 8123

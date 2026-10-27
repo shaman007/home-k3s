@@ -13,4 +13,4 @@ ports:
     port: 8123
 endpoints:
   - addresses:
-      - 192.168.1.247
+      - 192.168.30.246
