@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: w386.k8s.my.lan
+auto:
+  $patch: delete

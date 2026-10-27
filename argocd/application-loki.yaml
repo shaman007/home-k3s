@@ -109,6 +109,10 @@ spec:
                   period: 24h
 
         singleBinary:
+          persistence:
+            enableStatefulSetAutoDeletePVC: false
+            whenDeleted: Retain
+            whenScaled: Retain
           priorityClassName: homelab-essential
           replicas: 1
           extraEnv:

@@ -58,7 +58,7 @@ spec:
                 - name: PROMETHEUS_BASE_URL
                   value: http://prometheus-service.monitoring.svc.cluster.local:9090
                 - name: KUBERNETES_API_URL
-                  value: https://192.168.1.100:6443
+                  value: https://kubernetes.default.svc:443
                 - name: PUBLIC_HOST_SUFFIXES
                   value: andreybondarenko.com,shaman007.com
                 - name: HARBOR_HOST

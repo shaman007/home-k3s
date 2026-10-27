@@ -87,6 +87,26 @@ Validate a timed, automatically reversible explicit network configuration before
 retrying; do not assume shutdown has finished when a reboot request returns. Encrypted per-node rollback
 state is outside Git under `~/.local/state/infrastructure-vlan-migration/`.
 
+## Application maintenance shutdown — owner authorized
+
+Recorded original replica counts, CronJob suspension and Argo reconciliation flags in
+`application-replicas.json`. Paused all 84 Argo applications, suspended 14 application
+CronJobs (preserving those already suspended), and requested zero replicas for 87
+application Deployments/StatefulSets (including pre-existing zero counts). Retained
+platform controllers in the listed namespaces. No active application Jobs required
+suspension. Application services are intentionally unavailable during this window.
+Restore original counts in dependency order after network verification: OpenBao and
+unseal, SeaweedFS, Harbor, then databases and applications. Restore scheduling and
+reconciliation annotations only after live configuration and Git desired state agree.
+
+The timed static-network test confirmed automatic rollback, but exposed that DHCP
+also provided w386's hostname. The temporary generated alias `talos-oa1-nj3` was
+cordoned and removed with its orphaned system pods; no application workloads or
+Longhorn disks belonged to it. Fixed the existing hostname `w386.k8s.my.lan` in Talos
+without rebooting; verified effective hostname and the original three etcd members.
+Pin each node's current hostname before removing DHCP. Do not repeat the hostname
+change or use generated node identities during renumbering.
+
 ## Target addresses
 
 VLAN 30, gateway `192.168.30.1/24`; DHCP dynamic range `.50`–`.99`.
@@ -325,3 +345,42 @@ then matched the encrypted baseline exactly. Port 6 remained on Infrastructure.
 Before future switch-device writes, capture complete raw overrides, inspect the
 plan, and recompare/restore omitted flags afterward. Do not assume an unchanged
 native VLAN means every other port setting was preserved by the provider.
+
+## Loki retention incident during maintenance shutdown
+
+The pre-shutdown retention check was missed. Loki's StatefulSet had
+`whenScaled: Delete`, and scaling it to zero deleted `storage-loki-0` / volume
+`pvc-64003920-403f-44a8-901c-6d5117cca6c0`. No Longhorn backup for namespace Loki
+was found. Other StatefulSets had Retain behavior. Loki's durable chunks/index
+remain configured in the separate `loki` S3 bucket; local WAL data loss cannot yet
+be ruled out. Changed live StatefulSet retention to Retain for both scale/delete.
+Persist the matching chart setting and verify S3 history and ingestion after restore.
+Do not describe this local PVC as successfully backed up or recovered.
+
+## Verified node procedure and first completed move
+
+w386 is Ready at `192.168.30.209`, its existing etcd member ID is unchanged, and
+peer/client URLs point to the new address. All three members reached matching applied
+indexes with no errors. Cilium health reached 3/3 nodes and endpoints. Host DNS and a
+1 MiB IPv6 HTTPS transfer passed with source
+`2a02:e98:c0:181e:ce28:aaff:fe47:715` (HTTP 200).
+
+The effective final networking uses the new UniFi DHCP reservation and SLAAC, retaining
+the original host-networking design. Experimental static network patches are not the
+final configuration. Persisted fixed hostnames by merging the full **active**
+`v1alpha1` configuration in memory and applying the complete validated configuration
+without reboot; verified both `persistent` and active resource documents afterward.
+Do not select the first listed machine-config resource: it can be a different
+persistent snapshot. Preserve active documents and avoid replaying stale resources.
+
+Explicit etcd peer-URL updates are required: the automatic Talos advertised-peer
+controller waits for a healthy member, which cannot reliably complete this renumber
+on its own. Use version-matched etcdctl `member update` through the healthy quorum,
+changing only the existing member's peer URL. No member removal, bootstrap or data
+reset was performed. Ephemeral client TLS material was held only in memfd/in memory.
+For subsequent moves, keep application volumes detached, persist the unchanged
+hostname, set the new DHCP reservation, reboot and change the native port, then
+explicitly update that member's peer URL through the two healthy members. Verify
+new management, correct node identity, caught-up etcd, Cilium and outbound IPv6 before
+continuing. Canonical API DNS now points to verified `192.168.30.209` before moving
+its former target `.1.100`.

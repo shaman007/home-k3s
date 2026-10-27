@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: talos-d4h-k5m
+auto:
+  $patch: delete

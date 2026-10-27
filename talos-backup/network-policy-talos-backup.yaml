@@ -28,8 +28,8 @@ spec:
       ports:
         - {protocol: TCP, port: 8333}
     - to:
-        - ipBlock: {cidr: 192.168.1.100/32}
-        - ipBlock: {cidr: 192.168.1.209/32}
-        - ipBlock: {cidr: 192.168.1.242/32}
+        - ipBlock: {cidr: 192.168.30.100/32}
+        - ipBlock: {cidr: 192.168.30.209/32}
+        - ipBlock: {cidr: 192.168.30.242/32}
       ports:
         - {protocol: TCP, port: 50000}

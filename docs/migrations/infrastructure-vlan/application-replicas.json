@@ -1,0 +1,1031 @@
+{
+  "platformNamespacesKept": [
+    "argocd",
+    "cert-manager",
+    "external-secrets",
+    "gpu-operator",
+    "kube-system",
+    "longhorn-system",
+    "metallb-system",
+    "reloader"
+  ],
+  "workloads": [
+    {
+      "kind": "Deployment",
+      "namespace": "backup-rsync",
+      "name": "backup-rsync",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "bastioncam",
+      "name": "bastioncam",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "bitwarden",
+      "name": "bitwarden",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "ca-scanner",
+      "name": "ca-report-ui",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "clamav",
+      "name": "clamav",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "comfyui",
+      "name": "comfyui",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "connectivity-exporter",
+      "name": "connectivity-exporter",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "convertx",
+      "name": "convertx",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "dawarich",
+      "name": "dawarich",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "dawarich",
+      "name": "photon",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "harbor",
+      "name": "harbor-core",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "harbor",
+      "name": "harbor-exporter",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "harbor",
+      "name": "harbor-jobservice",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "harbor",
+      "name": "harbor-nginx",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "harbor",
+      "name": "harbor-portal",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "harbor",
+      "name": "harbor-registry",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "headlamp",
+      "name": "headlamp",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "immich",
+      "name": "immich-machine-learning",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "immich",
+      "name": "immich-server",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "karakeep",
+      "name": "karakeep",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "lenka",
+      "name": "mysql",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "loki",
+      "name": "loki-gateway",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mail",
+      "name": "dovecot",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mail",
+      "name": "postfix",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mail",
+      "name": "rspamd",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mail",
+      "name": "unbound",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mastodon",
+      "name": "mastodon-sidekiq-all-queues",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mastodon",
+      "name": "mastodon-streaming",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mastodon",
+      "name": "mastodon-web",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "matrix",
+      "name": "matrix",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "matrix",
+      "name": "nginx-matrix",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "mempalace",
+      "name": "mempalace",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "minecraft",
+      "name": "minecraft",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "alertmanager",
+      "replicas": 3
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "external-access-analytics-exporter",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "finance-ticker-exporter",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "grafana",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "platform-health-exporter",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "prometheus-deployment",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "thanos-compactor",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "thanos-querier",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "monitoring",
+      "name": "thanos-store-gateway",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "nextcloud",
+      "name": "collabora-collabora-online",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "nextcloud",
+      "name": "mysql-nextcloud",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "nllb",
+      "name": "nllb",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "ollama",
+      "name": "ollama",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "ollama",
+      "name": "ollama-small",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "open-terminal",
+      "name": "open-terminal",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "open-webui",
+      "name": "open-webui",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "plex",
+      "name": "plex",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "ripe-atlas",
+      "name": "ripe-atlas",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "searxng",
+      "name": "searxng",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "seaweedfs",
+      "name": "seaweedfs-s3",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "spotify",
+      "name": "ferretdb",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "spotify",
+      "name": "server",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "spotify",
+      "name": "web",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "stirling-pdf",
+      "name": "stirling-pdf",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "traefik",
+      "name": "traefik",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "unifi",
+      "name": "unifi-poller",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "wordpress",
+      "name": "mysql-wordpress",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "wordpress",
+      "name": "php",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "wordpress",
+      "name": "wordpress-analytics-exporter",
+      "replicas": 1
+    },
+    {
+      "kind": "Deployment",
+      "namespace": "year",
+      "name": "year",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "bitwarden",
+      "name": "bitwarden-postgres",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "dawarich",
+      "name": "dawarich-postgres",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "dawarich",
+      "name": "valkey-dawarich",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "harbor",
+      "name": "harbor-database",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "harbor",
+      "name": "harbor-redis",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "harbor",
+      "name": "harbor-trivy",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "hister",
+      "name": "hister",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "immich",
+      "name": "immich-postgres",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "immich",
+      "name": "immich-valkey",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "karakeep",
+      "name": "meilisearch",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "keycloak",
+      "name": "keycloak",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "keycloak",
+      "name": "keycloak-postgres",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "loki",
+      "name": "loki",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "loki",
+      "name": "loki-chunks-cache",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "loki",
+      "name": "loki-results-cache",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "mail",
+      "name": "valkey",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "mastodon",
+      "name": "mastodon-postgres",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "mastodon",
+      "name": "valkey",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "nextcloud",
+      "name": "nextcloud-web",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "nextcloud",
+      "name": "valkey",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "openbao",
+      "name": "openbao",
+      "replicas": 3
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "opensearch",
+      "name": "opensearch",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "spotify",
+      "name": "ferretdb-postgres",
+      "replicas": 1
+    },
+    {
+      "kind": "StatefulSet",
+      "namespace": "wordpress",
+      "name": "valkey",
+      "replicas": 1
+    }
+  ],
+  "cronjobs": [
+    {
+      "namespace": "image-builder",
+      "name": "podman-builder",
+      "suspend": false
+    },
+    {
+      "namespace": "keycloak",
+      "name": "oidc-token-renewer",
+      "suspend": false
+    },
+    {
+      "namespace": "mail",
+      "name": "rspamd-spam-trainer",
+      "suspend": false
+    },
+    {
+      "namespace": "mastodon",
+      "name": "bookmarked-media-sync",
+      "suspend": false
+    },
+    {
+      "namespace": "monitoring",
+      "name": "external-access-daily-report",
+      "suspend": false
+    },
+    {
+      "namespace": "monitoring",
+      "name": "finance-ticker-collector",
+      "suspend": false
+    },
+    {
+      "namespace": "monitoring",
+      "name": "logs-check",
+      "suspend": false
+    },
+    {
+      "namespace": "monitoring",
+      "name": "platform-health-report",
+      "suspend": false
+    },
+    {
+      "namespace": "nextcloud",
+      "name": "nextcloud",
+      "suspend": false
+    },
+    {
+      "namespace": "ooni",
+      "name": "ooniprobe",
+      "suspend": false
+    },
+    {
+      "namespace": "openbao",
+      "name": "vault-pki-renewer",
+      "suspend": false
+    },
+    {
+      "namespace": "talos-backup",
+      "name": "talos-backup",
+      "suspend": false
+    },
+    {
+      "namespace": "traefik",
+      "name": "geoip-db-refresh",
+      "suspend": false
+    },
+    {
+      "namespace": "wordpress",
+      "name": "wordpress-daily-report",
+      "suspend": false
+    }
+  ],
+  "activeJobs": [],
+  "applications": [
+    {
+      "namespace": "argocd",
+      "name": "alloy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "argocd-applications",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "argocd-deploy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "argocd-install",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "backup-rsync",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "bastioncam",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "bitwarden",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "ca-scanner",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "cert-manager",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "cilium",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "clamav",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "collabora",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "comfyui",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "connectivity-exporter-core",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "connectivity-exporter-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "convertx",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "coredns-custom",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "dawarich",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "element",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "external-access-analytics",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "external-secrets",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "external-secrets-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "finance-ticker",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "gpu-operator",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "grafana",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "harbor",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "harbor-custom",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "harbor-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "headlamp",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "hister",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "homeassistant",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "image-builder",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "immich",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "karakeep",
+      "skipReconcile": "true"
+    },
+    {
+      "namespace": "argocd",
+      "name": "keycloak",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "kube-node-exporter",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "kube-state-metrics",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "kubernetes-prometheus",
+      "skipReconcile": "true"
+    },
+    {
+      "namespace": "argocd",
+      "name": "kubernetes-snapshot-controller",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "lenka",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "logs-check",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "loki",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "loki-external-secrets",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "loki-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "longhorn",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "longhorn-custom",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "mail",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "mastodon",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "mastodon-custom",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "mempalace",
+      "skipReconcile": "true"
+    },
+    {
+      "namespace": "argocd",
+      "name": "metallb",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "metallb-config",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "metrics-server",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "metrics-server-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "minecraft",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "monitoring-ingress",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "monitoring-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "namespaces",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "nextcloud",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "nllb",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "ollama",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "ollama-small",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "ooni",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "open-terminal",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "open-webui",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "openbao",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "openbao-custom",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "openbao-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "opensearch",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "platform-health",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "plex",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "reloader",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "ripe-atlas",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "searxng",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "seaweedfs",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "stirling-pdf",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "talos-backup",
+      "skipReconcile": "true"
+    },
+    {
+      "namespace": "argocd",
+      "name": "thanos",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "traefik",
+      "skipReconcile": "true"
+    },
+    {
+      "namespace": "argocd",
+      "name": "traefik-network-policy",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "unifi-exporter",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "wordpress",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "year",
+      "skipReconcile": null
+    },
+    {
+      "namespace": "argocd",
+      "name": "your-spotify",
+      "skipReconcile": null
+    }
+  ]
+}
