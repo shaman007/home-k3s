@@ -24,6 +24,9 @@ spec:
           value: 'true'
       values: |
         deploymentMode: SingleBinary
+        memberlist:
+          service:
+            publishNotReadyAddresses: true
         global:
           priorityClassName: homelab-essential
         chunksCache:
