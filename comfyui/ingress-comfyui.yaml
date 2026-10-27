@@ -13,6 +13,10 @@ metadata:
     app.kubernetes.io/instance: comfyui
     app.kubernetes.io/managed-by: argoCD
 spec:
+  tls:
+    - hosts:
+        - comfyui.w386.k8s.my.lan
+      secretName: comfyui-vault-acme-tls
   ingressClassName: traefik-private
   rules:
     - host: comfyui.w386.k8s.my.lan

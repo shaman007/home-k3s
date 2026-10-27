@@ -13,6 +13,10 @@ metadata:
     app.kubernetes.io/instance: ollama
     app.kubernetes.io/managed-by: argoCD
 spec:
+  tls:
+    - hosts:
+        - ollama.w386.k8s.my.lan
+      secretName: ollama-vault-acme-tls
   ingressClassName: traefik-private
   rules:
     - host: ollama.w386.k8s.my.lan

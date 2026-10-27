@@ -13,6 +13,10 @@ metadata:
     app.kubernetes.io/instance: open-webui
     app.kubernetes.io/managed-by: argoCD
 spec:
+  tls:
+    - hosts:
+        - chat.w386.k8s.my.lan
+      secretName: open-webui-internal-vault-acme-tls
   ingressClassName: traefik-private
   rules:
     - host: chat.w386.k8s.my.lan
