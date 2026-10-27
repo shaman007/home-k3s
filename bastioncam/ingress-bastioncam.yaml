@@ -7,7 +7,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-private
   tls:
     - hosts:
         - bastioncam.w386.k8s.my.lan

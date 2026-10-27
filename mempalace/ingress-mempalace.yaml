@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/instance: mempalace
     app.kubernetes.io/managed-by: argoCD
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-private
   tls:
     - hosts:
         - mempalace.w386.k8s.my.lan

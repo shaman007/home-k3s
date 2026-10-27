@@ -14,7 +14,7 @@ spec:
     solvers:
       - http01:
           ingress:
-            ingressClassName: traefik
+            ingressClassName: traefik-private
             podTemplate:
               spec:
                 resources:

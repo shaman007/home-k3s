@@ -39,7 +39,7 @@ class VaultAcmeTest(unittest.TestCase):
         )
         self.assertEqual(
             acme["solvers"][0]["http01"]["ingress"]["ingressClassName"],
-            "traefik",
+            "traefik-private",
         )
 
     def test_canary_does_not_replace_a_consumed_secret(self):

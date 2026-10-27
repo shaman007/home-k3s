@@ -4,7 +4,7 @@ metadata:
   name: headlamp
   namespace: headlamp
   annotations:
-    kubernetes.io/ingress.class: "traefik"
+    kubernetes.io/ingress.class: traefik-private
     traefik.ingress.kubernetes.io/router.middlewares: headlamp-local-network-only@kubernetescrd,headlamp-hsts@kubernetescrd
   labels:
     app: headlamp
@@ -12,7 +12,7 @@ metadata:
     app.kubernetes.io/instance: headlamp
     app.kubernetes.io/managed-by: argoCD
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-private
   tls:
     - hosts:
         - headlamp.w386.k8s.my.lan

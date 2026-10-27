@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: private-ingress
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.30.211/32
+  autoAssign: false

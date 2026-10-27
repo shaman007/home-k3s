@@ -79,6 +79,8 @@ spec:
               version: v0.2.2
         ingressRoute:
           dashboard:
+            annotations:
+              kubernetes.io/ingress.class: traefik
             enabled: true
         additionalArguments:
         - --entryPoints.web.allowACMEByPass=true
@@ -152,8 +154,10 @@ spec:
                 enabled: true
         providers:
           kubernetesCRD:
+            ingressClass: traefik
             enabled: true
           kubernetesIngress:
+            ingressClass: traefik
             enabled: true
         extraObjects:
         - apiVersion: traefik.io/v1alpha1
@@ -283,6 +287,12 @@ spec:
             memory: 256Mi
           limits:
             memory: 2Gi
+
+        ingressClass:
+          enabled: true
+          name: traefik
+          isDefaultClass: false
+
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: traefik

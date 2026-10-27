@@ -4,12 +4,12 @@ metadata:
   name: longhorn-ingress
   namespace: longhorn-system
   annotations:
-    kubernetes.io/ingress.class: "traefik"
+    kubernetes.io/ingress.class: traefik-private
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-private
   tls:
     - hosts:
         - longhorn.w386.k8s.my.lan

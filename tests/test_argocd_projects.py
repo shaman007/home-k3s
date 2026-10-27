@@ -26,7 +26,7 @@ PROJECT_PLATFORM = {
     "headlamp", "metallb",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
     "openbao", "openbao-custom", "openbao-network-policy", "reloader", "traefik",
-    "traefik-network-policy",
+    "traefik-network-policy", "traefik-private",
 }
 
 PROJECT_STORAGE = {

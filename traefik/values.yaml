@@ -141,8 +141,10 @@ ports:
 # Enable Kubernetes CRDs/Providers
 providers:
   kubernetesCRD:
+    ingressClass: traefik
     enabled: true
   kubernetesIngress:
+    ingressClass: traefik
     enabled: true
 extraObjects:
   - apiVersion: traefik.io/v1alpha1
@@ -244,6 +246,8 @@ extraObjects:
 # Simple dashboard (optionally exposed via IngressRoute)
 ingressRoute:
   dashboard:
+    annotations:
+      kubernetes.io/ingress.class: traefik
     enabled: true
 
 affinity:
@@ -262,3 +266,8 @@ persistence:
   accessMode: ReadWriteOnce
   storageClass: longhorn
   volumeName: pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e
+
+ingressClass:
+  enabled: true
+  name: traefik
+  isDefaultClass: false

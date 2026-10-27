@@ -5,9 +5,10 @@ metadata:
   name: grafana-ingress
   namespace: monitoring
   annotations:
-    kubernetes.io/ingress.class: "traefik"
+    kubernetes.io/ingress.class: traefik-private
     traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
 spec:
+  ingressClassName: traefik-private
   tls:
     - hosts:
         - grafana.w386.k8s.my.lan

@@ -13,7 +13,7 @@ metadata:
     app.kubernetes.io/instance: ollama
     app.kubernetes.io/managed-by: argoCD
 spec:
-  ingressClassName: traefik
+  ingressClassName: traefik-private
   rules:
     - host: ollama.w386.k8s.my.lan
       http:
