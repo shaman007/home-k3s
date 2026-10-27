@@ -16,9 +16,11 @@ Home Assistant remains on its old LAN addresses; its migration is deferred by th
   final plan showed no changes. Preserved the full switch port-override array,
   including unmanaged false/empty flags. Disabled the obsolete old-node transition
   allowance. IDS/IPS remains disabled.
-- Allowed Infrastructure TCP/443 to its own ingress VIP for gateway hairpin traffic.
+- Allowed Infrastructure TCP/UDP 443 to its own ingress VIP for gateway hairpin traffic.
   Public-hostname Harbor HTTPS from VLAN 30 returned 200. Application image pulls
-  recovered. This does not establish independent external reachability.
+  recovered. The user independently verified public HTTPS over mobile data with
+  WireGuard off; HTTP/3 was also verified directly and via the public hostname from
+  Infrastructure. External HTTP/3 and mail protocol handshakes were not measured.
 - Added Infrastructure to both the shared internal ingress guard and Headlamp's
   separate LAN guard. Both Argo CD and Headlamp returned 200 from `.30.79`.
   WireGuard clients (`192.168.4.0/24`) are also included in both guards. The VPN
@@ -45,6 +47,11 @@ Home Assistant remains on its old LAN addresses; its migration is deferred by th
   timeouts during rebuilding; reduced replica rebuild concurrency from five per node
   to one. Prometheus/Thanos startup grace is twenty minutes to allow cold index and
   WAL recovery. Monitor volume recovery and replica rebuilds.
+
+Final application checks: all 84 Argo applications Healthy; all 74 Prometheus
+scrape targets up. Heavy cAdvisor/kube-state-metrics jobs use 30-second intervals
+and 20-second timeouts. Fedora exporter access is restricted to the three cluster
+node IPs and TCP/9100. Longhorn replica recovery is still in progress.
 
 The sections below record preparation and earlier execution stages. Their old
 addresses, temporary rules and incomplete-stage statements are historical.
