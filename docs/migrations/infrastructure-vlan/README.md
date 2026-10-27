@@ -390,6 +390,35 @@ HA and Kubernetes share a subnet: their direct traffic bypasses gateway policy;
 use another HA VLAN later if host-to-host separation is required. Discovery
 across VLANs and arbitrary device callbacks are not automatically enabled.
 
+## Current access policy — 2026-10-27
+
+Default LAN/Wi-Fi (`192.168.1.0/24`, including its IPv6 subnet) is untrusted.
+Its former blanket Infrastructure allow rule is disabled for both IP families.
+WireGuard (`192.168.4.0/24`) retains management access. Physically connected
+Infrastructure devices retain direct subnet access; this workstation's Ethernet
+stays on Infrastructure by explicit choice.
+
+Untrusted Wi-Fi may reach only the published DMZ destinations: ingress VIP
+`.30.210` TCP 80/443/587/993/4190/25565 and UDP 443/25565, plus Plex `.30.209`
+TCP 32400. WAN port forwards are unchanged, including SMTP WAN 25 to ingress 587.
+Internal HTTPS guards additionally reject the old LAN; they allow Infrastructure,
+WireGuard, and (for the shared guard) cluster Pods. Public-service ports do not
+provide access to private HTTP routes. HA-to-printer and node-to-exporter flows
+retain only their narrow existing exceptions and established replies.
+
+The workstation uses NetworkManager connection `UniFi Client4`, interface
+`wg-unifi`, address `192.168.4.4/32`, with automatic connection enabled. Its
+Infrastructure/VPN routes prefer the tunnel; its public WireGuard endpoint goes
+over Wi-Fi. Normal Internet routing is retained. DNS for `k8s.my.lan` uses
+`192.168.4.1` through the tunnel. The exported profile's existing public key was
+registered in UniFi; no existing peer was replaced. Private keys are stored only
+in the local profile/NetworkManager secret storage, never in Git or OpenTofu.
+
+Verified: VPN HA and Headlamp HTTP 200; Wi-Fi Headlamp HTTP 403; Wi-Fi Kubernetes
+API blocked; Wi-Fi Matrix client versions HTTP 200. SMTP STARTTLS on ingress 587
+and WAN hairpin 25, IMAPS 993, and ManageSieve STARTTLS 4190 completed verified
+TLS 1.3 handshakes from Wi-Fi. These checks do not send mail or authenticate users.
+
 ## Rollback and completion
 
 At each node stop gate, keep the other two nodes unchanged. If the moved node fails,

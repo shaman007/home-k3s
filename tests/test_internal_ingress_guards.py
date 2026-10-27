@@ -42,7 +42,7 @@ class InternalIngressGuardTest(unittest.TestCase):
 
         self.assertEqual([], missing)
 
-    def test_shared_guard_allows_lan_infrastructure_vpn_and_cluster_pods(self):
+    def test_shared_guard_allows_infrastructure_vpn_and_cluster_pods(self):
         application = yaml.safe_load(
             (ROOT / "argocd/application-traefik.yaml").read_text(encoding="utf-8")
         )
@@ -55,16 +55,16 @@ class InternalIngressGuardTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            ["192.168.1.0/24", "192.168.30.0/24", "192.168.4.0/24", "10.42.0.0/16"],
+            ["192.168.30.0/24", "192.168.4.0/24", "10.42.0.0/16"],
             middleware["spec"]["ipAllowList"]["sourceRange"],
         )
 
-    def test_headlamp_guard_allows_lan_infrastructure_and_vpn(self):
+    def test_headlamp_guard_allows_infrastructure_and_vpn(self):
         middleware = yaml.safe_load(
             (ROOT / "headlamp/middleware-local-network-only.yaml").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            ["192.168.1.0/24", "192.168.30.0/24", "192.168.4.0/24"],
+            ["192.168.30.0/24", "192.168.4.0/24"],
             middleware["spec"]["ipAllowList"]["sourceRange"],
         )
 
