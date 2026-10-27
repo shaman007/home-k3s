@@ -1,0 +1,42 @@
+{
+  "timestamp": "2026-10-27T10:53:20.219342+01:00",
+  "phase": "network-and-api-preparation",
+  "api_endpoint": "https://api.k8s.my.lan:6443",
+  "control_planes_api_tls_and_readyz": [
+    "192.168.1.100",
+    "192.168.1.209",
+    "192.168.1.242"
+  ],
+  "production_hosts_renumbered": false,
+  "desktop": {
+    "switch": "USW-16-PoE",
+    "port": 6,
+    "interface": "enp6s0",
+    "mac": "02:30:00:00:00:61",
+    "ipv4": "192.168.30.79",
+    "ipv6": "2a02:e98:c0:181e:af5b:89f3:6c17:d57f",
+    "wifi_management_retained": true,
+    "profile": "Infrastructure Ethernet (temporary)",
+    "ipv4_route_metric": 10000,
+    "wifi_ipv4_route_metric": 600
+  },
+  "checks": {
+    "dhcp": "passed",
+    "slaac": "passed",
+    "dns_over_ipv4": "passed",
+    "dns_over_ipv6": "passed",
+    "ipv4_https": "passed",
+    "forced_ipv6_https": "passed",
+    "ipv6_1mib_transfer": {
+      "result": "passed",
+      "seconds": 0.15666,
+      "bytes": 1048576
+    },
+    "new_vlan_to_old_lan_ipv4_block": "passed versus trusted Wi-Fi positive baseline",
+    "new_vlan_to_old_lan_ipv6_block": "passed versus trusted Wi-Fi positive baseline",
+    "external_unsolicited_ipv6_block": "configured, external probe pending",
+    "full_talos_recovery_rehearsal": "pending",
+    "owner_offline_key_and_console_confirmation": "pending",
+    "original_other_switch_port_overrides": "exactly restored and verified on ports 4,5,8,11,12,14,15,18 after provider omission of false/empty flags"
+  }
+}

@@ -1,8 +1,60 @@
-# Infrastructure VLAN migration — staged, not executed
+# Infrastructure VLAN migration — phase 1 in progress
 
-Prepared 2026-10-26. No node addresses, switch ports, live DNS, firewall policies,
-or active GitOps manifests have been changed by this preparation.
-Network IaC belongs in `/home/shaman007/git/unifi-infra`, outside this repository.
+Prepared 2026-10-26; migration started 2026-10-27. Network IaC is in
+`/home/shaman007/git/unifi-infra`, outside this repository.
+
+## Execution checkpoint — 2026-10-27
+
+Completed:
+
+- Created Infrastructure VLAN 30 with `192.168.30.1/24`, DHCP `.50`–`.99`,
+  static IPv6 `2a02:e98:c0:181e::1/64`, SLAAC and router advertisements.
+- Attached it to a dedicated Infrastructure zone. Controller defaults allow
+  IPv4/IPv6 outbound Internet and return traffic, block unsolicited WAN ingress,
+  and block new connections to/from other private zones. Added explicit trusted
+  Default-LAN and WireGuard ingress with return rules, plus the temporary
+  new-node-to-old-node IPv4 transition allowance. IDS/IPS remains disabled.
+- Applied the stable canonical API endpoint `https://api.k8s.my.lan:6443` and SAN
+  additions to all three control planes without rebooting. Verified the DNS
+  certificate and `/readyz` individually on `.209`, `.242`, then `.100`.
+  Updated the workstation's existing kubeconfig and verified its normal API access.
+- Downloaded and decrypted a fresh scheduled etcd snapshot from 2026-10-27
+  08:17 UTC (09:17 Europe/Prague), validated revision 123835344 and restored it
+  in isolated tmpfs. This is not a full Talos-cluster recovery rehearsal.
+- Saved encrypted Talos effective config, Talos/kube client config and UniFi
+  network exports under
+  `/home/shaman007/.local/state/infrastructure-vlan-migration/20261027T082726Z`.
+
+Desktop validation and remaining gates (host renumbering has not started):
+
+- End-host outbound checks now pass on the desktop's real switch port 6:
+  DHCP `192.168.30.79/24`, SLAAC
+  `2a02:e98:c0:181e:af5b:89f3:6c17:d57f/64`, DNS over IPv4 and IPv6,
+  forced IPv6 HTTPS and a 1 MiB transfer (HTTP 200, approximately 0.16 seconds).
+  IPv4 HTTPS also passed in approximately 24 ms. This supersedes the failed
+  in-cluster diagnostic probes below; it does not waive per-node/HA checks.
+- Verified new VLAN-to-old LAN blocking to a known listening Talos API port
+  over IPv4 and IPv6: both connected from trusted Wi-Fi and timed out when
+  bound to new-VLAN Ethernet. External unsolicited IPv6 ingress still needs
+  an independent external probe before final sign-off.
+- Confirm the owner's independent offline age-key copy and local console access.
+- Complete the disposable Talos recovery rehearsal, transition NetworkPolicy
+  expansions and ingress placement/cutover preparation before the first node move.
+- Desktop test path is now available on USW-16-PoE port 6. At the owner's request
+  Ethernet remains on VLAN 30 with a retained NetworkManager profile named
+  `Infrastructure Ethernet (temporary)` using diagnostic MAC `02:30:00:00:00:61`.
+  Wi-Fi remains preferred for Internet/management (route metric 600 versus 10000).
+  The original `Wired connection 1` profile is preserved. Its original MAC's old
+  LAN reservation and unrelated public forwarding have not been changed. Services
+  pinned to the old desktop `.1.141` address will need separate review while this
+  interface stays on the new VLAN.
+  Roll back by restoring only port 6's former native network, then activating
+  the original Ethernet profile. Encrypted prior port state is in
+  `/home/shaman007/.local/state/infrastructure-vlan-migration/test-port6.json.age`.
+
+All production node/HA addresses and their access-port assignments, MetalLB VIPs, public
+port forwards and ingress DNS targets remain on their original network. Current
+Pod/Service networks remain IPv4-only. HA migration has not started.
 
 ## Target addresses
 
@@ -28,12 +80,10 @@ node move, HA cutover and final sign-off:
   wholesale. Test larger transfers and connections beyond only the gateway.
 - Enforce equivalent IPv4/IPv6 inter-VLAN isolation and block unsolicited inbound
   WAN IPv6. Verify these with external and cross-VLAN probes, not only rule review.
-- Verify IPv6 egress from each application workload that requires it. IPv6 on
-  nodes does not provide native IPv6 connectivity to IPv4-only Pods automatically.
-  Before migration, identify those workloads and validate an explicit supported
-  egress design (dual-stack Pod networking or an appropriate application proxy).
-  Keeping Pod/Service CIDRs unchanged is conditional on meeting this requirement;
-  any required CNI/CIDR change needs a separate reviewed migration plan.
+- Scope confirmed by the owner on 2026-10-27: outbound IPv6 is required for
+  nodes and Home Assistant only. Keep Pods and Services IPv4-only, with their
+  current CIDRs and Cilium address-family settings. No Pod IPv6 egress or
+  dual-stack CNI migration is included.
 - Do not accept disabling IPv6 as a workaround for a failed cutover; stop and
   repair the path or roll back the affected host.
 
@@ -60,7 +110,8 @@ Do not alter switch/AP management networks, camera VLAN 20, or WAN Tap VLAN 3.
 
 All three machines are control-plane members. Live `talosctl etcd members/status`
 showed three voting members, matching applied indexes, no errors, and leader `.242`.
-The canonical Kubernetes API remains `https://192.168.1.100:6443`.
+The canonical Kubernetes API is now `https://api.k8s.my.lan:6443`, currently
+resolving to the unchanged node address `192.168.1.100`.
 Cilium uses the Talos local API proxy (`localhost:7445`) and VXLAN.
 
 Backup repair on 2026-10-26 enabled the hourly CronJob. A scheduled job completed,
@@ -231,3 +282,15 @@ of the live cutover, backup creation/decryption, restore rehearsal, endpoint cha
 or firewall enforcement tests was executed by the initial preparation. Backup
 creation, decryption, snapshot validation and isolated etcdutl restore were later
 verified during the backup repair; full Talos recovery remains untested.
+
+## Port-provider round-trip caveat observed during phase 1
+
+Provider 0.59.0 merges declared port indices, but serializes some false/empty
+flags on unmanaged ports as absent. Port-6 adoption omitted existing false/empty
+flags on ports 4, 5, 8, 11, 12, 14, 15 and 18 (including port 18 autoneg=false).
+The exact original override objects for those eight ports were restored through
+a partial raw API update containing the full preserved override array; all eight
+then matched the encrypted baseline exactly. Port 6 remained on Infrastructure.
+Before future switch-device writes, capture complete raw overrides, inspect the
+plan, and recompare/restore omitted flags afterward. Do not assume an unchanged
+native VLAN means every other port setting was preserved by the provider.
