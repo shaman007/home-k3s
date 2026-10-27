@@ -357,14 +357,38 @@ requests rather than relying only on configuration or gateway hairpin tests.
 
 ## Phase 4 — Home Assistant separately
 
-Take/verify HA backup first. Establish the Ethernet reservation `.30.246`, allow
-HA-to-Protect and measured IoT flows, and move switch port 3. Confirm direct HA
-access over Ethernet before disabling old Wi-Fi; avoid permanent dual-homing that
-bypasses segmentation. Then use `homeassistant.patch` to move the external
-EndpointSlice and Traefik's explicit egress destination together. Test HA through
-its normal hostname, all five camera streams, automations, discovery, and callbacks.
+HA Ethernet is now on switch port 3, Infrastructure VLAN 30, with DHCP reservation
+`192.168.30.246` for `e4:5f:01:bc:d6:fb`. Old-LAN Wi-Fi is disabled; its saved
+profile is retained for rollback. Both IPv4 and native IPv6 outbound HTTPS were
+verified with 1 MiB transfers on Ethernet. The current SLAAC prefix is
+`2a02:e98:c0:181e::/64`; no public AAAA record is required for egress.
+
+The protected automatic backup `68368a9d` was copied off-device, additionally age
+encrypted, and its archive metadata and encrypted-copy round trip verified. It is
+under the workstation's private infrastructure migration state directory. A full
+HA restore was not rehearsed. The initial network/client/switch configuration is
+also saved encrypted there.
+
+The HA EndpointSlice and Traefik egress policy now target `.30.246:8123`.
+HA's active stored HTTP settings additionally trust only the three new node IPs
+(`.30.100/32`, `.30.209/32`, `.30.242/32`), preserving its previous entries. The ignored legacy YAML HTTP block was removed.
+OpenTofu in the separate `unifi-infra` directory owns port 3, the reservation,
+and HA-to-printer (`192.168.1.106`) TCP 631 / UDP 161 exceptions. Protect and UniFi
+use the existing Infrastructure-to-Gateway allowance. IDS/IPS remains disabled.
+
+Verification after disabling Wi-Fi: HA Core reports RUNNING; authenticated API and
+normal HTTPS hostname work; Brother, IPP, MQTT, ZHA, UniFi and Protect integrations
+are loaded. Five active camera entities report recording; four camera JPEGs were
+retrieved successfully through authenticated HTTPS. The left camera low-resolution
+entity returns HTTP 500 for its snapshot even through the direct HA API; this
+remaining HA image check is not verified. The recorder itself returned a valid
+JPEG for that fifth camera. One extra camera entity
+was already unavailable before migration and remains so. No full automation or
+all-device callback rehearsal was performed.
+
 HA and Kubernetes share a subnet: their direct traffic bypasses gateway policy;
-use another HA VLAN later if host-to-host separation is required.
+use another HA VLAN later if host-to-host separation is required. Discovery
+across VLANs and arbitrary device callbacks are not automatically enabled.
 
 ## Rollback and completion
 
