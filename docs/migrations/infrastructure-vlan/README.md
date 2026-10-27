@@ -32,6 +32,10 @@ Home Assistant remains on its old LAN addresses; its migration is deferred by th
 - Loki returned historical canary logs from before maintenance and fresh entries
   after recovery. Retain PVC policy and discovery of not-ready members are now
   configured. These checks do not prove recovery of the deleted local WAL.
+- Repeated host DNS and forced outbound IPv6 HTTPS checks after reconciliation: all
+  three nodes transferred 1 MiB with HTTP 200 from their Infrastructure IPv6 addresses.
+- Repository validation passed: 155 unit tests, runtime contracts and generated
+  NetworkPolicy bundle checks. Ingress guard tests now require the new subnet.
 - Cilium completed its reconciliation rollout with 3/3 agents and Envoy pods ready.
   Longhorn recovery included read-only mounts and automatic detach/reattach of the
   Prometheus and Harbor registry volumes; monitor their recovery and replica rebuilds.

@@ -26,6 +26,8 @@ spec:
           preUpgradeChecker:
             jobEnabled: false
           defaultSettings:
+            # Limit recovery I/O contention on the shared node disks/network.
+            concurrentReplicaRebuildPerNodeLimit: 1
             allowRecurringJobWhileVolumeDetached: true
             createDefaultDiskLabeledNodes: true
             priorityClass: homelab-critical
