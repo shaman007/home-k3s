@@ -47,7 +47,7 @@ jobs:
       - name: Set up kubectl for Kustomize
         uses: azure/setup-kubectl@bda439f5f36b99b262ebdcd3613869bddb064c8e # v5
         with:
-          version: v1.37.1
+          version: v1.37.2
 
       - name: Validate runtime contracts
         run: |
