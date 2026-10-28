@@ -2,49 +2,28 @@
 deployment:
   annotations:
     argocd.argoproj.io/sync-options: ServerSideApply=true
-  replicas: 1
+  replicas: 2
   initContainers:
-    # The "volume-permissions" init container is required if you run into permission issues.
-    # Related issue: https://github.com/traefik/traefik-helm-chart/issues/396
-    - name: volume-permissions
-      image: docker.io/library/busybox:1.38.0
-      command: ["sh", "-c", "touch /data/acme.json; chmod -v 600 /data/acme.json"]
-      volumeMounts:
-       - name: data
-         mountPath: /data
-    - name: download-geoip-country-db
-      image: docker.io/library/busybox:1.38.0
-      command:
-        - sh
-        - -ceu
-        - |
-          db_dir='/data/geoip'
-          db_file="$db_dir/dbip-country-lite.mmdb"
-          db_archive='/tmp/dbip-country-lite.mmdb.gz'
-          db_url='https://download.db-ip.com/free/dbip-country-lite-latest.mmdb.gz'
-          mkdir -p "$db_dir"
-          if wget -q -O "$db_archive" "$db_url"; then
-            gunzip -c "$db_archive" > "$db_file"
-            rm -f "$db_archive"
-            chmod 0644 "$db_file"
-            exit 0
-          fi
-          if ! wget -q -O "$db_archive" "$db_url"; then
-            page="$(wget -qO- https://db-ip.com/db/download/ip-to-country-lite)"
-            db_url="$(printf '%s' "$page" | tr '\n' ' ' | sed -n 's/.*\(https:\/\/download\.db-ip\.com\/free\/dbip-country-lite-[0-9][0-9][0-9][0-9]-[0-9][0-9]\.mmdb\.gz\).*/\1/p')"
-            test -n "$db_url"
-            if wget -q -O "$db_archive" "$db_url"; then
-              gunzip -c "$db_archive" > "$db_file"
-              rm -f "$db_archive"
-              chmod 0644 "$db_file"
-              exit 0
-            fi
-          fi
-          rm -f "$db_archive"
-          test -s "$db_file"
-      volumeMounts:
-       - name: data
-         mountPath: /data
+  - name: download-geoip-country-db
+    image: docker.io/library/busybox:1.38.0
+    command:
+    - sh
+    - -ceu
+    - "db_dir='/data/geoip'\ndb_file=\"$db_dir/dbip-country-lite.mmdb\"\ndb_archive='/tmp/dbip-country-lite.mmdb.gz'\n\
+      db_url='https://download.db-ip.com/free/dbip-country-lite-latest.mmdb.gz'\nmkdir -p \"$db_dir\"\n# Publish\
+      \ on the same filesystem using rename; readers never see a partial DB.\ndb_staged=\"$(mktemp \"$db_dir/.country.XXXXXX\"\
+      )\"\ntrap 'rm -f \"$db_staged\" \"$db_archive\"' EXIT\npublish_db() {\n  gunzip -c \"$db_archive\" > \"$db_staged\"\
+      \n  test -s \"$db_staged\"\n  chmod 0644 \"$db_staged\"\n  mv -f \"$db_staged\" \"$db_file\"\n}\nif wget -q\
+      \ -O \"$db_archive\" \"$db_url\"; then\n  publish_db\n  rm -f \"$db_archive\"\n  chmod 0644 \"$db_file\"\n\
+      \  exit 0\nfi\nif ! wget -q -O \"$db_archive\" \"$db_url\"; then\n  page=\"$(wget -qO- https://db-ip.com/db/download/ip-to-country-lite)\"\
+      \n  db_url=\"$(printf '%s' \"$page\" | tr '\\n' ' ' | sed -n 's/.*\\(https:\\/\\/download\\.db-ip\\.com\\\
+      /free\\/dbip-country-lite-[0-9][0-9][0-9][0-9]-[0-9][0-9]\\.mmdb\\.gz\\).*/\\1/p')\"\n  test -n \"$db_url\"\
+      \n  if wget -q -O \"$db_archive\" \"$db_url\"; then\n    publish_db\n    rm -f \"$db_archive\"\n    chmod\
+      \ 0644 \"$db_file\"\n    exit 0\n  fi\nfi\nrm -f \"$db_archive\"\ntest -s \"$db_file\"\n"
+    volumeMounts:
+    - name: data
+      mountPath: /data
+
 podSecurityContext:
   fsGroup: 1000
   fsGroupChangePolicy: "OnRootMismatch"
@@ -147,103 +126,125 @@ providers:
     ingressClass: traefik
     enabled: true
 extraObjects:
-  - apiVersion: traefik.io/v1alpha1
-    kind: Middleware
-    metadata:
-      name: internal-clients-only
-      namespace: traefik
-    spec:
-      ipAllowList:
-        sourceRange:
-          - 192.168.30.0/24
-          - 2a02:e98:c0:181e::/64
-          - 192.168.4.0/24
-          - 10.42.0.0/16
-          - fd74:67a:1fcf:4200::/56
-  - apiVersion: traefik.io/v1alpha1
-    kind: Middleware
-    metadata:
-      name: geoip-country
-      namespace: traefik
-    spec:
-      plugin:
-        geoip2:
-          countryDbPath: /data/geoip/dbip-country-lite.mmdb
-  - apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: geoip-db-refresh
-      namespace: traefik
-  - apiVersion: rbac.authorization.k8s.io/v1
+- apiVersion: traefik.io/v1alpha1
+  kind: Middleware
+  metadata:
+    name: internal-clients-only
+    namespace: traefik
+  spec:
+    ipAllowList:
+      sourceRange:
+      - 192.168.30.0/24
+      - 2a02:e98:c0:181e::/64
+      - 192.168.4.0/24
+      - 10.42.0.0/16
+      - fd74:67a:1fcf:4200::/56
+- apiVersion: traefik.io/v1alpha1
+  kind: Middleware
+  metadata:
+    name: geoip-country
+    namespace: traefik
+  spec:
+    plugin:
+      geoip2:
+        countryDbPath: /data/geoip/dbip-country-lite.mmdb
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: geoip-db-refresh
+    namespace: traefik
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: geoip-db-refresh
+    namespace: traefik
+  rules:
+  - apiGroups:
+    - apps
+    resourceNames:
+    - '{{ include "traefik.fullname" . }}'
+    resources:
+    - deployments
+    verbs:
+    - get
+    - patch
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: geoip-db-refresh
+    namespace: traefik
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
     kind: Role
-    metadata:
-      name: geoip-db-refresh
-      namespace: traefik
-    rules:
-      - apiGroups:
-          - apps
-        resourceNames:
-          - '{{ include "traefik.fullname" . }}'
-        resources:
-          - deployments
-        verbs:
-          - get
-          - patch
-  - apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      name: geoip-db-refresh
-      namespace: traefik
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: Role
-      name: geoip-db-refresh
-    subjects:
-      - kind: ServiceAccount
-        name: geoip-db-refresh
-        namespace: traefik
-  - apiVersion: batch/v1
-    kind: CronJob
-    metadata:
-      name: geoip-db-refresh
-      namespace: traefik
-    spec:
-      schedule: "17 4 2 * *"
-      concurrencyPolicy: Forbid
-      successfulJobsHistoryLimit: 1
-      failedJobsHistoryLimit: 3
-      jobTemplate:
-        spec:
-          backoffLimit: 1
-          template:
-            metadata:
-              labels:
-                app.kubernetes.io/name: traefik
-            spec:
-              serviceAccountName: geoip-db-refresh
-              restartPolicy: OnFailure
-              containers:
-                - name: restart-traefik
-                  image: docker.io/curlimages/curl:8.23.0
-                  imagePullPolicy: IfNotPresent
-                  command:
-                    - sh
-                    - -ceu
-                    - |
-                      api='https://kubernetes.default.svc/apis/apps/v1/namespaces/traefik/deployments/{{ include "traefik.fullname" . }}'
-                      token="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
-                      ca_cert='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
-                      timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-                      payload="$(printf '{"spec":{"template":{"metadata":{"annotations":{"geoip.db-ip.com/restarted-at":"%s"}}}}}' "$timestamp")"
-                      curl --fail --silent --show-error \
-                        --cacert "$ca_cert" \
-                        -X PATCH \
-                        -H "Authorization: Bearer $token" \
-                        -H 'Content-Type: application/strategic-merge-patch+json' \
-                        --data "$payload" \
-                        "$api"
+    name: geoip-db-refresh
+  subjects:
+  - kind: ServiceAccount
+    name: geoip-db-refresh
+    namespace: traefik
+- apiVersion: batch/v1
+  kind: CronJob
+  metadata:
+    name: geoip-db-refresh
+    namespace: traefik
+  spec:
+    schedule: 17 4 2 * *
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 3
+    jobTemplate:
+      spec:
+        backoffLimit: 1
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: traefik
+          spec:
+            serviceAccountName: geoip-db-refresh
+            restartPolicy: OnFailure
+            containers:
+            - name: restart-traefik
+              image: docker.io/curlimages/curl:8.23.0
+              imagePullPolicy: IfNotPresent
+              command:
+              - sh
+              - -ceu
+              - "api='https://kubernetes.default.svc/apis/apps/v1/namespaces/traefik/deployments/{{ include \"traefik.fullname\"\
+                \ . }}'\ntoken=\"$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)\"\nca_cert='/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'\n\
+                timestamp=\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"\npayload=\"$(printf '{\"spec\":{\"template\":{\"metadata\"\
+                :{\"annotations\":{\"geoip.db-ip.com/restarted-at\":\"%s\"}}}}}' \"$timestamp\")\"\ncurl --fail\
+                \ --silent --show-error \\\n  --cacert \"$ca_cert\" \\\n  -X PATCH \\\n  -H \"Authorization: Bearer\
+                \ $token\" \\\n  -H 'Content-Type: application/strategic-merge-patch+json' \\\n  --data \"$payload\"\
+                \ \\\n  \"$api\"\n"
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: traefik-geoip-rwx
+    namespace: traefik
+    annotations:
+      argocd.argoproj.io/sync-wave: '-2'
+  spec:
+    accessModes:
+    - ReadWriteMany
+    storageClassName: longhorn
+    resources:
+      requests:
+        storage: 1Gi
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: traefik
+    namespace: traefik
+    annotations:
+      argocd.argoproj.io/sync-options: Prune=false
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: longhorn
+    volumeName: pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e
+    resources:
+      requests:
+        storage: 1Gi
 
-# Simple dashboard (optionally exposed via IngressRoute)
 ingressRoute:
   dashboard:
     annotations:
@@ -254,20 +255,36 @@ affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
-        - matchExpressions:
-            - key: node.kubernetes.io/exclude-from-external-load-balancers
-              operator: DoesNotExist
+      - matchExpressions:
+        - key: node.kubernetes.io/exclude-from-external-load-balancers
+          operator: DoesNotExist
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: traefik
+          app.kubernetes.io/instance: traefik-traefik
+      topologyKey: kubernetes.io/hostname
 
-# Persistent volume for acme.json (so certs survive restart)
 persistence:
   enabled: true
+  existingClaim: traefik-geoip-rwx
   path: /data
+  accessMode: ReadWriteMany
   size: 1Gi
-  accessMode: ReadWriteOnce
   storageClass: longhorn
-  volumeName: pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e
 
 ingressClass:
   enabled: true
   name: traefik
   isDefaultClass: false
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
