@@ -60,7 +60,7 @@ spec:
                 - name: TRAEFIK_HTTPS_HOST
                   value: traefik.traefik.svc.cluster.local
                 - name: SMTP_HOST
-                  value: andreybondarenko.com
+                  value: traefik.traefik.svc.cluster.local
                 - name: SMTP_PORT
                   value: "25"
                 - name: MAIL_FROM
