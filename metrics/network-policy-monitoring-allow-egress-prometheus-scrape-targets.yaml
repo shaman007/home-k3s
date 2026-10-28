@@ -96,6 +96,8 @@ spec:
           port: 9187
         - protocol: TCP
           port: 9964
+        - protocol: TCP
+          port: 9965
     - to:
         - ipBlock:
             cidr: 192.168.1.0/24
@@ -106,6 +108,8 @@ spec:
           port: 9963
         - protocol: TCP
           port: 9964
+        - protocol: TCP
+          port: 9965
     - to:
         - namespaceSelector:
             matchLabels:

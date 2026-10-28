@@ -366,6 +366,10 @@ data:
         - targets:
           - grafana.monitoring.svc.cluster.local:3000
       - job_name: prometheus
+        # Pilot on self metrics only; retain existing dashboard/alert series.
+        scrape_native_histograms: true
+        always_scrape_classic_histograms: true
+        convert_classic_histograms_to_nhcb: true
         scrape_interval: 45s
         scrape_timeout:  30s
         metrics_path: "/metrics"

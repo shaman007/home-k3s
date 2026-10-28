@@ -17,3 +17,5 @@ spec:
               protocol: TCP
             - port: "9964"
               protocol: TCP
+            - port: "9965"
+              protocol: TCP

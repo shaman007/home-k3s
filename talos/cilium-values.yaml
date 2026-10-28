@@ -10,6 +10,13 @@ cni:
 
 hubble:
   enabled: true
+  metrics:
+    # Keep labels bounded; HTTP/DNS inspection is not required for these metrics.
+    enabled:
+      - drop
+      - tcp
+      - flow
+      - icmp
   relay:
     enabled: true
     logOptions:

@@ -133,6 +133,16 @@ After the first successful import:
 1. Remove `MEILI_IMPORT_DUMP` from `stateful-set-meilisearch.yaml`.
 2. Commit that cleanup and sync again.
 
+## Full-page archives
+
+`karakeep-env` enables `CRAWLER_FULL_PAGE_ARCHIVE` with a 50 MB per-page
+limit. This supplements the existing PDF snapshots with a local HTML archive.
+Archives larger than the limit are discarded. Video downloading remains disabled.
+Existing bookmarks need a recrawl to acquire an archive; verify a newly added or
+recrawled bookmark offers a working full-page archive before bulk recrawling.
+Watch PVC usage as the archive collection grows. Disable the flag to stop new
+archives; existing assets are retained.
+
 # TODO
 
 * Metrics + Dashboard
