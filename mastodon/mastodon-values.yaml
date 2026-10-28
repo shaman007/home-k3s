@@ -78,6 +78,8 @@ mastodon:
           - name: prometheus
             containerPort: 9394
     extraEnvVars:
+      # Serve both address families advertised by the dual-stack Service.
+      BIND: "[::]"
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
   sidekiq:
@@ -102,6 +104,8 @@ mastodon:
         image:
           repository: harbor.andreybondarenko.com/library/mastodon
     extraEnvVars:
+      # Serve both address families advertised by the dual-stack Service.
+      BIND: "[::]"
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
   streaming:
@@ -119,6 +123,8 @@ mastodon:
         cpu: 37m
         memory: 110Mi
     extraEnvVars:
+      # Serve both address families advertised by the dual-stack Service.
+      BIND: "[::]"
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
 
   s3:
