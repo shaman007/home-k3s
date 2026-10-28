@@ -61,7 +61,7 @@ spec:
                   mountPath: /work
           containers:
             - name: immich-upload
-              image: harbor.andreybondarenko.com/dockerhub/node:24-alpine
+              image: harbor.andreybondarenko.com/dockerhub/node:26-alpine
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
