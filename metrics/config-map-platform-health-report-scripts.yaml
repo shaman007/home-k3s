@@ -267,8 +267,11 @@ data:
         return any(cert_name_matches(host, name) for name in names)
 
 
-    def live_tls_cert_days_left(host):
-        connect_host = env("TRAEFIK_HTTPS_HOST", "traefik.traefik.svc.cluster.local")
+    def live_tls_cert_days_left(host, ingress_class="traefik"):
+        if ingress_class == "traefik-private":
+            connect_host = env("TRAEFIK_PRIVATE_HTTPS_HOST", "traefik-private.traefik.svc.cluster.local")
+        else:
+            connect_host = env("TRAEFIK_HTTPS_HOST", "traefik.traefik.svc.cluster.local")
         connect_port = env_num("TRAEFIK_HTTPS_PORT", 443, int)
         ctx = ssl._create_unverified_context()
         with socket.create_connection((connect_host, connect_port), timeout=10) as sock:
@@ -595,7 +598,8 @@ data:
             is_http01_solver = is_http01_solver_ingress(ingress)
             hosts = [rule.get("host") for rule in ingress.get("spec", {}).get("rules", []) if rule.get("host")]
             for host in ingress_tls_hosts(ingress):
-                ingress_hosts.append((namespace, ingress_name, host))
+                ingress_class = ingress.get("spec", {}).get("ingressClassName", "traefik")
+                ingress_hosts.append((namespace, ingress_name, host, ingress_class))
             public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
             internal_hosts = [host for host in hosts if host.endswith(internal_suffixes)]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
@@ -617,19 +621,21 @@ data:
                         "value": 0,
                     })
         seen_ingress_hosts = set()
-        for namespace, ingress_name, host in sorted(ingress_hosts):
+        for namespace, ingress_name, host, ingress_class in sorted(ingress_hosts):
             key = (namespace, ingress_name, host)
             if key in seen_ingress_hosts:
                 continue
             seen_ingress_hosts.add(key)
             entry = {"namespace": namespace, "item": f"{ingress_name}/{host}", "value": 0, "value_name": "cert_expiry_days"}
             try:
-                entry["value"] = live_tls_cert_days_left(host)
+                entry["value"] = live_tls_cert_days_left(host, ingress_class)
                 cert_details.append(entry)
                 if entry["value"] < warn_days:
                     cert_issues.append(entry)
             except Exception as exc:
-                entry["item"] = f"{ingress_name}/{host} ({type(exc).__name__}: {exc})"
+                entry["item"] = f"{ingress_name}/{host} (TLS probe failed: {type(exc).__name__}: {exc})"
+                entry["value"] = 1
+                entry["value_name"] = "cert_probe_failed"
                 cert_details.append(entry)
                 cert_issues.append(entry)
         guard_issues = [

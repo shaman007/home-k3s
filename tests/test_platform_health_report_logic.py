@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 import yaml
 
@@ -20,6 +21,19 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.report = load_report_functions()
+
+    def test_tls_probe_selects_ingress_controller_by_class(self):
+        for ingress_class, destination in [
+            ("traefik", "traefik.traefik.svc.cluster.local"),
+            ("traefik-private", "traefik-private.traefik.svc.cluster.local"),
+        ]:
+            with self.subTest(ingress_class=ingress_class):
+                with patch.dict("os.environ", {}, clear=True), patch(
+                    "socket.create_connection", side_effect=RuntimeError("probe intercepted")
+                ) as connect:
+                    with self.assertRaisesRegex(RuntimeError, "probe intercepted"):
+                        self.report["live_tls_cert_days_left"]("test.k8s.my.lan", ingress_class)
+                    connect.assert_called_once_with((destination, 443), timeout=10)
 
     def test_token_renewal_uses_cronjob_last_success(self):
         now = datetime.now(timezone.utc)
