@@ -157,3 +157,5 @@ spec:
                   name: grafana-dashboard-finance-ticker
               - configMap:
                   name: grafana-dashboard-linux-host
+              - configMap:
+                  name: grafana-dashboard-crowdsec

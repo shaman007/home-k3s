@@ -1,0 +1,771 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-crowdsec
+  namespace: monitoring
+data:
+  crowdsec.json: |
+    {
+      "uid": "crowdsec-overview",
+      "title": "CrowdSec",
+      "description": "Public Traefik CrowdSec observation: ingestion, parser health, scenarios, alerts and decisions. Simulation context is documented explicitly.",
+      "tags": [
+        "crowdsec",
+        "security",
+        "traefik"
+      ],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "version": 1,
+      "editable": true,
+      "refresh": "30s",
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "templating": {
+        "list": []
+      },
+      "annotations": {
+        "list": []
+      },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Observation mode",
+          "type": "text",
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 24,
+            "h": 4
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "### CrowdSec \u2014 public Traefik monitoring\nThis deployment is configured for **global simulation with no bouncer**. Alerts and decisions do **not** mean requests were blocked. The mode is configuration context, not a live status metric.\n\nUse `cscli alerts list` / `cscli alerts inspect <ID> --details` in `deployment/crowdsec-lapi` for IPs and request evidence. Source/parser counters reset on restart; charts use rates or increases. Unparsed lines include Traefik startup and operational logs."
+          }
+        },
+        {
+          "id": 2,
+          "title": "LAPI up",
+          "type": "stat",
+          "gridPos": {
+            "x": 0,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          "description": "1 = scrape succeeds; 0 = scrape fails.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "up{job=\"crowdsec\",instance=\"crowdsec-service.crowdsec.svc.cluster.local:6060\"}",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0,
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": {
+                      "text": "DOWN",
+                      "color": "red"
+                    },
+                    "1": {
+                      "text": "UP",
+                      "color": "green"
+                    }
+                  }
+                }
+              ],
+              "noValue": "NO DATA"
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 3,
+          "title": "Agent up",
+          "type": "stat",
+          "gridPos": {
+            "x": 4,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          "description": "1 = scrape succeeds; verify source panels for actual ingestion.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "up{job=\"crowdsec\",instance=\"crowdsec-agent-service.crowdsec.svc.cluster.local:6060\"}",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0,
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": {
+                      "text": "DOWN",
+                      "color": "red"
+                    },
+                    "1": {
+                      "text": "UP",
+                      "color": "green"
+                    }
+                  }
+                }
+              ],
+              "noValue": "NO DATA"
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 4,
+          "title": "Parsed requests \u00b7 selected range",
+          "type": "stat",
+          "gridPos": {
+            "x": 8,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          "description": "Successfully parsed events in the selected time range.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(increase(cs_parser_hits_ok_total{job=\"crowdsec\"}[$__range]))",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 5,
+          "title": "Active scenario buckets",
+          "type": "stat",
+          "gridPos": {
+            "x": 12,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          "description": "Scenario tracking buckets; these are not alerts or blocked requests.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(cs_buckets{job=\"crowdsec\"})",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 6,
+          "title": "Recorded alerts",
+          "type": "stat",
+          "gridPos": {
+            "x": 16,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          "description": "The exporter may omit this metric until the first alert. Zero is shown only while LAPI scrape is healthy.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(cs_alerts{job=\"crowdsec\"}) or (0 * max(up{job=\"crowdsec\",instance=\"crowdsec-service.crowdsec.svc.cluster.local:6060\"} == 1))",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 7,
+          "title": "Active decisions",
+          "type": "stat",
+          "gridPos": {
+            "x": 20,
+            "y": 4,
+            "w": 4,
+            "h": 4
+          },
+          "description": "Simulation decisions are not enforced. Missing series are zero only while LAPI scrape is healthy.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(cs_active_decisions{job=\"crowdsec\"}) or (0 * max(up{job=\"crowdsec\",instance=\"crowdsec-service.crowdsec.svc.cluster.local:6060\"} == 1))",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "colorMode": "value",
+            "graphMode": "none",
+            "textMode": "auto",
+            "orientation": "auto"
+          }
+        },
+        {
+          "id": 8,
+          "title": "Incoming log lines by Traefik replica",
+          "type": "timeseries",
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "description": "Includes access logs and operational logs read from each public Traefik replica.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (source) (rate(cs_kubernetessource_hits_total{job=\"crowdsec\"}[$__rate_interval]))",
+              "legendFormat": "{{source}}",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "title": "Parsed and unparsed lines",
+          "type": "timeseries",
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "description": "Unparsed operational logs are expected; sustained zero parsed traffic while input rises needs investigation.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(cs_parser_hits_ok_total{job=\"crowdsec\"}[$__rate_interval]))",
+              "legendFormat": "Parsed",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "format": "time_series"
+            },
+            {
+              "refId": "B",
+              "expr": "sum(rate(cs_parser_hits_ko_total{job=\"crowdsec\"}[$__rate_interval]))",
+              "legendFormat": "Unparsed",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 10,
+          "title": "Events entering detection scenarios",
+          "type": "timeseries",
+          "gridPos": {
+            "x": 0,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "description": "Scenario input activity is not an alert count. Alerts appear only after a scenario triggers.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (rate(cs_bucket_poured_total{job=\"crowdsec\"}[$__rate_interval]))",
+              "legendFormat": "{{name}}",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 11,
+          "title": "Whitelisted events",
+          "type": "timeseries",
+          "gridPos": {
+            "x": 12,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "description": "Includes the standard private-address allowlist; local tests can be parsed and then whitelisted.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (reason) (rate(cs_node_wl_hits_ok_total{job=\"crowdsec\"}[$__rate_interval]))",
+              "legendFormat": "{{reason}}",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": true,
+              "instant": false,
+              "format": "time_series"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "lineWidth": 2,
+                "fillOpacity": 8,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          }
+        },
+        {
+          "id": 12,
+          "title": "Parsed requests by replica \u00b7 selected range",
+          "type": "table",
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "description": "Selected-range increases; newly started sources may need two scrapes before values appear.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (source) (increase(cs_parser_hits_ok_total{job=\"crowdsec\"}[$__range]))",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm"
+          }
+        },
+        {
+          "id": 13,
+          "title": "Scenario events \u00b7 selected range",
+          "type": "table",
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "description": "Events poured into scenarios, not bans or alerts.",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sort_desc(sum by (name) (increase(cs_bucket_poured_total{job=\"crowdsec\"}[$__range])))",
+              "legendFormat": "",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "editorMode": "code",
+              "range": false,
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {},
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm"
+          }
+        }
+      ]
+    }
