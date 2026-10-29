@@ -11,10 +11,11 @@ Keycloak client, its realm-role ID-token mapper, and the two dedicated OpenBao K
 entries, read policies, and namespace/service-account-bound Kubernetes auth roles.
 No secret values are in this repository. GitOps revision `70607afa` reached the
 cluster on 2026-10-29. CrowdSec and both Traefik releases rolled out; Longhorn
-redirects to Keycloak. Monitoring ingress is waiting for the two missing Thanos
-DNS records below: their HTTP-01 self-checks report NXDOMAIN, and the certificate
-sync wave blocks the remaining monitoring ingress updates. Real Keycloak browser
-login remains unverified. Do not call the complete rollout finished yet.
+redirects to Keycloak. The two missing Thanos DNS records were subsequently
+added through `/home/shaman007/git/unifi-infra/internal-service-dns.tf`. Both
+certificates are Ready, monitoring ingress is Synced/Healthy at `0002dca9`, and
+all six console endpoints serve valid TLS and redirect to the `traefik-admin`
+Keycloak client. Real Keycloak browser login remains unverified.
 
 ## OIDC
 
@@ -67,11 +68,12 @@ KV entries, ACLs and auth roles. It preserves an existing session key and reads
 operator credentials into memory without logging them. It does not deploy
 Kubernetes resources. Follow the repository approval rules before using it.
 
-DNS checked on 2026-10-29: `thanos.w386.k8s.my.lan` resolves to `192.168.30.211`.
-**Add LAN DNS records for `thanos-compactor.w386.k8s.my.lan` and
-`thanos-store.w386.k8s.my.lan`, both pointing to `192.168.30.211`, before validating
-those consoles.** These records are managed outside this repository. The new
-Certificates use the existing `vault-acme` ClusterIssuer.
+DNS verified on 2026-10-29: `thanos.w386.k8s.my.lan`,
+`thanos-compactor.w386.k8s.my.lan`, and `thanos-store.w386.k8s.my.lan` all resolve
+to `192.168.30.211`. The latter two records were added with a targeted OpenTofu
+apply: exactly two additions, no updates or removals. Their configuration and
+state live in `/home/shaman007/git/unifi-infra`; this is outside this repository.
+Their Certificates use the existing `vault-acme` ClusterIssuer and are Ready.
 
 After reconciliation, verify the SecretStore and ExternalSecret are Ready and
 both private Traefik replicas load the plugin without errors. An unauthenticated
