@@ -13,6 +13,11 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 data:
   config: |
+    # WordPress versions are not necessarily content hashes: do not mark immutable.
+    map $arg_ver $wp_asset_cache_control {
+      "" "public, max-age=3600";
+      default "public, max-age=604800";
+    }
     map $http_geoip_country_code $country_code {
       default $http_geoip_country_code;
       "" $http_cf_ipcountry;
@@ -38,6 +43,7 @@ data:
     server {
       listen 8080;
       gzip on;
+      add_header_inherit merge;
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log blog_json;
@@ -53,7 +59,20 @@ data:
       location / {
           try_files $uri $uri/ /index.php?$query_string;
       }
-      location  ~* ^.+\.(pdf|ovpn|svg|ico|odp|txt|xml|well-known)$ {
+      # Only existing static files get public cache headers. Missing files retain PHP routing.
+      location ~* \.(?:css|js|mjs|woff2?|ttf|otf|eot|png|jpe?g|gif|webp|avif|ico|svg)$ {
+          try_files $uri /index.php?$query_string;
+          add_header Cache-Control $wp_asset_cache_control;
+          gzip_types text/css text/javascript application/javascript application/wasm image/svg+xml;
+          gzip_vary on;
+          gzip_min_length 1024;
+          gzip_comp_level 4;
+          etag on;
+          location ~* \.mjs$ {
+              default_type text/javascript;
+          }
+      }
+      location  ~* ^.+\.(pdf|ovpn|odp|txt|xml|well-known)$ {
           #root /code;
           allow all;
       }
