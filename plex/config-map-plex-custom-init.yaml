@@ -19,6 +19,17 @@ data:
     tmp="$(mktemp)"
     cp "${prefs}" "${tmp}"
 
+    # LinuxServer does not synchronize ADVERTISE_IP into existing preferences.
+    # Keep the published client endpoints aligned with the deployment.
+    if [[ -n "${ADVERTISE_IP:-}" ]]; then
+      connections="${ADVERTISE_IP}"
+      if grep -q 'customConnections="' "${tmp}"; then
+        sed -i "s#customConnections=\"[^\"]*\"#customConnections=\"${connections}\"#" "${tmp}"
+      else
+        sed -i "s#/># customConnections=\"${connections}\"/>#" "${tmp}"
+      fi
+    fi
+
     if grep -q 'ScheduledLibraryUpdatesEnabled="' "${tmp}"; then
       sed -i 's/ScheduledLibraryUpdatesEnabled="[^"]*"/ScheduledLibraryUpdatesEnabled="0"/' "${tmp}"
     else
@@ -38,7 +49,7 @@ data:
     fi
 
     if cmp -s "${tmp}" "${prefs}"; then
-      echo "[plex-preferences] Library scan preferences already set."
+      echo "[plex-preferences] Client endpoints and library scan preferences already set."
       rm -f "${tmp}"
       exit 0
     fi
@@ -46,4 +57,4 @@ data:
     cat "${tmp}" > "${prefs}"
     rm -f "${tmp}"
 
-    echo "[plex-preferences] Disabled scheduled library polling and kept filesystem event scans enabled."
+    echo "[plex-preferences] Updated client endpoints and library scan preferences."
