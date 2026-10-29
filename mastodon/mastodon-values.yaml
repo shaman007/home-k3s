@@ -1,7 +1,7 @@
 ---
 image:
   repository: harbor.andreybondarenko.com/library/mastodon
-  tag: 2026-10-26-022930
+  tag: 2026-10-29-201548-amd64
   pullPolicy: Always
 
 mastodon:
@@ -49,7 +49,7 @@ mastodon:
     persistentTimeout: "20"
     image:
       repository: harbor.andreybondarenko.com/library/mastodon
-      tag: 2026-10-26-022930
+      tag: 2026-10-29-201548-amd64
     resources:
       limits:
         memory: 4115Mi
@@ -60,7 +60,7 @@ mastodon:
     # same container here so CPU remains requested but never throttled.
     extraContainers:
       - name: prometheus-exporter
-        image: harbor.andreybondarenko.com/library/mastodon:2026-10-26-022930
+        image: harbor.andreybondarenko.com/library/mastodon:2026-10-29-201548-amd64
         imagePullPolicy: Always
         command:
           - ./bin/prometheus_exporter
@@ -104,7 +104,7 @@ mastodon:
           - scheduler
         image:
           repository: harbor.andreybondarenko.com/library/mastodon
-          tag: 2026-10-26-022930
+          tag: 2026-10-29-201548-amd64
     extraEnvVars:
       # Serve both address families advertised by the dual-stack Service.
       BIND: "[::]"
