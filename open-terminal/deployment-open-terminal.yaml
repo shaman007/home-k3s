@@ -41,6 +41,10 @@ spec:
               drop: [ALL]
           image: harbor.andreybondarenko.com/github/open-webui/open-terminal:0.14.6
           imagePullPolicy: IfNotPresent
+          # The console-script shebang uses python3-ot with a SETGID file capability.
+          # Use plain Python for this single-user, Restricted deployment.
+          command: ["/usr/bin/tini", "--", "/usr/local/bin/python3", "/usr/local/bin/open-terminal"]
+          args: ["run"]
           env:
             - name: OPEN_TERMINAL_API_KEY
               valueFrom:

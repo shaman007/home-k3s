@@ -87,3 +87,15 @@ preparation. Commit/push and live rollout require user authorization.
 References:
 - https://kubernetes.io/docs/concepts/security/pod-security-admission/
 - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+## Open Terminal rollout correction
+
+The first live rollout exposed an image compatibility issue: the full 0.14.6
+image launches its console script using python3-ot, which carries a SETGID file
+capability. With capabilities dropped, execution failed with EPERM. This
+single-user deployment invokes the same console script explicitly through
+plain /usr/local/bin/python3 under tini, preserving Restricted contexts. It
+bypasses the image entrypoint's optional sudo/package-install/iptables setup;
+none is configured here, API-key injection is direct from a Secret, and the
+existing home PVC is already owned by UID 1000. Multi-user provisioning would
+require a separate design and is outside this deployment.
