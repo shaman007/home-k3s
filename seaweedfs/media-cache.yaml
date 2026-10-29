@@ -156,7 +156,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: cache
-        image: docker.io/library/nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949
+        image: harbor.andreybondarenko.com/dockerhub/nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949
         command:
         - nginx
         args:
