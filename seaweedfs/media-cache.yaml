@@ -1,0 +1,259 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastodon-media-cache
+  namespace: seaweedfs
+data:
+  nginx.conf: |
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    error_log /dev/stderr warn;
+    events { worker_connections 256; }
+    http {
+        default_type application/octet-stream;
+        server_tokens off;
+        log_format cache_json escape=json '{"cache":"$upstream_cache_status","status":$status,"origin_check":"$origin_status","bytes":$body_bytes_sent,"seconds":$request_time}';
+        access_log /dev/stdout cache_json;
+        client_body_temp_path /tmp/client;
+        proxy_temp_path /tmp/proxy;
+        proxy_cache_path /var/cache/nginx/media levels=1:2 keys_zone=media:16m max_size=512m inactive=1h use_temp_path=off;
+
+        # Any credentials, query, range, or conditional request uses the origin directly.
+        map "$request_method|$http_authorization|$http_cookie|$http_range|$args|$http_if_none_match|$http_if_modified_since|$http_if_match|$http_if_unmodified_since|$http_if_range" $bypass_request {
+            default 1;
+            "GET|||||||||" 0;
+        }
+        # Strictly less than 10 MB; missing/chunked length is never stored.
+        map $origin_length $origin_too_large { default 1; "~^[0-9]{1,7}$" 0; }
+        map $upstream_http_content_length $response_too_large { default 1; "~^[0-9]{1,7}$" 0; }
+        map $origin_etag $missing_etag { default 0; "" 1; }
+        # S3 metadata updates can keep the same ETag; validate metadata too.
+        map $origin_etag $origin_validator {
+            default "$origin_etag|$origin_modified|$origin_type|$origin_disposition|$origin_control";
+        }
+        map $upstream_http_etag $response_validator {
+            default "$upstream_http_etag|$upstream_http_last_modified|$upstream_http_content_type|$upstream_http_content_disposition|$upstream_http_cache_control";
+        }
+        map "$origin_validator#$response_validator" $validator_mismatch {
+            default 1;
+            "~^(.+)#\\1$" 0;
+        }
+        map $origin_control $origin_no_cache { default 0; "~*(private|no-store|no-cache)" 1; }
+        map $origin_cookie $origin_sets_cookie { default 1; "" 0; }
+        map $upstream_http_cache_control $client_cache_control {
+            default "private, no-cache";
+            "~*no-store" "private, no-store";
+        }
+        upstream media_origin {
+            server s3.seaweedfs.svc.cluster.local:8333;
+            keepalive 16;
+        }
+        server {
+            listen 8080;
+            server_name s3.andreybondarenko.com;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_set_header Host $http_host;
+            proxy_connect_timeout 3s;
+            proxy_read_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_max_temp_file_size 0;
+            client_max_body_size 1m;
+
+            location = /healthz { access_log off; return 200 "ok\n"; }
+            location / { return 404; }
+            location ^~ /mastodon/ {
+                error_page 418 = @uncached;
+                if ($bypass_request) { return 418; }
+                auth_request /__origin_head;
+                auth_request_set $origin_status $upstream_status;
+                auth_request_set $origin_etag $upstream_http_etag;
+                auth_request_set $origin_length $upstream_http_content_length;
+                auth_request_set $origin_modified $upstream_http_last_modified;
+                auth_request_set $origin_type $upstream_http_content_type;
+                auth_request_set $origin_disposition $upstream_http_content_disposition;
+                auth_request_set $origin_control $upstream_http_cache_control;
+                auth_request_set $origin_cookie $upstream_http_set_cookie;
+                error_page 401 403 = @denied;
+                error_page 500 502 504 = @unavailable;
+
+                proxy_cache media;
+                proxy_cache_key "$host$request_uri|$origin_validator";
+                proxy_cache_valid 200 10m;
+                proxy_cache_lock on;
+                proxy_cache_lock_timeout 5s;
+                proxy_cache_use_stale off;
+                proxy_cache_background_update off;
+                proxy_cache_bypass $origin_too_large $missing_etag $origin_no_cache $origin_sets_cookie;
+                proxy_no_cache $origin_too_large $response_too_large $missing_etag $validator_mismatch $origin_no_cache $origin_sets_cookie;
+                proxy_set_header Accept-Encoding "";
+                proxy_pass http://media_origin;
+                # A downstream shared cache must not bypass our per-read ACL validation.
+                proxy_hide_header Cache-Control;
+                add_header Cache-Control $client_cache_control always;
+                add_header X-Media-Cache $upstream_cache_status always;
+            }
+            location = /__origin_head {
+                internal;
+                proxy_method HEAD;
+                proxy_pass_request_body off;
+                proxy_pass_request_headers off;
+                proxy_set_header Content-Length "";
+                proxy_set_header Host s3.andreybondarenko.com;
+                proxy_set_header Connection "";
+                proxy_intercept_errors on;
+                error_page 404 = /__origin_missing;
+                proxy_pass http://media_origin$request_uri;
+            }
+            location = /__origin_missing { internal; return 403; }
+            location @denied {
+                add_header Cache-Control "no-store" always;
+                if ($origin_status = 404) { return 404; }
+                return 403;
+            }
+            location @unavailable {
+                add_header Cache-Control "no-store" always;
+                return 503;
+            }
+            location @uncached {
+                auth_request off;
+                proxy_cache off;
+                proxy_pass http://media_origin;
+                proxy_hide_header Cache-Control;
+                add_header Cache-Control $client_cache_control always;
+                add_header X-Media-Cache BYPASS always;
+            }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mastodon-media-cache
+  namespace: seaweedfs
+  labels: &id001
+    app: mastodon-media-cache
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels: *id001
+  template:
+    metadata:
+      labels: *id001
+      annotations:
+        checksum/config: 863f0c03f674d81daca119f1ec8e6dbf65225ba86fe49133c76c31ffa0231b74
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: cache
+        image: docker.io/library/nginx:1.30.6-alpine@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949
+        command:
+        - nginx
+        args:
+        - -e
+        - stderr
+        - -c
+        - /etc/media-cache/nginx.conf
+        - -g
+        - daemon off;
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          capabilities:
+            drop:
+            - ALL
+        ports:
+        - name: http
+          containerPort: 8080
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+            ephemeral-storage: 128Mi
+          limits:
+            memory: 128Mi
+            ephemeral-storage: 1Gi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/media-cache
+          readOnly: true
+        - name: cache
+          mountPath: /var/cache/nginx
+        - name: tmp
+          mountPath: /tmp
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 2
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 2
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: mastodon-media-cache
+      - name: cache
+        emptyDir:
+          sizeLimit: 768Mi
+      - name: tmp
+        emptyDir:
+          sizeLimit: 64Mi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels: *id001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mastodon-media-cache
+  namespace: seaweedfs
+spec:
+  selector:
+    app: mastodon-media-cache
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: seaweedfs-media-cache-from-traefik
+  namespace: seaweedfs
+spec:
+  podSelector:
+    matchLabels:
+      app: mastodon-media-cache
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+    ports:
+    - port: 8080
+      protocol: TCP

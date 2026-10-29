@@ -68,22 +68,28 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
             plugins = yaml.safe_load(documents(path)[0]['spec']['source']['helm']['values'])['experimental']['plugins']
             self.assertFalse(any('crowdsec' in p['moduleName'] for p in plugins.values()))
 
-    def test_media_cache_is_fixture_only_and_bypasses_sensitive_requests(self):
+    def test_media_cache_covers_public_mastodon_reads_with_bounded_proxy(self):
         middleware, ingress = documents('seaweedfs/ingress-route-mastodon-cache-pilot.yaml')
-        cache = middleware['spec']['plugin']['souin']
-        self.assertEqual(r'\?', cache['default_cache']['regex']['exclude'])
-        self.assertEqual('no-store', cache['default_cache']['default_cache_control'])
-        self.assertEqual('0s', cache['default_cache']['stale'])
-        self.assertEqual(['GET', 'HEAD'], cache['default_cache']['allowed_http_verbs'])
         rule = ingress['spec']['routes'][0]['match']
-        self.assertIn('ClientIP(', rule)
-        self.assertIn('Header(`X-Mastodon-Cache-Pilot`, `1`)', rule)
-        self.assertIn('PathPrefix(`/mastodon/cache-pilot/`)', rule)
-        for header in ['Authorization', 'Cookie', 'Range']:
-            self.assertIn(f'!HeaderRegexp(`{header}`, `.+`)', rule)
-        self.assertIn('Path(`/souin-api/__mastodon_cache_pilot/flush`) && Method(`PURGE`)', rule)
-        self.assertNotIn('PathPrefix(`/mastodon/`)', rule)
-        self.assertEqual(1, len(ingress['spec']['routes']))
+        self.assertIn('PathPrefix(`/mastodon/`)', rule)
+        self.assertNotIn('ClientIP(', rule)
+        self.assertNotIn('X-Mastodon-Cache-Pilot', rule)
+        self.assertIn('Method(`GET`)', rule)
+        self.assertIn('Method(`HEAD`)', rule)
+        self.assertEqual('mastodon-media-cache', ingress['spec']['routes'][0]['services'][0]['name'])
+        self.assertEqual(64, middleware['spec']['inFlightReq']['amount'])
+        objects = documents('seaweedfs/media-cache.yaml')
+        config = next(d['data']['nginx.conf'] for d in objects if d['kind'] == 'ConfigMap')
+        deployment = next(d for d in objects if d['kind'] == 'Deployment')
+        self.assertEqual(2, deployment['spec']['replicas'])
+        self.assertIn('max_size=512m', config)
+        self.assertIn('auth_request /__origin_head', config)
+        self.assertIn('$host$request_uri|$origin_validator', config)
+        self.assertIn('proxy_cache_use_stale off', config)
+        self.assertNotIn('proxy_ignore_headers', config)
+        self.assertIn('private, no-cache', config)
+        for header in ['$http_authorization', '$http_cookie', '$http_range', '$args']:
+            self.assertIn(header, config)
         mastodon = documents('mastodon/mastodon-values.yaml')[0]
         self.assertEqual('s3.andreybondarenko.com/mastodon', mastodon['mastodon']['s3']['aliasHost'])
 

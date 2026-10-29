@@ -1,26 +1,14 @@
-# Opt-in, LAN-only disposable fixture cache. No production Mastodon media is cached.
+# Production media cache; legacy resource names are retained for an in-place GitOps update.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: mastodon-media-cache-pilot
   namespace: seaweedfs
+  labels:
+    app.kubernetes.io/name: mastodon-media-cache
 spec:
-  plugin:
-    souin:
-      api:
-        souin:
-          basepath: /__mastodon_cache_pilot
-      default_cache:
-        cache_name: MastodonPilot
-        ttl: 30s
-        stale: 0s
-        allowed_http_verbs:
-        - GET
-        - HEAD
-        default_cache_control: no-store
-        regex:
-          exclude: \?
-      log_level: warn
+  inFlightReq:
+    amount: 64
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -29,22 +17,21 @@ metadata:
   namespace: seaweedfs
   annotations:
     kubernetes.io/ingress.class: traefik
+    argocd.argoproj.io/sync-wave: '1'
+  labels:
+    app.kubernetes.io/name: mastodon-media-cache
 spec:
   entryPoints:
   - websecure
   routes:
   - kind: Rule
-    match: Host(`s3.andreybondarenko.com`) && (ClientIP(`192.168.30.0/24`) || ClientIP(`192.168.4.0/24`) || ClientIP(`2a02:e98:c0:181e::/64`)
-      || ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`)) && Header(`X-Mastodon-Cache-Pilot`,
-      `1`) && !HeaderRegexp(`Authorization`, `.+`) && !HeaderRegexp(`Cookie`, `.+`)
-      && !HeaderRegexp(`Range`, `.+`) && ((PathPrefix(`/mastodon/cache-pilot/`) &&
-      (Method(`GET`) || Method(`HEAD`))) || (Path(`/souin-api/__mastodon_cache_pilot/flush`)
-      && Method(`PURGE`)))
-    priority: 200
+    match: Host(`s3.andreybondarenko.com`) && PathPrefix(`/mastodon/`) && (Method(`GET`)
+      || Method(`HEAD`))
+    priority: 220
     middlewares:
     - name: mastodon-media-cache-pilot
     services:
-    - name: s3
-      port: 8333
+    - name: mastodon-media-cache
+      port: 8080
   tls:
     secretName: seaweedfs-tls

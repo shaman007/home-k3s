@@ -1,10 +1,9 @@
-# Private console login, CrowdSec observation, and Mastodon cache pilot
+# Private console login, CrowdSec observation, and Mastodon media caching
 
 ## Scope and rollout status
 
 This change adds Keycloak OIDC to private infrastructure consoles, introduces
-CrowdSec in simulation mode, and prepares an opt-in cache for disposable Mastodon
-media fixtures. Sablier remains deferred.
+CrowdSec in simulation mode, and includes the production Mastodon media-cache configuration. Sablier remains deferred.
 
 External prerequisites were provisioned on 2026-10-29: the `traefik-admin`
 Keycloak client, its realm-role ID-token mapper, and the two dedicated OpenBao KV
@@ -132,54 +131,117 @@ blocking. A healthy pod or an empty alert list alone does not establish that
 acquisition works. Prometheus scrapes LAPI and agent metrics on TCP/6060 under
 job `crowdsec`; confirm both targets are up.
 
-## Mastodon media-cache pilot
+## Production Mastodon media caching
 
-Souin v1.7.8 is loaded by public Traefik. The pilot route requires all of:
+The Souin fixture pilot is replaced by a dedicated NGINX 1.30.6 proxy, pinned by
+image digest. The in-process Souin integration did not expose the storage limits
+needed for production. `seaweedfs/media-cache.yaml` defines a ConfigMap, two
+cache replicas, a ClusterIP Service, and Traefik ingress permission on TCP/8080.
+The existing SeaweedFS intra-namespace and DNS policies cover origin access.
 
-- Host `s3.andreybondarenko.com`.
-- A LAN/WireGuard client address, or loopback for operator port-forward checks.
-- Header `X-Mastodon-Cache-Pilot: 1`.
-- A GET/HEAD for a disposable `/mastodon/cache-pilot/` object, or a PURGE to the
-  exact `/souin-api/__mastodon_cache_pilot/flush` endpoint.
-- No Authorization, Cookie, or Range header.
+The existing IngressRoute and Middleware identities retain their historical
+`mastodon-media-cache-pilot` names to update them in place: SeaweedFS automatic
+pruning is disabled. They now route all GET/HEAD requests for
+`s3.andreybondarenko.com/mastodon/` to the cache proxy. No LAN restriction or
+pilot header is required. The legacy Middleware becomes a 64-request concurrency
+limit per public Traefik replica. The route has sync wave 1, so cache Deployment
+health gates the cutover. Normal S3 writes and other buckets retain the existing
+S3 ingress. The original `/robots.txt` route is unchanged. The new media route
+uses only its concurrency middleware; it does not add GeoIP enrichment.
 
-Query-bearing media requests bypass caching. The default for responses without
-an explicit cache policy is `no-store`; stale serving is disabled. Fixtures
-should be small and explicitly carry `Cache-Control: public, max-age=30`.
-Do not place actual user media in the pilot prefix. Keep pilot fixtures
-non-sensitive: the Souin administrative API dispatches by URI substring.
+Mastodon's `S3_ENDPOINT`, `S3_ALIAS_HOST`, S3 credentials, and media URLs are
+unchanged. Anonymous GETs are cache candidates. Authorization, cookies, any
+query string (including presigned S3 URLs), Range, conditional requests, and
+HEAD bypass storage and go directly to S3 with their original Host and headers.
 
-The normal S3 ingress, other buckets, writes, signed requests, and production
-Mastodon media URLs retain their existing behavior. Neither `S3_ENDPOINT` nor
-`S3_ALIAS_HOST` changes. This pilot does not accelerate federation yet.
+### Correctness and privacy
 
-Caches are local to each Traefik process. **A load-balanced PURGE is insufficient**:
-the operator helper enumerates all running public Traefik pods and opens a
-loopback, certificate-verified TLS port-forward to each pod:
+Before every cache-eligible GET, an uncached anonymous HEAD request checks the
+current S3 object. A deleted object returns 404 and an inaccessible object
+returns 403 even if both replicas have warm caches. Origin failures return 503;
+there is no stale fallback. This also covers direct S3 mutations and media
+cleanup, without depending on Mastodon callbacks or a purge fan-out job.
+
+Cache keys include the current ETag, Last-Modified, Content-Type,
+Content-Disposition, and Cache-Control. Thus replacements and metadata-only
+changes select a different representation. Missing validators/length, private or
+no-store/no-cache policies, Set-Cookie responses, and oversized objects bypass
+storage. GET response metadata must match the HEAD result before storage, which
+prevents caching a concurrent replacement under an obsolete validator. Native
+NGINX handling of Cache-Control, Vary and Set-Cookie remains enabled.
+
+Downstream responses use `Cache-Control: private, no-cache` (or `private,
+no-store` when the origin says no-store), so an external shared cache cannot
+skip the per-read permission check. Browsers can retain a body but must
+revalidate it. Origin checks add a metadata round trip per eligible request;
+this design saves repeated payload reads and transfer from SeaweedFS, rather
+than removing all origin requests. Cached files may remain on local disk until
+eviction, but revocation immediately prevents serving them.
+
+### Bounds and availability
+
+Each pod has a 512 MiB disk cache and 16 MiB shared key zone, inside a 768 MiB
+ephemeral volume. Cached bodies must have known lengths strictly below
+10,000,000 bytes. Larger/unknown-length media and ranges stream from the origin.
+Non-cacheable buffering cannot spill to unbounded temporary files. Memory is
+limited to 128 MiB and ephemeral storage to 1 GiB per pod. Cache contents are
+rebuildable and are lost on restart. Idle entries expire after one hour;
+Cache-Control controls freshness, with a ten-minute default for HTTP 200 when
+no explicit origin freshness exists.
+
+Rolling updates retain both available replicas until a replacement is ready.
+There is no purge/admin endpoint. Availability depends on S3 metadata checks;
+serving potentially revoked content during an origin outage is deliberately
+excluded.
+
+### Rollout and verification
+
+Commit/push the production manifests and let Argo reconcile `seaweedfs` and the
+public `traefik` plugin removal. The public Traefik release may restart to unload
+Souin; its existing HA settings remain unchanged. The cache route switches only
+after the proxy Deployment is healthy. This configuration is prepared in Git;
+production activation and real-origin verification still require reconciliation.
+
+`X-Media-Cache` reports HIT, MISS or BYPASS. Cache logs contain cache result,
+status, origin-check status, bytes and duration; they omit request paths,
+queries, cookies and credentials.
+
+Use uniquely named synthetic objects under `/mastodon/cache-pilot/` for live
+verification; that prefix now follows the ordinary production route. The
+operator helper reads each cache pod directly through a loopback port-forward,
+using a canonical Host header and never exposing object bodies or credentials:
 
 ```sh
-python3 tools/check-mastodon-cache-pilot.py
-python3 tools/check-mastodon-cache-pilot.py --purge
+python3 tools/check-mastodon-media-cache.py --path /mastodon/cache-pilot/fixture.txt
 ```
 
-Provision only a disposable `mastodon/cache-pilot/fixture.txt` object using the
-existing authenticated S3 workflow. The helper does not create or delete S3
-objects. After warming every replica, delete that fixture at the origin, then:
+After warming both replicas, overwrite the same fixture with different bytes
+and verify the new SHA256 without purging:
 
 ```sh
-python3 tools/check-mastodon-cache-pilot.py --purge --expect-missing
+python3 tools/check-mastodon-media-cache.py --path /mastodon/cache-pilot/fixture.txt \
+  --expect-body-sha256 <current-body-sha256>
 ```
 
-Every replica must return 403 or 404 after purge. The helper never prints body
-contents or S3 credentials. It verifies identical bodies and repeat cache hits.
-Use access logs and origin read counts/latency to measure value before expanding
-the route. Monitor Traefik memory: the pilot has no aggregate cache-memory cap.
+Also warm and then revoke anonymous read permission at S3; require 403 from
+both replicas using `--expect-private`. Warm and delete the fixture; require 404
+from both using `--expect-missing`. No PURGE is needed or supported. Confirm
+normal signed S3 reads/writes and existing Mastodon media delivery still work,
+and remove only the synthetic fixtures afterward.
 
-Before production media caching, implement and test automatic invalidation from
-Mastodon deletion, suspension/ACL changes, media cleanup and direct object
-changes, with purge fan-out to every replica and fail/retry behavior. Mastodon's
-cache-buster hooks can help, but do not cover arbitrary direct S3 mutations.
-Do not widen the fixture route merely because cache-hit tests pass.
+Behavior tests run the production configuration in two real NGINX processes
+against an isolated mock S3 origin:
+
+```sh
+NGINX_BINARY=/path/to/nginx python3 -m unittest tests.test_media_cache_runtime
+```
+
+The binary needs the auth-request and rewrite modules. Eight tests cover warm
+hits, deletion, ACL revocation, replacement, metadata-only changes, cache-policy
+revocation, origin failure, all bypass classes, oversized/unknown responses,
+Set-Cookie, concurrent changes and denial of admin/other-bucket paths. These
+passed locally against NGINX 1.30.6; they are not a substitute for the real S3
+rollout checks above.
 
 ## Validation and rollback
 
@@ -200,8 +262,9 @@ python3 -m unittest tests.test_traefik_security_plugins tests.test_argocd_projec
 ```
 
 Rollback OIDC by removing only `traefik-admin-oidc@kubernetescrd` from the affected
-ingress chains; retain LAN restrictions. Remove the pilot IngressRoute before
-removing its plugin registration. CrowdSec can be stopped independently because
+ingress chains; retain LAN restrictions. To roll back media caching, point the existing media IngressRoute service back
+to `s3:8333` before removing the proxy resources. Keep the media URL and origin
+permissions unchanged. Do not reinstate the old Souin cache for production. CrowdSec can be stopped independently because
 it has no enforcement component. Preserve its LAPI PVCs if observations are
 needed; review Argo pruning before deleting the Application. Retain external
 credentials until no workloads reference them, then retire only these dedicated
@@ -215,5 +278,5 @@ named synthetic S3 fixture produced repeat hits with identical bodies on both
 public Traefik replicas. After origin deletion, both replicas still served cached
 copies; after per-replica purge, both returned 404. The fixture was removed.
 The verification helper now sends the canonical Host header so ephemeral local
-port-forward ports cannot create different cache keys between test runs. Normal
-Mastodon federation media remains outside this opt-in fixture pilot.
+port-forward ports cannot create different cache keys between test runs. This verification applied to the original fixture pilot; production media
+caching is defined separately above and needs a new post-reconciliation check.

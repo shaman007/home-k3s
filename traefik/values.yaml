@@ -29,9 +29,6 @@ podSecurityContext:
   fsGroupChangePolicy: "OnRootMismatch"
 experimental:
   plugins:
-    souin:
-      moduleName: github.com/darkweak/souin
-      version: v1.7.8
     geoip2:
       moduleName: github.com/thiagotognoli/traefikgeoip
       version: v1.1.1
