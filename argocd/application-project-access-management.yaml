@@ -63,3 +63,8 @@ spec:
       kind: RoleBinding
   orphanedResources:
     warn: true
+    ignore:
+      # Retain the pre-existing database credential; no credential values belong in Git.
+      - group: ""
+        kind: Secret
+        name: "mysql-secret"

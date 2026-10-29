@@ -112,3 +112,16 @@ spec:
       - group: ""
         kind: Secret
         name: "sh.helm.release.v1.*"
+      # Retained bootstrap Secret, existing Harbor data claim, ACME account, and manually managed tagging egress policy.
+      - group: ""
+        kind: Secret
+        name: "vault-synapse"
+      - group: ""
+        kind: PersistentVolumeClaim
+        name: "harbor-jobservice"
+      - group: ""
+        kind: Secret
+        name: "letsencrypt-prod-account-key"
+      - group: "networking.k8s.io"
+        kind: NetworkPolicy
+        name: "mastodon-allow-egress-ollama"

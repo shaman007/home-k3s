@@ -85,3 +85,203 @@ spec:
       - group: ""
         kind: Secret
         name: "sh.helm.release.v1.*"
+      # Kubernetes/Talos bootstrap inventory shared by applications in kube-system.
+      - group: ""
+        kind: ConfigMap
+        name: "coredns"
+      - group: ""
+        kind: ConfigMap
+        name: "extension-apiserver-authentication"
+      - group: ""
+        kind: ConfigMap
+        name: "kube-apiserver-legacy-service-account-token-tracking"
+      - group: ""
+        kind: ConfigMap
+        name: "kubeconfig-in-cluster"
+      - group: ""
+        kind: ConfigMap
+        name: "talos-bootstrap-manifests-inventory"
+      - group: ""
+        kind: Service
+        name: "kube-dns"
+      - group: ""
+        kind: ServiceAccount
+        name: "attachdetach-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "certificate-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "clusterrole-aggregation-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "coredns"
+      - group: ""
+        kind: ServiceAccount
+        name: "cronjob-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "daemon-set-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "deployment-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "device-taint-eviction-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "disruption-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "endpoint-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "endpointslice-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "endpointslicemirroring-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "ephemeral-volume-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "expand-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "generic-garbage-collector"
+      - group: ""
+        kind: ServiceAccount
+        name: "horizontal-pod-autoscaler"
+      - group: ""
+        kind: ServiceAccount
+        name: "job-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "kube-apiserver-serving-clustertrustbundle-publisher"
+      - group: ""
+        kind: ServiceAccount
+        name: "legacy-service-account-token-cleaner"
+      - group: ""
+        kind: ServiceAccount
+        name: "namespace-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "node-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "persistent-volume-binder"
+      - group: ""
+        kind: ServiceAccount
+        name: "pod-garbage-collector"
+      - group: ""
+        kind: ServiceAccount
+        name: "podcertificaterequestcleaner"
+      - group: ""
+        kind: ServiceAccount
+        name: "pv-protection-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "pvc-protection-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "replicaset-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "replication-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "resource-claim-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "resourcequota-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "root-ca-cert-publisher"
+      - group: ""
+        kind: ServiceAccount
+        name: "service-account-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "service-cidrs-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "statefulset-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "storage-version-migrator-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "token-cleaner"
+      - group: ""
+        kind: ServiceAccount
+        name: "ttl-after-finished-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "ttl-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "validatingadmissionpolicy-status-controller"
+      - group: ""
+        kind: ServiceAccount
+        name: "volumeattributesclass-protection-controller"
+      - group: "apps"
+        kind: Deployment
+        name: "coredns"
+      - group: "rbac.authorization.k8s.io"
+        kind: Role
+        name: "extension-apiserver-authentication-reader"
+      - group: "rbac.authorization.k8s.io"
+        kind: Role
+        name: "system::leader-locking-kube-controller-manager"
+      - group: "rbac.authorization.k8s.io"
+        kind: Role
+        name: "system::leader-locking-kube-scheduler"
+      - group: "rbac.authorization.k8s.io"
+        kind: Role
+        name: "system:controller:bootstrap-signer"
+      - group: "rbac.authorization.k8s.io"
+        kind: Role
+        name: "system:controller:cloud-provider"
+      - group: "rbac.authorization.k8s.io"
+        kind: Role
+        name: "system:controller:token-cleaner"
+      - group: "rbac.authorization.k8s.io"
+        kind: RoleBinding
+        name: "system::extension-apiserver-authentication-reader"
+      - group: "rbac.authorization.k8s.io"
+        kind: RoleBinding
+        name: "system::leader-locking-kube-controller-manager"
+      - group: "rbac.authorization.k8s.io"
+        kind: RoleBinding
+        name: "system::leader-locking-kube-scheduler"
+      - group: "rbac.authorization.k8s.io"
+        kind: RoleBinding
+        name: "system:controller:bootstrap-signer"
+      - group: "rbac.authorization.k8s.io"
+        kind: RoleBinding
+        name: "system:controller:cloud-provider"
+      - group: "rbac.authorization.k8s.io"
+        kind: RoleBinding
+        name: "system:controller:token-cleaner"
+      # Longhorn recovery state, webhook CA, and externally provisioned backup/S3 credentials.
+      - group: ""
+        kind: ConfigMap
+        name: "recovery-backend-share-manager-*"
+      - group: ""
+        kind: Secret
+        name: "longhorn-backup-s3"
+      - group: ""
+        kind: Secret
+        name: "longhorn-webhook-ca"
+      - group: ""
+        kind: Secret
+        name: "s3-admin"
+      - group: ""
+        kind: Pod
+        name: "coredns-*"
+      - group: "apps"
+        kind: ReplicaSet
+        name: "coredns-*"
+      - group: ""
+        kind: Secret
+        name: "bootstrap-token-*"
