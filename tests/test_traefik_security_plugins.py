@@ -82,6 +82,7 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
         config = next(d['data']['nginx.conf'] for d in objects if d['kind'] == 'ConfigMap')
         deployment = next(d for d in objects if d['kind'] == 'Deployment')
         self.assertEqual(2, deployment['spec']['replicas'])
+        self.assertEqual('128Mi', deployment['spec']['template']['spec']['containers'][0]['resources']['requests']['memory'])
         self.assertIn('max_size=512m', config)
         self.assertIn('auth_request /__origin_head', config)
         self.assertIn('$host$request_uri|$origin_validator', config)
