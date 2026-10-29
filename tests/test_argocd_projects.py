@@ -21,6 +21,7 @@ PROJECT_APPLICATIONS = {
 }
 
 PROJECT_PLATFORM = {
+    "crowdsec", "crowdsec-config",
     "argocd-deploy", "argocd-install", "cert-manager", "cilium", "coredns-custom",
     "external-secrets", "external-secrets-network-policy", "gpu-operator",
     "headlamp", "metallb",

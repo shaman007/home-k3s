@@ -1,0 +1,46 @@
+{
+  "clientId": "traefik-admin",
+  "name": "Private infrastructure consoles",
+  "protocol": "openid-connect",
+  "enabled": true,
+  "publicClient": false,
+  "clientAuthenticatorType": "client-secret",
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": false,
+  "fullScopeAllowed": true,
+  "redirectUris": [
+    "https://prometheus.w386.k8s.my.lan/oidc/callback",
+    "https://alerts.w386.k8s.my.lan/oidc/callback",
+    "https://longhorn.w386.k8s.my.lan/oidc/callback",
+    "https://thanos.w386.k8s.my.lan/oidc/callback",
+    "https://thanos-compactor.w386.k8s.my.lan/oidc/callback",
+    "https://thanos-store.w386.k8s.my.lan/oidc/callback"
+  ],
+  "webOrigins": [],
+  "attributes": {
+    "pkce.code.challenge.method": "S256"
+  },
+  "defaultClientScopes": [
+    "profile",
+    "email",
+    "roles"
+  ],
+  "protocolMappers": [
+    {
+      "name": "realm-roles-id-token",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-realm-role-mapper",
+      "consentRequired": false,
+      "config": {
+        "multivalued": "true",
+        "claim.name": "realm_roles",
+        "jsonType.label": "String",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "userinfo.token.claim": "true"
+      }
+    }
+  ]
+}

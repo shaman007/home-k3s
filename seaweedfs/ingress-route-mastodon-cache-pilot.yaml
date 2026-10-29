@@ -1,0 +1,50 @@
+# Opt-in, LAN-only disposable fixture cache. No production Mastodon media is cached.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: mastodon-media-cache-pilot
+  namespace: seaweedfs
+spec:
+  plugin:
+    souin:
+      api:
+        souin:
+          basepath: /__mastodon_cache_pilot
+      default_cache:
+        cache_name: MastodonPilot
+        ttl: 30s
+        stale: 0s
+        allowed_http_verbs:
+        - GET
+        - HEAD
+        default_cache_control: no-store
+        regex:
+          exclude: \?
+      log_level: warn
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: mastodon-media-cache-pilot
+  namespace: seaweedfs
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - kind: Rule
+    match: Host(`s3.andreybondarenko.com`) && (ClientIP(`192.168.30.0/24`) || ClientIP(`192.168.4.0/24`) || ClientIP(`2a02:e98:c0:181e::/64`)
+      || ClientIP(`127.0.0.1/32`) || ClientIP(`::1/128`)) && Header(`X-Mastodon-Cache-Pilot`,
+      `1`) && !HeaderRegexp(`Authorization`, `.+`) && !HeaderRegexp(`Cookie`, `.+`)
+      && !HeaderRegexp(`Range`, `.+`) && ((PathPrefix(`/mastodon/cache-pilot/`) &&
+      (Method(`GET`) || Method(`HEAD`))) || (Path(`/souin-api/__mastodon_cache_pilot/flush`)
+      && Method(`PURGE`)))
+    priority: 200
+    middlewares:
+    - name: mastodon-media-cache-pilot
+    services:
+    - name: s3
+      port: 8333
+  tls:
+    secretName: seaweedfs-tls

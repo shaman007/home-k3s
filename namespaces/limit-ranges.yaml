@@ -781,3 +781,18 @@ spec:
         memory: 1Gi
       default:
         memory: 8Gi
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: crowdsec
+spec:
+  limits:
+  - type: Container
+    defaultRequest:
+      cpu: 10m
+      memory: 128Mi
+    default:
+      memory: 512Mi

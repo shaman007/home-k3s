@@ -233,3 +233,10 @@ spec:
           port: 9104
         - protocol: TCP
           port: 9121
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: crowdsec
+      ports:
+        - protocol: TCP
+          port: 6060

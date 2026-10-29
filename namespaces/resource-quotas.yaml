@@ -557,3 +557,18 @@ spec:
     configmaps: "20"
     persistentvolumeclaims: "2"
     requests.storage: 1Gi
+
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: namespace-quota
+  namespace: crowdsec
+spec:
+  hard:
+    pods: '6'
+    services: '5'
+    secrets: '15'
+    configmaps: '20'
+    persistentvolumeclaims: '2'
+    requests.storage: 2Gi

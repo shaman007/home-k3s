@@ -15,3 +15,9 @@ sessions, consents, group membership, and temporary admin clients are excluded.
 Restore those from Vault or a database backup. New confidential clients created
 from the snapshot receive new secrets, which must then be written to the
 corresponding Vault entries used by External Secrets.
+
+`traefik-admin.client.json` is the dedicated private-console OIDC client contract
+added after the realm snapshot. Provision/check it with
+`tools/provision-traefik-security.py`; do not import the whole realm to create
+this client. See `docs/traefik-security-plugins.md` for role requirements,
+secret handling and runtime checks.

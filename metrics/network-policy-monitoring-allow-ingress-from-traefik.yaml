@@ -19,3 +19,5 @@ spec:
           port: 9090
         - protocol: TCP
           port: 9093
+        - protocol: TCP
+          port: 10902

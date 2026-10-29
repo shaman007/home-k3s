@@ -1,0 +1,82 @@
+image:
+  tag: v1.8.1
+container_runtime: containerd
+secrets:
+  externalSecret:
+    name: crowdsec-bootstrap
+config:
+  simulation.yaml: |
+    simulation: true
+    exclusions: []
+  config.yaml.local: |
+    api:
+      server:
+        auto_registration:
+          enabled: true
+          token: "${REGISTRATION_TOKEN}"
+          allowed_ranges:
+            - "10.42.0.0/16"
+            - "fd74:67a:1fcf:4200::/56"
+    prometheus:
+      enabled: true
+      level: full
+      listen_addr: 0.0.0.0
+      listen_port: 6060
+  agent_config.yaml.local: |
+    crowdsec_service:
+      acquisition_path: /etc/crowdsec/kubernetes-acquisition.yaml
+    prometheus:
+      enabled: true
+      level: full
+      listen_addr: 0.0.0.0
+      listen_port: 6060
+lapi:
+  replicas: 1
+  env:
+  - name: DISABLE_ONLINE_API
+    value: 'true'
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  persistentVolume:
+    data:
+      storageClassName: longhorn
+      size: 1Gi
+    config:
+      storageClassName: longhorn
+      size: 100Mi
+agent:
+  isDeployment: true
+  replicas: 1
+  serviceAccountName: crowdsec-agent
+  hostVarLog: false
+  acquisition: []
+  additionalAcquisition:
+  - source: file
+    filenames:
+    - /dev/null
+    labels:
+      type: traefik
+  env:
+  - name: COLLECTIONS
+    value: crowdsecurity/traefik
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  extraVolumes:
+  - name: kubernetes-acquisition
+    configMap:
+      name: crowdsec-kubernetes-acquisition
+  extraVolumeMounts:
+  - name: kubernetes-acquisition
+    mountPath: /staging/etc/crowdsec/kubernetes-acquisition.yaml
+    subPath: acquis.yaml
+    readOnly: true
+appsec:
+  enabled: false

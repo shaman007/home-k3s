@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: traefik-private
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
 spec:
   ingressClassName: traefik-private
   tls:

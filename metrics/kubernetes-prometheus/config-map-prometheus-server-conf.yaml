@@ -185,6 +185,11 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
+      - job_name: crowdsec
+        static_configs:
+          - targets:
+              - crowdsec-service.crowdsec.svc.cluster.local:6060
+              - crowdsec-agent-service.crowdsec.svc.cluster.local:6060
 
       - job_name: mysql-wordpress
         scrape_interval: 45s
