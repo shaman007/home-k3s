@@ -40,6 +40,7 @@ lapi:
       cpu: 50m
       memory: 256Mi
     limits:
+      cpu: null # Remove the chart's default CPU limit.
       memory: 512Mi
   persistentVolume:
     data:
@@ -68,6 +69,7 @@ agent:
       cpu: 50m
       memory: 128Mi
     limits:
+      cpu: null # Remove the chart's default CPU limit.
       memory: 512Mi
   extraVolumes:
   - name: kubernetes-acquisition
