@@ -15,6 +15,8 @@ spec:
     repoURL: https://grafana.github.io/helm-charts
     targetRevision: 7.5.0
     helm:
+      # The optional chart test has no security-context overrides; keep canary probes.
+      skipTests: true
       parameters:
         - name: memcachedExporter.image.repository
           value: harbor.andreybondarenko.com/dockerhub/prom/memcached-exporter
@@ -27,6 +29,10 @@ spec:
         memberlist:
           service:
             publishNotReadyAddresses: true
+        memcached:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
         global:
           priorityClassName: homelab-essential
         chunksCache:
@@ -38,12 +44,18 @@ spec:
             limits:
               memory: 9830Mi
         gateway:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
           image:
             registry: harbor.andreybondarenko.com/dockerhub
           resources:
             requests:
               cpu: 25m
         lokiCanary:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
           image:
             registry: harbor.andreybondarenko.com/dockerhub
           resources:
@@ -60,6 +72,9 @@ spec:
             repository: harbor.andreybondarenko.com/dockerhub/kiwigrid/k8s-sidecar
 
         loki:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
           mode: SingleBinary
           image:
             registry: harbor.andreybondarenko.com/dockerhub

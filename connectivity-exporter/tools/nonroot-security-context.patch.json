@@ -1,0 +1,6 @@
+[
+  {"op":"test","path":"/spec/template/spec/containers/0/name","value":"exporter"},
+  {"op":"add","path":"/spec/template/spec/containers/0/securityContext/runAsNonRoot","value":true},
+  {"op":"add","path":"/spec/template/spec/containers/0/securityContext/runAsUser","value":65534},
+  {"op":"add","path":"/spec/template/spec/containers/0/securityContext/runAsGroup","value":65534}
+]

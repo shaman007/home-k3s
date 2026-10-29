@@ -30,7 +30,11 @@ class PodSecurityNamespaceLabelsTest(unittest.TestCase):
             labels = namespace["metadata"]["labels"]
             for name, value in EXPECTED_LABELS.items():
                 self.assertEqual(value, labels.get(name), path)
-            self.assertNotIn("pod-security.kubernetes.io/enforce", labels)
+            if path.startswith("open-terminal/"):
+                self.assertEqual("restricted", labels["pod-security.kubernetes.io/enforce"])
+                self.assertEqual("v1.37", labels["pod-security.kubernetes.io/enforce-version"])
+            else:
+                self.assertNotIn("pod-security.kubernetes.io/enforce", labels)
 
     def test_argo_managed_namespaces_have_restricted_audit_and_warn(self):
         for path in (
@@ -42,8 +46,25 @@ class PodSecurityNamespaceLabelsTest(unittest.TestCase):
             labels = sync_policy["managedNamespaceMetadata"]["labels"]
             for name, value in EXPECTED_LABELS.items():
                 self.assertEqual(value, labels.get(name), path)
-            self.assertNotIn("pod-security.kubernetes.io/enforce", labels)
+            if "argocd-install" in path:
+                self.assertEqual("restricted", labels["pod-security.kubernetes.io/enforce"])
+                self.assertEqual("v1.37", labels["pod-security.kubernetes.io/enforce-version"])
+            else:
+                self.assertNotIn("pod-security.kubernetes.io/enforce", labels)
             self.assertIn("CreateNamespace=true", sync_policy["syncOptions"])
+
+    def test_first_wave_is_pinned_without_changing_privileged_exceptions(self):
+        namespaces = {d['metadata']['name']: d for d in yaml.safe_load_all(
+            (ROOT / 'namespaces/namespaces.yaml').read_text()) if isinstance(d, dict)}
+        for name in ('ca-scanner', 'cert-manager', 'external-secrets', 'opensearch',
+                     'stirling-pdf', 'unifi', 'loki', 'mempalace', 'harbor'):
+            labels = namespaces[name]['metadata']['labels']
+            self.assertEqual('restricted', labels['pod-security.kubernetes.io/enforce'])
+            self.assertEqual('v1.37', labels['pod-security.kubernetes.io/enforce-version'])
+        for name in ('longhorn-system', 'image-builder', 'metallb-system'):
+            self.assertEqual('privileged', namespaces[name]['metadata']['labels']['pod-security.kubernetes.io/enforce'])
+        # The exporter requires a new non-root image before namespace enforcement.
+        self.assertNotIn('pod-security.kubernetes.io/enforce', namespaces['connectivity-exporter']['metadata']['labels'])
 
     def test_only_primary_ollama_application_manages_shared_namespace(self):
         application = load_yaml("argocd/application-ollama-small.yaml")

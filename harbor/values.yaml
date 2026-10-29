@@ -18,6 +18,15 @@ exporter:
 jobservice:
   initContainers:
     - name: wait-for-core
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+        seccompProfile:
+          type: RuntimeDefault
       image: busybox:1.38
       imagePullPolicy: IfNotPresent
       command:

@@ -26,10 +26,19 @@ spec:
       priorityClassName: homelab-best-effort
       enableServiceLinks: false
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: open-terminal
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           image: harbor.andreybondarenko.com/github/open-webui/open-terminal:0.14.6
           imagePullPolicy: IfNotPresent
           env:

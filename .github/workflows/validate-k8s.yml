@@ -71,6 +71,10 @@ jobs:
         run: |
           python tools/ci/check-container-resources.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
+      - name: Check Restricted namespace pod security contexts
+        run: |
+          python tools/ci/check-restricted-contexts.py --rendered "${RUNNER_TEMP}/rendered-applications"
+
       - name: Validate rendered and tracked manifests
         run: |
           python tools/ci/validate-rendered.py --rendered "${RUNNER_TEMP}/rendered-applications"
