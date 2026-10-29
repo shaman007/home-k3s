@@ -37,6 +37,12 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: prepare-model-cache
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-ec", "mkdir -p /models/cache && chown -R 1000:1000 /models"]

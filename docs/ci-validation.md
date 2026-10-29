@@ -42,3 +42,8 @@ errors show resource identities and failing constraint paths, not values. For
 Helm diagnostics, reproduce the failing source locally and keep output private.
 `--application NAME` supports isolated rendering; full validation requires the
 complete application inventory.
+
+Container memory budgets and the absence of CPU limits are checked after
+rendering with `tools/ci/check-container-resources.py`. Namespace LimitRanges
+are considered for admission defaults. See [container resource policy](container-resources.md)
+for operator-generated pods, sizing evidence and rollout requirements.

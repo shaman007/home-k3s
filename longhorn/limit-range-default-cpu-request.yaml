@@ -1,19 +1,16 @@
+# Kept aligned with the centrally deployed namespaces/limit-ranges.yaml policy.
+# This file is excluded by the longhorn-custom Application directory filter.
 ---
 apiVersion: v1
 kind: LimitRange
 metadata:
-  name: default-cpu-request
+  name: default-resource-requests
   namespace: longhorn-system
 spec:
   limits:
     - type: Container
       defaultRequest:
         cpu: 10m
-        memory: 64Mi
+        memory: 1Gi
       default:
-        memory: 512Mi
-      min:
-        cpu: 5m
-        memory: 32Mi
-      max:
-        memory: 2Gi
+        memory: 8Gi

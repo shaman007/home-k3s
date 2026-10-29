@@ -15,6 +15,13 @@ spec:
       helm:
         releaseName: cert-manager
         values: |
+          startupapicheck:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
           crds:
             enabled: true
           global:

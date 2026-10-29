@@ -16,11 +16,19 @@ spec:
           repository: nvcr.io/nvidia
           resources:
             limits:
+              # Null removes the chart default CPU quota; keep its CPU request.
+              cpu: null
               memory: 350Mi
             requests:
               cpu: 200m
               memory: 100Mi
         validator:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           repository: nvcr.io/nvidia
         driver:
           enabled: false
@@ -29,6 +37,12 @@ spec:
         hostPaths:
           driverInstallDir: /usr/local
         devicePlugin:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
           repository: nvcr.io/nvidia
           config:
             create: true
@@ -50,8 +64,20 @@ spec:
                       - name: nvidia.com/gpu
                         replicas: 8
         dcgmExporter:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
           repository: nvcr.io/nvidia/k8s
         gfd:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
           repository: nvcr.io/nvidia
         migManager:
           repository: nvcr.io/nvidia/cloud-native

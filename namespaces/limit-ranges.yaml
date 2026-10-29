@@ -739,3 +739,45 @@ spec:
         memory: 32Mi
       max:
         memory: 1Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: gpu-operator
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 64Mi
+      default:
+        memory: 256Mi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: lenka
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 512Mi
+      default:
+        memory: 2Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-resource-requests
+  namespace: longhorn-system
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 1Gi
+      default:
+        memory: 8Gi

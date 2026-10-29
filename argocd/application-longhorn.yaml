@@ -26,6 +26,17 @@ spec:
           preUpgradeChecker:
             jobEnabled: false
           defaultSettings:
+            # Native setting covers CSI pods created by Longhorn after Helm renders.
+            systemManagedCSIComponentsResourceLimits: |
+              {
+                "csi-attacher": {"requests": {"cpu": "10m","memory": "64Mi"},"limits": {"memory": "256Mi"}},
+                "csi-provisioner": {"requests": {"cpu": "10m","memory": "128Mi"},"limits": {"memory": "512Mi"}},
+                "csi-resizer": {"requests": {"cpu": "10m","memory": "64Mi"},"limits": {"memory": "256Mi"}},
+                "csi-snapshotter": {"requests": {"cpu": "10m","memory": "64Mi"},"limits": {"memory": "256Mi"}},
+                "longhorn-csi-plugin": {"requests": {"cpu": "10m","memory": "128Mi"},"limits": {"memory": "512Mi"}},
+                "node-driver-registrar": {"requests": {"cpu": "10m","memory": "32Mi"},"limits": {"memory": "128Mi"}},
+                "longhorn-liveness-probe": {"requests": {"cpu": "10m","memory": "32Mi"},"limits": {"memory": "128Mi"}}
+              }
             # Limit recovery I/O contention on the shared node disks/network.
             concurrentReplicaRebuildPerNodeLimit: 1
             allowRecurringJobWhileVolumeDetached: true
@@ -33,11 +44,24 @@ spec:
             priorityClass: homelab-critical
             taintToleration: node-role.kubernetes.io/control-plane:NoSchedule
           longhornManager:
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
             priorityClass: homelab-critical
             tolerations:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
                 effect: NoSchedule
+          longhornGlobalManager:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
           longhornDriver:
             priorityClass: homelab-critical
           longhornUI:

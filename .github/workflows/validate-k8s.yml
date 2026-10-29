@@ -67,6 +67,10 @@ jobs:
         run: |
           python tools/ci/render-applications.py --output "${RUNNER_TEMP}/rendered-applications"
 
+      - name: Check container memory budgets and absence of CPU limits
+        run: |
+          python tools/ci/check-container-resources.py --rendered "${RUNNER_TEMP}/rendered-applications"
+
       - name: Validate rendered and tracked manifests
         run: |
           python tools/ci/validate-rendered.py --rendered "${RUNNER_TEMP}/rendered-applications"

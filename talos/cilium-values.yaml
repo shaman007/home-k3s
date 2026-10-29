@@ -5,6 +5,9 @@ cgroup:
 
 cni:
   resources:
+    limits:
+      # Override the chart default quota for install-cni-binaries.
+      cpu: null
     requests:
       memory: 32Mi
 

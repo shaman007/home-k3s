@@ -30,6 +30,12 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: prepare-config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
           command:
