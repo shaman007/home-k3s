@@ -9,9 +9,12 @@ media fixtures. Sablier remains deferred.
 External prerequisites were provisioned on 2026-10-29: the `traefik-admin`
 Keycloak client, its realm-role ID-token mapper, and the two dedicated OpenBao KV
 entries, read policies, and namespace/service-account-bound Kubernetes auth roles.
-No secret values are in this repository. Kubernetes manifests must still be
-committed/pushed by the operator and reconciled through Argo CD. Do not call the
-rollout complete until the runtime checks below pass.
+No secret values are in this repository. GitOps revision `70607afa` reached the
+cluster on 2026-10-29. CrowdSec and both Traefik releases rolled out; Longhorn
+redirects to Keycloak. Monitoring ingress is waiting for the two missing Thanos
+DNS records below: their HTTP-01 self-checks report NXDOMAIN, and the certificate
+sync wave blocks the remaining monitoring ingress updates. Real Keycloak browser
+login remains unverified. Do not call the complete rollout finished yet.
 
 ## OIDC
 
@@ -201,3 +204,14 @@ it has no enforcement component. Preserve its LAPI PVCs if observations are
 needed; review Argo pruning before deleting the Application. Retain external
 credentials until no workloads reference them, then retire only these dedicated
 clients/roles/KV entries with operator authorization.
+
+### Live pilot verification, 2026-10-29
+
+Both CrowdSec sources parsed real public Traefik requests, global simulation was
+enabled, and Prometheus reported both CrowdSec scrape targets up. A uniquely
+named synthetic S3 fixture produced repeat hits with identical bodies on both
+public Traefik replicas. After origin deletion, both replicas still served cached
+copies; after per-replica purge, both returned 404. The fixture was removed.
+The verification helper now sends the canonical Host header so ephemeral local
+port-forward ports cannot create different cache keys between test runs. Normal
+Mastodon federation media remains outside this opt-in fixture pilot.

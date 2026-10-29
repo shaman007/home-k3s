@@ -26,7 +26,8 @@ class DirectTLS(http.client.HTTPSConnection):
 def fetch(port, path, method='GET'):
     conn = DirectTLS(HOST, port=port, timeout=10, context=ssl.create_default_context())
     try:
-        conn.request(method, path, headers={'X-Mastodon-Cache-Pilot': '1'})
+        # Keep cache keys stable across ephemeral port-forward ports.
+        conn.request(method, path, headers={'Host': HOST, 'X-Mastodon-Cache-Pilot': '1'})
         response = conn.getresponse()
         body = response.read()
         return response.status, response.getheader('Cache-Status', ''), hashlib.sha256(body).hexdigest()
