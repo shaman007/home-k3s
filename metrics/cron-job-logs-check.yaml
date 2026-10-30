@@ -80,9 +80,9 @@ spec:
                 - name: MAIL_TO
                   value: me@andreybondarenko.com
                 - name: LOOKBACK_HOURS
-                  value: "1"
+                  value: "24"
                 - name: LOKI_QUERY_LIMIT
-                  value: "80"
+                  value: "200"
                 - name: MAX_SAMPLES_PER_QUERY
                   value: "0"
                 - name: LOKI_BATCH_LIMIT

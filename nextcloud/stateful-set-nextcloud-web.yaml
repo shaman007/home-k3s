@@ -27,6 +27,11 @@ spec:
         component: web
         app.kubernetes.io/component: web
     spec:
+      # Avoid public SMTP hairpinning while retaining the mail certificate hostname.
+      hostAliases:
+        - ip: "192.168.30.210"
+          hostnames:
+            - andreybondarenko.com
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       securityContext:
