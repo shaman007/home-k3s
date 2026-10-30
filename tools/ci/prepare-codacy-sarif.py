@@ -34,7 +34,9 @@ def prepare(report):
             matches = [i for i, existing in enumerate(target_rules) if existing["id"] == rule["id"]]
             if matches:
                 target = matches[0]
-                if target_rules[target] != rule:
+                if target_rules[target] == {"id": rule["id"]}:
+                    target_rules[target] = rule
+                elif rule != {"id": rule["id"]} and target_rules[target] != rule:
                     raise ValueError("Conflicting Codacy rule definitions")
             else:
                 target = len(target_rules)
@@ -43,7 +45,19 @@ def prepare(report):
         artifacts = run.get("artifacts", [])
         offset = len(merged["artifacts"])
         for result in run.get("results", []):
-            if "ruleIndex" in result:
+            # Codacy may emit -1 when a pattern has no description, and
+            # non-security results can use indices relative to their own list.
+            # The explicit ruleId is authoritative in both cases.
+            if "ruleId" in result:
+                rule_id = result["ruleId"]
+                matches = [i for i, rule in enumerate(target_rules) if rule["id"] == rule_id]
+                if not matches:
+                    target_rules.append({"id": rule_id})
+                    matches = [len(target_rules) - 1]
+                result["ruleIndex"] = matches[0]
+            elif "ruleIndex" in result:
+                if result["ruleIndex"] not in rule_map:
+                    raise ValueError("Invalid Codacy rule index without a ruleId")
                 result["ruleIndex"] = rule_map[result["ruleIndex"]]
             for location in result.get("locations", []):
                 artifact = location.get("physicalLocation", {}).get("artifactLocation", {})

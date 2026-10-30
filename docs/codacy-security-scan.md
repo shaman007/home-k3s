@@ -36,3 +36,9 @@ Regression tests cover the five-batch failure and reference preservation.
 
 The rejection is described in GitHub's
 [SARIF upload change](https://github.blog/changelog/2025-07-21-code-scanning-will-stop-combining-multiple-sarif-runs-uploaded-in-the-same-sarif-file/).
+
+Codacy also emits `ruleIndex: -1` for findings whose pattern lacks a description,
+and can use a non-security-local index in the combined rule list. Preparation
+resolves results by `ruleId`, adds an ID-only descriptor if needed, and enriches
+it if a later batch supplies metadata. Findings and fingerprints are retained;
+an invalid index without a rule ID still fails.

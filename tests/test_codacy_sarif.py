@@ -50,12 +50,46 @@ class CodacySarifTest(unittest.TestCase):
 
     def test_conflicting_rules_and_invalid_references_fail(self):
         a, b = batch("a", "a.py"), batch("a", "b.py")
+        a["tool"]["driver"]["rules"][0]["name"] = "original"
         b["tool"]["driver"]["rules"][0]["name"] = "conflict"
         with self.assertRaises(ValueError):
             sarif.prepare({"runs": [a, b]})
         a["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]["index"] = 5
         with self.assertRaises(ValueError):
             sarif.prepare({"runs": [a]})
+
+    def test_negative_index_and_missing_descriptor_preserve_finding(self):
+        run = batch("undocumented", "a.py")
+        run["tool"]["driver"]["rules"] = []
+        run["results"][0]["ruleIndex"] = -1
+        output = sarif.prepare({"runs": [run]})["runs"][0]
+        self.assertEqual(output["tool"]["driver"]["rules"], [{"id": "undocumented"}])
+        self.assertEqual(output["results"][0]["ruleIndex"], 0)
+        expected = copy.deepcopy(run["results"][0])
+        expected["ruleIndex"] = 0
+        self.assertEqual(output["results"][0], expected)
+
+    def test_rule_id_overrides_incorrect_nonnegative_index(self):
+        run = batch("nonsecurity", "a.py")
+        run["tool"]["driver"]["rules"].insert(0, {"id": "security"})
+        output = sarif.prepare({"runs": [run]})["runs"][0]
+        self.assertEqual(output["results"][0]["ruleIndex"], 1)
+
+    def test_later_batch_enriches_synthesized_descriptor(self):
+        first, second = batch("a", "a.py"), batch("a", "b.py")
+        first["tool"]["driver"]["rules"] = []
+        first["results"][0]["ruleIndex"] = -1
+        second["tool"]["driver"]["rules"][0]["name"] = "Full description"
+        output = sarif.prepare({"runs": [first, second]})["runs"][0]
+        self.assertEqual(output["tool"]["driver"]["rules"], second["tool"]["driver"]["rules"])
+        self.assertEqual([r["ruleIndex"] for r in output["results"]], [0, 0])
+
+    def test_unresolvable_index_without_id_fails(self):
+        run = batch("a", "a.py")
+        del run["results"][0]["ruleId"]
+        run["results"][0]["ruleIndex"] = -1
+        with self.assertRaises(ValueError):
+            sarif.prepare({"runs": [run]})
 
     def test_new_tables_fail_instead_of_corrupting_references(self):
         run = batch("a", "a.py")
