@@ -158,3 +158,32 @@ data:
     	$property->setValue( null, $defaults );
     }
     add_action( 'after_setup_theme', 'home_k3s_fix_independent_publisher_defaults', 100 );
+
+  internal-smtp.php: |
+    <?php
+    /**
+     * Plugin Name: Internal SMTP transport
+     * Description: Route WordPress mail through the homelab Postfix service.
+     */
+    if (!defined('ABSPATH')) {
+        exit;
+    }
+
+    add_action('phpmailer_init', static function ($mailer) {
+        $mailer->isSMTP();
+        $mailer->Host = 'andreybondarenko.com';
+        $mailer->Port = 25;
+        // Postfix accepts local-domain recipients without relay credentials.
+        $mailer->SMTPAuth = false;
+        $mailer->SMTPSecure = 'tls';
+        $mailer->SMTPAutoTLS = true;
+        $mailer->Timeout = 15;
+        $mailer->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'allow_self_signed' => false,
+            ],
+        ];
+        $mailer->setFrom('wordpress@andreybondarenko.com', 'WordPress', false);
+    });

@@ -26,6 +26,11 @@ spec:
         app: wordpress
         component: web
     spec:
+      # Preserve the mail TLS hostname while using the reserved internal ingress VIP.
+      hostAliases:
+        - ip: "192.168.30.210"
+          hostnames:
+            - andreybondarenko.com
       automountServiceAccountToken: false
       priorityClassName: homelab-essential
       securityContext:
@@ -87,6 +92,9 @@ spec:
             - name: mu-plugins
               mountPath: /code/wp-content/mu-plugins/independent-publisher-compat.php
               subPath: independent-publisher-compat.php
+            - name: mu-plugins
+              mountPath: /code/wp-content/mu-plugins/internal-smtp.php
+              subPath: internal-smtp.php
             - name: varrun
               mountPath: /var/run/php
             - name: run

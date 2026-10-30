@@ -54,7 +54,7 @@ spec:
                 - name: SITE_HOSTS
                   value: andreybondarenko.com,www.andreybondarenko.com
                 - name: SMTP_HOST
-                  value: andreybondarenko.com
+                  value: traefik.traefik.svc.cluster.local
                 - name: SMTP_PORT
                   value: "25"
                 - name: MAIL_FROM
@@ -62,7 +62,7 @@ spec:
                 - name: MAIL_TO
                   value: me@andreybondarenko.com
                 - name: SEND_EMAIL
-                  value: "false"
+                  value: "true"
                 - name: METRICS_CONFIGMAP_NAME
                   value: wordpress-daily-report-metrics
                 - name: HTTP_TIMEOUT_SECONDS

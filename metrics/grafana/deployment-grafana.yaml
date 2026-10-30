@@ -22,6 +22,11 @@ spec:
       labels:
         app: grafana
     spec:
+      # Preserve the mail TLS hostname while using the reserved internal ingress VIP.
+      hostAliases:
+        - ip: "192.168.30.210"
+          hostnames:
+            - andreybondarenko.com
       automountServiceAccountToken: false
       priorityClassName: homelab-essential
       securityContext:
@@ -70,6 +75,18 @@ spec:
             limits:
               memory: 704Mi
           env:
+            - name: GF_SMTP_ENABLED
+              value: "true"
+            - name: GF_SMTP_HOST
+              value: "andreybondarenko.com:25"
+            - name: GF_SMTP_FROM_ADDRESS
+              value: "grafana@andreybondarenko.com"
+            - name: GF_SMTP_FROM_NAME
+              value: "Grafana"
+            - name: GF_SMTP_STARTTLS_POLICY
+              value: "MandatoryStartTLS"
+            - name: GF_SMTP_SKIP_VERIFY
+              value: "false"
             - name: GF_SERVER_ROOT_URL
               value: "https://grafana.w386.k8s.my.lan"
             - name: GF_PLUGINS_PREINSTALL_AUTO_UPDATE
