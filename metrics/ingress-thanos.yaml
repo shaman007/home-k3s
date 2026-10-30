@@ -22,7 +22,6 @@ metadata:
   name: thanos-ingress
   namespace: monitoring
   annotations:
-    kubernetes.io/ingress.class: traefik-private
     traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
 spec:
   ingressClassName: traefik-private

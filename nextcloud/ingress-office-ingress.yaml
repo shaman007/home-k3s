@@ -4,7 +4,6 @@ metadata:
   name: office-ingress
   namespace: nextcloud
   annotations:
-    kubernetes.io/ingress.class: traefik-private
     traefik.ingress.kubernetes.io/service.serversscheme: "https"
     traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,nextcloud-hsts@kubernetescrd
 spec:

@@ -1,5 +1,5 @@
 # Keep aligned with the cluster when upgrading Kubernetes.
-kubernetesVersion: "1.36.4"
+kubernetesVersion: "1.37.1"
 # Cilium installs its CRDs through the agent, not Helm templates. Fetch this
 # schema from the same upstream release as application-cilium.yaml.
 additionalCRDs:

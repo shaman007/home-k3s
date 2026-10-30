@@ -12,6 +12,10 @@ and the workflow's kubectl version with cluster upgrades. The kubeconform archiv
 is checked against the reviewed release SHA-256 before extraction; update both
 its version and checksum when upgrading it.
 
+Runtime-contract validation rejects deprecated Service `externalIPs` and
+`loadBalancerIP` fields. Use a NodePort endpoint or the load balancer provider's
+address annotation. Ingress class tests reject the legacy class annotation.
+
 All rendered manifests and tracked raw Kubernetes manifests are validated.
 Talos machine configuration is excluded from Kubernetes manifest discovery. Kustomization
 configuration is consumed by rendering, rather than passed to Kubernetes schema

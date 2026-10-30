@@ -6,7 +6,6 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.middlewares: traefik-geoip-country@kubernetescrd,nextcloud-chain@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
 spec:
   ingressClassName: traefik

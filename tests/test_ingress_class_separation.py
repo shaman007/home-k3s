@@ -70,9 +70,7 @@ class IngressClassSeparationTest(unittest.TestCase):
                     hosts = [rule.get("host", "") for rule in document.get("spec", {}).get("rules", [])]
                     expected = "traefik-private" if any(host.endswith(".k8s.my.lan") for host in hosts) else "traefik"
                     self.assertEqual(expected, document["spec"].get("ingressClassName"), str(path))
-                    legacy = document.get("metadata", {}).get("annotations", {}).get("kubernetes.io/ingress.class")
-                    if legacy:
-                        self.assertEqual(expected, legacy, str(path))
+                    self.assertNotIn("kubernetes.io/ingress.class", document.get("metadata", {}).get("annotations", {}), str(path))
                     count += 1
                 elif kind in ["IngressRoute", "IngressRouteTCP", "IngressRouteUDP"]:
                     matches = [rule.get("match", "") for rule in document.get("spec", {}).get("routes", [])]

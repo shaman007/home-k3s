@@ -129,6 +129,20 @@ def check_deprecated_args(path: Path, document_index: int, document: dict) -> li
     return errors
 
 
+def check_deprecated_service_fields(path: Path, document_index: int, document: dict) -> list[str]:
+    if document.get("kind") != "Service":
+        return []
+    replacements = {
+        "externalIPs": "use an explicit NodePort or LoadBalancer endpoint",
+        "loadBalancerIP": "use the load balancer provider's address annotation",
+    }
+    return [
+        f"{path}: document {document_index}, Service uses deprecated spec.{field}: {replacement}."
+        for field, replacement in replacements.items()
+        if field in document.get("spec", {})
+    ]
+
+
 def check_external_secret_targets(path: Path, document_index: int, document: dict) -> list[str]:
     errors: list[str] = []
     if document.get("kind") != "ExternalSecret":
@@ -186,6 +200,7 @@ def main() -> int:
         for document_index, document in load_documents(path):
             errors.extend(check_http_probe_paths(path.relative_to(root), document_index, document))
             errors.extend(check_deprecated_args(path.relative_to(root), document_index, document))
+            errors.extend(check_deprecated_service_fields(path.relative_to(root), document_index, document))
             errors.extend(
                 check_external_secret_targets(path.relative_to(root), document_index, document)
             )
