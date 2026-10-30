@@ -1,5 +1,9 @@
 import copy
 import importlib.util
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -90,6 +94,24 @@ class CodacySarifTest(unittest.TestCase):
         run["results"][0]["ruleIndex"] = -1
         with self.assertRaises(ValueError):
             sarif.prepare({"runs": [run]})
+
+    def test_cli_reads_readonly_report_and_writes_separate_output(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "container.sarif"
+            output = Path(directory) / "prepared.sarif"
+            report = {"version": "2.1.0", "runs": [batch(str(i), f"{i}.py") for i in range(5)]}
+            source.write_text(json.dumps(report))
+            source.chmod(0o444)
+            original = source.read_bytes()
+            command = [sys.executable, str(ROOT / "tools/ci/prepare-codacy-sarif.py"), str(source)]
+            result = subprocess.run(command + [str(output)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(output.read_text()), sarif.prepare(report))
+            self.assertEqual(source.read_bytes(), original)
+            self.assertEqual(source.stat().st_mode & 0o777, 0o444)
+            same = subprocess.run(command + [str(source)], capture_output=True, text=True)
+            self.assertNotEqual(same.returncode, 0)
+            self.assertEqual(source.read_bytes(), original)
 
     def test_new_tables_fail_instead_of_corrupting_references(self):
         run = batch("a", "a.py")

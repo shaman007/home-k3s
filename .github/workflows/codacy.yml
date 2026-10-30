@@ -40,6 +40,7 @@ jobs:
         tool: [bandit, opengrep, shellcheck]
     env:
       SARIF_FILE: results-${{ matrix.tool }}.sarif
+      PREPARED_SARIF_FILE: ${{ runner.temp }}/prepared-${{ matrix.tool }}.sarif
     steps:
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout code
@@ -63,11 +64,11 @@ jobs:
           max-allowed-issues: 2147483647
 
       - name: Prepare SARIF for GitHub code scanning
-        run: python3 tools/ci/prepare-codacy-sarif.py "$SARIF_FILE"
+        run: python3 tools/ci/prepare-codacy-sarif.py "$SARIF_FILE" "$PREPARED_SARIF_FILE"
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: ${{ env.SARIF_FILE }}
+          sarif_file: ${{ env.PREPARED_SARIF_FILE }}
           category: codacy-${{ matrix.tool }}

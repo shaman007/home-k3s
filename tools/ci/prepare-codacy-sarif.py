@@ -1,8 +1,8 @@
 """Combine Codacy CLI batches without losing their run-local references."""
 
+import argparse
 import copy
 import json
-import sys
 from pathlib import Path
 
 
@@ -72,8 +72,20 @@ def prepare(report):
     return report
 
 
-if __name__ == "__main__":
-    path = Path(sys.argv[1])
-    report = prepare(json.loads(path.read_text()))
-    path.write_text(json.dumps(report))
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("input", type=Path)
+    parser.add_argument("output", type=Path)
+    args = parser.parse_args()
+    if args.input.resolve() == args.output.resolve():
+        parser.error("Input and output must be different files")
+    report = prepare(json.loads(args.input.read_text()))
+    # Codacy's container may own the input. Create runner-owned output instead
+    # of reopening the scanner's report for writing.
+    with args.output.open("x") as stream:
+        json.dump(report, stream)
     print(f"Prepared {len(report['runs'])} SARIF analysis run(s).")
+
+
+if __name__ == "__main__":
+    main()
