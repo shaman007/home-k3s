@@ -44,6 +44,6 @@ it if a later batch supplies metadata. Findings and fingerprints are retained;
 an invalid index without a rule ID still fails.
 
 The adapter reads the container-created report and writes a separate runner-owned
-file under `runner.temp`, which is the file passed to `upload-sarif`. The scanner
+file in the checkout, which is the file passed to `upload-sarif`. The scanner
 report can be read-only; preparation never overwrites it. The command-line
 regression test covers this file-permission boundary as well as batch merging.

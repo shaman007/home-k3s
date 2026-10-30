@@ -40,7 +40,7 @@ jobs:
         tool: [bandit, opengrep, shellcheck]
     env:
       SARIF_FILE: results-${{ matrix.tool }}.sarif
-      PREPARED_SARIF_FILE: ${{ runner.temp }}/prepared-${{ matrix.tool }}.sarif
+      PREPARED_SARIF_FILE: prepared-${{ matrix.tool }}.sarif
     steps:
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout code
