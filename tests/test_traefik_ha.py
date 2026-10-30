@@ -19,8 +19,7 @@ class TraefikHATest(unittest.TestCase):
             claims = {o["metadata"]["name"]: o for o in values["extraObjects"] if o.get("kind") == "PersistentVolumeClaim"}
             self.assertEqual("traefik-geoip-rwx", values["persistence"]["existingClaim"])
             self.assertEqual(["ReadWriteMany"], claims["traefik-geoip-rwx"]["spec"]["accessModes"])
-            self.assertEqual("Prune=false", claims["traefik"]["metadata"]["annotations"]["argocd.argoproj.io/sync-options"])
-            self.assertEqual("pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e", claims["traefik"]["spec"]["volumeName"])
+            self.assertNotIn("traefik", claims)
             init = values["deployment"]["initContainers"]
             self.assertEqual(["download-geoip-country-db"], [c["name"] for c in init])
             script = init[0]["command"][-1]

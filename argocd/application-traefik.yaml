@@ -269,21 +269,6 @@ spec:
             resources:
               requests:
                 storage: 1Gi
-        - apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: traefik
-            namespace: traefik
-            annotations:
-              argocd.argoproj.io/sync-options: Prune=false
-          spec:
-            accessModes:
-            - ReadWriteOnce
-            storageClassName: longhorn
-            volumeName: pvc-0b8e1746-93a0-401c-a4ac-e2aac9c7ff2e
-            resources:
-              requests:
-                storage: 1Gi
 
         - apiVersion: traefik.io/v1alpha1
           kind: Middleware
