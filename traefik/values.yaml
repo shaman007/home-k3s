@@ -247,8 +247,6 @@ extraObjects:
 
 ingressRoute:
   dashboard:
-    annotations:
-      kubernetes.io/ingress.class: traefik
     enabled: true
 
 affinity:

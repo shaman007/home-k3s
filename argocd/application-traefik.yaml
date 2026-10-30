@@ -65,8 +65,6 @@ spec:
               version: v0.2.2
         ingressRoute:
           dashboard:
-            annotations:
-              kubernetes.io/ingress.class: traefik
             enabled: true
         additionalArguments:
         - --entryPoints.web.allowACMEByPass=true

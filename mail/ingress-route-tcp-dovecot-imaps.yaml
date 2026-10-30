@@ -1,11 +1,10 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
-  annotations:
-    kubernetes.io/ingress.class: traefik
   namespace: mail
   name: dovecot-imaps
 spec:
+  ingressClassName: traefik
   entryPoints:
     - imaps
   routes:
