@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-allow-egress-crowdsec
+  namespace: traefik
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: traefik-traefik
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: crowdsec
+      podSelector:
+        matchLabels:
+          k8s-app: crowdsec
+          type: lapi
+    ports:
+    - protocol: TCP
+      port: 8080

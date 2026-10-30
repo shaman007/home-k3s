@@ -47,11 +47,27 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
         self.assertEqual(callbacks, set(client['redirectUris']))
         self.assertTrue(all('*' not in uri for uri in callbacks))
 
-    def test_crowdsec_observes_public_logs_without_remediation_or_host_access(self):
+    def test_crowdsec_limits_enforcement_to_explicit_exploits(self):
         values = documents('crowdsec/values.yaml')[0]
         simulation = yaml.safe_load(values['config']['simulation.yaml'])
         self.assertTrue(simulation['simulation'])
-        self.assertEqual([], simulation['exclusions'])
+        expected = {
+            'crowdsecurity/http-backdoors-attempts',
+            'crowdsecurity/http-cve-probing',
+            'crowdsecurity/thinkphp-cve-2018-20062',
+            'crowdsecurity/CVE-2017-9841',
+            'crowdsecurity/CVE-2022-41082',
+            'crowdsecurity/jira_cve-2021-26086',
+        }
+        self.assertEqual(expected, set(simulation['exclusions']))
+        profiles = list(yaml.safe_load_all(values['config']['profiles.yaml']))
+        self.assertEqual(1, len(profiles))
+        self.assertEqual([{'type': 'ban', 'duration': '15m'}], profiles[0]['decisions'])
+        self.assertIn('Alert.GetScope() == "Ip"', profiles[0]['filters'][0])
+        for scenario in expected:
+            self.assertIn('"' + scenario + '"', profiles[0]['filters'][0])
+        for generic in ['http-probing', 'http-crawl-non_statics', 'http-generic-401-bf']:
+            self.assertFalse(any(s.endswith('/' + generic) for s in simulation['exclusions']))
         self.assertFalse(values['appsec']['enabled'])
         self.assertTrue(values['agent']['isDeployment'])
         self.assertEqual(1, values['agent']['replicas'])
@@ -64,9 +80,22 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
         self.assertEqual('traefik', role['metadata']['namespace'])
         self.assertEqual({'pods', 'pods/log'}, {r for rule in role['rules'] for r in rule['resources']})
         self.assertEqual({'get', 'list', 'watch'}, {v for rule in role['rules'] for v in rule['verbs']})
-        for path in ['argocd/application-traefik.yaml', 'argocd/application-traefik-private.yaml']:
-            plugins = yaml.safe_load(documents(path)[0]['spec']['source']['helm']['values'])['experimental']['plugins']
-            self.assertFalse(any('crowdsec' in p['moduleName'] for p in plugins.values()))
+        public = yaml.safe_load(documents('argocd/application-traefik.yaml')[0]['spec']['source']['helm']['values'])
+        private = yaml.safe_load(documents('argocd/application-traefik-private.yaml')[0]['spec']['source']['helm']['values'])
+        self.assertNotIn('crowdsec', private['experimental']['plugins'])
+        self.assertEqual('v1.8.1', public['experimental']['plugins']['crowdsec']['version'])
+        self.assertIn('--entryPoints.websecure.http.middlewares=traefik-crowdsec-bouncer@kubernetescrd', public['additionalArguments'])
+        middleware = next(o for o in public['extraObjects'] if o['kind'] == 'Middleware' and o['metadata']['name'] == 'crowdsec-bouncer')
+        bouncer = middleware['spec']['plugin']['crowdsec']
+        self.assertEqual('stream', bouncer['crowdsecMode'])
+        self.assertEqual([], bouncer['forwardedHeadersTrustedIPs'])
+        self.assertEqual(-1, bouncer['updateMaxFailure'])
+        self.assertNotIn('crowdsecLapiKey', bouncer)
+        self.assertEqual('/secrets/crowdsec/apiKey', bouncer['crowdsecLapiKeyFile'])
+        canonical = documents('traefik/values.yaml')[0]
+        self.assertEqual(canonical['experimental']['plugins'], public['experimental']['plugins'])
+        canonical_middleware = next(o for o in canonical['extraObjects'] if o['kind'] == 'Middleware' and o['metadata']['name'] == 'crowdsec-bouncer')
+        self.assertEqual(canonical_middleware, middleware)
 
     def test_media_cache_covers_public_mastodon_reads_with_bounded_proxy(self):
         middleware, ingress = documents('seaweedfs/ingress-route-mastodon-cache-pilot.yaml')

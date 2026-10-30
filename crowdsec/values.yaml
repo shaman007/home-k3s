@@ -7,7 +7,21 @@ secrets:
 config:
   simulation.yaml: |
     simulation: true
-    exclusions: []
+    exclusions:
+    - crowdsecurity/http-backdoors-attempts
+    - crowdsecurity/http-cve-probing
+    - crowdsecurity/thinkphp-cve-2018-20062
+    - crowdsecurity/CVE-2017-9841
+    - crowdsecurity/CVE-2022-41082
+    - crowdsecurity/jira_cve-2021-26086
+  profiles.yaml: |
+    name: explicit_exploit_short_ban
+    filters:
+    - Alert.Remediation == true && Alert.GetScope() == "Ip" && Alert.GetScenario() in ["crowdsecurity/http-backdoors-attempts", "crowdsecurity/http-cve-probing", "crowdsecurity/thinkphp-cve-2018-20062", "crowdsecurity/CVE-2017-9841", "crowdsecurity/CVE-2022-41082", "crowdsecurity/jira_cve-2021-26086"]
+    decisions:
+    - type: ban
+      duration: 15m
+    on_success: break
   config.yaml.local: |
     api:
       server:

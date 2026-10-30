@@ -102,9 +102,67 @@ to it. The chart-generated `/dev/null` file acquisition is unused. This keeps
 chart schema validation enabled. The source fields were checked against the
 v1.8.1 engine source and acquisition schema.
 
-Global simulation is enabled with no exclusions. No Traefik bouncer or firewall
-remediation is deployed, and AppSec is disabled. LAPI online/community API use
-is disabled for this observation phase. Agents still download the Traefik
+Selective enforcement was activated with explicit operator approval on
+2026-10-30. Both public Traefik replicas run the registered bouncer. The desired
+configuration remains uncommitted and unpushed. Global simulation stays enabled,
+with six explicit exclusions: `http-backdoors-attempts`, `http-cve-probing`,
+`thinkphp-cve-2018-20062`, `CVE-2017-9841`, `CVE-2022-41082`, and
+`jira_cve-2021-26086` (all under `crowdsecurity/`). A single LAPI profile repeats
+that allowlist and issues only 15-minute IP bans, without escalation or range
+bans. Generic probing, crawling, sensitive-file, WordPress and authentication
+scenarios remain simulated. AppSec and LAPI online/community API use remain
+disabled.
+
+Public Traefik loads `maxlerebourg/crowdsec-bouncer-traefik-plugin` v1.8.1 in
+stream mode on the HTTPS entrypoint, including HTTP/3. It polls LAPI every ten
+seconds, uses direct client addresses, trusts no forwarded-header sources and
+allows unbanned traffic when LAPI is unavailable. Private Traefik and TCP mail
+entrypoints are unchanged. Both sides of TCP/8080 access are restricted to
+public Traefik pods and the LAPI pods. A dedicated OpenBao KV entry
+`kv/crowdsec-bouncer` supplies the API key through External Secrets and a
+read-only policy bound to `traefik/crowdsec-bouncer-vault-auth`. The middleware
+reads the mounted key file; no key is embedded in a manifest.
+
+Investigation on 2026-10-30: the Czech IPv6 address triggered generic rules
+while accessing Hister document URLs, Karakeep navigation, Immich video segments
+and Harbor image layers. These appear to be legitimate client activity; no
+address-wide exception was added. Spotify `/.git/config`, `/.git/HEAD` and
+`/config.prod.json` returned the exact homepage body. Harbor's Jira probe also
+returned its exact homepage body; tested `.env` paths now return 418 from the
+existing probe-blocking route. No exposed file was found in these checks;
+historical response bodies were unavailable.
+
+The approved rollout provisioned the dedicated OpenBao credential/policy/role,
+registered the bouncer, created its resources, updated the pod configurations
+and network policies, and temporarily paused Argo reconciliation on `crowdsec`,
+`crowdsec-config`, `traefik` and `traefik-network-policy`. These four live-only
+pauses remain necessary while Git still describes observation mode. Do not
+commit or push without a separate request.
+After the desired revision reaches Git, remove the live-only
+`argocd.argoproj.io/skip-reconcile` annotations and verify all four applications
+reconcile. Before calling enforcement complete, verify a controlled temporary
+ban returns 403 on both public replicas, spoofed forwarded headers cannot bypass
+it, removal/expiry restores access and ordinary public traffic still works.
+Do not replay historical simulated alerts into real bans.
+
+Live verification on 2026-10-30 passed on public replicas
+`traefik-6bd598f5d8-jbf8j` and `traefik-6bd598f5d8-zp2nj`: requests through
+individual pod tunnels returned 200 with valid public TLS certificates, 403
+under a 45-second loopback-only ban, 403 despite a spoofed `X-Forwarded-For`,
+and 200 again after natural expiry. A second temporary ban verified explicit
+removal restores 200 on both replicas. Pod logs independently recorded these
+200/403 transitions; both replicas were Ready with no error-level log entries.
+The live LAPI profile issued a non-simulated ban with 14m59s remaining for a
+controlled TEST-NET backdoor alert and issued no decision for a generic-probing
+input. All synthetic test decisions and alerts were removed. Ordinary public
+HTTPS requests to Spotify, Harbor, SSO, WordPress and Mastodon returned 200.
+The agent parsed logs from both new public replicas. These checks exercise the
+live ingress middleware and LAPI but do not constitute an outside-network
+IPv4/IPv6 ban test or an end-to-end exploit-detection test from a public client.
+The pinned plugin also passed isolated tests for ban expiry/removal, spoof
+resistance and continued unbanned access during LAPI failure. Both charts
+rendered successfully and 17 repository checks passed.
+ Agents still download the Traefik
 collection and dependencies from the Hub. Network policy permits DNS, public
 HTTPS for Hub downloads, scoped agent-to-LAPI traffic, Kubernetes API access,
 and Prometheus metric scraping. It exposes no public ingress.
@@ -264,8 +322,9 @@ python3 -m unittest tests.test_traefik_security_plugins tests.test_argocd_projec
 Rollback OIDC by removing only `traefik-admin-oidc@kubernetescrd` from the affected
 ingress chains; retain LAN restrictions. To roll back media caching, point the existing media IngressRoute service back
 to `s3:8333` before removing the proxy resources. Keep the media URL and origin
-permissions unchanged. Do not reinstate the old Souin cache for production. CrowdSec can be stopped independently because
-it has no enforcement component. Preserve its LAPI PVCs if observations are
+permissions unchanged. Do not reinstate the old Souin cache for production. To roll back CrowdSec enforcement, remove the public HTTPS entrypoint bouncer
+middleware before stopping LAPI or retiring its credential. Keep the observer
+and its simulation configuration if detection history is still wanted. Preserve its LAPI PVCs if observations are
 needed; review Argo pruning before deleting the Application. Retain external
 credentials until no workloads reference them, then retire only these dedicated
 clients/roles/KV entries with operator authorization.
