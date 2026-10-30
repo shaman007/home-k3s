@@ -40,12 +40,14 @@ jobs:
 
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
       - name: Run Codacy Analysis CLI
-        uses: codacy/codacy-analysis-cli-action@d840f886c4bd4edc059706d09c6a1586111c540b
+        uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
         with:
           # Check https://github.com/codacy/codacy-analysis-cli#project-token to get your project token from your Codacy repository
           # You can also omit the token and run the tools that support default configurations
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           verbose: true
+          # Tool failures must not appear as a successful scan with empty SARIF.
+          fail-if-incomplete: true
           output: results.sarif
           format: sarif
           # Adjust severity of non-security issues
@@ -53,6 +55,20 @@ jobs:
           # Force 0 exit code to allow SARIF file generation
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
+
+      - name: Validate SARIF contains analysis runs
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("results.sarif").read_text())
+          runs = report.get("runs")
+          if not isinstance(runs, list) or not runs:
+              raise SystemExit("Codacy produced no SARIF analysis runs; inspect the scanner logs. This is not a clean scan.")
+          print(f"Validated {len(runs)} SARIF analysis run(s).")
+          PYTHON
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
