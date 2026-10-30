@@ -62,20 +62,8 @@ jobs:
           # still fail the job through fail-if-incomplete.
           max-allowed-issues: 2147483647
 
-      - name: Validate SARIF contains analysis runs
-        shell: bash
-        run: |
-          python3 - <<'PYTHON'
-          import json
-          import os
-          from pathlib import Path
-
-          report = json.loads(Path(os.environ["SARIF_FILE"]).read_text())
-          runs = report.get("runs")
-          if not isinstance(runs, list) or not runs:
-              raise SystemExit("Codacy produced no SARIF analysis runs; inspect the scanner logs. This is not a clean scan.")
-          print(f"Validated {len(runs)} SARIF analysis run(s).")
-          PYTHON
+      - name: Prepare SARIF for GitHub code scanning
+        run: python3 tools/ci/prepare-codacy-sarif.py "$SARIF_FILE"
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
