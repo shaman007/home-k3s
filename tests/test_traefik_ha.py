@@ -5,6 +5,21 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 class TraefikHATest(unittest.TestCase):
+    def test_extra_objects_have_unique_resource_identities(self):
+        app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
+        sources = {
+            "application": yaml.safe_load(app["spec"]["source"]["helm"]["values"]),
+            "standalone": yaml.safe_load((ROOT / "traefik/values.yaml").read_text()),
+        }
+        for source, values in sources.items():
+            with self.subTest(source=source):
+                identities = [
+                    (obj["apiVersion"].split("/")[0] if "/" in obj["apiVersion"] else "",
+                     obj["kind"], obj["metadata"].get("namespace", "traefik"), obj["metadata"]["name"])
+                    for obj in values["extraObjects"]
+                ]
+                self.assertEqual(len(identities), len(set(identities)))
+
     def test_both_value_sources_preserve_storage_and_enforce_ha(self):
         app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
         for values in [yaml.safe_load(app["spec"]["source"]["helm"]["values"]),
