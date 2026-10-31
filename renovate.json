@@ -32,6 +32,11 @@
   ],
   "packageRules": [
     {
+      "description": "Keep GitHub Actions pinned to immutable commit SHAs",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true
+    },
+    {
       "description": "Use calendar versioning for locally built images",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["harbor.andreybondarenko.com/library/**"],
