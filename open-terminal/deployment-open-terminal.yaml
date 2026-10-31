@@ -39,7 +39,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
-          image: harbor.andreybondarenko.com/github/open-webui/open-terminal:0.14.6
+          image: harbor.andreybondarenko.com/github/open-webui/open-terminal:0.14.7
           imagePullPolicy: IfNotPresent
           # The console-script shebang uses python3-ot with a SETGID file capability.
           # Use plain Python for this single-user, Restricted deployment.
