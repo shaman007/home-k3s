@@ -93,6 +93,33 @@ class LogsCheckLogicTest(unittest.TestCase):
         batches = self.report['build_log_batches']({'real_fault_candidates': entries})
         self.assertEqual(80, "\n".join(batches).count('sampled_count='))
 
+    def test_fast_batches_keep_strong_final_synthesis(self):
+        calls = []
+        def analyst(system, prompt, **kwargs):
+            calls.append(kwargs.get('model', 'default'))
+            return 'Evidence reviewed'
+        self.report['call_ollama'] = analyst
+        self.report['build_log_batches'] = lambda _: ['first batch', 'second batch']
+        preflight = {}
+        start = datetime(2026, 11, 1, tzinfo=ZoneInfo('UTC'))
+        with patch.dict('os.environ', {'OLLAMA_BATCH_MODEL': 'gemma3:4b', 'OLLAMA_MODEL': 'gpt-oss:20b'}):
+            self.report['analyze_logs_with_ollama'](start, start+timedelta(days=1), preflight, '',
+                                                  {'real_fault_candidates': [self.entry('SMTP authentication failed')]})
+        self.assertEqual(['gemma3:4b', 'gemma3:4b', 'gemma3:4b', 'default'], calls)
+        self.assertTrue(preflight['analyst_execution']['ok'])
+        self.assertEqual(2, preflight['analyst_execution']['completed_batches'])
+        self.assertEqual('gpt-oss:20b', preflight['analyst_execution']['summary_model'])
+
+    def test_empty_batch_does_not_claim_complete_analysis(self):
+        self.report['call_ollama'] = lambda *args, **kwargs: ''
+        preflight = {}
+        start = datetime(2026, 11, 1, tzinfo=ZoneInfo('UTC'))
+        with self.assertRaisesRegex(RuntimeError, 'empty summary'):
+            self.report['analyze_logs_with_ollama'](start, start+timedelta(days=1), preflight, '',
+                                                  {'real_fault_candidates': [self.entry('SMTP authentication failed')]})
+        self.assertFalse(preflight['analyst_execution']['ok'])
+        self.assertEqual(0, preflight['analyst_execution']['completed_batches'])
+
     def test_history_cap_disables_novelty_claims(self):
         start = datetime(2026, 10, 29, 5, tzinfo=ZoneInfo('Europe/Prague'))
         self.report['kube_json'] = lambda _: {'data': {}}

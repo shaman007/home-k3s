@@ -149,6 +149,63 @@ data:
         }
 
 
+    def argocd_application_check(applications):
+        # Lenka is an intentionally user-managed playground (argocd/README.md).
+        self_heal_exceptions = {("argocd", "lenka")}
+        issues = []
+        for app in applications:
+            metadata = app.get("metadata", {})
+            namespace = metadata.get("namespace", "argocd")
+            name = metadata.get("name", "unknown")
+            status = app.get("status") or {}
+            reasons = []
+            health = (status.get("health") or {}).get("status", "Unknown")
+            sync = (status.get("sync") or {}).get("status", "Unknown")
+            if health != "Healthy":
+                reasons.append(f"health={health}")
+            if sync != "Synced":
+                reasons.append(f"sync={sync}")
+            annotations = metadata.get("annotations") or {}
+            if str(annotations.get("argocd.argoproj.io/skip-reconcile", "")).lower() == "true":
+                reasons.append("reconciliation paused (skip-reconcile)")
+            automated = (app.get("spec", {}).get("syncPolicy") or {}).get("automated")
+            if automated is None or automated.get("enabled") is False:
+                reasons.append("auto-sync disabled")
+            if (namespace, name) not in self_heal_exceptions and not (automated or {}).get("selfHeal", False):
+                reasons.append("self-healing disabled")
+            if metadata.get("deletionTimestamp"):
+                reasons.append("application deleting")
+            for condition in status.get("conditions") or []:
+                kind = condition.get("type", "Unknown")
+                reasons.append(f"{kind}: {condition.get('message', '')}")
+            operation = status.get("operationState") or {}
+            phase = operation.get("phase")
+            if phase in {"Running", "Terminating", "Failed", "Error"}:
+                reason = f"operation={phase}"
+                if phase in {"Running", "Terminating"}:
+                    started = parse_time(operation.get("startedAt"))
+                    if started and utc_now() - started >= timedelta(minutes=30):
+                        reason += " (stalled for at least 30 minutes)"
+                reasons.append(reason)
+            if app.get("operation") and phase not in {"Running", "Terminating"}:
+                reasons.append("sync operation pending")
+            if reasons:
+                issues.append({"namespace": namespace, "item": name, "value": 1,
+                               "value_name": "argocd_application_issue", "message": "; ".join(reasons)})
+        return check("argocd_applications", bool(applications) and not issues,
+                     f"Argo CD: {len(applications) - len(issues)}/{len(applications)} application(s) healthy, synced and unpaused with expected automation. "
+                     "Lenka is exempt only from self-healing. Empty inventory fails.", issues)
+
+
+    def collect_argocd_check(kube):
+        try:
+            return argocd_application_check(kube("/apis/argoproj.io/v1alpha1/applications").get("items", []))
+        except Exception as exc:
+            # Keep the email/report working if collection fails (including RBAC).
+            return check("argocd_applications", False,
+                         f"Unable to inspect Argo CD applications ({type(exc).__name__}).")
+
+
     def longhorn_backup_check(volumes, recurring, backups, cutoff):
         """Check coverage per opted-in volume using completed backup creation times."""
         backup_jobs = [job for job in recurring if job.get("spec", {}).get("task") in {"backup", "backup-force"}]
@@ -391,7 +448,7 @@ data:
             lines.extend(["", "Top items to review:"])
             for item in failing:
                 for detail in item.get("review_details", item["details"])[:5]:
-                    lines.append(f'- {item["name"]}: ns={detail.get("namespace", "-")} item={detail.get("item", "-")} value={detail.get("value", 0)}')
+                    lines.append(f'- {item["name"]}: ns={detail.get("namespace", "-")} item={detail.get("item", "-")} value={detail.get("value", 0)} {detail.get("message", "")}')
         return "\n".join(lines).strip() + "\n"
 
 
@@ -403,7 +460,7 @@ data:
             rows.append(
                 "<tr>"
                 f"<td style=\"padding:9px 10px;border-top:1px solid #e7edf3;color:#516070;\">{html.escape(str(detail.get('namespace', '-')))}</td>"
-                f"<td style=\"padding:9px 10px;border-top:1px solid #e7edf3;color:#16202a;word-break:break-word;overflow-wrap:anywhere;\">{html.escape(str(detail.get('item', '-')))}</td>"
+                f"<td style=\"padding:9px 10px;border-top:1px solid #e7edf3;color:#16202a;word-break:break-word;overflow-wrap:anywhere;\">{html.escape(str(detail.get('item', '-')))}{('<br>' + html.escape(str(detail['message']))) if detail.get('message') else ''}</td>"
                 f"<td style=\"padding:9px 10px;border-top:1px solid #e7edf3;text-align:right;color:#16202a;font-weight:600;\">{html.escape(str(round(float(detail.get('value', 0)), 2)))}</td>"
                 "</tr>"
             )
@@ -532,7 +589,7 @@ data:
 
     def main():
         kube = kube_client()
-        checks = []
+        checks = [collect_argocd_check(kube)]
 
         externalsecrets = kube("/apis/external-secrets.io/v1/externalsecrets").get("items", [])
         es_fail = [{"namespace": x["metadata"]["namespace"], "item": x["metadata"]["name"], "value": 0} for x in externalsecrets if not ready(x.get("status", {}).get("conditions", []))]

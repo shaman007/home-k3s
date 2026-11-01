@@ -890,14 +890,15 @@ data:
         return compact, True
 
 
-    def call_ollama(system_prompt, user_prompt, *, num_predict=350):
+    def call_ollama(system_prompt, user_prompt, *, num_predict=350, model=None):
         base_url = env("OLLAMA_BASE_URL", "http://ollama.ollama.svc.cluster.local:11434")
-        model = env("OLLAMA_MODEL", "gpt-oss:20b")
+        model = model or env("OLLAMA_MODEL", "gpt-oss:20b")
         payload = {
             "model": model,
             "stream": False,
             "options": {
                 "temperature": 0.1,
+                "num_ctx": env_int("OLLAMA_CONTEXT_TOKENS", 8192),
                 "num_predict": num_predict,
             },
             "messages": [
@@ -918,6 +919,12 @@ data:
         log_batches = build_log_batches(grouped_entries)
         log_progress(f"prepared ollama log batches count={len(log_batches)} total_entries={total_entries}")
         batch_summaries = []
+        batch_model = env("OLLAMA_BATCH_MODEL", env("OLLAMA_MODEL", "gpt-oss:20b"))
+        execution = {"ok": False, "batch_model": batch_model,
+                     "reduction_model": batch_model,
+                     "summary_model": env("OLLAMA_MODEL", "gpt-oss:20b"),
+                     "planned_batches": len(log_batches), "completed_batches": 0}
+        preflight["analyst_execution"] = execution
         batch_system_prompt = (
             "You are reviewing one batch of home Kubernetes logs.\n"
             "Classify findings into exactly one of: real fault, probe instability, noise, or platform issue.\n"
@@ -946,10 +953,12 @@ data:
                 batch_system_prompt,
                 batch_user_prompt,
                 num_predict=env_int("OLLAMA_BATCH_NUM_PREDICT", 500),
+                model=batch_model,
             )
             if not batch_summary:
-                batch_summary = f"Batch {index} produced an empty summary."
+                raise RuntimeError(f"Batch {index} produced an empty summary")
             batch_summaries.append(batch_summary)
+            execution["completed_batches"] = index
             log_progress(f"finished ollama batch index={index} total={len(log_batches)}")
 
         reduction_system_prompt = (
@@ -999,6 +1008,7 @@ data:
                     reduction_system_prompt,
                     reduction_user_prompt,
                     num_predict=env_int("OLLAMA_REDUCTION_NUM_PREDICT", 700),
+                    model=batch_model,
                 )
                 if not reduced_summary:
                     reduced_summary = f"Reduction batch {index} produced an empty summary."
@@ -1022,11 +1032,15 @@ data:
             ]
         )
         log_progress("starting final ollama synthesis")
-        return call_ollama(
+        final_summary = call_ollama(
             reduction_system_prompt,
             final_user_prompt,
             num_predict=env_int("OLLAMA_REDUCTION_NUM_PREDICT", 700),
         )
+        if not final_summary:
+            raise RuntimeError("Final synthesis produced an empty summary")
+        execution["ok"] = True
+        return final_summary
 
 
     def fallback_analysis(preflight, grouped_entries):
@@ -1117,6 +1131,8 @@ data:
             analysis = summarize_samples(grouped_entries)
         pattern_counts, pattern_changes, pattern_history_complete = pattern_history(grouped_entries, env("REPORT_CONFIGMAP_NAME", "logs-check-report"), start_local, end_local)
         authoritative_findings = render_authoritative_findings(grouped_entries)
+        if not preflight.get("analyst_execution", {"ok": True})["ok"]:
+            authoritative_findings = "**INCOMPLETE LOG ANALYSIS: analyst processing failed; use the collected evidence below.**\n\n" + authoritative_findings
         if not preflight["analyst_sampling"]["ok"]:
             authoritative_findings = "**ANALYST SAMPLE LIMITED: only the first 50 distinct patterns per category were sent for analysis.**\n\n" + authoritative_findings
         if not preflight["collection"]["ok"]:

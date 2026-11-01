@@ -22,3 +22,26 @@ Argo's existing platform-health source includes both the script ConfigMap and
 role, so they reconcile together. An existing running Job still uses its mounted
 configuration/process state; verify a new scheduled run after sync. Newly visible
 stale coverage needs investigation, rather than suppressing the check.
+
+# Argo CD application checks
+
+The health email also reads all Argo CD Applications. Every application must be
+Healthy and Synced, with auto-sync enabled and reconciliation unpaused. Any
+application condition (including warnings), deletion, pending/running/terminating
+sync, or latest Failed/Error operation requires review. Running or terminating
+operations older than 30 minutes are additionally marked stalled. Progressing,
+Suspended, Degraded, Missing and Unknown health states fail immediately; a daily
+snapshot cannot prove that a Progressing state persisted between runs.
+
+Self-healing is expected for all applications except `argocd/lenka`, the existing
+exception documented in `argocd/README.md` for its user-managed playground.
+Lenka still receives every other check. An absent automated policy or explicit
+`enabled: false` disables auto-sync; an empty automated object or omitted/null
+`enabled` enables it. No application policies are changed by the report.
+
+An empty inventory or API/RBAC collection error fails the Argo check, while
+allowing the rest of the email to run. The report's ClusterRole grants read-only
+Application access. Issue reasons appear in text and HTML; application issue
+metrics use stable application names. The text email lists the first five review
+items per check; HTML includes all affected applications. Sync-window scheduling
+is not evaluated. Verify a newly scheduled report after GitOps deployment.

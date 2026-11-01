@@ -71,6 +71,10 @@ spec:
                   value: http://ollama.ollama.svc.cluster.local:11434
                 - name: OLLAMA_MODEL
                   value: gpt-oss:20b
+                - name: OLLAMA_BATCH_MODEL
+                  value: gemma3:4b
+                - name: OLLAMA_CONTEXT_TOKENS
+                  value: "8192"
                 - name: SMTP_HOST
                   value: traefik.traefik.svc.cluster.local
                 - name: SMTP_PORT
@@ -86,7 +90,7 @@ spec:
                 - name: MAX_SAMPLES_PER_QUERY
                   value: "0"
                 - name: LOKI_BATCH_LIMIT
-                  value: "1000"
+                  value: "5000"
                 - name: OLLAMA_BATCH_CONTEXT_CHARS
                   value: "12000"
                 - name: OLLAMA_REDUCTION_CONTEXT_CHARS

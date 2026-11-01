@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest
+from copy import deepcopy
 from unittest.mock import patch
 
 import yaml
@@ -21,6 +22,82 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.report = load_report_functions()
+
+    def healthy_application(self, name="example"):
+        return {"metadata": {"namespace": "argocd", "name": name},
+                "spec": {"syncPolicy": {"automated": {"selfHeal": True}}},
+                "status": {"health": {"status": "Healthy"}, "sync": {"status": "Synced"}}}
+
+    def test_argocd_automation_and_lenka_exception(self):
+        app = self.healthy_application()
+        for enabled in (None, True):
+            app["spec"]["syncPolicy"]["automated"]["enabled"] = enabled
+            self.assertTrue(self.report["argocd_application_check"]([app])["passed"])
+        for policy in ({}, {"automated": None}, {"automated": {}},
+                       {"automated": {"enabled": False, "selfHeal": True}}):
+            app["spec"]["syncPolicy"] = policy
+            self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
+        app = self.healthy_application("lenka")
+        app["spec"]["syncPolicy"]["automated"] = {"prune": True}
+        self.assertTrue(self.report["argocd_application_check"]([app])["passed"])
+        app["spec"]["syncPolicy"]["automated"]["enabled"] = False
+        self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
+
+    def test_argocd_unhealthy_states_and_empty_inventory(self):
+        self.assertFalse(self.report["argocd_application_check"]([])["passed"])
+        for state in ("Progressing", "Suspended", "Degraded", "Missing", "Unknown", "Stalled"):
+            app = self.healthy_application()
+            app["status"]["health"]["status"] = state
+            result = self.report["argocd_application_check"]([app])
+            self.assertFalse(result["passed"])
+            self.assertIn(state, result["details"][0]["message"])
+        app = self.healthy_application()
+        app["status"] = {}
+        self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
+        app["status"] = {"health": {"status": "Healthy"}, "sync": {"status": "OutOfSync"}}
+        self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
+
+    def test_argocd_pauses_warnings_operations_and_rendering(self):
+        base = self.healthy_application()
+        variants = []
+        for phase in ("Running", "Terminating", "Failed", "Error"):
+            app = deepcopy(base)
+            app["status"]["operationState"] = {"phase": phase,
+                "startedAt": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()}
+            variants.append(app)
+        for metadata in ({"annotations": {"argocd.argoproj.io/skip-reconcile": "true"}},
+                         {"deletionTimestamp": "2026-11-01T00:00:00Z"}):
+            app = deepcopy(base)
+            app["metadata"].update(metadata)
+            variants.append(app)
+        app = deepcopy(base)
+        app["status"]["conditions"] = [{"type": "SharedResourceWarning", "message": "<warning>"}]
+        variants.append(app)
+        app = deepcopy(base)
+        app["operation"] = {"sync": {}}
+        variants.append(app)
+        for app in variants:
+            result = self.report["argocd_application_check"]([app])
+            self.assertFalse(result["passed"])
+            self.assertIn(result["details"][0]["message"], self.report["render_report"]([result]))
+            rendered = self.report["render_html_report"]([result], "test")
+            self.assertIn("example", rendered)
+            self.assertNotIn("<warning>", rendered)
+        result = self.report["argocd_application_check"]([variants[0]])
+        self.assertIn("stalled", result["details"][0]["message"])
+        base["status"]["operationState"] = {"phase": "Succeeded"}
+        self.assertTrue(self.report["argocd_application_check"]([base])["passed"])
+
+    def test_argocd_collection_failure_is_reported(self):
+        def denied(path):
+            raise PermissionError("denied")
+        self.assertFalse(self.report["collect_argocd_check"](denied)["passed"])
+        paths = []
+        def kube(path):
+            paths.append(path)
+            return {"items": [self.healthy_application()]}
+        self.assertTrue(self.report["collect_argocd_check"](kube)["passed"])
+        self.assertEqual(paths, ["/apis/argoproj.io/v1alpha1/applications"])
 
     def test_tls_probe_selects_ingress_controller_by_class(self):
         for ingress_class, destination in [
