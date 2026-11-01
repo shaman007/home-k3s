@@ -7,4 +7,4 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "create", "update", "patch"]
+    verbs: ["get", "create", "update", "patch", "delete"]

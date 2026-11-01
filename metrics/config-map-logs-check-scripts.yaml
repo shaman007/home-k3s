@@ -372,35 +372,113 @@ data:
         return payload.get("data", {}).get("report.txt", "")
 
 
-    def pattern_history(grouped_entries, name, start_local, end_local):
-        current = {}
-        details = {}
+    def pattern_digest(counts):
+        digest = hashlib.sha256()
+        for chunk in json.JSONEncoder(sort_keys=True, separators=(",", ":")).iterencode(counts):
+            digest.update(chunk.encode())
+        return digest.hexdigest()
+
+
+    def load_pattern_counts(report):
+        storage = report.get("pattern_history_storage")
+        if not storage:
+            counts = report.get("pattern_counts")
+            if not isinstance(counts, dict):
+                raise ValueError("Invalid legacy pattern history")
+            return counts
+        if storage.get("format") != 1:
+            raise ValueError("Unsupported pattern history format")
+        counts = {}
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        for name in storage["shards"]:
+            obj = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/{name}")
+            shard = json.loads(obj["data"]["patterns.json"])
+            if counts.keys() & shard.keys():
+                raise ValueError("Duplicate patterns in history shards")
+            counts.update(shard)
+        if len(counts) != storage["pattern_count"] or pattern_digest(counts) != storage["sha256"]:
+            raise ValueError("Pattern history count or checksum mismatch")
+        return counts
+
+
+    def store_pattern_counts(counts, parent, start, end):
+        namespace = env("REPORT_NAMESPACE", "monitoring")
+        digest = pattern_digest(counts)
+        snapshot = hashlib.sha256(f"{parent['uid']}:{start}:{end}:{digest}".encode()).hexdigest()[:16]
+        chunks, current, size = [], {}, 2
+        for key, value in sorted(counts.items()):
+            entry_size = len(json.dumps(key)) + len(str(value)) + 2
+            if current and size + entry_size > 480000:
+                chunks.append(current)
+                current, size = {}, 2
+            current[key] = value
+            size += entry_size
+        if current or not chunks:
+            chunks.append(current)
+        names = []
+        for index, chunk in enumerate(chunks):
+            name = f"{parent['name'][:28]}-history-{snapshot}-{index}"
+            data = {"patterns.json": json.dumps(chunk, separators=(",", ":"))}
+            body = {"apiVersion": "v1", "kind": "ConfigMap", "immutable": True,
+                    "metadata": {"name": name, "namespace": namespace,
+                                 "labels": {"app": "logs-check", "app.kubernetes.io/name": "logs-check"},
+                                 "ownerReferences": [{"apiVersion": "v1", "kind": "ConfigMap",
+                                                      "name": parent['name'], "uid": parent['uid']}]},
+                    "data": data}
+            try:
+                kube_json(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
+            except urllib.error.HTTPError as exc:
+                if exc.code != 409:
+                    raise
+                existing = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/{name}")
+                if existing.get("data") != data or not any(owner.get("uid") == parent["uid"] for owner in existing["metadata"].get("ownerReferences", [])):
+                    raise ValueError("History snapshot name collision")
+            names.append(name)
+        return {"format": 1, "pattern_count": len(counts), "sha256": digest, "shards": names}
+
+
+    def count_patterns(grouped_entries):
+        counts, details = {}, {}
         for bucket, entries in grouped_entries.items():
             for (namespace, container, signature), detail in group_patterns(entries).items():
                 raw_key = json.dumps([bucket, namespace, container, signature], ensure_ascii=True)
                 key = hashlib.sha256(raw_key.encode()).hexdigest()[:24]
-                current[key] = detail["count"]
+                counts[key] = detail["count"]
                 details[key] = (bucket, namespace, container, signature)
+        return counts, details
+
+
+    def matching_history_window(report, start_local, end_local):
+        try:
+            left = datetime.fromisoformat(report["window_start"])
+            right = datetime.fromisoformat(report["window_end"])
+            return (right == start_local and right - left == end_local - start_local
+                    and report.get("pattern_history_complete", False)
+                    and report.get("preflight", {}).get("collection", {}).get("ok", False))
+        except (KeyError, TypeError, ValueError):
+            return False
+
+
+    def compare_pattern_history(current, details, name, start_local, end_local, collection_complete=True):
         namespace = env("REPORT_NAMESPACE", "monitoring")
-        previous = {}
-        comparable = False
+        previous, old, comparable, failure = {}, {}, False, None
         try:
             obj = kube_json(f"/api/v1/namespaces/{namespace}/configmaps/{name}")
             previous = json.loads(obj.get("data", {}).get("report.json", "{}"))
-            old_start = datetime.fromisoformat(previous["window_start"])
-            old_end = datetime.fromisoformat(previous["window_end"])
-            # Do not compare a one-hour legacy report or stale/overlapping windows to a daily sample.
-            comparable = (previous.get("pattern_counts") is not None and
-                          old_end == start_local and old_end - old_start == end_local - start_local)
-        except Exception:
-            pass
-        history_complete = len(current) <= 2000
-        current = dict(list(current.items())[:2000])
-        comparable = comparable and history_complete and previous.get("pattern_history_complete", False)
-        old = previous.get("pattern_counts", {}) if comparable else {}
+            if collection_complete:
+                for candidate in (previous, previous.get("recurrence_baseline", {})):
+                    if matching_history_window(candidate, start_local, end_local):
+                        old = load_pattern_counts(candidate)
+                        comparable = True
+                        break
+        except Exception as exc:
+            comparable = False
+            failure = type(exc).__name__
         lines = ["## Pattern changes", "", "Comparison describes collected samples, not a complete historical baseline; newly observed does not prove newly occurring."]
         if not comparable:
             lines.append("Baseline unavailable or not comparable; no new/resolved or rate-change claims are made.")
+            if failure:
+                lines.append(f"History could not be read ({failure}); missing history is not treated as an empty baseline.")
         else:
             newly_observed = sum(key not in old for key in current)
             lines.append(f"{newly_observed} newly observed sampled patterns; {len(current) - newly_observed} recurring sampled patterns.")
@@ -409,50 +487,74 @@ data:
                 bucket, namespace, container, signature = details[key]
                 before = old.get(key, 0)
                 state = "newly observed in sample" if not before else "recurring"
-                # Samples can be capped, so never claim a measured rate increase.
                 lines.append(f"- {state}: `{namespace}/{container}` [{bucket}]: {count} sampled lines "
                              f"(previous {before}); `{signature}`")
             if len(current) > 50:
-                lines.append(f"Showing 50 of {len(current)} patterns, newly observed first; all retained counts are stored in report.json.")
+                lines.append(f"Showing 50 of {len(current)} patterns, newly observed first; every pattern count is retained in history storage.")
             if old.keys() - current.keys():
                 lines.append(f"{len(old.keys() - current.keys())} prior patterns were not observed in this sample; this does not prove resolution.")
-        if not history_complete:
-            lines.append("Pattern history capped at 2000 patterns; novelty comparison unavailable.")
-        return current, "\n".join(lines), history_complete
+        return current, "\n".join(lines), collection_complete
 
 
-    def upsert_report(name, report, payload_json):
+    def pattern_history(grouped_entries, name, start_local, end_local, collection_complete=True):
+        counts, details = count_patterns(grouped_entries)
+        return compare_pattern_history(counts, details, name, start_local, end_local, collection_complete)
+
+
+    def upsert_report(name, report, payload_json, expected_resource_version=None):
         namespace = env("REPORT_NAMESPACE", "monitoring")
-        body = {
-            "apiVersion": "v1",
-            "kind": "ConfigMap",
-            "metadata": {
-                "name": name,
-                "namespace": namespace,
-                "labels": {
-                    "app": "logs-check",
-                    "app.kubernetes.io/name": "logs-check",
-                    "app.kubernetes.io/instance": "logs-check",
-                    "app.kubernetes.io/part-of": "monitoring",
-                    "app.kubernetes.io/managed-by": "argoCD",
-                },
-            },
-            "data": {
-                "report.txt": report,
-                "report.json": json.dumps(payload_json, indent=2, ensure_ascii=True),
-            },
-        }
-
         object_path = f"/api/v1/namespaces/{namespace}/configmaps/{name}"
         try:
             existing = kube_json(object_path)
-            body["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
-            body["metadata"]["annotations"] = existing["metadata"].get("annotations", {})
-            return kube_json(object_path, method="PUT", payload=body)
         except urllib.error.HTTPError as exc:
             if exc.code != 404:
                 raise
-        return kube_json(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload=body)
+            existing = kube_json(f"/api/v1/namespaces/{namespace}/configmaps", method="POST", payload={
+                "apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": name, "namespace": namespace}, "data": {}})
+        if expected_resource_version is not None and existing["metadata"]["resourceVersion"] != expected_resource_version:
+            raise RuntimeError("Report changed during history rebuild")
+        old = json.loads(existing.get("data", {}).get("report.json", "{}"))
+        stored = dict(payload_json)
+        counts = stored.pop("pattern_counts", None)
+        if counts is not None:
+            stored["pattern_history_storage"] = store_pattern_counts(
+                counts, existing["metadata"], stored["window_start"], stored["window_end"])
+        new_ref = stored.get("pattern_history_storage")
+        old_ref = old.get("pattern_history_storage")
+        start = datetime.fromisoformat(stored["window_start"])
+        end = datetime.fromisoformat(stored["window_end"])
+        old_seed = old.get("recurrence_baseline", {})
+        matching_seed = old_seed.get("pattern_history_storage") if matching_history_window(old_seed, start, end) else None
+        seed = stored.get("recurrence_baseline", old_seed)
+        # Keep a scheduled-window baseline across manual reports with other boundaries.
+        # The first matching scheduled run consumes it into normal previous history.
+        if seed and not matching_history_window(seed, start, end) and end - datetime.fromisoformat(seed["window_end"]) <= 2 * (end - start):
+            stored["recurrence_baseline"] = seed
+        else:
+            stored.pop("recurrence_baseline", None)
+        previous_ref = stored.get("previous_pattern_history_storage") or (
+            old.get("previous_pattern_history_storage") if new_ref == old_ref else (matching_seed or old_ref))
+        if previous_ref:
+            stored["previous_pattern_history_storage"] = previous_ref
+        body = {"apiVersion": "v1", "kind": "ConfigMap",
+                "metadata": {"name": name, "namespace": namespace,
+                             "resourceVersion": existing["metadata"]["resourceVersion"],
+                             "annotations": existing["metadata"].get("annotations", {}),
+                             "labels": {**existing["metadata"].get("labels", {}), "app": "logs-check",
+                                        "app.kubernetes.io/name": "logs-check"}},
+                "data": {"report.txt": report, "report.json": json.dumps(stored, indent=2, ensure_ascii=True)}}
+        result = kube_json(object_path, method="PUT", payload=body)
+        keep = {n for ref in (new_ref, previous_ref, stored.get("recurrence_baseline", {}).get("pattern_history_storage")) if ref for n in ref["shards"]}
+        obsolete = {n for ref in (old_ref, old.get("previous_pattern_history_storage"), old_seed.get("pattern_history_storage")) if ref for n in ref["shards"]} - keep
+        for shard in obsolete:
+            path = f"/api/v1/namespaces/{namespace}/configmaps/{shard}"
+            try:
+                obj = kube_json(path)
+                if any(owner.get("uid") == existing["metadata"]["uid"] for owner in obj["metadata"].get("ownerReferences", [])):
+                    kube_json(path, method="DELETE")
+            except Exception as exc:
+                log_progress(f"history cleanup skipped name={shard} error={type(exc).__name__}")
+        return result
 
 
     def html_stat(label, value):
@@ -1129,7 +1231,7 @@ data:
             analysis = fallback_analysis(preflight, grouped_entries)
         if not analysis.strip():
             analysis = summarize_samples(grouped_entries)
-        pattern_counts, pattern_changes, pattern_history_complete = pattern_history(grouped_entries, env("REPORT_CONFIGMAP_NAME", "logs-check-report"), start_local, end_local)
+        pattern_counts, pattern_changes, pattern_history_complete = pattern_history(grouped_entries, env("REPORT_CONFIGMAP_NAME", "logs-check-report"), start_local, end_local, preflight["collection"]["ok"])
         authoritative_findings = render_authoritative_findings(grouped_entries)
         if not preflight.get("analyst_execution", {"ok": True})["ok"]:
             authoritative_findings = "**INCOMPLETE LOG ANALYSIS: analyst processing failed; use the collected evidence below.**\n\n" + authoritative_findings
@@ -1204,3 +1306,194 @@ data:
         except Exception as exc:  # noqa: BLE001
             print(f"logs-check failed: {exc}", file=sys.stderr)
             raise
+
+  history-rebuild.py: |
+    #!/usr/bin/env python3
+    """Rebuild adjacent complete history snapshots without repeating LLM analysis."""
+    import concurrent.futures
+    from datetime import datetime, timedelta
+    import json
+    import re
+    import runpy
+    from zoneinfo import ZoneInfo
+
+    m = runpy.run_path('/scripts/logs-check.py', run_name='history_rebuild')
+    g = m['pattern_history'].__globals__
+    namespace = m['env']('REPORT_NAMESPACE', 'monitoring')
+    name = m['env']('REPORT_CONFIGMAP_NAME', 'logs-check-report')
+    path = f'/api/v1/namespaces/{namespace}/configmaps/{name}'
+    parent = m['kube_json'](path)
+    report = json.loads(parent['data']['report.json'])
+    start, end = (datetime.fromisoformat(report[key]) for key in ('window_start', 'window_end'))
+    windows = [(start - (end-start), start), (start, end)]
+    # Use exactly the same queries as the saved, fully analysed report.
+    queries = report['queries']
+    counts, details = [{}, {}], [{}, {}]
+    filtered_counts = [{key: 0 for key in queries} for _ in windows]
+    raw_counts = [{key: 0 for key in queries} for _ in windows]
+
+    def collect(task):
+        window, bucket, cursor, stop = task
+        entries = m['loki_query_range'](queries[bucket], int(cursor.timestamp()*1e9), int(stop.timestamp()*1e9)-1, limit=0)
+        raw = len(entries)
+        grouped = m['filter_false_positives']({bucket: entries})[0]
+        found, descriptions = m['count_patterns'](grouped)
+        return window, bucket, raw, len(grouped[bucket]), found, descriptions
+
+    tasks = []
+    for window, (left, right) in enumerate(windows):
+        cursor = left
+        while cursor < right:
+            stop = min(cursor+timedelta(hours=1), right)
+            tasks.extend((window, bucket, cursor, stop) for bucket in queries)
+            cursor = stop
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        pending = {executor.submit(collect, task) for task in tasks}
+        completed = 0
+        while pending:
+            done, pending = concurrent.futures.wait(pending, return_when=concurrent.futures.FIRST_COMPLETED)
+            for future in done:
+                window, bucket, raw, kept, found, descriptions = future.result()
+                raw_counts[window][bucket] += raw
+                filtered_counts[window][bucket] += kept
+                for key, value in found.items():
+                    counts[window][key] = counts[window].get(key, 0) + value
+                if window == 1:
+                    details[window].update(descriptions)
+                completed += 1
+                if completed % 12 == 0 or completed == len(tasks):
+                    print(f'history collection completed={completed}/{len(tasks)}', flush=True)
+    # No partial baseline is published if any Loki query failed.
+    if filtered_counts[1] != report['entry_counts']:
+        raise RuntimeError(f'Rebuilt current window differs from analysed counts: {filtered_counts[1]} versus {report["entry_counts"]}')
+    old_ref = m['store_pattern_counts'](counts[0], parent['metadata'], windows[0][0].isoformat(), start.isoformat())
+    virtual_name = name + '-verification-baseline'
+    virtual_path = f'/api/v1/namespaces/{namespace}/configmaps/{virtual_name}'
+    baseline = {'window_start': windows[0][0].isoformat(), 'window_end': start.isoformat(),
+                'pattern_history_storage': old_ref, 'pattern_history_complete': True,
+                'preflight': {'collection': {'ok': True}}}
+    real_api = g['kube_json']
+    def api(request_path, **kwargs):
+        if request_path == virtual_path and kwargs.get('method', 'GET') == 'GET':
+            return {'data': {'report.json': json.dumps(baseline)}}
+        return real_api(request_path, **kwargs)
+    g['kube_json'] = api
+    _, changes, complete = m['compare_pattern_history'](counts[1], details[1], virtual_name, start, end)
+    assert complete and 'recurring sampled patterns.' in changes
+    assert 'Baseline unavailable' not in changes
+    report['pattern_counts'] = counts[1]
+    report['pattern_history_complete'] = complete
+    report['previous_pattern_history_storage'] = old_ref
+    report['history_rebuild'] = {'completed_at': datetime.now(ZoneInfo('UTC')).isoformat(),
+                               'baseline_pattern_count': len(counts[0]), 'current_pattern_count': len(counts[1]),
+                               'newly_observed': len(counts[1].keys()-counts[0].keys()),
+                               'recurring': len(counts[1].keys() & counts[0].keys()),
+                               'raw_counts': raw_counts, 'filtered_counts': filtered_counts,
+                               'collection_complete': True}
+    def replace_changes(text):
+        updated, replaced = re.subn(r'## Pattern changes\n.*?(?=\n\n## Analyst notes)', lambda _: changes,
+                                    text, count=1, flags=re.S)
+        if replaced != 1:
+            raise RuntimeError('Cannot find existing pattern comparison section')
+        return updated
+    report['analysis'] = replace_changes(report['analysis'])
+    text = replace_changes(parent['data']['report.txt'])
+    latest = real_api(path)
+    if latest['data']['report.json'] != parent['data']['report.json']:
+        raise RuntimeError('Report changed during history rebuild')
+    m['upsert_report'](name, text, report, expected_resource_version=latest['metadata']['resourceVersion'])
+    saved = json.loads(real_api(path)['data']['report.json'])
+    assert m['load_pattern_counts'](saved) == counts[1]
+    assert len(counts[1]) > 2000
+    assert m['load_pattern_counts']({'pattern_history_storage': saved['previous_pattern_history_storage']}) == counts[0]
+    print(json.dumps(report['history_rebuild'], indent=2), flush=True)
+    print('Complete adjacent-window history and recurrence verified.', flush=True)
+
+  history-seed.py: |
+    #!/usr/bin/env python3
+    """Seed the scheduled daily baseline after an off-schedule verification report."""
+    import concurrent.futures
+    from datetime import datetime, timedelta
+    import json
+    import runpy
+    from zoneinfo import ZoneInfo
+
+    m = runpy.run_path('/scripts/logs-check.py', run_name='history_seed')
+    end = datetime.fromisoformat(m['env']('HISTORY_BASELINE_END', required=True)).astimezone(
+        ZoneInfo(m['env']('REPORT_TIMEZONE', 'Europe/Prague')))
+    if end > datetime.now(ZoneInfo('UTC')):
+        raise RuntimeError('Cannot seed a future baseline')
+    start = end - timedelta(hours=m['env_int']('LOOKBACK_HOURS', 24))
+    namespace, name = m['env']('REPORT_NAMESPACE', 'monitoring'), m['env']('REPORT_CONFIGMAP_NAME', 'logs-check-report')
+    path = f'/api/v1/namespaces/{namespace}/configmaps/{name}'
+    parent = m['kube_json'](path)
+    report = json.loads(parent['data']['report.json'])
+    queries = report['queries']
+    source_start, source_end = (datetime.fromisoformat(report[key]) for key in ('window_start', 'window_end'))
+    left, right = max(start, source_start), min(end, source_end)
+    can_reuse = (left < right and report.get('pattern_history_complete', False)
+                 and report.get('preflight', {}).get('collection', {}).get('ok', False)
+                 and set(report.get('raw_entry_counts', {})) == set(queries)
+                 and set(report.get('entry_counts', {})) == set(queries))
+    if can_reuse:
+        counts = m['load_pattern_counts'](report)
+        raw_counts, entry_counts = dict(report['raw_entry_counts']), dict(report['entry_counts'])
+        intervals = [(1, start, left), (1, right, end),
+                     (-1, source_start, left), (-1, right, source_end)]
+    else:
+        counts = {}
+        raw_counts, entry_counts = {key: 0 for key in queries}, {key: 0 for key in queries}
+        intervals = [(1, start, end)]
+    def collect(task):
+        sign, bucket, left, right = task
+        rows = m['loki_query_range'](queries[bucket], int(left.timestamp()*1e9), int(right.timestamp()*1e9)-1, limit=0)
+        raw = len(rows)
+        grouped = m['filter_false_positives']({bucket: rows})[0]
+        found, descriptions = m['count_patterns'](grouped)
+        return sign, bucket, raw, len(grouped[bucket]), found
+
+    tasks = []
+    for sign, begin, finish in intervals:
+        cursor = begin
+        while cursor < finish:
+            stop = min(cursor+timedelta(hours=1), finish)
+            tasks.extend((sign, bucket, cursor, stop) for bucket in queries)
+            cursor = stop
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        pending = {executor.submit(collect, task) for task in tasks}
+        completed = 0
+        while pending:
+            done, pending = concurrent.futures.wait(pending, return_when=concurrent.futures.FIRST_COMPLETED)
+            for future in done:
+                sign, bucket, raw, kept, found = future.result()
+                raw_counts[bucket] += sign * raw
+                entry_counts[bucket] += sign * kept
+                for key, value in found.items():
+                    counts[key] = counts.get(key, 0) + sign * value
+                completed += 1
+                if completed % 12 == 0 or completed == len(tasks):
+                    print(f'scheduled baseline collection completed={completed}/{len(tasks)}', flush=True)
+    if any(value < 0 for value in counts.values()) or any(value < 0 for value in entry_counts.values()) or any(value < 0 for value in raw_counts.values()):
+        raise RuntimeError('Source history changed while deriving the scheduled baseline')
+    counts = {key: value for key, value in counts.items() if value}
+    if sum(counts.values()) != sum(entry_counts.values()):
+        raise RuntimeError('Derived pattern totals differ from collected entry totals')
+    ref = m['store_pattern_counts'](counts, parent['metadata'], start.isoformat(), end.isoformat())
+    report['recurrence_baseline'] = {
+        'window_start': start.isoformat(), 'window_end': end.isoformat(),
+        'pattern_history_storage': ref, 'pattern_history_complete': True,
+        'preflight': {'collection': {'ok': True}},
+        'raw_entry_counts': raw_counts, 'entry_counts': entry_counts}
+    latest = m['kube_json'](path)
+    if latest['data']['report.json'] != parent['data']['report.json']:
+        raise RuntimeError('Report changed during scheduled baseline collection')
+    m['upsert_report'](name, parent['data']['report.txt'], report,
+                       expected_resource_version=latest['metadata']['resourceVersion'])
+    saved = json.loads(m['kube_json'](path)['data']['report.json'])
+    assert m['load_pattern_counts'](saved['recurrence_baseline']) == counts
+    details = {key: ('verification', 'history', 'pattern', key) for key in counts}
+    _, comparison, complete = m['compare_pattern_history'](counts, details, name, end, end+(end-start))
+    assert complete and f'0 newly observed sampled patterns; {len(counts)} recurring sampled patterns.' in comparison
+    print(json.dumps({'window_start': start.isoformat(), 'window_end': end.isoformat(),
+                      'patterns': len(counts), 'reused_complete_snapshot': can_reuse,
+                      'next_scheduled_baseline_selection_verified': True}, indent=2), flush=True)

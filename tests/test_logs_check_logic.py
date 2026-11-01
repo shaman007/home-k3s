@@ -120,16 +120,155 @@ class LogsCheckLogicTest(unittest.TestCase):
         self.assertFalse(preflight['analyst_execution']['ok'])
         self.assertEqual(0, preflight['analyst_execution']['completed_batches'])
 
-    def test_history_cap_disables_novelty_claims(self):
+    def test_history_keeps_more_than_two_thousand_patterns(self):
         start = datetime(2026, 10, 29, 5, tzinfo=ZoneInfo('Europe/Prague'))
         self.report['kube_json'] = lambda _: {'data': {}}
         counts, text, complete = self.report['pattern_history'](
             {'real_fault_candidates': [self.entry(f'distinct {i}') for i in range(2001)]},
             'report', start, start+timedelta(days=1))
-        self.assertEqual(2000, len(counts))
-        self.assertFalse(complete)
-        self.assertIn('capped', text)
+        self.assertEqual(2001, len(counts))
+        self.assertTrue(complete)
+        self.assertNotIn('capped', text)
         self.assertNotIn('newly observed:', text)
+
+    def history_backend(self):
+        import copy
+        import urllib.error
+        objects = {}
+        def api(path, method='GET', payload=None):
+            name = path.rsplit('/', 1)[-1]
+            if method == 'POST':
+                name = payload['metadata']['name']
+                if name in objects:
+                    raise urllib.error.HTTPError(path, 409, 'exists', None, None)
+                obj = copy.deepcopy(payload)
+                obj['metadata'].update(uid='uid-'+name, resourceVersion='1')
+                objects[name] = obj
+            elif method == 'PUT':
+                uid = objects[name]['metadata']['uid']
+                objects[name] = copy.deepcopy(payload)
+                objects[name]['metadata']['uid'] = uid
+            elif method == 'DELETE':
+                return objects.pop(name)
+            elif name not in objects:
+                raise urllib.error.HTTPError(path, 404, 'missing', None, None)
+            return copy.deepcopy(objects[name])
+        self.report['kube_json'] = api
+        return objects
+
+    def test_sharded_history_roundtrip_and_two_snapshot_retention(self):
+        objects = self.history_backend()
+        counts = {f'{n:024x}': n+1 for n in range(35000)}
+        def save(day, values):
+            self.report['upsert_report']('test-report', 'report', {
+                'window_start': f'2026-10-{day:02}T00:00:00+00:00',
+                'window_end': f'2026-10-{day+1:02}T00:00:00+00:00',
+                'pattern_counts': values, 'pattern_history_complete': True})
+            return json.loads(objects['test-report']['data']['report.json'])
+        first = save(20, counts)
+        self.assertGreater(len(first['pattern_history_storage']['shards']), 1)
+        self.assertEqual(counts, self.report['load_pattern_counts'](first))
+        for name in first['pattern_history_storage']['shards']:
+            self.assertLess(len(objects[name]['data']['patterns.json']), 500000)
+            self.assertEqual('test-report', objects[name]['metadata']['ownerReferences'][0]['name'])
+        second = save(21, {'second': 7})
+        self.assertEqual(first['pattern_history_storage'], second['previous_pattern_history_storage'])
+        save(22, {'third': 8})
+        self.assertTrue(all(name not in objects for name in first['pattern_history_storage']['shards']))
+        self.assertTrue(all(name in objects for name in second['pattern_history_storage']['shards']))
+        save(22, {'third': 8})  # Snapshot creation is idempotent.
+
+    def test_missing_or_corrupt_shard_is_not_an_empty_baseline(self):
+        objects = self.history_backend()
+        start = datetime(2026, 10, 22, tzinfo=ZoneInfo('UTC'))
+        self.report['upsert_report']('test-report', '', {
+            'window_start': (start-timedelta(days=1)).isoformat(), 'window_end': start.isoformat(),
+            'pattern_counts': {'key': 4}, 'pattern_history_complete': True,
+            'preflight': {'collection': {'ok': True}}})
+        previous = json.loads(objects['test-report']['data']['report.json'])
+        shard = previous['pattern_history_storage']['shards'][0]
+        objects[shard]['data']['patterns.json'] = '{"key":5}'
+        _, text, _ = self.report['compare_pattern_history'](
+            {'key': 4}, {'key': ('fault', 'ns', 'container', 'signature')},
+            'test-report', start, start+timedelta(days=1))
+        self.assertIn('History could not be read', text)
+        self.assertNotIn('recurring sampled patterns.', text)
+        del objects[shard]
+        with self.assertRaises(Exception):
+            self.report['load_pattern_counts'](previous)
+
+    def test_incomplete_collection_cannot_be_a_recurrence_baseline(self):
+        start = datetime(2026, 10, 22, tzinfo=ZoneInfo('UTC'))
+        old = {'window_start': (start-timedelta(days=1)).isoformat(), 'window_end': start.isoformat(),
+               'pattern_counts': {'key': 4}, 'pattern_history_complete': True,
+               'preflight': {'collection': {'ok': False}}}
+        self.report['kube_json'] = lambda _: {'data': {'report.json': json.dumps(old)}}
+        _, text, complete = self.report['compare_pattern_history'](
+            {'key': 4}, {'key': ('fault', 'ns', 'container', 'signature')},
+            'test-report', start, start+timedelta(days=1))
+        self.assertTrue(complete)
+        self.assertIn('not comparable', text)
+
+    def test_recurrence_includes_patterns_beyond_former_cap(self):
+        self.history_backend()
+        start = datetime(2026, 10, 22, tzinfo=ZoneInfo('UTC'))
+        entries = [self.entry(f'failure signature {n}') for n in range(2501)]
+        counts, _ = self.report['count_patterns']({'real_fault_candidates': entries})
+        self.report['upsert_report']('test-report', '', {
+            'window_start': (start-timedelta(days=1)).isoformat(), 'window_end': start.isoformat(),
+            'pattern_counts': counts, 'pattern_history_complete': True,
+            'preflight': {'collection': {'ok': True}}})
+        current, text, complete = self.report['pattern_history'](
+            {'real_fault_candidates': entries + [self.entry('new signature')]},
+            'test-report', start, start+timedelta(days=1))
+        self.assertEqual(2502, len(current))
+        self.assertTrue(complete)
+        self.assertIn('1 newly observed sampled patterns; 2501 recurring sampled patterns.', text)
+
+    def test_scheduled_seed_survives_manual_report_and_is_consumed(self):
+        objects = self.history_backend()
+        name = 'test-report'
+        start = datetime(2026, 11, 1, 5, tzinfo=ZoneInfo('UTC'))
+        self.report['upsert_report'](name, '', {
+            'window_start': (start-timedelta(hours=18)).isoformat(),
+            'window_end': (start+timedelta(hours=6)).isoformat(),
+            'pattern_counts': {'manual': 1}, 'pattern_history_complete': True,
+            'preflight': {'collection': {'ok': True}}})
+        manual = json.loads(objects[name]['data']['report.json'])
+        seed_ref = self.report['store_pattern_counts']({'seed': 3}, objects[name]['metadata'],
+                       (start-timedelta(days=1)).isoformat(), start.isoformat())
+        manual['recurrence_baseline'] = {'window_start': (start-timedelta(days=1)).isoformat(),
+            'window_end': start.isoformat(), 'pattern_history_storage': seed_ref,
+            'pattern_history_complete': True, 'preflight': {'collection': {'ok': True}}}
+        self.report['upsert_report'](name, '', manual)
+        _, text, _ = self.report['compare_pattern_history'](
+            {'seed': 4}, {'seed': ('fault', 'ns', 'container', 'signature')},
+            name, start, start+timedelta(days=1))
+        self.assertIn('0 newly observed sampled patterns; 1 recurring sampled patterns.', text)
+        _, overlapping, _ = self.report['compare_pattern_history'](
+            {'seed': 4}, {'seed': ('fault', 'ns', 'container', 'signature')},
+            name, start+timedelta(hours=1), start+timedelta(days=1,hours=1))
+        self.assertIn('not comparable', overlapping)
+        self.report['upsert_report'](name, '', {'window_start': start.isoformat(),
+            'window_end': (start+timedelta(days=1)).isoformat(), 'pattern_counts': {'seed': 4},
+            'pattern_history_complete': True, 'preflight': {'collection': {'ok': True}}})
+        saved = json.loads(objects[name]['data']['report.json'])
+        self.assertNotIn('recurrence_baseline', saved)
+        self.assertEqual(seed_ref, saved['previous_pattern_history_storage'])
+        self.assertTrue(all(n not in objects for n in manual['pattern_history_storage']['shards']))
+        self.assertEqual({'seed': 3}, self.report['load_pattern_counts']({'pattern_history_storage': seed_ref}))
+
+    def test_missing_legacy_counts_are_not_an_empty_baseline(self):
+        start = datetime(2026, 10, 22, tzinfo=ZoneInfo('UTC'))
+        previous = {'window_start': (start-timedelta(days=1)).isoformat(),
+                    'window_end': start.isoformat(), 'pattern_history_complete': True,
+                    'preflight': {'collection': {'ok': True}}}
+        self.report['kube_json'] = lambda _: {'data': {'report.json': json.dumps(previous)}}
+        _, text, _ = self.report['compare_pattern_history'](
+            {'key': 1}, {'key': ('fault', 'ns', 'container', 'signature')},
+            'test-report', start, start+timedelta(days=1))
+        self.assertIn('History could not be read', text)
+        self.assertNotIn('recurring sampled patterns.', text)
 
     def test_fallback_does_not_invent_api_failure(self):
         text = self.report['fallback_analysis']({'ollama': {'chat_error': 'invalid response'}}, {'real_fault_candidates': [self.entry('Net::OpenTimeout')]})

@@ -154,7 +154,29 @@ data:
     protocol sieve {
       mail_max_userip_connections = 128
     }
+  mastodon-registration-bounces.sieve: |
+    require ["fileinto", "mailbox", "envelope", "body"];
+    # Registration confirmation DSNs only; preserve other delivery failures.
+    if allof (
+      envelope :localpart :is "to" "shaman007",
+      anyof (envelope :is "from" "",
+             address :localpart :is "From" ["mailer-daemon", "postmaster"]),
+      header :contains "Content-Type" "multipart/report",
+      header :contains "Content-Type" "delivery-status",
+      body :raw :contains "From: notifications@andreybondarenko.com",
+      body :raw :contains "Subject: Mastodon: Confirmation instructions",
+      body :raw :contains "mastodon.andreybondarenko.com"
+    ) {
+      fileinto :create "Trash";
+      stop;
+    }
   90-sieve: |
+    sieve_script mastodon_registration_bounces {
+      type = before
+      driver = file
+      path = /etc/dovecot/sieve-before/mastodon-registration-bounces.sieve
+      bin_path = /var/mail/sieve/%{user}/.global-before-bin
+    }
     sieve_script personal {
       driver = file
       path = /var/mail/sieve/%{user}

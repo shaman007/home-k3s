@@ -88,6 +88,12 @@ spec:
             items:
               - key: 90-sieve
                 path: 90-sieve.conf
+        - name: sieve-before
+          configMap:
+            name: dovecot-cf
+            items:
+              - key: mastodon-registration-bounces.sieve
+                path: mastodon-registration-bounces.sieve
         - name: passwd
           secret:
             secretName: passwd
@@ -160,6 +166,9 @@ spec:
             - name: 90-sieve
               mountPath: /etc/dovecot/conf.d/90-sieve.conf
               subPath: 90-sieve.conf
+            - name: sieve-before
+              mountPath: /etc/dovecot/sieve-before
+              readOnly: true
             - name: passwd
               mountPath: /etc/dovecot/passwd
               subPath: passwd
