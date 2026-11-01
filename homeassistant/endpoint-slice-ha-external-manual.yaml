@@ -12,5 +12,6 @@ ports:
     protocol: TCP
     port: 8123
 endpoints:
-  - addresses:
+  - conditions: {}
+    addresses:
       - 192.168.30.246
