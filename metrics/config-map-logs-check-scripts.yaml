@@ -202,7 +202,7 @@ data:
 
 
     def collect_window(query, start_ns, end_ns, limit):
-        """Bound work per hour so a recent burst cannot hide the rest of the day."""
+        """Paginate each hour fully by default; report any explicitly configured cap."""
         entries, capped = [], []
         hour_ns = 3600 * 1_000_000_000
         cursor = start_ns
@@ -696,7 +696,7 @@ data:
     def build_log_batches(grouped_entries):
         blocks = []
         for name, entries in grouped_entries.items():
-            for (namespace, container, signature), detail in list(group_patterns(entries).items())[:50]:
+            for (namespace, container, signature), detail in group_patterns(entries).items():
                 blocks.append(f"[{name}] ns={namespace} container={container} pod={detail['example'].get('pod', '')} "
                               f"sampled_count={detail['count']} first={detail['first']} last={detail['last']} | {signature}")
         return chunk_blocks(blocks, env_int("OLLAMA_BATCH_CONTEXT_CHARS", 12000))
@@ -1057,7 +1057,7 @@ data:
         start_local, end_local = get_window()
         start_ns = int(start_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
         end_ns = int(end_local.astimezone(ZoneInfo("UTC")).timestamp() * 1_000_000_000)
-        sample_limit = env_int("LOKI_QUERY_LIMIT", 200)
+        sample_limit = env_int("LOKI_QUERY_LIMIT", 0)
 
         preflight = {
             "grafana": grafana_preflight(),
@@ -1067,10 +1067,10 @@ data:
         }
 
         queries = {
-            "real_fault_candidates": '{namespace=~".+",namespace!~"loki"} |~ "(?i)Net::OpenTimeout|Error performing|level=error|panic|fatal|Traceback|traceback|Exception|exception|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
-            "probe_instability_candidates": '{namespace=~".+",namespace!~"loki"} |~ "Readiness probe failed|readiness probe failed|Liveness probe failed|liveness probe failed|Startup probe failed|startup probe failed|probe failed"',
-            "noise_candidates": '{namespace=~".+",namespace!~"loki"} |~ "deprecated|comparison expired|controller refresh requested|OIDC|oidc|stale session|No status changes. Skipping patch|warning|Warning"',
-            "platform_issue_candidates": '{namespace=~".+",namespace!~"loki"} |~ "context deadline exceeded|i/o timeout|connection refused|TLS handshake timeout|tls handshake timeout|dial tcp|no such host|Temporary failure in name resolution|temporary failure in name resolution"',
+            "real_fault_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "(?i)Net::OpenTimeout|Error performing|level=error|panic|fatal|Traceback|traceback|Exception|exception|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
+            "probe_instability_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "Readiness probe failed|readiness probe failed|Liveness probe failed|liveness probe failed|Startup probe failed|startup probe failed|probe failed"',
+            "noise_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "deprecated|comparison expired|controller refresh requested|OIDC|oidc|stale session|No status changes. Skipping patch|warning|Warning"',
+            "platform_issue_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "context deadline exceeded|i/o timeout|connection refused|TLS handshake timeout|tls handshake timeout|dial tcp|no such host|Temporary failure in name resolution|temporary failure in name resolution"',
         }
 
         grouped_entries = {}
@@ -1096,9 +1096,9 @@ data:
                 "examples": false_positive_examples,
             }
         preflight["analyst_sampling"] = {
-            "ok": all(len(group_patterns(entries)) <= 50 for name, entries in grouped_entries.items()),
-            "pattern_limit_per_bucket": 50,
-            "omitted_patterns": {name: max(0, len(group_patterns(entries)) - 50) for name, entries in grouped_entries.items()},
+            "ok": True,
+            "pattern_limit_per_bucket": None,
+            "omitted_patterns": {name: 0 for name in grouped_entries},
         }
         # Derive recurrence from structured pattern history, not old analyst prose.
         previous_report = ""

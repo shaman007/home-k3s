@@ -82,7 +82,7 @@ spec:
                 - name: LOOKBACK_HOURS
                   value: "24"
                 - name: LOKI_QUERY_LIMIT
-                  value: "200"
+                  value: "0"
                 - name: MAX_SAMPLES_PER_QUERY
                   value: "0"
                 - name: LOKI_BATCH_LIMIT
@@ -112,9 +112,9 @@ spec:
               resources:
                 requests:
                   cpu: 25m
-                  memory: 256Mi
+                  memory: 512Mi
                 limits:
-                  memory: 256Mi
+                  memory: 512Mi
               volumeMounts:
                 - name: tmp
                   mountPath: /tmp

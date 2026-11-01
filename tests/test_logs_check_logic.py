@@ -66,10 +66,32 @@ class LogsCheckLogicTest(unittest.TestCase):
         self.assertFalse(coverage['ok'])
         self.assertEqual(1, len(coverage['capped_hour_starts']))
 
-    def test_prompt_pattern_cap_bounds_analysis(self):
+    def test_unlimited_collection_paginates_beyond_one_response(self):
+        def response(timestamps):
+            return {'data': {'result': [{'stream': {'namespace': 'mail'},
+                    'values': [[str(ts), 'authentication failure'] for ts in timestamps]}]}}
+        responses = iter([response([9, 8]), response([7, 6]), response([5])])
+        self.report['http_json'] = lambda _: next(responses)
+        with patch.dict('os.environ', {'LOKI_BATCH_LIMIT': '2'}):
+            entries, coverage = self.report['collect_window']('query', 0, 10, 0)
+        self.assertEqual([9, 8, 7, 6, 5], [e['ts_ns'] for e in entries])
+        self.assertTrue(coverage['ok'])
+        self.assertEqual([], coverage['capped_hour_starts'])
+
+    def test_all_queries_exclude_checker_logs(self):
+        import ast
+        source = yaml.safe_load((ROOT / 'metrics/config-map-logs-check-scripts.yaml').read_text())['data']['logs-check.py']
+        main = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == 'main')
+        queries = next(ast.literal_eval(n.value) for n in main.body if isinstance(n, ast.Assign)
+                       and any(isinstance(t, ast.Name) and t.id == 'queries' for t in n.targets))
+        for query in queries.values():
+            self.assertIn('pod!~"logs-check-.*"', query)
+            self.assertIn('container!="logs-check"', query)
+
+    def test_all_patterns_are_batched_for_analysis(self):
         entries = [self.entry(f"distinct error {i}") for i in range(80)]
         batches = self.report['build_log_batches']({'real_fault_candidates': entries})
-        self.assertEqual(50, "\n".join(batches).count('sampled_count='))
+        self.assertEqual(80, "\n".join(batches).count('sampled_count='))
 
     def test_history_cap_disables_novelty_claims(self):
         start = datetime(2026, 10, 29, 5, tzinfo=ZoneInfo('Europe/Prague'))
