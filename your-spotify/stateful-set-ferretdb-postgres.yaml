@@ -30,6 +30,8 @@ spec:
         - name: postgres
           image: harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - name: postgres
               containerPort: 5432
