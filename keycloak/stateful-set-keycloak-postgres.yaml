@@ -26,6 +26,8 @@ spec:
       priorityClassName: homelab-essential
       securityContext:
         fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
         runAsUser: 999
         runAsGroup: 999
       initContainers:

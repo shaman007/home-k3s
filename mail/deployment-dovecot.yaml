@@ -28,6 +28,9 @@ spec:
         app: dovecot
         tier: mail
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       volumes:

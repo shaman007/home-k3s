@@ -24,6 +24,8 @@ spec:
       enableServiceLinks: false
       securityContext:
         fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
         - name: fix-data-permissions

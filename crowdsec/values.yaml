@@ -45,6 +45,9 @@ config:
       listen_addr: 0.0.0.0
       listen_port: 6060
 lapi:
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
   replicas: 1
   env:
   - name: DISABLE_ONLINE_API
@@ -64,6 +67,9 @@ lapi:
       storageClassName: longhorn
       size: 100Mi
 agent:
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
   isDeployment: true
   replicas: 1
   serviceAccountName: crowdsec-agent

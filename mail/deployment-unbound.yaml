@@ -23,6 +23,9 @@ spec:
         app: unbound
         tier: mail
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       containers:

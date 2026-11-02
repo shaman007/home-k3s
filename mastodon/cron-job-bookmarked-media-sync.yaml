@@ -26,6 +26,9 @@ spec:
             app.kubernetes.io/instance: bookmarked-media-sync
             app.kubernetes.io/part-of: mastodon
         spec:
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
           priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: bookmarked-media-sync

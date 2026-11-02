@@ -25,6 +25,9 @@ spec:
       labels:
         app: keycloak
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       automountServiceAccountToken: false
       priorityClassName: homelab-essential
       initContainers:

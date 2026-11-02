@@ -35,6 +35,8 @@ spec:
       priorityClassName: homelab-essential
       securityContext:
         runAsUser: 33
+        seccompProfile:
+          type: RuntimeDefault
         runAsGroup: 33
         runAsNonRoot: true
         fsGroup: 33

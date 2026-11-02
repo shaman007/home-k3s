@@ -29,6 +29,8 @@ spec:
       priorityClassName: homelab-best-effort
       securityContext:
         runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
         runAsGroup: 1000
         runAsNonRoot: true
         fsGroup: 1000

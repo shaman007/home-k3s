@@ -25,6 +25,9 @@ spec:
             app.kubernetes.io/instance: wordpress-daily-report
             app.kubernetes.io/part-of: wordpress
         spec:
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
           priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: wordpress-daily-report

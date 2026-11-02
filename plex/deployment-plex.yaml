@@ -21,6 +21,9 @@ spec:
       labels:
         app: plex
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       runtimeClassName: nvidia
