@@ -25,6 +25,7 @@ spec:
         Host(`harbor.andreybondarenko.com`) &&
         Path(`/service/token`) &&
         !ClientIP(`192.168.1.0/24`) &&
+        !ClientIP(`192.168.30.1/32`) &&
         !HeaderRegexp(`GeoIP-Country-Code`, `^CZ$`) &&
         !HeaderRegexp(`CF-IPCountry`, `^CZ$`)
       middlewares:
