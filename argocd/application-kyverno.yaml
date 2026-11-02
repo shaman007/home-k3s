@@ -1,0 +1,129 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
+spec:
+  project: kyverno
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: 3.9.2
+    helm:
+      releaseName: kyverno
+      skipTests: true
+      values: |
+        global:
+          priorityClassName: homelab-critical
+          tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
+        crds:
+          migration:
+            enabled: false
+        features:
+          forceFailurePolicyIgnore:
+            enabled: true
+          generateValidatingAdmissionPolicy:
+            enabled: false
+          generateMutatingAdmissionPolicy:
+            enabled: false
+          backgroundScan:
+            enabled: true
+            backgroundScanInterval: 1h
+            backgroundScanWorkers: 2
+        admissionController:
+          replicas: 3
+          podDisruptionBudget:
+            enabled: true
+            minAvailable: 2
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/instance: kyverno
+                  app.kubernetes.io/component: admission-controller
+              topologyKey: kubernetes.io/hostname
+          initContainer:
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                cpu: null
+                memory: 256Mi
+          container:
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+          networkPolicy:
+            enabled: true
+            ingressFrom:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kyverno
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+        reportsController:
+          replicas: 2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          networkPolicy:
+            enabled: true
+            ingressFrom:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kyverno
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+        backgroundController:
+          enabled: false
+        cleanupController:
+          enabled: false
+        webhooksCleanup:
+          resources:
+            limits:
+              cpu: null
+              memory: 256Mi
+        test:
+          resources:
+            limits:
+              cpu: null
+              memory: 256Mi
+        config:
+          enableDefaultRegistryMutation: false
+        kyverno-api:
+          labels:
+            app.kubernetes.io/instance: kyverno
+            app.kubernetes.io/part-of: kyverno
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      selfHeal: true
+      enabled: true
+    syncOptions:
+    - ServerSideApply=true
+    - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
+        pod-security.kubernetes.io/enforce-version: v1.37
+        pod-security.kubernetes.io/warn: restricted
+        pod-security.kubernetes.io/audit: restricted
+        pod-security.kubernetes.io/warn-version: latest
+        pod-security.kubernetes.io/audit-version: latest

@@ -1,0 +1,63 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '1'
+spec:
+  project: kyverno
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno-policies
+    targetRevision: 3.9.2
+    helm:
+      releaseName: kyverno-policies
+      skipTests: true
+      values: |
+        policyType: ValidatingPolicy
+        podSecurityStandard: custom
+        podSecurityPolicies:
+        - disallow-privileged-containers
+        - disallow-privilege-escalation
+        - require-run-as-nonroot
+        validationFailureAction: Audit
+        failurePolicy: Ignore
+        background: true
+        kyvernoVersion: 1.19.2
+        vpolExclude:
+          excludeNamespaces:
+          - kyverno
+          - kube-system
+        customPolicies:
+        - apiVersion: cilium.io/v2
+          kind: CiliumNetworkPolicy
+          metadata:
+            name: kyverno-allow-control-plane
+            namespace: kyverno
+            annotations:
+              argocd.argoproj.io/sync-wave: '-1'
+          spec:
+            endpointSelector:
+              matchLabels:
+                app.kubernetes.io/instance: kyverno
+            ingress:
+            - fromEntities:
+              - kube-apiserver
+              - host
+              - remote-node
+              toPorts:
+              - ports:
+                - port: '9443'
+                  protocol: TCP
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      selfHeal: true
+      enabled: true
+    syncOptions:
+    - ServerSideApply=true
+    - CreateNamespace=true

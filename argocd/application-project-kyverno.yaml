@@ -1,0 +1,38 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: kyverno
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  description: Kyverno audit policies and reporting controllers
+  sourceRepos:
+  - https://kyverno.github.io/kyverno/
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: kyverno
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: apiextensions.k8s.io
+    kind: CustomResourceDefinition
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRole
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding
+  - group: policies.kyverno.io
+    kind: ValidatingPolicy
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  orphanedResources:
+    warn: true
+    ignore:
+    - group: ''
+      kind: Secret
+      name: kyverno-svc.kyverno.svc.kyverno-tls-*
+    - group: ''
+      kind: Secret
+      name: kyverno-generate-provenance

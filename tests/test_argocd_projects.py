@@ -53,6 +53,7 @@ PROJECT_MEMBERS = {
     "observability": PROJECT_OBSERVABILITY,
     "access-management": PROJECT_ACCESS_MANAGEMENT,
     "namespace-management": PROJECT_NAMESPACE_MANAGEMENT,
+    "kyverno": {"kyverno", "kyverno-policies"},
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
@@ -78,6 +79,13 @@ PROJECT_SYNC_WAVES = {
 }
 
 EXPECTED_CLUSTER_PERMISSIONS = {
+    "kyverno": {
+        ("", "Namespace"),
+        ("apiextensions.k8s.io", "CustomResourceDefinition"),
+        ("rbac.authorization.k8s.io", "ClusterRole"),
+        ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
+        ("policies.kyverno.io", "ValidatingPolicy"),
+    },
     "applications": {
         ("", "Namespace"),
         ("", "PersistentVolume"),
