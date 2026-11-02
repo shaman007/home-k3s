@@ -78,3 +78,8 @@ The two bootstrapped Applications and their AppProject remain outside the remote
 parent application until these files are published. Argo CD may consequently
 report these three definitions as orphaned resources in the shared `argocd`
 namespace. They have known ownership; do not delete them to silence the warning.
+
+## Remaining non-root workloads
+
+See [the application audit and retained exceptions](../docs/non-root-audit.md)
+for compatible application changes, runtime evidence, and remaining chart gaps.

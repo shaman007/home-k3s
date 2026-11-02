@@ -55,8 +55,9 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
         self.assertEqual(["ALL"], security["capabilities"]["drop"])
         self.assertTrue(security["readOnlyRootFilesystem"])
         self.assertEqual("RuntimeDefault", security["seccompProfile"]["type"])
-        self.assertNotIn("runAsUser", security)
-        self.assertNotIn("runAsNonRoot", security)
+        self.assertEqual(65534, security["runAsUser"])
+        self.assertEqual(65534, security["runAsGroup"])
+        self.assertTrue(security["runAsNonRoot"])
 
     def test_headlamp_tmp_fits_extracted_frontend(self):
         pod_spec = load_yaml("headlamp/deployment-headlamp.yaml")["spec"]["template"]["spec"]

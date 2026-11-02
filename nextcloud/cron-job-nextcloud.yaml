@@ -38,10 +38,15 @@ spec:
             - name: previews
               image: harbor.andreybondarenko.com/library/php:2026-11-02-095223
               imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 33
+                runAsGroup: 33
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
               command:
                 - /bin/sh
                 - -c
-                - "sleep 120; sudo -u www-data php /nextcloud/cron.php"
+                - "sleep 120; exec php /nextcloud/cron.php"
               resources:
                 requests:
                   cpu: 10m

@@ -24,6 +24,9 @@ spec:
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
       securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        runAsNonRoot: true
         fsGroup: 999
         fsGroupChangePolicy: OnRootMismatch
       containers:

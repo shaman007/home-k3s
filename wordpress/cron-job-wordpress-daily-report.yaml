@@ -34,6 +34,9 @@ spec:
               image: harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine
               imagePullPolicy: IfNotPresent
               securityContext:
+                runAsUser: 65534
+                runAsGroup: 65534
+                runAsNonRoot: true
                 allowPrivilegeEscalation: false
               command:
                 - python3

@@ -38,22 +38,19 @@ Storage/GPU/system exceptions and root-dependent database permission init
 containers remain outside this wave. No cluster-wide defaults or exemptions
 are changed.
 
-## Connectivity exporter: deliberately pending image publication
+## Connectivity exporter: non-root image verified
 
-The current image runs as root and has /app/check.py owned by root with mode
-0600. Merely setting runAsNonRoot would break startup. The user authorized a
-Dockerfile change in the separate Dockerfiles checkout, but deferred image
-publication. The recipe now uses ADD --chmod=0644 and USER 65534:65534.
-No image was built or published by this change.
+The November 2 image `2026-11-02-095223` runs as UID/GID 65534 and makes
+`/app/check.py` readable by that identity. This supersedes the earlier root-image
+publication blocker. The Deployment now declares UID/GID 65534 and
+`runAsNonRoot: true`, preserving its no-escalation, capability-drop, seccomp and
+read-only-root settings. An isolated probe verified code/config readability.
 
-Do not enforce Restricted on connectivity-exporter yet. After building,
-publishing and verifying the exact new image, update the Deployment image and
-integrate tools/nonroot-security-context.patch.json from the exporter folder.
-That JSON patch is review material only, excluded from the Application's
-non-recursive source. Its paths are guarded by a container-name test. Verify
-all configured checks and the metrics output as UID 65534 before enabling
-Restricted v1.37 for that namespace. Existing no-escalation, capability-drop,
-seccomp and read-only-root settings are preserved.
+The exporter folder's `tools/nonroot-security-context.patch.json` remains review
+material excluded from the Application's non-recursive source; the Deployment
+is authoritative. Verify all configured checks and metrics after rollout before
+separately enabling Restricted enforcement for this namespace. See
+[the remaining non-root audit](non-root-audit.md) for scope and exceptions.
 
 ## Verification and rollout
 

@@ -27,6 +27,9 @@ spec:
           image: harbor.andreybondarenko.com/library/connectivity-exporter-local:2026-11-02-095223
           imagePullPolicy: IfNotPresent
           securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            runAsNonRoot: true
             allowPrivilegeEscalation: false
             capabilities:
               drop:
