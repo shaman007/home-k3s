@@ -61,6 +61,9 @@ spec:
           image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.8.1
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             runAsUser: 1000
             runAsNonRoot: true
           args: ["start", "--metrics-enabled=true", "--event-metrics-user-enabled=true", "--event-metrics-user-events=login,logout,refresh_token"]

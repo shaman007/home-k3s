@@ -83,6 +83,9 @@ spec:
               memory: "2304Mi"
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
         - name: freshclam
           image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.4-debian13-slim
@@ -105,6 +108,9 @@ spec:
               mountPath: /var/log/clamav
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
           resources:
             requests:

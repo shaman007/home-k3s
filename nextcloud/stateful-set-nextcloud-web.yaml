@@ -138,6 +138,9 @@ spec:
             failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
           resources:
             requests:
@@ -150,6 +153,9 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
           ports:
             - containerPort: 8080
@@ -190,6 +196,9 @@ spec:
             - --server.http.listen-addr=0.0.0.0:12345
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: false
           livenessProbe:
             tcpSocket:

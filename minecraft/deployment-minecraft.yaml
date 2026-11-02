@@ -84,6 +84,9 @@ spec:
             failureThreshold: 10
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
           volumeMounts:
             - name: minecraft-lh

@@ -51,6 +51,9 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 65532
+            capabilities:
+              drop:
+                - ALL
             runAsGroup: 65532
             runAsNonRoot: true
             allowPrivilegeEscalation: false

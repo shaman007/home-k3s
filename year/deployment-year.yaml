@@ -54,6 +54,9 @@ spec:
               memory: 128Mi
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
           volumeMounts:
             - name: year-data
