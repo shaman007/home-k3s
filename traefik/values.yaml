@@ -282,6 +282,16 @@ extraObjects:
             - name: restart-traefik
               image: docker.io/curlimages/curl:8.23.0
               imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 100
+                runAsGroup: 101
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                seccompProfile:
+                  type: RuntimeDefault
               command:
               - sh
               - -ceu

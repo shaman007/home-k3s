@@ -332,6 +332,16 @@ spec:
                       image: docker.io/curlimages/curl:8.23.0
                       imagePullPolicy: IfNotPresent
                       name: restart-traefik
+                      securityContext:
+                        runAsUser: 100
+                        runAsGroup: 101
+                        runAsNonRoot: true
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop:
+                          - ALL
+                        seccompProfile:
+                          type: RuntimeDefault
         - apiVersion: v1
           kind: PersistentVolumeClaim
           metadata:
