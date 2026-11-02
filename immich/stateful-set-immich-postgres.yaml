@@ -37,6 +37,7 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 0
+            allowPrivilegeEscalation: false
           command:
             - sh
             - -c
@@ -59,6 +60,8 @@ spec:
         - name: postgres
           image: harbor.andreybondarenko.com/github/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 5432
               name: tcp-postgres
