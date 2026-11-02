@@ -59,6 +59,7 @@ spec:
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
           ports:
             - containerPort: 5432
               name: tcp-postgres
