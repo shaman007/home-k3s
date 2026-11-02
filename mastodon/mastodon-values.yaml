@@ -68,6 +68,11 @@ mastodon:
       - name: prometheus-exporter
         image: harbor.andreybondarenko.com/library/mastodon:2026-10-29-203640-amd64
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         command:
           - ./bin/prometheus_exporter
         args:

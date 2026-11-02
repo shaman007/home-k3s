@@ -36,6 +36,11 @@ spec:
               \ 0644 \"$db_file\"\n    exit 0\n  fi\nfi\nrm -f \"$db_archive\"\ntest -s \"$db_file\"\n"
             image: docker.io/library/busybox:1.38.0
             name: download-geoip-country-db
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
             volumeMounts:
             - mountPath: /data
               name: data
