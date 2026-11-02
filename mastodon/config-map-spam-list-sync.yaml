@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastodon-spam-list-sync
+  namespace: mastodon
+data:
+  sync.rb: |
+    # frozen_string_literal: true
+    require 'net/http'
+    require 'ipaddr'
+    require 'json'
+
+    # All downloads and validation finish before any database writes.
+    BASE = 'https://raw.githubusercontent.com/martinmuc/mastodon-spam-lists/main/'
+    OWNER = 'mastodon-spam-lists: registration protection'
+    def fetch_list(name, minimum, maximum)
+      uri = URI(BASE + name)
+      response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 15, read_timeout: 30) do |http|
+        http.get(uri.request_uri)
+      end
+      raise "Download failed: #{name}" unless response.is_a?(Net::HTTPSuccess)
+      raise "Oversized list: #{name}" if response.body.bytesize > 1_000_000
+      entries = response.body.lines.map { |line| line.split('#', 2).first.to_s.strip.downcase }.reject(&:empty?).uniq
+      raise "Unexpected list size: #{name}" unless entries.size.between?(minimum, maximum)
+      entries
+    end
+
+    def domain_valid?(domain)
+      domain.bytesize <= 253 && domain.include?('.') && domain.split('.', -1).all? do |label|
+        label.match?(/\A[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\z/)
+      end
+    end
+
+    domains = fetch_list('spam-domains.txt', 100, 20_000)
+    # Upstream includes Google's shared MX and a non-FQDN; neither is safe to block.
+    mx = fetch_list('spam-mx-servers.txt', 1, 1_000) - %w[smtp.google.com communications]
+    raise 'Invalid email/MX domain' unless (domains + mx).all? { |domain| domain_valid?(domain) }
+    # Guard against accidental inclusion of common legitimate mail providers.
+    protected_domains = %w[gmail.com googlemail.com outlook.com hotmail.com live.com icloud.com yahoo.com yahoo.co.jp proton.me protonmail.com gmx.de gmx.net mail.com andreybondarenko.com]
+    raise 'Protected email domain in source' unless ((domains + mx) & protected_domains).empty?
+    ranges = fetch_list('spam-ips.txt', 1, 2_000).map do |entry|
+      raise 'Expected CIDR' unless entry.include?('/')
+      ip = IPAddr.new(entry)
+      raise 'Overly broad or private IP range' if ip.prefix < (ip.ipv4? ? 16 : 32) || ip.private? || ip.loopback? || ip.link_local?
+      "#{ip}/#{ip.prefix}"
+    end.uniq
+    apply = ENV.fetch('SPAM_LIST_APPLY', 'false') == 'true'
+    result = { apply: apply, domains: domains.size, mx: mx.size, ranges: ranges.size, email_added: 0, ip_added: 0, ip_refreshed: 0 }
+    ActiveRecord::Base.transaction do
+      # Serializes concurrent manual/scheduled importers; does not lock registration.
+      ActiveRecord::Base.connection.execute('SELECT pg_advisory_xact_lock(84739201)') if apply
+      (domains + mx).uniq.each do |domain|
+        next if EmailDomainBlock.exists?(domain: domain)
+        if apply
+          block = EmailDomainBlock.create!(domain: domain, allow_with_approval: false)
+          puts "Created EmailDomainBlock id=#{block.id}"
+        end
+        result[:email_added] += 1
+      end
+      ranges.each do |range|
+        block = IpBlock.find_by(ip: range)
+        if block.nil?
+          if apply
+            block = IpBlock.create!(ip: range, severity: :sign_up_block, comment: OWNER, expires_at: 14.days.from_now)
+            puts "Created IpBlock id=#{block.id}"
+          end
+          result[:ip_added] += 1
+        elsif block.comment == OWNER && block.severity == 'sign_up_block'
+          block.update!(expires_at: 14.days.from_now) if apply
+          result[:ip_refreshed] += 1
+        end
+      end
+    end
+    puts JSON.generate(result)

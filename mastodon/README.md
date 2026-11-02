@@ -76,3 +76,46 @@ names, retain their original spelling and hash. Ordinary links and mentions
 continue to be removed. The list is embedded in the Ruby exporter in
 `config-map-bookmarked-media-sync-scripts.yaml`; keep both lists in sync.
 See `bookmarked-media-strip-tags-analysis.md` for selection and frequency counts.
+
+## Registration spam lists
+
+`config-map-spam-list-sync.yaml` and `cron-job-spam-list-sync.yaml` import
+https://github.com/martinmuc/mastodon-spam-lists daily at 04:23 Europe/Prague.
+The job uses the same Mastodon image, chart-generated `mastodon-env`, and
+existing database/Redis secrets. Existing namespace network policies permit
+HTTPS downloads, DNS, PostgreSQL, and Valkey; Kubernetes API access is disabled.
+Keep the job image aligned with the web image when upgrading Mastodon.
+
+The importer downloads the full domain list, MX list, and IP list before writes.
+Mastodon's native `EmailDomainBlock` enforces domain/MX restrictions; its native
+`IpBlock` uses `sign_up_block`, which restricts registration rather than general
+access. Existing exact-match moderation records are preserved. The import does
+not suspend accounts, delete users, or change federation rules. Mastodon's own
+registration exceptions (such as valid invitations) still apply.
+
+Two upstream MX entries are deliberately excluded: `smtp.google.com` is shared
+legitimate mail infrastructure, and `communications` is not a fully qualified
+domain. Other malformed entries, unexpectedly small/large lists, common protected
+mail providers, private addresses, and overly broad CIDRs stop the entire import.
+All database writes are transactional. A failed download retains existing rules.
+
+IP rules owned by this importer have a 14-day expiry, renewed while listed.
+Existing manual IP rules are never changed. Email/MX imports are additive because
+Mastodon has no ownership/comment field for these records: upstream removals do
+not automatically unblock a domain. Review removals manually in the admin UI.
+The job logs newly created record IDs and aggregate counts, without user data.
+For rollback, suspend the CronJob first and remove only its newly created records
+using those IDs after checking for intervening moderation changes. Removing the
+CronJob or ConfigMap alone does not remove imported database records.
+
+For a read-only preview, run the embedded `sync.rb` with `bundle exec rails runner`
+in the Mastodon web environment with `SPAM_LIST_APPLY=false` (the script default).
+The scheduled job explicitly sets `SPAM_LIST_APPLY=true`. Deployment requires
+approval under this repository's live-cluster change policy; neither manifest
+has been deployed by this change. After activation, verify a completed import,
+the native block records, and registration rejection for a listed domain while
+an ordinary provider remains eligible. Do not send test confirmation mail to
+third-party addresses.
+
+Focused offline checks:
+`python3 -m unittest discover -s tests -p test_mastodon_spam_list_sync.py -v`.

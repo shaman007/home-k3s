@@ -1,0 +1,100 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mastodon-spam-list-sync
+  namespace: mastodon
+spec:
+  schedule: 23 4 * * *
+  timeZone: Europe/Prague
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: mastodon-spam-list-sync
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 991
+            runAsGroup: 991
+            fsGroup: 991
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: sync
+            image: harbor.andreybondarenko.com/library/mastodon:2026-10-29-203640-amd64
+            workingDir: /opt/mastodon
+            command:
+            - bundle
+            - exec
+            - rails
+            - runner
+            - /scripts/sync.rb
+            envFrom:
+            - configMapRef:
+                name: mastodon-env
+            env:
+            - name: SPAM_LIST_APPLY
+              value: 'true'
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: mastodon
+                  key: SECRET_KEY_BASE
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: username
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mastodon-redis
+                  key: redis-password
+            - name: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mastodon
+                  key: ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+            - name: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mastodon
+                  key: ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+            - name: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: mastodon
+                  key: ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+          volumes:
+          - name: scripts
+            configMap:
+              name: mastodon-spam-list-sync
