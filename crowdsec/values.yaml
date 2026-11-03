@@ -1,6 +1,6 @@
 image:
   repository: harbor.andreybondarenko.com/library/crowdsec-rootless
-  tag: v1.8.1-rootless.1@sha256:15214bb9f7090f4f24857ef54fe1a500edaae4f237292b6ec2c1485e1504240e
+  tag: v1.8.1-rootless.2@sha256:2562c531bff29008d08aa56cc7043f8f4f42f71447e62ef6c5aa336f0a1dcc7d
 container_runtime: containerd
 secrets:
   externalSecret:
@@ -53,7 +53,7 @@ lapi:
     type: Recreate
   extraInitContainers:
   - name: prepare-rootless-database
-    image: harbor.andreybondarenko.com/library/crowdsec-rootless:v1.8.1-rootless.1@sha256:15214bb9f7090f4f24857ef54fe1a500edaae4f237292b6ec2c1485e1504240e
+    image: harbor.andreybondarenko.com/library/crowdsec-rootless:v1.8.1-rootless.2@sha256:2562c531bff29008d08aa56cc7043f8f4f42f71447e62ef6c5aa336f0a1dcc7d
     imagePullPolicy: IfNotPresent
     command:
     - /usr/local/bin/crowdsec-rootless-prepare-database
@@ -73,6 +73,7 @@ lapi:
     volumeMounts:
     - name: crowdsec-db
       mountPath: /var/lib/crowdsec/data
+      subPath: crowdsec
   # The rootless image and kubelet fsGroup handle startup without capabilities.
   securityContext:
     allowPrivilegeEscalation: false
@@ -151,10 +152,14 @@ agent:
       cpu: null # Remove the chart's default CPU limit.
       memory: 512Mi
   extraVolumes:
+  - name: agent-runtime-config
+    emptyDir: {}
   - name: kubernetes-acquisition
     configMap:
       name: crowdsec-kubernetes-acquisition
   extraVolumeMounts:
+  - name: agent-runtime-config
+    mountPath: /etc/crowdsec
   - name: kubernetes-acquisition
     mountPath: /staging/etc/crowdsec/kubernetes-acquisition.yaml
     subPath: acquis.yaml

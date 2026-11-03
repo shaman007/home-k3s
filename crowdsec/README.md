@@ -7,7 +7,7 @@ root init container or Kyverno exemption.
 
 The image recipe and reusable integration test live in the sibling
 `Dockerfiles/crowdsec-rootless` checkout. The base image is pinned by digest;
-the published reference is `harbor.andreybondarenko.com/library/crowdsec-rootless:v1.8.1-rootless.1`.
+the published reference is `harbor.andreybondarenko.com/library/crowdsec-rootless:v1.8.1-rootless.2`.
 The image was published to Harbor and verified by digest before the GitOps
 cutover. Both image references in the values are pinned to that digest.
 The built image is tested on AMD64; all three current nodes are AMD64.
@@ -81,3 +81,31 @@ init completion, UID/capability state, all three current-controller Kyverno
 results, Traefik acquisition, LAPI/bouncer connectivity and the new database.
 Production fsGroup migration, live credentials and end-to-end detection remain
 rollout checks; the isolated tests did not read production credentials/data.
+
+## Mount-layout recovery and regression guards
+
+The initial rootless rollout exposed three details omitted from the isolated
+fixture: ConfigMap subPath mounts created a root-owned `/etc/crowdsec` parent;
+the database init mounted the PVC root while LAPI mounted subPath `crowdsec`;
+and bundled GeoIP/scenario files under `/staging/var/lib/crowdsec` were root-only.
+The agent now mounts an fsGroup-writable emptyDir parent, both database roles
+mount the exact same subPath, and image revision 2 owns the staged datasets.
+
+The original database remained intact. Recovery stopped LAPI, archived the
+unintended newly created database under
+`/var/lib/crowdsec/data/rootless-cutover-archive-20261103T112148Z`, and copied the
+legacy state with the tested backup helper. The restored copy contained all
+9 original machines, 10 bouncers, 1,255 alerts and 220 decisions before restart.
+Both the original and the archived replacement are retained; neither was deleted.
+
+The new CI mount-contract check runs against actual Helm output and rejects the
+two original mount mistakes. The image integration test checks every bundled
+dataset is readable and fails on startup permission errors. Future Kubernetes
+fixtures must retain the exact nested ConfigMap and PVC subPath layouts, not
+only the application commands.
+
+During repair, reconciliation of only the `crowdsec` Application was paused
+with `argocd.argoproj.io/skip-reconcile=true`, allowing the corrected live
+workloads to stay operational while the Git fix is unpublished. Remove that
+annotation after the corrected commit is pushed, refresh/reconcile and check
+Synced/Healthy. Do not resume against the older mount configuration.
