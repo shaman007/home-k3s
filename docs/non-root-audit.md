@@ -37,13 +37,45 @@ rootless Podman. The probes use disposable storage, no production credentials,
 no published ports and no external network. Both proposed workloads pass the
 actual strict capability CEL policy without exceptions and Kubernetes schemas.
 
-Unbound will roll after publication. OpenBao retains its OnDelete update
+Unbound rolled at revision `4db46f06`: its replacement pod is Ready with zero
+restarts, a read-only root mount and only NET_BIND_SERVICE in its effective and
+bounding sets. Public and cluster DNS queries through its Service passed over
+UDP and TCP; the capability policy reports Pass on the Deployment and Pod.
+OpenBao's live template has drop ALL, but its existing pods are unchanged.
+OpenBao retains its OnDelete update
 strategy: reconciliation updates the template but existing pods retain their
 current bounding sets until an explicitly authorized, one-at-a-time maintenance
 replacement. Check readiness and DNS after Unbound rolls; verify OpenBao's actual
 bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
+
+### Backup SSH and Collabora follow-up (2026-11-03)
+
+Backup SSH now declares drop ALL with only CHOWN, DAC_OVERRIDE, FOWNER, SETGID,
+SETUID, SYS_CHROOT and NET_BIND_SERVICE. These retain startup ownership/user
+setup, OpenSSH privilege separation, authenticated user switching and port 22.
+No host storage, authorized keys, existing host keys, rsync restrictions or
+no-escalation settings are changed. The image's actual entrypoint and repository
+key-copy hook passed startup plus key-authenticated rsync upload/download of a
+file and symlink in disposable storage with exactly that bounding/effective set,
+no-new-privileges and seccomp. The probe never mounts production backup data or
+credentials. Strict capability auditing still fails because the required
+additions exceed NET_BIND_SERVICE; no main-container exception was introduced.
+
+Collabora now explicitly declares UID/GID 1001 and privileged=false, matching
+the running production container's identity. Retain CHOWN, FOWNER, SYS_CHROOT
+and allowPrivilegeEscalation=true for its file-capability document-jail helper.
+The same image started as 1001:1001 under the existing capability restrictions,
+served WOPI discovery and created a spare document-jail child in an isolated
+probe. Opening/saving a production document remains a rollout follow-up.
+Existing narrow escalation exceptions remain unchanged; the capability audit
+finding remains visible.
+
+Reproduce with `python3 tools/security/test-backup-collabora-guards.py` using
+rootless Podman. Test SSH identities are generated in a temporary private
+directory and removed on exit. Both manifests passed chart/schema validation;
+publication and live replacement verification remain required.
 
 | Workload | Identity and change | Verification |
 | --- | --- | --- |
