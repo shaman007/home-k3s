@@ -820,6 +820,29 @@ data:
                 return True
         if bucket != "real_fault_candidates":
             return False
+        namespace = item.get("namespace", "")
+        container = item.get("container", "")
+        if namespace == "argocd":
+            try:
+                record = json.loads(line)
+            except (ValueError, TypeError):
+                record = {}
+            if isinstance(record, dict) and record.get("level") == "info":
+                message = record.get("msg", "")
+                if container == "argocd-application-controller" and message.startswith("Adding resource result,"):
+                    if "status: 'Synced'" in message and "phase: 'Running'" in message:
+                        return True
+                if container == "argocd-repo-server" and str(record.get("args", "")).startswith("[helm template "):
+                    if message == "Executing command":
+                        return True
+        if namespace == "kyverno" and container in ("kyverno", "controller"):
+            if "warning: kyverno.io/v2 policyexception is deprecated" in lowered:
+                # Also collected by the warnings query; retain it there for migration review.
+                return True
+        if namespace == "dawarich" and container == "dawarich":
+            # Stack frames are context, not additional failures. Keep exception headers.
+            if re.match(r"^\s*[\w./-]+(?: \([^)]*\))?\s+\S+\.rb:\d+:in\s", line):
+                return True
         if (
             item.get("namespace") == "mastodon"
             and "http::timeouterror" in lowered
@@ -929,14 +952,14 @@ data:
         raw_real_fault_count = raw_entry_counts.get("real_fault_candidates", real_fault_count)
         removed_real_fault_count = false_positive_counts.get("real_fault_candidates", 0)
         lines.append(
-            f"* **Real fault candidates after filtering** - {real_fault_count}. "
+            f"* **Fault candidate log lines after filtering** - {real_fault_count}. "
             f"The raw query matched {raw_real_fault_count}, but {removed_real_fault_count} were removed as known false positives."
         )
         for (namespace, pod, container), detail in group_entry_counts(grouped_entries.get("real_fault_candidates", []))[:5]:
             first = detail["first"]
             last = detail["last"]
             lines.append(
-                f"* **Real fault evidence: {namespace}/{pod}/{container}** - {detail['count']} entries from {last['ts']} to {first['ts']}. "
+                f"* **Fault candidate evidence: {namespace}/{pod}/{container}** - {detail['count']} log lines from {last['ts']} to {first['ts']}. "
                 f"Example: `{trim_line(first['line'], 240)}`"
             )
 
@@ -1183,7 +1206,7 @@ data:
         }
 
         queries = {
-            "real_fault_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "(?i)Net::OpenTimeout|Error performing|level=error|panic|fatal|Traceback|traceback|Exception|exception|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
+            "real_fault_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "(?i)Net::OpenTimeout|Error performing|level=error|panic|fatal|Traceback|traceback|Exception|exception|ConnectionNotEstablished|PG::ConnectionBad|segfault|OutOfMemory|OOMKilled|CrashLoopBackOff|Back-off restarting failed container|failed to start|error syncing pod|segmentation fault"',
             "probe_instability_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "Readiness probe failed|readiness probe failed|Liveness probe failed|liveness probe failed|Startup probe failed|startup probe failed|probe failed"',
             "noise_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "deprecated|comparison expired|controller refresh requested|OIDC|oidc|stale session|No status changes. Skipping patch|warning|Warning"',
             "platform_issue_candidates": '{namespace=~".+",namespace!~"loki",pod!~"logs-check-.*",container!="logs-check"} |~ "context deadline exceeded|i/o timeout|connection refused|TLS handshake timeout|tls handshake timeout|dial tcp|no such host|Temporary failure in name resolution|temporary failure in name resolution"',

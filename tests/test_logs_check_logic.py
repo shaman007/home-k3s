@@ -54,6 +54,50 @@ class LogsCheckLogicTest(unittest.TestCase):
         filtered, _, _ = self.report['filter_false_positives']({'noise_candidates': [item]})
         self.assertIn('unknown database corruption', '\n'.join(self.report['build_log_batches'](filtered)))
 
+    def test_successful_argo_resource_result_is_not_a_fault(self):
+        item = self.entry(json.dumps(dict(level='info', kind='PolicyException',
+                          msg="Adding resource result, status: 'Synced', phase: 'Running', message: 'updated'")))
+        item.update(namespace='argocd', container='argocd-application-controller')
+        self.assertTrue(self.report['is_false_positive']('real_fault_candidates', item))
+        item['line'] = item['line'].replace("'Synced'", "'SyncFailed'")
+        self.assertFalse(self.report['is_false_positive']('real_fault_candidates', item))
+
+    def test_helm_invocation_filter_preserves_failures_and_unknown_messages(self):
+        item = self.entry('')
+        item.update(namespace='argocd', container='argocd-repo-server')
+        for level, message, expected in [('info', 'Executing command', True),
+                                         ('error', 'Executing command', False),
+                                         ('info', 'command failed', False)]:
+            item['line'] = json.dumps(dict(level=level, msg=message,
+                                          args='[helm template . --api-versions kyverno.io/v2/PolicyException]'))
+            self.assertEqual(expected, self.report['is_false_positive']('real_fault_candidates', item))
+        for line in ('not JSON', '[]', 'null'):
+            item['line'] = line
+            self.assertFalse(self.report['is_false_positive']('real_fault_candidates', item))
+
+    def test_kyverno_deprecation_remains_in_warning_analysis(self):
+        item = self.entry('INF Warning: kyverno.io/v2 PolicyException is deprecated and will be removed')
+        item.update(namespace='kyverno', container='kyverno')
+        filtered, _, _ = self.report['filter_false_positives'](
+            {'real_fault_candidates': [item], 'noise_candidates': [item]})
+        self.assertEqual([], filtered['real_fault_candidates'])
+        self.assertEqual([item], filtered['noise_candidates'])
+        self.assertIn('deprecated', '\n'.join(self.report['build_log_batches'](filtered)))
+
+    def test_dawarich_frames_do_not_hide_database_failure(self):
+        frame = self.entry("actionpack (8.1.3.1) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'")
+        frame.update(namespace='dawarich', container='dawarich')
+        failure = dict(frame, line='ActiveRecord::ConnectionNotEstablished (No route to host)')
+        filtered, _, _ = self.report['filter_false_positives']({'real_fault_candidates': [frame, failure]})
+        self.assertEqual([failure], filtered['real_fault_candidates'])
+        self.assertIn('ConnectionNotEstablished', '\n'.join(self.report['build_log_batches'](filtered)))
+
+    def test_evidence_labels_are_candidates_not_confirmed_faults(self):
+        rendered = self.report['render_observed_evidence'](
+            {'real_fault_candidates': [self.entry('PG::ConnectionBad')]}, {}, {}, {})
+        self.assertIn('Fault candidate log lines after filtering', rendered)
+        self.assertNotIn('Real fault evidence', rendered)
+
     def test_daily_collection_visits_all_hours_and_marks_caps(self):
         calls = []
         def query(q, start, end, limit):
