@@ -58,7 +58,7 @@ def main():
                 assert output['spec']==b.expected_spec(doc,entry),(entry['name'],'unexpected spec changes')
                 assert evaluate(output)==output,(entry['name'],'not idempotent')
             else:assert output==doc,(entry['name'],'mutated out-of-scope resource')
-    print(f'{len(cases)} component mutation/scope checks and 12 idempotence checks passed')
+    print(f'{len(cases)} component mutation/scope checks and {len(entries)*2} idempotence checks passed')
 
 
 if __name__=='__main__':main()
