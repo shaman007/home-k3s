@@ -106,6 +106,8 @@ EXPECTED_CLUSTER_PERMISSIONS = {
         ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
     },
     "storage": {
+        ("admissionregistration.k8s.io", "MutatingAdmissionPolicy"),
+        ("admissionregistration.k8s.io", "MutatingAdmissionPolicyBinding"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
         ("rbac.authorization.k8s.io", "ClusterRole"),
         ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
@@ -143,7 +145,8 @@ EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS = {
 CLUSTER_SCOPED_KINDS = {
     "APIService", "CSIDriver", "ClusterRole", "ClusterRoleBinding",
     "ClusterSecretStore", "CustomResourceDefinition", "IngressClass",
-    "MutatingWebhookConfiguration", "Namespace", "PersistentVolume",
+    "MutatingWebhookConfiguration", "MutatingAdmissionPolicy", "MutatingAdmissionPolicyBinding",
+    "Namespace", "PersistentVolume",
     "PriorityClass", "RuntimeClass", "StorageClass",
     "ValidatingWebhookConfiguration", "ValidatingPolicy", "VolumeSnapshotClass",
 }

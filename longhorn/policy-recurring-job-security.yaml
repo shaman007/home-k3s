@@ -1,0 +1,84 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: longhorn-recurring-job-security
+  annotations:
+    argocd.argoproj.io/sync-wave: '-2'
+spec:
+  failurePolicy: Ignore
+  reinvocationPolicy: IfNeeded
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - batch
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - cronjobs
+      resourceNames:
+      - trim-daily-a
+      - trim-daily-b
+      - trim-daily-c
+      - trim-hourly
+      - trim-15min
+      - backup-daily-retain31-a
+      - backup-daily-retain31-b
+      - backup-daily-retain31-c
+      - backup-monthly-retain60-mempalace
+      - backup-monthly-retain60-hister
+      - backup-daily-retain30
+      - backup-daily-retain11
+      - backup-daily-retain1
+      - snapshot-daily-retain1
+  matchConditions:
+  - name: namespace
+    expression: request.namespace == 'longhorn-system'
+  - name: reviewed-names
+    expression: object.metadata.name in ["trim-daily-a", "trim-daily-b", "trim-daily-c", "trim-hourly", "trim-15min",
+      "backup-daily-retain31-a", "backup-daily-retain31-b", "backup-daily-retain31-c", "backup-monthly-retain60-mempalace",
+      "backup-monthly-retain60-hister", "backup-daily-retain30", "backup-daily-retain11", "backup-daily-retain1",
+      "snapshot-daily-retain1"]
+  - name: generated-labels
+    expression: |-
+      has(object.metadata.labels) &&
+      'longhorn.io/managed-by' in object.metadata.labels &&
+      'recurring-job.longhorn.io' in object.metadata.labels &&
+      object.metadata.labels['longhorn.io/managed-by'] == 'longhorn-manager' &&
+      object.metadata.labels['recurring-job.longhorn.io'] == object.metadata.name
+  - name: reviewed-command
+    expression: |-
+      [object.spec.jobTemplate.spec.template.spec].exists(p,
+       p.?serviceAccountName.orValue('default') == 'longhorn-service-account' &&
+       p.containers.size() == 1 && p.?initContainers.orValue([]).size() == 0 &&
+       p.containers[0].name == object.metadata.name &&
+       p.containers[0].image == 'docker.io/longhornio/longhorn-manager:v1.13.0' &&
+       p.containers[0].?command.orValue([]) == ['longhorn-manager', '-d', 'recurring-job', string(object.metadata.name), '--manager-url', 'http://longhorn-backend:9500/v1'])
+  mutations:
+  - patchType: JSONPatch
+    jsonPatch:
+      expression: |-
+        (!has(object.spec.jobTemplate.spec.template.spec.containers[0].securityContext) ? [JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext", value: {}}] : []) + [
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/runAsNonRoot", value: true},
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/runAsUser", value: 1000},
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/runAsGroup", value: 1000},
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/allowPrivilegeEscalation", value: false},
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/privileged", value: false},
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/capabilities", value: {"drop": ["ALL"]}},
+          JSONPatch{op: "add", path: "/spec/jobTemplate/spec/template/spec/containers/0/securityContext/seccompProfile", value: {"type": "RuntimeDefault"}}
+        ]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: longhorn-recurring-job-security
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  policyName: longhorn-recurring-job-security
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: longhorn-system

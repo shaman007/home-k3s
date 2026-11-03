@@ -84,6 +84,7 @@ jobs:
         run: |
           python tools/kyverno/generate-exceptions.py --check
           python tools/kyverno/test-audit-policies.py --rendered "${RUNNER_TEMP}/rendered-applications"
+          python tools/longhorn/test-recurring-security-policy.py
 
       - name: Check CrowdSec rootless mount contracts
         run: |

@@ -25,6 +25,10 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: seaweedfs
   clusterResourceWhitelist:
+    - group: admissionregistration.k8s.io
+      kind: MutatingAdmissionPolicy
+    - group: admissionregistration.k8s.io
+      kind: MutatingAdmissionPolicyBinding
     - group: apiextensions.k8s.io
       kind: CustomResourceDefinition
     - group: rbac.authorization.k8s.io
