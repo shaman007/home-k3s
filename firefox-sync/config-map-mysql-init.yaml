@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init
+  namespace: firefox-sync
+data:
+  01-tokenserver.sql: 'CREATE DATABASE IF NOT EXISTS tokenserver;
+
+    GRANT ALL PRIVILEGES ON tokenserver.* TO ''sync''@''%'';
+
+    '

@@ -20,6 +20,8 @@ spec:
     - https://helm.goharbor.io
     - https://mastodon.github.io/helm-charts
   destinations:
+    - namespace: firefox-sync
+      server: https://kubernetes.default.svc
     - server: https://kubernetes.default.svc
       namespace: bastioncam
     - server: https://kubernetes.default.svc

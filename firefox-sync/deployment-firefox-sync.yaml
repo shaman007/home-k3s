@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefox-sync
+  namespace: firefox-sync
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: firefox-sync
+  template:
+    metadata:
+      labels:
+        app: firefox-sync
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: homelab-standard
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: syncserver
+        image: ghcr.io/mozilla-services/syncstorage-rs/syncserver-mysql:0.24.0@sha256:781bcff42f2ae50846449c8d7733da1d5ce326a6fdf5d411761c922a75dbebdd
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          seccompProfile:
+            type: RuntimeDefault
+          readOnlyRootFilesystem: true
+        ports:
+        - name: http
+          containerPort: 8000
+        env:
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: MYSQL_PASSWORD
+        - name: SYNC_MASTER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: SYNC_MASTER_SECRET
+        - name: SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET
+        - name: SYNC_HOST
+          value: 0.0.0.0
+        - name: SYNC_PORT
+          value: '8000'
+        - name: SYNC_ENVIRONMENT
+          value: prod
+        - name: SYNC_SYNCSTORAGE__DATABASE_URL
+          value: mysql://sync:$(MYSQL_PASSWORD)@mysql:3306/syncstorage
+        - name: SYNC_TOKENSERVER__DATABASE_URL
+          value: mysql://sync:$(MYSQL_PASSWORD)@mysql:3306/tokenserver
+        - name: SYNC_TOKENSERVER__ENABLED
+          value: 'true'
+        - name: SYNC_TOKENSERVER__RUN_MIGRATIONS
+          value: 'true'
+        - name: SYNC_TOKENSERVER__NODE_TYPE
+          value: mysql
+        - name: SYNC_TOKENSERVER__FXA_EMAIL_DOMAIN
+          value: api.accounts.firefox.com
+        - name: SYNC_TOKENSERVER__FXA_OAUTH_SERVER_URL
+          value: https://oauth.accounts.firefox.com
+        - name: SYNC_TOKENSERVER__INIT_NODE_URL
+          value: https://sync.andreybondarenko.com
+        - name: RUST_LOG
+          value: info
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        startupProbe:
+          httpGet:
+            path: /__heartbeat__
+            port: http
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /__heartbeat__
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /__lbheartbeat__
+            port: http
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
