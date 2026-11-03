@@ -42,6 +42,13 @@ spec:
             runAsGroup: 0
             runAsNonRoot: false
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
           volumeMounts:
             - name: hister-data
               mountPath: /data

@@ -22,6 +22,18 @@
               "image": "harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-permissions": {
+              "image": "harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -115,6 +127,17 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-runtime-directories": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -205,6 +228,17 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -274,6 +308,17 @@
           "initContainers": {
             "prepare-writable-volumes": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-writable-volumes": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -364,6 +409,18 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-cache": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_READ_SEARCH"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -434,6 +491,17 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-library": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -500,6 +568,17 @@
           "initContainers": {
             "init-writable-paths": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "init-writable-paths": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -593,6 +672,18 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "fix-perms": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "FOWNER"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -663,6 +754,17 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "fix-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -729,6 +831,17 @@
           "initContainers": {
             "fix-perms": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "fix-perms": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -814,6 +927,17 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-mount-hack": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -879,6 +1003,17 @@
           "initContainers": {
             "volume-mount-hack": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-mount-hack": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -948,6 +1083,17 @@
           "initContainers": {
             "prepare-model-cache": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-model-cache": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -1020,6 +1166,18 @@
           "initContainers": {
             "prepare-ollama-data": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-ollama-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
             }
           }
         }
@@ -1109,6 +1267,18 @@
           "initContainers": {
             "prepare-ollama-data": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-ollama-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
             }
           }
         }
@@ -1201,6 +1371,17 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
@@ -1289,6 +1470,18 @@
           "initContainers": {
             "prepare-data-and-tmp": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data-and-tmp": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
             }
           }
         }
@@ -1411,22 +1604,34 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "fix-data-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
         "securityContext": {
           "fsGroup": 65532,
-          "fsGroupChangePolicy": "OnRootMismatch",
           "seccompProfile": {
             "type": "RuntimeDefault"
-          }
+          },
+          "fsGroupChangePolicy": "OnRootMismatch"
         },
         "containers": [
           {
             "name": "hister",
             "image": "harbor.andreybondarenko.com/github/asciimoo/hister:v0.21.0",
             "securityContext": {
-              "allowPrivilegeEscalation": false,
+              "runAsUser": 65532,
               "capabilities": {
                 "drop": [
                   "ALL"
@@ -1434,7 +1639,7 @@
               },
               "runAsGroup": 65532,
               "runAsNonRoot": true,
-              "runAsUser": 65532
+              "allowPrivilegeEscalation": false
             }
           }
         ],
@@ -1443,10 +1648,20 @@
             "name": "fix-data-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "allowPrivilegeEscalation": false,
+              "runAsUser": 0,
               "runAsGroup": 0,
               "runAsNonRoot": false,
-              "runAsUser": 0
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ]
+              }
             }
           }
         ]
@@ -1469,6 +1684,17 @@
           "initContainers": {
             "prepare-data": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -1537,6 +1763,17 @@
           "initContainers": {
             "init-meili-data": {
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "init-meili-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN"
+              ]
             }
           }
         }
@@ -1610,16 +1847,28 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
-          "runAsGroup": 999,
-          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          }
+          },
+          "runAsUser": 999,
+          "runAsGroup": 999
         },
         "containers": [
           {
@@ -1639,15 +1888,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              },
-              "readOnlyRootFilesystem": true,
-              "runAsNonRoot": true,
-              "runAsUser": 65534
+              }
             }
           }
         ],
@@ -1656,8 +1905,17 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
+              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
-              "runAsUser": 0
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ]
+              }
             }
           }
         ]
@@ -1681,16 +1939,28 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
-          "runAsGroup": 999,
-          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          }
+          },
+          "runAsUser": 999,
+          "runAsGroup": 999
         },
         "containers": [
           {
@@ -1710,15 +1980,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              },
-              "readOnlyRootFilesystem": true,
-              "runAsNonRoot": true,
-              "runAsUser": 65534
+              }
             }
           }
         ],
@@ -1727,8 +1997,17 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
+              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
-              "runAsUser": 0
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ]
+              }
             }
           }
         ]
@@ -1753,16 +2032,28 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
-          "runAsGroup": 999,
-          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          }
+          },
+          "runAsUser": 999,
+          "runAsGroup": 999
         },
         "containers": [
           {
@@ -1784,8 +2075,17 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
+              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
-              "runAsUser": 0
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ]
+              }
             }
           }
         ]
@@ -1809,16 +2109,28 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
-          "runAsGroup": 999,
-          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          }
+          },
+          "runAsUser": 999,
+          "runAsGroup": 999
         },
         "containers": [
           {
@@ -1838,15 +2150,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              },
-              "readOnlyRootFilesystem": true,
-              "runAsNonRoot": true,
-              "runAsUser": 65534
+              }
             }
           }
         ],
@@ -1855,8 +2167,17 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
+              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
-              "runAsUser": 0
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ]
+              }
             }
           }
         ]
@@ -1880,16 +2201,28 @@
               "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ]
+            }
+          }
         }
       },
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
-          "runAsGroup": 999,
-          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          }
+          },
+          "runAsUser": 999,
+          "runAsGroup": 999
         },
         "containers": [
           {
@@ -1909,15 +2242,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              },
-              "readOnlyRootFilesystem": true,
-              "runAsNonRoot": true,
-              "runAsUser": 65534
+              }
             }
           }
         ],
@@ -1926,8 +2259,17 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
+              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
-              "runAsUser": 0
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ]
+              }
             }
           }
         ]

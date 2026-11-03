@@ -2,6 +2,55 @@
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-bitwarden-bitwarden
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"bitwarden\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"bitwarden\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) &&\
+      \ object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name ==\
+      \ \"bitwarden-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"bitwarden\" && o.?controller.orValue(false) == true)) || (object.kind == \"\
+      Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"ReplicaSet\" &&\
+      \ o.name == \"bitwarden-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"bitwarden-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"service\" in p.metadata.labels && p.metadata.labels[\"\
+      service\"] == \"bitwarden\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\", \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([])))))\
+      \ &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c,\
+      \ !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-permissions\" && c.image == \"harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\", \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n\
+      )"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-bitwarden-bitwarden
   namespace: kyverno
 spec:
@@ -37,6 +86,55 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"prepare-permissions\" && c.image == \"harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-comfyui-comfyui
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-runtime-directories": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"comfyui\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"\
+      comfyui\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name == \"comfyui-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"Deployment\" && o.name ==\
+      \ \"comfyui\" && o.?controller.orValue(false) == true)) || (object.kind == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"ReplicaSet\" && o.name == \"comfyui-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] &&\
+      \ o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"comfyui-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"comfyui\" &&\n  has(p.metadata.labels) && \"app.kubernetes.io/instance\"\
+      \ in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/instance\"] == \"comfyui\" &&\n  has(p.metadata.labels)\
+      \ && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] == \"comfyui\" &&\n  p.spec.?serviceAccountName.orValue(\"\
+      default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-runtime-directories\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-runtime-directories\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -81,6 +179,54 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-convertx-convertx
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-data": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"convertx\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"convertx\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) &&\
+      \ object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name ==\
+      \ \"convertx-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"convertx\" && o.?controller.orValue(false) == true)) || (object.kind == \"\
+      Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"ReplicaSet\" &&\
+      \ o.name == \"convertx-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"convertx-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"convertx\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-convertx-convertx
   namespace: kyverno
 spec:
@@ -115,6 +261,54 @@ spec:
       \ == true) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"prepare-data\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0))\
       \ == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-dawarich-dawarich
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-writable-volumes": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"dawarich\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"dawarich\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) &&\
+      \ object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name ==\
+      \ \"dawarich-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"dawarich\" && o.?controller.orValue(false) == true)) || (object.kind == \"\
+      Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"ReplicaSet\" &&\
+      \ o.name == \"dawarich-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"dawarich-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"dawarich\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-writable-volumes\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-writable-volumes\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -154,6 +348,56 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"prepare-writable-volumes\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-immich-immich-machine-learning
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-cache": ["CHOWN", "DAC_READ_SEARCH"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"immich\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"\
+      immich-machine-learning\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name\
+      \ == \"immich-machine-learning-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"immich-machine-learning\" && o.?controller.orValue(false) == true)) || (object.kind\
+      \ == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"immich-machine-learning-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] && o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"immich-machine-learning-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"immich-machine-learning\" &&\n  has(p.metadata.labels) && \"app\"\
+      \ in p.metadata.labels && p.metadata.labels[\"app\"] == \"immich-machine-learning\" &&\n  p.spec.?serviceAccountName.orValue(\"\
+      default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-cache\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_READ_SEARCH\"]) && [\"CHOWN\", \"DAC_READ_SEARCH\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([])))))\
+      \ &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c,\
+      \ !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-cache\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_READ_SEARCH\"]) && [\"CHOWN\", \"DAC_READ_SEARCH\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n\
+      )"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -198,6 +442,55 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-immich-immich-server
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-library": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"immich\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"\
+      immich-server\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) &&\
+      \ object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name ==\
+      \ \"immich-server-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"immich-server\" && o.?controller.orValue(false) == true)) || (object.kind\
+      \ == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"immich-server-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] &&\
+      \ o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"immich-server-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"immich-server\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels\
+      \ && p.metadata.labels[\"app\"] == \"immich-server\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\"\
+      \ &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-library\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-library\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-immich-immich-server
   namespace: kyverno
 spec:
@@ -234,6 +527,54 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"prepare-library\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" &&\
       \ c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-karakeep-karakeep
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"init-writable-paths": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"karakeep\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"karakeep\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) &&\
+      \ object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name ==\
+      \ \"karakeep-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"karakeep\" && o.?controller.orValue(false) == true)) || (object.kind == \"\
+      Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"ReplicaSet\" &&\
+      \ o.name == \"karakeep-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"karakeep-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"karakeep\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"init-writable-paths\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"init-writable-paths\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -277,6 +618,54 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-mail-rspamd
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"fix-perms": ["CHOWN", "FOWNER"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"mail\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"rspamd\"\
+      ) || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name == \"rspamd-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"Deployment\" && o.name ==\
+      \ \"rspamd\" && o.?controller.orValue(false) == true)) || (object.kind == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"ReplicaSet\" && o.name == \"rspamd-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] &&\
+      \ o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"rspamd-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"tier\" in p.metadata.labels && p.metadata.labels[\"\
+      tier\"] == \"mail\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] == \"\
+      rspamd\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"fix-perms\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"FOWNER\"]) && [\"CHOWN\",\
+      \ \"FOWNER\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"fix-perms\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"FOWNER\"]) && [\"CHOWN\",\
+      \ \"FOWNER\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-mail-rspamd
   namespace: kyverno
 spec:
@@ -311,6 +700,54 @@ spec:
       \ == true) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"fix-perms\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0))\
       \ == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-matrix-matrix
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"fix-permissions": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"matrix\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"\
+      matrix\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name == \"matrix-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"Deployment\" && o.name ==\
+      \ \"matrix\" && o.?controller.orValue(false) == true)) || (object.kind == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"ReplicaSet\" && o.name == \"matrix-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] &&\
+      \ o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"matrix-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"tier\" in p.metadata.labels && p.metadata.labels[\"\
+      tier\"] == \"backend\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] ==\
+      \ \"matrix\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"fix-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"fix-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -354,6 +791,54 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-monitoring-prometheus-deployment
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"fix-perms": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"monitoring\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"prometheus-deployment\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name\
+      \ == \"prometheus-deployment-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"prometheus-deployment\" && o.?controller.orValue(false) == true)) || (object.kind\
+      \ == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"prometheus-deployment-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] && o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"prometheus-deployment-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"prometheus-server\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"prometheus-server\" &&\n\
+      \  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"fix-perms\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"fix-perms\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-monitoring-prometheus-deployment
   namespace: kyverno
 spec:
@@ -388,6 +873,54 @@ spec:
       \ == true) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"fix-perms\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0))\
       \ == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-monitoring-thanos-compactor
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-mount-hack": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"monitoring\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"thanos-compactor\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name\
+      \ == \"thanos-compactor-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"thanos-compactor\" && o.?controller.orValue(false) == true)) || (object.kind\
+      \ == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"thanos-compactor-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"]\
+      \ && o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"thanos-compactor-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"thanos-compactor\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-mount-hack\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-mount-hack\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -431,6 +964,54 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-monitoring-thanos-store-gateway
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-mount-hack": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"monitoring\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"thanos-store-gateway\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name\
+      \ == \"thanos-store-gateway-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"thanos-store-gateway\" && o.?controller.orValue(false) == true)) || (object.kind\
+      \ == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"thanos-store-gateway-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] && o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"thanos-store-gateway-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"thanos-store-gateway\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-mount-hack\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-mount-hack\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-monitoring-thanos-store-gateway
   namespace: kyverno
 spec:
@@ -466,6 +1047,55 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"volume-mount-hack\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-nllb-nllb
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-model-cache": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"nllb\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"nllb\"\
+      ) || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name == \"nllb-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"Deployment\" && o.name ==\
+      \ \"nllb\" && o.?controller.orValue(false) == true)) || (object.kind == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"ReplicaSet\" && o.name == \"nllb-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"nllb-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"nllb\" &&\n  has(p.metadata.labels) && \"app.kubernetes.io/instance\"\
+      \ in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/instance\"] == \"nllb\" &&\n  has(p.metadata.labels)\
+      \ && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] == \"nllb\" &&\n  p.spec.?serviceAccountName.orValue(\"\
+      default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-model-cache\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-model-cache\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -510,6 +1140,54 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-ollama-ollama
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-ollama-data": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"ollama\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"\
+      ollama\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name == \"ollama-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"Deployment\" && o.name ==\
+      \ \"ollama\" && o.?controller.orValue(false) == true)) || (object.kind == \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"ReplicaSet\" && o.name == \"ollama-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] &&\
+      \ o.?controller.orValue(false) == true) && object.metadata.name.startsWith(\"ollama-\" + object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"ollama\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels\
+      \ && p.metadata.labels[\"app\"] == \"ollama\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n\
+      \  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-ollama-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-ollama-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-ollama-ollama
   namespace: kyverno
 spec:
@@ -545,6 +1223,55 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"prepare-ollama-data\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-ollama-ollama-small
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-ollama-data": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"ollama\" &&\n((object.kind == \"Deployment\" && object.metadata.name == \"\
+      ollama-small\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) &&\
+      \ object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name ==\
+      \ \"ollama-small-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"ollama-small\" && o.?controller.orValue(false) == true)) || (object.kind ==\
+      \ \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"ollama-small-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"ollama-small-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"ollama-small\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels\
+      \ && p.metadata.labels[\"app\"] == \"ollama-small\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\"\
+      \ &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-ollama-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-ollama-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -589,6 +1316,56 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-open-webui-open-webui
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-data": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"open-webui\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"open-webui\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name\
+      \ == \"open-webui-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"open-webui\" && o.?controller.orValue(false) == true)) || (object.kind ==\
+      \ \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"open-webui-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"open-webui-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"open-webui\" &&\n  has(p.metadata.labels) && \"app.kubernetes.io/instance\"\
+      \ in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/instance\"] == \"open-webui\" &&\n  has(p.metadata.labels)\
+      \ && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] == \"open-webui\" &&\n  p.spec.?serviceAccountName.orValue(\"\
+      default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-data\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-open-webui-open-webui
   namespace: kyverno
 spec:
@@ -625,6 +1402,54 @@ spec:
       \ == true) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"prepare-data\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0))\
       \ == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-seaweedfs-seaweedfs-s3
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-data-and-tmp": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"seaweedfs\" &&\n((object.kind == \"Deployment\" && object.metadata.name ==\
+      \ \"seaweedfs-s3\") || (object.kind == \"ReplicaSet\" && \"pod-template-hash\" in object.metadata.?labels.orValue({})\
+      \ && object.metadata.?labels.orValue({})[\"pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.name\
+      \ == \"seaweedfs-s3-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"Deployment\" && o.name == \"seaweedfs-s3\" && o.?controller.orValue(false) == true)) || (object.kind ==\
+      \ \"Pod\" && \"pod-template-hash\" in object.metadata.?labels.orValue({}) && object.metadata.?labels.orValue({})[\"\
+      pod-template-hash\"].matches(\"^[a-z0-9]{1,10}$\") && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind\
+      \ == \"ReplicaSet\" && o.name == \"seaweedfs-s3-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"] && o.?controller.orValue(false)\
+      \ == true) && object.metadata.name.startsWith(\"seaweedfs-s3-\" + object.metadata.?labels.orValue({})[\"pod-template-hash\"\
+      ] + \"-\"))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"seaweedfs-s3\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-data-and-tmp\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-data-and-tmp\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -668,6 +1493,48 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-hister-hister
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"fix-data-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"hister\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name == \"\
+      hister\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^hister-[0-9]+$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"StatefulSet\" && o.name == \"hister\" && o.?controller.orValue(false) == true))) &&\n[(object.kind ==\
+      \ \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template : object.spec.template)].exists(p,\n\
+      \  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] == \"hister\" &&\n  p.spec.?serviceAccountName.orValue(\"\
+      default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"fix-data-permissions\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\", \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([])))))\
+      \ &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c,\
+      \ !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) && ((c.name == \"fix-data-permissions\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\", \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n\
+      )"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-hister-hister
   namespace: kyverno
 spec:
@@ -696,6 +1563,49 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"fix-data-permissions\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-immich-immich-valkey
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"prepare-data": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"immich\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name == \"\
+      immich-valkey\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^immich\\\\-valkey-[0-9]+$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"StatefulSet\" && o.name == \"immich-valkey\" && o.?controller.orValue(false) == true))) &&\n[(object.kind\
+      \ == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template : object.spec.template)].exists(p,\n\
+      \  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/name\"\
+      ] == \"immich-valkey\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] ==\
+      \ \"immich-valkey\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"\
+      ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -733,6 +1643,47 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-karakeep-meilisearch
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"init-meili-data": ["CHOWN"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"karakeep\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name ==\
+      \ \"meilisearch\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^meilisearch-[0-9]+$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"StatefulSet\" && o.name == \"meilisearch\" && o.?controller.orValue(false) == true))) &&\n[(object.kind\
+      \ == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template : object.spec.template)].exists(p,\n\
+      \  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"] == \"meilisearch\" &&\n  p.spec.?serviceAccountName.orValue(\"\
+      default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"init-meili-data\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
+      \ && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"init-meili-data\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\"]) && [\"CHOWN\"].all(cap, cap\
+      \ in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-karakeep-meilisearch
   namespace: kyverno
 spec:
@@ -761,6 +1712,48 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"init-meili-data\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" &&\
       \ c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-bitwarden-bitwarden-postgres
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"bitwarden\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name ==\
+      \ \"bitwarden-postgres\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^bitwarden\\\\-postgres-[0-9]+$\"\
+      ) && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"StatefulSet\" && o.name == \"bitwarden-postgres\"\
+      \ && o.?controller.orValue(false) == true))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"bitwarden-postgres\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -798,6 +1791,48 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-dawarich-dawarich-postgres
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"dawarich\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name ==\
+      \ \"dawarich-postgres\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^dawarich\\\\-postgres-[0-9]+$\"\
+      ) && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"StatefulSet\" && o.name == \"dawarich-postgres\"\
+      \ && o.?controller.orValue(false) == true))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"dawarich-postgres\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-dawarich-dawarich-postgres
   namespace: kyverno
 spec:
@@ -827,6 +1862,49 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"volume-permissions\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-immich-immich-postgres
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"immich\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name == \"\
+      immich-postgres\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^immich\\\\-postgres-[0-9]+$\") && object.metadata.?ownerReferences.orValue([]).exists(o,\
+      \ o.kind == \"StatefulSet\" && o.name == \"immich-postgres\" && o.?controller.orValue(false) == true))) &&\n[(object.kind\
+      \ == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template : object.spec.template)].exists(p,\n\
+      \  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/name\"\
+      ] == \"immich-postgres\" &&\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"app\"]\
+      \ == \"immich-postgres\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
@@ -865,6 +1943,48 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
+  name: verified-capabilities-keycloak-keycloak-postgres
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"keycloak\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name ==\
+      \ \"keycloak-postgres\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^keycloak\\\\-postgres-[0-9]+$\"\
+      ) && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"StatefulSet\" && o.name == \"keycloak-postgres\"\
+      \ && o.?controller.orValue(false) == true))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"keycloak-postgres\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
   name: verified-root-keycloak-keycloak-postgres
   namespace: kyverno
 spec:
@@ -894,6 +2014,48 @@ spec:
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
       \ == true) && ((c.name == \"volume-permissions\" && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\"\
       \ && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))))\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-mastodon-mastodon-postgres
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
+    evidence: docs/non-root-audit.md#retained-permission-init-containers
+    reviewed-on: '2026-11-03'
+    review-trigger: image/chart/startup or ownership change
+    approved-init-capabilities: '{"volume-permissions": ["CHOWN", "DAC_OVERRIDE"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"mastodon\" &&\n((object.kind == \"StatefulSet\" && object.metadata.name ==\
+      \ \"mastodon-postgres\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^mastodon\\\\-postgres-[0-9]+$\"\
+      ) && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"StatefulSet\" && o.name == \"mastodon-postgres\"\
+      \ && o.?controller.orValue(false) == true))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app\" in p.metadata.labels && p.metadata.labels[\"\
+      app\"] == \"mastodon-postgres\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) && ((c.name == \"volume-permissions\"\
+      \ && c.image == \"harbor.andreybondarenko.com/dockerhub/busybox:1.38\" && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
+      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\n)"
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException

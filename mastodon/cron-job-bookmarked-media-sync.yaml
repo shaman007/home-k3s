@@ -37,6 +37,9 @@ spec:
             - name: fetch-bookmarked-media
               securityContext:
                 allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
               imagePullPolicy: IfNotPresent
               command:
@@ -68,6 +71,9 @@ spec:
             - name: immich-upload
               securityContext:
                 allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               image: harbor.andreybondarenko.com/dockerhub/node:26-alpine
               imagePullPolicy: IfNotPresent
               command:

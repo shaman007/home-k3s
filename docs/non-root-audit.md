@@ -90,10 +90,69 @@ the database Pods; verify each init completes, PostgreSQL becomes Ready and the
 applications reconnect. Actual storage-backed startup is not proven by the tmpfs
 probe and remains a deployment check.
 
-The capability audit intentionally still fails for these helpers because it
-allows only NET_BIND_SERVICE additions. The existing root exceptions remain
-narrow, and this wave adds no new exceptions. Kernel capability definitions are
+The initial capability-limiting wave retained the strict capability findings.
+The following reviewed capability-exception batch covers these five helpers
+without broadening their root exceptions. Kernel capability definitions are
 in [capabilities(7)](https://www.man7.org/linux/man-pages/man7/capabilities.7.html).
+
+
+## Reviewed permission-init capability batch
+
+The next batch adds 25 capability exceptions for the existing reviewed root
+ownership-init roles. It keeps the original 66 root/escalation/privileged
+exceptions unchanged. Exact workload identities, service accounts, labels,
+container roles/names and declared image references remain mandatory. Each
+capability exception additionally requires declared UID 0, no privilege
+escalation, non-privileged execution, exact drop ALL and the exact addition set.
+Unexpected capabilities, missing guards, changed images or moved container roles
+remain Fail; an init that stops needing additions reports Pass rather than Skip.
+Main and ephemeral containers are never approved for capability exceptions.
+
+| Exact capability set | Reviewed workload count | Purpose |
+|---|---:|---|
+| CHOWN | 13 | Existing ownership assignment helpers |
+| CHOWN, DAC_OVERRIDE | 10 | Ownership assignment through private directories, including five PostgreSQL helpers |
+| CHOWN, DAC_READ_SEARCH | 1 | Immich ML cache ownership with read/traversal bypass |
+| CHOWN, FOWNER | 1 | Rspamd ownership followed by chmod |
+
+The source of truth is [the reviewed catalog](../kyverno/exception-catalog.json).
+This is an audit-report exception, not an execution privilege grant. No policy
+is switched to enforcement, no namespace is broadly excluded, and unrelated mail,
+GPU, storage or application capability requirements remain visible. Declared
+image references are matched as strings; mutable tags are not resolved to digests
+by the exception. Startup/storage changes require review even when names/images
+stay the same, because commands and mounts are not pinned in these expressions.
+
+This batch also tightens running helper declarations:
+
+- Hister's ownership init drops ALL and retains only CHOWN/DAC_OVERRIDE, with a
+  read-only root filesystem. The skipped manual reindex Job mirrors those init
+  guards, adds a main-container drop ALL and declares RuntimeDefault seccomp;
+  it is not run or activated by this change.
+- Postfix queue ownership init drops ALL and retains only CHOWN/FOWNER, runs
+  explicitly as UID/GID 0 and uses a read-only root filesystem. Its chown is
+  non-recursive; chmod after changing ownership needs FOWNER.
+- Both bookmarked-media-sync containers drop ALL without additions. Their
+  existing root startup and no-escalation settings remain. Exact apk/npm install
+  phases and client version commands passed locally with zero capabilities;
+  no production fetch, login, upload, description update or face-detection API
+  request was executed by these probes.
+
+Hister and Postfix exact helper commands passed on disposable restrictive tmpfs
+with the reduced effective/bounding sets (`0x3` and `0x9`) and read-only root
+filesystems. Contents, ownership and modes were verified. Reproduce with:
+
+```sh
+python3 tools/security/test-permission-helper-guards.py
+# Also exercise the public-package installation phases, without production jobs:
+python3 tools/security/test-permission-helper-guards.py --installers
+```
+
+After publication, verify Hister/Postfix rollouts and the next normal media job.
+The exception-only changes do not restart the other reviewed applications. Old
+Pods/ReplicaSets may retain findings until report refresh and normal history
+cleanup; never delete them merely to improve counts. The original exception
+expiry and its documented runtime-verification limitation remain unchanged.
 
 ## Infrastructure and ownership boundaries
 

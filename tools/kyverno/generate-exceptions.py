@@ -12,7 +12,8 @@ CATALOG = ROOT / 'kyverno/exception-catalog.json'
 OUTPUT = ROOT / 'kyverno/policy-exceptions-verified.yaml'
 POLICIES = {'require-run-as-nonroot': 'root',
             'disallow-privilege-escalation': 'escalation',
-            'disallow-privileged-containers': 'privileged'}
+            'disallow-privileged-containers': 'privileged',
+            'require-drop-all-capabilities': 'capabilities'}
 
 
 def literal(value):
@@ -61,6 +62,9 @@ def compliant(policy):
         return 'c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false'
     if policy == 'disallow-privileged-containers':
         return 'c.?securityContext.?privileged.orValue(false) == false'
+    if policy == 'require-drop-all-capabilities':
+        return ('"ALL" in c.?securityContext.?capabilities.?drop.orValue([]) && '
+                'c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == "NET_BIND_SERVICE")')
     raise ValueError(policy)
 
 
@@ -71,6 +75,21 @@ def approved(policy, allowed):
         fields = [f'c.name == {literal(name)}', f'c.image == {literal(rule["image"])}']
         if policy == 'require-run-as-nonroot':
             fields.append('c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0')
+        if policy == 'require-drop-all-capabilities':
+            assert set(rule) == {'image', 'capabilities'}
+            caps = rule['capabilities']
+            assert isinstance(caps, list)
+            assert caps and len(caps) == len(set(caps))
+            assert set(caps) <= {'CHOWN', 'DAC_OVERRIDE', 'DAC_READ_SEARCH', 'FOWNER'}
+            actual = 'c.?securityContext.?capabilities.?add.orValue([])'
+            fields.extend([
+                'c.?securityContext.?privileged.orValue(false) == false',
+                'c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false',
+                'c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0',
+                'c.?securityContext.?capabilities.?drop.orValue([]) == ["ALL"]',
+                f'{actual}.size() == {len(caps)}',
+                f'{actual}.all(cap, cap in {literal(caps)})',
+                f'{literal(caps)}.all(cap, cap in {actual})'])
         if rule.get('requirePrivileged'):
             fields.append('c.?securityContext.?privileged.orValue(false) == true')
         clauses.append('(' + ' && '.join(fields) + ')')
@@ -79,6 +98,13 @@ def approved(policy, allowed):
 
 def expression(entry, policy):
     config = entry['policies'][policy]
+    if policy == 'require-drop-all-capabilities':
+        # Only the previously reviewed root permission-init roles may receive
+        # capability exceptions; never approve a main or ephemeral container.
+        assert config.get('initContainers') and not config.get('containers') and not config.get('ephemeralContainers')
+        root_roles = entry['policies']['require-run-as-nonroot'].get('initContainers', {})
+        for name, rule in config['initContainers'].items():
+            assert name in root_roles and root_roles[name]['image'] == rule['image']
     ok = compliant(policy)
     terms = []
     actual = []
@@ -115,6 +141,9 @@ def generate(catalog):
         assert entry['labels'] and entry['reason'] and entry['evidence']
         for policy in sorted(entry['policies']):
             assert policy in POLICIES
+            cap_properties = {}
+            if policy == 'require-drop-all-capabilities':
+                cap_properties['approved-init-capabilities'] = literal({name: rule['capabilities'] for name, rule in entry['policies'][policy]['initContainers'].items()})
             name = exception_name(entry, policy)
             assert name not in names
             names.add(name)
@@ -124,7 +153,7 @@ def generate(catalog):
                             'expiresAt': catalog['expiresAt'], 'reportResult': 'skip',
                             'properties': {'reason': entry['reason'], 'evidence': entry['evidence'],
                                            'reviewed-on': catalog['reviewedOn'],
-                                           'review-trigger': 'image/chart/startup or ownership change'},
+                                           'review-trigger': 'image/chart/startup or ownership change', **cap_properties},
                             'matchConditions': [{'name': 'exact-workload-and-approved-deviations',
                                                  'expression': expression(entry, policy)}]}}
 

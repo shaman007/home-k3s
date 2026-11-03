@@ -86,6 +86,8 @@ def noncompliant_container(policy, name):
         sc.update(runAsUser=0, runAsNonRoot=False)
     elif policy == 'disallow-privilege-escalation':
         sc['allowPrivilegeEscalation'] = True
+    elif policy == 'require-drop-all-capabilities':
+        sc['capabilities']['add'] = ['SYS_ADMIN']
     else:
         sc.update(privileged=True, allowPrivilegeEscalation=True)
     return {'name': name, 'image': 'registry.example.invalid/unapproved:1', 'securityContext': sc}
@@ -167,8 +169,12 @@ def main():
             else:
                 positive = document
             def variant_name(document, token):
-                if entry['kind'] not in ('Pod', 'StatefulSet'):
-                    suffix = hashlib.sha256((entry['namespace'] + '/' + entry['name'] + token).encode()).hexdigest()[:10]
+                suffix = hashlib.sha256((entry['namespace'] + '/' + entry['name'] + token).encode()).hexdigest()[:10]
+                if entry['kind'] == 'StatefulSet':
+                    # Valid unique ordinals preserve controller identity while
+                    # avoiding hundreds of separate CLI policy compilations.
+                    document['metadata']['name'] = entry['name'] + '-' + str(int(suffix, 16))
+                elif entry['kind'] != 'Pod':
                     document['metadata']['name'] = document['metadata']['ownerReferences'][0]['name'] + '-' + suffix
             for mutation in ['namespace', 'owner', 'labels', 'service-account']:
                 changed = copy.deepcopy(positive)
@@ -178,7 +184,7 @@ def main():
                 if mutation == 'labels': changed['metadata']['labels'][next(iter(entry['labels']))] = 'unapproved'
                 if mutation == 'service-account': changed['spec']['serviceAccountName'] = 'unapproved'
                 case(changed, {p: 'fail' for p in entry['policies']},
-                     separate=entry['kind'] in ('Pod', 'StatefulSet'))
+                     separate=entry['kind'] == 'Pod')
             for policy, approval in entry['policies'].items():
                 for mutation in ['image', 'sidecar', 'ephemeral', 'repaired']:
                     changed = copy.deepcopy(positive)
@@ -196,8 +202,31 @@ def main():
                             if policy == 'require-run-as-nonroot': sc.update(runAsUser=1000, runAsNonRoot=True)
                             if policy == 'disallow-privilege-escalation': sc.update(allowPrivilegeEscalation=False, privileged=False)
                             if policy == 'disallow-privileged-containers': sc['privileged'] = False
+                            if policy == 'require-drop-all-capabilities': sc['capabilities'] = {'drop': ['ALL']}
                     case(changed, {policy: 'pass' if mutation == 'repaired' else 'fail'},
-                         separate=entry['kind'] in ('Pod', 'StatefulSet'))
+                         separate=entry['kind'] == 'Pod')
+                if policy == 'require-drop-all-capabilities':
+                    role = next(iter(approval['initContainers']))
+                    for mutation in ['extra-capability', 'missing-drop', 'escalation', 'privileged', 'changed-uid', 'moved-to-main', 'duplicate-capabilities', 'missing-escalation-guard', 'reordered']:
+                        changed = copy.deepcopy(positive)
+                        variant_name(changed, policy + mutation)
+                        helper = next(c for c in changed['spec']['initContainers'] if c['name'] == role)
+                        sc = helper['securityContext']
+                        if mutation == 'extra-capability': sc['capabilities']['add'].append('SYS_ADMIN')
+                        if mutation == 'missing-drop': sc['capabilities'].pop('drop')
+                        if mutation == 'escalation': sc['allowPrivilegeEscalation'] = True
+                        if mutation == 'privileged': sc['privileged'] = True
+                        if mutation == 'changed-uid': sc['runAsUser'] = 1000
+                        if mutation == 'moved-to-main':
+                            changed['spec']['initContainers'].remove(helper)
+                            changed['spec']['containers'].append(helper)
+                        if mutation == 'duplicate-capabilities':
+                            caps = sc['capabilities']['add']
+                            sc['capabilities']['add'] = [caps[0]] * max(2, len(caps))
+                        if mutation == 'missing-escalation-guard': sc.pop('allowPrivilegeEscalation')
+                        if mutation == 'reordered': sc['capabilities']['add'].reverse()
+                        case(changed, {policy: 'skip' if mutation == 'reordered' else 'fail'},
+                             separate=entry['kind'] == 'Pod')
 
         def audit_case(name, change, policy, result):
             pod = {'apiVersion': 'v1', 'kind': 'Pod', 'metadata': {'name': name, 'namespace': 'audit-validation'},

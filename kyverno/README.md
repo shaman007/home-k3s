@@ -45,7 +45,7 @@ Git for normal parent-Application reconciliation; do not apply it manually.
 
 ## Reviewed exceptions and additional audits
 
-The reviewed [catalog](exception-catalog.json) contains 66 policy-specific
+The reviewed [catalog](exception-catalog.json) contains 91 policy-specific
 exceptions for 48 workload identities. Each entry records its reason, evidence,
 service account, stable labels, approved container role/name and exact declared
 image reference. These are explicit reviewed entries, not an import of every
@@ -59,8 +59,15 @@ also pin the owner UID and exact Pod name; replacements intentionally need revie
 Vendor sidecars and missing guard fields without evidence of a root requirement
 remain findings. CrowdSec receives no exception.
 
-Exceptions reference only the existing root, escalation or privileged policy,
-with one policy per exception. They check namespace, workload/controller identity,
+The original 66 root/escalation/privileged exceptions are unchanged. An additional
+25 capability exceptions cover only already-reviewed permission init roles,
+with one policy per exception. Each capability exception requires explicit drop
+ALL, the exact reviewed capability set, effective declared UID 0, no escalation
+and non-privileged execution. Only CHOWN, DAC_OVERRIDE, DAC_READ_SEARCH and FOWNER
+can appear in this permission-init catalog. Main and ephemeral containers cannot
+receive capability exceptions. All other containers must meet the capability
+policy. Extra/missing/duplicate additions, changed images, moved roles, and
+missing drop/no-escalation guards leave the finding visible. They check namespace, workload/controller identity,
 service account, labels, container role, name and image. All other regular, init
 and ephemeral containers must comply with that policy; ephemeral containers are
 never exempt. A repaired workload reports Pass rather than Skip. Controller and
@@ -85,8 +92,11 @@ Two additional policies remain strictly Audit/Ignore:
   profile, including init and ephemeral containers. Pod-level inheritance works;
   a container-level `Unconfined` override is reported.
 
-Neither new audit has exceptions yet. Legitimate capability additions or seccomp
-requirements will appear as findings for separate review. Existing namespace
+The seccomp audit has no exceptions. Capability exceptions are limited to the
+25 reviewed ownership-init roles above; mail, GPU, storage and other main-container
+capability requirements remain visible for separate review. Commands and volume
+mounts are not pinned by the exception expressions; changes to startup or storage
+contracts require owner review under the existing RBAC/GitOps trust boundary. Existing namespace
 exclusions remain `kyverno` and `kube-system`. This change does not mutate or
 restart application workloads and does not enable denial.
 
@@ -103,7 +113,9 @@ python tools/kyverno/test-audit-policies.py --rendered /tmp/rendered-application
 CI installs the checksum-pinned Kyverno 1.19.2 CLI and evaluates the actual
 rendered policies with approved fixtures and negative cases: changed images,
 owners, namespaces, service accounts, unexpected containers, repaired workloads,
-and missing capability/seccomp fields. Fixtures omit credentials and are never
+and missing capability/seccomp fields. Capability regression cases also cover
+extra/duplicate capabilities, privilege escalation, privileged mode, changed UID,
+and moving an approved init role into the main container list. Fixtures omit credentials and are never
 submitted to the cluster. Operator-created workloads use reviewed sanitized
 snapshots when they are absent from Git-rendered application sources.
 

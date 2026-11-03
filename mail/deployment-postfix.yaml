@@ -82,7 +82,16 @@ spec:
             - name: queue
               mountPath: /var/lib/postfix
           securityContext:
+            runAsUser: 0
+            runAsGroup: 0
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - FOWNER
       containers:
         - name: postfix-mail
           image: harbor.andreybondarenko.com/library/postfix:2026-11-02-095223
