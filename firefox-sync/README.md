@@ -12,8 +12,11 @@ Ready, and public HTTPS certificate validation succeeds. Health endpoints return
 200 and unauthenticated token requests return 401. An authenticated synthetic
 storage write/read/cleanup passed through the public HTTPS ingress with certificate
 validation enabled. The app can reach Mozilla OAuth keys over trusted HTTPS.
-No real Firefox account has enrolled yet; Mozilla sign-in and cross-device Firefox
-synchronization remain unverified.
+Real Firefox verification completed: the user reported successful synchronization
+between two isolated test profiles. Server-side checks confirmed one enrolled
+Mozilla account, two client records, two tab records, and 45 bookmark records.
+Record payloads and account identifiers were not inspected. The normal desktop
+Firefox profile was not modified; the test profiles remain separate.
 
 The volume currently has a recurring filesystem trim assignment but no recurring
 backup job. No backup recovery claim is made.
