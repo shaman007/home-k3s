@@ -6,6 +6,43 @@ and final Kyverno report clearance require publication and reconciliation.
 No admission enforcement, mutation policies, blanket exemptions, namespace
 security labels, credentials, or persistent-data ownership were changed.
 
+## Follow-up: Unbound and OpenBao capability guards (2026-11-03)
+
+Published revision `d9c2d594` passed CI. Hister and Postfix replacement pods are
+Ready with zero restarts and successful permission inits. Hister's capability
+audit is Skip under its reviewed init exception; Postfix still fails the strict
+capability audit because its main mail server has no drop list. The scheduled
+Mastodon bookmarked-media job completed with zero capabilities in both roles,
+1,387 downloads and 1,357 description updates without failures. Its optional
+face-detection queue request returned HTTP 403 because it requires admin access;
+credentials and permissions were not broadened.
+
+The next prepared changes are:
+
+* Unbound: remove CHOWN, retain only NET_BIND_SERVICE, and make its root filesystem
+  read-only. Its direct binary invocation and configuration disable user changes,
+  chroot, PID files, file logging and DNSSEC trust-anchor writes. An isolated run
+  of the same image/configuration answered deterministic UDP and TCP DNS queries
+  with the proposed guards; its capability bounding/effective sets contained only
+  NET_BIND_SERVICE, with no-new-privileges and seccomp active.
+* OpenBao: drop ALL capabilities through the pinned chart's server container
+  security context. Existing production processes run as UID 100/GID 1000 with
+  zero effective/permitted capabilities and SKIP_CHOWN=true. Isolated OpenBao
+  2.7.2 started an uninitialized Raft server and served its health endpoint with
+  zero bounding/effective capabilities. This does not test production TLS,
+  unsealing or multi-node Raft behavior.
+
+Reproduce with `python3 tools/security/test-service-capability-guards.py` using
+rootless Podman. The probes use disposable storage, no production credentials,
+no published ports and no external network. Both proposed workloads pass the
+actual strict capability CEL policy without exceptions and Kubernetes schemas.
+
+Unbound will roll after publication. OpenBao retains its OnDelete update
+strategy: reconciliation updates the template but existing pods retain their
+current bounding sets until an explicitly authorized, one-at-a-time maintenance
+replacement. Check readiness and DNS after Unbound rolls; verify OpenBao's actual
+bounding sets and audit results only after its controlled replacements.
+
 ## Prepared application changes
 
 | Workload | Identity and change | Verification |
@@ -35,7 +72,7 @@ not Kyverno PolicyExceptions or evidence that a rootless redesign is impossible.
 | backup-rsync | Root SSH master and multi-user privilege separation | Dedicated rootless backup transport/image |
 | CrowdSec agent/LAPI and agent registration init | Stock image startup required root; replacement image and non-root SQLite migration are now prepared | See [rootless cutover](../crowdsec/README.md) |
 | Mail Dovecot/Postfix, Postfix queue init | Master processes manage separate users and queue ownership | Vendor-supported rootless mail architecture |
-| Mail Unbound | Current image startup/config ownership and privileged DNS bind lifecycle | Verified rootless image and bind configuration |
+| Mail Unbound | Direct resolver binary currently runs as root and binds DNS port 53; CHOWN removal is prepared | Verified rootless identity and bind configuration |
 | Mail rspamd-spam-trainer | Starts private Dovecot master/auth services before mailbox operations | Separate privilege-safe training architecture; do not test by modifying mailboxes |
 | Plex | Linuxserver s6 startup fixes ownership and drops to configured application user | Supported rootless image lifecycle |
 | RIPE Atlas and prepare-atlas-runtime | Root bootstrap owns runtime directories, then drops to ripe-atlas with NET_RAW | Image/bootstrap redesign preserving raw-socket operation |

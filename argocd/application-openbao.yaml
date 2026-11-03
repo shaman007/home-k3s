@@ -31,6 +31,13 @@ spec:
         injector:
           enabled: false
         server:
+          statefulSet:
+            securityContext:
+              container:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
           priorityClassName: homelab-critical
           tolerations:
             - key: node-role.kubernetes.io/control-plane

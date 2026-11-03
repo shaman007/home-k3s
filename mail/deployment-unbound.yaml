@@ -65,12 +65,11 @@ spec:
               memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
               add:
-                - CHOWN
                 - NET_BIND_SERVICE
           volumeMounts:
             - name: unbound-config
