@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import unittest
+from urllib.parse import parse_qs
 
 import yaml
 
@@ -26,14 +27,24 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
 
     @staticmethod
     def _is_version_pinned_upstream_install(resource):
-        prefix = "github.com/argoproj/argo-cd//manifests/cluster-install?ref=v"
+        prefix = "github.com/argoproj/argo-cd//manifests/cluster-install?"
         if not resource.startswith(prefix):
             return False
 
-        version = resource.removeprefix(prefix)
+        refs = parse_qs(resource.removeprefix(prefix)).get("ref", [])
+        if len(refs) != 1 or not refs[0].startswith("v"):
+            return False
+        version = refs[0][1:]
         return len(version.split(".")) == 3 and all(
             part.isdigit() for part in version.split(".")
         )
+
+    def test_pin_check_allows_fetch_options_but_rejects_unpinned_refs(self):
+        prefix = "github.com/argoproj/argo-cd//manifests/cluster-install?"
+        self.assertTrue(self._is_version_pinned_upstream_install(prefix + "ref=v3.5.7&timeout=120s"))
+        for query in ["ref=main&timeout=120s", "timeout=120s", "ref=v3.5", "ref=v3.5.7&ref=main"]:
+            with self.subTest(query=query):
+                self.assertFalse(self._is_version_pinned_upstream_install(prefix + query))
 
     def test_install_is_managed_by_argocd(self):
         application = yaml.safe_load(APPLICATION.read_text(encoding="utf-8"))

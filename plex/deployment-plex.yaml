@@ -41,6 +41,20 @@ spec:
         - name: plex
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
+                - FOWNER
+                - FSETID
+                - KILL
+                - SETGID
+                - SETUID
+                - NET_BIND_SERVICE
+                - SYS_CHROOT
+                - AUDIT_WRITE
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5
           imagePullPolicy: IfNotPresent
           env:
