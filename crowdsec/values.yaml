@@ -45,6 +45,20 @@ config:
       listen_addr: 0.0.0.0
       listen_port: 6060
 lapi:
+  # Keep startup ownership/user operations; remove unrelated runtime capabilities.
+  securityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    capabilities:
+      drop:
+      - ALL
+      add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - FSETID
+      - SETUID
+      - SETGID
   podSecurityContext:
     seccompProfile:
       type: RuntimeDefault
@@ -67,9 +81,37 @@ lapi:
       storageClassName: longhorn
       size: 100Mi
 agent:
+  # Keep startup ownership/user operations; remove unrelated runtime capabilities.
+  securityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    capabilities:
+      drop:
+      - ALL
+      add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - FSETID
+      - SETUID
+      - SETGID
   podSecurityContext:
     seccompProfile:
       type: RuntimeDefault
+  wait_for_lapi:
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      capabilities:
+        drop:
+        - ALL
+        add:
+        - CHOWN
+        - DAC_OVERRIDE
+        - FOWNER
+        - FSETID
+        - SETUID
+        - SETGID
   isDeployment: true
   replicas: 1
   serviceAccountName: crowdsec-agent
