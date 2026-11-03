@@ -84,6 +84,19 @@ spec:
         node-feature-discovery:
           image:
             repository: registry.k8s.io/nfd/node-feature-discovery
+          # Explicitly retain the RuntimeDefault already supplied by the kubelets.
+          master:
+            podSecurityContext:
+              seccompProfile:
+                type: RuntimeDefault
+          gc:
+            podSecurityContext:
+              seccompProfile:
+                type: RuntimeDefault
+          worker:
+            podSecurityContext:
+              seccompProfile:
+                type: RuntimeDefault
   destination:
     server: https://kubernetes.default.svc
     namespace: gpu-operator

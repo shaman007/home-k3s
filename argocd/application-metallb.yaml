@@ -17,6 +17,9 @@ spec:
         loadBalancerClass: metallb-l2
         controller:
           priorityClassName: homelab-critical
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
         speaker:
           priorityClassName: homelab-critical
         frr-k8s:
