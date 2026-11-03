@@ -64,3 +64,24 @@ disabled; NLLB completed a CUDA tensor calculation. Both Ollama Pods expose the
 RTX 4070 Ti, but no model was loaded during the check, so generation was not
 exercised. ComfyUI is explicitly configured with `--cpu` and no GPU allocation;
 this is its existing manifest configuration, not a consequence of these guards.
+
+## Follow-up: forwarded discovery and further capability reduction
+
+After the LAN-subnet correction, a real LAN GDM request through the GPU node
+192.168.30.242 returned HTTP/1.0 200 OK. The advertised w386 endpoint still
+timed out. Cilium observed its request being dropped by policy with translated
+source `10.42.0.196`, destination `10.42.2.163:32414/UDP`. CiliumNode metadata
+confirms `10.42.0.196` is w386's CiliumInternalIP. The prepared correction admits
+only this exact /32 source on the existing six UDP discovery ports. No TCP
+permissions, Service, NodePorts or advertised endpoint change. SNAT hides the
+original client's source, so this rule trusts UDP forwarded by w386. Recheck
+this address if Cilium node IPAM is reset, and repeat LAN discovery through
+192.168.30.209 after publication.
+
+The next prepared capability set removes AUDIT_WRITE and NET_BIND_SERVICE,
+retaining eight capabilities. Plex has no configured port below 1024; UDP
+discovery sockets do not need either removed capability. The updated offline
+probe passed startup, software MJPEG transcoding and preference persistence
+through restart, with bounding set `0x400fb`, no-new-privileges and seccomp.
+GPU runtime/resources and all UDP ports remain unchanged. Verify real playback,
+NVENC and LAN discovery again after rollout; no capability exception was added.

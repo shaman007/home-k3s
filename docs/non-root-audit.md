@@ -50,6 +50,25 @@ bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
 
+### Remove audit-write and unused Plex low-port capability (2026-11-03)
+
+Postfix and Dovecot's next prepared set removes AUDIT_WRITE, retaining nine
+capabilities. Their configured authentication uses Dovecot passwd-file/static
+userdb rather than PAM; kernel audit-record writing is not part of the tested
+mail paths. The isolated mail probe passed IMAPS authentication and read-only
+INBOX access, SMTP PROXY/TLS/SASL negotiation, then both daemon reloads and repeat
+checks with bounding/effective sets `0x404fb`. Both roots remained read-only,
+with declared writable mounts only. No message was submitted. Retain their
+low-port, process signalling, ownership and user/chroot transition permissions.
+
+Plex also drops AUDIT_WRITE and its unused NET_BIND_SERVICE, as every declared
+Plex port is above 1023. Its offline startup/media/preferences probe passed with
+eight capabilities. GPU allocation, runtime, discovery ports and identities are
+unchanged. These are prepared reductions, not newly deployed guards or claims
+that the remaining sets are minimal. Strict capability audit findings remain
+visible, and no new exceptions are introduced. Plex's separate cross-node UDP
+SNAT correction and required post-publication checks are in its README.
+
 ### Single-GPU discovery and read-only Dovecot follow-up (2026-11-03)
 
 The only physical GPU is on `talos-d4h-k5m`, currently exposing eight time-sliced

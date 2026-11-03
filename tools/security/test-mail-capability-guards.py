@@ -16,7 +16,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 CAPS = ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID',
-        'NET_BIND_SERVICE', 'SYS_CHROOT', 'AUDIT_WRITE']
+        'NET_BIND_SERVICE', 'SYS_CHROOT']
 
 
 def run(args):
@@ -135,7 +135,7 @@ def main():
             print('Postfix: read-only root, PROXY protocol, EHLO, STARTTLS, fixture AUTH and NOOP passed; no mail submitted', flush=True)
             for name, cid in [('dovecot', dovecot), ('postfix', postfix)]:
                 status = run(['podman', 'exec', cid, 'cat', '/proc/1/status'])
-                for line in ['CapEff:\t00000000200404fb', 'CapBnd:\t00000000200404fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
+                for line in ['CapEff:\t00000000000404fb', 'CapBnd:\t00000000000404fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
                     assert line in status, name + ': ' + status
                 run(['podman', 'exec', cid, name, 'reload'])
             retry(imap); retry(smtp)

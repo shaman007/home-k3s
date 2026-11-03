@@ -12,7 +12,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 CAPS = ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID',
-        'NET_BIND_SERVICE', 'SYS_CHROOT', 'AUDIT_WRITE']
+        'SYS_CHROOT']
 
 
 def run(args, timeout=90):
@@ -26,6 +26,7 @@ def main():
     c = doc['spec']['template']['spec']['containers'][0]
     assert c['securityContext']['capabilities'] == {'drop': ['ALL'], 'add': CAPS}
     assert c['securityContext']['allowPrivilegeEscalation'] is False
+    assert all(p['containerPort'] >= 1024 for p in c['ports'])
     hook = yaml.safe_load((ROOT / 'plex/config-map-plex-custom-init.yaml').read_text())['data']['10-disable-scheduled-library-updates.sh']
     volume = run(['podman', 'volume', 'create'])
     cid = None
@@ -56,7 +57,7 @@ def main():
                 raise RuntimeError('Plex identity endpoint did not become ready')
             identity()
             status = run(['podman', 'exec', cid, 'cat', '/proc/1/status'])
-            for expected in ['CapBnd:\t00000000200404fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
+            for expected in ['CapBnd:\t00000000000400fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
                 assert expected in status, status
             # Read a synthetic file and software-transcode as the real media user.
             run(['podman', 'exec', '--user', '1000:1000', cid,
