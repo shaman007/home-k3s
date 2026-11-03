@@ -64,6 +64,7 @@ spec:
             runAsGroup: 65532
             runAsNonRoot: true
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           env:
             - name: HISTER__SERVER__ADDRESS
               value: 0.0.0.0:8080

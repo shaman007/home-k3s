@@ -19,6 +19,7 @@ spec:
       labels:
         app: hister-reindex
     spec:
+      automountServiceAccountToken: false
       enableServiceLinks: false
       restartPolicy: Never
       securityContext:
@@ -54,6 +55,7 @@ spec:
             runAsGroup: 65532
             runAsNonRoot: true
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL

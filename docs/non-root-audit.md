@@ -50,6 +50,30 @@ bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
 
+### Hister read-only application roots (2026-11-03)
+
+The next prepared guard makes the Hister server and skipped manual reindex
+container roots read-only. Both keep UID/GID 65532, drop ALL, no-escalation and
+RuntimeDefault. Existing data/config mounts and the ownership init are unchanged.
+The manual Job also disables the unneeded Kubernetes service-account token;
+its command uses Hister's HTTP API, not Kubernetes. Its Skip annotation remains
+and no production reindex Job was launched.
+
+Live redacted configuration inspection confirmed data/database paths under /data,
+stdout or data-directory logging, and no custom PDF parser command. The isolated
+same-image probe used only a disposable /data volume and fixture configuration,
+without any implicit writable /tmp or /run. It passed startup, text/PDF import
+and search, the actual manual reindex role against its local fixture server,
+and search after restart with persisted index data. Effective/bounding sets
+were zero, with UID/GID 65532, no-new-privileges and seccomp active. No production
+index, configuration, credentials or remote content were mounted or fetched.
+
+Reproduce with `python3 tools/security/test-hister-readonly-root.py` using
+rootless Podman. After publication, verify StatefulSet replacement readiness and
+read-only root, existing-index access and normal client indexing/search. The
+manual template changes do not activate its Job. No audit policy/exception changes
+or production ownership modifications are included.
+
 ### Remove unused Postfix and Plex chroot capability (2026-11-03)
 
 The next prepared reduction removes SYS_CHROOT from Postfix and Plex only.
