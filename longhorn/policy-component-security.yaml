@@ -25,6 +25,7 @@ spec:
       - csi-resizer
       - csi-snapshotter
       - longhorn-ui
+      - longhorn-global-manager
     - apiGroups:
       - apps
       apiVersions:
@@ -107,17 +108,30 @@ spec:
        p.containers[0].?securityContext.?privileged.orValue(false) == true &&
        p.containers[2].name == "longhorn-csi-plugin" &&
        p.containers[2].image == "docker.io/longhornio/longhorn-manager:v1.13.0" &&
-       p.containers[2].?securityContext.?privileged.orValue(false) == true)
+       p.containers[2].?securityContext.?privileged.orValue(false) == true) ||
+      (object.kind == "Deployment" &&
+       object.metadata.name == "longhorn-global-manager" &&
+       object.spec.template.metadata.?labels.orValue({})["app"] == "longhorn-global-manager" &&
+       p.?serviceAccountName.orValue("default") == "longhorn-service-account" &&
+       p.containers.size() == 1 &&
+       p.?initContainers.orValue([]).size() == 0 &&
+       p.containers[0].name == "longhorn-global-manager" &&
+       p.containers[0].image == "docker.io/longhornio/longhorn-manager:v1.13.0" &&
+       p.containers[0].?args.orValue([]) == [] &&
+       p.containers[0].?command.orValue([]) == ["longhorn-manager", "-d", "global"])
       )
   variables:
   - name: index
-    expression: 'object.kind == "DaemonSet" ? 1 : 0'
-  - name: nonroot
-    expression: object.metadata.name == "longhorn-ui"
+    expression: '{"csi-attacher": 0, "csi-provisioner": 0, "csi-resizer": 0, "csi-snapshotter": 0, "longhorn-ui":
+      0, "longhorn-csi-plugin": 1, "longhorn-global-manager": 0}[string(object.metadata.name)]'
   - name: uid
-    expression: 'variables.nonroot ? 499 : 0'
+    expression: '{"csi-attacher": 0, "csi-provisioner": 0, "csi-resizer": 0, "csi-snapshotter": 0, "longhorn-ui":
+      499, "longhorn-csi-plugin": 0, "longhorn-global-manager": 1000}[string(object.metadata.name)]'
   - name: gid
-    expression: 'variables.nonroot ? 486 : 0'
+    expression: '{"csi-attacher": 0, "csi-provisioner": 0, "csi-resizer": 0, "csi-snapshotter": 0, "longhorn-ui":
+      486, "longhorn-csi-plugin": 0, "longhorn-global-manager": 1000}[string(object.metadata.name)]'
+  - name: nonroot
+    expression: variables.uid != 0
   mutations:
   - patchType: JSONPatch
     jsonPatch:

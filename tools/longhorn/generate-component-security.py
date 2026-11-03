@@ -16,6 +16,7 @@ Dumper.add_representer(str, lambda d,v:d.represent_scalar('tag:yaml.org,2002:str
 
 def generate(catalog):
     entries = catalog['entries']; branches = []
+    assert len({e['name'] for e in entries}) == len(entries), 'Ambiguous workload names'
     for e in entries:
         c = f'p.containers[{e["index"]}]'
         parts = [f'object.kind == {json.dumps(e["kind"])}', f'object.metadata.name == {json.dumps(e["name"])}',
@@ -44,9 +45,8 @@ def generate(catalog):
     policy = {'apiVersion':'admissionregistration.k8s.io/v1','kind':'MutatingAdmissionPolicy','metadata':{'name':name,'annotations':{'argocd.argoproj.io/sync-wave':'-2'}},'spec':{
         'failurePolicy':'Ignore','reinvocationPolicy':'IfNeeded','matchConstraints':{'resourceRules':rules},
         'matchConditions':[{'name':'namespace','expression':'request.namespace == "longhorn-system"'},{'name':'reviewed-contract','expression':expression}],
-        'variables':[{'name':'index','expression':'object.kind == "DaemonSet" ? 1 : 0'},
-                     {'name':'nonroot','expression':'object.metadata.name == "longhorn-ui"'},
-                     {'name':'uid','expression':'variables.nonroot ? 499 : 0'}, {'name':'gid','expression':'variables.nonroot ? 486 : 0'}],
+        'variables':[{'name':field,'expression':json.dumps({e['name']:e[field] for e in entries})+'[string(object.metadata.name)]'}
+                     for field in ['index','uid','gid']] + [{'name':'nonroot','expression':'variables.uid != 0'}],
         'mutations':[{'patchType':'JSONPatch','jsonPatch':{'expression':mutation}}]}}
     binding = {'apiVersion':'admissionregistration.k8s.io/v1','kind':'MutatingAdmissionPolicyBinding','metadata':{'name':name,'annotations':{'argocd.argoproj.io/sync-wave':'-1'}},'spec':{'policyName':name,'matchResources':{'namespaceSelector':{'matchLabels':{'kubernetes.io/metadata.name':'longhorn-system'}}}}}
     meta = lambda:{'name':'component-security-backfill','namespace':'longhorn-system','annotations':{'argocd.argoproj.io/sync-wave':'-1'}}
@@ -55,7 +55,7 @@ def generate(catalog):
     for r in role['rules']: r.pop('operations'); r.pop('apiVersions')
     rb = {'apiVersion':'rbac.authorization.k8s.io/v1','kind':'RoleBinding','metadata':meta(),'roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'Role','name':'component-security-backfill'},'subjects':[{'kind':'ServiceAccount','name':'component-security-backfill','namespace':'longhorn-system'}]}
     cm = {'apiVersion':'v1','kind':'ConfigMap','metadata':meta(),'data':{'catalog.json':json.dumps(catalog),'backfill.py':(ROOT/'tools/longhorn/backfill-component-security.py').read_text()}}
-    job = {'apiVersion':'batch/v1','kind':'Job','metadata':{'generateName':'component-security-backfill-','namespace':'longhorn-system','annotations':{'argocd.argoproj.io/hook':'PostSync','argocd.argoproj.io/hook-delete-policy':'HookSucceeded'}},'spec':{'backoffLimit':0,'activeDeadlineSeconds':2100,'template':{'metadata':{'labels':{'app':'component-security-backfill'}},'spec':{'serviceAccountName':'component-security-backfill','restartPolicy':'Never','securityContext':{'runAsNonRoot':True,'runAsUser':1000,'runAsGroup':1000,'seccompProfile':{'type':'RuntimeDefault'}},'containers':[{'name':'backfill','image':'harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine','command':['python3','/config/backfill.py'],'env':[{'name':'PYTHONDONTWRITEBYTECODE','value':'1'}],'securityContext':{'allowPrivilegeEscalation':False,'readOnlyRootFilesystem':True,'capabilities':{'drop':['ALL']}},'resources':{'requests':{'cpu':'10m','memory':'32Mi'},'limits':{'memory':'128Mi'}},'volumeMounts':[{'name':'config','mountPath':'/config','readOnly':True}]}],'volumes':[{'name':'config','configMap':{'name':'component-security-backfill'}}]}}}}
+    job = {'apiVersion':'batch/v1','kind':'Job','metadata':{'generateName':'component-security-backfill-','namespace':'longhorn-system','annotations':{'argocd.argoproj.io/hook':'PostSync','argocd.argoproj.io/hook-delete-policy':'HookSucceeded'}},'spec':{'backoffLimit':0,'activeDeadlineSeconds':len(entries)*300+300,'template':{'metadata':{'labels':{'app':'component-security-backfill'}},'spec':{'serviceAccountName':'component-security-backfill','restartPolicy':'Never','securityContext':{'runAsNonRoot':True,'runAsUser':1000,'runAsGroup':1000,'seccompProfile':{'type':'RuntimeDefault'}},'containers':[{'name':'backfill','image':'harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine','command':['python3','/config/backfill.py'],'env':[{'name':'PYTHONDONTWRITEBYTECODE','value':'1'}],'securityContext':{'allowPrivilegeEscalation':False,'readOnlyRootFilesystem':True,'capabilities':{'drop':['ALL']}},'resources':{'requests':{'cpu':'10m','memory':'32Mi'},'limits':{'memory':'128Mi'}},'volumeMounts':[{'name':'config','mountPath':'/config','readOnly':True}]}],'volumes':[{'name':'config','configMap':{'name':'component-security-backfill'}}]}}}}
     return {'longhorn/policy-component-security.yaml':[policy,binding],'longhorn/component-security-backfill.yaml':[sa,role,rb,cm,job]}
 
 
