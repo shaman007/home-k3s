@@ -32,21 +32,3 @@ spec:
           port: 32414
         - protocol: TCP
           port: 32469
-    # w386 is the advertised LAN endpoint. Cross-node NodePort forwarding
-    # uses its CiliumInternalIP as the source instead of the LAN client's IP.
-    - from:
-        - ipBlock:
-            cidr: 10.42.0.196/32
-      ports:
-        - protocol: UDP
-          port: 1900
-        - protocol: UDP
-          port: 5353
-        - protocol: UDP
-          port: 32410
-        - protocol: UDP
-          port: 32412
-        - protocol: UDP
-          port: 32413
-        - protocol: UDP
-          port: 32414

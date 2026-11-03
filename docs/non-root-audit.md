@@ -50,6 +50,24 @@ bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
 
+### Remove unused Postfix and Plex chroot capability (2026-11-03)
+
+The next prepared reduction removes SYS_CHROOT from Postfix and Plex only.
+All 25 active Postfix master.cf services explicitly set chroot=n. The isolated
+probe passed startup, SMTP PROXY/TLS/SASL, mail-daemon reloads and repeat protocol
+checks with Postfix's eight-capability effective/bounding set `0x4fb`. No message
+was submitted. A CI compatibility test prevents enabling chroot services without
+restoring the necessary capability. Dovecot retains SYS_CHROOT for its login
+isolation and its existing nine-capability set is unchanged.
+
+Plex passed offline fresh startup, software MJPEG transcoding and restart against
+persisted preferences with seven capabilities and bounding set `0xfb`. Normal
+Plex media processes already run as UID 1000 with zero effective capabilities;
+the root init/supervision path was the compatibility concern checked here.
+GPU allocation/runtime, UDP ports, identities, volumes and no-escalation remain
+unchanged. Live GPU/playback and LAN discovery still require post-publication
+checks for this new guard. No policy exception or namespace exemption is added.
+
 ### Remove audit-write and unused Plex low-port capability (2026-11-03)
 
 Postfix and Dovecot's next prepared set removes AUDIT_WRITE, retaining nine

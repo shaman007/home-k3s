@@ -11,8 +11,7 @@ import xml.etree.ElementTree as ET
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-CAPS = ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID',
-        'SYS_CHROOT']
+CAPS = ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID']
 
 
 def run(args, timeout=90):
@@ -57,7 +56,7 @@ def main():
                 raise RuntimeError('Plex identity endpoint did not become ready')
             identity()
             status = run(['podman', 'exec', cid, 'cat', '/proc/1/status'])
-            for expected in ['CapBnd:\t00000000000400fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
+            for expected in ['CapBnd:\t00000000000000fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
                 assert expected in status, status
             # Read a synthetic file and software-transcode as the real media user.
             run(['podman', 'exec', '--user', '1000:1000', cid,

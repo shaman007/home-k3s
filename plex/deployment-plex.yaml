@@ -52,7 +52,6 @@ spec:
                 - KILL
                 - SETGID
                 - SETUID
-                - SYS_CHROOT
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5
           imagePullPolicy: IfNotPresent
           env:

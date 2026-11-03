@@ -65,23 +65,43 @@ RTX 4070 Ti, but no model was loaded during the check, so generation was not
 exercised. ComfyUI is explicitly configured with `--cpu` and no GPU allocation;
 this is its existing manifest configuration, not a consequence of these guards.
 
-## Follow-up: forwarded discovery and further capability reduction
+## UDP discovery entry point
 
-After the LAN-subnet correction, a real LAN GDM request through the GPU node
-192.168.30.242 returned HTTP/1.0 200 OK. The advertised w386 endpoint still
-timed out. Cilium observed its request being dropped by policy with translated
-source `10.42.0.196`, destination `10.42.2.163:32414/UDP`. CiliumNode metadata
-confirms `10.42.0.196` is w386's CiliumInternalIP. The prepared correction admits
-only this exact /32 source on the existing six UDP discovery ports. No TCP
-permissions, Service, NodePorts or advertised endpoint change. SNAT hides the
-original client's source, so this rule trusts UDP forwarded by w386. Recheck
-this address if Cilium node IPAM is reset, and repeat LAN discovery through
-192.168.30.209 after publication.
+Use the GPU node `talos-d4h-k5m` (`192.168.30.242`) for UDP discovery. Keep
+w386's `http://192.168.30.209:32355/` TCP endpoint and public HTTPS unchanged.
+The Service now pins its existing UDP NodePorts, without reallocating any ports:
 
-The next prepared capability set removes AUDIT_WRITE and NET_BIND_SERVICE,
-retaining eight capabilities. Plex has no configured port below 1024; UDP
-discovery sockets do not need either removed capability. The updated offline
-probe passed startup, software MJPEG transcoding and preference persistence
-through restart, with bounding set `0x400fb`, no-new-privileges and seccomp.
-GPU runtime/resources and all UDP ports remain unchanged. Verify real playback,
-NVENC and LAN discovery again after rollout; no capability exception was added.
+| Function | Container UDP port | GPU-node UDP NodePort |
+| --- | --- | --- |
+| DLNA/SSDP | 1900 | 30524 |
+| mDNS (declared, not currently listening) | 5353 | 30670 |
+| GDM | 32410 | 30726 |
+| GDM | 32412 | 31606 |
+| GDM | 32413 | 30265 |
+| GDM server discovery | 32414 | 32521 |
+
+A real unicast GDM request from the LAN to `192.168.30.242:32521` returned
+HTTP/1.0 200 OK after revision `dc9532e9`. This does not establish automatic
+multicast discovery across LAN segments; real client discovery/playback remains
+a separate check. The other declared UDP ports were not protocol-tested here.
+
+The request through w386 was dropped with source `10.42.0.196` and security
+identity `world-ipv4`, including after the exact /32 allowance was published.
+[Cilium documents that tunneled north/south traffic uses the world identity](https://docs.cilium.io/en/stable/security/policy/caveats/),
+and [CIDR rules normally exclude managed node addresses](https://docs.cilium.io/en/stable/security/policy/layer3/#ip-cidr-based).
+The ineffective /32 rule is removed. As explicitly chosen, preserve the existing
+LAN-only rules rather than adding a world-identity UDP allowance or changing
+cluster-wide routing. No new policy exception, public CIDR or UDP port is added.
+
+## Further capability reduction
+
+Revision `dc9532e9` removes AUDIT_WRITE and NET_BIND_SERVICE, retaining eight
+capabilities. Plex has no configured port below 1024; its main media processes
+run as UID 1000 with zero effective capabilities. GPU allocation/runtime and
+all UDP ports remain intact.
+
+The next prepared guard also removes SYS_CHROOT, retaining seven capabilities.
+The offline startup, UID 1000 software MJPEG transcode and persistent-preference
+restart probe passed with bounding set `0xfb`, no-new-privileges and seccomp.
+Verify replacement readiness, NVENC, playback and GPU-node LAN discovery after
+this new guard is published.

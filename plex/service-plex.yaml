@@ -18,23 +18,29 @@ spec:
     - port: 1900
       protocol: UDP
       name: "dlna"
+      nodePort: 30524
     - port: 5353
       protocol: UDP
       name: "avahi"
+      nodePort: 30670
     - port: 8324
       name: "companion"
     - port: 32410
       name: "gdm1"
       protocol: UDP
+      nodePort: 30726
     - port: 32412
       protocol: UDP
       name: "gdm2"
+      nodePort: 31606
     - port: 32413
       protocol: UDP
       name: "gdm3"
+      nodePort: 30265
     - port: 32414
       protocol: UDP
       name: "gdm4"
+      nodePort: 32521
     - port: 32469
       name: "dlna2"
   selector:

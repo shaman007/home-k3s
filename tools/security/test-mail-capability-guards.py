@@ -26,14 +26,15 @@ def run(args):
 def command(name):
     doc = yaml.safe_load((ROOT / ('mail/deployment-' + name + '.yaml')).read_text())
     c = doc['spec']['template']['spec']['containers'][0]
-    assert c['securityContext']['capabilities'] == {'drop': ['ALL'], 'add': CAPS}
+    caps = CAPS if name == 'dovecot' else [cap for cap in CAPS if cap != 'SYS_CHROOT']
+    assert c['securityContext']['capabilities'] == {'drop': ['ALL'], 'add': caps}
     assert c['securityContext']['allowPrivilegeEscalation'] is False
     assert c['securityContext']['readOnlyRootFilesystem'] is True
     args = ['podman', 'run', '-d', '--cap-drop=ALL', '--security-opt=no-new-privileges']
     if c['securityContext']['readOnlyRootFilesystem']:
         # Match Kubernetes: do not let Podman add implicit writable /tmp or /run.
         args += ['--read-only', '--read-only-tmpfs=false']
-    args += ['--cap-add=' + cap for cap in CAPS]
+    args += ['--cap-add=' + cap for cap in caps]
     return args, c
 
 
@@ -92,6 +93,11 @@ def main():
             print('Dovecot: TLS, fixture authentication and read-only INBOX selection passed', flush=True)
 
             config = yaml.safe_load((ROOT / 'mail/config-map-main-cf.yaml').read_text())['data']
+            services = [line.split() for line in config['master'].splitlines()
+                        if line.strip() and not line.lstrip().startswith(('#', '-'))]
+            services = [row for row in services if len(row) >= 8 and row[1] in
+                        ['inet', 'unix', 'unix-dgram', 'fifo', 'pass']]
+            assert services and all(row[4] == 'n' for row in services), 'Review SYS_CHROOT if enabling Postfix chroot'
             args, container = command('postfix')
             args += ['--network=container:' + dovecot]
             # Named volumes are seeded from the image, like an initialized queue PVC.
@@ -135,7 +141,8 @@ def main():
             print('Postfix: read-only root, PROXY protocol, EHLO, STARTTLS, fixture AUTH and NOOP passed; no mail submitted', flush=True)
             for name, cid in [('dovecot', dovecot), ('postfix', postfix)]:
                 status = run(['podman', 'exec', cid, 'cat', '/proc/1/status'])
-                for line in ['CapEff:\t00000000000404fb', 'CapBnd:\t00000000000404fb', 'NoNewPrivs:\t1', 'Seccomp:\t2']:
+                mask = '00000000000404fb' if name == 'dovecot' else '00000000000004fb'
+                for line in ['CapEff:\t' + mask, 'CapBnd:\t' + mask, 'NoNewPrivs:\t1', 'Seccomp:\t2']:
                     assert line in status, name + ': ' + status
                 run(['podman', 'exec', cid, name, 'reload'])
             retry(imap); retry(smtp)
