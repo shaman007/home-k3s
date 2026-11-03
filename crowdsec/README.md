@@ -1,55 +1,33 @@
-# CrowdSec startup capability restrictions
+# CrowdSec capability restrictions
 
-Prepared 2026-11-03 for chart 0.24.2 / CrowdSec v1.8.1. The agent, LAPI and
-`wait-for-lapi-and-register` init container now drop ALL capabilities and add
-back a conservative startup allowlist:
+Prepared 2026-11-03 for chart 0.24.2 / CrowdSec v1.8.1. Agent, LAPI and
+`wait-for-lapi-and-register` now drop ALL Linux capabilities. This supersedes the
+initial conservative six-capability allowlist, after an isolated startup test
+proved all three roles work without it for this configuration.
 
-- CHOWN, DAC_OVERRIDE, FOWNER and FSETID for filesystem ownership/mode operations.
-- SETUID and SETGID to preserve the current root image's user-management envelope.
+Root execution remains an explicit application exception. Staged image
+credentials have root ownership and mode 0600, and the chart startup command
+creates a configuration symlink under `/etc`. A UID/GID 1000 probe failed on
+staged credential reads. Clearing the root finding needs a rootless image and
+entrypoint/volume design; merely adding runAsNonRoot would break startup.
 
-This reduces the observed default set from 14 to six, removing NET_RAW,
-NET_BIND_SERVICE, SYS_CHROOT, MKNOD, AUDIT_WRITE, SETFCAP, KILL and SETPCAP.
-These containers have no inspected startup dependency on raw sockets, low ports,
-chroot, device creation, file capabilities or changing capability sets. LAPI
-listens on 8080 and metrics on 6060. The image scripts stage configuration, run
-rsync/copy/install operations and optionally change database group ownership.
-The retained six are a conservative compatibility boundary, not a claim that
-all six are individually essential or the minimum possible set.
+Existing no-escalation, non-privileged and RuntimeDefault controls remain.
+Registration, acquisition, selective Traefik enforcement, service accounts,
+credentials and production PVCs are unchanged. All inspected production
+configuration/data files were root-owned; no ownership migration was performed.
+Changing GID/ownership behavior or upgrading the image requires revalidating the
+zero-capability startup assumption.
 
-Root execution remains an explicit application exception. Existing
-`allowPrivilegeEscalation: false`, `privileged: false` and RuntimeDefault seccomp
-are preserved. Registration, acquisition, Traefik enforcement scope, secrets,
-service accounts, storage and network policies are unchanged.
+An isolated temporary instance with emptyDir storage and generated ephemeral
+credentials passed LAPI startup, agent registration and authentication, and both
+metrics endpoints. Effective/bounding capabilities were zero and NoNewPrivs=1.
+It had no production credentials, PVCs, service-account token or Service labels.
+It did not test production Kubernetes log acquisition or bouncer decisions.
+The temporary workloads were removed.
 
-## Verification
-
-- Pinned chart render confirmed the allowlist on all three intended containers.
-- Rendered resource checks passed for five containers, using namespace defaults.
-- Both production Deployment patches passed API-server dry runs. Remaining
-  Restricted warnings for root execution/added capabilities are expected; this
-  is not full Restricted compliance or clearance of non-root Kyverno findings.
-- Repository suite passed: 256 tests run, 16 skipped. Diff whitespace check passed.
-- An isolated temporary Pod ran LAPI, registration and agent startup with these
-  security contexts. Registration completed successfully, agent authentication
-  to LAPI succeeded, and both metrics endpoints responded. Runtime effective and
-  bounding sets were `0xDB` (the six listed capabilities), with NoNewPrivs=1 and
-  Seccomp=2.
-
-The isolated fixture used emptyDir storage and generated its own ephemeral
-credentials. It mounted no production PVCs, Secrets or service-account token,
-and carried no production Service selector labels. LAPI and agent shared
-loopback networking with separate metrics ports; test auto-registration allowed
-loopback only. The fixture's initial key-strength failure was corrected before
-the successful test. It exercised the image/registration lifecycle and metrics,
-not production Kubernetes log acquisition, real bouncer decisions, or existing
-PVC upgrades. The test Pod and its ephemeral storage were removed.
-
-## Publication and rollout
-
-Changes are prepared in Git, not patched into production. After publication,
-check both Argo Applications (`crowdsec` and `crowdsec-config`) and both
-Deployment rollouts. Verify registration/init completion, readiness, actual
-capability sets, continuous Traefik log acquisition and LAPI/bouncer connectivity.
-Existing configuration/database PVCs must be retained. A successful fresh
-isolated startup does not prove restart against the production PVC contents or
-end-to-end remediation behavior; those remain rollout checks.
+After publication, verify both `crowdsec` and `crowdsec-config` Argo Applications,
+init completion, readiness, actual capability sets, continuous Traefik log
+acquisition and bouncer connectivity against existing PVC contents. The root
+Kyverno finding intentionally remains visible. See the
+[full compatibility audit](../docs/security-exception-follow-up.md) for exact
+validation, limits and other application exceptions.

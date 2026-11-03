@@ -60,7 +60,21 @@ spec:
             - /usr/bin/bash
             - /opt/atlas-transfer/entrypoint.sh
           securityContext:
+            # The setuid measurement helper fails setresuid under no-new-privileges.
             allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
+                - FOWNER
+                - FSETID
+                - KILL
+                - SETUID
+                - SETGID
+                - SETPCAP
+                - NET_RAW
             readOnlyRootFilesystem: true
           env:
             - name: PATH

@@ -14,6 +14,15 @@ spec:
       values: |
         priorityClassName: homelab-standard
         securityContext:
+          # coolforkit-caps needs file capabilities to build document chroot jails.
+          allowPrivilegeEscalation: true
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - CHOWN
+              - FOWNER
+              - SYS_CHROOT
           seccompProfile:
             type: RuntimeDefault
           runAsNonRoot: true

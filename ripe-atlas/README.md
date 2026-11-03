@@ -38,3 +38,14 @@ spool and runtime paths, requesting a scheduler reload after each translation.
 Mount aliases alone do not satisfy the package's literal-path validation.
 The wrapper also creates the periodic scheduler's `crons/7` directory before
 Atlas starts, so the scheduler can start and accept controller assignments.
+
+## Security-context compatibility
+
+The installed setuid measurement helper fails `setresuid` when
+no-new-privileges is enabled. Escalation therefore remains an explicit exception,
+while the runtime bounding set is restricted to nine capabilities. The real
+bootstrap and helper identity transition passed an isolated test without loading
+the production probe identity or registering another probe. Actual measurement
+and transfer verification remains a rollout check. See the
+[security follow-up](../docs/security-exception-follow-up.md) for evidence and
+retained capability roles.

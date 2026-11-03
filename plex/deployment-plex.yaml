@@ -39,6 +39,8 @@ spec:
                       - talos-d4h-k5m
       containers:
         - name: plex
+          securityContext:
+            allowPrivilegeEscalation: false
           image: harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5
           imagePullPolicy: IfNotPresent
           env:

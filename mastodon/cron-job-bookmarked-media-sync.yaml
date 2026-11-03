@@ -35,6 +35,8 @@ spec:
           restartPolicy: Never
           initContainers:
             - name: fetch-bookmarked-media
+              securityContext:
+                allowPrivilegeEscalation: false
               image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
               imagePullPolicy: IfNotPresent
               command:
@@ -64,6 +66,8 @@ spec:
                   mountPath: /work
           containers:
             - name: immich-upload
+              securityContext:
+                allowPrivilegeEscalation: false
               image: harbor.andreybondarenko.com/dockerhub/node:26-alpine
               imagePullPolicy: IfNotPresent
               command:
