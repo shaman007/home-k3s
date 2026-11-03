@@ -229,8 +229,10 @@ data:
 
     def evidence_signature(item):
         line = re.sub(r"\x1b\[[0-9;]*m", "", safe_log_line(item.get("line", "")))
-        line = re.sub(r"\b[0-9a-f]{8}-[0-9a-f-]{27,}\b", "<uuid>", line, flags=re.I)
-        line = re.sub(r"\b\d{4}-\d\d-\d\d[T ][0-9:.]+(?:Z|[+-]\d\d:\d\d)?", "<time>", line)
+        if item.get("namespace") != "longhorn-system":
+            line = re.sub(r"\b[0-9a-f]{8}-[0-9a-f-]{27,}\b", "<uuid>", line, flags=re.I)
+        line = re.sub(r"\b\d{4}-\d\d-\d\d[T ][0-9:.,]+(?:Z|[+-]\d\d:\d\d)?", "<time>", line)
+        line = re.sub(r"\b[IEWF]\d{4} \d\d:\d\d:\d\d\.\d+", "<time>", line)
         line = re.sub(r"\b(?:pid|tid|objectRV|eventRV|count)=[^ ,]+", "", line)
         line = re.sub(r"\b\d{1,3}(?:\.\d{1,3}){3}:\d+", "<endpoint>", line)
         return trim_line(line, 350)
@@ -867,6 +869,10 @@ data:
             kept = []
             removed = []
             for item in entries:
+                if not item.get("pod") and re.search(r"\bkind=Pod\b", item.get("line", "")):
+                    pod_name = re.search(r"\bname=([^\s]+)", item["line"])
+                    if pod_name:
+                        item = dict(item, pod=pod_name.group(1))
                 if is_false_positive(name, item):
                     removed.append(item)
                 else:
@@ -947,7 +953,9 @@ data:
 
 
     def render_observed_evidence(grouped_entries, raw_entry_counts, false_positive_counts, false_positive_examples):
-        lines = ["**Observed evidence from this run**", ""]
+        lines = ["**Observed evidence from this run**", "",
+                 "Counts are matching log lines, not incident counts. Categories overlap; do not add them together. "
+                 "Repeated Kubernetes event records may include cumulative count fields. Pattern counts below retain repeated observations.", ""]
         real_fault_count = len(grouped_entries.get("real_fault_candidates", []))
         raw_real_fault_count = raw_entry_counts.get("real_fault_candidates", real_fault_count)
         removed_real_fault_count = false_positive_counts.get("real_fault_candidates", 0)
@@ -968,12 +976,11 @@ data:
 
         platform_entries = grouped_entries.get("platform_issue_candidates", [])
         lines.append(f"* **Platform issue candidates** - {len(platform_entries)}.")
-        for (namespace, pod, container), detail in group_entry_counts(platform_entries)[:5]:
-            first = detail["first"]
-            last = detail["last"]
+        platform_patterns = sorted(group_patterns(platform_entries).items(), key=lambda pair: pair[1]["count"], reverse=True)
+        for (namespace, container, signature), detail in platform_patterns[:5]:
             lines.append(
-                f"* **{namespace}/{pod}/{container}** - {detail['count']} entries from {last['ts']} to {first['ts']}. "
-                f"Example: `{trim_line(first['line'], 220)}`"
+                f"* **Platform pattern: {namespace}/{container or '-'}** - {detail['count']} log lines "
+                f"from {detail['last']} to {detail['first']}. Example: `{signature}`"
             )
 
         probe_entries = grouped_entries.get("probe_instability_candidates", [])
@@ -994,6 +1001,9 @@ data:
                 for (namespace, pod, container), detail in top_noise_groups
             )
             lines.append(f"* **Unclassified warning sources** - {summary}.")
+            warning_patterns = sorted(group_patterns(noise_entries).items(), key=lambda pair: pair[1]["count"], reverse=True)
+            for (namespace, container, signature), detail in warning_patterns[:5]:
+                lines.append(f"* **Warning pattern: {namespace}/{container or '-'}** - {detail['count']} log lines. Example: `{signature}`")
 
         return "\n".join(lines)
 

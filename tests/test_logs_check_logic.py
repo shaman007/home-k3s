@@ -49,6 +49,46 @@ class LogsCheckLogicTest(unittest.TestCase):
         self.assertEqual({'noise_candidates': 1}, counts)
         self.assertEqual([], self.report['build_log_batches'](filtered))
 
+    def test_event_pod_identity_is_recovered_without_inventing_container(self):
+        item = self.entry('name=keycloak-0 kind=Pod reason=Unhealthy type=Warning count=20', pod='')
+        item.update(namespace='keycloak', container='')
+        filtered, _, _ = self.report['filter_false_positives']({'probe_instability_candidates': [item]})
+        event = filtered['probe_instability_candidates'][0]
+        self.assertEqual('keycloak-0', event['pod'])
+        self.assertEqual('', event['container'])
+        self.assertEqual('', item['pod'])
+
+    def test_keycloak_warning_repetitions_group_but_clients_remain_distinct(self):
+        def warning(time, client):
+            item = self.entry(f"2026-11-03 {time} WARN Client '{client}' Full scope allowed is deprecated")
+            item.update(namespace='keycloak', container='keycloak')
+            return item
+        groups = self.report['group_patterns']([warning('07:30:04,540', 'argocd'),
+                                               warning('08:00:04,400', 'argocd'),
+                                               warning('08:00:06,303', 'harbor')])
+        self.assertEqual([1, 2], sorted(g['count'] for g in groups.values()))
+
+    def test_longhorn_patterns_merge_managers_without_merging_volumes(self):
+        def warning(pod, volume):
+            item = self.entry(f'Failed to get purge status for engine pvc-{volume}-e-0', pod=pod)
+            item.update(namespace='longhorn-system', container='longhorn-manager')
+            return item
+        first = 'ac9d6cd7-76b1-43c7-a4f5-81e6c597811c'
+        second = 'bc9d6cd7-76b1-43c7-a4f5-81e6c597811c'
+        entries = [warning('manager-a', first), warning('manager-b', first), warning('manager-b', second)]
+        groups = self.report['group_patterns'](entries)
+        self.assertEqual([1, 2], sorted(g['count'] for g in groups.values()))
+        rendered = self.report['render_observed_evidence']({'platform_issue_candidates': entries}, {}, {}, {})
+        self.assertEqual(2, rendered.count('**Platform pattern:'))
+        self.assertIn('Categories overlap', rendered)
+
+    def test_warning_evidence_includes_actionable_pattern_not_just_source_count(self):
+        item = self.entry("Client 'argocd' Full scope allowed is deprecated")
+        item.update(namespace='keycloak', container='keycloak')
+        rendered = self.report['render_observed_evidence']({'noise_candidates': [item]}, {}, {}, {})
+        self.assertIn('Warning pattern: keycloak/keycloak', rendered)
+        self.assertIn('Full scope allowed', rendered)
+
     def test_unfamiliar_warning_is_sent_to_analyst(self):
         item = self.entry('Warning: unknown database corruption')
         filtered, _, _ = self.report['filter_false_positives']({'noise_candidates': [item]})
