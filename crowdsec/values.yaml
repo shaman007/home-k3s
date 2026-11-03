@@ -1,5 +1,6 @@
 image:
-  tag: v1.8.1
+  repository: harbor.andreybondarenko.com/library/crowdsec-rootless
+  tag: v1.8.1-rootless.1@sha256:15214bb9f7090f4f24857ef54fe1a500edaae4f237292b6ec2c1485e1504240e
 container_runtime: containerd
 secrets:
   externalSecret:
@@ -23,6 +24,8 @@ config:
       duration: 15m
     on_success: break
   config.yaml.local: |
+    db_config:
+      db_path: /var/lib/crowdsec/data/crowdsec-rootless.db
     api:
       server:
         auto_registration:
@@ -45,7 +48,32 @@ config:
       listen_addr: 0.0.0.0
       listen_port: 6060
 lapi:
-  # Verified root startup requires no Linux capabilities in this configuration.
+  # Stop the legacy SQLite writer before taking the rootless backup.
+  strategy:
+    type: Recreate
+  extraInitContainers:
+  - name: prepare-rootless-database
+    image: harbor.andreybondarenko.com/library/crowdsec-rootless:v1.8.1-rootless.1@sha256:15214bb9f7090f4f24857ef54fe1a500edaae4f237292b6ec2c1485e1504240e
+    imagePullPolicy: IfNotPresent
+    command:
+    - /usr/local/bin/crowdsec-rootless-prepare-database
+    - /var/lib/crowdsec/data/crowdsec.db
+    - /var/lib/crowdsec/data/crowdsec-rootless.db
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        cpu: 10m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    volumeMounts:
+    - name: crowdsec-db
+      mountPath: /var/lib/crowdsec/data
+  # The rootless image and kubelet fsGroup handle startup without capabilities.
   securityContext:
     allowPrivilegeEscalation: false
     privileged: false
@@ -53,6 +81,11 @@ lapi:
       drop:
       - ALL
   podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
     seccompProfile:
       type: RuntimeDefault
   replicas: 1
@@ -74,7 +107,7 @@ lapi:
       storageClassName: longhorn
       size: 100Mi
 agent:
-  # Verified root startup requires no Linux capabilities in this configuration.
+  # The rootless image and kubelet fsGroup handle startup without capabilities.
   securityContext:
     allowPrivilegeEscalation: false
     privileged: false
@@ -82,6 +115,11 @@ agent:
       drop:
       - ALL
   podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
     seccompProfile:
       type: RuntimeDefault
   wait_for_lapi:

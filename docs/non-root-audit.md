@@ -33,7 +33,7 @@ not Kyverno PolicyExceptions or evidence that a rootless redesign is impossible.
 | Workload/source | Current dependency | Review trigger |
 | --- | --- | --- |
 | backup-rsync | Root SSH master and multi-user privilege separation | Dedicated rootless backup transport/image |
-| CrowdSec agent/LAPI and agent registration init | Current entrypoint stages system configuration and adjusts database ownership | Rootless entrypoint plus volume migration plan |
+| CrowdSec agent/LAPI and agent registration init | Stock image startup required root; replacement image and non-root SQLite migration are now prepared | See [rootless cutover](../crowdsec/README.md) |
 | Mail Dovecot/Postfix, Postfix queue init | Master processes manage separate users and queue ownership | Vendor-supported rootless mail architecture |
 | Mail Unbound | Current image startup/config ownership and privileged DNS bind lifecycle | Verified rootless image and bind configuration |
 | Mail rspamd-spam-trainer | Starts private Dovecot master/auth services before mailbox operations | Separate privilege-safe training architecture; do not test by modifying mailboxes |

@@ -1,5 +1,9 @@
 # Application security exception follow-up
 
+The later [rootless CrowdSec cutover](../crowdsec/README.md) supersedes the
+CrowdSec root exception described below. The original tests remain historical
+evidence for the stock image; the replacement image changes those constraints.
+
 Prepared 2026-11-03. This wave hardens Collabora, Plex, RIPE Atlas, Mastodon's
 bookmarked-media job and CrowdSec. It preserves the previously agreed boundary:
 retain necessary root/helper exceptions rather than break application behavior
