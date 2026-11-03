@@ -11,7 +11,7 @@ REPOSITORY = "https://github.com/shaman007/home-k3s.git"
 
 PROJECT_APPLICATIONS = {
     "backup-rsync", "bastioncam", "bitwarden", "ca-scanner", "clamav", "collabora",
-    "comfyui", "convertx", "dawarich", "element", "harbor",
+    "comfyui", "convertx", "dawarich", "element", "firefox-sync", "harbor",
     "harbor-custom", "harbor-network-policy", "hister", "homeassistant",
     "image-builder", "immich", "karakeep", "keycloak", "mail",
     "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
