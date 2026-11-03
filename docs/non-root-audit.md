@@ -68,12 +68,14 @@ and helper init containers; and privileged image-builder build/checkout remain
 vendor or infrastructure exceptions. A guard must not disable host-device,
 network, storage or build operations without a component-specific redesign.
 
-Two vendor-managed workloads already run non-root but still lack an explicit
-guard: GPU Operator controller UID/GID 1000 (chart v26.7.2), and Longhorn UI
-UID 499/GID 486 (chart 1.13.0). The inspected pinned-chart defaults expose no
-securityContext setting for those components. Leave these findings visible;
-review upstream chart support before adding an ownership override or mutation.
-They are guard gaps, not root-runtime dependencies.
+The GPU Operator controller already runs as UID/GID 1000 (chart v26.7.2), but
+its explicit non-root guard remains a chart gap. Longhorn UI runs as UID 499/GID
+486; explicit UI guards and capability/escalation/seccomp guards for the
+non-privileged CSI clients are prepared in
+[the reviewed component hardening](../longhorn/component-security.md).
+The CSI clients retain UID 0 because their live root-owned 0755 Unix socket
+requires owner write permission. These are verified socket-access requirements,
+not a reason to add unreviewed namespace-wide exceptions.
 
 Kube-system remains outside the existing audit-policy scope and under Talos/
 bootstrap ownership; CoreDNS and kube-state-metrics already run non-root.
