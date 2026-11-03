@@ -10,6 +10,7 @@ spec:
   description: Kyverno audit policies and reporting controllers
   sourceRepos:
   - https://kyverno.github.io/kyverno/
+  - https://github.com/shaman007/home-k3s.git
   destinations:
   - server: https://kubernetes.default.svc
     namespace: kyverno

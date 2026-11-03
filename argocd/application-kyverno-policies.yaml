@@ -22,6 +22,7 @@ spec:
         - disallow-privileged-containers
         - disallow-privilege-escalation
         - require-run-as-nonroot
+        - restrict-seccomp-strict
         validationFailureAction: Audit
         failurePolicy: Ignore
         background: true

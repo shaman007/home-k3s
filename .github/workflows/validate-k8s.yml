@@ -49,6 +49,17 @@ jobs:
         with:
           version: v1.37.2
 
+      - name: Install pinned Kyverno CLI
+        env:
+          KYVERNO_CLI_VERSION: v1.19.2
+        run: |
+          curl -fsSL -o kyverno-cli.tar.gz \
+            "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_CLI_VERSION}/kyverno-cli_${KYVERNO_CLI_VERSION}_linux_x86_64.tar.gz"
+          echo "357eaf1df8bc24ddd5a73979fadeaae6a032e8710f11af264229756e4956bf4a  kyverno-cli.tar.gz" | sha256sum --check --strict
+          tar -xzf kyverno-cli.tar.gz kyverno
+          sudo mv kyverno /usr/local/bin/kyverno
+          rm -f kyverno-cli.tar.gz
+
       - name: Validate runtime contracts
         run: |
           python tools/ci/validate-runtime-contracts.py
@@ -66,6 +77,11 @@ jobs:
       - name: Render Argo CD applications
         run: |
           python tools/ci/render-applications.py --output "${RUNNER_TEMP}/rendered-applications"
+
+      - name: Check generated Kyverno exceptions and real CEL cases
+        run: |
+          python tools/kyverno/generate-exceptions.py --check
+          python tools/kyverno/test-audit-policies.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
       - name: Check CrowdSec rootless mount contracts
         run: |

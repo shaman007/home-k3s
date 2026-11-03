@@ -26,6 +26,9 @@ spec:
           migration:
             enabled: false
         features:
+          policyExceptions:
+            enabled: true
+            namespace: kyverno
           forceFailurePolicyIgnore:
             enabled: true
           generateValidatingAdmissionPolicy:

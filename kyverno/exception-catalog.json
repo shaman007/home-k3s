@@ -1,0 +1,3360 @@
+{
+  "version": 1,
+  "exceptionNamespace": "kyverno",
+  "reviewedOn": "2026-11-03",
+  "expiresAt": "2027-02-01T00:00:00Z",
+  "entries": [
+    {
+      "namespace": "bitwarden",
+      "kind": "Deployment",
+      "name": "bitwarden",
+      "serviceAccount": "default",
+      "labels": {
+        "service": "bitwarden"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-permissions": {
+              "image": "harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "bitwarden",
+            "image": "harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "alloy",
+            "image": "harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.21.3",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 473,
+              "runAsNonRoot": true,
+              "runAsUser": 473,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-permissions",
+            "image": "harbor.andreybondarenko.com/github/bitwarden/lite:2026.10.1@sha256:f2d693cc9ebf73f22c969dae3c36b3747b06edbd1fe2fca7291e5b61e309b960",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "comfyui",
+      "kind": "Deployment",
+      "name": "comfyui",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "comfyui",
+        "app.kubernetes.io/instance": "comfyui",
+        "app.kubernetes.io/name": "comfyui"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-runtime-directories": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "comfyui",
+            "image": "harbor.andreybondarenko.com/github/lecode-official/comfyui-docker:0.6.3-comfyui-0.8.2-pytorch-2.9.1-cuda-12.8-cudnn-9",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-runtime-directories",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "model-downloader",
+            "image": "harbor.andreybondarenko.com/dockerhub/alpine:3.24",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "convertx",
+      "kind": "Deployment",
+      "name": "convertx",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "convertx"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "convertx",
+            "image": "harbor.andreybondarenko.com/github/c4illin/convertx:v0.20.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-data",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "dawarich",
+      "kind": "Deployment",
+      "name": "dawarich",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "dawarich"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-writable-volumes": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "dawarich",
+            "image": "harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.20.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "dawarich-sidekiq",
+            "image": "harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.20.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-writable-volumes",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "immich",
+      "kind": "Deployment",
+      "name": "immich-machine-learning",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "immich-machine-learning",
+        "app.kubernetes.io/name": "immich-machine-learning"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-cache": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "immich-machine-learning",
+            "image": "harbor.andreybondarenko.com/github/immich-app/immich-machine-learning:v3.3.5-cuda",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-cache",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_READ_SEARCH"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "immich",
+      "kind": "Deployment",
+      "name": "immich-server",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "immich-server",
+        "app.kubernetes.io/name": "immich-server"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-library": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "immich-server",
+            "image": "harbor.andreybondarenko.com/github/immich-app/immich-server:v3.3.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-library",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "karakeep",
+      "kind": "Deployment",
+      "name": "karakeep",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "karakeep"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "init-writable-paths": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "web",
+            "image": "harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.34.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "chrome",
+            "image": "ghcr.io/karakeep-app/karakeep-chrome:156.0.8078.47-r1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65534,
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "init-writable-paths",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "mail",
+      "kind": "Deployment",
+      "name": "rspamd",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "rspamd",
+        "tier": "mail"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "fix-perms": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 11333,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "rspamd",
+            "image": "harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.3",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": false,
+              "runAsGroup": 11333,
+              "runAsNonRoot": true,
+              "runAsUser": 11333
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "fix-perms",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "FOWNER"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "matrix",
+      "kind": "Deployment",
+      "name": "matrix",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "matrix",
+        "tier": "backend"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "fix-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "synapse",
+            "image": "harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.164.2",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 991,
+              "runAsNonRoot": true,
+              "runAsUser": 991,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "fix-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "monitoring",
+      "kind": "Deployment",
+      "name": "prometheus-deployment",
+      "serviceAccount": "prometheus-server",
+      "labels": {
+        "app": "prometheus-server"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "fix-perms": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 65534,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "prometheus",
+            "image": "harbor.andreybondarenko.com/dockerhub/prom/prometheus:v3.15.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65534,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
+          },
+          {
+            "name": "thanos",
+            "image": "harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65534,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "fix-perms",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "monitoring",
+      "kind": "Deployment",
+      "name": "thanos-compactor",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "thanos-compactor"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-mount-hack": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1001,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "thanos",
+            "image": "harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1001,
+              "runAsNonRoot": true,
+              "runAsUser": 1001
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-mount-hack",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "monitoring",
+      "kind": "Deployment",
+      "name": "thanos-store-gateway",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "thanos-store-gateway"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-mount-hack": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1001,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "thanos",
+            "image": "harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1001,
+              "runAsNonRoot": true,
+              "runAsUser": 1001
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-mount-hack",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "nllb",
+      "kind": "Deployment",
+      "name": "nllb",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "nllb",
+        "app.kubernetes.io/instance": "nllb",
+        "app.kubernetes.io/name": "nllb"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-model-cache": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "nllb",
+            "image": "harbor.andreybondarenko.com/github/lecode-official/comfyui-docker:0.6.3-comfyui-0.8.2-pytorch-2.9.1-cuda-12.8-cudnn-9",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-model-cache",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "ollama",
+      "kind": "Deployment",
+      "name": "ollama",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "ollama",
+        "app.kubernetes.io/name": "ollama"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-ollama-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "ollama",
+            "image": "harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.40.14",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65532,
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "model-puller",
+            "image": "harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.40.14",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65532,
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-ollama-data",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "ollama",
+      "kind": "Deployment",
+      "name": "ollama-small",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "ollama-small",
+        "app.kubernetes.io/name": "ollama-small"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-ollama-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "ollama",
+            "image": "harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.40.14",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65532,
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "model-puller",
+            "image": "harbor.andreybondarenko.com/dockerhub/ollama/ollama:0.40.14",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 65532,
+              "runAsNonRoot": true,
+              "runAsUser": 65532,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-ollama-data",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "open-webui",
+      "kind": "Deployment",
+      "name": "open-webui",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "open-webui",
+        "app.kubernetes.io/instance": "open-webui",
+        "app.kubernetes.io/name": "open-webui"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "open-webui",
+            "image": "harbor.andreybondarenko.com/github/open-webui/open-webui:v0.12.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-data",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "reconcile-model-providers",
+            "image": "harbor.andreybondarenko.com/github/open-webui/open-webui:v0.12.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "seaweedfs",
+      "kind": "Deployment",
+      "name": "seaweedfs-s3",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "seaweedfs-s3"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data-and-tmp": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "master",
+            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000
+            }
+          },
+          {
+            "name": "volume",
+            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000
+            }
+          },
+          {
+            "name": "filer",
+            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000
+            }
+          },
+          {
+            "name": "s3",
+            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-data-and-tmp",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "hister",
+      "kind": "StatefulSet",
+      "name": "hister",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "hister"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "fix-data-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 65532,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "hister",
+            "image": "harbor.andreybondarenko.com/github/asciimoo/hister:v0.21.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsGroup": 65532,
+              "runAsNonRoot": true,
+              "runAsUser": 65532
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "fix-data-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "immich",
+      "kind": "StatefulSet",
+      "name": "immich-valkey",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "immich-valkey",
+        "app.kubernetes.io/name": "immich-valkey"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "prepare-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 999,
+          "fsGroupChangePolicy": "OnRootMismatch",
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "valkey",
+            "image": "harbor.andreybondarenko.com/dockerhub/valkey/valkey:9",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 999,
+              "runAsNonRoot": true,
+              "runAsUser": 999
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-data",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "karakeep",
+      "kind": "StatefulSet",
+      "name": "meilisearch",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "meilisearch"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "init-meili-data": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "fsGroupChangePolicy": "OnRootMismatch"
+        },
+        "containers": [
+          {
+            "name": "meilisearch",
+            "image": "harbor.andreybondarenko.com/dockerhub/getmeili/meilisearch:v1.56.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "init-meili-data",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "bitwarden",
+      "kind": "StatefulSet",
+      "name": "bitwarden-postgres",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "bitwarden-postgres"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "postgres",
+            "image": "harbor.andreybondarenko.com/dockerhub/postgres:18",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsNonRoot": true
+            }
+          },
+          {
+            "name": "postgres-exporter",
+            "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "dawarich",
+      "kind": "StatefulSet",
+      "name": "dawarich-postgres",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "dawarich-postgres"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "postgres",
+            "image": "harbor.andreybondarenko.com/github/cloudnative-pg/postgis:17",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsNonRoot": true
+            }
+          },
+          {
+            "name": "postgres-exporter",
+            "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "immich",
+      "kind": "StatefulSet",
+      "name": "immich-postgres",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "immich-postgres",
+        "app.kubernetes.io/name": "immich-postgres"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "postgres",
+            "image": "harbor.andreybondarenko.com/github/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsNonRoot": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "keycloak",
+      "kind": "StatefulSet",
+      "name": "keycloak-postgres",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "keycloak-postgres"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "postgres",
+            "image": "harbor.andreybondarenko.com/dockerhub/postgres:18",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsNonRoot": true
+            }
+          },
+          {
+            "name": "postgres-exporter",
+            "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "mastodon",
+      "kind": "StatefulSet",
+      "name": "mastodon-postgres",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "mastodon-postgres"
+      },
+      "reason": "Existing init container prepares persistent-directory ownership; application containers must remain non-root.",
+      "evidence": "docs/non-root-audit.md#retained-permission-init-containers",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {},
+          "initContainers": {
+            "volume-permissions": {
+              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "postgres",
+            "image": "harbor.andreybondarenko.com/dockerhub/postgres:18",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsNonRoot": true
+            }
+          },
+          {
+            "name": "postgres-exporter",
+            "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "volume-permissions",
+            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "backup-rsync",
+      "kind": "Deployment",
+      "name": "backup-rsync",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "backup-rsync"
+      },
+      "reason": "SSH master uses multi-user privilege separation.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "sshd": {
+              "image": "harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "sshd",
+            "image": "harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "mail",
+      "kind": "Deployment",
+      "name": "dovecot",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "dovecot",
+        "tier": "mail"
+      },
+      "reason": "Dovecot master manages separate mail/authentication users.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "dovecot-mail": {
+              "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "dovecot-mail",
+            "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": false
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "mail",
+      "kind": "Deployment",
+      "name": "postfix",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "postfix",
+        "tier": "mail"
+      },
+      "reason": "Postfix master manages separate users; init prepares queue ownership.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "postfix-mail": {
+              "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223"
+            }
+          },
+          "initContainers": {
+            "init-postfix-queue-perms": {
+              "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "postfix-mail",
+            "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "init-postfix-queue-perms",
+            "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223",
+            "securityContext": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "mail",
+      "kind": "Deployment",
+      "name": "unbound",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "unbound",
+        "tier": "mail"
+      },
+      "reason": "Pinned image startup prepares DNS configuration and binds the privileged DNS port.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "unbound": {
+              "image": "harbor.andreybondarenko.com/dockerhub/mvance/unbound:1.22.0"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "unbound",
+            "image": "harbor.andreybondarenko.com/dockerhub/mvance/unbound:1.22.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "NET_BIND_SERVICE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": false
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "mail",
+      "kind": "CronJob",
+      "name": "rspamd-spam-trainer",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "rspamd-spam-trainer",
+        "tier": "mail"
+      },
+      "reason": "Current trainer starts a private Dovecot master/auth service with separate users.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "trainer": {
+              "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "fsGroup": 1000,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "trainer",
+            "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "plex",
+      "kind": "Deployment",
+      "name": "plex",
+      "serviceAccount": "default",
+      "labels": {
+        "app": "plex"
+      },
+      "reason": "Linuxserver s6 startup prepares ownership and drops to the configured application user.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "plex": {
+              "image": "harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "plex",
+            "image": "harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5",
+            "securityContext": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "ripe-atlas",
+      "kind": "Deployment",
+      "name": "ripe-atlas",
+      "serviceAccount": "default",
+      "labels": {
+        "app.kubernetes.io/instance": "ripe-atlas",
+        "app.kubernetes.io/name": "ripe-atlas"
+      },
+      "reason": "Bootstrap prepares multi-user directories; the setuid measurement helper fails setresuid under no-new-privileges.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "ripe-atlas": {
+              "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223"
+            }
+          },
+          "initContainers": {
+            "prepare-atlas-runtime": {
+              "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223"
+            }
+          }
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "ripe-atlas": {
+              "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "ripe-atlas",
+            "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "FOWNER",
+                  "FSETID",
+                  "KILL",
+                  "SETUID",
+                  "SETGID",
+                  "SETPCAP",
+                  "NET_RAW"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "prepare-atlas-runtime",
+            "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "mastodon",
+      "kind": "CronJob",
+      "name": "bookmarked-media-sync",
+      "serviceAccount": "bookmarked-media-sync",
+      "labels": {
+        "app.kubernetes.io/instance": "bookmarked-media-sync",
+        "app.kubernetes.io/name": "bookmarked-media-sync"
+      },
+      "reason": "The current images install system/global tooling at runtime; no escalation exemption is required.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "immich-upload": {
+              "image": "harbor.andreybondarenko.com/dockerhub/node:26-alpine"
+            }
+          },
+          "initContainers": {
+            "fetch-bookmarked-media": {
+              "image": "harbor.andreybondarenko.com/dockerhub/alpine:3.24"
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "immich-upload",
+            "image": "harbor.andreybondarenko.com/dockerhub/node:26-alpine",
+            "securityContext": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "fetch-bookmarked-media",
+            "image": "harbor.andreybondarenko.com/dockerhub/alpine:3.24",
+            "securityContext": {
+              "allowPrivilegeEscalation": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "nextcloud",
+      "kind": "Deployment",
+      "name": "collabora-collabora-online",
+      "serviceAccount": "default",
+      "labels": {
+        "app.kubernetes.io/instance": "collabora",
+        "app.kubernetes.io/name": "collabora-online"
+      },
+      "reason": "Document sandbox helpers require file capabilities; no-new-privileges failed the exact installed image.",
+      "evidence": "docs/security-exception-follow-up.md",
+      "policies": {
+        "disallow-privilege-escalation": {
+          "containers": {
+            "collabora-online": {
+              "image": "harbor.andreybondarenko.com/dockerhub/collabora/code:26.04.5.2.1"
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "collabora-online",
+            "image": "harbor.andreybondarenko.com/dockerhub/collabora/code:26.04.5.2.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "FOWNER",
+                  "SYS_CHROOT"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "runAsNonRoot": true,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "gpu-operator",
+      "kind": "DaemonSet",
+      "name": "gpu-feature-discovery",
+      "serviceAccount": "nvidia-gpu-feature-discovery",
+      "labels": {
+        "app": "gpu-feature-discovery"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "gpu-feature-discovery": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "gpu-feature-discovery",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          },
+          {
+            "name": "config-manager",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          },
+          {
+            "name": "config-manager-init",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {}
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "gpu-operator",
+      "kind": "DaemonSet",
+      "name": "nvidia-dcgm-exporter",
+      "serviceAccount": "nvidia-dcgm-exporter",
+      "labels": {
+        "app": "nvidia-dcgm-exporter",
+        "app.kubernetes.io/component": "nvidia-dcgm-exporter"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "nvidia-dcgm-exporter": {
+              "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.6.1-4.8.4-distroless",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "nvidia-dcgm-exporter": {
+              "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.6.1-4.8.4-distroless",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "nvidia-dcgm-exporter": {
+              "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.6.1-4.8.4-distroless",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-dcgm-exporter",
+            "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.6.1-4.8.4-distroless",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "gpu-operator",
+      "kind": "DaemonSet",
+      "name": "nvidia-device-plugin-daemonset",
+      "serviceAccount": "nvidia-device-plugin",
+      "labels": {
+        "app": "nvidia-device-plugin-daemonset"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "nvidia-device-plugin": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-device-plugin",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          },
+          {
+            "name": "config-manager",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          },
+          {
+            "name": "config-manager-init",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {}
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "gpu-operator",
+      "kind": "DaemonSet",
+      "name": "nvidia-device-plugin-mps-control-daemon",
+      "serviceAccount": "nvidia-device-plugin",
+      "labels": {
+        "app": "nvidia-device-plugin-mps-control-daemon"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "mps-control-daemon-ctr": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "mps-control-daemon-mounts": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "mps-control-daemon-ctr",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          },
+          {
+            "name": "config-manager",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          },
+          {
+            "name": "mps-control-daemon-mounts",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "privileged": true
+            }
+          },
+          {
+            "name": "config-manager-init",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {}
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "gpu-operator",
+      "kind": "DaemonSet",
+      "name": "nvidia-mig-manager",
+      "serviceAccount": "nvidia-mig-manager",
+      "labels": {
+        "app": "nvidia-mig-manager"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "nvidia-mig-manager": {
+              "image": "nvcr.io/nvidia/cloud-native/k8s-mig-manager:v0.15.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "nvidia-mig-manager": {
+              "image": "nvcr.io/nvidia/cloud-native/k8s-mig-manager:v0.15.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "nvidia-mig-manager": {
+              "image": "nvcr.io/nvidia/cloud-native/k8s-mig-manager:v0.15.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-mig-manager",
+            "image": "nvcr.io/nvidia/cloud-native/k8s-mig-manager:v0.15.1",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "gpu-operator",
+      "kind": "DaemonSet",
+      "name": "nvidia-operator-validator",
+      "serviceAccount": "nvidia-operator-validator",
+      "labels": {
+        "app": "nvidia-operator-validator"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "nvidia-operator-validator": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "driver-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "cuda-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "plugin-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "nvidia-operator-validator": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "driver-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "cuda-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "plugin-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "nvidia-operator-validator": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "driver-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "cuda-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            },
+            "plugin-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-operator-validator",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "driver-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0,
+              "seLinuxOptions": {
+                "level": "s0"
+              }
+            }
+          },
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          },
+          {
+            "name": "cuda-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          },
+          {
+            "name": "plugin-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "DaemonSet",
+      "name": "engine-image-ei-2f3240cb",
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "longhorn.io/component": "engine-image",
+        "longhorn.io/engine-image": "ei-2f3240cb"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "engine-image-ei-2f3240cb": {
+              "image": "docker.io/longhornio/longhorn-engine:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "engine-image-ei-2f3240cb": {
+              "image": "docker.io/longhornio/longhorn-engine:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "engine-image-ei-2f3240cb": {
+              "image": "docker.io/longhornio/longhorn-engine:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "engine-image-ei-2f3240cb",
+            "image": "docker.io/longhornio/longhorn-engine:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "DaemonSet",
+      "name": "longhorn-csi-plugin",
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "app": "longhorn-csi-plugin"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "node-driver-registrar": {
+              "image": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+              "requirePrivileged": true
+            },
+            "longhorn-csi-plugin": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "node-driver-registrar",
+            "image": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+            "securityContext": {
+              "privileged": true
+            }
+          },
+          {
+            "name": "longhorn-liveness-probe",
+            "image": "docker.io/longhornio/livenessprobe:v2.20.0",
+            "securityContext": {}
+          },
+          {
+            "name": "longhorn-csi-plugin",
+            "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": true,
+              "capabilities": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              },
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "DaemonSet",
+      "name": "longhorn-manager",
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "app": "longhorn-manager",
+        "app.kubernetes.io/instance": "longhorn",
+        "app.kubernetes.io/name": "longhorn"
+      },
+      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "longhorn-manager": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "longhorn-manager",
+            "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            }
+          },
+          {
+            "name": "pre-pull-share-manager-image",
+            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+            "securityContext": {}
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "image-builder",
+      "kind": "CronJob",
+      "name": "podman-builder",
+      "serviceAccount": "default",
+      "labels": {
+        "app.kubernetes.io/instance": "podman-builder",
+        "app.kubernetes.io/name": "podman-builder"
+      },
+      "reason": "Nested Podman image building requires privileged operation. Checkout root remains an unreviewed guard gap.",
+      "evidence": "image-builder/cron-job-podman-builder.yaml",
+      "policies": {
+        "disallow-privileged-containers": {
+          "containers": {
+            "build": {
+              "image": "quay.io/podman/stable:v5.8.9",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "build": {
+              "image": "quay.io/podman/stable:v5.8.9",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "build",
+            "image": "quay.io/podman/stable:v5.8.9",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "checkout",
+            "image": "registry.k8s.io/git-sync/git-sync:v4.8.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Pod",
+      "name": "instance-manager-1b9c214d13f58139d930b8e2dd3fbd07",
+      "owner": {
+        "apiVersion": "longhorn.io/v1beta2",
+        "blockOwnerDeletion": true,
+        "controller": true,
+        "kind": "InstanceManager",
+        "name": "instance-manager-1b9c214d13f58139d930b8e2dd3fbd07",
+        "uid": "0453b7bf-e671-41ea-890e-d6967f1700e0"
+      },
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "longhorn.io/component": "instance-manager",
+        "longhorn.io/data-engine": "v1",
+        "longhorn.io/instance-manager-image": "imi-2bdbe6d9",
+        "longhorn.io/instance-manager-type": "aio",
+        "longhorn.io/managed-by": "longhorn-manager",
+        "longhorn.io/node": "talos-d4h-k5m"
+      },
+      "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privileged-containers": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "instance-manager",
+            "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Pod",
+      "name": "instance-manager-8e7770903fa89374fe9364ff07c7111b",
+      "owner": {
+        "apiVersion": "longhorn.io/v1beta2",
+        "blockOwnerDeletion": true,
+        "controller": true,
+        "kind": "InstanceManager",
+        "name": "instance-manager-8e7770903fa89374fe9364ff07c7111b",
+        "uid": "f7def45d-2ba7-4795-8aaa-d07a899d6a68"
+      },
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "longhorn.io/component": "instance-manager",
+        "longhorn.io/data-engine": "v1",
+        "longhorn.io/instance-manager-image": "imi-2bdbe6d9",
+        "longhorn.io/instance-manager-type": "aio",
+        "longhorn.io/managed-by": "longhorn-manager",
+        "longhorn.io/node": "talos-qlw-pbh"
+      },
+      "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privileged-containers": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "instance-manager",
+            "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Pod",
+      "name": "instance-manager-f6f6704cc5ac55f4ab63af5be03a4196",
+      "owner": {
+        "apiVersion": "longhorn.io/v1beta2",
+        "blockOwnerDeletion": true,
+        "controller": true,
+        "kind": "InstanceManager",
+        "name": "instance-manager-f6f6704cc5ac55f4ab63af5be03a4196",
+        "uid": "4576ce13-d5f9-469a-a3de-6754489530f6"
+      },
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "longhorn.io/component": "instance-manager",
+        "longhorn.io/data-engine": "v1",
+        "longhorn.io/instance-manager-image": "imi-2bdbe6d9",
+        "longhorn.io/instance-manager-type": "aio",
+        "longhorn.io/managed-by": "longhorn-manager",
+        "longhorn.io/node": "w386"
+      },
+      "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privileged-containers": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "instance-manager",
+            "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Pod",
+      "name": "share-manager-pvc-ebe1aab2-d3fa-4710-9e78-5dcf04c5a1d0",
+      "owner": {
+        "apiVersion": "longhorn.io/v1beta2",
+        "controller": true,
+        "kind": "ShareManager",
+        "name": "pvc-ebe1aab2-d3fa-4710-9e78-5dcf04c5a1d0",
+        "uid": "63df987b-4136-4fe6-94d0-d48985eaaa85"
+      },
+      "serviceAccount": "longhorn-service-account",
+      "labels": {
+        "longhorn.io/component": "share-manager",
+        "longhorn.io/managed-by": "longhorn-manager",
+        "longhorn.io/share-manager": "pvc-ebe1aab2-d3fa-4710-9e78-5dcf04c5a1d0",
+        "longhorn.io/share-manager-image": "smi-efa90dfd"
+      },
+      "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
+      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "share-manager": {
+              "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "share-manager": {
+              "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privileged-containers": {
+          "containers": {
+            "share-manager": {
+              "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "share-manager",
+            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    }
+  ]
+}

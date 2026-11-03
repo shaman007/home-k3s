@@ -53,7 +53,7 @@ PROJECT_MEMBERS = {
     "observability": PROJECT_OBSERVABILITY,
     "access-management": PROJECT_ACCESS_MANAGEMENT,
     "namespace-management": PROJECT_NAMESPACE_MANAGEMENT,
-    "kyverno": {"kyverno", "kyverno-policies"},
+    "kyverno": {"kyverno", "kyverno-policies", "kyverno-exceptions"},
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
@@ -145,7 +145,7 @@ CLUSTER_SCOPED_KINDS = {
     "ClusterSecretStore", "CustomResourceDefinition", "IngressClass",
     "MutatingWebhookConfiguration", "Namespace", "PersistentVolume",
     "PriorityClass", "RuntimeClass", "StorageClass",
-    "ValidatingWebhookConfiguration", "VolumeSnapshotClass",
+    "ValidatingWebhookConfiguration", "ValidatingPolicy", "VolumeSnapshotClass",
 }
 
 
