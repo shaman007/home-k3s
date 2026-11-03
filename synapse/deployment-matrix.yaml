@@ -47,7 +47,7 @@ spec:
           emptyDir: {}
       containers:
         - name: synapse
-          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.164.1
+          image: harbor.andreybondarenko.com/dockerhub/matrixdotorg/synapse:v1.164.2
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
