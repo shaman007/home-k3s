@@ -4,7 +4,8 @@ Self-hosted Syncstorage and Tokenserver, with Mozilla accounts for sign-in.
 This syncs Firefox-supported data (bookmarks, history, passwords, tabs, add-ons,
 and selected settings), rather than cloning an entire profile directory.
 
-Status: live bootstrap deployed on 2026-11-03; GitOps publication remains pending.
+Status: deployed on 2026-11-03 and adopted by Argo CD. The Firefox Sync
+Application is Synced and Healthy against the published Git configuration.
 MySQL and Sync are Ready; the Longhorn volume is healthy with two replicas;
 OpenBao SecretStore and ExternalSecret are Ready. Both database schemas and the
 public tokenserver node are initialized. Public DNS resolves, the certificate is
@@ -34,7 +35,8 @@ backup job. No backup recovery claim is made.
   `argocd/application-firefox-sync.yaml`, the `firefox-sync` directory, and
   `traefik/network-policy-traefik-allow-egress-firefox-sync.yaml`.
   Live bootstrap alone does not establish GitOps reconciliation; the Argo
-  Application is intentionally not created until its source is published.
+  Application must not be created before its source is published. This deployment
+  has now been published and adopted by Argo CD.
 - For an approved live bootstrap before publication, create the namespace first,
   then create the resources in this directory using `kubectl create -f firefox-sync/`,
   plus the dedicated Traefik egress policy above (required for API and ACME traffic).
