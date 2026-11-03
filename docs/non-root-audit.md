@@ -50,6 +50,35 @@ bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
 
+### Postfix and Dovecot capability follow-up (2026-11-03)
+
+Both main mail containers now declare drop ALL and re-add ten existing default
+capabilities: CHOWN, DAC_OVERRIDE, FOWNER, FSETID, KILL, SETGID, SETUID,
+NET_BIND_SERVICE, SYS_CHROOT and AUDIT_WRITE. This conservatively removes
+NET_RAW, MKNOD, SETFCAP and SETPCAP without changing the root master/user
+switching, ownership, process signalling or low-port permissions. This is a
+reduction from the current default set, not a claim of the minimum possible set.
+Postfix's existing read-only root and permission-init guards are retained;
+Dovecot's writable paths, identities, credentials and configuration are unchanged.
+No additional audit exceptions are introduced: both still fail the strict
+capability rule because their retained capabilities exceed NET_BIND_SERVICE.
+
+`python3 tools/security/test-mail-capability-guards.py` passed against the same
+images and repository configuration with disposable TLS/user identities and
+storage. Dovecot passed IMAPS authentication and read-only INBOX selection.
+Postfix passed its HAProxy PROXY preamble, SMTP EHLO, STARTTLS, fixture SASL
+authentication through Dovecot, NOOP and QUIT with its root filesystem read-only.
+Both daemons passed reload and repeat protocol checks with effective/bounding
+sets `0x200404fb`, no-new-privileges and seccomp. No MAIL, RCPT or DATA commands
+were sent. The probe substitutes a local auth backend and disables external
+milters; actual delivery, Rspamd integration and existing production mail storage
+remain rollout checks. No production secrets, mailboxes or queues are mounted.
+
+The CI renderer also retries remote Kustomize `git fetch` failures at most three
+times. It preserves diagnostic redaction, and local YAML/patch and Helm failures
+still fail immediately. Regression tests cover transient success, bounded failure
+and redaction. The pinned Argo install source rendered successfully locally.
+
 ### Backup SSH and Collabora follow-up (2026-11-03)
 
 Backup SSH now declares drop ALL with only CHOWN, DAC_OVERRIDE, FOWNER, SETGID,

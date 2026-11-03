@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import sys
 import unittest
+import subprocess
 from unittest.mock import patch
 import yaml
 
@@ -22,6 +23,32 @@ validate = module('validate', 'validate-rendered.py')
 
 
 class RenderValidationTest(unittest.TestCase):
+    def test_remote_kustomize_fetch_retries_without_printing_diagnostics(self):
+        failed = subprocess.CompletedProcess([], 1, 'private manifest', 'git fetch failed: private diagnostic')
+        success = subprocess.CompletedProcess([], 0, 'rendered', '')
+        with patch.object(render.subprocess, 'run', side_effect=[failed, success]) as call, \
+                patch.object(render.time, 'sleep') as sleep, patch('builtins.print') as output:
+            self.assertEqual('rendered', render.run(['kubectl', 'kustomize', 'argocd-install']))
+            self.assertEqual(2, call.call_count)
+            sleep.assert_called_once_with(2)
+            self.assertNotIn('private', str(output.call_args_list))
+
+    def test_remote_fetch_retries_are_bounded(self):
+        failed = subprocess.CompletedProcess([], 1, 'private manifest', 'git fetch failed: private diagnostic')
+        with patch.object(render.subprocess, 'run', return_value=failed) as call, \
+                patch.object(render.time, 'sleep'), patch('builtins.print'), self.assertRaises(RuntimeError) as error:
+            render.run(['kubectl', 'kustomize', 'argocd-install'])
+        self.assertEqual(3, call.call_count)
+        self.assertNotIn('private', str(error.exception))
+
+    def test_local_kustomize_and_helm_errors_are_not_retried(self):
+        for args, diagnostic in [(['kubectl', 'kustomize', 'local'], 'invalid YAML'),
+                                 (['helm', 'template', 'chart'], 'git fetch failed')]:
+            with self.subTest(args=args), patch.object(render.subprocess, 'run', return_value=
+                    subprocess.CompletedProcess([], 1, '', diagnostic)) as call, self.assertRaises(RuntimeError):
+                render.run(args)
+            self.assertEqual(1, call.call_count)
+
     def test_additional_crd_url_supports_pinned_runtime_controller_release(self):
         source = {'version': 'v1.14.2', 'url': 'https://example.invalid/v{version}/crd.yaml'}
         self.assertEqual('https://example.invalid/v1.14.2/crd.yaml', validate.additional_crd_url(source))

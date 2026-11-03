@@ -138,6 +138,20 @@ spec:
             - name: spool
               mountPath: /var/spool/postfix
           securityContext:
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
+                - FOWNER
+                - FSETID
+                - KILL
+                - SETGID
+                - SETUID
+                - NET_BIND_SERVICE
+                - SYS_CHROOT
+                - AUDIT_WRITE
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           resources:

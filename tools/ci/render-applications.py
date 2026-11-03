@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+import time
 
 import yaml
 from ci_yaml import load, load_all
@@ -21,11 +22,18 @@ REPO = "https://github.com/shaman007/home-k3s.git"
 
 
 def run(args, cwd=None):
-    result = subprocess.run(args, cwd=cwd, text=True, capture_output=True, timeout=300)
-    if result.returncode:
-        # Helm errors can include rendered Secret data; keep diagnostics local.
+    for attempt in range(3):
+        result = subprocess.run(args, cwd=cwd, text=True, capture_output=True, timeout=300)
+        if not result.returncode:
+            return result.stdout
+        # Kustomize fetches pinned GitHub bases with git. Retry fetch failures,
+        # while keeping all subprocess diagnostics private (they may contain
+        # rendered Secrets). Local YAML/patch failures still fail immediately.
+        if args[:2] == ["kubectl", "kustomize"] and "git fetch" in result.stderr and attempt < 2:
+            print(f"Remote Kustomize fetch failed; retrying ({attempt + 2}/3)", flush=True)
+            time.sleep(2 ** (attempt + 1))
+            continue
         raise RuntimeError(f"{args[0]} {args[1]} failed (exit {result.returncode}); run this source locally to inspect its diagnostic output")
-    return result.stdout
 
 
 def local_path(root, value):

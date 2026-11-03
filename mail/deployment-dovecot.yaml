@@ -134,6 +134,20 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 3
           securityContext:
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
+                - FOWNER
+                - FSETID
+                - KILL
+                - SETGID
+                - SETUID
+                - NET_BIND_SERVICE
+                - SYS_CHROOT
+                - AUDIT_WRITE
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
           volumeMounts:
