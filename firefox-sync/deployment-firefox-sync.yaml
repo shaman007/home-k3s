@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: syncserver
-        image: ghcr.io/mozilla-services/syncstorage-rs/syncserver-mysql:0.24.0@sha256:781bcff42f2ae50846449c8d7733da1d5ce326a6fdf5d411761c922a75dbebdd
+        image: harbor.andreybondarenko.com/github/mozilla-services/syncstorage-rs/syncserver-mysql:0.24.0@sha256:781bcff42f2ae50846449c8d7733da1d5ce326a6fdf5d411761c922a75dbebdd
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
