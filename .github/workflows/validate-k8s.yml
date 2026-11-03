@@ -53,11 +53,13 @@ jobs:
         env:
           KYVERNO_CLI_VERSION: v1.19.2
         run: |
+          install_dir="$(mktemp -d)"
+          trap 'rm -rf "$install_dir"' EXIT
           curl -fsSL -o kyverno-cli.tar.gz \
             "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_CLI_VERSION}/kyverno-cli_${KYVERNO_CLI_VERSION}_linux_x86_64.tar.gz"
           echo "357eaf1df8bc24ddd5a73979fadeaae6a032e8710f11af264229756e4956bf4a  kyverno-cli.tar.gz" | sha256sum --check --strict
-          tar -xzf kyverno-cli.tar.gz kyverno
-          sudo mv kyverno /usr/local/bin/kyverno
+          tar -xzf kyverno-cli.tar.gz -C "$install_dir" kyverno
+          sudo mv "$install_dir/kyverno" /usr/local/bin/kyverno
           rm -f kyverno-cli.tar.gz
 
       - name: Validate runtime contracts
