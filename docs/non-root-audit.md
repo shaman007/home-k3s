@@ -60,6 +60,41 @@ startup without these helpers.
 - PostgreSQL `volume-permissions` helpers for Bitwarden, Dawarich, Immich,
   Mastodon and Keycloak.
 
+
+### PostgreSQL permission-init capabilities
+
+The existing `volume-permissions` helpers for Immich, Keycloak, Dawarich,
+Mastodon and Bitwarden now explicitly drop ALL capabilities and add only CHOWN
+and DAC_OVERRIDE. CHOWN permits the existing ownership assignments; DAC_OVERRIDE
+allows traversal of PostgreSQL-owned mode-0700 directories. The commands only
+mkdir/chown, so FOWNER is not required. UID 0 and the current initialization role
+remain necessary; the application containers keep their existing non-root guards.
+
+The exact pinned BusyBox commands were tested independently for all five
+manifests on disposable tmpfs data, with UID 0/GID 999 and supplemental GID 999,
+only these two capabilities, no-new-privileges and default seccomp. Effective and
+bounding masks were both `0x3`. Tests covered nonempty mode-0700 nested directories,
+mode-0600 files, setgid directories, preserved contents and final UID/GID 999 ownership. Both the current Harbor mirror image and the cached image digest used by all
+five live helpers were checked (the latter is
+`docker.io/library/busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616`).
+No production data or credentials were used. Reproduce with:
+
+```sh
+python3 tools/postgres/test-permission-init-caps.py
+```
+
+Only the init capability fields change. The existing commands still create
+`/var/run/postgresql` in their container filesystem, so this wave does not add a
+read-only root filesystem. Publishing these StatefulSet template changes rolls
+the database Pods; verify each init completes, PostgreSQL becomes Ready and the
+applications reconnect. Actual storage-backed startup is not proven by the tmpfs
+probe and remains a deployment check.
+
+The capability audit intentionally still fails for these helpers because it
+allows only NET_BIND_SERVICE additions. The existing root exceptions remain
+narrow, and this wave adds no new exceptions. Kernel capability definitions are
+in [capabilities(7)](https://www.man7.org/linux/man-pages/man7/capabilities.7.html).
+
 ## Infrastructure and ownership boundaries
 
 GPU device plugins, feature discovery, DCGM, MIG, validators and associated init

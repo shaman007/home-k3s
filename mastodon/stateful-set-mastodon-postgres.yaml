@@ -37,6 +37,12 @@ spec:
           securityContext:
             runAsUser: 0
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - DAC_OVERRIDE
           command:
             - sh
             - -c
