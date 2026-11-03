@@ -28,9 +28,13 @@ def command(name):
     c = doc['spec']['template']['spec']['containers'][0]
     assert c['securityContext']['capabilities'] == {'drop': ['ALL'], 'add': CAPS}
     assert c['securityContext']['allowPrivilegeEscalation'] is False
+    assert c['securityContext']['readOnlyRootFilesystem'] is True
     args = ['podman', 'run', '-d', '--cap-drop=ALL', '--security-opt=no-new-privileges']
+    if c['securityContext']['readOnlyRootFilesystem']:
+        # Match Kubernetes: do not let Podman add implicit writable /tmp or /run.
+        args += ['--read-only', '--read-only-tmpfs=false']
     args += ['--cap-add=' + cap for cap in CAPS]
-    return args, c['image']
+    return args, c
 
 
 def bind(args, path, destination):
@@ -56,10 +60,11 @@ def main():
             run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
                  '-subj', '/CN=guard.invalid', '-keyout', str(d / 'tls.key'), '-out', str(d / 'tls.crt')])
             config = yaml.safe_load((ROOT / 'mail/config-map-dovecot-cf.yaml').read_text())['data']
-            args, image = command('dovecot')
+            args, container = command('dovecot')
             args += ['-p', '127.0.0.1::993', '-p', '127.0.0.1::587',
                      '--tmpfs', '/var/mail:rw,mode=0777', '--tmpfs', '/run/dovecot:rw,mode=0755',
-                     '--tmpfs', '/var/lib/dovecot:rw,mode=0755']
+                     '--tmpfs', '/var/lib/dovecot:rw,mode=0755',
+                     '--tmpfs', '/tmp:rw,mode=0777,size=256m']
             mapping = {'config': 'dovecot.conf', **{key: 'conf.d/' + key + '.conf' for key in
                        ['10-auth', '10-mail', '10-master', '10-ssl', '15-lda', '20-lmtp', '20-managesieve', '90-sieve']},
                        'mastodon-registration-bounces.sieve': 'sieve-before/mastodon-registration-bounces.sieve'}
@@ -70,7 +75,11 @@ def main():
             (d / 'passwd').chmod(0o644)
             bind(args, d / 'passwd', '/etc/dovecot/passwd')
             for item in ['tls.key', 'tls.crt']: bind(args, d / item, '/etc/dovecot/ssl/' + item)
-            dovecot = run(args + [image]); containers.append(dovecot)
+            entrypoint = container['command']
+            args += ['--entrypoint', entrypoint[0]]
+            dovecot = run(args + [container['image']] + entrypoint[1:] + container['args'])
+            containers.append(dovecot)
+            assert run(['podman', 'exec', dovecot, 'stat', '-c', '%a', '/tmp']) == '1777'
             context = ssl._create_unverified_context()  # Only the disposable self-signed certificate.
             def imap():
                 client = imaplib.IMAP4_SSL('127.0.0.1', port(dovecot, 993), ssl_context=context, timeout=3)
@@ -83,8 +92,8 @@ def main():
             print('Dovecot: TLS, fixture authentication and read-only INBOX selection passed', flush=True)
 
             config = yaml.safe_load((ROOT / 'mail/config-map-main-cf.yaml').read_text())['data']
-            args, image = command('postfix')
-            args += ['--read-only', '--network=container:' + dovecot]
+            args, container = command('postfix')
+            args += ['--network=container:' + dovecot]
             # Named volumes are seeded from the image, like an initialized queue PVC.
             for destination in ['/var/spool/postfix', '/var/lib/postfix']:
                 volume = run(['podman', 'volume', 'create']); volumes.append(volume)
@@ -99,7 +108,7 @@ def main():
                 p = d / ('postfix-' + key); p.write_text(value); p.chmod(0o644)
                 bind(args, p, '/etc/postfix/' + destination)
             for item in ['tls.key', 'tls.crt']: bind(args, d / item, '/var/certs/' + item)
-            args += ['--entrypoint', '/usr/bin/sh', image, '-ec',
+            args += ['--entrypoint', '/usr/bin/sh', container['image'], '-ec',
                      'chown 100:102 /var/lib/postfix && chmod 755 /var/lib/postfix; '
                      'exec dumb-init -- /etc/service/run']
             postfix = run(args); containers.append(postfix)

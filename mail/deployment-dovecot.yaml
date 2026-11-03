@@ -112,10 +112,17 @@ spec:
         - name: rundir
           emptyDir:
             sizeLimit: 500Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
       containers:
         - name: dovecot-mail
           image: harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root
           imagePullPolicy: IfNotPresent
+          # Preserve the image's sticky /tmp semantics on the fresh emptyDir.
+          command: ["/usr/bin/tini", "--", "/bin/sh", "-ec"]
+          args:
+            - chmod 1777 /tmp; exec /dovecot/sbin/dovecot -F
           ports:
             - containerPort: 24
             - containerPort: 1234
@@ -149,8 +156,10 @@ spec:
                 - SYS_CHROOT
                 - AUDIT_WRITE
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: mail-lh
               mountPath: /var/mail
             - name: mail-certs

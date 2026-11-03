@@ -94,6 +94,9 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
           worker:
+            # The only GPU is on this node; avoid discovery workers elsewhere.
+            nodeSelector:
+              kubernetes.io/hostname: talos-d4h-k5m
             podSecurityContext:
               seccompProfile:
                 type: RuntimeDefault

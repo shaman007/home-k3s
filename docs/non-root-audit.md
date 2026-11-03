@@ -50,6 +50,35 @@ bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
 
+### Single-GPU discovery and read-only Dovecot follow-up (2026-11-03)
+
+The only physical GPU is on `talos-d4h-k5m`, currently exposing eight time-sliced
+GPU resources. NFD workers presently run on all three nodes. The prepared chart
+value pins only the NFD worker DaemonSet to that hostname, reducing workers from
+three to one (10m CPU and 128Mi memory requests removed). Render comparison
+confirmed that this hostname selector is the only changed rendered object/field;
+ClusterPolicy, GPU feature discovery, device plugin, driver/toolkit settings,
+time slicing and application GPU allocations are identical. GPU feature discovery
+already runs only on the GPU node and remains enabled. Keep NFD master/GC for
+feature publication/cleanup; change this selector when adding or moving a GPU.
+
+The current GPU Operator and FRR status-cleaner chart templates do not expose
+the required security-context overrides, so no ignored Helm values, new admission
+mutation or live patches were introduced for them.
+
+Dovecot's next guard makes the root filesystem read-only. The actual startup
+probe found that doveconf compiles its binary configuration under /tmp. A
+256Mi emptyDir now backs /tmp, with a small wrapper restoring mode 1777 before
+execing the same Dovecot binary under the image's existing Tini. Existing mail,
+runtime and state mounts remain. The mail probe disables Podman's implicit
+writable temporary mounts to match Kubernetes, uses only the declared writable
+paths, and verifies sticky /tmp mode. IMAPS login, read-only INBOX, SMTP/TLS/SASL
+integration and both daemon reloads passed; no message was submitted. No
+production mailbox, queue, identity or TLS material was used by the probe.
+
+Plex's remaining external UDP verification exposed a separate LAN policy gap;
+the prepared subnet correction and rollout checks are recorded in its README.
+
 ### Postfix and Dovecot capability follow-up (2026-11-03)
 
 Both main mail containers now declare drop ALL and re-add ten existing default

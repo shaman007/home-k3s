@@ -47,6 +47,17 @@ checks GPU encoding under the proposed bounding set, not a production rollout.
 After publication, verify replacement readiness, HTTP identity, real client
 playback/hardware transcoding and cross-LAN UDP discovery.
 
+Revision `44d89045` rolled out with the proposed capability set, Ready and zero
+restarts. HTTPS identity and a live synthetic NVENC encoding passed. A loopback
+GDM UDP discovery request returned HTTP/1.0 200 OK; ports 1900 and
+32410/32412/32413/32414 remain bound. External UDP NodePort requests from
+192.168.30.79 timed out. The existing LAN policies only cover 192.168.1.0/24,
+omitting the actual 192.168.30.0/24 node/client network. The next prepared fix
+adds that subnet to the existing LAN ingress and discovery egress rules, keeping
+their existing port restrictions. No Service or NodePort is changed. Repeat the
+external UDP test after publication; multicast traversal across LANs is not
+established by a successful unicast GDM response.
+
 Other GPU applications were checked separately: Immich server completed synthetic
 NVENC encoding; Immich ML completed ONNX CUDA inference with CPU fallback
 disabled; NLLB completed a CUDA tensor calculation. Both Ollama Pods expose the
