@@ -26,6 +26,8 @@ spec:
         - name: exporter
           image: harbor.andreybondarenko.com/library/connectivity-exporter-local:2026-11-02-095223
           imagePullPolicy: IfNotPresent
+          command: ["python", "/app/check.py"]
+          args: ["--config", "/config/config.yaml"]
           securityContext:
             runAsUser: 65534
             runAsGroup: 65534
