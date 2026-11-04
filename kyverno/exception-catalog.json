@@ -3900,6 +3900,198 @@
         ],
         "initContainers": []
       }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Deployment",
+      "name": "csi-attacher",
+      "serviceAccount": "longhorn-csi-service-account",
+      "labels": {
+        "app": "csi-attacher"
+      },
+      "reason": "CSI client requires owner-write access to the existing root-owned mode-0755 driver socket; retain UID 0 without capabilities or escalation.",
+      "evidence": "docs/csi-root-and-speaker-seccomp-review.md",
+      "reviewedOn": "2026-11-04",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "csi-attacher": {
+              "image": "docker.io/longhornio/csi-attacher:v4.13.0",
+              "requireHardened": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "csi-attacher",
+            "image": "docker.io/longhornio/csi-attacher:v4.13.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "privileged": false,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Deployment",
+      "name": "csi-provisioner",
+      "serviceAccount": "longhorn-csi-service-account",
+      "labels": {
+        "app": "csi-provisioner"
+      },
+      "reason": "CSI client requires owner-write access to the existing root-owned mode-0755 driver socket; retain UID 0 without capabilities or escalation.",
+      "evidence": "docs/csi-root-and-speaker-seccomp-review.md",
+      "reviewedOn": "2026-11-04",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "csi-provisioner": {
+              "image": "docker.io/longhornio/csi-provisioner:v6.3.0",
+              "requireHardened": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "csi-provisioner",
+            "image": "docker.io/longhornio/csi-provisioner:v6.3.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "privileged": false,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Deployment",
+      "name": "csi-resizer",
+      "serviceAccount": "longhorn-csi-service-account",
+      "labels": {
+        "app": "csi-resizer"
+      },
+      "reason": "CSI client requires owner-write access to the existing root-owned mode-0755 driver socket; retain UID 0 without capabilities or escalation.",
+      "evidence": "docs/csi-root-and-speaker-seccomp-review.md",
+      "reviewedOn": "2026-11-04",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "csi-resizer": {
+              "image": "docker.io/longhornio/csi-resizer:v2.2.1",
+              "requireHardened": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "csi-resizer",
+            "image": "docker.io/longhornio/csi-resizer:v2.2.1",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "privileged": false,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": []
+      }
+    },
+    {
+      "namespace": "longhorn-system",
+      "kind": "Deployment",
+      "name": "csi-snapshotter",
+      "serviceAccount": "longhorn-csi-service-account",
+      "labels": {
+        "app": "csi-snapshotter"
+      },
+      "reason": "CSI client requires owner-write access to the existing root-owned mode-0755 driver socket; retain UID 0 without capabilities or escalation.",
+      "evidence": "docs/csi-root-and-speaker-seccomp-review.md",
+      "reviewedOn": "2026-11-04",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "csi-snapshotter": {
+              "image": "docker.io/longhornio/csi-snapshotter:v8.6.0",
+              "requireHardened": true
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "csi-snapshotter",
+            "image": "docker.io/longhornio/csi-snapshotter:v8.6.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "privileged": false,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": []
+      }
     }
   ]
 }

@@ -22,6 +22,9 @@ spec:
               type: RuntimeDefault
         speaker:
           priorityClassName: homelab-critical
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
         frr-k8s:
           prometheus:
             serviceMonitor:

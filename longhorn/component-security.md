@@ -18,7 +18,8 @@ The four controller sidecars and the node liveness probe therefore retain UID/GI
 0:0 and an explicit `runAsNonRoot: false`. They receive `privileged: false`,
 `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, and container-level
 `seccompProfile.type: RuntimeDefault`. Their root audit findings intentionally
-remain visible; this change adds no root exceptions.
+remain visible until the separately reviewed, audit-only root exceptions in
+[the follow-up review](../docs/csi-root-and-speaker-seccomp-review.md) are published.
 
 The UI already runs as UID 499/GID 486. Its image startup script generates nginx
 configuration in `/var/config/nginx`, uses the chart's writable emptyDir mounts,

@@ -103,6 +103,17 @@ def approved(policy, allowed):
                 f'{actual}.size() == {len(caps)}',
                 f'{actual}.all(cap, cap in {literal(caps)})',
                 f'{literal(caps)}.all(cap, cap in {actual})'])
+        if rule.get('requireHardened'):
+            assert policy == 'require-run-as-nonroot'
+            assert set(rule) == {'image', 'requireHardened'}
+            fields.extend([
+                'c.?securityContext.?runAsUser.orValue(-1) == 0',
+                'c.?securityContext.?runAsGroup.orValue(-1) == 0',
+                'c.?securityContext.?privileged.orValue(false) == false',
+                'c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false',
+                'c.?securityContext.?capabilities.?drop.orValue([]) == ["ALL"]',
+                'c.?securityContext.?capabilities.?add.orValue([]).size() == 0',
+                'c.?securityContext.?seccompProfile.?type.orValue("") == "RuntimeDefault"'])
         if rule.get('requirePrivileged'):
             fields.append('c.?securityContext.?privileged.orValue(false) == true')
         clauses.append('(' + ' && '.join(fields) + ')')

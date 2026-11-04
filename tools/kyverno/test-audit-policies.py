@@ -52,7 +52,9 @@ def snapshot(entry):
 
 
 def derived_pod(entry):
-    hash_value = hashlib.sha256((entry['namespace'] + '/' + entry['name']).encode()).hexdigest()[:8]
+    # Prefix a letter: numeric/scientific-looking hashes can be coerced by the
+    # CLI's YAML conversion even when emitted as quoted string scalars.
+    hash_value = 'a' + hashlib.sha256((entry['namespace'] + '/' + entry['name']).encode()).hexdigest()[:7]
     kind, name = entry['kind'], entry['name']
     meta = {'namespace': entry['namespace'], 'labels': copy.deepcopy(entry['labels'])}
     if kind == 'Pod':
@@ -205,6 +207,21 @@ def main():
                             if policy == 'require-drop-all-capabilities': sc['capabilities'] = {'drop': ['ALL']}
                     case(changed, {policy: 'pass' if mutation == 'repaired' else 'fail'},
                          separate=entry['kind'] == 'Pod')
+                if policy == 'require-run-as-nonroot':
+                    for role, rule in approval.get('containers', {}).items():
+                        if not rule.get('requireHardened'):
+                            continue
+                        for mutation in ['added-capability', 'missing-drop', 'escalation', 'unconfined', 'privileged', 'gid']:
+                            changed = copy.deepcopy(positive)
+                            variant_name(changed, policy + role + mutation)
+                            sc = next(c for c in changed['spec']['containers'] if c['name'] == role)['securityContext']
+                            if mutation == 'added-capability': sc['capabilities']['add'] = ['CHOWN']
+                            if mutation == 'missing-drop': sc['capabilities'].pop('drop')
+                            if mutation == 'escalation': sc['allowPrivilegeEscalation'] = True
+                            if mutation == 'unconfined': sc['seccompProfile']['type'] = 'Unconfined'
+                            if mutation == 'privileged': sc['privileged'] = True
+                            if mutation == 'gid': sc['runAsGroup'] = 1000
+                            case(changed, {policy: 'fail'})
                 if policy == 'require-drop-all-capabilities':
                     for section in ['containers', 'initContainers']:
                         for role, rule in approval.get(section, {}).items():
