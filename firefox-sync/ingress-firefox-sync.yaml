@@ -5,6 +5,7 @@ metadata:
   namespace: firefox-sync
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-robots-disallow-all@kubernetescrd
     traefik.ingress.kubernetes.io/router.tls: 'true'
 spec:
   ingressClassName: traefik
