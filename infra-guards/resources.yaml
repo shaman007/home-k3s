@@ -112,177 +112,6 @@ spec:
 
       p.initContainers[0].?securityContext.?privileged.orValue(false) == false) ||
 
-      (object.metadata.namespace == "metallb-system" && object.kind == "Deployment" && object.metadata.name == "metallb-frr-k8s-statuscleaner"
-      &&
-
-      p.?serviceAccountName.orValue("default") == "metallb-frr-k8s-controller" &&
-
-      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/component"] == "statuscleaner" &&
-
-      p.?containers.orValue([]).size() == 1 &&
-
-      p.containers[0].name == "frr-k8s-statuscleaner" &&
-
-      p.containers[0].image == "quay.io/metallb/frr-k8s:v0.0.25" &&
-
-      p.containers[0].?command.orValue([]) == ["/statuscleaner"] &&
-
-      p.containers[0].?args.orValue([]) == ["--webhook-port=19443", "--log-level=info", "--namespace=$(NAMESPACE)"] &&
-
-      p.containers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/tmp/k8s-webhook-server/serving-certs"), "name": dyn("cert"),
-      "readOnly": dyn(true)}] &&
-
-      p.?initContainers.orValue([]).size() == 0 &&
-
-      p.?volumes.orValue([]) == [{"name": dyn("cert"), "secret": dyn({"defaultMode": dyn(420), "secretName": dyn("frr-k8s-webhook-server-cert")})}]
-      &&
-
-      p.containers[0].?securityContext.?privileged.orValue(false) == false) ||
-
-      (object.metadata.namespace == "metallb-system" && object.kind == "DaemonSet" && object.metadata.name == "metallb-frr-k8s"
-      &&
-
-      p.?serviceAccountName.orValue("default") == "metallb-frr-k8s-controller" &&
-
-      object.spec.template.metadata.?labels.orValue({})["app"] == "frr-k8s" &&
-
-      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/component"] == "frr-k8s" &&
-
-      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/instance"] == "metallb" &&
-
-      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/name"] == "frr-k8s" &&
-
-      p.?containers.orValue([]).size() == 5 &&
-
-      p.containers[0].name == "controller" &&
-
-      p.containers[0].image == "quay.io/metallb/frr-k8s:v0.0.25" &&
-
-      p.containers[0].?command.orValue([]) == ["/frr-k8s"] &&
-
-      p.containers[0].?args.orValue([]) == ["--node-name=$(NODE_NAME)", "--namespace=$(NAMESPACE)", "--metrics-bind-address=0.0.0.0:9140",
-      "--log-level=info"] &&
-
-      p.containers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/etc/frr_reloader"), "name": dyn("reloader")}] &&
-
-      p.containers[1].name == "frr" &&
-
-      p.containers[1].image == "quay.io/frrouting/frr:10.4.3" &&
-
-      p.containers[1].?command.orValue([]) == ["/bin/sh", "-c", "/sbin/tini -- /usr/lib/frr/docker-start"] &&
-
-      p.containers[1].?args.orValue([]) == [] &&
-
-      p.containers[1].?volumeMounts.orValue([]) == [{"mountPath": dyn("/var/run/frr"), "name": dyn("frr-sockets")}, {"mountPath":
-      dyn("/etc/frr"), "name": dyn("frr-conf")}, {"mountPath": dyn("/var/lib/frr"), "name": dyn("frr-lib")}, {"mountPath":
-      dyn("/var/tmp/frr"), "name": dyn("frr-tmp")}] &&
-
-      p.containers[2].name == "reloader" &&
-
-      p.containers[2].image == "quay.io/frrouting/frr:10.4.3" &&
-
-      p.containers[2].?command.orValue([]) == ["/etc/frr_reloader/frr-reloader.sh"] &&
-
-      p.containers[2].?args.orValue([]) == [] &&
-
-      p.containers[2].?volumeMounts.orValue([]) == [{"mountPath": dyn("/var/run/frr"), "name": dyn("frr-sockets")}, {"mountPath":
-      dyn("/etc/frr"), "name": dyn("frr-conf")}, {"mountPath": dyn("/etc/frr_reloader"), "name": dyn("reloader")}] &&
-
-      p.containers[3].name == "frr-metrics" &&
-
-      p.containers[3].image == "quay.io/frrouting/frr:10.4.3" &&
-
-      p.containers[3].?command.orValue([]) == ["/etc/frr_metrics/frr-metrics"] &&
-
-      p.containers[3].?args.orValue([]) == ["--metrics-port=9141", "--metrics-bind-address=0.0.0.0"] &&
-
-      p.containers[3].?volumeMounts.orValue([]) == [{"mountPath": dyn("/var/run/frr"), "name": dyn("frr-sockets")}, {"mountPath":
-      dyn("/etc/frr"), "name": dyn("frr-conf")}, {"mountPath": dyn("/etc/frr_metrics"), "name": dyn("metrics")}] &&
-
-      p.containers[4].name == "frr-status" &&
-
-      p.containers[4].image == "quay.io/frrouting/frr:10.4.3" &&
-
-      p.containers[4].?command.orValue([]) == ["/etc/frr_status/frr-status"] &&
-
-      p.containers[4].?args.orValue([]) == ["--node-name=$(NODE_NAME)", "--namespace=$(NAMESPACE)", "--pod-name=$(POD_NAME)",
-      "--log-level=info", "--poll-interval=2m"] &&
-
-      p.containers[4].?volumeMounts.orValue([]) == [{"mountPath": dyn("/var/run/frr"), "name": dyn("frr-sockets")}, {"mountPath":
-      dyn("/etc/frr"), "name": dyn("frr-conf")}, {"mountPath": dyn("/etc/frr_status"), "name": dyn("frr-status")}] &&
-
-      p.?initContainers.orValue([]).size() == 4 &&
-
-      p.initContainers[0].name == "cp-frr-files" &&
-
-      p.initContainers[0].image == "quay.io/frrouting/frr:10.4.3" &&
-
-      p.initContainers[0].?command.orValue([]) == ["/bin/sh", "-c", "cp -rLf /tmp/frr/* /etc/frr/"] &&
-
-      p.initContainers[0].?args.orValue([]) == [] &&
-
-      p.initContainers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/tmp/frr"), "name": dyn("frr-startup")}, {"mountPath":
-      dyn("/etc/frr"), "name": dyn("frr-conf")}] &&
-
-      p.initContainers[1].name == "cp-reloader" &&
-
-      p.initContainers[1].image == "quay.io/metallb/frr-k8s:v0.0.25" &&
-
-      p.initContainers[1].?command.orValue([]) == ["/bin/sh", "-c", "cp -f /frr-reloader.sh /etc/frr_reloader/"] &&
-
-      p.initContainers[1].?args.orValue([]) == [] &&
-
-      p.initContainers[1].?volumeMounts.orValue([]) == [{"mountPath": dyn("/etc/frr_reloader"), "name": dyn("reloader")}]
-      &&
-
-      p.initContainers[2].name == "cp-metrics" &&
-
-      p.initContainers[2].image == "quay.io/metallb/frr-k8s:v0.0.25" &&
-
-      p.initContainers[2].?command.orValue([]) == ["/bin/sh", "-c", "cp -f /frr-metrics /etc/frr_metrics/"] &&
-
-      p.initContainers[2].?args.orValue([]) == [] &&
-
-      p.initContainers[2].?volumeMounts.orValue([]) == [{"mountPath": dyn("/etc/frr_metrics"), "name": dyn("metrics")}] &&
-
-      p.initContainers[3].name == "cp-frr-status" &&
-
-      p.initContainers[3].image == "quay.io/metallb/frr-k8s:v0.0.25" &&
-
-      p.initContainers[3].?command.orValue([]) == ["/bin/sh", "-c", "cp -f /frr-status /etc/frr_status/"] &&
-
-      p.initContainers[3].?args.orValue([]) == [] &&
-
-      p.initContainers[3].?volumeMounts.orValue([]) == [{"mountPath": dyn("/etc/frr_status"), "name": dyn("frr-status")}]
-      &&
-
-      p.?volumes.orValue([]) == [{"emptyDir": dyn({}), "name": dyn("frr-sockets")}, {"configMap": dyn({"defaultMode": dyn(420),
-      "name": dyn("metallb-frr-k8s-frr-startup")}), "name": dyn("frr-startup")}, {"emptyDir": dyn({}), "name": dyn("frr-conf")},
-      {"emptyDir": dyn({}), "name": dyn("reloader")}, {"emptyDir": dyn({}), "name": dyn("metrics")}, {"emptyDir": dyn({}),
-      "name": dyn("frr-status")}, {"emptyDir": dyn({}), "name": dyn("frr-lib")}, {"emptyDir": dyn({}), "name": dyn("frr-tmp")}]
-      &&
-
-      object.spec.updateStrategy == {"type": dyn("RollingUpdate"), "rollingUpdate": dyn({"maxSurge": dyn(0), "maxUnavailable":
-      dyn(1)})} &&
-
-      p.initContainers[0].?securityContext.?privileged.orValue(false) == false &&
-
-      p.initContainers[1].?securityContext.?privileged.orValue(false) == false &&
-
-      p.initContainers[2].?securityContext.?privileged.orValue(false) == false &&
-
-      p.initContainers[3].?securityContext.?privileged.orValue(false) == false &&
-
-      p.containers[0].?securityContext.?privileged.orValue(false) == false &&
-
-      p.containers[1].?securityContext.?privileged.orValue(false) == false &&
-
-      p.containers[2].?securityContext.?privileged.orValue(false) == false &&
-
-      p.containers[3].?securityContext.?privileged.orValue(false) == false &&
-
-      p.containers[4].?securityContext.?privileged.orValue(false) == false) ||
-
       (object.metadata.namespace == "gpu-operator" && object.kind == "DaemonSet" && object.metadata.name == "gpu-feature-discovery"
       &&
 
@@ -505,60 +334,6 @@ spec:
         + (!has(object.spec.template.spec.securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/securityContext",value:{}}]
         : []) + [JSONPatch{op:"add",path:"/spec/template/spec/securityContext/runAsUser",value:1000}, JSONPatch{op:"add",path:"/spec/template/spec/securityContext/runAsGroup",value:1000},
         JSONPatch{op:"add",path:"/spec/template/spec/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/securityContext/fsGroup",value:1000}])
-        : ((object.metadata.namespace == "metallb-system" && object.kind == "Deployment" && object.metadata.name == "metallb-frr-k8s-statuscleaner")
-        ? ((!has(object.spec.template.spec.containers[0].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/runAsUser",value:1000}, JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/runAsGroup",value:1000},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
-        : ((object.metadata.namespace == "metallb-system" && object.kind == "DaemonSet" && object.metadata.name == "metallb-frr-k8s")
-        ? ((!has(object.spec.template.spec.initContainers[0].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/runAsUser",value:100}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/runAsGroup",value:101},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/0/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
-        + (!has(object.spec.template.spec.initContainers[1].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsUser",value:0}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsGroup",value:0},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsNonRoot",value:false}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
-        + (!has(object.spec.template.spec.initContainers[2].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/runAsUser",value:0}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/runAsGroup",value:0},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/runAsNonRoot",value:false}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/2/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
-        + (!has(object.spec.template.spec.initContainers[3].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/runAsUser",value:0}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/runAsGroup",value:0},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/runAsNonRoot",value:false}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
-        + (!has(object.spec.template.spec.containers[0].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/seccompProfile",value:{"type":
-        "RuntimeDefault"}}] + (!has(object.spec.template.spec.containers[1].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/1/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/1/securityContext/seccompProfile",value:{"type":
-        "RuntimeDefault"}}] + (!has(object.spec.template.spec.containers[2].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/runAsUser",value:0}, JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/runAsGroup",value:102},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/runAsNonRoot",value:false}, JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/capabilities",value:{"drop": ["ALL"], "add":
-        ["DAC_OVERRIDE"]}}, JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/seccompProfile",value:{"type":
-        "RuntimeDefault"}}] + (!has(object.spec.template.spec.containers[3].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/runAsUser",value:100}, JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/runAsGroup",value:102},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
-        + (!has(object.spec.template.spec.containers[4].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext",value:{}}]
-        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/runAsUser",value:100}, JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/runAsGroup",value:102},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/privileged",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/allowPrivilegeEscalation",value:false},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
         : ((object.metadata.namespace == "gpu-operator" && object.kind == "DaemonSet" && object.metadata.name == "gpu-feature-discovery")
         ? ((!has(object.spec.template.spec.initContainers[1].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext",value:{}}]
         : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsUser",value:1000}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsGroup",value:1000},
@@ -573,7 +348,7 @@ spec:
         JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/allowPrivilegeEscalation",value:false},
         JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/capabilities",value:{"drop": ["ALL"]}},
         JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
-        : ([]))))))'
+        : ([]))))'
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicyBinding
@@ -591,7 +366,6 @@ spec:
         values:
         - gpu-operator
         - longhorn-system
-        - metallb-system
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -703,45 +477,6 @@ subjects:
   name: reviewed-infrastructure-guards
   namespace: kyverno
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: reviewed-infrastructure-guards
-  namespace: metallb-system
-rules:
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  resourceNames:
-  - metallb-frr-k8s-statuscleaner
-  verbs:
-  - get
-  - patch
-- apiGroups:
-  - apps
-  resources:
-  - daemonsets
-  resourceNames:
-  - metallb-frr-k8s
-  verbs:
-  - get
-  - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: reviewed-infrastructure-guards
-  namespace: metallb-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: reviewed-infrastructure-guards
-subjects:
-- kind: ServiceAccount
-  name: reviewed-infrastructure-guards
-  namespace: kyverno
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -779,82 +514,18 @@ data:
     {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "initContainers", "index": 0, "name": "wait-longhorn-manager",
     "guards": {"runAsUser": 1000, "runAsGroup": 1000, "runAsNonRoot": true, "privileged": false, "allowPrivilegeEscalation":
     false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}], "podGuards": {"runAsUser":
-    1000, "runAsGroup": 1000, "runAsNonRoot": true, "fsGroup": 1000}}, {"kind": "Deployment", "namespace": "metallb-system",
-    "name": "metallb-frr-k8s-statuscleaner", "serviceAccount": "metallb-frr-k8s-controller", "labels": {"app.kubernetes.io/component":
-    "statuscleaner"}, "fixture": {"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "metallb-frr-k8s-statuscleaner",
-    "namespace": "metallb-system"}, "spec": {"selector": {"matchLabels": {"app.kubernetes.io/component": "statuscleaner"}},
-    "replicas": 1, "template": {"metadata": {"labels": {"app.kubernetes.io/component": "statuscleaner"}}, "spec": {"serviceAccountName":
-    "metallb-frr-k8s-controller", "securityContext": {}, "containers": [{"name": "frr-k8s-statuscleaner", "image": "quay.io/metallb/frr-k8s:v0.0.25",
-    "command": ["/statuscleaner"], "args": ["--webhook-port=19443", "--log-level=info", "--namespace=$(NAMESPACE)"], "securityContext":
-    {"allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]}, "readOnlyRootFilesystem": true}, "volumeMounts":
-    [{"mountPath": "/tmp/k8s-webhook-server/serving-certs", "name": "cert", "readOnly": true}]}], "initContainers": [], "volumes":
-    [{"name": "cert", "secret": {"defaultMode": 420, "secretName": "frr-k8s-webhook-server-cert"}}]}}}}, "targets": [{"section":
-    "containers", "index": 0, "name": "frr-k8s-statuscleaner", "guards": {"runAsUser": 1000, "runAsGroup": 1000, "runAsNonRoot":
-    true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type":
-    "RuntimeDefault"}}}]}, {"kind": "DaemonSet", "namespace": "metallb-system", "name": "metallb-frr-k8s", "serviceAccount":
-    "metallb-frr-k8s-controller", "labels": {"app": "frr-k8s", "app.kubernetes.io/component": "frr-k8s", "app.kubernetes.io/instance":
-    "metallb", "app.kubernetes.io/name": "frr-k8s"}, "fixture": {"apiVersion": "apps/v1", "kind": "DaemonSet", "metadata":
-    {"name": "metallb-frr-k8s", "namespace": "metallb-system"}, "spec": {"selector": {"matchLabels": {"app.kubernetes.io/component":
-    "frr-k8s", "app.kubernetes.io/instance": "metallb", "app.kubernetes.io/name": "frr-k8s"}}, "replicas": null, "updateStrategy":
-    {"type": "RollingUpdate", "rollingUpdate": {"maxSurge": 0, "maxUnavailable": 1}}, "template": {"metadata": {"labels":
-    {"app": "frr-k8s", "app.kubernetes.io/component": "frr-k8s", "app.kubernetes.io/instance": "metallb", "app.kubernetes.io/name":
-    "frr-k8s"}}, "spec": {"serviceAccountName": "metallb-frr-k8s-controller", "securityContext": {}, "containers": [{"name":
-    "controller", "image": "quay.io/metallb/frr-k8s:v0.0.25", "command": ["/frr-k8s"], "args": ["--node-name=$(NODE_NAME)",
-    "--namespace=$(NAMESPACE)", "--metrics-bind-address=0.0.0.0:9140", "--log-level=info"], "securityContext": {"allowPrivilegeEscalation":
-    false, "capabilities": {"add": ["NET_RAW"], "drop": ["ALL"]}, "readOnlyRootFilesystem": true}, "volumeMounts": [{"mountPath":
-    "/etc/frr_reloader", "name": "reloader"}]}, {"name": "frr", "image": "quay.io/frrouting/frr:10.4.3", "command": ["/bin/sh",
-    "-c", "/sbin/tini -- /usr/lib/frr/docker-start"], "securityContext": {"allowPrivilegeEscalation": false, "capabilities":
-    {"add": ["NET_ADMIN", "NET_RAW", "SYS_ADMIN", "NET_BIND_SERVICE"]}, "readOnlyRootFilesystem": true}, "volumeMounts": [{"mountPath":
-    "/var/run/frr", "name": "frr-sockets"}, {"mountPath": "/etc/frr", "name": "frr-conf"}, {"mountPath": "/var/lib/frr", "name":
-    "frr-lib"}, {"mountPath": "/var/tmp/frr", "name": "frr-tmp"}]}, {"name": "reloader", "image": "quay.io/frrouting/frr:10.4.3",
-    "command": ["/etc/frr_reloader/frr-reloader.sh"], "volumeMounts": [{"mountPath": "/var/run/frr", "name": "frr-sockets"},
-    {"mountPath": "/etc/frr", "name": "frr-conf"}, {"mountPath": "/etc/frr_reloader", "name": "reloader"}]}, {"name": "frr-metrics",
-    "image": "quay.io/frrouting/frr:10.4.3", "command": ["/etc/frr_metrics/frr-metrics"], "args": ["--metrics-port=9141",
-    "--metrics-bind-address=0.0.0.0"], "volumeMounts": [{"mountPath": "/var/run/frr", "name": "frr-sockets"}, {"mountPath":
-    "/etc/frr", "name": "frr-conf"}, {"mountPath": "/etc/frr_metrics", "name": "metrics"}]}, {"name": "frr-status", "image":
-    "quay.io/frrouting/frr:10.4.3", "command": ["/etc/frr_status/frr-status"], "args": ["--node-name=$(NODE_NAME)", "--namespace=$(NAMESPACE)",
-    "--pod-name=$(POD_NAME)", "--log-level=info", "--poll-interval=2m"], "volumeMounts": [{"mountPath": "/var/run/frr", "name":
-    "frr-sockets"}, {"mountPath": "/etc/frr", "name": "frr-conf"}, {"mountPath": "/etc/frr_status", "name": "frr-status"}]}],
-    "initContainers": [{"name": "cp-frr-files", "image": "quay.io/frrouting/frr:10.4.3", "command": ["/bin/sh", "-c", "cp
-    -rLf /tmp/frr/* /etc/frr/"], "securityContext": {"runAsGroup": 101, "runAsUser": 100}, "volumeMounts": [{"mountPath":
-    "/tmp/frr", "name": "frr-startup"}, {"mountPath": "/etc/frr", "name": "frr-conf"}]}, {"name": "cp-reloader", "image":
-    "quay.io/metallb/frr-k8s:v0.0.25", "command": ["/bin/sh", "-c", "cp -f /frr-reloader.sh /etc/frr_reloader/"], "volumeMounts":
-    [{"mountPath": "/etc/frr_reloader", "name": "reloader"}]}, {"name": "cp-metrics", "image": "quay.io/metallb/frr-k8s:v0.0.25",
-    "command": ["/bin/sh", "-c", "cp -f /frr-metrics /etc/frr_metrics/"], "volumeMounts": [{"mountPath": "/etc/frr_metrics",
-    "name": "metrics"}]}, {"name": "cp-frr-status", "image": "quay.io/metallb/frr-k8s:v0.0.25", "command": ["/bin/sh", "-c",
-    "cp -f /frr-status /etc/frr_status/"], "volumeMounts": [{"mountPath": "/etc/frr_status", "name": "frr-status"}]}], "volumes":
-    [{"emptyDir": {}, "name": "frr-sockets"}, {"configMap": {"defaultMode": 420, "name": "metallb-frr-k8s-frr-startup"}, "name":
-    "frr-startup"}, {"emptyDir": {}, "name": "frr-conf"}, {"emptyDir": {}, "name": "reloader"}, {"emptyDir": {}, "name": "metrics"},
-    {"emptyDir": {}, "name": "frr-status"}, {"emptyDir": {}, "name": "frr-lib"}, {"emptyDir": {}, "name": "frr-tmp"}]}}}},
-    "targets": [{"section": "initContainers", "index": 0, "name": "cp-frr-files", "guards": {"runAsUser": 100, "runAsGroup":
-    101, "runAsNonRoot": true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]},
-    "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "initContainers", "index": 1, "name": "cp-reloader", "guards":
-    {"runAsUser": 0, "runAsGroup": 0, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation": false, "capabilities":
-    {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "initContainers", "index": 2, "name": "cp-metrics",
-    "guards": {"runAsUser": 0, "runAsGroup": 0, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation": false,
-    "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "initContainers", "index":
-    3, "name": "cp-frr-status", "guards": {"runAsUser": 0, "runAsGroup": 0, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation":
-    false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "containers", "index":
-    0, "name": "controller", "guards": {"seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "containers", "index":
-    1, "name": "frr", "guards": {"seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "containers", "index": 2, "name":
-    "reloader", "guards": {"runAsUser": 0, "runAsGroup": 102, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation":
-    false, "capabilities": {"drop": ["ALL"], "add": ["DAC_OVERRIDE"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section":
-    "containers", "index": 3, "name": "frr-metrics", "guards": {"runAsUser": 100, "runAsGroup": 102, "runAsNonRoot": true,
-    "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type":
-    "RuntimeDefault"}}}, {"section": "containers", "index": 4, "name": "frr-status", "guards": {"runAsUser": 100, "runAsGroup":
-    102, "runAsNonRoot": true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]},
-    "seccompProfile": {"type": "RuntimeDefault"}}}]}, {"kind": "DaemonSet", "namespace": "gpu-operator", "name": "gpu-feature-discovery",
-    "serviceAccount": "nvidia-gpu-feature-discovery", "labels": {"app": "gpu-feature-discovery", "app.kubernetes.io/managed-by":
-    "gpu-operator", "app.kubernetes.io/part-of": "nvidia-gpu", "helm.sh/chart": "gpu-operator-v26.7.2"}, "fixture": {"apiVersion":
-    "apps/v1", "kind": "DaemonSet", "metadata": {"name": "gpu-feature-discovery", "namespace": "gpu-operator"}, "spec": {"selector":
-    {"matchLabels": {"app": "gpu-feature-discovery", "app.kubernetes.io/part-of": "nvidia-gpu"}}, "updateStrategy": {"rollingUpdate":
-    {"maxSurge": 0, "maxUnavailable": 1}, "type": "RollingUpdate"}, "template": {"metadata": {"labels": {"app": "gpu-feature-discovery",
-    "app.kubernetes.io/managed-by": "gpu-operator", "app.kubernetes.io/part-of": "nvidia-gpu", "helm.sh/chart": "gpu-operator-v26.7.2"}},
-    "spec": {"serviceAccountName": "nvidia-gpu-feature-discovery", "securityContext": {}, "volumes": [{"hostPath": {"path":
-    "/etc/kubernetes/node-feature-discovery/features.d", "type": ""}, "name": "output-dir"}, {"hostPath": {"path": "/sys",
-    "type": ""}, "name": "host-sys"}, {"hostPath": {"path": "/run/nvidia", "type": "Directory"}, "name": "run-nvidia"}, {"configMap":
-    {"defaultMode": 420, "name": "nvidia-device-plugin-config"}, "name": "nvidia-device-plugin-config"}, {"emptyDir": {},
-    "name": "config"}], "containers": [{"name": "gpu-feature-discovery", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+    1000, "runAsGroup": 1000, "runAsNonRoot": true, "fsGroup": 1000}}, {"kind": "DaemonSet", "namespace": "gpu-operator",
+    "name": "gpu-feature-discovery", "serviceAccount": "nvidia-gpu-feature-discovery", "labels": {"app": "gpu-feature-discovery",
+    "app.kubernetes.io/managed-by": "gpu-operator", "app.kubernetes.io/part-of": "nvidia-gpu", "helm.sh/chart": "gpu-operator-v26.7.2"},
+    "fixture": {"apiVersion": "apps/v1", "kind": "DaemonSet", "metadata": {"name": "gpu-feature-discovery", "namespace": "gpu-operator"},
+    "spec": {"selector": {"matchLabels": {"app": "gpu-feature-discovery", "app.kubernetes.io/part-of": "nvidia-gpu"}}, "updateStrategy":
+    {"rollingUpdate": {"maxSurge": 0, "maxUnavailable": 1}, "type": "RollingUpdate"}, "template": {"metadata": {"labels":
+    {"app": "gpu-feature-discovery", "app.kubernetes.io/managed-by": "gpu-operator", "app.kubernetes.io/part-of": "nvidia-gpu",
+    "helm.sh/chart": "gpu-operator-v26.7.2"}}, "spec": {"serviceAccountName": "nvidia-gpu-feature-discovery", "securityContext":
+    {}, "volumes": [{"hostPath": {"path": "/etc/kubernetes/node-feature-discovery/features.d", "type": ""}, "name": "output-dir"},
+    {"hostPath": {"path": "/sys", "type": ""}, "name": "host-sys"}, {"hostPath": {"path": "/run/nvidia", "type": "Directory"},
+    "name": "run-nvidia"}, {"configMap": {"defaultMode": 420, "name": "nvidia-device-plugin-config"}, "name": "nvidia-device-plugin-config"},
+    {"emptyDir": {}, "name": "config"}], "containers": [{"name": "gpu-feature-discovery", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
     "command": ["gpu-feature-discovery"], "args": [], "volumeMounts": [{"mountPath": "/etc/kubernetes/node-feature-discovery/features.d",
     "name": "output-dir"}, {"mountPath": "/sys", "name": "host-sys", "readOnly": true}, {"mountPath": "/config", "name": "config"},
     {"mountPath": "/available-configs", "name": "nvidia-device-plugin-config"}], "securityContext": {"privileged": true}},
@@ -1055,7 +726,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   backoffLimit: 0
-  activeDeadlineSeconds: 2100
+  activeDeadlineSeconds: 1500
   template:
     metadata:
       labels:

@@ -137,12 +137,10 @@ spec:
           limits:
             memory: 128Mi
         readinessProbe:
-          httpGet:
-            path: /metrics
+          tcpSocket:
             port: metrics
         livenessProbe:
-          httpGet:
-            path: /metrics
+          tcpSocket:
             port: metrics
       volumes:
       - name: tmp

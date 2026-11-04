@@ -74,8 +74,13 @@ broad automated pruning. Verify ingress, backup SSH, speaker health and Kyverno
 again. Retirement should remove six current Fail results, leaving nine if no
 other workloads change.
 
-No live deletion is authorized or performed by this preparation. The review tool
-only calls `helm template` and optional `kubectl get`.
+The user authorized retirement on 2026-11-04 after publishing stage 1. IPv4 and
+IPv6 public ingress returned HTTP 200, private OpenBao ingress returned HTTP 200,
+and backup SSH returned its OpenSSH banner. All three native speakers and the
+controller were ready, and all three Services retained their VIPs/L2 announcers.
+The FRR guard cleanup is prepared locally. Publish it and verify the new backfill
+hook before deleting the exact retirement inventory. The review tool only calls
+`helm template` and optional `kubectl get`.
 
 ## Rollback
 

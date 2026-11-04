@@ -24,9 +24,9 @@ class InfrastructureGuardTests(unittest.TestCase):
         return doc
 
     def test_exact_reviewed_scope(self):
-        self.assertEqual({(e['namespace'],e['name']) for e in self.entries},{('gpu-operator','gpu-operator'),('longhorn-system','longhorn-driver-deployer'),('metallb-system','metallb-frr-k8s-statuscleaner'),('metallb-system','metallb-frr-k8s'),('gpu-operator','gpu-feature-discovery'),('gpu-operator','nvidia-device-plugin-daemonset')})
-        self.assertEqual({t['name'] for e in self.entries for t in e['targets']},{'gpu-operator','longhorn-driver-deployer','wait-longhorn-manager','frr-k8s-statuscleaner','cp-frr-files','cp-reloader','cp-metrics','cp-frr-status','controller','frr','reloader','frr-metrics','frr-status','config-manager-init'})
-        self.assertEqual(sum(len(e['targets']) for e in self.entries),15)
+        self.assertEqual({(e['namespace'],e['name']) for e in self.entries},{('gpu-operator','gpu-operator'),('longhorn-system','longhorn-driver-deployer'),('gpu-operator','gpu-feature-discovery'),('gpu-operator','nvidia-device-plugin-daemonset')})
+        self.assertEqual({t['name'] for e in self.entries for t in e['targets']},{'gpu-operator','longhorn-driver-deployer','wait-longhorn-manager','config-manager-init'})
+        self.assertEqual(sum(len(e['targets']) for e in self.entries),5)
         docs=g.generate(self.catalog)
         for role in [d for d in docs if d['kind']=='Role']:
             for rule in role['rules']:
@@ -124,17 +124,8 @@ class InfrastructureGuardTests(unittest.TestCase):
 
 
     def test_new_helpers_preserve_required_privilege_boundaries(self):
-        frr=next(e for e in self.entries if e['name']=='metallb-frr-k8s')
-        targets={t['name']:t for t in frr['targets']}
-        self.assertEqual(targets['reloader']['guards']['runAsUser'],0)
-        self.assertEqual(targets['reloader']['guards']['runAsGroup'],102)
-        self.assertEqual(targets['reloader']['guards']['capabilities'],{'drop':['ALL'],'add':['DAC_OVERRIDE']})
-        for name in ['frr-metrics','frr-status']:
-            self.assertEqual(targets[name]['guards']['runAsUser'],100)
-            self.assertEqual(targets[name]['guards']['runAsGroup'],102)
-            self.assertEqual(targets[name]['guards']['capabilities'],{'drop':['ALL']})
-        for name in ['controller','frr']:
-            self.assertEqual(targets[name]['guards'],{'seccompProfile':{'type':'RuntimeDefault'}})
+        self.assertFalse(any(e['namespace']=='metallb-system' for e in self.entries))
+        self.assertFalse(any(d.get('metadata',{}).get('namespace')=='metallb-system' for d in g.generate(self.catalog)))
         gpu=[e for e in self.entries if e['name'] in ['gpu-feature-discovery','nvidia-device-plugin-daemonset']]
         self.assertEqual(len(gpu),2)
         for e in gpu:
