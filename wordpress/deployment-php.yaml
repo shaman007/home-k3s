@@ -127,6 +127,7 @@ spec:
           volumeMounts:
             - name: wordpress-lh
               mountPath: /code
+              readOnly: true
             - name: config
               mountPath: /etc/nginx/conf.d
             - name: cache

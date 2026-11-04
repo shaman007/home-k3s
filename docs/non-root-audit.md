@@ -50,6 +50,64 @@ bounding sets and audit results only after its controlled replacements.
 
 ## Prepared application changes
 
+### Read-only nginx application mounts (2026-11-04)
+
+The next prepared changes make /nextcloud read-only for nextcloud-nginx and
+/code read-only for WordPress's nginx container. PHP retains writable access to
+its existing application volume for uploads/updates. No application files,
+ownership, routing, images, cache settings, identities or other mounts change.
+The existing writable nginx cache/runtime volumes remain available. Publishing
+these Pod-template changes replaces both web Pods; verify each real application
+afterward, including normal uploads and Nextcloud WebDAV.
+
+`python3 tools/security/test-nginx-readonly-content.py` passed for both nginx
+roles with the unchanged repository configurations, UID/GID 33, drop ALL,
+no-new-privileges and seccomp. Static files/media, FastCGI forwarding, 2MiB POST
+bodies and Nextcloud's streamed PUT path worked against an isolated mock FastCGI
+server. Kernel mount flags and blocked fixture writes confirmed read-only content.
+The fixture uses explicit writable cache/run mounts, representing existing
+Kubernetes emptyDirs rather than Podman's image-seeded volume permissions.
+
+Tests passed with the exact installed nginx image digest
+`6e67f8eaac94fc456588d4ff6c470d984841f5b5dc4279863d5cbe6ec5a60def`
+and with the differing current registry tag, both nginx 1.31.8. Set
+NGINX_GUARD_IMAGE to an installed immutable reference for an exact-image probe.
+No real CMS code/data, credentials, backend, published ports or production
+requests were used by this isolated probe. It does not test actual PHP execution
+or a full real application upload; those remain post-publication checks.
+
+### Nextcloud Alloy read-only boundaries (2026-11-03)
+
+The next prepared change hardens only the Alloy log sidecar in nextcloud-web:
+read-only root, a read-only /nextcloud mount, and explicit
+`--storage.path=/data-alloy`. The old relative storage default already resolves
+there because the running process's working directory is /. Its existing
+/data-alloy and /run/alloy emptyDirs remain writable; no storage migration or
+new volume is introduced. PHP/Nginx mounts, identities, resources and all other
+Pod fields remain unchanged. Publishing this template change replaces the whole
+Nextcloud web Pod, so check the web application as well as the collector.
+
+`python3 tools/security/test-nextcloud-alloy-readonly.py` passed using the exact
+live v1.21.3 image digest, UID/GID 33, drop ALL, no-new-privileges and seccomp.
+The actual repository pipeline read initial and appended fixture logs and sent
+them to an isolated mock Loki; native Snappy decompression verified their content.
+Kernel mount flags confirmed read-only root and Nextcloud mounts, an attempted
+fixture write was blocked, and positions were saved under /data-alloy. Probe
+readiness and component-health endpoints both returned HTTP 200. The probe
+state-directory ownership/modes match the existing root:33 group-writable volumes.
+No real Nextcloud files, credentials or Loki endpoint were used. The existing
+emptyDir lifetime is unchanged: full Pod replacement still resets collector state.
+
+After publication, verify web-Pod readiness, Alloy logs/metrics, and arrival of
+fresh normal Nextcloud logs in Loki. Do not replace or reset the real data volume.
+
+A pre-publication live baseline also passed: Nextcloud reports installed=true,
+maintenance=false and no database upgrade required. One clearly marked temporary
+log file written through PHP's existing writable mount reached Loki; its unique
+marker was found, and the fixture file was removed without modifying existing
+logs. At that point main still contained Alloy's old writable mounts, so this
+baseline is not proof that the prepared read-only guards have deployed.
+
 ### Hister read-only application roots (2026-11-03)
 
 The next prepared guard makes the Hister server and skipped manual reindex
@@ -73,6 +131,13 @@ rootless Podman. After publication, verify StatefulSet replacement readiness and
 read-only root, existing-index access and normal client indexing/search. The
 manual template changes do not activate its Job. No audit policy/exception changes
 or production ownership modifications are included.
+
+Published revision `a1e3a7db` subsequently rolled out Healthy with zero restarts.
+The kernel root mount is read-only and existing-index search passed. A uniquely
+named synthetic live document was indexed and found by search, then deleted;
+its absence and removal of the temporary fixture file were verified. No existing
+document was modified. The published manual reindex manifest still has Skip and
+API-token automount disabled, and no reindex Job exists in the namespace.
 
 ### Remove unused Postfix and Plex chroot capability (2026-11-03)
 

@@ -175,6 +175,7 @@ spec:
           volumeMounts:
             - name: nextcloud-lh
               mountPath: /nextcloud
+              readOnly: true
             - name: nextcloud-config
               mountPath: /etc/nginx/conf.d
             - name: nginx-cache
@@ -194,12 +195,13 @@ spec:
             - run
             - /etc/alloy/config.alloy
             - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/data-alloy
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
-            readOnlyRootFilesystem: false
+            readOnlyRootFilesystem: true
           livenessProbe:
             tcpSocket:
               port: 12345
@@ -220,5 +222,6 @@ spec:
               mountPath: /run/alloy
             - name: nextcloud-lh
               mountPath: /nextcloud
+              readOnly: true
             - name: alloy-data
               mountPath: /data-alloy
