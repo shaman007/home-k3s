@@ -652,14 +652,14 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: CertificateExpiring
-        expr: (min by(namespace,name) (certmanager_certificate_expiration_timestamp_seconds) - time()) < 14 * 86400
+        expr: (min by(namespace,name) (certmanager_certificate_expiration_timestamp_seconds) - time()) < 5 * 86400
         for: 10m
         labels:
           severity: mail
           priority: warning
           owner: homelab
         annotations:
-          summary: Certificate expires within fourteen days.
+          summary: Certificate expires within five days.
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: CertificateNotReady
