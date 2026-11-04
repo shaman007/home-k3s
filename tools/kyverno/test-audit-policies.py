@@ -90,6 +90,8 @@ def noncompliant_container(policy, name):
         sc['allowPrivilegeEscalation'] = True
     elif policy == 'require-drop-all-capabilities':
         sc['capabilities']['add'] = ['SYS_ADMIN']
+    elif policy == 'restrict-seccomp-strict':
+        sc['seccompProfile'] = {'type': 'Unconfined'}
     else:
         sc.update(privileged=True, allowPrivilegeEscalation=True)
     return {'name': name, 'image': 'registry.example.invalid/unapproved:1', 'securityContext': sc}
@@ -199,13 +201,18 @@ def main():
                         # Only noncompliant policies are expected to need the exception.
                         case(changed, {p: 'fail' for p in entry['policies']}, separate=entry['kind'] == 'Pod')
             for policy, approval in entry['policies'].items():
-                for mutation in ['image', 'sidecar', 'ephemeral', 'repaired']:
+                for mutation in ['image', 'image-version', 'image-digest', 'sidecar', 'ephemeral', 'repaired']:
                     changed = copy.deepcopy(positive)
                     variant_name(changed, policy + mutation)
-                    if mutation == 'image':
+                    if mutation in ('image', 'image-version', 'image-digest'):
                         section = next(s for s in ['containers', 'initContainers'] if approval[s])
                         name = next(iter(approval[section]))
-                        next(c for c in changed['spec'][section] if c['name'] == name)['image'] = 'registry.example.invalid/changed:1'
+                        c = next(c for c in changed['spec'][section] if c['name'] == name)
+                        if mutation == 'image': c['image'] = 'registry.example.invalid/changed:1'
+                        else:
+                            repository = c['image'].split('@', 1)[0]
+                            if repository.rfind(':') > repository.rfind('/'): repository = repository.rsplit(':', 1)[0]
+                            c['image'] = repository + (':future-test-version' if mutation == 'image-version' else '@sha256:' + 'a'*64)
                     elif mutation in ('sidecar', 'ephemeral'):
                         section = 'containers' if mutation == 'sidecar' else 'ephemeralContainers'
                         changed['spec'].setdefault(section, []).append(noncompliant_container(policy, 'unapproved-audit-container'))
@@ -217,7 +224,7 @@ def main():
                             if policy == 'disallow-privileged-containers': sc['privileged'] = False
                             if policy == 'require-drop-all-capabilities': sc['capabilities'] = {'drop': ['ALL']}
                             if policy == 'restrict-seccomp-strict': sc['seccompProfile'] = {'type': 'RuntimeDefault'}
-                    case(changed, {policy: 'pass' if mutation == 'repaired' else 'fail'},
+                    case(changed, {policy: 'pass' if mutation == 'repaired' else 'skip' if mutation in ('image-version', 'image-digest') else 'fail'},
                          separate=entry['kind'] == 'Pod')
                 if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict'):
                     for section, rules in approval.items():

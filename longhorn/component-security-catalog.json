@@ -1414,7 +1414,7 @@
           "updateStrategy": {
             "rollingUpdate": {
               "maxSurge": 0,
-              "maxUnavailable": "100%"
+              "maxUnavailable": 1
             },
             "type": "RollingUpdate"
           },
@@ -1474,5 +1474,9 @@
         }
       }
     }
-  ]
+  ],
+  "managerRolloutReview": {
+    "chartVersion": "1.13.0",
+    "maxUnavailable": 1
+  }
 }

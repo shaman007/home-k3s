@@ -63,6 +63,27 @@ def annotation_patch(doc):
     return patch
 
 
+def storage_healthy(volumes, nodes):
+    """Reject active degradation; detached idle volumes may have unknown health."""
+    assert volumes.get('items'), 'No Longhorn volume status available'
+    assert nodes.get('items'), 'No Longhorn node status available'
+    for volume in volumes['items']:
+        status = volume.get('status', {})
+        detached = status.get('state') == 'detached'
+        acceptable = (status.get('robustness') in ('healthy', 'unknown') if detached
+                      else status.get('state') == 'attached' and status.get('robustness') == 'healthy')
+        assert acceptable and status.get('restoreRequired') is False, 'Longhorn storage is not stable and healthy'
+    for node in nodes['items']:
+        status = node.get('status', {})
+        conditions = {c['type']: c['status'] for c in status.get('conditions', [])}
+        assert conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True', 'Longhorn node is not ready/schedulable'
+        disks = status.get('diskStatus', {})
+        assert disks, 'No Longhorn disk status available'
+        for disk in disks.values():
+            conditions = {c['type']: c['status'] for c in disk.get('conditions', [])}
+            assert conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True', 'Longhorn disk is not ready/schedulable'
+
+
 def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):
     entries = json.loads((config_dir/'catalog.json').read_text())['entries']
     context = ssl.create_default_context(cafile=str(account/'ca.crt'))
@@ -83,9 +104,21 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
         except urllib.error.HTTPError as error:
             raise RuntimeError(f'{entry["name"]}: Kubernetes HTTP {error.code}') from None
 
+    check_storage = any(e['name'] == 'longhorn-manager' for e in entries)
+
+    def storage_check():
+        if not check_storage: return
+        documents = []
+        for resource in ['volumes', 'nodes']:
+            url = base + '/apis/longhorn.io/v1beta2/namespaces/' + NAMESPACE + '/' + resource
+            req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + token})
+            with opener.open(req, timeout=15) as response: documents.append(json.load(response))
+        storage_healthy(*documents)
+
     # Complete all safety checks before the first persistent write.
     for attempt in range(30):
         try:
+            storage_check()
             for entry in entries:
                 original = request(entry); reviewed(original, entry)
                 assert ready(original), f'{entry["name"]}: workload is not fully healthy'
@@ -96,6 +129,7 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
             if attempt == 29: raise
             time.sleep(3)
     for entry in entries:
+        storage_check()
         # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.
         original = request(entry); reviewed(original, entry)
         assert ready(original), f'{entry["name"]}: became unhealthy before mutation'
@@ -111,6 +145,7 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
             if ready(current): break
             if time.monotonic() >= deadline: raise RuntimeError(f'{entry["name"]}: rollout timed out; later targets were not changed')
             time.sleep(3)
+        storage_check()
         print(f'{entry["name"]}: security context and completed rollout verified', flush=True)
     for path in ['/', '/v1']:
         req = urllib.request.Request('http://longhorn-frontend'+path)

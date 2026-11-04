@@ -4799,6 +4799,19 @@
             }
           },
           "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
+          "containers": {
+            "node-driver-registrar": {
+              "image": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+              "requirePrivileged": true
+            },
+            "longhorn-csi-plugin": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
         }
       },
       "snapshot": {
@@ -4879,7 +4892,8 @@
         }
       },
       "requiredPodGuards": {},
-      "guardReview": "docs/exception-guard-contract-review.md"
+      "guardReview": "docs/exception-guard-contract-review.md",
+      "rolloutSafetyReview": "docs/longhorn-rollout-safety.md"
     },
     {
       "namespace": "longhorn-system",

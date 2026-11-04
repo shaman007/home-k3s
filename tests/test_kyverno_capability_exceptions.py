@@ -121,4 +121,23 @@ class CompanionGuardContractTests(unittest.TestCase):
             with self.assertRaises(AssertionError):list(gen.generate({**self.catalog,'entries':[e]}))
 
 
+class ImageRepositoryScopeTests(unittest.TestCase):
+    def test_tags_and_digests_do_not_change_repository(self):
+        repository='registry.example:5000/team/app'
+        for suffix in ['',':v1', '@sha256:'+'a'*64, ':v2@sha256:'+'b'*64]:
+            self.assertEqual(gen.image_repository(repository+suffix),repository)
+
+    def test_matcher_rejects_repository_substitution(self):
+        import re
+        expression=gen.image_expression('registry.example:5000/team/app:v1')
+        pattern=json.loads(expression[len('c.image.matches('):-1])
+        for image in ['registry.example:5000/team/app:v2', 'registry.example:5000/team/app@sha256:'+'a'*64]:
+            self.assertIsNotNone(re.fullmatch(pattern,image))
+        for image in ['registryXexample:5000/team/app:v2','registry.example:5001/team/app:v2','registry.example:5000/team/app-evil:v2','registry.example:5000/team/app/evil:v2']:
+            self.assertIsNone(re.fullmatch(pattern,image))
+
+    def test_implicit_registry_is_not_a_reviewed_reference(self):
+        with self.assertRaises(AssertionError):gen.image_repository('busybox:v1')
+
+
 if __name__=='__main__':unittest.main()

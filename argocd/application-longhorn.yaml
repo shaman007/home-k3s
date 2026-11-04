@@ -45,6 +45,10 @@ spec:
             priorityClass: homelab-critical
             taintToleration: node-role.kubernetes.io/control-plane:NoSchedule
           longhornManager:
+            # Roll same-version guard changes one node at a time. Review on upgrades.
+            updateStrategy:
+              rollingUpdate:
+                maxUnavailable: 1
             resources:
               requests:
                 cpu: 100m

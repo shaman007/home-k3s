@@ -83,11 +83,27 @@ def compliant(policy):
     raise ValueError(policy)
 
 
+def image_repository(image):
+    """Remove a tag/digest while preserving an explicit registry and port."""
+    assert isinstance(image, str) and image and not any(c.isspace() for c in image)
+    image = image.split('@', 1)[0]
+    slash = image.rfind('/')
+    assert slash > 0, 'Reviewed images require an explicit registry/repository'
+    colon = image.rfind(':')
+    return image[:colon] if colon > slash else image
+
+
+def image_expression(image):
+    repository = image_repository(image)
+    pattern = '^' + re.escape(repository) + r'(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$'
+    return f'c.image.matches({literal(pattern)})'
+
+
 def approved(policy, allowed):
     clauses = []
     for name, rule in sorted(allowed.items()):
         assert rule['image'] and '*' not in rule['image']
-        fields = [f'c.name == {literal(name)}', f'c.image == {literal(rule["image"])}']
+        fields = [f'c.name == {literal(name)}', image_expression(rule['image'])]
         if policy == 'require-run-as-nonroot':
             fields.append('c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0')
         if policy == 'require-drop-all-capabilities' and not rule.get('requirePrivileged'):
@@ -250,7 +266,8 @@ def generate(catalog):
                             'expiresAt': catalog['expiresAt'], 'reportResult': 'skip',
                             'properties': {'reason': entry['reason'], 'evidence': entry['evidence'],
                                            'reviewed-on': entry.get('reviewedOn', catalog['reviewedOn']),
-                                           'review-trigger': 'image/chart/startup or ownership change', **cap_properties},
+                                           'review-trigger': 'repository/guard/startup/chart or ownership change',
+                                           'image-scope': 'exact registry/repository; tags and sha256 digests may change', **cap_properties},
                             'matchConditions': [{'name': 'exact-workload-and-approved-deviations',
                                                  'expression': expression(entry, policy)}]}}
 

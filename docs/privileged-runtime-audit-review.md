@@ -1,5 +1,10 @@
 # Privileged runtime audit exceptions — 2026-11-04
 
+Follow-up: image checks now match exact registry/repository across tag/digest
+updates; version pins described below record the original review. CSI driver and
+registrar escalation requirements are also covered, while liveness must keep its
+no-escalation guard. See [rollout safety review](longhorn-rollout-safety.md).
+
 This batch classifies verified infrastructure requirements. It changes no workload
 privileges, guards, images, GPU allocations, storage ownership or networking. All
 five audit policies remain Audit/Ignore. Exceptions report Skip, retain the

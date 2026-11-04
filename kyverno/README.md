@@ -100,7 +100,7 @@ Capability exceptions are limited to those roles and the
 25 reviewed ownership-init roles above and six reviewed application workloads:
 backup SSH, Postfix, Dovecot, Plex, Collabora and RIPE Atlas. Application exceptions
 require an exact capability set, reviewed UID and explicit escalation setting,
-non-privileged mode and drop ALL, in addition to existing image and workload
+non-privileged mode and drop ALL, in addition to registry/repository and workload
 identity checks. Postfix's CHOWN/FOWNER queue-init role is included. See
 [compatibility evidence](../docs/capability-exception-review.md).
 GPU and storage capability requirements remain visible for separate review. Commands and volume
@@ -113,6 +113,21 @@ Existing reviewed exceptions also pin the live companion guards for 52 workload
 identities and 70 container roles; weakening a reviewed guard invalidates the
 exception. This does not grant new roles or change application privileges. See
 [guard contract review](../docs/exception-guard-contract-review.md).
+
+## Image update scope
+
+Audit exceptions match the exact registry/repository, allowing tag and SHA-256
+digest changes within that repository. They keep workload/controller/owner,
+namespace, label, service-account and guard checks. Similar repository prefixes,
+child repositories and other registries do not match. Versioned images retained
+in the catalog and snapshots are review evidence, not version allowlists.
+An image update can still change a workload's name, owner UID or identity labels;
+those deliberately narrow identity checks continue to need review.
+
+This does not change Longhorn's native mutation policy: its image/command pins
+still require compatibility review before applying runtime guards to new images.
+Repository-scoped audit exceptions do not prove a new image works with existing
+data or guards. See [rollout safety review](../docs/longhorn-rollout-safety.md).
 
 ## Validation and rollout
 

@@ -28,7 +28,8 @@ class ComponentSecurityTests(unittest.TestCase):
     def test_exact_scope_and_namespace_rbac(self):
         self.assertEqual({e['name'] for e in self.entries},{'csi-attacher','csi-provisioner','csi-resizer','csi-snapshotter','longhorn-ui','longhorn-csi-plugin','longhorn-global-manager','longhorn-manager'})
         rules=next(d for d in self.bundle if d['kind']=='Role')['rules']
-        for rule in rules:
+        self.assertEqual(rules[-1], {'apiGroups':['longhorn.io'],'resources':['volumes','nodes'],'verbs':['list']})
+        for rule in rules[:-1]:
             self.assertEqual(rule['verbs'],['get','patch']);self.assertEqual(rule['apiGroups'],['apps'])
             expected=[e['name'] for e in self.entries if ('deployments' if e['kind']=='Deployment' else 'daemonsets') in rule['resources']]
             self.assertEqual(rule['resourceNames'],expected)
@@ -110,6 +111,54 @@ class ComponentSecurityTests(unittest.TestCase):
         data=next(d['data'] for d in self.bundle if d['kind']=='ConfigMap')
         self.assertEqual(data['backfill.py'],(ROOT/'tools/longhorn/backfill-component-security.py').read_text())
         self.assertEqual(json.loads(data['catalog.json']),self.catalog)
+
+
+    def test_storage_gate_accepts_idle_detached_but_rejects_degradation(self):
+        volumes={'items':[{'status':{'state':'attached','robustness':'healthy','restoreRequired':False}},
+                          {'status':{'state':'detached','robustness':'unknown','restoreRequired':False}}]}
+        good=[{'type':'Ready','status':'True'},{'type':'Schedulable','status':'True'}]
+        nodes={'items':[{'status':{'conditions':good,'diskStatus':{'disk':{'conditions':good}}}}]}
+        b.storage_healthy(volumes,nodes)
+        for mutation in ['degraded','faulted','restoring','transitioning','node','disk','no-status']:
+            v,n=copy.deepcopy(volumes),copy.deepcopy(nodes)
+            if mutation in ['degraded','faulted']:v['items'][0]['status']['robustness']=mutation
+            if mutation=='restoring':v['items'][0]['status']['restoreRequired']=True
+            if mutation=='transitioning':v['items'][0]['status']['state']='attaching'
+            if mutation=='node':n['items'][0]['status']['conditions']=[]
+            if mutation=='disk':n['items'][0]['status']['diskStatus']['disk']['conditions']=[]
+            if mutation=='no-status':v['items'][0]['status']={}
+            with self.subTest(mutation=mutation), self.assertRaises(AssertionError):b.storage_healthy(v,n)
+
+
+    def test_manager_rollout_strategy_requires_chart_review(self):
+        app=yaml.safe_load((ROOT/'argocd/application-longhorn.yaml').read_text())
+        chart=app['spec']['sources'][0]
+        values=yaml.safe_load(chart['helm']['values'])
+        review=self.catalog['managerRolloutReview']
+        self.assertEqual(chart['targetRevision'],review['chartVersion'], 'Review rolling manager compatibility before a Longhorn chart upgrade')
+        self.assertEqual(values['longhornManager']['updateStrategy']['rollingUpdate']['maxUnavailable'],review['maxUnavailable'])
+        entry=next(e for e in self.entries if e['name']=='longhorn-manager')
+        self.assertEqual(entry['fixture']['spec']['updateStrategy']['rollingUpdate']['maxUnavailable'],review['maxUnavailable'])
+
+    def test_unhealthy_storage_preflight_never_patches(self):
+        entry=next(e for e in self.entries if e['name']=='longhorn-manager');calls=[]
+        class Response:
+            def __init__(self,doc):self.doc=doc
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def read(self):return json.dumps(self.doc).encode()
+        class Opener:
+            def open(self,req,**kwargs):
+                calls.append(req.get_method())
+                if req.full_url.endswith('/volumes'):
+                    return Response({'items':[{'status':{'state':'attached','robustness':'degraded','restoreRequired':False}}]})
+                return Response({'items':[]})
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);(root/'catalog.json').write_text(json.dumps({'entries':[entry]}));(root/'token').write_text('synthetic-test-only')
+            with patch.object(b.ssl,'create_default_context'),patch.object(b.urllib.request,'build_opener',return_value=Opener()),patch.dict(b.os.environ,{'KUBERNETES_SERVICE_HOST':'mock.invalid','KUBERNETES_SERVICE_PORT':'443'}),patch.object(b.time,'sleep'):
+                with self.assertRaises(AssertionError):b.main(root,root)
+        self.assertTrue(calls)
+        self.assertEqual(set(calls),{'GET'})
 
 
 if __name__=='__main__':unittest.main()

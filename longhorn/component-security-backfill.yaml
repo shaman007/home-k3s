@@ -39,6 +39,13 @@ rules:
   verbs:
   - get
   - patch
+- apiGroups:
+  - longhorn.io
+  resources:
+  - volumes
+  - nodes
+  verbs:
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -255,9 +262,9 @@ data:
     "command": ["sh", "-c", "echo share-manager image pulled && sleep infinity"], "index": 1, "count": 2, "uid":
     65534, "gid": 65534, "fixture": {"apiVersion": "apps/v1", "kind": "DaemonSet", "metadata": {"name": "longhorn-manager",
     "namespace": "longhorn-system"}, "spec": {"selector": {"matchLabels": {"app": "longhorn-manager"}}, "updateStrategy":
-    {"rollingUpdate": {"maxSurge": 0, "maxUnavailable": "100%"}, "type": "RollingUpdate"}, "template": {"metadata":
-    {"labels": {"app": "longhorn-manager", "app.kubernetes.io/instance": "longhorn", "app.kubernetes.io/managed-by":
-    "Helm", "app.kubernetes.io/name": "longhorn", "app.kubernetes.io/version": "v1.13.0", "helm.sh/chart": "longhorn-1.13.0"}},
+    {"rollingUpdate": {"maxSurge": 0, "maxUnavailable": 1}, "type": "RollingUpdate"}, "template": {"metadata": {"labels":
+    {"app": "longhorn-manager", "app.kubernetes.io/instance": "longhorn", "app.kubernetes.io/managed-by": "Helm",
+    "app.kubernetes.io/name": "longhorn", "app.kubernetes.io/version": "v1.13.0", "helm.sh/chart": "longhorn-1.13.0"}},
     "spec": {"serviceAccountName": "longhorn-service-account", "containers": [{"name": "longhorn-manager", "image":
     "docker.io/longhornio/longhorn-manager:v1.13.0", "command": ["longhorn-manager", "-d", "daemon", "--engine-image",
     "docker.io/longhornio/longhorn-engine:v1.13.0", "--instance-manager-image", "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
@@ -266,7 +273,8 @@ data:
     "--manager-image", "docker.io/longhornio/longhorn-manager:v1.13.0", "--service-account", "longhorn-service-account",
     "--upgrade-version-check"], "securityContext": {"privileged": true}}, {"name": "pre-pull-share-manager-image",
     "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0", "command": ["sh", "-c", "echo share-manager
-    image pulled && sleep infinity"]}]}}}}}]}'
+    image pulled && sleep infinity"]}]}}}}}], "managerRolloutReview": {"chartVersion": "1.13.0", "maxUnavailable":
+    1}}'
   backfill.py: |
     #!/usr/bin/env python3
     """Preflight native mutations, then roll reviewed workloads one at a time."""
@@ -333,6 +341,27 @@ data:
         return patch
 
 
+    def storage_healthy(volumes, nodes):
+        """Reject active degradation; detached idle volumes may have unknown health."""
+        assert volumes.get('items'), 'No Longhorn volume status available'
+        assert nodes.get('items'), 'No Longhorn node status available'
+        for volume in volumes['items']:
+            status = volume.get('status', {})
+            detached = status.get('state') == 'detached'
+            acceptable = (status.get('robustness') in ('healthy', 'unknown') if detached
+                          else status.get('state') == 'attached' and status.get('robustness') == 'healthy')
+            assert acceptable and status.get('restoreRequired') is False, 'Longhorn storage is not stable and healthy'
+        for node in nodes['items']:
+            status = node.get('status', {})
+            conditions = {c['type']: c['status'] for c in status.get('conditions', [])}
+            assert conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True', 'Longhorn node is not ready/schedulable'
+            disks = status.get('diskStatus', {})
+            assert disks, 'No Longhorn disk status available'
+            for disk in disks.values():
+                conditions = {c['type']: c['status'] for c in disk.get('conditions', [])}
+                assert conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True', 'Longhorn disk is not ready/schedulable'
+
+
     def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):
         entries = json.loads((config_dir/'catalog.json').read_text())['entries']
         context = ssl.create_default_context(cafile=str(account/'ca.crt'))
@@ -353,9 +382,21 @@ data:
             except urllib.error.HTTPError as error:
                 raise RuntimeError(f'{entry["name"]}: Kubernetes HTTP {error.code}') from None
 
+        check_storage = any(e['name'] == 'longhorn-manager' for e in entries)
+
+        def storage_check():
+            if not check_storage: return
+            documents = []
+            for resource in ['volumes', 'nodes']:
+                url = base + '/apis/longhorn.io/v1beta2/namespaces/' + NAMESPACE + '/' + resource
+                req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + token})
+                with opener.open(req, timeout=15) as response: documents.append(json.load(response))
+            storage_healthy(*documents)
+
         # Complete all safety checks before the first persistent write.
         for attempt in range(30):
             try:
+                storage_check()
                 for entry in entries:
                     original = request(entry); reviewed(original, entry)
                     assert ready(original), f'{entry["name"]}: workload is not fully healthy'
@@ -366,6 +407,7 @@ data:
                 if attempt == 29: raise
                 time.sleep(3)
         for entry in entries:
+            storage_check()
             # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.
             original = request(entry); reviewed(original, entry)
             assert ready(original), f'{entry["name"]}: became unhealthy before mutation'
@@ -381,6 +423,7 @@ data:
                 if ready(current): break
                 if time.monotonic() >= deadline: raise RuntimeError(f'{entry["name"]}: rollout timed out; later targets were not changed')
                 time.sleep(3)
+            storage_check()
             print(f'{entry["name"]}: security context and completed rollout verified', flush=True)
         for path in ['/', '/v1']:
             req = urllib.request.Request('http://longhorn-frontend'+path)
