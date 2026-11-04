@@ -12,7 +12,7 @@ Grafana 13.3.0 reported a healthy database. Grafana-managed alert rule inventory
 - Add 21 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch, Firefox Sync, Metrics Server, snapshot-controller, node-feature-discovery, Longhorn CSI controllers, Hister, Spotify and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
 - Keep dedicated Traefik and Prometheus jobs and drop their redundant generic pod/service discovery targets.
 - Extend Prometheus egress and target ingress for the needed ports, including Cilium host/remote-node permissions. Add the Argo ingress policy to its Kustomization.
-- Provision eleven dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, Database and Storage Metrics, Firefox Sync Metrics, Mastodon Application Metrics, Immich Application Metrics Meilisearch Metrics and Open WebUI Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
+- Provision thirteen dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, Database and Storage Metrics, Firefox Sync Metrics, Mastodon Application Metrics, Immich Application Metrics Meilisearch Metrics, Open WebUI Metrics, Hister Metrics and Your Spotify Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
 - Repair Vault Overview using job=openbao, vault_core_unsealed and vault_core_active; replace a nonexistent generic route counter with the observed KV-read counter. Repair MySQL/SeaweedFS datasource bindings while preserving live UIDs. Replace the MySQL buffer-pool/host-RAM comparison, whose instance labels cannot join, with buffer-pool used percentage.
 - Preserve every Prometheus alert rule byte-for-byte. Alert suggestions below are documentation only.
 
@@ -22,34 +22,34 @@ The initial Mastodon exporter exposed only five ruby_collector metric families b
 
 ## Every installed Argo application
 
-Configuration-only applications inherit the owning component assessment; they are not independently running services. A missing native exporter is explicitly distinguished from existing infrastructure/database coverage. Dashboard names introduced by this change remain local until deployment.
+Configuration-only applications inherit the owning component assessment; they are not independently running services. A missing native exporter is explicitly distinguished from existing infrastructure/database coverage. Dashboard names introduced by this change are provisioned through the GitOps rollout.
 
 | Application | Namespace | Source | Metrics assessment | Dashboard coverage |
 |---|---|---|---|---|
-| alloy | monitoring | `loki/alloy` | Exporter verified; scrape staged | Metrics Collection |
-| argocd-applications | argocd | `argocd` | Configuration for argocd-install; Controller/server/ApplicationSet collected; repo/notifications scrape staged | ArgoCD; Metrics Collection |
-| argocd-deploy | argocd | `argocd-deploy` | Configuration for argocd-install; Controller/server/ApplicationSet collected; repo/notifications scrape staged | ArgoCD; Metrics Collection |
-| argocd-install | argocd | `argocd-install` | Controller/server/ApplicationSet collected; repo/notifications scrape staged | ArgoCD; Metrics Collection |
+| alloy | monitoring | `loki/alloy` | Exporter verified; collected and verified | Metrics Collection |
+| argocd-applications | argocd | `argocd` | Configuration for argocd-install; Controller/server/ApplicationSet collected; repo/notifications collected and verified | ArgoCD; Metrics Collection |
+| argocd-deploy | argocd | `argocd-deploy` | Configuration for argocd-install; Controller/server/ApplicationSet collected; repo/notifications collected and verified | ArgoCD; Metrics Collection |
+| argocd-install | argocd | `argocd-install` | Controller/server/ApplicationSet collected; repo/notifications collected and verified | ArgoCD; Metrics Collection |
 | backup-rsync | backup-rsync | `backup-rsync` | No app exporter configured; CronJob/workload coverage | Application Workloads |
 | bastioncam | bastioncam | `bastioncam` | No app exporter configured | Application Workloads |
 | bitwarden | bitwarden | `bitwarden` | PostgreSQL collected; web app uses workload coverage | PostgreSQL Database; Database and Storage Metrics |
 | ca-scanner | ca-scanner | `canitiser` | No app exporter configured; job coverage | Application Workloads |
-| cert-manager | cert-manager | `chart:cert-manager, cert-manager` | Metrics disabled; enablement staged | Platform Controller Metrics |
-| cilium | kube-system | `chart:cilium, chart:values` | Operator/Envoy/Hubble collected; agent disabled, enablement staged | Cluster Network Metrics |
+| cert-manager | cert-manager | `chart:cert-manager, cert-manager` | Metrics disabled; enabled and collected | Platform Controller Metrics |
+| cilium | kube-system | `chart:cilium, chart:values` | Operator/Envoy/Hubble collected; agent disabled, enabled and collected | Cluster Network Metrics |
 | clamav | clamav | `clamav` | Collected | ClamAV Exporter |
 | collabora | nextcloud | `chart:collabora-online` | Collected | Libreoffice Collabora |
 | comfyui | comfyui | `comfyui` | No app exporter configured; GPU metrics collected | Application Workloads; GPU Overview |
 | connectivity-exporter-core | connectivity-exporter | `connectivity-exporter` | Collected | Platform Health; Metrics Collection |
 | connectivity-exporter-network-policy | connectivity-exporter | `connectivity-exporter` | Configuration for connectivity-exporter-core; Collected | Platform Health; Metrics Collection |
 | convertx | convertx | `convertx` | No app exporter configured | Application Workloads |
-| coredns-custom | kube-system | `kube-system/coredns-custom` | Configuration for cilium; Operator/Envoy/Hubble collected; agent disabled, enablement staged | Cluster Network Metrics |
+| coredns-custom | kube-system | `kube-system/coredns-custom` | Configuration for cilium; Operator/Envoy/Hubble collected; agent disabled, enabled and collected | Cluster Network Metrics |
 | crowdsec | crowdsec | `chart:crowdsec, chart:values` | Collected | CrowdSec |
 | crowdsec-config | crowdsec | `crowdsec` | Configuration for crowdsec; Collected | CrowdSec |
 | dawarich | dawarich | `dawarich` | PostgreSQL/Valkey collected; Rails app uses workload coverage | Database and Storage Metrics; Application Workloads |
 | element | matrix | `synapse` | Synapse collected; frontend uses workload coverage | Synapse; Application Workloads |
 | external-access-analytics | monitoring | `metrics` | Collected | External Access Analytics |
-| external-secrets | external-secrets | `chart:external-secrets` | All three component exporters verified; scrape staged | Platform Controller Metrics |
-| external-secrets-network-policy | external-secrets | `external-secrets` | Configuration for external-secrets; All three component exporters verified; scrape staged | Platform Controller Metrics |
+| external-secrets | external-secrets | `chart:external-secrets` | All three component exporters verified; collected and verified | Platform Controller Metrics |
+| external-secrets-network-policy | external-secrets | `external-secrets` | Configuration for external-secrets; All three component exporters verified; collected and verified | Platform Controller Metrics |
 | finance-ticker | monitoring | `metrics` | Collected | Finance Ticker |
 | firefox-sync | firefox-sync | `firefox-sync` | Local StatsD bridge and Prometheus collection prepared | Application Workloads |
 | gpu-operator | gpu-operator | `chart:gpu-operator` | Operator and DCGM collected | GPU Overview |
@@ -61,17 +61,17 @@ Configuration-only applications inherit the owning component assessment; they ar
 | hister | hister | `hister` | Native metrics enabled; authenticated token delivery configured with user approval | Application Workloads; native dashboard follow-up |
 | homeassistant | homeassistant | `homeassistant` | External service; native integration/token requires external configuration access | No Kubernetes workload; external follow-up |
 | image-builder | image-builder | `image-builder` | No app exporter configured; Kubernetes Job coverage | Application Workloads |
-| immich | immich | `immich` | Telemetry disabled; API/worker enablement staged; DB exporters still absent | Platform Controller Metrics; Application Workloads |
-| infra-guards | kyverno | `infra-guards` | Configuration for kyverno; Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
+| immich | immich | `immich` | Telemetry disabled; API/worker enabled and collected; DB exporters still absent | Platform Controller Metrics; Application Workloads |
+| infra-guards | kyverno | `infra-guards` | Configuration for kyverno; Admission/reports exporters verified; collected and verified | Platform Controller Metrics |
 | karakeep | karakeep | `karakeep` | No web exporter configured; scoped Meilisearch metrics integration prepared | Application Workloads |
 | keycloak | keycloak | `keycloak` | Collected | Keycloak Events; PostgreSQL Database |
 | kube-node-exporter | monitoring | `metrics/kubernetes-node-exporter` | Collected | Cluster load - new; Linux Host Overview |
 | kube-state-metrics | kube-system | `metrics/kube-state-metrics-configs` | Collected | Application Workloads; Platform Health |
 | kubernetes-prometheus | monitoring | `metrics/kubernetes-prometheus` | Collected; Alertmanager and sidecar collection staged | Prometheus 2.0 Stats; Metrics Collection |
 | kubernetes-snapshot-controller | kube-system | `metrics/kubernetes-snapshot-controller` | HTTP metrics endpoint enabled by this change | Application Workloads |
-| kyverno | kyverno | `chart:kyverno` | Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
-| kyverno-exceptions | kyverno | `kyverno` | Configuration for kyverno; Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
-| kyverno-policies | kyverno | `chart:kyverno-policies` | Configuration for kyverno; Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
+| kyverno | kyverno | `chart:kyverno` | Admission/reports exporters verified; collected and verified | Platform Controller Metrics |
+| kyverno-exceptions | kyverno | `kyverno` | Configuration for kyverno; Admission/reports exporters verified; collected and verified | Platform Controller Metrics |
+| kyverno-policies | kyverno | `chart:kyverno-policies` | Configuration for kyverno; Admission/reports exporters verified; collected and verified | Platform Controller Metrics |
 | lenka | lenka | `lenka` | MySQL workload only; no DB exporter configured | Application Workloads |
 | logs-check | monitoring | `metrics` | Kubernetes CronJob and shared platform checks | Platform Health; Application Workloads |
 | loki | loki | `chart:loki` | Collected; gateway not separately collected | Three existing Loki dashboards; Metrics Collection |
@@ -83,8 +83,8 @@ Configuration-only applications inherit the owning component assessment; they ar
 | mastodon | mastodon | `chart:mastodon, chart:values` | PostgreSQL/Valkey collected; web and embedded Sidekiq instrumentation enabled in follow-up | Platform Controller Metrics; Database and Storage Metrics |
 | mastodon-custom | mastodon | `mastodon` | Configuration for mastodon; PostgreSQL/Valkey collected; web and embedded Sidekiq instrumentation enabled in follow-up | Platform Controller Metrics; Database and Storage Metrics |
 | mempalace | mempalace | `mempalace` | No app exporter configured | Application Workloads |
-| metallb | metallb-system | `chart:metallb` | Controller/speaker/FRR HTTPS endpoints authenticated successfully; scrape staged | Cluster Network Metrics |
-| metallb-config | metallb-system | `metallb` | Configuration for metallb; Controller/speaker/FRR HTTPS endpoints authenticated successfully; scrape staged | Cluster Network Metrics |
+| metallb | metallb-system | `chart:metallb` | Controller/speaker/FRR HTTPS endpoints authenticated successfully; collected and verified | Cluster Network Metrics |
+| metallb-config | metallb-system | `metallb` | Configuration for metallb; Controller/speaker/FRR HTTPS endpoints authenticated successfully; collected and verified | Cluster Network Metrics |
 | metrics-server | kube-system | `chart:metrics-server` | Resource API plus authenticated HTTPS self-metrics collection | Application Workloads |
 | metrics-server-network-policy | kube-system | `kube-system` | Configuration for metrics-server; Resource API plus authenticated HTTPS self-metrics collection | Application Workloads |
 | minecraft | minecraft | `minecraft` | No game exporter configured | Application Workloads |
@@ -104,18 +104,18 @@ Configuration-only applications inherit the owning component assessment; they ar
 | opensearch | opensearch | `opensearch` | No Prometheus exporter/plugin configured | Application Workloads |
 | platform-health | monitoring | `metrics` | Collected | Platform Health |
 | plex | plex | `plex` | No media-server exporter configured | Application Workloads |
-| reloader | argocd | `chart:reloader` | Exporter verified; scrape staged | Platform Controller Metrics |
+| reloader | argocd | `chart:reloader` | Exporter verified; collected and verified | Platform Controller Metrics |
 | ripe-atlas | ripe-atlas | `ripe-atlas` | No app exporter configured | Application Workloads |
 | searxng | searxng | `searxng` | No app exporter configured | Application Workloads |
-| seaweedfs | seaweedfs | `seaweedfs` | Master/volume/filer/S3 collected | SeaweedFS (datasource repairs staged) |
+| seaweedfs | seaweedfs | `seaweedfs` | Master/volume/filer/S3 collected | SeaweedFS (datasource repairs deployed) |
 | stirling-pdf | stirling-pdf | `stirling-pdf` | No app exporter configured; native Prometheus feature is licence-dependent | Application Workloads |
 | talos-backup | talos-backup | `talos-backup` | CronJob success tracked; existing backup alerts | Application Workloads |
-| thanos | monitoring | `thanos` | Querier/store/compactor collected; Prometheus sidecar scrape staged | Thanos / Overview; Metrics Collection |
+| thanos | monitoring | `thanos` | Querier/store/compactor collected; Prometheus sidecar collected and verified | Thanos / Overview; Metrics Collection |
 | traefik | traefik | `chart:traefik` | Collected twice by pod and dedicated jobs; deduplication staged | Traefik Official Standalone Dashboard |
 | traefik-network-policy | traefik | `traefik` | Configuration for traefik; Collected twice by pod and dedicated jobs; deduplication staged | Traefik Official Standalone Dashboard |
 | traefik-private | traefik | `chart:traefik` | Collected twice by pod and dedicated jobs; deduplication staged | Traefik Official Standalone Dashboard |
 | unifi-exporter | unifi | `unifi/poller` | Collected | Six UniFi-Poller dashboards |
-| wordpress | wordpress | `wordpress` | MySQL/analytics collected; Valkey exporter verified, scrape staged | WordPress Analytics; MySQL Dashboard (repair staged) |
+| wordpress | wordpress | `wordpress` | MySQL/analytics collected; Valkey exporter verified, collected and verified | WordPress Analytics; MySQL Dashboard (repair deployed) |
 | year | year | `year` | No app exporter configured | Application Workloads |
 | your-spotify | spotify | `your-spotify` | FerretDB collected; authenticated native server metrics configured; backing PostgreSQL uses workload coverage | Database and Storage Metrics; Application Workloads |
 
@@ -151,14 +151,14 @@ All 35 dashboards were fetched and inspected recursively, including collapsed ro
 | Loki2.0 Global Metrics | `MQHVDmtWk` | No broken datasource or legacy panel detected; validate queries and usability during normal use |
 | Longhorn Example v1.1.0 | `2BCgsldGz` | 11 legacy panels; migrate and visually verify; Add tags |
 | MongoDB Exporter + Go/Process | `mongodb-exporter-go-process` | Generic MongoDB panels may not match FerretDB; use staged native FerretDB pool/request panels |
-| MySQL Dashboard | `r4uc0hUGk` | Stale datasource and invalid host-memory join; repair staged; 2 legacy panels; migrate and visually verify; Add tags |
+| MySQL Dashboard | `r4uc0hUGk` | Stale datasource and invalid host-memory join; repair deployed; 2 legacy panels; migrate and visually verify; Add tags |
 | OpenWRT | `fLi0yXAWk` | Add tags |
 | Platform Health | `platform-health` | Add description |
 | PostgreSQL Database | `000000039` | 32 legacy panels; migrate and visually verify |
 | Prometheus 2.0 Stats | `UDdpyzz7z` | Add description |
 | Redis Dashboard for Prometheus Redis Exporter (helm stable/redis-ha) | `xDLNRKUWz` | 9 legacy panels; migrate and visually verify |
 | Rspamd stat | `190zF30Vk` | Add tags |
-| SeaweedFS | `nh02dOVnz` | Stale Prometheus datasource reference; repair staged; Add description; Add tags |
+| SeaweedFS | `nh02dOVnz` | Stale Prometheus datasource reference; repair deployed; Add description; Add tags |
 | Synapse | `9f15576b-9cf6-4bfc-a3ab-bb95654d97c8` | Add description |
 | Thanos / Overview | `xhXVFwJ7z` | Add tags |
 | Traefik Official Standalone Dashboard | `n5bu_kv45` | Add tags |
@@ -168,7 +168,7 @@ All 35 dashboards were fetched and inspected recursively, including collapsed ro
 | UniFi-Poller: UAP Insights - Prometheus | `g5wFWqxZk` | 20 legacy panels; migrate and visually verify |
 | UniFi-Poller: USG Insights - Prometheus | `4Yo8IZ-Wk` | 15 legacy panels; migrate and visually verify |
 | UniFi-Poller: USW Insights - Prometheus | `FsfxpWaZz` | 15 legacy panels; migrate and visually verify |
-| Vault Overview | `vault-overview` | Stale job and nonexistent seal/leader/route metrics; repair staged; Add description |
+| Vault Overview | `vault-overview` | Stale job and nonexistent seal/leader/route metrics; repair deployed; Add description |
 | WordPress Analytics | `wordpress-analytics` | Add description |
 
 ## Alert inventory and suggested changes — not implemented
@@ -236,3 +236,7 @@ Open WebUI native metrics were verified in Prometheus as http_server_requests_to
 References: [Hister metrics and authentication](https://hister.org/docs/monitoring), [Your Spotify native metrics](https://github.com/Yooooomi/your_spotify/tree/master/apps/server#prometheus), [Ollama native metrics feature request](https://github.com/ollama/ollama/issues/3144).
 
 External Secrets policy correction: the added broad pod-selector ingress policy unintentionally isolated the previously unselected webhook and blocked admission traffic. It was narrowed immediately and removed from GitOps as redundant: the existing policy already permits metrics on non-webhook components, while the webhook retains its prior admission access. No controller, certificate, or fail-open behavior was changed.
+
+Final native dashboard additions: Hister and Your Spotify use authenticated endpoint probes grounded in live metric families. Spotify business counters are lazy/event-dependent; process/Node.js metrics were verified immediately and absent business counters are not filled with artificial zeros. Application Workloads also exposes namespace-filtered Traefik service throughput, 5xx responses and p95 latency for applications without a native exporter. Two remaining Alloy timeouts were traced to ingress policies matching Deployment metadata labels rather than Pod labels; selectors were corrected to Bitwarden service=bitwarden and Nextcloud app=nextcloud,component=web.
+
+Completed dashboard query validation: all 128 queries evaluated successfully against live Prometheus; 125 returned series. The absent queries were an event-dependent OpenBao policy counter and Spotify ingestion/import counters. Source policy selectors were checked against live Pod-template labels. A final handoff rechecks target health, Argo state and provisioned dashboard count after the selector/dashboard sync.

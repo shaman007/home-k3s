@@ -54,6 +54,9 @@ names.append(dashboard('application-workloads', 'Application Workloads',
     ('Memory requests by namespace', f'sum by (namespace) (kube_pod_container_resource_requests{{{ns},resource="memory"}})', 'bytes', '{{namespace}}'),
     ('PVC utilization', f'100 * max by (namespace,persistentvolumeclaim) (kubelet_volume_stats_used_bytes{{{ns}}} / kubelet_volume_stats_capacity_bytes{{{ns}}})', 'percent', '{{namespace}} / {{persistentvolumeclaim}}'),
     ('CronJob time since last successful run', f'time() - kube_cronjob_status_last_successful_time{{{ns}}}', 's', '{{namespace}} / {{cronjob}}'),
+    ('Ingress requests by service', 'sum by (service) (rate(traefik_service_requests_total{job="traefik",service=~"($namespace)-.*"}[$__rate_interval]))', 'ops', '{{service}}'),
+    ('Ingress 5xx responses by service', 'sum by (service) (rate(traefik_service_requests_total{job="traefik",service=~"($namespace)-.*",code=~"5.."}[$__rate_interval]))', 'ops', '{{service}}'),
+    ('Ingress p95 latency by service', 'histogram_quantile(0.95, sum by (le,service) (rate(traefik_service_request_duration_seconds_bucket{job="traefik",service=~"($namespace)-.*"}[$__rate_interval])))', 's', '{{service}}'),
     ('Argo applications by sync and health', 'count by (sync_status,health_status) (argocd_app_info)', 'short', '{{sync_status}} / {{health_status}}'),
 ], [query_variable('namespace', 'label_values(kube_pod_info, namespace)')]))
 
@@ -183,6 +186,28 @@ names.append(dashboard('open-webui-metrics', 'Open WebUI Metrics',
     ('Active users today', 'webui_users_active_today{job="open-webui"}', 'short', 'users'),
     ('Native export sample age', 'time() - max(timestamp(http_server_requests_total{job="open-webui"}))', 's', 'age'),
     ('Active OTLP instances', 'count(target_info{job="open-webui"})', 'short', 'instances'),
+]))
+
+names.append(dashboard('hister-metrics', 'Hister Metrics',
+    'Authenticated native search/index metrics. Size/document gauges refresh in the background. Search/index latency and counters need activity before yielding meaningful values.', [
+    ('Metrics target health', 'up{job="hister"}', 'short', 'target'),
+    ('Indexed documents', 'hister_index_document_count{job="hister"}', 'short', 'documents'),
+    ('Datastore size', 'hister_datastore_size_bytes{job="hister"}', 'bytes', 'size'),
+    ('Documents indexed by type', 'sum by (type) (rate(hister_documents_indexed_total{job="hister"}[$__rate_interval]))', 'ops', '{{type}}'),
+    ('Search p95 latency', 'histogram_quantile(0.95, sum by (le) (rate(hister_search_duration_seconds_bucket{job="hister"}[$__rate_interval])))', 's', 'p95'),
+    ('Indexing p95 latency', 'histogram_quantile(0.95, sum by (le) (rate(hister_indexing_duration_seconds_bucket{job="hister"}[$__rate_interval])))', 's', 'p95'),
+]))
+
+names.append(dashboard('spotify-metrics', 'Your Spotify Metrics',
+    'Authenticated native server/runtime metrics. HTTP/import/ingestion counters are event-dependent and may be absent until the first event after restart. Empty counters are not presented as successful zeros.', [
+    ('Metrics target health', 'up{job="spotify"}', 'short', 'target'),
+    ('Resident memory', 'process_resident_memory_bytes{job="spotify"}', 'bytes', 'memory'),
+    ('Process CPU cores', 'rate(process_cpu_seconds_total{job="spotify"}[$__rate_interval])', 'cores', 'CPU'),
+    ('Node.js used heap', 'nodejs_heap_size_used_bytes{job="spotify"}', 'bytes', 'heap'),
+    ('Node.js event loop p99', 'nodejs_eventloop_lag_p99_seconds{job="spotify"}', 's', 'p99'),
+    ('Application HTTP requests', 'sum(rate(http_requests_total{job="spotify"}[$__rate_interval]))', 'ops', 'requests'),
+    ('Tracks ingested', 'sum(rate(ingested_tracks_total{job="spotify"}[$__rate_interval]))', 'ops', 'tracks'),
+    ('Imports in 24 hours', 'sum(increase(imports_total{job="spotify"}[24h]))', 'short', 'imports'),
 ]))
 
 if __name__ == '__main__':

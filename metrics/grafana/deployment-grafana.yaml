@@ -202,3 +202,7 @@ spec:
                   name: grafana-dashboard-meilisearch-metrics
               - configMap:
                   name: grafana-dashboard-open-webui-metrics
+              - configMap:
+                  name: grafana-dashboard-hister-metrics
+              - configMap:
+                  name: grafana-dashboard-spotify-metrics
