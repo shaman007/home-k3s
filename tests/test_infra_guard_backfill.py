@@ -24,9 +24,9 @@ class InfrastructureGuardTests(unittest.TestCase):
         return doc
 
     def test_exact_reviewed_scope(self):
-        self.assertEqual({(e['namespace'],e['name']) for e in self.entries},{('gpu-operator','gpu-operator'),('longhorn-system','longhorn-driver-deployer'),('metallb-system','metallb-frr-k8s-statuscleaner'),('metallb-system','metallb-frr-k8s')})
-        self.assertEqual({t['name'] for e in self.entries for t in e['targets']},{'gpu-operator','longhorn-driver-deployer','wait-longhorn-manager','frr-k8s-statuscleaner','cp-frr-files','cp-reloader','cp-metrics','cp-frr-status'})
-        self.assertEqual(sum(len(e['targets']) for e in self.entries),8)
+        self.assertEqual({(e['namespace'],e['name']) for e in self.entries},{('gpu-operator','gpu-operator'),('longhorn-system','longhorn-driver-deployer'),('metallb-system','metallb-frr-k8s-statuscleaner'),('metallb-system','metallb-frr-k8s'),('gpu-operator','gpu-feature-discovery'),('gpu-operator','nvidia-device-plugin-daemonset')})
+        self.assertEqual({t['name'] for e in self.entries for t in e['targets']},{'gpu-operator','longhorn-driver-deployer','wait-longhorn-manager','frr-k8s-statuscleaner','cp-frr-files','cp-reloader','cp-metrics','cp-frr-status','controller','frr','reloader','frr-metrics','frr-status','config-manager-init'})
+        self.assertEqual(sum(len(e['targets']) for e in self.entries),15)
         docs=g.generate(self.catalog)
         for role in [d for d in docs if d['kind']=='Role']:
             for rule in role['rules']:
@@ -46,8 +46,8 @@ class InfrastructureGuardTests(unittest.TestCase):
                 for i,c in enumerate(after['template']['spec'][section]):
                     if i not in selected:self.assertEqual(c,doc['spec']['template']['spec'][section][i])
                     else:
-                        self.assertFalse(c['securityContext']['allowPrivilegeEscalation'])
-                        self.assertEqual(c['securityContext']['capabilities'],{'drop':['ALL']})
+                        target=next(t for t in e['targets'] if t['section']==section and t['index']==i)
+                        for key,value in target['guards'].items():self.assertEqual(c['securityContext'][key],value)
             # Native patch is idempotent even when unrelated context fields exist.
             doc['spec']=after;self.assertEqual(b.expected_spec(doc,e),after)
 
@@ -120,6 +120,53 @@ class InfrastructureGuardTests(unittest.TestCase):
             p=Path(directory);(p/'catalog.json').write_text(json.dumps({'entries':[e]}));(p/'token').write_text('synthetic-test-only')
             with patch.object(b.ssl,'create_default_context'),patch.object(b.urllib.request,'build_opener',return_value=Opener()),patch.dict(b.os.environ,{'KUBERNETES_SERVICE_HOST':'mock.invalid','KUBERNETES_SERVICE_PORT':'443'}),patch.object(b.time,'sleep'),patch.dict('sys.modules',{'storage_guard':storage}):
                 with self.assertRaisesRegex(AssertionError,'not stable and healthy'):b.main(p,p)
+        self.assertTrue(calls);self.assertEqual(set(calls),{'GET'})
+
+
+    def test_new_helpers_preserve_required_privilege_boundaries(self):
+        frr=next(e for e in self.entries if e['name']=='metallb-frr-k8s')
+        targets={t['name']:t for t in frr['targets']}
+        self.assertEqual(targets['reloader']['guards']['runAsUser'],0)
+        self.assertEqual(targets['reloader']['guards']['runAsGroup'],102)
+        self.assertEqual(targets['reloader']['guards']['capabilities'],{'drop':['ALL'],'add':['DAC_OVERRIDE']})
+        for name in ['frr-metrics','frr-status']:
+            self.assertEqual(targets[name]['guards']['runAsUser'],100)
+            self.assertEqual(targets[name]['guards']['runAsGroup'],102)
+            self.assertEqual(targets[name]['guards']['capabilities'],{'drop':['ALL']})
+        for name in ['controller','frr']:
+            self.assertEqual(targets[name]['guards'],{'seccompProfile':{'type':'RuntimeDefault'}})
+        gpu=[e for e in self.entries if e['name'] in ['gpu-feature-discovery','nvidia-device-plugin-daemonset']]
+        self.assertEqual(len(gpu),2)
+        for e in gpu:
+            self.assertEqual(len(e['targets']),1);t=e['targets'][0]
+            self.assertEqual(t['name'],'config-manager-init');self.assertEqual(t['section'],'initContainers')
+            self.assertEqual(t['guards']['runAsUser'],1000);self.assertTrue(t['guards']['runAsNonRoot']);self.assertEqual(t['guards']['capabilities'],{'drop':['ALL']})
+            self.assertEqual(t['requiredEnv']['ONESHOT'],'true');self.assertEqual(t['requiredEnv']['SEND_SIGNAL'],'false')
+
+    def test_gpu_health_permission_and_capacity_gate(self):
+        docs=g.generate(self.catalog);role=next(d for d in docs if d['kind']=='ClusterRole')
+        self.assertEqual(role['rules'],[{'apiGroups':[''],'resources':['nodes'],'resourceNames':['talos-d4h-k5m'],'verbs':['get']}])
+        review=self.catalog['gpuResourceReview']
+        good={'metadata':{'name':review['node']},'status':{'conditions':[{'type':'Ready','status':'True'}],'capacity':{'nvidia.com/gpu':'8'},'allocatable':{'nvidia.com/gpu':'8'}}}
+        b.gpu_healthy(good,review)
+        for field in ['capacity','allocatable','conditions']:
+            bad=copy.deepcopy(good)
+            bad['status'][field]=[] if field=='conditions' else {'nvidia.com/gpu':'0'}
+            with self.subTest(field=field),self.assertRaises(AssertionError):b.gpu_healthy(bad,review)
+
+
+    def test_lost_gpu_resources_prevent_rollout_writes(self):
+        e=next(e for e in self.entries if e['name']=='gpu-operator');review=self.catalog['gpuResourceReview'];calls=[]
+        class Response:
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def read(self):return json.dumps({'metadata':{'name':review['node']},'status':{'conditions':[{'type':'Ready','status':'True'}],'capacity':{'nvidia.com/gpu':'0'},'allocatable':{'nvidia.com/gpu':'0'}}}).encode()
+        class Opener:
+            def open(self,req,**kwargs):calls.append(req.get_method());return Response()
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory);(p/'catalog.json').write_text(json.dumps({'entries':[e],'gpuResourceReview':review}));(p/'token').write_text('synthetic-test-only')
+            with patch.object(b.ssl,'create_default_context'),patch.object(b.urllib.request,'build_opener',return_value=Opener()),patch.dict(b.os.environ,{'KUBERNETES_SERVICE_HOST':'mock.invalid','KUBERNETES_SERVICE_PORT':'443'}),patch.object(b.time,'sleep'):
+                with self.assertRaisesRegex(AssertionError,'GPU resource count changed'):b.main(p,p)
         self.assertTrue(calls);self.assertEqual(set(calls),{'GET'})
 
 

@@ -110,7 +110,7 @@ exclusions remain `kyverno` and `kube-system`. This change does not mutate or
 restart application workloads and does not enable denial.
 
 Existing reviewed exceptions also pin the live companion guards for 52 workload
-identities and 70 container roles; weakening a reviewed guard invalidates the
+identities and 72 container roles; weakening a reviewed guard invalidates the
 exception. This does not grant new roles or change application privileges. See
 [guard contract review](../docs/exception-guard-contract-review.md).
 
@@ -192,3 +192,6 @@ without webhook timeouts after that correction.
 
 See [the application audit and retained exceptions](../docs/non-root-audit.md)
 for compatible application changes, runtime evidence, and remaining chart gaps.
+
+The GPU init follow-up adds strictly guarded, compliant companion checks; these
+do not grant exception roles. See [GPU/FRR requirements](../docs/gpu-frr-helper-hardening.md).

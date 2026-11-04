@@ -697,8 +697,665 @@
               "type": "RuntimeDefault"
             }
           }
+        },
+        {
+          "section": "containers",
+          "index": 0,
+          "name": "controller",
+          "guards": {
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        {
+          "section": "containers",
+          "index": 1,
+          "name": "frr",
+          "guards": {
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        {
+          "section": "containers",
+          "index": 2,
+          "name": "reloader",
+          "guards": {
+            "runAsUser": 0,
+            "runAsGroup": 102,
+            "runAsNonRoot": false,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ],
+              "add": [
+                "DAC_OVERRIDE"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        {
+          "section": "containers",
+          "index": 3,
+          "name": "frr-metrics",
+          "guards": {
+            "runAsUser": 100,
+            "runAsGroup": 102,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        {
+          "section": "containers",
+          "index": 4,
+          "name": "frr-status",
+          "guards": {
+            "runAsUser": 100,
+            "runAsGroup": 102,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "DaemonSet",
+      "namespace": "gpu-operator",
+      "name": "gpu-feature-discovery",
+      "serviceAccount": "nvidia-gpu-feature-discovery",
+      "labels": {
+        "app": "gpu-feature-discovery",
+        "app.kubernetes.io/managed-by": "gpu-operator",
+        "app.kubernetes.io/part-of": "nvidia-gpu",
+        "helm.sh/chart": "gpu-operator-v26.7.2"
+      },
+      "fixture": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {
+          "name": "gpu-feature-discovery",
+          "namespace": "gpu-operator"
+        },
+        "spec": {
+          "selector": {
+            "matchLabels": {
+              "app": "gpu-feature-discovery",
+              "app.kubernetes.io/part-of": "nvidia-gpu"
+            }
+          },
+          "updateStrategy": {
+            "rollingUpdate": {
+              "maxSurge": 0,
+              "maxUnavailable": 1
+            },
+            "type": "RollingUpdate"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "app": "gpu-feature-discovery",
+                "app.kubernetes.io/managed-by": "gpu-operator",
+                "app.kubernetes.io/part-of": "nvidia-gpu",
+                "helm.sh/chart": "gpu-operator-v26.7.2"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "nvidia-gpu-feature-discovery",
+              "securityContext": {},
+              "volumes": [
+                {
+                  "hostPath": {
+                    "path": "/etc/kubernetes/node-feature-discovery/features.d",
+                    "type": ""
+                  },
+                  "name": "output-dir"
+                },
+                {
+                  "hostPath": {
+                    "path": "/sys",
+                    "type": ""
+                  },
+                  "name": "host-sys"
+                },
+                {
+                  "hostPath": {
+                    "path": "/run/nvidia",
+                    "type": "Directory"
+                  },
+                  "name": "run-nvidia"
+                },
+                {
+                  "configMap": {
+                    "defaultMode": 420,
+                    "name": "nvidia-device-plugin-config"
+                  },
+                  "name": "nvidia-device-plugin-config"
+                },
+                {
+                  "emptyDir": {},
+                  "name": "config"
+                }
+              ],
+              "containers": [
+                {
+                  "name": "gpu-feature-discovery",
+                  "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+                  "command": [
+                    "gpu-feature-discovery"
+                  ],
+                  "args": [],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/etc/kubernetes/node-feature-discovery/features.d",
+                      "name": "output-dir"
+                    },
+                    {
+                      "mountPath": "/sys",
+                      "name": "host-sys",
+                      "readOnly": true
+                    },
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    },
+                    {
+                      "mountPath": "/available-configs",
+                      "name": "nvidia-device-plugin-config"
+                    }
+                  ],
+                  "securityContext": {
+                    "privileged": true
+                  }
+                },
+                {
+                  "name": "config-manager",
+                  "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+                  "command": [
+                    "config-manager"
+                  ],
+                  "args": [],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    },
+                    {
+                      "mountPath": "/available-configs",
+                      "name": "nvidia-device-plugin-config"
+                    }
+                  ],
+                  "securityContext": {
+                    "privileged": true
+                  }
+                }
+              ],
+              "initContainers": [
+                {
+                  "name": "toolkit-validation",
+                  "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+                  "command": [
+                    "sh",
+                    "-c"
+                  ],
+                  "args": [
+                    "until [ -f /run/nvidia/validations/toolkit-ready ] && { grep -q '^nvidia ' /proc/modules || [ -e /dev/dxg ]; }; do echo waiting for nvidia container stack to be setup; sleep 5; done"
+                  ],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/run/nvidia",
+                      "mountPropagation": "HostToContainer",
+                      "name": "run-nvidia"
+                    }
+                  ],
+                  "securityContext": {
+                    "privileged": true,
+                    "runAsUser": 0
+                  },
+                  "env": []
+                },
+                {
+                  "name": "config-manager-init",
+                  "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+                  "command": [
+                    "config-manager"
+                  ],
+                  "args": [],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    },
+                    {
+                      "mountPath": "/available-configs",
+                      "name": "nvidia-device-plugin-config"
+                    }
+                  ],
+                  "securityContext": {},
+                  "env": [
+                    {
+                      "name": "ONESHOT",
+                      "value": "true"
+                    },
+                    {
+                      "name": "NODE_NAME",
+                      "valueFrom": {
+                        "fieldRef": {
+                          "apiVersion": "v1",
+                          "fieldPath": "spec.nodeName"
+                        }
+                      }
+                    },
+                    {
+                      "name": "NODE_LABEL",
+                      "value": "nvidia.com/device-plugin.config"
+                    },
+                    {
+                      "name": "CONFIG_FILE_SRCDIR",
+                      "value": "/available-configs"
+                    },
+                    {
+                      "name": "CONFIG_FILE_DST",
+                      "value": "/config/config.yaml"
+                    },
+                    {
+                      "name": "DEFAULT_CONFIG",
+                      "value": "default"
+                    },
+                    {
+                      "name": "SEND_SIGNAL",
+                      "value": "false"
+                    },
+                    {
+                      "name": "FALLBACK_STRATEGIES",
+                      "value": "empty"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "section": "initContainers",
+          "index": 1,
+          "name": "config-manager-init",
+          "requiredEnv": {
+            "ONESHOT": "true",
+            "NODE_LABEL": "nvidia.com/device-plugin.config",
+            "CONFIG_FILE_SRCDIR": "/available-configs",
+            "CONFIG_FILE_DST": "/config/config.yaml",
+            "DEFAULT_CONFIG": "default",
+            "SEND_SIGNAL": "false",
+            "FALLBACK_STRATEGIES": "empty"
+          },
+          "requiredFieldRefs": {
+            "NODE_NAME": "spec.nodeName"
+          },
+          "guards": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "kind": "DaemonSet",
+      "namespace": "gpu-operator",
+      "name": "nvidia-device-plugin-daemonset",
+      "serviceAccount": "nvidia-device-plugin",
+      "labels": {
+        "app": "nvidia-device-plugin-daemonset",
+        "app.kubernetes.io/managed-by": "gpu-operator",
+        "helm.sh/chart": "gpu-operator-v26.7.2"
+      },
+      "fixture": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {
+          "name": "nvidia-device-plugin-daemonset",
+          "namespace": "gpu-operator"
+        },
+        "spec": {
+          "selector": {
+            "matchLabels": {
+              "app": "nvidia-device-plugin-daemonset"
+            }
+          },
+          "updateStrategy": {
+            "rollingUpdate": {
+              "maxSurge": 0,
+              "maxUnavailable": 1
+            },
+            "type": "RollingUpdate"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "app": "nvidia-device-plugin-daemonset",
+                "app.kubernetes.io/managed-by": "gpu-operator",
+                "helm.sh/chart": "gpu-operator-v26.7.2"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "nvidia-device-plugin",
+              "securityContext": {},
+              "volumes": [
+                {
+                  "configMap": {
+                    "defaultMode": 448,
+                    "name": "nvidia-device-plugin-entrypoint"
+                  },
+                  "name": "nvidia-device-plugin-entrypoint"
+                },
+                {
+                  "hostPath": {
+                    "path": "/var/lib/kubelet/device-plugins",
+                    "type": ""
+                  },
+                  "name": "device-plugin"
+                },
+                {
+                  "hostPath": {
+                    "path": "/run/nvidia/validations",
+                    "type": "DirectoryOrCreate"
+                  },
+                  "name": "run-nvidia-validations"
+                },
+                {
+                  "hostPath": {
+                    "path": "/usr/local",
+                    "type": "DirectoryOrCreate"
+                  },
+                  "name": "driver-install-dir"
+                },
+                {
+                  "hostPath": {
+                    "path": "/",
+                    "type": ""
+                  },
+                  "name": "host-root"
+                },
+                {
+                  "hostPath": {
+                    "path": "/var/run/cdi",
+                    "type": "DirectoryOrCreate"
+                  },
+                  "name": "cdi-root"
+                },
+                {
+                  "hostPath": {
+                    "path": "/run/nvidia/mps",
+                    "type": "DirectoryOrCreate"
+                  },
+                  "name": "mps-root"
+                },
+                {
+                  "hostPath": {
+                    "path": "/run/nvidia/mps/shm",
+                    "type": ""
+                  },
+                  "name": "mps-shm"
+                },
+                {
+                  "configMap": {
+                    "defaultMode": 420,
+                    "name": "nvidia-device-plugin-config"
+                  },
+                  "name": "nvidia-device-plugin-config"
+                },
+                {
+                  "emptyDir": {},
+                  "name": "config"
+                }
+              ],
+              "containers": [
+                {
+                  "name": "nvidia-device-plugin",
+                  "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+                  "command": [
+                    "/bin/sh",
+                    "-c"
+                  ],
+                  "args": [
+                    "/bin/entrypoint.sh"
+                  ],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/bin/entrypoint.sh",
+                      "name": "nvidia-device-plugin-entrypoint",
+                      "readOnly": true,
+                      "subPath": "entrypoint.sh"
+                    },
+                    {
+                      "mountPath": "/var/lib/kubelet/device-plugins",
+                      "name": "device-plugin"
+                    },
+                    {
+                      "mountPath": "/run/nvidia/validations",
+                      "name": "run-nvidia-validations"
+                    },
+                    {
+                      "mountPath": "/driver-root",
+                      "mountPropagation": "HostToContainer",
+                      "name": "driver-install-dir"
+                    },
+                    {
+                      "mountPath": "/host",
+                      "mountPropagation": "HostToContainer",
+                      "name": "host-root",
+                      "readOnly": true
+                    },
+                    {
+                      "mountPath": "/var/run/cdi",
+                      "name": "cdi-root"
+                    },
+                    {
+                      "mountPath": "/dev/shm",
+                      "name": "mps-shm"
+                    },
+                    {
+                      "mountPath": "/mps",
+                      "name": "mps-root"
+                    },
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    },
+                    {
+                      "mountPath": "/available-configs",
+                      "name": "nvidia-device-plugin-config"
+                    }
+                  ],
+                  "securityContext": {
+                    "privileged": true
+                  }
+                },
+                {
+                  "name": "config-manager",
+                  "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+                  "command": [
+                    "config-manager"
+                  ],
+                  "args": [],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    },
+                    {
+                      "mountPath": "/available-configs",
+                      "name": "nvidia-device-plugin-config"
+                    }
+                  ],
+                  "securityContext": {
+                    "privileged": true
+                  }
+                }
+              ],
+              "initContainers": [
+                {
+                  "name": "toolkit-validation",
+                  "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+                  "command": [
+                    "sh",
+                    "-c"
+                  ],
+                  "args": [
+                    "until [ -f /run/nvidia/validations/toolkit-ready ] && { grep -q '^nvidia ' /proc/modules || [ -e /dev/dxg ]; }; do echo waiting for nvidia container stack to be setup; sleep 5; done"
+                  ],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/run/nvidia/validations",
+                      "mountPropagation": "HostToContainer",
+                      "name": "run-nvidia-validations"
+                    }
+                  ],
+                  "securityContext": {
+                    "privileged": true,
+                    "runAsUser": 0
+                  },
+                  "env": []
+                },
+                {
+                  "name": "config-manager-init",
+                  "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+                  "command": [
+                    "config-manager"
+                  ],
+                  "args": [],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/config",
+                      "name": "config"
+                    },
+                    {
+                      "mountPath": "/available-configs",
+                      "name": "nvidia-device-plugin-config"
+                    }
+                  ],
+                  "securityContext": {},
+                  "env": [
+                    {
+                      "name": "ONESHOT",
+                      "value": "true"
+                    },
+                    {
+                      "name": "NODE_NAME",
+                      "valueFrom": {
+                        "fieldRef": {
+                          "apiVersion": "v1",
+                          "fieldPath": "spec.nodeName"
+                        }
+                      }
+                    },
+                    {
+                      "name": "NODE_LABEL",
+                      "value": "nvidia.com/device-plugin.config"
+                    },
+                    {
+                      "name": "CONFIG_FILE_SRCDIR",
+                      "value": "/available-configs"
+                    },
+                    {
+                      "name": "CONFIG_FILE_DST",
+                      "value": "/config/config.yaml"
+                    },
+                    {
+                      "name": "DEFAULT_CONFIG",
+                      "value": "default"
+                    },
+                    {
+                      "name": "SEND_SIGNAL",
+                      "value": "false"
+                    },
+                    {
+                      "name": "FALLBACK_STRATEGIES",
+                      "value": "empty"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "targets": [
+        {
+          "section": "initContainers",
+          "index": 1,
+          "name": "config-manager-init",
+          "requiredEnv": {
+            "ONESHOT": "true",
+            "NODE_LABEL": "nvidia.com/device-plugin.config",
+            "CONFIG_FILE_SRCDIR": "/available-configs",
+            "CONFIG_FILE_DST": "/config/config.yaml",
+            "DEFAULT_CONFIG": "default",
+            "SEND_SIGNAL": "false",
+            "FALLBACK_STRATEGIES": "empty"
+          },
+          "requiredFieldRefs": {
+            "NODE_NAME": "spec.nodeName"
+          },
+          "guards": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
         }
       ]
     }
-  ]
+  ],
+  "gpuResourceReview": {
+    "node": "talos-d4h-k5m",
+    "resource": "nvidia.com/gpu",
+    "capacity": 8
+  }
 }

@@ -41,6 +41,11 @@ def generate(catalog):
             assert pod[section][index]['name'] == target['name']
             ref=f'object.spec.template.spec.{section}[{index}]'
             terms.append(f'p.{section}[{index}].?securityContext.?privileged.orValue(false) == false')
+            for key,value in target.get('requiredEnv',{}).items():
+                terms.append(f'p.{section}[{index}].?env.orValue([]).exists(v, v.name == {J(key)} && v.?value.orValue("") == {J(value)})')
+            for key,path_value in target.get('requiredFieldRefs',{}).items():
+                terms.append(f'p.{section}[{index}].?env.orValue([]).exists(v, v.name == {J(key)} && v.?valueFrom.?fieldRef.?fieldPath.orValue("") == {J(path_value)})')
+
             path=f'/spec/template/spec/{section}/{index}/securityContext'
             mutation_parts.append(f'(!has({ref}.securityContext) ? [JSONPatch{{op:"add",path:{J(path)},value:{{}}}}] : [])')
             mutation_parts.append('['+', '.join('JSONPatch{op:"add",path:'+J(path+'/'+key)+',value:'+J(value)+'}' for key,value in target['guards'].items())+']')
@@ -59,6 +64,11 @@ def generate(catalog):
     meta=lambda ns:{'name':name,'namespace':ns}
     sa={'apiVersion':'v1','kind':'ServiceAccount','metadata':meta('kyverno')}
     docs=[policy,binding,sa]
+    if catalog.get('gpuResourceReview'):
+        docs += [
+            {'apiVersion':'rbac.authorization.k8s.io/v1','kind':'ClusterRole','metadata':{'name':name+'-gpu-health'},'rules':[{'apiGroups':[''],'resources':['nodes'],'resourceNames':[catalog['gpuResourceReview']['node']],'verbs':['get']}]},
+            {'apiVersion':'rbac.authorization.k8s.io/v1','kind':'ClusterRoleBinding','metadata':{'name':name+'-gpu-health'},'roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'ClusterRole','name':name+'-gpu-health'},'subjects':[{'kind':'ServiceAccount','name':name,'namespace':'kyverno'}]}]
+
     for ns in namespaces:
         rules=[]
         for kind,resource in [('Deployment','deployments'),('DaemonSet','daemonsets')]:
@@ -69,7 +79,7 @@ def generate(catalog):
         docs += [{'apiVersion':'rbac.authorization.k8s.io/v1','kind':'Role','metadata':meta(ns),'rules':rules},
                  {'apiVersion':'rbac.authorization.k8s.io/v1','kind':'RoleBinding','metadata':meta(ns),'roleRef':{'apiGroup':'rbac.authorization.k8s.io','kind':'Role','name':name},'subjects':[{'kind':'ServiceAccount','name':name,'namespace':'kyverno'}]}]
     docs.append({'apiVersion':'v1','kind':'ConfigMap','metadata':meta('kyverno'),'data':{'catalog.json':J(catalog),'backfill.py':(ROOT/'tools/security/infra_guard_backfill.py').read_text(),'storage_guard.py':(ROOT/'tools/longhorn/backfill-component-security.py').read_text()}})
-    docs.append({'apiVersion':'batch/v1','kind':'Job','metadata':{'generateName':name+'-','namespace':'kyverno','annotations':{'argocd.argoproj.io/hook':'PostSync','argocd.argoproj.io/hook-delete-policy':'HookSucceeded'}},'spec':{'backoffLimit':0,'activeDeadlineSeconds':1800,'template':{'metadata':{'labels':{'app':name}},'spec':{'serviceAccountName':name,'automountServiceAccountToken':True,'restartPolicy':'Never','securityContext':{'runAsNonRoot':True,'runAsUser':1000,'runAsGroup':1000,'seccompProfile':{'type':'RuntimeDefault'}},'containers':[{'name':'backfill','image':'harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine','command':['python3','/config/backfill.py'],'env':[{'name':'PYTHONDONTWRITEBYTECODE','value':'1'}],'securityContext':{'allowPrivilegeEscalation':False,'readOnlyRootFilesystem':True,'capabilities':{'drop':['ALL']}},'resources':{'requests':{'cpu':'10m','memory':'32Mi'},'limits':{'memory':'128Mi'}},'volumeMounts':[{'name':'config','mountPath':'/config','readOnly':True}]}],'volumes':[{'name':'config','configMap':{'name':name}}]}}}})
+    docs.append({'apiVersion':'batch/v1','kind':'Job','metadata':{'generateName':name+'-','namespace':'kyverno','annotations':{'argocd.argoproj.io/hook':'PostSync','argocd.argoproj.io/hook-delete-policy':'HookSucceeded'}},'spec':{'backoffLimit':0,'activeDeadlineSeconds':len(entries)*300+300,'template':{'metadata':{'labels':{'app':name}},'spec':{'serviceAccountName':name,'automountServiceAccountToken':True,'restartPolicy':'Never','securityContext':{'runAsNonRoot':True,'runAsUser':1000,'runAsGroup':1000,'seccompProfile':{'type':'RuntimeDefault'}},'containers':[{'name':'backfill','image':'harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine','command':['python3','/config/backfill.py'],'env':[{'name':'PYTHONDONTWRITEBYTECODE','value':'1'}],'securityContext':{'allowPrivilegeEscalation':False,'readOnlyRootFilesystem':True,'capabilities':{'drop':['ALL']}},'resources':{'requests':{'cpu':'10m','memory':'32Mi'},'limits':{'memory':'128Mi'}},'volumeMounts':[{'name':'config','mountPath':'/config','readOnly':True}]}],'volumes':[{'name':'config','configMap':{'name':name}}]}}}})
     return docs
 
 

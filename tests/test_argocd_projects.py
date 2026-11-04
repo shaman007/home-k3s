@@ -80,7 +80,7 @@ PROJECT_SYNC_WAVES = {
 }
 
 EXPECTED_CLUSTER_PERMISSIONS = {
-    "infra-guards": {("admissionregistration.k8s.io", "MutatingAdmissionPolicy"), ("admissionregistration.k8s.io", "MutatingAdmissionPolicyBinding")},
+    "infra-guards": {("admissionregistration.k8s.io", "MutatingAdmissionPolicy"), ("admissionregistration.k8s.io", "MutatingAdmissionPolicyBinding"), ("rbac.authorization.k8s.io", "ClusterRole"), ("rbac.authorization.k8s.io", "ClusterRoleBinding")},
     "kyverno": {
         ("", "Namespace"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),

@@ -1,24 +1,12 @@
 # Reviewed infrastructure guards
 
-Prepared batch: eight selected container roles across six currently running Pods
-(16 controller/init instances, counting four FRR init roles on each of three nodes).
-This is runtime hardening, not additional Kyverno exceptions. The five audit
-policies and repository-scoped audit exception matching remain unchanged.
-
-| Workload | Selected roles | Identity |
-| --- | --- | --- |
-| gpu-operator/gpu-operator | gpu-operator | UID/GID 1000, matching current process |
-| longhorn-system/longhorn-driver-deployer | longhorn-driver-deployer, wait-longhorn-manager | UID/GID 1000; no host or data mounts |
-| metallb-system/metallb-frr-k8s-statuscleaner | frr-k8s-statuscleaner | UID/GID 1000; API client and port 19443 |
-| metallb-system/metallb-frr-k8s | cp-frr-files | Existing UID/GID 100:101 retained |
-| metallb-system/metallb-frr-k8s | cp-reloader, cp-metrics, cp-frr-status | Root retained only for existing root-owned emptyDir destinations |
-
-Selected roles receive privileged=false, drop ALL, no escalation and RuntimeDefault,
-plus explicit identities/non-root flags. The FRR daemons, reloader, metrics/status
-companions, NVIDIA privileged device plugin/discovery/validator processes and all
-GPU allocation/device/runtime settings are untouched. The FRR parent Pods still
-have remaining findings; hardening the copy helpers alone does not clear every
-policy for those Pods.
+Current catalog: 15 selected roles across eight running Pods (33 controller/init
+instances). The latest extension is reviewed in
+[GPU/FRR helper hardening](../docs/gpu-frr-helper-hardening.md): 17 additional contexts
+across five Pods. It includes non-root GPU config init and FRR exporters, a single
+required reloader DAC capability, and explicit existing FRR seccomp. The original
+controller batch below remains part of the catalog. These are runtime guards,
+with separately reviewed audit classifications for existing privileged GPU actors.
 
 ## Requirements and compatibility evidence
 
@@ -29,11 +17,11 @@ policy for those Pods.
   detection runs in separately created helper workloads, not this controller.
   Its CLI starts non-root; the actual curl/HTTP wait logic passed non-root against
   a disposable loopback HTTP server. No production Kubernetes API write was made.
-- The current deployer token is root-owned 0600. The replacement Pod gets explicit
-  UID/GID and fsGroup 1000 for projected-token access. The mutation requires the
+- The deployed deployer token is mode 0640, owner 1000:1000. Authenticated API
+  reads and CSI reconciliation were verified after the preceding rollout. Explicit
+  UID/GID and fsGroup 1000 provide projected-token access. The mutation requires the
   existing zero-volume/zero-mount controller contract, so this group change cannot
-  silently apply to a newly added persistent volume. Token ownership/readability
-  and authenticated controller activity must still be verified after rollout.
+  silently apply to a newly added persistent volume.
 - Status cleaner already drops capabilities, disables escalation and uses a
   read-only root. Its binary starts as UID/GID 1000. Its certificate Secret uses
   mode 0644 and its listener is above 1024; no certificate values were read.
@@ -59,8 +47,9 @@ No production secrets, mounts, GPU devices or data were used by the probes.
 
 A separate `infra-guards` Argo Application/AppProject manages the policy and hook.
 It grants only the required cluster-native mutation kinds and specific namespaced
-configuration/RBAC/Job kinds. It has no Secret permissions or ClusterRoleBinding.
-Its service account can get/patch exactly four named controllers; it can also list
+configuration/RBAC/Job kinds. It has no Secret permissions. One narrowly scoped
+ClusterRoleBinding permits only GET of the known GPU node for resource-health verification.
+Its service account can get/patch exactly six named controllers; it can also list
 Longhorn volume/node health in longhorn-system. No namespace-wide patch permission
 is granted. The existing kyverno namespace hosts the hook, not new Kyverno policy
 behavior. Existing namespace network policy selectors do not restrict this hook.
@@ -91,22 +80,23 @@ It has a memory limit and no CPU limit.
 
 ## Validation and operational boundaries
 
-57 real CEL mutation/scope/idempotence checks passed with Kyverno CLI 1.19.2.
-The full repository suite passed: 306 tests run, 16 skipped. All 11 rendered
-resources passed strict Kubernetes 1.37.1 schema validation; resource-budget and
-restricted-context checks passed.
+103 real CEL mutation/scope/idempotence checks passed with Kyverno CLI 1.19.2.
+The latest helper review records current repository/runtime/exception checks.
+All 13 rendered resources passed strict Kubernetes 1.37.1 schema validation;
+resource-budget and restricted-context checks passed.
 Positive cases prove selected-context-only changes; negative cases cover identity,
 images/commands, extra mounts/volumes, inventory changes, privileged targets and
 unreviewed FRR rollout strategy. Unit tests cover least-privilege RBAC, unchanged
 companions, token-volume boundary, incomplete readiness, failed preflight making
-no persistent write, failed rollout stopping later targets, and unhealthy storage preventing writes. Generated-bundle
-consistency and targeted rendering/resource/schema checks are required in CI.
+no persistent write, failed rollout stopping later targets, and storage/GPU health
+failures preventing writes. Generated-bundle consistency and targeted rendering/resource/schema checks are required in CI.
 
-Publication and live validation remain pending. Publishing rolls six Pods, including
-three FRR Pods and the GPU Operator controller; existing GPU workloads and the
+Publication and live validation of this extension remain pending. It rolls five
+Pods: three FRR Pods and two GPU helper Pods. Existing GPU workloads and the
 MetalLB speaker are not directly restarted by this batch. After reconciliation,
 verify controller API activity, certificate/webhook readiness, CSI/storage health,
 LoadBalancer endpoints, GPU node/resource counts and current-Pod Kyverno reports.
-Do not claim the expected three controller finding groups are cleared until those
-live checks pass. The remaining privileged GPU helpers, FRR main containers,
-MetalLB speaker and OpenBao OnDelete replacement need separate review.
+The preceding three controller finding groups have already cleared; the new GPU
+classifications and FRR results must still be verified after this extension.
+Remaining FRR main requirements, MetalLB speaker and OpenBao OnDelete replacement
+need separate review.

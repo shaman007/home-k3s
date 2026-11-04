@@ -23,6 +23,10 @@ spec:
       kind: MutatingAdmissionPolicy
     - group: admissionregistration.k8s.io
       kind: MutatingAdmissionPolicyBinding
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
   namespaceResourceWhitelist:
     - group: ''
       kind: ServiceAccount

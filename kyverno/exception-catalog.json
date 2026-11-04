@@ -3915,10 +3915,94 @@
       "labels": {
         "app": "gpu-feature-discovery"
       },
-      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "reason": "Existing vendor GPU processes retain reviewed privileged requirements; the one-shot config helper must independently remain UID 1000, non-root, zero-capability, no-escalation and RuntimeDefault.",
+      "evidence": "docs/gpu-frr-helper-hardening.md",
       "policies": {
         "disallow-privileged-containers": {
+          "containers": {
+            "gpu-feature-discovery": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "gpu-feature-discovery": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "gpu-feature-discovery": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "gpu-feature-discovery": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "disallow-privilege-escalation": {
           "containers": {
             "gpu-feature-discovery": {
               "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
@@ -3966,7 +4050,22 @@
           },
           {
             "name": "config-manager-init",
-            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
           }
         ]
       },
@@ -3983,11 +4082,34 @@
           "toolkit-validation": {
             "privileged": true,
             "runAsUser": 0
+          },
+          "config-manager-init": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
           }
         }
       },
       "requiredPodGuards": {},
-      "guardReview": "docs/exception-guard-contract-review.md"
+      "guardReview": "docs/exception-guard-contract-review.md",
+      "reviewedOn": "2026-11-04",
+      "reviewedCompanions": {
+        "initContainers": {
+          "config-manager-init": {
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
+          }
+        }
+      }
     },
     {
       "namespace": "gpu-operator",
@@ -4127,10 +4249,94 @@
       "labels": {
         "app": "nvidia-device-plugin-daemonset"
       },
-      "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "reason": "Existing vendor GPU processes retain reviewed privileged requirements; the one-shot config helper must independently remain UID 1000, non-root, zero-capability, no-escalation and RuntimeDefault.",
+      "evidence": "docs/gpu-frr-helper-hardening.md",
       "policies": {
         "disallow-privileged-containers": {
+          "containers": {
+            "nvidia-device-plugin": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "nvidia-device-plugin": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "nvidia-device-plugin": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "nvidia-device-plugin": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            },
+            "config-manager": {
+              "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true
+            }
+          }
+        },
+        "disallow-privilege-escalation": {
           "containers": {
             "nvidia-device-plugin": {
               "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
@@ -4178,7 +4384,22 @@
           },
           {
             "name": "config-manager-init",
-            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
           }
         ]
       },
@@ -4195,11 +4416,34 @@
           "toolkit-validation": {
             "privileged": true,
             "runAsUser": 0
+          },
+          "config-manager-init": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
           }
         }
       },
       "requiredPodGuards": {},
-      "guardReview": "docs/exception-guard-contract-review.md"
+      "guardReview": "docs/exception-guard-contract-review.md",
+      "reviewedOn": "2026-11-04",
+      "reviewedCompanions": {
+        "initContainers": {
+          "config-manager-init": {
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
+          }
+        }
+      }
     },
     {
       "namespace": "gpu-operator",

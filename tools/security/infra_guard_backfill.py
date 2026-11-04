@@ -22,7 +22,11 @@ def reviewed(doc, entry):
             assert all(a.get(k, []) == e.get(k, []) for k in ['name', 'image', 'command', 'args', 'volumeMounts'])
     assert pod.get('volumes', []) == entry['fixture']['spec']['template']['spec'].get('volumes', [])
     for target in entry['targets']:
-        assert pod[target['section']][target['index']]['name'] == target['name']
+        actual=pod[target['section']][target['index']]
+        assert actual['name'] == target['name']
+        env={v['name']:v for v in actual.get('env',[])}
+        for name,value in target.get('requiredEnv',{}).items():assert env.get(name,{}).get('value') == value
+        for name,path in target.get('requiredFieldRefs',{}).items():assert env.get(name,{}).get('valueFrom',{}).get('fieldRef',{}).get('fieldPath') == path
     if entry['kind'] == 'DaemonSet':
         assert doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']
         assert doc['spec']['updateStrategy']['rollingUpdate']['maxUnavailable'] == 1
@@ -57,8 +61,16 @@ def patch(doc):
     return result
 
 
+def gpu_healthy(node, review):
+    assert node['metadata']['name'] == review['node']
+    assert any(c['type']=='Ready' and c['status']=='True' for c in node.get('status',{}).get('conditions',[])), 'GPU node is not Ready'
+    for field in ['capacity','allocatable']:
+        assert int(node.get('status',{}).get(field,{}).get(review['resource'],0)) == review['capacity'], 'GPU resource count changed'
+
+
 def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):
-    entries = json.loads((config_dir/'catalog.json').read_text())['entries']
+    catalog = json.loads((config_dir/'catalog.json').read_text())
+    entries = catalog['entries']
     context = ssl.create_default_context(cafile=str(account/'ca.crt'))
     token = (account/'token').read_text().strip()
     base = 'https://' + os.environ['KUBERNETES_SERVICE_HOST'] + ':' + os.environ['KUBERNETES_SERVICE_PORT']
@@ -83,10 +95,17 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
             with opener.open(req,timeout=15) as response:documents.append(json.load(response))
         storage_healthy(*documents)
 
+    def gpu_check():
+        review=catalog.get('gpuResourceReview')
+        if not review:return
+        req=urllib.request.Request(base+'/api/v1/nodes/'+review['node'],headers={'Authorization':'Bearer '+token})
+        with opener.open(req,timeout=15) as response:gpu_healthy(json.load(response),review)
+
     # Every contract and dry-run mutation must pass before the hook writes anything.
     for attempt in range(30):
         try:
             storage_check()
+            gpu_check()
             for e in entries:
                 original = request(e); reviewed(original, e)
                 assert ready(original), e['name'] + ': not fully ready'
@@ -97,6 +116,7 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
             time.sleep(3)
     for e in entries:
         storage_check()
+        gpu_check()
         original = request(e); reviewed(original, e)
         assert ready(original), e['name'] + ': readiness changed'
         expected = expected_spec(original, e)
@@ -115,6 +135,7 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
             if time.monotonic() >= deadline: raise RuntimeError(e['name'] + ': rollout failed; later targets untouched')
             time.sleep(3)
         storage_check()
+        gpu_check()
         print(e['namespace'] + '/' + e['name'] + ': guards and rollout verified', flush=True)
 
 

@@ -271,7 +271,214 @@ spec:
 
       p.initContainers[2].?securityContext.?privileged.orValue(false) == false &&
 
-      p.initContainers[3].?securityContext.?privileged.orValue(false) == false))'
+      p.initContainers[3].?securityContext.?privileged.orValue(false) == false &&
+
+      p.containers[0].?securityContext.?privileged.orValue(false) == false &&
+
+      p.containers[1].?securityContext.?privileged.orValue(false) == false &&
+
+      p.containers[2].?securityContext.?privileged.orValue(false) == false &&
+
+      p.containers[3].?securityContext.?privileged.orValue(false) == false &&
+
+      p.containers[4].?securityContext.?privileged.orValue(false) == false) ||
+
+      (object.metadata.namespace == "gpu-operator" && object.kind == "DaemonSet" && object.metadata.name == "gpu-feature-discovery"
+      &&
+
+      p.?serviceAccountName.orValue("default") == "nvidia-gpu-feature-discovery" &&
+
+      object.spec.template.metadata.?labels.orValue({})["app"] == "gpu-feature-discovery" &&
+
+      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/managed-by"] == "gpu-operator" &&
+
+      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/part-of"] == "nvidia-gpu" &&
+
+      object.spec.template.metadata.?labels.orValue({})["helm.sh/chart"] == "gpu-operator-v26.7.2" &&
+
+      p.?containers.orValue([]).size() == 2 &&
+
+      p.containers[0].name == "gpu-feature-discovery" &&
+
+      p.containers[0].image == "nvcr.io/nvidia/k8s-device-plugin:v0.20.1" &&
+
+      p.containers[0].?command.orValue([]) == ["gpu-feature-discovery"] &&
+
+      p.containers[0].?args.orValue([]) == [] &&
+
+      p.containers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/etc/kubernetes/node-feature-discovery/features.d"),
+      "name": dyn("output-dir")}, {"mountPath": dyn("/sys"), "name": dyn("host-sys"), "readOnly": dyn(true)}, {"mountPath":
+      dyn("/config"), "name": dyn("config")}, {"mountPath": dyn("/available-configs"), "name": dyn("nvidia-device-plugin-config")}]
+      &&
+
+      p.containers[1].name == "config-manager" &&
+
+      p.containers[1].image == "nvcr.io/nvidia/k8s-device-plugin:v0.20.1" &&
+
+      p.containers[1].?command.orValue([]) == ["config-manager"] &&
+
+      p.containers[1].?args.orValue([]) == [] &&
+
+      p.containers[1].?volumeMounts.orValue([]) == [{"mountPath": dyn("/config"), "name": dyn("config")}, {"mountPath": dyn("/available-configs"),
+      "name": dyn("nvidia-device-plugin-config")}] &&
+
+      p.?initContainers.orValue([]).size() == 2 &&
+
+      p.initContainers[0].name == "toolkit-validation" &&
+
+      p.initContainers[0].image == "nvcr.io/nvidia/gpu-operator:v26.7.2" &&
+
+      p.initContainers[0].?command.orValue([]) == ["sh", "-c"] &&
+
+      p.initContainers[0].?args.orValue([]) == ["until [ -f /run/nvidia/validations/toolkit-ready ] && { grep -q ''^nvidia
+      '' /proc/modules || [ -e /dev/dxg ]; }; do echo waiting for nvidia container stack to be setup; sleep 5; done"] &&
+
+      p.initContainers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/run/nvidia"), "mountPropagation": dyn("HostToContainer"),
+      "name": dyn("run-nvidia")}] &&
+
+      p.initContainers[1].name == "config-manager-init" &&
+
+      p.initContainers[1].image == "nvcr.io/nvidia/k8s-device-plugin:v0.20.1" &&
+
+      p.initContainers[1].?command.orValue([]) == ["config-manager"] &&
+
+      p.initContainers[1].?args.orValue([]) == [] &&
+
+      p.initContainers[1].?volumeMounts.orValue([]) == [{"mountPath": dyn("/config"), "name": dyn("config")}, {"mountPath":
+      dyn("/available-configs"), "name": dyn("nvidia-device-plugin-config")}] &&
+
+      p.?volumes.orValue([]) == [{"hostPath": dyn({"path": dyn("/etc/kubernetes/node-feature-discovery/features.d"), "type":
+      dyn("")}), "name": dyn("output-dir")}, {"hostPath": dyn({"path": dyn("/sys"), "type": dyn("")}), "name": dyn("host-sys")},
+      {"hostPath": dyn({"path": dyn("/run/nvidia"), "type": dyn("Directory")}), "name": dyn("run-nvidia")}, {"configMap":
+      dyn({"defaultMode": dyn(420), "name": dyn("nvidia-device-plugin-config")}), "name": dyn("nvidia-device-plugin-config")},
+      {"emptyDir": dyn({}), "name": dyn("config")}] &&
+
+      object.spec.updateStrategy == {"rollingUpdate": dyn({"maxSurge": dyn(0), "maxUnavailable": dyn(1)}), "type": dyn("RollingUpdate")}
+      &&
+
+      p.initContainers[1].?securityContext.?privileged.orValue(false) == false &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "ONESHOT" && v.?value.orValue("") == "true") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "NODE_LABEL" && v.?value.orValue("") == "nvidia.com/device-plugin.config")
+      &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "CONFIG_FILE_SRCDIR" && v.?value.orValue("") == "/available-configs")
+      &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "CONFIG_FILE_DST" && v.?value.orValue("") == "/config/config.yaml")
+      &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "DEFAULT_CONFIG" && v.?value.orValue("") == "default") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "SEND_SIGNAL" && v.?value.orValue("") == "false") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "FALLBACK_STRATEGIES" && v.?value.orValue("") == "empty") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "NODE_NAME" && v.?valueFrom.?fieldRef.?fieldPath.orValue("")
+      == "spec.nodeName")) ||
+
+      (object.metadata.namespace == "gpu-operator" && object.kind == "DaemonSet" && object.metadata.name == "nvidia-device-plugin-daemonset"
+      &&
+
+      p.?serviceAccountName.orValue("default") == "nvidia-device-plugin" &&
+
+      object.spec.template.metadata.?labels.orValue({})["app"] == "nvidia-device-plugin-daemonset" &&
+
+      object.spec.template.metadata.?labels.orValue({})["app.kubernetes.io/managed-by"] == "gpu-operator" &&
+
+      object.spec.template.metadata.?labels.orValue({})["helm.sh/chart"] == "gpu-operator-v26.7.2" &&
+
+      p.?containers.orValue([]).size() == 2 &&
+
+      p.containers[0].name == "nvidia-device-plugin" &&
+
+      p.containers[0].image == "nvcr.io/nvidia/k8s-device-plugin:v0.20.1" &&
+
+      p.containers[0].?command.orValue([]) == ["/bin/sh", "-c"] &&
+
+      p.containers[0].?args.orValue([]) == ["/bin/entrypoint.sh"] &&
+
+      p.containers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/bin/entrypoint.sh"), "name": dyn("nvidia-device-plugin-entrypoint"),
+      "readOnly": dyn(true), "subPath": dyn("entrypoint.sh")}, {"mountPath": dyn("/var/lib/kubelet/device-plugins"), "name":
+      dyn("device-plugin")}, {"mountPath": dyn("/run/nvidia/validations"), "name": dyn("run-nvidia-validations")}, {"mountPath":
+      dyn("/driver-root"), "mountPropagation": dyn("HostToContainer"), "name": dyn("driver-install-dir")}, {"mountPath": dyn("/host"),
+      "mountPropagation": dyn("HostToContainer"), "name": dyn("host-root"), "readOnly": dyn(true)}, {"mountPath": dyn("/var/run/cdi"),
+      "name": dyn("cdi-root")}, {"mountPath": dyn("/dev/shm"), "name": dyn("mps-shm")}, {"mountPath": dyn("/mps"), "name":
+      dyn("mps-root")}, {"mountPath": dyn("/config"), "name": dyn("config")}, {"mountPath": dyn("/available-configs"), "name":
+      dyn("nvidia-device-plugin-config")}] &&
+
+      p.containers[1].name == "config-manager" &&
+
+      p.containers[1].image == "nvcr.io/nvidia/k8s-device-plugin:v0.20.1" &&
+
+      p.containers[1].?command.orValue([]) == ["config-manager"] &&
+
+      p.containers[1].?args.orValue([]) == [] &&
+
+      p.containers[1].?volumeMounts.orValue([]) == [{"mountPath": dyn("/config"), "name": dyn("config")}, {"mountPath": dyn("/available-configs"),
+      "name": dyn("nvidia-device-plugin-config")}] &&
+
+      p.?initContainers.orValue([]).size() == 2 &&
+
+      p.initContainers[0].name == "toolkit-validation" &&
+
+      p.initContainers[0].image == "nvcr.io/nvidia/gpu-operator:v26.7.2" &&
+
+      p.initContainers[0].?command.orValue([]) == ["sh", "-c"] &&
+
+      p.initContainers[0].?args.orValue([]) == ["until [ -f /run/nvidia/validations/toolkit-ready ] && { grep -q ''^nvidia
+      '' /proc/modules || [ -e /dev/dxg ]; }; do echo waiting for nvidia container stack to be setup; sleep 5; done"] &&
+
+      p.initContainers[0].?volumeMounts.orValue([]) == [{"mountPath": dyn("/run/nvidia/validations"), "mountPropagation":
+      dyn("HostToContainer"), "name": dyn("run-nvidia-validations")}] &&
+
+      p.initContainers[1].name == "config-manager-init" &&
+
+      p.initContainers[1].image == "nvcr.io/nvidia/k8s-device-plugin:v0.20.1" &&
+
+      p.initContainers[1].?command.orValue([]) == ["config-manager"] &&
+
+      p.initContainers[1].?args.orValue([]) == [] &&
+
+      p.initContainers[1].?volumeMounts.orValue([]) == [{"mountPath": dyn("/config"), "name": dyn("config")}, {"mountPath":
+      dyn("/available-configs"), "name": dyn("nvidia-device-plugin-config")}] &&
+
+      p.?volumes.orValue([]) == [{"configMap": dyn({"defaultMode": dyn(448), "name": dyn("nvidia-device-plugin-entrypoint")}),
+      "name": dyn("nvidia-device-plugin-entrypoint")}, {"hostPath": dyn({"path": dyn("/var/lib/kubelet/device-plugins"), "type":
+      dyn("")}), "name": dyn("device-plugin")}, {"hostPath": dyn({"path": dyn("/run/nvidia/validations"), "type": dyn("DirectoryOrCreate")}),
+      "name": dyn("run-nvidia-validations")}, {"hostPath": dyn({"path": dyn("/usr/local"), "type": dyn("DirectoryOrCreate")}),
+      "name": dyn("driver-install-dir")}, {"hostPath": dyn({"path": dyn("/"), "type": dyn("")}), "name": dyn("host-root")},
+      {"hostPath": dyn({"path": dyn("/var/run/cdi"), "type": dyn("DirectoryOrCreate")}), "name": dyn("cdi-root")}, {"hostPath":
+      dyn({"path": dyn("/run/nvidia/mps"), "type": dyn("DirectoryOrCreate")}), "name": dyn("mps-root")}, {"hostPath": dyn({"path":
+      dyn("/run/nvidia/mps/shm"), "type": dyn("")}), "name": dyn("mps-shm")}, {"configMap": dyn({"defaultMode": dyn(420),
+      "name": dyn("nvidia-device-plugin-config")}), "name": dyn("nvidia-device-plugin-config")}, {"emptyDir": dyn({}), "name":
+      dyn("config")}] &&
+
+      object.spec.updateStrategy == {"rollingUpdate": dyn({"maxSurge": dyn(0), "maxUnavailable": dyn(1)}), "type": dyn("RollingUpdate")}
+      &&
+
+      p.initContainers[1].?securityContext.?privileged.orValue(false) == false &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "ONESHOT" && v.?value.orValue("") == "true") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "NODE_LABEL" && v.?value.orValue("") == "nvidia.com/device-plugin.config")
+      &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "CONFIG_FILE_SRCDIR" && v.?value.orValue("") == "/available-configs")
+      &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "CONFIG_FILE_DST" && v.?value.orValue("") == "/config/config.yaml")
+      &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "DEFAULT_CONFIG" && v.?value.orValue("") == "default") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "SEND_SIGNAL" && v.?value.orValue("") == "false") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "FALLBACK_STRATEGIES" && v.?value.orValue("") == "empty") &&
+
+      p.initContainers[1].?env.orValue([]).exists(v, v.name == "NODE_NAME" && v.?valueFrom.?fieldRef.?fieldPath.orValue("")
+      == "spec.nodeName")))'
   mutations:
   - patchType: JSONPatch
     jsonPatch:
@@ -329,8 +536,44 @@ spec:
         JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/runAsNonRoot",value:false}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/privileged",value:false},
         JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/allowPrivilegeEscalation",value:false},
         JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/capabilities",value:{"drop": ["ALL"]}},
-        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
-        : ([]))))'
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/3/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
+        + (!has(object.spec.template.spec.containers[0].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/0/securityContext/seccompProfile",value:{"type":
+        "RuntimeDefault"}}] + (!has(object.spec.template.spec.containers[1].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/1/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/1/securityContext/seccompProfile",value:{"type":
+        "RuntimeDefault"}}] + (!has(object.spec.template.spec.containers[2].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/runAsUser",value:0}, JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/runAsGroup",value:102},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/runAsNonRoot",value:false}, JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/privileged",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/allowPrivilegeEscalation",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/capabilities",value:{"drop": ["ALL"], "add":
+        ["DAC_OVERRIDE"]}}, JSONPatch{op:"add",path:"/spec/template/spec/containers/2/securityContext/seccompProfile",value:{"type":
+        "RuntimeDefault"}}] + (!has(object.spec.template.spec.containers[3].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/runAsUser",value:100}, JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/runAsGroup",value:102},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/privileged",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/allowPrivilegeEscalation",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/capabilities",value:{"drop": ["ALL"]}},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/3/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}]
+        + (!has(object.spec.template.spec.containers[4].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/runAsUser",value:100}, JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/runAsGroup",value:102},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/privileged",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/allowPrivilegeEscalation",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/capabilities",value:{"drop": ["ALL"]}},
+        JSONPatch{op:"add",path:"/spec/template/spec/containers/4/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
+        : ((object.metadata.namespace == "gpu-operator" && object.kind == "DaemonSet" && object.metadata.name == "gpu-feature-discovery")
+        ? ((!has(object.spec.template.spec.initContainers[1].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsUser",value:1000}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsGroup",value:1000},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/privileged",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/allowPrivilegeEscalation",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/capabilities",value:{"drop": ["ALL"]}},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
+        : ((object.metadata.namespace == "gpu-operator" && object.kind == "DaemonSet" && object.metadata.name == "nvidia-device-plugin-daemonset")
+        ? ((!has(object.spec.template.spec.initContainers[1].securityContext) ? [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext",value:{}}]
+        : []) + [JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsUser",value:1000}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsGroup",value:1000},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/runAsNonRoot",value:true}, JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/privileged",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/allowPrivilegeEscalation",value:false},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/capabilities",value:{"drop": ["ALL"]}},
+        JSONPatch{op:"add",path:"/spec/template/spec/initContainers/1/securityContext/seccompProfile",value:{"type": "RuntimeDefault"}}])
+        : ([]))))))'
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicyBinding
@@ -357,6 +600,33 @@ metadata:
   namespace: kyverno
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: reviewed-infrastructure-guards-gpu-health
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - nodes
+  resourceNames:
+  - talos-d4h-k5m
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: reviewed-infrastructure-guards-gpu-health
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: reviewed-infrastructure-guards-gpu-health
+subjects:
+- kind: ServiceAccount
+  name: reviewed-infrastructure-guards
+  namespace: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: reviewed-infrastructure-guards
@@ -368,6 +638,16 @@ rules:
   - deployments
   resourceNames:
   - gpu-operator
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  resourceNames:
+  - gpu-feature-discovery
+  - nvidia-device-plugin-daemonset
   verbs:
   - get
   - patch
@@ -554,7 +834,88 @@ data:
     "guards": {"runAsUser": 0, "runAsGroup": 0, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation": false,
     "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "initContainers", "index":
     3, "name": "cp-frr-status", "guards": {"runAsUser": 0, "runAsGroup": 0, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation":
-    false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}]}]}'
+    false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "containers", "index":
+    0, "name": "controller", "guards": {"seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "containers", "index":
+    1, "name": "frr", "guards": {"seccompProfile": {"type": "RuntimeDefault"}}}, {"section": "containers", "index": 2, "name":
+    "reloader", "guards": {"runAsUser": 0, "runAsGroup": 102, "runAsNonRoot": false, "privileged": false, "allowPrivilegeEscalation":
+    false, "capabilities": {"drop": ["ALL"], "add": ["DAC_OVERRIDE"]}, "seccompProfile": {"type": "RuntimeDefault"}}}, {"section":
+    "containers", "index": 3, "name": "frr-metrics", "guards": {"runAsUser": 100, "runAsGroup": 102, "runAsNonRoot": true,
+    "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type":
+    "RuntimeDefault"}}}, {"section": "containers", "index": 4, "name": "frr-status", "guards": {"runAsUser": 100, "runAsGroup":
+    102, "runAsNonRoot": true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]},
+    "seccompProfile": {"type": "RuntimeDefault"}}}]}, {"kind": "DaemonSet", "namespace": "gpu-operator", "name": "gpu-feature-discovery",
+    "serviceAccount": "nvidia-gpu-feature-discovery", "labels": {"app": "gpu-feature-discovery", "app.kubernetes.io/managed-by":
+    "gpu-operator", "app.kubernetes.io/part-of": "nvidia-gpu", "helm.sh/chart": "gpu-operator-v26.7.2"}, "fixture": {"apiVersion":
+    "apps/v1", "kind": "DaemonSet", "metadata": {"name": "gpu-feature-discovery", "namespace": "gpu-operator"}, "spec": {"selector":
+    {"matchLabels": {"app": "gpu-feature-discovery", "app.kubernetes.io/part-of": "nvidia-gpu"}}, "updateStrategy": {"rollingUpdate":
+    {"maxSurge": 0, "maxUnavailable": 1}, "type": "RollingUpdate"}, "template": {"metadata": {"labels": {"app": "gpu-feature-discovery",
+    "app.kubernetes.io/managed-by": "gpu-operator", "app.kubernetes.io/part-of": "nvidia-gpu", "helm.sh/chart": "gpu-operator-v26.7.2"}},
+    "spec": {"serviceAccountName": "nvidia-gpu-feature-discovery", "securityContext": {}, "volumes": [{"hostPath": {"path":
+    "/etc/kubernetes/node-feature-discovery/features.d", "type": ""}, "name": "output-dir"}, {"hostPath": {"path": "/sys",
+    "type": ""}, "name": "host-sys"}, {"hostPath": {"path": "/run/nvidia", "type": "Directory"}, "name": "run-nvidia"}, {"configMap":
+    {"defaultMode": 420, "name": "nvidia-device-plugin-config"}, "name": "nvidia-device-plugin-config"}, {"emptyDir": {},
+    "name": "config"}], "containers": [{"name": "gpu-feature-discovery", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+    "command": ["gpu-feature-discovery"], "args": [], "volumeMounts": [{"mountPath": "/etc/kubernetes/node-feature-discovery/features.d",
+    "name": "output-dir"}, {"mountPath": "/sys", "name": "host-sys", "readOnly": true}, {"mountPath": "/config", "name": "config"},
+    {"mountPath": "/available-configs", "name": "nvidia-device-plugin-config"}], "securityContext": {"privileged": true}},
+    {"name": "config-manager", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1", "command": ["config-manager"], "args":
+    [], "volumeMounts": [{"mountPath": "/config", "name": "config"}, {"mountPath": "/available-configs", "name": "nvidia-device-plugin-config"}],
+    "securityContext": {"privileged": true}}], "initContainers": [{"name": "toolkit-validation", "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+    "command": ["sh", "-c"], "args": ["until [ -f /run/nvidia/validations/toolkit-ready ] && { grep -q ''^nvidia '' /proc/modules
+    || [ -e /dev/dxg ]; }; do echo waiting for nvidia container stack to be setup; sleep 5; done"], "volumeMounts": [{"mountPath":
+    "/run/nvidia", "mountPropagation": "HostToContainer", "name": "run-nvidia"}], "securityContext": {"privileged": true,
+    "runAsUser": 0}, "env": []}, {"name": "config-manager-init", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1", "command":
+    ["config-manager"], "args": [], "volumeMounts": [{"mountPath": "/config", "name": "config"}, {"mountPath": "/available-configs",
+    "name": "nvidia-device-plugin-config"}], "securityContext": {}, "env": [{"name": "ONESHOT", "value": "true"}, {"name":
+    "NODE_NAME", "valueFrom": {"fieldRef": {"apiVersion": "v1", "fieldPath": "spec.nodeName"}}}, {"name": "NODE_LABEL", "value":
+    "nvidia.com/device-plugin.config"}, {"name": "CONFIG_FILE_SRCDIR", "value": "/available-configs"}, {"name": "CONFIG_FILE_DST",
+    "value": "/config/config.yaml"}, {"name": "DEFAULT_CONFIG", "value": "default"}, {"name": "SEND_SIGNAL", "value": "false"},
+    {"name": "FALLBACK_STRATEGIES", "value": "empty"}]}]}}}}, "targets": [{"section": "initContainers", "index": 1, "name":
+    "config-manager-init", "requiredEnv": {"ONESHOT": "true", "NODE_LABEL": "nvidia.com/device-plugin.config", "CONFIG_FILE_SRCDIR":
+    "/available-configs", "CONFIG_FILE_DST": "/config/config.yaml", "DEFAULT_CONFIG": "default", "SEND_SIGNAL": "false", "FALLBACK_STRATEGIES":
+    "empty"}, "requiredFieldRefs": {"NODE_NAME": "spec.nodeName"}, "guards": {"runAsUser": 1000, "runAsGroup": 1000, "runAsNonRoot":
+    true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities": {"drop": ["ALL"]}, "seccompProfile": {"type":
+    "RuntimeDefault"}}}]}, {"kind": "DaemonSet", "namespace": "gpu-operator", "name": "nvidia-device-plugin-daemonset", "serviceAccount":
+    "nvidia-device-plugin", "labels": {"app": "nvidia-device-plugin-daemonset", "app.kubernetes.io/managed-by": "gpu-operator",
+    "helm.sh/chart": "gpu-operator-v26.7.2"}, "fixture": {"apiVersion": "apps/v1", "kind": "DaemonSet", "metadata": {"name":
+    "nvidia-device-plugin-daemonset", "namespace": "gpu-operator"}, "spec": {"selector": {"matchLabels": {"app": "nvidia-device-plugin-daemonset"}},
+    "updateStrategy": {"rollingUpdate": {"maxSurge": 0, "maxUnavailable": 1}, "type": "RollingUpdate"}, "template": {"metadata":
+    {"labels": {"app": "nvidia-device-plugin-daemonset", "app.kubernetes.io/managed-by": "gpu-operator", "helm.sh/chart":
+    "gpu-operator-v26.7.2"}}, "spec": {"serviceAccountName": "nvidia-device-plugin", "securityContext": {}, "volumes": [{"configMap":
+    {"defaultMode": 448, "name": "nvidia-device-plugin-entrypoint"}, "name": "nvidia-device-plugin-entrypoint"}, {"hostPath":
+    {"path": "/var/lib/kubelet/device-plugins", "type": ""}, "name": "device-plugin"}, {"hostPath": {"path": "/run/nvidia/validations",
+    "type": "DirectoryOrCreate"}, "name": "run-nvidia-validations"}, {"hostPath": {"path": "/usr/local", "type": "DirectoryOrCreate"},
+    "name": "driver-install-dir"}, {"hostPath": {"path": "/", "type": ""}, "name": "host-root"}, {"hostPath": {"path": "/var/run/cdi",
+    "type": "DirectoryOrCreate"}, "name": "cdi-root"}, {"hostPath": {"path": "/run/nvidia/mps", "type": "DirectoryOrCreate"},
+    "name": "mps-root"}, {"hostPath": {"path": "/run/nvidia/mps/shm", "type": ""}, "name": "mps-shm"}, {"configMap": {"defaultMode":
+    420, "name": "nvidia-device-plugin-config"}, "name": "nvidia-device-plugin-config"}, {"emptyDir": {}, "name": "config"}],
+    "containers": [{"name": "nvidia-device-plugin", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1", "command": ["/bin/sh",
+    "-c"], "args": ["/bin/entrypoint.sh"], "volumeMounts": [{"mountPath": "/bin/entrypoint.sh", "name": "nvidia-device-plugin-entrypoint",
+    "readOnly": true, "subPath": "entrypoint.sh"}, {"mountPath": "/var/lib/kubelet/device-plugins", "name": "device-plugin"},
+    {"mountPath": "/run/nvidia/validations", "name": "run-nvidia-validations"}, {"mountPath": "/driver-root", "mountPropagation":
+    "HostToContainer", "name": "driver-install-dir"}, {"mountPath": "/host", "mountPropagation": "HostToContainer", "name":
+    "host-root", "readOnly": true}, {"mountPath": "/var/run/cdi", "name": "cdi-root"}, {"mountPath": "/dev/shm", "name": "mps-shm"},
+    {"mountPath": "/mps", "name": "mps-root"}, {"mountPath": "/config", "name": "config"}, {"mountPath": "/available-configs",
+    "name": "nvidia-device-plugin-config"}], "securityContext": {"privileged": true}}, {"name": "config-manager", "image":
+    "nvcr.io/nvidia/k8s-device-plugin:v0.20.1", "command": ["config-manager"], "args": [], "volumeMounts": [{"mountPath":
+    "/config", "name": "config"}, {"mountPath": "/available-configs", "name": "nvidia-device-plugin-config"}], "securityContext":
+    {"privileged": true}}], "initContainers": [{"name": "toolkit-validation", "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+    "command": ["sh", "-c"], "args": ["until [ -f /run/nvidia/validations/toolkit-ready ] && { grep -q ''^nvidia '' /proc/modules
+    || [ -e /dev/dxg ]; }; do echo waiting for nvidia container stack to be setup; sleep 5; done"], "volumeMounts": [{"mountPath":
+    "/run/nvidia/validations", "mountPropagation": "HostToContainer", "name": "run-nvidia-validations"}], "securityContext":
+    {"privileged": true, "runAsUser": 0}, "env": []}, {"name": "config-manager-init", "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
+    "command": ["config-manager"], "args": [], "volumeMounts": [{"mountPath": "/config", "name": "config"}, {"mountPath":
+    "/available-configs", "name": "nvidia-device-plugin-config"}], "securityContext": {}, "env": [{"name": "ONESHOT", "value":
+    "true"}, {"name": "NODE_NAME", "valueFrom": {"fieldRef": {"apiVersion": "v1", "fieldPath": "spec.nodeName"}}}, {"name":
+    "NODE_LABEL", "value": "nvidia.com/device-plugin.config"}, {"name": "CONFIG_FILE_SRCDIR", "value": "/available-configs"},
+    {"name": "CONFIG_FILE_DST", "value": "/config/config.yaml"}, {"name": "DEFAULT_CONFIG", "value": "default"}, {"name":
+    "SEND_SIGNAL", "value": "false"}, {"name": "FALLBACK_STRATEGIES", "value": "empty"}]}]}}}}, "targets": [{"section": "initContainers",
+    "index": 1, "name": "config-manager-init", "requiredEnv": {"ONESHOT": "true", "NODE_LABEL": "nvidia.com/device-plugin.config",
+    "CONFIG_FILE_SRCDIR": "/available-configs", "CONFIG_FILE_DST": "/config/config.yaml", "DEFAULT_CONFIG": "default", "SEND_SIGNAL":
+    "false", "FALLBACK_STRATEGIES": "empty"}, "requiredFieldRefs": {"NODE_NAME": "spec.nodeName"}, "guards": {"runAsUser":
+    1000, "runAsGroup": 1000, "runAsNonRoot": true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities":
+    {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}]}], "gpuResourceReview": {"node": "talos-d4h-k5m", "resource":
+    "nvidia.com/gpu", "capacity": 8}}'
   backfill.py: "\"\"\"Guarded GitOps backfill: exact contracts, admission previews, sequential rollouts.\"\"\"\nimport copy\n\
     import json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.request\n\n\ndef reviewed(doc,\
     \ entry):\n    assert doc['kind'] == entry['kind'] and doc['metadata']['name'] == entry['name']\n    assert doc['metadata']['namespace']\
@@ -563,22 +924,28 @@ data:
     \ == value\n    for section in ['containers', 'initContainers']:\n        actual, expected = pod.get(section, []), entry['fixture']['spec']['template']['spec'].get(section,\
     \ [])\n        assert len(actual) == len(expected)\n        for a, e in zip(actual, expected):\n            assert all(a.get(k,\
     \ []) == e.get(k, []) for k in ['name', 'image', 'command', 'args', 'volumeMounts'])\n    assert pod.get('volumes', [])\
-    \ == entry['fixture']['spec']['template']['spec'].get('volumes', [])\n    for target in entry['targets']:\n        assert\
-    \ pod[target['section']][target['index']]['name'] == target['name']\n    if entry['kind'] == 'DaemonSet':\n        assert\
-    \ doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']\n        assert doc['spec']['updateStrategy']['rollingUpdate']['maxUnavailable']\
-    \ == 1\n\n\ndef expected_spec(doc, entry):\n    spec = copy.deepcopy(doc['spec'])\n    if entry.get('podGuards'):\n  \
-    \      pod = spec['template']['spec']\n        pod['securityContext'] = {**(pod.get('securityContext') or {}), **entry['podGuards']}\n\
-    \    for target in entry['targets']:\n        container = spec['template']['spec'][target['section']][target['index']]\n\
-    \        container['securityContext'] = {**(container.get('securityContext') or {}), **target['guards']}\n    return spec\n\
-    \n\ndef ready(doc):\n    s = doc.get('status', {})\n    if s.get('observedGeneration', 0) < doc['metadata'].get('generation',\
-    \ 1): return False\n    if doc['kind'] == 'Deployment':\n        n = doc['spec'].get('replicas', 1)\n        return n\
-    \ > 0 and all(s.get(k) == n for k in ['replicas', 'updatedReplicas', 'readyReplicas', 'availableReplicas'])\n    n = s.get('desiredNumberScheduled',\
-    \ 0)\n    return n > 0 and all(s.get(k) == n for k in ['updatedNumberScheduled', 'numberReady', 'numberAvailable'])\n\n\
-    \ndef patch(doc):\n    result = [{'op':'test', 'path':'/metadata/resourceVersion', 'value':doc['metadata']['resourceVersion']}]\n\
-    \    if doc['metadata'].get('annotations') is None:\n        result.append({'op':'add','path':'/metadata/annotations','value':{}})\n\
+    \ == entry['fixture']['spec']['template']['spec'].get('volumes', [])\n    for target in entry['targets']:\n        actual=pod[target['section']][target['index']]\n\
+    \        assert actual['name'] == target['name']\n        env={v['name']:v for v in actual.get('env',[])}\n        for\
+    \ name,value in target.get('requiredEnv',{}).items():assert env.get(name,{}).get('value') == value\n        for name,path\
+    \ in target.get('requiredFieldRefs',{}).items():assert env.get(name,{}).get('valueFrom',{}).get('fieldRef',{}).get('fieldPath')\
+    \ == path\n    if entry['kind'] == 'DaemonSet':\n        assert doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']\n\
+    \        assert doc['spec']['updateStrategy']['rollingUpdate']['maxUnavailable'] == 1\n\n\ndef expected_spec(doc, entry):\n\
+    \    spec = copy.deepcopy(doc['spec'])\n    if entry.get('podGuards'):\n        pod = spec['template']['spec']\n     \
+    \   pod['securityContext'] = {**(pod.get('securityContext') or {}), **entry['podGuards']}\n    for target in entry['targets']:\n\
+    \        container = spec['template']['spec'][target['section']][target['index']]\n        container['securityContext']\
+    \ = {**(container.get('securityContext') or {}), **target['guards']}\n    return spec\n\n\ndef ready(doc):\n    s = doc.get('status',\
+    \ {})\n    if s.get('observedGeneration', 0) < doc['metadata'].get('generation', 1): return False\n    if doc['kind']\
+    \ == 'Deployment':\n        n = doc['spec'].get('replicas', 1)\n        return n > 0 and all(s.get(k) == n for k in ['replicas',\
+    \ 'updatedReplicas', 'readyReplicas', 'availableReplicas'])\n    n = s.get('desiredNumberScheduled', 0)\n    return n\
+    \ > 0 and all(s.get(k) == n for k in ['updatedNumberScheduled', 'numberReady', 'numberAvailable'])\n\n\ndef patch(doc):\n\
+    \    result = [{'op':'test', 'path':'/metadata/resourceVersion', 'value':doc['metadata']['resourceVersion']}]\n    if\
+    \ doc['metadata'].get('annotations') is None:\n        result.append({'op':'add','path':'/metadata/annotations','value':{}})\n\
     \    result.append({'op':'add','path':'/metadata/annotations/hardening.home-k3s~1infra-guards','value':'v1'})\n    return\
-    \ result\n\n\ndef main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):\n \
-    \   entries = json.loads((config_dir/'catalog.json').read_text())['entries']\n    context = ssl.create_default_context(cafile=str(account/'ca.crt'))\n\
+    \ result\n\n\ndef gpu_healthy(node, review):\n    assert node['metadata']['name'] == review['node']\n    assert any(c['type']=='Ready'\
+    \ and c['status']=='True' for c in node.get('status',{}).get('conditions',[])), 'GPU node is not Ready'\n    for field\
+    \ in ['capacity','allocatable']:\n        assert int(node.get('status',{}).get(field,{}).get(review['resource'],0)) ==\
+    \ review['capacity'], 'GPU resource count changed'\n\n\ndef main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):\n\
+    \    catalog = json.loads((config_dir/'catalog.json').read_text())\n    entries = catalog['entries']\n    context = ssl.create_default_context(cafile=str(account/'ca.crt'))\n\
     \    token = (account/'token').read_text().strip()\n    base = 'https://' + os.environ['KUBERNETES_SERVICE_HOST'] + ':'\
     \ + os.environ['KUBERNETES_SERVICE_PORT']\n    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context))\n\
     \n    def request(e, changes=None, dry=False):\n        resource = 'deployments' if e['kind'] == 'Deployment' else 'daemonsets'\n\
@@ -590,12 +957,15 @@ data:
     \   if not any(e['namespace'] == 'longhorn-system' for e in entries): return\n        from storage_guard import storage_healthy\n\
     \        documents=[]\n        for resource in ['volumes','nodes']:\n            req=urllib.request.Request(base+'/apis/longhorn.io/v1beta2/namespaces/longhorn-system/'+resource,\
     \ headers={'Authorization':'Bearer '+token})\n            with opener.open(req,timeout=15) as response:documents.append(json.load(response))\n\
-    \        storage_healthy(*documents)\n\n    # Every contract and dry-run mutation must pass before the hook writes anything.\n\
-    \    for attempt in range(30):\n        try:\n            storage_check()\n            for e in entries:\n           \
-    \     original = request(e); reviewed(original, e)\n                assert ready(original), e['name'] + ': not fully ready'\n\
-    \                assert request(e, patch(original), True)['spec'] == expected_spec(original, e), e['name'] + ': unexpected\
-    \ admission result'\n            break\n        except AssertionError:\n            if attempt == 29: raise\n        \
-    \    time.sleep(3)\n    for e in entries:\n        storage_check()\n        original = request(e); reviewed(original,\
+    \        storage_healthy(*documents)\n\n    def gpu_check():\n        review=catalog.get('gpuResourceReview')\n      \
+    \  if not review:return\n        req=urllib.request.Request(base+'/api/v1/nodes/'+review['node'],headers={'Authorization':'Bearer\
+    \ '+token})\n        with opener.open(req,timeout=15) as response:gpu_healthy(json.load(response),review)\n\n    # Every\
+    \ contract and dry-run mutation must pass before the hook writes anything.\n    for attempt in range(30):\n        try:\n\
+    \            storage_check()\n            gpu_check()\n            for e in entries:\n                original = request(e);\
+    \ reviewed(original, e)\n                assert ready(original), e['name'] + ': not fully ready'\n                assert\
+    \ request(e, patch(original), True)['spec'] == expected_spec(original, e), e['name'] + ': unexpected admission result'\n\
+    \            break\n        except AssertionError:\n            if attempt == 29: raise\n            time.sleep(3)\n \
+    \   for e in entries:\n        storage_check()\n        gpu_check()\n        original = request(e); reviewed(original,\
     \ e)\n        assert ready(original), e['name'] + ': readiness changed'\n        expected = expected_spec(original, e)\n\
     \        if expected != original['spec']:\n            assert request(e, patch(original), True)['spec'] == expected\n\
     \            assert request(e, patch(original))['spec'] == expected\n        deadline = time.monotonic() + 300\n     \
@@ -603,8 +973,8 @@ data:
     \ expected, e['name'] + ': unexpected spec change'\n            if ready(current):\n                if stable_since is\
     \ None: stable_since = time.monotonic()\n                if time.monotonic() - stable_since >= 15: break\n           \
     \ else: stable_since = None\n            if time.monotonic() >= deadline: raise RuntimeError(e['name'] + ': rollout failed;\
-    \ later targets untouched')\n            time.sleep(3)\n        storage_check()\n        print(e['namespace'] + '/' +\
-    \ e['name'] + ': guards and rollout verified', flush=True)\n\n\nif __name__ == '__main__':\n    main()\n"
+    \ later targets untouched')\n            time.sleep(3)\n        storage_check()\n        gpu_check()\n        print(e['namespace']\
+    \ + '/' + e['name'] + ': guards and rollout verified', flush=True)\n\n\nif __name__ == '__main__':\n    main()\n"
   storage_guard.py: "#!/usr/bin/env python3\n\"\"\"Preflight native mutations, then roll reviewed workloads one at a time.\"\
     \"\"\nimport copy\nimport json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.error\nimport\
     \ urllib.request\n\nNAMESPACE = 'longhorn-system'\nMARKER = 'hardening.home-k3s/component-security'\n\n\ndef security(entry):\n\
@@ -685,7 +1055,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   backoffLimit: 0
-  activeDeadlineSeconds: 1800
+  activeDeadlineSeconds: 2100
   template:
     metadata:
       labels:

@@ -220,11 +220,19 @@ def expression(entry, policy):
     for section, roles in entry.get('requiredGuards', {}).items():
         assert section in ('containers', 'initContainers')
         for name, guards in roles.items():
-            assert any(name in config.get(section, {}) for config in entry['policies'].values())
+            companion = entry.get('reviewedCompanions', {}).get(section, {}).get(name)
+            assert any(name in config.get(section, {}) for config in entry['policies'].values()) or companion
             assert guards
-            # Guard inheritance applies through a separately pinned Pod context.
+            conditions = guard_terms('c', guards)
+            if companion:
+                # This only constrains an already compliant companion; it never
+                # grants an exception role or bypasses any policy's compliant().
+                assert set(companion) == {'image'}
+                snapshot = next(c for c in entry['snapshot'][section] if c['name'] == name)
+                assert snapshot['image'] == companion['image']
+                conditions.append(image_expression(companion['image']))
             terms.append(f'p.spec.?{section}.orValue([]).exists(c, c.name == {literal(name)} && ' +
-                         ' && '.join(guard_terms('c', guards)) + ')')
+                         ' && '.join(conditions) + ')')
     terms.extend(guard_terms('p.spec', entry.get('requiredPodGuards', {})))
     account = entry['serviceAccount']
     terms.insert(0, f'p.spec.?serviceAccountName.orValue("default") == {literal(account)}')

@@ -108,7 +108,7 @@ class CompanionGuardContractTests(unittest.TestCase):
 
     def test_reviewed_scope_and_role_counts(self):
         self.assertEqual(len(self.entries),52)
-        self.assertEqual(sum(len(v) for e in self.entries for v in e['requiredGuards'].values()),70)
+        self.assertEqual(sum(len(v) for e in self.entries for v in e['requiredGuards'].values()),72)
         list(gen.generate({**self.catalog,'entries':self.entries}))
 
     def test_reject_unapproved_roles_and_unknown_guard_fields(self):
@@ -119,6 +119,19 @@ class CompanionGuardContractTests(unittest.TestCase):
             if mutation=='role':e['requiredGuards'][section]['unapproved']=e['requiredGuards'][section].pop(role)
             else:e['requiredGuards'][section][role]['unreviewedField']=True
             with self.assertRaises(AssertionError):list(gen.generate({**self.catalog,'entries':[e]}))
+
+
+    def test_reviewed_gpu_companions_are_constraints_not_exception_roles(self):
+        entries=[e for e in self.entries if e.get('reviewedCompanions')]
+        self.assertEqual(len(entries),2)
+        for e in entries:
+            helper='config-manager-init'
+            self.assertTrue(e['requiredGuards']['initContainers'][helper]['runAsNonRoot'])
+            self.assertEqual(e['requiredGuards']['initContainers'][helper]['capabilities'],{'drop':['ALL']})
+            self.assertFalse(e['requiredGuards']['initContainers'][helper]['allowPrivilegeEscalation'])
+            for policy in e['policies'].values():self.assertNotIn(helper,policy.get('initContainers',{}))
+            bad=copy.deepcopy(e);bad['reviewedCompanions']['initContainers'][helper]['image']='registry.invalid/unapproved:1'
+            with self.assertRaises(AssertionError):list(gen.generate({**self.catalog,'entries':[bad]}))
 
 
 class ImageRepositoryScopeTests(unittest.TestCase):

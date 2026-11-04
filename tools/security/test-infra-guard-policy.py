@@ -55,6 +55,16 @@ def main():
                 if mutation=='privileged':c.setdefault('securityContext',{})['privileged']=True
                 assert evaluate(changed)==changed,e['name']+': mutated unreviewed '+mutation
                 count+=1
+            for target in e['targets']:
+                for key in target.get('requiredEnv',{}):
+                    changed=copy.deepcopy(doc);container=changed['spec']['template']['spec'][target['section']][target['index']]
+                    next(v for v in container['env'] if v['name']==key)['value']='unreviewed'
+                    assert evaluate(changed)==changed,e['name']+': ignored critical env '+key
+                    count+=1
+                for key in target.get('requiredFieldRefs',{}):
+                    changed=copy.deepcopy(doc);container=changed['spec']['template']['spec'][target['section']][target['index']]
+                    next(v for v in container['env'] if v['name']==key)['valueFrom']['fieldRef']['fieldPath']='metadata.name'
+                    assert evaluate(changed)==changed;count+=1
             if e['kind']=='DaemonSet':
                 changed=copy.deepcopy(doc);changed['spec']['updateStrategy']['rollingUpdate']['maxUnavailable']='100%'
                 assert evaluate(changed)==changed;count+=1
