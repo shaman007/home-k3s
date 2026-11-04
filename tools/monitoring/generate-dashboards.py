@@ -173,5 +173,17 @@ names.append(dashboard('meilisearch-metrics', 'Meilisearch Metrics',
     ('Tasks by kind and state', 'meilisearch_nb_tasks{job="meilisearch"}', 'short', '{{kind}} / {{value}}'),
 ]))
 
+names.append(dashboard('open-webui-metrics', 'Open WebUI Metrics',
+    'Native OTLP metrics only: HTTP throughput/latency and aggregate user counts. Tracing and OTLP logs are disabled. OTLP is push-based and therefore has no scrape up metric; sample age shows export freshness.', [
+    ('HTTP requests by status', 'sum by (http_status_code) (rate(http_server_requests_total{job="open-webui"}[$__rate_interval]))', 'ops', '{{http_status_code}}'),
+    ('HTTP p95 duration', 'histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket{job="open-webui"}[$__rate_interval]))) / 1000', 's', 'p95'),
+    ('HTTP mean duration', 'sum(rate(http_server_duration_milliseconds_sum{job="open-webui"}[$__rate_interval])) / sum(rate(http_server_duration_milliseconds_count{job="open-webui"}[$__rate_interval])) / 1000', 's', 'mean'),
+    ('Registered users', 'webui_users_total{job="open-webui"}', 'short', 'users'),
+    ('Active users', 'webui_users_active{job="open-webui"}', 'short', 'users'),
+    ('Active users today', 'webui_users_active_today{job="open-webui"}', 'short', 'users'),
+    ('Native export sample age', 'time() - max(timestamp(http_server_requests_total{job="open-webui"}))', 's', 'age'),
+    ('Active OTLP instances', 'count(target_info{job="open-webui"})', 'short', 'instances'),
+]))
+
 if __name__ == '__main__':
     print('\n'.join(names))

@@ -200,3 +200,5 @@ spec:
                   name: grafana-dashboard-immich-metrics
               - configMap:
                   name: grafana-dashboard-meilisearch-metrics
+              - configMap:
+                  name: grafana-dashboard-open-webui-metrics

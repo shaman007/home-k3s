@@ -9,10 +9,10 @@ Grafana 13.3.0 reported a healthy database. Grafana-managed alert rule inventory
 ## Implemented change set
 
 - Enable cert-manager metrics, Cilium agent metrics, Headlamp telemetry, Immich API/worker telemetry, snapshot-controller metrics and Open WebUI native HTTP metrics. Open WebUI exports OTLP/HTTP to Prometheus every 30 seconds; tracing and OTLP logging are explicitly disabled, and pod identity distinguishes exporter instances.
-- Add 18 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch, Firefox Sync, Metrics Server, snapshot-controller, node-feature-discovery and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
+- Add 21 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch, Firefox Sync, Metrics Server, snapshot-controller, node-feature-discovery, Longhorn CSI controllers, Hister, Spotify and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
 - Keep dedicated Traefik and Prometheus jobs and drop their redundant generic pod/service discovery targets.
 - Extend Prometheus egress and target ingress for the needed ports, including Cilium host/remote-node permissions. Add the Argo ingress policy to its Kustomization.
-- Provision ten dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, Database and Storage Metrics, Firefox Sync Metrics, Mastodon Application Metrics, Immich Application Metrics and Meilisearch Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
+- Provision eleven dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, Database and Storage Metrics, Firefox Sync Metrics, Mastodon Application Metrics, Immich Application Metrics Meilisearch Metrics and Open WebUI Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
 - Repair Vault Overview using job=openbao, vault_core_unsealed and vault_core_active; replace a nonexistent generic route counter with the observed KV-read counter. Repair MySQL/SeaweedFS datasource bindings while preserving live UIDs. Replace the MySQL buffer-pool/host-RAM comparison, whose instance labels cannot join, with buffer-pool used percentage.
 - Preserve every Prometheus alert rule byte-for-byte. Alert suggestions below are documentation only.
 
@@ -58,7 +58,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 | harbor-custom | harbor | `harbor` | Configuration for harbor; Core/jobservice/registry/exporter collected | Harbor Overview |
 | harbor-network-policy | harbor | `harbor` | Configuration for harbor; Core/jobservice/registry/exporter collected | Harbor Overview |
 | headlamp | headlamp | `headlamp` | Metrics flag disabled; enablement and actual HTTP port 4466 staged | Platform Controller Metrics; Application Workloads |
-| hister | hister | `hister` | No app exporter configured | Application Workloads |
+| hister | hister | `hister` | Native metrics enabled; authenticated token delivery configured with user approval | Application Workloads; native dashboard follow-up |
 | homeassistant | homeassistant | `homeassistant` | External service; native integration/token requires external configuration access | No Kubernetes workload; external follow-up |
 | image-builder | image-builder | `image-builder` | No app exporter configured; Kubernetes Job coverage | Application Workloads |
 | immich | immich | `immich` | Telemetry disabled; API/worker enablement staged; DB exporters still absent | Platform Controller Metrics; Application Workloads |
@@ -93,8 +93,8 @@ Configuration-only applications inherit the owning component assessment; they ar
 | namespaces | argocd | `namespaces` | Configuration only; no exporter required | Platform Health |
 | nextcloud | nextcloud | `nextcloud` | MySQL/Valkey and Collabora collected; PHP app uses workload coverage | Database and Storage Metrics; Libreoffice Collabora |
 | nllb | nllb | `nllb` | No app exporter configured; GPU metrics collected | Application Workloads; GPU Overview |
-| ollama | ollama | `ollama` | No model-serving exporter configured; GPU metrics collected | Application Workloads; GPU Overview |
-| ollama-small | ollama | `ollama-small` | No model-serving exporter configured; GPU metrics collected | Application Workloads; GPU Overview |
+| ollama | ollama | `ollama` | No native endpoint in the deployed binary; GPU metrics collected | Application Workloads; GPU Overview |
+| ollama-small | ollama | `ollama-small` | No native endpoint in the deployed binary; GPU metrics collected | Application Workloads; GPU Overview |
 | ooni | ooni | `ooni` | No app exporter configured; job coverage | Application Workloads |
 | open-terminal | open-terminal | `open-terminal` | No app exporter configured | Application Workloads |
 | open-webui | open-webui | `open-webui` | Native OTLP/HTTP metrics enabled; tracing and OTLP logging disabled | Application Workloads; native dashboard follow-up |
@@ -117,7 +117,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 | unifi-exporter | unifi | `unifi/poller` | Collected | Six UniFi-Poller dashboards |
 | wordpress | wordpress | `wordpress` | MySQL/analytics collected; Valkey exporter verified, scrape staged | WordPress Analytics; MySQL Dashboard (repair staged) |
 | year | year | `year` | No app exporter configured | Application Workloads |
-| your-spotify | spotify | `your-spotify` | FerretDB collected; web and backing PostgreSQL use workload coverage | Database and Storage Metrics; Application Workloads |
+| your-spotify | spotify | `your-spotify` | FerretDB collected; authenticated native server metrics configured; backing PostgreSQL uses workload coverage | Database and Storage Metrics; Application Workloads |
 
 ## Native coverage still requiring work
 
@@ -127,7 +127,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 - Database exporters remain absent for Immich PostgreSQL/Valkey, Spotify backing PostgreSQL, Firefox Sync MySQL, Lenka MySQL and Harbor internal PostgreSQL/Redis. Existing application/exporter metrics do not replace those database diagnostics.
 - Other applications marked “No app exporter configured” have shared workload coverage. This is an observed configuration gap, not a claim that their upstream software cannot support an exporter. Adding third-party exporters/instrumentation requires selecting and validating the integration; it has not been silently represented as complete.
 - Stirling PDF native Prometheus support requires a Team/Enterprise licence according to current upstream documentation; no licence change is made.
-- Individual Longhorn CSI sidecars and Loki gateway remain outside the native scrape additions. Metrics Server, snapshot-controller, GPU node-feature-discovery and both embedded Alloy sidecars are covered by the follow-up collection configuration. Argo Dex has no responding metrics listener in this installation; it is not configured as an authentication provider.
+- All four Longhorn CSI control-component endpoints (attacher/provisioner/resizer/snapshotter) were verified and added to discovery. The CSI liveness endpoint and Longhorn global manager return 404 for /metrics; no nonexistent targets are added. Loki gateway remains without a separate native exporter. Metrics Server, snapshot-controller, GPU node-feature-discovery and both embedded Alloy sidecars are covered by the follow-up collection configuration. Argo Dex has no responding metrics listener in this installation; it is not configured as an authentication provider.
 
 ## Existing dashboard review
 
@@ -224,3 +224,13 @@ Immich startup follow-up: the existing library init recursively applied chown ev
 - Native applications with no suitable exporter continue to have shared Kubernetes workload metrics. This does not invent application-level request or queue metrics. Externally hosted Home Assistant and licence-gated Stirling PDF telemetry require the separate access/licence follow-ups listed above.
 
 Additional references: [Open WebUI telemetry](https://docs.openwebui.com/reference/monitoring/otel/), [Prometheus OTLP receiver](https://prometheus.io/docs/guides/opentelemetry/), [StatsD exporter](https://github.com/prometheus/statsd_exporter).
+
+## Remaining endpoint capability checks
+
+A read-only /metrics probe covered Bastioncam, Bitwarden, CA Scanner, ComfyUI, ConvertX, Dawarich, Photon, Hister, Karakeep, MemPalace, NLLB, both Ollama servers, Open Terminal, Plex, SearxNG, Your Spotify and Year. HTML responses were not mistaken for metric exposition. Most routes returned 404; Hister/Plex returned 403 and Your Spotify returned 401. Upstream documentation identified Hister's optional flag and Spotify's protected native endpoint, so those integrations were configured with explicitly authorized credentials. Hister uses its existing application access token because it offers no metrics-only scope; Spotify uses a dedicated metrics password. These values are delivered through OpenBao/External Secrets and never committed.
+
+The installed Ollama 0.40.14 binary contains no OLLAMA_METRICS environment key, both servers return 404 for /metrics, and upstream's native endpoint remains an open feature request. No unmerged feature flag or new proxy was introduced. Shared workload/GPU telemetry remains valid for those servers.
+
+Open WebUI native metrics were verified in Prometheus as http_server_requests_total, http_server_duration_milliseconds and aggregate webui_users_* series. Native endpoint probes found all four CSI control components already exposing roughly 200 metric families each. They are collected separately from Longhorn manager storage metrics.
+
+References: [Hister metrics and authentication](https://hister.org/docs/monitoring), [Your Spotify native metrics](https://github.com/Yooooomi/your_spotify/tree/master/apps/server#prometheus), [Ollama native metrics feature request](https://github.com/ollama/ollama/issues/3144).
