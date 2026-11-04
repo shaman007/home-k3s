@@ -109,6 +109,11 @@ contracts require owner review under the existing RBAC/GitOps trust boundary. Ex
 exclusions remain `kyverno` and `kube-system`. This change does not mutate or
 restart application workloads and does not enable denial.
 
+Existing reviewed exceptions also pin the live companion guards for 52 workload
+identities and 70 container roles; weakening a reviewed guard invalidates the
+exception. This does not grant new roles or change application privileges. See
+[guard contract review](../docs/exception-guard-contract-review.md).
+
 ## Validation and rollout
 
 Generate and check the deterministic exception bundle with:

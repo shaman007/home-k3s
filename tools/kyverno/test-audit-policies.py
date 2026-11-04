@@ -187,6 +187,17 @@ def main():
                 if mutation == 'service-account': changed['spec']['serviceAccountName'] = 'unapproved'
                 case(changed, {p: 'fail' for p in entry['policies']},
                      separate=entry['kind'] == 'Pod')
+            for section, roles in entry.get('requiredGuards', {}).items():
+                for role, guards in roles.items():
+                    for field in ['privileged', 'allowPrivilegeEscalation']:
+                        if guards.get(field) is not False:
+                            continue
+                        changed = copy.deepcopy(positive)
+                        variant_name(changed, role + field + 'guard-regression')
+                        sc = next(c for c in changed['spec'][section] if c['name'] == role).setdefault('securityContext', {})
+                        sc[field] = True
+                        # Only noncompliant policies are expected to need the exception.
+                        case(changed, {p: 'fail' for p in entry['policies']}, separate=entry['kind'] == 'Pod')
             for policy, approval in entry['policies'].items():
                 for mutation in ['image', 'sidecar', 'ephemeral', 'repaired']:
                     changed = copy.deepcopy(positive)

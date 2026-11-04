@@ -101,4 +101,24 @@ class PrivilegedRuntimeExceptionTests(unittest.TestCase):
                     with self.assertRaises(AssertionError):list(gen.generate({**self.catalog,'entries':[e]}))
 
 
+class CompanionGuardContractTests(unittest.TestCase):
+    def setUp(self):
+        self.catalog=json.loads((ROOT/'kyverno/exception-catalog.json').read_text())
+        self.entries=[e for e in self.catalog['entries'] if e.get('requiredGuards')]
+
+    def test_reviewed_scope_and_role_counts(self):
+        self.assertEqual(len(self.entries),52)
+        self.assertEqual(sum(len(v) for e in self.entries for v in e['requiredGuards'].values()),70)
+        list(gen.generate({**self.catalog,'entries':self.entries}))
+
+    def test_reject_unapproved_roles_and_unknown_guard_fields(self):
+        for mutation in ['role','field']:
+            e=copy.deepcopy(self.entries[0])
+            section=next(iter(e['requiredGuards']))
+            role=next(iter(e['requiredGuards'][section]))
+            if mutation=='role':e['requiredGuards'][section]['unapproved']=e['requiredGuards'][section].pop(role)
+            else:e['requiredGuards'][section][role]['unreviewedField']=True
+            with self.assertRaises(AssertionError):list(gen.generate({**self.catalog,'entries':[e]}))
+
+
 if __name__=='__main__':unittest.main()

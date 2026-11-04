@@ -129,6 +129,29 @@ def approved(policy, allowed):
     return '(' + ' || '.join(clauses) + ')' if clauses else 'false'
 
 
+def guard_terms(variable, expected):
+    """Pin reviewed guards; capability set order is immaterial."""
+    terms = []
+    for field, value in sorted(expected.items()):
+        assert field in {'privileged', 'allowPrivilegeEscalation', 'readOnlyRootFilesystem',
+                         'runAsNonRoot', 'runAsUser', 'runAsGroup', 'seccompProfile', 'capabilities'}
+        actual = f'{variable}.?securityContext.?{field}'
+        if field == 'capabilities':
+            assert set(value) <= {'add', 'drop'}
+            for operation in ['add', 'drop']:
+                caps = value.get(operation, [])
+                current = f'{actual}.?{operation}.orValue([])'
+                terms += [f'{current}.size() == {len(caps)}',
+                          f'{current}.all(cap, cap in {literal(caps)})',
+                          f'{literal(caps)}.all(cap, cap in {current})']
+        else:
+            default = 'false' if field == 'privileged' else 'null'
+            if variable == 'c' and field in {'runAsNonRoot', 'runAsUser', 'runAsGroup', 'seccompProfile'}:
+                default = f'p.spec.?securityContext.?{field}.orValue(null)'
+            terms.append(f'{actual}.orValue({default}) == {literal(value)}')
+    return terms
+
+
 def expression(entry, policy):
     config = entry['policies'][policy]
     if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict'):
@@ -178,6 +201,15 @@ def expression(entry, policy):
             actual.append(f'{collection}.exists(c, !({ok}) && {allow})')
     assert actual
     terms.append('(' + ' || '.join(actual) + ')')
+    for section, roles in entry.get('requiredGuards', {}).items():
+        assert section in ('containers', 'initContainers')
+        for name, guards in roles.items():
+            assert any(name in config.get(section, {}) for config in entry['policies'].values())
+            assert guards
+            # Guard inheritance applies through a separately pinned Pod context.
+            terms.append(f'p.spec.?{section}.orValue([]).exists(c, c.name == {literal(name)} && ' +
+                         ' && '.join(guard_terms('c', guards)) + ')')
+    terms.extend(guard_terms('p.spec', entry.get('requiredPodGuards', {})))
     account = entry['serviceAccount']
     terms.insert(0, f'p.spec.?serviceAccountName.orValue("default") == {literal(account)}')
     for key, value in sorted(entry['labels'].items()):

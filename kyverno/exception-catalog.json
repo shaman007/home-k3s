@@ -105,7 +105,32 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "comfyui",
@@ -208,7 +233,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-runtime-directories": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "convertx",
@@ -290,7 +339,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-data": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "dawarich",
@@ -328,7 +401,7 @@
         "containers": [
           {
             "name": "dawarich",
-            "image": "harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.20.1",
+            "image": "harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.21.0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -347,7 +420,7 @@
           },
           {
             "name": "dawarich-sidekiq",
-            "image": "harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.20.1",
+            "image": "harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.21.0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -388,7 +461,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-writable-volumes": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "immich",
@@ -470,7 +567,36 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-cache": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_READ_SEARCH"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "immich",
@@ -550,7 +676,35 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-library": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "karakeep",
@@ -610,7 +764,7 @@
           },
           {
             "name": "chrome",
-            "image": "ghcr.io/karakeep-app/karakeep-chrome:156.0.8078.47-r1",
+            "image": "ghcr.io/karakeep-app/karakeep-chrome:157.0.8103.38-r1",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -651,7 +805,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "init-writable-paths": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mail",
@@ -733,7 +911,36 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "fix-perms": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "FOWNER"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "matrix",
@@ -813,7 +1020,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "fix-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "monitoring",
@@ -907,7 +1138,34 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "fix-perms": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "monitoring",
@@ -985,7 +1243,34 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-mount-hack": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "monitoring",
@@ -1063,7 +1348,34 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-mount-hack": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "nllb",
@@ -1147,7 +1459,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-model-cache": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "ollama",
@@ -1248,7 +1584,32 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-ollama-data": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "ollama",
@@ -1349,7 +1710,32 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-ollama-data": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "open-webui",
@@ -1392,7 +1778,7 @@
         "containers": [
           {
             "name": "open-webui",
-            "image": "harbor.andreybondarenko.com/github/open-webui/open-webui:v0.12.5",
+            "image": "harbor.andreybondarenko.com/github/open-webui/open-webui:v0.13.0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -1434,7 +1820,7 @@
           },
           {
             "name": "reconcile-model-providers",
-            "image": "harbor.andreybondarenko.com/github/open-webui/open-webui:v0.12.5",
+            "image": "harbor.andreybondarenko.com/github/open-webui/open-webui:v0.13.0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -1452,7 +1838,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-data": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "seaweedfs",
@@ -1584,7 +1994,36 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-data-and-tmp": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "hister",
@@ -1621,25 +2060,26 @@
       "snapshot": {
         "securityContext": {
           "fsGroup": 65532,
+          "fsGroupChangePolicy": "OnRootMismatch",
           "seccompProfile": {
             "type": "RuntimeDefault"
-          },
-          "fsGroupChangePolicy": "OnRootMismatch"
+          }
         },
         "containers": [
           {
             "name": "hister",
             "image": "harbor.andreybondarenko.com/github/asciimoo/hister:v0.21.0",
             "securityContext": {
-              "runAsUser": 65532,
+              "allowPrivilegeEscalation": false,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
               },
+              "readOnlyRootFilesystem": true,
               "runAsGroup": 65532,
               "runAsNonRoot": true,
-              "allowPrivilegeEscalation": false
+              "runAsUser": 65532
             }
           }
         ],
@@ -1648,24 +2088,54 @@
             "name": "fix-data-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "runAsUser": 0,
-              "runAsGroup": 0,
-              "runAsNonRoot": false,
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": true,
               "capabilities": {
-                "drop": [
-                  "ALL"
-                ],
                 "add": [
                   "CHOWN",
                   "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
                 ]
-              }
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "fix-data-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "immich",
@@ -1745,7 +2215,35 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "prepare-data": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "karakeep",
@@ -1827,7 +2325,31 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "init-meili-data": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "bitwarden",
@@ -1864,11 +2386,11 @@
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          },
-          "runAsUser": 999,
-          "runAsGroup": 999
+          }
         },
         "containers": [
           {
@@ -1888,15 +2410,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
-              "runAsNonRoot": true,
-              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              }
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
             }
           }
         ],
@@ -1905,21 +2427,51 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
               "capabilities": {
-                "drop": [
-                  "ALL"
-                ],
                 "add": [
                   "CHOWN",
                   "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
                 ]
-              }
+              },
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "runAsUser": 0,
+            "privileged": false,
+            "runAsGroup": 999,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "runAsGroup": 999,
+        "runAsUser": 999,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "dawarich",
@@ -1956,11 +2508,11 @@
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          },
-          "runAsUser": 999,
-          "runAsGroup": 999
+          }
         },
         "containers": [
           {
@@ -1980,15 +2532,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
-              "runAsNonRoot": true,
-              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              }
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
             }
           }
         ],
@@ -1997,21 +2549,51 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
               "capabilities": {
-                "drop": [
-                  "ALL"
-                ],
                 "add": [
                   "CHOWN",
                   "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
                 ]
-              }
+              },
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "runAsUser": 0,
+            "privileged": false,
+            "runAsGroup": 999,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "runAsGroup": 999,
+        "runAsUser": 999,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "immich",
@@ -2049,11 +2631,11 @@
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          },
-          "runAsUser": 999,
-          "runAsGroup": 999
+          }
         },
         "containers": [
           {
@@ -2075,21 +2657,51 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
               "capabilities": {
-                "drop": [
-                  "ALL"
-                ],
                 "add": [
                   "CHOWN",
                   "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
                 ]
-              }
+              },
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "runAsUser": 0,
+            "privileged": false,
+            "runAsGroup": 999,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "runAsGroup": 999,
+        "runAsUser": 999,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "keycloak",
@@ -2126,11 +2738,11 @@
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          },
-          "runAsUser": 999,
-          "runAsGroup": 999
+          }
         },
         "containers": [
           {
@@ -2150,15 +2762,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
-              "runAsNonRoot": true,
-              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              }
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
             }
           }
         ],
@@ -2167,21 +2779,51 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
               "capabilities": {
-                "drop": [
-                  "ALL"
-                ],
                 "add": [
                   "CHOWN",
                   "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
                 ]
-              }
+              },
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "runAsUser": 0,
+            "privileged": false,
+            "runAsGroup": 999,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "runAsGroup": 999,
+        "runAsUser": 999,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mastodon",
@@ -2218,11 +2860,11 @@
       "snapshot": {
         "securityContext": {
           "fsGroup": 999,
+          "runAsGroup": 999,
+          "runAsUser": 999,
           "seccompProfile": {
             "type": "RuntimeDefault"
-          },
-          "runAsUser": 999,
-          "runAsGroup": 999
+          }
         },
         "containers": [
           {
@@ -2242,15 +2884,15 @@
             "name": "postgres-exporter",
             "image": "harbor.andreybondarenko.com/quay/prometheuscommunity/postgres-exporter:v0.20.1",
             "securityContext": {
-              "runAsNonRoot": true,
-              "runAsUser": 65534,
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": true,
               "capabilities": {
                 "drop": [
                   "ALL"
                 ]
-              }
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsNonRoot": true,
+              "runAsUser": 65534
             }
           }
         ],
@@ -2259,21 +2901,51 @@
             "name": "volume-permissions",
             "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
             "securityContext": {
-              "runAsUser": 0,
               "allowPrivilegeEscalation": false,
               "capabilities": {
-                "drop": [
-                  "ALL"
-                ],
                 "add": [
                   "CHOWN",
                   "DAC_OVERRIDE"
+                ],
+                "drop": [
+                  "ALL"
                 ]
-              }
+              },
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "initContainers": {
+          "volume-permissions": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "runAsUser": 0,
+            "privileged": false,
+            "runAsGroup": 999,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "runAsGroup": 999,
+        "runAsUser": 999,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "backup-rsync",
@@ -2345,7 +3017,38 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "sshd": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "NET_BIND_SERVICE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mail",
@@ -2423,7 +3126,41 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "dovecot-mail": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETGID",
+                "SETUID",
+                "NET_BIND_SERVICE",
+                "SYS_CHROOT"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mail",
@@ -2531,7 +3268,61 @@
           }
         ]
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "postfix-mail": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETGID",
+                "SETUID",
+                "NET_BIND_SERVICE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        "initContainers": {
+          "init-postfix-queue-perms": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "FOWNER"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "runAsGroup": 0,
+            "runAsUser": 0,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mail",
@@ -2568,19 +3359,44 @@
               "allowPrivilegeEscalation": false,
               "capabilities": {
                 "add": [
-                  "CHOWN",
                   "NET_BIND_SERVICE"
                 ],
                 "drop": [
                   "ALL"
                 ]
               },
-              "readOnlyRootFilesystem": false
+              "readOnlyRootFilesystem": true
             }
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "unbound": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "NET_BIND_SERVICE"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mail",
@@ -2621,7 +3437,25 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "trainer": {
+            "allowPrivilegeEscalation": false,
+            "readOnlyRootFilesystem": true,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "plex",
@@ -2693,7 +3527,38 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "plex": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETGID",
+                "SETUID"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "ripe-atlas",
@@ -2800,7 +3665,56 @@
           }
         ]
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "ripe-atlas": {
+            "allowPrivilegeEscalation": true,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETUID",
+                "SETGID",
+                "SETPCAP",
+                "NET_RAW"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        "initContainers": {
+          "prepare-atlas-runtime": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "privileged": false
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "mastodon",
@@ -2838,7 +3752,12 @@
             "name": "immich-upload",
             "image": "harbor.andreybondarenko.com/dockerhub/node:26-alpine",
             "securityContext": {
-              "allowPrivilegeEscalation": false
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
             }
           }
         ],
@@ -2847,11 +3766,52 @@
             "name": "fetch-bookmarked-media",
             "image": "harbor.andreybondarenko.com/dockerhub/alpine:3.24",
             "securityContext": {
-              "allowPrivilegeEscalation": false
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              }
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "immich-upload": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        "initContainers": {
+          "fetch-bookmarked-media": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "nextcloud",
@@ -2919,7 +3879,33 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "collabora-online": {
+            "allowPrivilegeEscalation": true,
+            "capabilities": {
+              "add": [
+                "CHOWN",
+                "FOWNER",
+                "SYS_CHROOT"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "runAsGroup": 1001,
+            "runAsNonRoot": true,
+            "runAsUser": 1001,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "gpu-operator",
@@ -2980,11 +3966,28 @@
           },
           {
             "name": "config-manager-init",
-            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
-            "securityContext": {}
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "gpu-feature-discovery": {
+            "privileged": true
+          },
+          "config-manager": {
+            "privileged": true
+          }
+        },
+        "initContainers": {
+          "toolkit-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "gpu-operator",
@@ -3099,7 +4102,22 @@
           }
         ]
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "nvidia-dcgm-exporter": {
+            "privileged": true
+          }
+        },
+        "initContainers": {
+          "toolkit-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "gpu-operator",
@@ -3160,11 +4178,28 @@
           },
           {
             "name": "config-manager-init",
-            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
-            "securityContext": {}
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "nvidia-device-plugin": {
+            "privileged": true
+          },
+          "config-manager": {
+            "privileged": true
+          }
+        },
+        "initContainers": {
+          "toolkit-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "gpu-operator",
@@ -3236,11 +4271,31 @@
           },
           {
             "name": "config-manager-init",
-            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1",
-            "securityContext": {}
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "mps-control-daemon-ctr": {
+            "privileged": true
+          },
+          "config-manager": {
+            "privileged": true
+          }
+        },
+        "initContainers": {
+          "toolkit-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          },
+          "mps-control-daemon-mounts": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "gpu-operator",
@@ -3317,7 +4372,22 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "nvidia-mig-manager": {
+            "privileged": true
+          }
+        },
+        "initContainers": {
+          "toolkit-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "gpu-operator",
@@ -3531,7 +4601,35 @@
           }
         ]
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "nvidia-operator-validator": {
+            "privileged": true,
+            "runAsUser": 0
+          }
+        },
+        "initContainers": {
+          "driver-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          },
+          "toolkit-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          },
+          "cuda-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          },
+          "plugin-validation": {
+            "privileged": true,
+            "runAsUser": 0
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -3608,7 +4706,16 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "engine-image-ei-2f3240cb": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -3739,7 +4846,40 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "node-driver-registrar": {
+            "privileged": true
+          },
+          "longhorn-csi-plugin": {
+            "allowPrivilegeEscalation": true,
+            "capabilities": {
+              "add": [
+                "SYS_ADMIN"
+              ]
+            },
+            "privileged": true
+          },
+          "longhorn-liveness-probe": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -3776,12 +4916,20 @@
           },
           {
             "name": "pre-pull-share-manager-image",
-            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
-            "securityContext": {}
+            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0"
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "longhorn-manager": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "image-builder",
@@ -3845,7 +4993,16 @@
             }
           }
         ]
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "build": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -3934,7 +5091,16 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "instance-manager": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4023,7 +5189,16 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "instance-manager": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4112,7 +5287,16 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "instance-manager": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4198,7 +5382,16 @@
         ],
         "initContainers": []
       },
-      "reviewedOn": "2026-11-04"
+      "reviewedOn": "2026-11-04",
+      "requiredGuards": {
+        "containers": {
+          "share-manager": {
+            "privileged": true
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4246,7 +5439,28 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "csi-attacher": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4294,7 +5508,28 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "csi-provisioner": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4342,7 +5577,28 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "csi-resizer": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     },
     {
       "namespace": "longhorn-system",
@@ -4390,7 +5646,28 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "requiredGuards": {
+        "containers": {
+          "csi-snapshotter": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "privileged": false,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "runAsUser": 0,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "requiredPodGuards": {},
+      "guardReview": "docs/exception-guard-contract-review.md"
     }
   ]
 }
