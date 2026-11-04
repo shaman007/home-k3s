@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           containers:
           - name: sync
-            image: harbor.andreybondarenko.com/library/mastodon:2026-10-29-203640-amd64
+            image: harbor.andreybondarenko.com/library/mastodon:2026-11-04-100651@sha256:b6d100617a59c58160849a6570536adbaeb4ceb0780d2a07c59b1e732221d05e
             workingDir: /opt/mastodon
             command:
             - bundle
