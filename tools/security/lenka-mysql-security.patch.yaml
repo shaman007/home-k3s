@@ -1,0 +1,18 @@
+# Strategic merge patch for the existing unmanaged Deployment; not an Argo manifest.
+# Keeps its image, credentials, PVC, service and update strategy unchanged.
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
