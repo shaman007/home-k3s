@@ -185,6 +185,70 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
+      - job_name: metrics-server
+        scheme: https
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        tls_config:
+          insecure_skip_verify: true
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        static_configs:
+        - targets:
+          - metrics-server.kube-system.svc.cluster.local:443
+      - job_name: snapshot-controller
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - kube-system
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_name
+          action: keep
+          regex: snapshot-controller
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '8080'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: kubernetes_namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+      - job_name: node-feature-discovery
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - gpu-operator
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_name
+          action: keep
+          regex: node-feature-discovery
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '8080'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: kubernetes_namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
       - job_name: firefox-sync
         scrape_interval: 45s
         scrape_timeout: 15s
@@ -385,15 +449,20 @@ data:
           namespaces:
             names:
             - monitoring
+            - bitwarden
+            - nextcloud
         relabel_configs:
         - source_labels:
           - __meta_kubernetes_pod_phase
           action: keep
           regex: Running
         - source_labels:
-          - __meta_kubernetes_pod_container_port_number
+          - __meta_kubernetes_pod_container_name
           action: keep
-          regex: '12345'
+          regex: alloy
+        - source_labels: [__meta_kubernetes_pod_ip]
+          target_label: __address__
+          replacement: $1:12345
         - source_labels:
           - __meta_kubernetes_namespace
           target_label: kubernetes_namespace

@@ -8,17 +8,17 @@ Grafana 13.3.0 reported a healthy database. Grafana-managed alert rule inventory
 
 ## Implemented change set
 
-- Enable cert-manager metrics, Cilium agent metrics, Headlamp telemetry and Immich API/worker telemetry.
-- Add 15 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch, Firefox Sync and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
+- Enable cert-manager metrics, Cilium agent metrics, Headlamp telemetry, Immich API/worker telemetry, snapshot-controller metrics and Open WebUI native HTTP metrics. Open WebUI exports OTLP/HTTP to Prometheus every 30 seconds; tracing and OTLP logging are explicitly disabled, and pod identity distinguishes exporter instances.
+- Add 18 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch, Firefox Sync, Metrics Server, snapshot-controller, node-feature-discovery and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
 - Keep dedicated Traefik and Prometheus jobs and drop their redundant generic pod/service discovery targets.
 - Extend Prometheus egress and target ingress for the needed ports, including Cilium host/remote-node permissions. Add the Argo ingress policy to its Kustomization.
-- Provision six dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, and Database and Storage Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
+- Provision ten dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, Database and Storage Metrics, Firefox Sync Metrics, Mastodon Application Metrics, Immich Application Metrics and Meilisearch Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
 - Repair Vault Overview using job=openbao, vault_core_unsealed and vault_core_active; replace a nonexistent generic route counter with the observed KV-read counter. Repair MySQL/SeaweedFS datasource bindings while preserving live UIDs. Replace the MySQL buffer-pool/host-RAM comparison, whose instance labels cannot join, with buffer-pool used percentage.
 - Preserve every Prometheus alert rule byte-for-byte. Alert suggestions below are documentation only.
 
 MetalLB controller/speaker and both FRR endpoints were checked through temporary port forwards. They require HTTPS and authentication; the existing Prometheus service-account credential successfully read all four exporters. The staged job keeps bearer authentication and follows the pinned upstream chart default for ephemeral self-signed metrics certificates (`insecure_skip_verify: true`). No credentials were persisted.
 
-The initial Mastodon exporter exposed only five ruby_collector metric families because application instrumentation was disabled. Enable the chart-equivalent web and Sidekiq environment flags while retaining the custom exporter and its uncapped CPU configuration. Select one web/embedded Sidekiq exporter per pod, including Sidekiq pods that do not declare a metrics container port. Immich, Headlamp, Cilium-agent and cert-manager telemetry still require deployment before their series can be verified.
+The initial Mastodon exporter exposed only five ruby_collector metric families because application instrumentation was disabled. Enable the chart-equivalent web and Sidekiq environment flags while retaining the custom exporter and its uncapped CPU configuration. Select one web/embedded Sidekiq exporter per pod, including Sidekiq pods that do not declare a metrics container port. Immich, Headlamp, Cilium-agent, cert-manager, Mastodon web/Sidekiq, Firefox Sync and Meilisearch metrics were subsequently verified live. The first complete application scrape capture had 134 targets, all up.
 
 ## Every installed Argo application
 
@@ -68,7 +68,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 | kube-node-exporter | monitoring | `metrics/kubernetes-node-exporter` | Collected | Cluster load - new; Linux Host Overview |
 | kube-state-metrics | kube-system | `metrics/kube-state-metrics-configs` | Collected | Application Workloads; Platform Health |
 | kubernetes-prometheus | monitoring | `metrics/kubernetes-prometheus` | Collected; Alertmanager and sidecar collection staged | Prometheus 2.0 Stats; Metrics Collection |
-| kubernetes-snapshot-controller | kube-system | `metrics/kubernetes-snapshot-controller` | No dedicated exporter configured; workload coverage | Application Workloads |
+| kubernetes-snapshot-controller | kube-system | `metrics/kubernetes-snapshot-controller` | HTTP metrics endpoint enabled by this change | Application Workloads |
 | kyverno | kyverno | `chart:kyverno` | Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
 | kyverno-exceptions | kyverno | `kyverno` | Configuration for kyverno; Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
 | kyverno-policies | kyverno | `chart:kyverno-policies` | Configuration for kyverno; Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
@@ -85,8 +85,8 @@ Configuration-only applications inherit the owning component assessment; they ar
 | mempalace | mempalace | `mempalace` | No app exporter configured | Application Workloads |
 | metallb | metallb-system | `chart:metallb` | Controller/speaker/FRR HTTPS endpoints authenticated successfully; scrape staged | Cluster Network Metrics |
 | metallb-config | metallb-system | `metallb` | Configuration for metallb; Controller/speaker/FRR HTTPS endpoints authenticated successfully; scrape staged | Cluster Network Metrics |
-| metrics-server | kube-system | `chart:metrics-server` | Used for Kubernetes resource API; self-exporter not separately collected | Application Workloads |
-| metrics-server-network-policy | kube-system | `kube-system` | Configuration for metrics-server; Used for Kubernetes resource API; self-exporter not separately collected | Application Workloads |
+| metrics-server | kube-system | `chart:metrics-server` | Resource API plus authenticated HTTPS self-metrics collection | Application Workloads |
+| metrics-server-network-policy | kube-system | `kube-system` | Configuration for metrics-server; Resource API plus authenticated HTTPS self-metrics collection | Application Workloads |
 | minecraft | minecraft | `minecraft` | No game exporter configured | Application Workloads |
 | monitoring-ingress | monitoring | `metrics` | Configuration for grafana; Collected | Grafana metrics; Metrics Collection |
 | monitoring-network-policy | monitoring | `metrics` | Configuration for kubernetes-prometheus; Collected; Alertmanager and sidecar collection staged | Prometheus 2.0 Stats; Metrics Collection |
@@ -97,7 +97,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 | ollama-small | ollama | `ollama-small` | No model-serving exporter configured; GPU metrics collected | Application Workloads; GPU Overview |
 | ooni | ooni | `ooni` | No app exporter configured; job coverage | Application Workloads |
 | open-terminal | open-terminal | `open-terminal` | No app exporter configured | Application Workloads |
-| open-webui | open-webui | `open-webui` | No app exporter configured | Application Workloads |
+| open-webui | open-webui | `open-webui` | Native OTLP/HTTP metrics enabled; tracing and OTLP logging disabled | Application Workloads; native dashboard follow-up |
 | openbao | openbao | `chart:openbao` | Collected as job=openbao; existing dashboard repaired | Vault Overview |
 | openbao-custom | openbao | `openbao` | Configuration for openbao; Collected as job=openbao; existing dashboard repaired | Vault Overview |
 | openbao-network-policy | openbao | `openbao` | Configuration for openbao; Collected as job=openbao; existing dashboard repaired | Vault Overview |
@@ -122,12 +122,12 @@ Configuration-only applications inherit the owning component assessment; they ar
 ## Native coverage still requiring work
 
 - Home Assistant is an externally routed service, not a Kubernetes Deployment. Enabling its Prometheus integration and providing a long-lived token requires access to the external installation. Keep authentication enabled; do not expose `/api/prometheus` anonymously.
-- Meilisearch now has a dedicated `metrics.get` key stored in OpenBao with user approval. The prepared ExternalSecret supplies that restricted key to Prometheus; the master key is not copied into monitoring. Metrics flag, collection and native data verification are part of the follow-up rollout.
-- Firefox Sync emits StatsD; a localhost-only StatsD exporter sidecar and Prometheus scrape are prepared. Its UDP receiver is not exposed through a Service or ingress. Application telemetry still requires verifying real emitted events after deployment.
+- Meilisearch now has a dedicated `metrics.get` key stored in OpenBao with user approval. The prepared ExternalSecret supplies that restricted key to Prometheus; the master key is not copied into monitoring. The enabled endpoint was authenticated successfully, and 128 native time series were observed in Prometheus after deployment.
+- Firefox Sync emits StatsD; a localhost-only StatsD exporter sidecar and Prometheus scrape are prepared. Its UDP receiver is not exposed through a Service or ingress. Native request-duration and request counters were verified from real emitted events after deployment.
 - Database exporters remain absent for Immich PostgreSQL/Valkey, Spotify backing PostgreSQL, Firefox Sync MySQL, Lenka MySQL and Harbor internal PostgreSQL/Redis. Existing application/exporter metrics do not replace those database diagnostics.
 - Other applications marked “No app exporter configured” have shared workload coverage. This is an observed configuration gap, not a claim that their upstream software cannot support an exporter. Adding third-party exporters/instrumentation requires selecting and validating the integration; it has not been silently represented as complete.
 - Stirling PDF native Prometheus support requires a Team/Enterprise licence according to current upstream documentation; no licence change is made.
-- Individual CSI and infrastructure sidecars, metrics-server self-metrics and Loki gateway are not exhaustively instrumented by this change.
+- Individual Longhorn CSI sidecars and Loki gateway remain outside the native scrape additions. Metrics Server, snapshot-controller, GPU node-feature-discovery and both embedded Alloy sidecars are covered by the follow-up collection configuration. Argo Dex has no responding metrics listener in this installation; it is not configured as an authentication provider.
 
 ## Existing dashboard review
 
@@ -197,7 +197,7 @@ Existing rules: High Node Memory, High Swap Usage, High Load Avarage, High Files
 ## Validation and deployment boundary
 
 - Live: exporter endpoint probes, authenticated MetalLB/FRR reads, Grafana health/datasources/dashboard inventory, active scrape health and Prometheus rule evaluation health.
-- Local: YAML/JSON parsing, Prometheus config validation with the running promtool, live PromQL validation, provisioned dashboard mounts, target selector review and unchanged-alert comparison. Final checks passed: running promtool syntax validation, 11 focused unit tests, git diff --check, 16 mounted dashboard ConfigMaps, and 75 live PromQL evaluations (57 returned data; 18 were empty, including staged exporters and an event-dependent policy counter). Alert payload is byte-for-byte unchanged.
+- Local: YAML/JSON parsing, Prometheus config validation with the running promtool, live PromQL validation, provisioned dashboard mounts, target selector review and unchanged-alert comparison. Checks passed before the final infrastructure follow-up: running promtool syntax validation, 25 focused unit tests, git diff --check, 103 live PromQL evaluations (102 returned data; one event-dependent OpenBao policy counter was absent). All four newly instrumented application exporters returned native series; the new native dashboards use those observed metric families. Alert payload is byte-for-byte unchanged.
 - The initial monitoring change was published as `4d20d49c` and reconciled by Argo CD. The first post-rollout target capture contained 129 active targets, all up. Meilisearch collection, exporter namespace-label preservation and Immich startup optimization are follow-up changes. No alert mutation was performed. Repository-local configuration alone does not establish collection. After publishing through the authorized GitOps process, recheck target counts and `up`, actual new metric families, Grafana provisioning and representative panel data over multiple scrape intervals.
 
 ## Upstream references
@@ -214,3 +214,13 @@ Existing rules: High Node Memory, High Swap Usage, High Load Avarage, High Files
 Local Strata delegation was attempted; the readiness check failed, so the audit and implementation were completed directly.
 
 Immich startup follow-up: the existing library init recursively applied chown even to entries already owned by 1000:1000. Limit chown to entries with mismatched owner/group, retaining the permission-repair semantics while avoiding unnecessary metadata writes. The root, upload and thumbs directories were verified already owned by 1000:1000.
+
+## Additional collection verification
+
+- After the Firefox/Mastodon rollout, all 134 scrape targets were up. Native series counts at that capture: Immich 5,102; Meilisearch 128; Firefox Sync 102; Mastodon 68; External Secrets 3,140; Kyverno 10,475; Headlamp 992.
+- Metrics Server self-metrics accepted the projected Prometheus service-account token over HTTPS. Its serving certificate is self-signed, consistent with the existing APIService TLS configuration; the scrape retains authentication and skips certificate verification.
+- GPU node-feature-discovery and both Bitwarden/Nextcloud Alloy sidecar endpoints responded with native metrics before collection was added. Their endpoints were already enabled.
+- A platform-health scrape warning was traced to duplicate restart-detail samples when a Pod name was reused with a different UID. Coalesce only those exposed restart samples by their public labels. Preserve the report checks, report/HTML content, and notification decisions. The existing generated metrics-only snapshot was corrected with a resourceVersion check; no report email was triggered. A regression test covers two Pod incarnations with distinct restart counts.
+- Native applications with no suitable exporter continue to have shared Kubernetes workload metrics. This does not invent application-level request or queue metrics. Externally hosted Home Assistant and licence-gated Stirling PDF telemetry require the separate access/licence follow-ups listed above.
+
+Additional references: [Open WebUI telemetry](https://docs.openwebui.com/reference/monitoring/otel/), [Prometheus OTLP receiver](https://prometheus.io/docs/guides/opentelemetry/), [StatsD exporter](https://github.com/prometheus/statsd_exporter).

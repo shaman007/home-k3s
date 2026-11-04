@@ -39,6 +39,7 @@ spec:
             - "--config.file=/etc/prometheus/prometheus.yaml"
             - "--storage.tsdb.path=/prometheus/"
             - "--web.enable-lifecycle"
+            - "--web.enable-otlp-receiver"
             - "--storage.tsdb.no-lockfile"
             - "--web.external-url=https://prometheus.w386.k8s.my.lan"
             - "--storage.tsdb.min-block-duration=2h"

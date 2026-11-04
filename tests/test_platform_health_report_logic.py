@@ -23,6 +23,18 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
     def setUpClass(cls):
         cls.report = load_report_functions()
 
+    def test_restart_metrics_coalesce_recreated_pods_without_changing_checks(self):
+        checks = [{"name": "restarts", "passed": True, "failures": 0, "details": [
+            {"namespace": "test", "item": "recreated/worker", "value_name": "restarts_24h", "value": 2},
+            {"namespace": "test", "item": "recreated/worker", "value_name": "restarts_24h", "value": 3},
+        ]}]
+        before = deepcopy(checks)
+        metrics = self.report["render_metrics"](checks)
+        samples = [line for line in metrics.splitlines() if line.startswith("platform_health_detail_value{")]
+        self.assertEqual(samples, ['platform_health_detail_value{check="restarts_24h",namespace="test",item="recreated/worker"} 5.0'])
+        self.assertEqual(checks, before)
+        self.assertIn('platform_health_check_status{scope="cluster",check="restarts"} 1', metrics)
+
     def healthy_application(self, name="example"):
         return {"metadata": {"namespace": "argocd", "name": name},
                 "spec": {"syncPolicy": {"automated": {"selfHeal": True}}},
