@@ -75,6 +75,8 @@ spec:
       ports:
         - protocol: TCP
           port: 8088
+        - protocol: TCP
+          port: 8080
     - to:
         - namespaceSelector:
             matchLabels:
@@ -157,6 +159,8 @@ spec:
       ports:
         - protocol: TCP
           port: 9500
+        - protocol: TCP
+          port: 8000
     - to:
         - namespaceSelector:
             matchLabels:
@@ -328,3 +332,10 @@ spec:
       ports:
         - protocol: TCP
           port: 9102
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: hister
+      ports:
+        - protocol: TCP
+          port: 8080

@@ -16,9 +16,6 @@ spec:
       namespace: gpu-operator
     - server: https://kubernetes.default.svc
       namespace: longhorn-system
-    # Retain this destination until Argo prunes the obsolete guard Role/RoleBinding.
-    - server: https://kubernetes.default.svc
-      namespace: metallb-system
   clusterResourceWhitelist:
     - group: admissionregistration.k8s.io
       kind: MutatingAdmissionPolicy

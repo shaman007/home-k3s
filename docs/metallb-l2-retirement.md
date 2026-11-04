@@ -78,9 +78,20 @@ The user authorized retirement on 2026-11-04 after publishing stage 1. IPv4 and
 IPv6 public ingress returned HTTP 200, private OpenBao ingress returned HTTP 200,
 and backup SSH returned its OpenSSH banner. All three native speakers and the
 controller were ready, and all three Services retained their VIPs/L2 announcers.
-The FRR guard cleanup is prepared locally. Publish it and verify the new backfill
-hook before deleting the exact retirement inventory. The review tool only calls
-`helm template` and optional `kubectl get`.
+The FRR guard cleanup was published as `ca5ac042`; its updated hook succeeded,
+and Argo pruned the obsolete guard Role/RoleBinding. The native policy no longer
+contains FRR targets. All 13 operational resources were then deleted by exact
+name and verified absent; all four CRDs were verified present. MetalLB and
+infra-guards are Synced/Healthy. IPv4/IPv6 ingress and backup SSH passed again;
+private ingress passed with OpenBao standby health explicitly accepted.
+
+Current running-Pod Kyverno results are nine Fail results across six Pods:
+speaker root/capability findings (six) and OpenBao capability findings (three).
+No FRR Pods remain. The temporary AppProject destination can now be removed; that
+small follow-up is prepared locally. CI on ca5ac042 rejected its extra destination
+in the exact-scope unit test. After removal all 311 unit tests passed (16 skipped).
+The earlier Firefox Sync exporter probe error is fixed; runtime-contract checks
+passed. The review tool only calls `helm template` and optional `kubectl get`.
 
 ## Rollback
 

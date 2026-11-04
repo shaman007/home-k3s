@@ -8,8 +8,8 @@ separately reviewed audit exceptions.
 
 The unused FRR DaemonSet and statuscleaner have been removed from the catalog,
 native mutation rules, backfill ConfigMap and generated namespaced RBAC. The
-AppProject temporarily retains the metallb-system destination so Argo can prune
-the old guard Role/RoleBinding; there are no remaining MetalLB mutation targets. See
+AppProject no longer needs the metallb-system destination after Argo pruned the
+old guard Role/RoleBinding; there are no remaining MetalLB mutation targets. See
 [staged FRR retirement](../docs/metallb-l2-retirement.md) for deployment sequencing,
 verification and the retained CRDs. Historical compatibility evidence remains in
 [GPU/FRR helper hardening](../docs/gpu-frr-helper-hardening.md); isolated FRR probe

@@ -30,6 +30,13 @@ spec:
       priorityClassName: homelab-standard
       containers:
         - env:
+            - name: PROMETHEUS_USERNAME
+              value: prometheus
+            - name: PROMETHEUS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spotify
+                  key: PROMETHEUS_PASSWORD
             - name: API_ENDPOINT
               value: https://spt-server.andreybondarenko.com
             - name: CLIENT_ENDPOINT

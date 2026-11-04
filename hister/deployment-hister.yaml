@@ -66,6 +66,8 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           env:
+            - name: HISTER__SERVER__METRICS
+              value: "true"
             - name: HISTER__SERVER__ADDRESS
               value: 0.0.0.0:8080
             - name: HISTER__SERVER__BASE_URL

@@ -185,6 +185,42 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
+      - job_name: hister
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        authorization:
+          credentials_file: /etc/prometheus-hister/token
+        static_configs:
+          - targets: [hister.hister.svc.cluster.local:8080]
+      - job_name: spotify
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        basic_auth:
+          username: prometheus
+          password_file: /etc/prometheus-spotify/token
+        static_configs:
+          - targets: [server.spotify.svc.cluster.local:8080]
+      - job_name: longhorn-csi
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [longhorn-system]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_phase]
+            action: keep
+            regex: Running
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: csi-(attacher|provisioner|resizer|snapshotter)
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            action: keep
+            regex: "8000"
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: component
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
       - job_name: metrics-server
         scheme: https
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token

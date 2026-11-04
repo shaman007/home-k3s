@@ -70,6 +70,12 @@ spec:
             timeoutSeconds: 2
             failureThreshold: 3
           volumeMounts:
+            - name: spotify-metrics-token
+              mountPath: /etc/prometheus-spotify
+              readOnly: true
+            - name: hister-metrics-token
+              mountPath: /etc/prometheus-hister
+              readOnly: true
             - name: meilisearch-metrics-token
               mountPath: /etc/prometheus-meilisearch
               readOnly: true
@@ -178,6 +184,12 @@ spec:
             limits:
               memory: 32Mi
       volumes:
+        - name: spotify-metrics-token
+          secret:
+            secretName: prometheus-spotify-metrics
+        - name: hister-metrics-token
+          secret:
+            secretName: prometheus-hister-metrics
         - name: meilisearch-metrics-token
           secret:
             secretName: prometheus-meilisearch-metrics
