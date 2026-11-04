@@ -129,5 +129,49 @@ names.append(dashboard('data-services', 'Database and Storage Metrics',
     ('Longhorn write throughput', 'longhorn_volume_write_throughput', 'Bps', '{{volume}}'),
 ]))
 
+names.append(dashboard('firefox-sync-metrics', 'Firefox Sync Metrics',
+    'Native Syncstorage StatsD metrics received by the localhost-only bridge. Durations are converted from StatsD timers to seconds. Idle/error series may be absent until events occur.', [
+    ('Requests by route', 'sum by (method,route) (rate(syncstorage_request_duration_count{job="firefox-sync"}[$__rate_interval]))', 'ops', '{{method}} / {{route}}'),
+    ('Requests by status', 'sum by (status) (rate(syncstorage_request_duration_count{job="firefox-sync"}[$__rate_interval]))', 'ops', '{{status}}'),
+    ('Mean request duration', 'sum(rate(syncstorage_request_duration_sum{job="firefox-sync"}[$__rate_interval])) / sum(rate(syncstorage_request_duration_count{job="firefox-sync"}[$__rate_interval]))', 's', 'mean'),
+    ('StatsD events received', 'sum by (type) (rate(statsd_exporter_events_total{job="firefox-sync"}[$__rate_interval]))', 'ops', '{{type}}'),
+    ('Telemetry target health', 'up{job="firefox-sync"}', 'short', '{{pod}}'),
+    ('Bridge resident memory', 'process_resident_memory_bytes{job="firefox-sync"}', 'bytes', '{{pod}}'),
+]))
+
+names.append(dashboard('mastodon-metrics', 'Mastodon Application Metrics',
+    'Native web/Puma and embedded Sidekiq metrics. Queue-depth and per-job completion metrics are not inferred from busy-worker gauges. PostgreSQL and Valkey have separate data-service panels.', [
+    ('Web requests by status', 'sum by (status) (rate(ruby_http_requests_total{job="mastodon"}[$__rate_interval]))', 'ops', '{{status}}'),
+    ('Puma request backlog', 'sum by (pod) (ruby_puma_request_backlog{job="mastodon"})', 'short', '{{pod}}'),
+    ('Puma thread pool capacity', 'sum by (pod) (ruby_puma_thread_pool_capacity{job="mastodon"})', 'short', '{{pod}}'),
+    ('Sidekiq busy workers', 'sidekiq_process_busy{job="mastodon"}', 'short', '{{pod}}'),
+    ('Sidekiq concurrency', 'sidekiq_process_concurrency{job="mastodon"}', 'short', '{{pod}}'),
+    ('Web database connections waiting', 'sum by (pod) (ruby_active_record_connection_pool_waiting{job="mastodon"})', 'short', '{{pod}}'),
+    ('Sidekiq database connections waiting', 'sum by (pod) (active_record_connection_pool_waiting{job="mastodon"})', 'short', '{{pod}}'),
+    ('Web and Sidekiq targets', 'up{job="mastodon"}', 'short', '{{pod}}'),
+]))
+
+names.append(dashboard('immich-metrics', 'Immich Application Metrics',
+    'API and microservices telemetry from the two native endpoints. Queue panels show observed active-job gauges; no absent metric is presented as a successful zero.', [
+    ('Telemetry endpoint health', 'up{job="immich"}', 'short', '{{instance}}'),
+    ('Process memory', 'process_memory_usage{job="immich"}', 'bytes', '{{instance}}'),
+    ('Process CPU utilization', '100 * process_cpu_utilization{job="immich"}', 'percent', '{{instance}} / {{process_cpu_state}}'),
+    ('Active jobs by queue', 'sum by (__name__) ({job="immich",__name__=~"immich_queues_.*_active"})', 'short', '{{__name__}}'),
+    ('Worker job runs', 'sum(rate(immich_job_repository_run_duration_count{job="immich"}[$__rate_interval]))', 'ops', 'runs'),
+    ('Asset creation calls', 'sum(rate(immich_asset_repository_create_duration_count{job="immich"}[$__rate_interval]))', 'ops', 'calls'),
+]))
+
+names.append(dashboard('meilisearch-metrics', 'Meilisearch Metrics',
+    'Karakeep search-engine telemetry, collected with a metrics.get-only API key. Request panels exclude the metrics endpoint itself.', [
+    ('Database size', 'meilisearch_db_size_bytes{job="meilisearch"}', 'bytes', 'allocated'),
+    ('Used database size', 'meilisearch_used_db_size_bytes{job="meilisearch"}', 'bytes', 'used'),
+    ('Documents by index', 'meilisearch_index_docs_count{job="meilisearch"}', 'short', '{{index}}'),
+    ('HTTP requests excluding scrapes', 'sum by (status) (rate(meilisearch_http_requests_total{job="meilisearch",path!="/metrics"}[$__rate_interval]))', 'ops', '{{status}}'),
+    ('HTTP p95 latency excluding scrapes', 'histogram_quantile(0.95, sum by (le) (rate(meilisearch_http_response_time_seconds_bucket{job="meilisearch",path!="/metrics"}[$__rate_interval])))', 's', 'p95'),
+    ('Search queue size', 'meilisearch_search_queue_size{job="meilisearch"}', 'short', 'searches'),
+    ('Task queue latency', 'meilisearch_task_queue_latency_seconds{job="meilisearch"}', 's', 'latency'),
+    ('Tasks by kind and state', 'meilisearch_nb_tasks{job="meilisearch"}', 'short', '{{kind}} / {{value}}'),
+]))
+
 if __name__ == '__main__':
     print('\n'.join(names))

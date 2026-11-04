@@ -534,6 +534,7 @@ data:
             "# HELP platform_health_detail_value Detailed per-item values emitted by the platform health report.",
             "# TYPE platform_health_detail_value gauge",
         ]
+        restart_values = {}
         for item in checks:
             lines.append(f'platform_health_check_status{{scope="cluster",check="{item["name"]}"}} {1 if item["passed"] else 0}')
             lines.append(f'platform_health_check_failures{{scope="cluster",check="{item["name"]}"}} {item["failures"]}')
@@ -541,7 +542,15 @@ data:
                 namespace = str(detail.get("namespace", "cluster")).replace('"', "")
                 label_item = str(detail.get("item", "cluster")).replace('"', "")
                 value_name = str(detail.get("value_name", item["name"])).replace('"', "")
-                lines.append(f'platform_health_detail_value{{check="{value_name}",namespace="{namespace}",item="{label_item}"}} {detail.get("value", 0)}')
+                if value_name == "restarts_24h":
+                    # Recreated Pods can share name/container labels but have different UIDs.
+                    # Keep report/notification decisions unchanged; coalesce only exposition.
+                    key = (namespace, label_item)
+                    restart_values[key] = restart_values.get(key, 0) + float(detail.get("value", 0))
+                else:
+                    lines.append(f'platform_health_detail_value{{check="{value_name}",namespace="{namespace}",item="{label_item}"}} {detail.get("value", 0)}')
+        for (namespace, label_item), value in sorted(restart_values.items()):
+            lines.append(f'platform_health_detail_value{{check="restarts_24h",namespace="{namespace}",item="{label_item}"}} {value}')
         return "\n".join(lines).strip() + "\n"
 
 

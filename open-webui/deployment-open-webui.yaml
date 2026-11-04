@@ -129,6 +129,28 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           env:
+            - name: ENABLE_OTEL
+              value: "true"
+            - name: ENABLE_OTEL_METRICS
+              value: "true"
+            - name: ENABLE_OTEL_TRACES
+              value: "false"
+            - name: ENABLE_OTEL_LOGS
+              value: "false"
+            - name: OTEL_METRICS_OTLP_SPAN_EXPORTER
+              value: http
+            - name: OTEL_METRICS_EXPORTER_OTLP_ENDPOINT
+              value: http://prometheus-service.monitoring.svc.cluster.local:9090/api/v1/otlp/v1/metrics
+            - name: OTEL_METRICS_EXPORT_INTERVAL_MILLIS
+              value: "30000"
+            - name: OTEL_SERVICE_NAME
+              value: open-webui
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.instance.id=$(POD_NAME),k8s.namespace.name=open-webui
             # Keep infrastructure integrations declarative. Chats, accounts,
             # and other user data remain on the persistent data volume.
             - name: ENABLE_PERSISTENT_CONFIG

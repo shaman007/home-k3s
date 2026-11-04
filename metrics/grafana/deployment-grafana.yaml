@@ -192,3 +192,11 @@ spec:
                   name: grafana-dashboard-mysql
               - configMap:
                   name: grafana-dashboard-seaweedfs
+              - configMap:
+                  name: grafana-dashboard-firefox-sync-metrics
+              - configMap:
+                  name: grafana-dashboard-mastodon-metrics
+              - configMap:
+                  name: grafana-dashboard-immich-metrics
+              - configMap:
+                  name: grafana-dashboard-meilisearch-metrics
