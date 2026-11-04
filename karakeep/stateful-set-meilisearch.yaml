@@ -65,6 +65,8 @@ spec:
               containerPort: 7700
               protocol: TCP
           env:
+            - name: MEILI_EXPERIMENTAL_ENABLE_METRICS
+              value: "true"
             # Keep the established data path across engine upgrades.
             - name: MEILI_DB_PATH
               value: /meili_data/data-v1.37.0-r1.ms

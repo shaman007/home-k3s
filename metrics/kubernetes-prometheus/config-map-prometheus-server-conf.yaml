@@ -185,6 +185,14 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
+      - job_name: meilisearch
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        authorization:
+          credentials_file: /etc/prometheus-meilisearch/token
+        static_configs:
+          - targets:
+              - meilisearch.karakeep.svc.cluster.local:7700
       - job_name: external-secrets
         scrape_interval: 45s
         scrape_timeout: 15s
@@ -204,7 +212,7 @@ data:
           regex: '8080'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -230,7 +238,7 @@ data:
           regex: '8000'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -256,7 +264,7 @@ data:
           regex: '4466'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -282,7 +290,7 @@ data:
           regex: '9394'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -308,7 +316,7 @@ data:
           regex: '9090'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -334,7 +342,7 @@ data:
           regex: '8084'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -366,7 +374,7 @@ data:
           regex: '12345'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -392,7 +400,7 @@ data:
           regex: '9093'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -421,7 +429,7 @@ data:
           regex: '10902'
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -447,7 +455,7 @@ data:
           regex: 8081|8082
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod
@@ -478,7 +486,7 @@ data:
           regex: 9120|9140|9141
         - source_labels:
           - __meta_kubernetes_namespace
-          target_label: namespace
+          target_label: kubernetes_namespace
         - source_labels:
           - __meta_kubernetes_pod_name
           target_label: pod

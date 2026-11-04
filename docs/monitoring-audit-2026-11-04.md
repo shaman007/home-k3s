@@ -6,10 +6,10 @@ Live audit: 92 Argo CD applications, 145 Deployment/StatefulSet/DaemonSet object
 
 Grafana 13.3.0 reported a healthy database. Grafana-managed alert rule inventory is empty; alerting is managed by Prometheus (21 rules, all inactive and evaluating successfully). Successful evaluation does not establish meaningful coverage: two OpenBao rules select an obsolete job/metric. Notification delivery was not tested.
 
-## Prepared changes (local; not deployed)
+## Implemented change set
 
 - Enable cert-manager metrics, Cilium agent metrics, Headlamp telemetry and Immich API/worker telemetry.
-- Add 13 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
+- Add 14 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
 - Keep dedicated Traefik and Prometheus jobs and drop their redundant generic pod/service discovery targets.
 - Extend Prometheus egress and target ingress for the needed ports, including Cilium host/remote-node permissions. Add the Argo ingress policy to its Kustomization.
 - Provision six dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, and Database and Storage Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
@@ -63,7 +63,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 | image-builder | image-builder | `image-builder` | No app exporter configured; Kubernetes Job coverage | Application Workloads |
 | immich | immich | `immich` | Telemetry disabled; API/worker enablement staged; DB exporters still absent | Platform Controller Metrics; Application Workloads |
 | infra-guards | kyverno | `infra-guards` | Configuration for kyverno; Admission/reports exporters verified; scrape staged | Platform Controller Metrics |
-| karakeep | karakeep | `karakeep` | No web exporter configured; Meilisearch metrics require scoped credential | Application Workloads |
+| karakeep | karakeep | `karakeep` | No web exporter configured; scoped Meilisearch metrics integration prepared | Application Workloads |
 | keycloak | keycloak | `keycloak` | Collected | Keycloak Events; PostgreSQL Database |
 | kube-node-exporter | monitoring | `metrics/kubernetes-node-exporter` | Collected | Cluster load - new; Linux Host Overview |
 | kube-state-metrics | kube-system | `metrics/kube-state-metrics-configs` | Collected | Application Workloads; Platform Health |
@@ -122,7 +122,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 ## Native coverage still requiring work
 
 - Home Assistant is an externally routed service, not a Kubernetes Deployment. Enabling its Prometheus integration and providing a long-lived token requires access to the external installation. Keep authentication enabled; do not expose `/api/prometheus` anonymously.
-- Karakeep Meilisearch has a master key and its metrics flag is absent. A restricted `metrics.get` API key, secure secret delivery to Prometheus and the metrics flag are needed. No master key is copied into monitoring.
+- Meilisearch now has a dedicated `metrics.get` key stored in OpenBao with user approval. The prepared ExternalSecret supplies that restricted key to Prometheus; the master key is not copied into monitoring. Metrics flag, collection and native data verification are part of the follow-up rollout.
 - Firefox Sync uses StatsD. A StatsD-to-Prometheus bridge and mapping are needed; no native Prometheus endpoint is assumed.
 - Database exporters remain absent for Immich PostgreSQL/Valkey, Spotify backing PostgreSQL, Firefox Sync MySQL, Lenka MySQL and Harbor internal PostgreSQL/Redis. Existing application/exporter metrics do not replace those database diagnostics.
 - Other applications marked “No app exporter configured” have shared workload coverage. This is an observed configuration gap, not a claim that their upstream software cannot support an exporter. Adding third-party exporters/instrumentation requires selecting and validating the integration; it has not been silently represented as complete.
@@ -198,7 +198,7 @@ Existing rules: High Node Memory, High Swap Usage, High Load Avarage, High Files
 
 - Live: exporter endpoint probes, authenticated MetalLB/FRR reads, Grafana health/datasources/dashboard inventory, active scrape health and Prometheus rule evaluation health.
 - Local: YAML/JSON parsing, Prometheus config validation with the running promtool, live PromQL validation, provisioned dashboard mounts, target selector review and unchanged-alert comparison. Final checks passed: running promtool syntax validation, 11 focused unit tests, git diff --check, 16 mounted dashboard ConfigMaps, and 75 live PromQL evaluations (57 returned data; 18 were empty, including staged exporters and an event-dependent policy counter). Alert payload is byte-for-byte unchanged.
-- No deployment, commit, push or alert mutation was performed. Repository-local configuration does not establish collection. After publishing through the authorized GitOps process, recheck target counts and `up`, actual new metric families, Grafana provisioning and representative panel data over multiple scrape intervals.
+- The initial monitoring change was published as `4d20d49c` and reconciled by Argo CD. The first post-rollout target capture contained 129 active targets, all up. Meilisearch collection, exporter namespace-label preservation and Immich startup optimization are follow-up changes. No alert mutation was performed. Repository-local configuration alone does not establish collection. After publishing through the authorized GitOps process, recheck target counts and `up`, actual new metric families, Grafana provisioning and representative panel data over multiple scrape intervals.
 
 ## Upstream references
 
@@ -212,3 +212,5 @@ Existing rules: High Node Memory, High Swap Usage, High Load Avarage, High Files
 - Pinned chart values inspected directly: cert-manager v1.21.3, Cilium 1.20.4, MetalLB 0.16.1.
 
 Local Strata delegation was attempted; the readiness check failed, so the audit and implementation were completed directly.
+
+Immich startup follow-up: the existing library init recursively applied chown even to entries already owned by 1000:1000. Limit chown to entries with mismatched owner/group, retaining the permission-repair semantics while avoiding unnecessary metadata writes. The root, upload and thumbs directories were verified already owned by 1000:1000.

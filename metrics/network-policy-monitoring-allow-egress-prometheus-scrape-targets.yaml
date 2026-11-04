@@ -308,3 +308,10 @@ spec:
           port: 9140
         - protocol: TCP
           port: 9141
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: karakeep
+      ports:
+        - protocol: TCP
+          port: 7700

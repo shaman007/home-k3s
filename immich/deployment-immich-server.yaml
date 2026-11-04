@@ -44,6 +44,7 @@ spec:
             - -c
             - >-
               find /data -path /data/lost+found -prune -o
+              \( ! -user 1000 -o ! -group 1000 \)
               -exec chown 1000:1000 {} +
           securityContext:
             runAsUser: 0

@@ -69,6 +69,9 @@ spec:
             timeoutSeconds: 2
             failureThreshold: 3
           volumeMounts:
+            - name: meilisearch-metrics-token
+              mountPath: /etc/prometheus-meilisearch
+              readOnly: true
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
@@ -174,6 +177,9 @@ spec:
             limits:
               memory: 32Mi
       volumes:
+        - name: meilisearch-metrics-token
+          secret:
+            secretName: prometheus-meilisearch-metrics
         - name: prometheus-config-volume
           configMap:
             defaultMode: 420
