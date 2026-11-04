@@ -47,6 +47,7 @@ PROJECT_ACCESS_MANAGEMENT = {"lenka"}
 PROJECT_NAMESPACE_MANAGEMENT = {"namespaces"}
 
 PROJECT_MEMBERS = {
+    "infra-guards": {"infra-guards"},
     "applications": PROJECT_APPLICATIONS,
     "platform": PROJECT_PLATFORM,
     "storage": PROJECT_STORAGE,
@@ -79,6 +80,7 @@ PROJECT_SYNC_WAVES = {
 }
 
 EXPECTED_CLUSTER_PERMISSIONS = {
+    "infra-guards": {("admissionregistration.k8s.io", "MutatingAdmissionPolicy"), ("admissionregistration.k8s.io", "MutatingAdmissionPolicyBinding")},
     "kyverno": {
         ("", "Namespace"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
@@ -131,6 +133,7 @@ EXPECTED_CLUSTER_PERMISSIONS = {
 }
 
 EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS = {
+    "infra-guards": {("", "ServiceAccount"), ("", "ConfigMap"), ("rbac.authorization.k8s.io", "Role"), ("rbac.authorization.k8s.io", "RoleBinding"), ("batch", "Job")},
     "access-management": {
         ("", "Secret"),
         ("", "ServiceAccount"),

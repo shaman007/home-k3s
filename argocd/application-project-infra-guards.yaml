@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infra-guards
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  description: Reviewed non-privileged infrastructure guards and narrowly scoped backfill
+  sourceRepos:
+    - https://github.com/shaman007/home-k3s.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: kyverno
+    - server: https://kubernetes.default.svc
+      namespace: gpu-operator
+    - server: https://kubernetes.default.svc
+      namespace: longhorn-system
+    - server: https://kubernetes.default.svc
+      namespace: metallb-system
+  clusterResourceWhitelist:
+    - group: admissionregistration.k8s.io
+      kind: MutatingAdmissionPolicy
+    - group: admissionregistration.k8s.io
+      kind: MutatingAdmissionPolicyBinding
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ServiceAccount
+    - group: ''
+      kind: ConfigMap
+    - group: rbac.authorization.k8s.io
+      kind: Role
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: batch
+      kind: Job

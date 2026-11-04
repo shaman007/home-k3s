@@ -87,6 +87,8 @@ jobs:
           python tools/longhorn/test-recurring-security-policy.py
           python tools/longhorn/generate-component-security.py --check
           python tools/longhorn/test-component-security-policy.py
+          python tools/security/generate-infra-guards.py --check
+          python tools/security/test-infra-guard-policy.py
 
       - name: Check CrowdSec rootless mount contracts
         run: |
