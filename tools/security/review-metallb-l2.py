@@ -73,6 +73,24 @@ def main():
             raise AssertionError('Unexpected changed resource: ' + str(identity))
         assert original == actual, 'Unexpected change within ' + str(identity)
     assert len(changed) == 3, 'Expected only controller/speaker backend and speaker RBAC changes'
+    speaker = after[('DaemonSet', 'metallb-speaker')]['spec']
+    pod = speaker['template']['spec']
+    assert pod['securityContext'] == {
+        'runAsNonRoot': True, 'runAsUser': 1000, 'runAsGroup': 1000,
+        'fsGroup': 1000, 'seccompProfile': {'type': 'RuntimeDefault'}}, 'Unreviewed speaker identity'
+    assert speaker['updateStrategy'] == {'type': 'RollingUpdate', 'rollingUpdate': {'maxUnavailable': 1}}
+    assert pod['hostNetwork'] is True and not pod.get('hostPID') and not pod.get('hostIPC')
+    assert not pod.get('initContainers'), 'Unexpected speaker init container'
+    assert len(pod['containers']) == 1
+    container = pod['containers'][0]
+    assert container['securityContext'] == {
+        'allowPrivilegeEscalation': False, 'readOnlyRootFilesystem': True,
+        'capabilities': {'drop': ['ALL'], 'add': ['NET_RAW']}}, 'Required raw L2 capability changed'
+    assert all(port['containerPort'] > 1024 for port in container['ports'])
+    assert all(set(volume) <= {'name', 'secret', 'configMap'} for volume in pod['volumes']), 'fsGroup review excludes persistent/host volumes'
+    exclude = next(volume for volume in pod['volumes'] if volume['name'] == 'metallb-excludel2')
+    assert exclude['configMap']['defaultMode'] == 0o400, 'Unexpected config mode'
+    print('Non-root speaker guards, NET_RAW, projected-only volumes and one-at-a-time rollout verified.')
     print('Chart review passed: 3 narrowly changed resources; 17 FRR resources leave desired state, including 4 retained CRDs.')
     if args.live:
         def get(resource, namespace=None):
@@ -91,7 +109,7 @@ def main():
             assert service['spec'].get('loadBalancerClass') == 'metallb-l2', 'Unexpected LoadBalancer class'
             assert service.get('status', {}).get('loadBalancer', {}).get('ingress'), 'Unassigned LoadBalancer'
         print(f'Live prerequisites passed: no BGP/FRR configs; {len(pools)} pools, {len(ads)} L2 advertisements, {len(services)} assigned L2 services.')
-        print('This does not prove post-migration ARP/NDP reachability. Verify that after publishing, before retirement.')
+        print('This does not prove post-rollout ARP/NDP reachability. Verify from the LAN after backend or identity changes.')
 
 
 if __name__ == '__main__':

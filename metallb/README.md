@@ -18,3 +18,6 @@ See [private ingress](../traefik-private/README.md) for class isolation and inte
 
 See [staged FRR retirement](../docs/metallb-l2-retirement.md) for the reviewed
 L2-only backend migration, retained CRDs and verification/rollback steps.
+
+See [speaker non-root compatibility](../docs/metallb-speaker-nonroot.md) for the
+projected-volume group requirement, retained NET_RAW and post-rollout checks.

@@ -29,8 +29,18 @@ spec:
         speaker:
           frr:
             enabled: false
+          updateStrategy:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: 1
           priorityClassName: homelab-critical
           securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            # Projected mode-0400 exclude-L2 config needs group read access.
+            # No persistent or hostPath volumes are mounted by the speaker.
+            fsGroup: 1000
             seccompProfile:
               type: RuntimeDefault
         frr-k8s:
