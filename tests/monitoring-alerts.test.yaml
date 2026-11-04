@@ -1,0 +1,201 @@
+rule_files:
+- fixtures/monitoring-alerts.rules.yaml
+evaluation_interval: 1m
+tests:
+- name: VaultSealed
+  interval: 1m
+  input_series:
+  - series: vault_core_unsealed{job="openbao",instance="bao"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: vault_core_unsealed{job="openbao"} == 0
+    eval_time: 20m
+    exp_samples: []
+- name: VaultSealed
+  interval: 1m
+  input_series:
+  - series: vault_core_unsealed{job="openbao",instance="bao"}
+    values: 0+0x20
+  promql_expr_test:
+  - expr: vault_core_unsealed{job="openbao"} == 0
+    eval_time: 20m
+    exp_samples:
+    - labels: '{__name__="vault_core_unsealed",job="openbao",instance="bao"}'
+      value: 0
+- name: RedisMemoryNearLimit
+  interval: 1m
+  input_series:
+  - series: redis_memory_used_bytes{instance="r"}
+    values: 100+0x20
+  - series: redis_memory_max_bytes{instance="r"}
+    values: 0+0x20
+  promql_expr_test:
+  - expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.90) and (redis_memory_max_bytes
+      > 0)
+    eval_time: 20m
+    exp_samples: []
+- name: KubePodNotReady
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and
+      on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"}))
+      unless on(namespace,pod) kube_pod_deletion_timestamp
+    eval_time: 20m
+    exp_samples:
+    - labels: '{namespace="n",pod="p"}'
+      value: 0
+- name: KubePodNotReady
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="Job"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and
+      on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"}))
+      unless on(namespace,pod) kube_pod_deletion_timestamp
+    eval_time: 20m
+    exp_samples: []
+- name: KubePodNotReady
+  interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_deletion_timestamp{namespace="n",pod="p"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and
+      on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"}))
+      unless on(namespace,pod) kube_pod_deletion_timestamp
+    eval_time: 20m
+    exp_samples: []
+- name: ExpectedScrapeJobMissing
+  interval: 1m
+  input_series:
+  - series: homelab_expected_scrape_job{job="redis"}
+    values: 1+0x20
+  - series: up{job="redis",instance="r"}
+    values: 0+0x20
+  promql_expr_test:
+  - expr: homelab_expected_scrape_job unless on(job) count by(job) (up)
+    eval_time: 20m
+    exp_samples: []
+- name: ExpectedScrapeJobMissing
+  interval: 1m
+  input_series:
+  - series: homelab_expected_scrape_job{job="test-expected"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: homelab_expected_scrape_job{job="test-expected"} unless on(job) count by(job)
+      (up)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{__name__="homelab_expected_scrape_job",job="test-expected"}'
+      value: 1
+- name: TraefikHigh5xx
+  interval: 1m
+  input_series:
+  - series: traefik_service_requests_total{service="web",code="200"}
+    values: 0+1x20
+  - series: traefik_service_requests_total{service="web",code="500"}
+    values: 0+1x20
+  promql_expr_test:
+  - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.05) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100)
+    eval_time: 20m
+    exp_samples: []
+- name: TraefikHigh5xx
+  interval: 1m
+  input_series:
+  - series: traefik_service_requests_total{service="web",code="200"}
+    values: 0+90x20
+  - series: traefik_service_requests_total{service="web",code="500"}
+    values: 0+10x20
+  promql_expr_test:
+  - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.05) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{service="web"}'
+      value: 0.1
+- name: LonghornBackupStale
+  interval: 1m
+  input_series:
+  - series: homelab_backup_max_age_seconds{namespace="longhorn-system",cronjob="monthly"}
+    values: 3024000+0x20
+  - series: kube_cronjob_status_last_successful_time{namespace="longhorn-system",cronjob="monthly"}
+    values: -86400+0x20
+  - series: kube_cronjob_spec_suspend{namespace="longhorn-system",cronjob="monthly"}
+    values: 0+0x20
+  promql_expr_test:
+  - expr: ((time() - kube_cronjob_status_last_successful_time) > on(namespace,cronjob)
+      homelab_backup_max_age_seconds) and on(namespace,cronjob) (kube_cronjob_spec_suspend
+      == 0)
+    eval_time: 20m
+    exp_samples: []
+- name: LoadBalancerAddressMissing
+  interval: 1m
+  input_series:
+  - series: kube_service_spec_type{namespace="n",service="s",type="LoadBalancer"}
+    values: 1+0x20
+  - series: kube_service_status_load_balancer_ingress{namespace="n",service="s",ip="1.2.3.4"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: kube_service_spec_type{type="LoadBalancer"} unless on(namespace,service)
+      kube_service_status_load_balancer_ingress
+    eval_time: 20m
+    exp_samples: []
+- name: LoadBalancerAddressMissing
+  interval: 1m
+  input_series:
+  - series: kube_service_spec_type{namespace="n",service="s",type="LoadBalancer"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: kube_service_spec_type{type="LoadBalancer"} unless on(namespace,service)
+      kube_service_status_load_balancer_ingress
+    eval_time: 20m
+    exp_samples:
+    - labels: '{__name__="kube_service_spec_type",namespace="n",service="s",type="LoadBalancer"}'
+      value: 1
+- name: daily backup overdue 0
+  interval: 1m
+  input_series:
+  - series: homelab_backup_max_age_seconds{namespace="longhorn-system",cronjob="daily"}
+    values: 108000+0x20
+  - series: kube_cronjob_status_last_successful_time{namespace="longhorn-system",cronjob="daily"}
+    values: -172800+0x20
+  - series: kube_cronjob_spec_suspend{namespace="longhorn-system",cronjob="daily"}
+    values: 0+0x20
+  promql_expr_test:
+  - expr: ((time() - kube_cronjob_status_last_successful_time) > on(namespace,cronjob)
+      homelab_backup_max_age_seconds) and on(namespace,cronjob) (kube_cronjob_spec_suspend
+      == 0)
+    eval_time: 20m
+    exp_samples:
+    - labels: '{namespace="longhorn-system",cronjob="daily"}'
+      value: 174000
+- name: daily backup overdue 1
+  interval: 1m
+  input_series:
+  - series: homelab_backup_max_age_seconds{namespace="longhorn-system",cronjob="daily"}
+    values: 108000+0x20
+  - series: kube_cronjob_status_last_successful_time{namespace="longhorn-system",cronjob="daily"}
+    values: -172800+0x20
+  - series: kube_cronjob_spec_suspend{namespace="longhorn-system",cronjob="daily"}
+    values: 1+0x20
+  promql_expr_test:
+  - expr: ((time() - kube_cronjob_status_last_successful_time) > on(namespace,cronjob)
+      homelab_backup_max_age_seconds) and on(namespace,cronjob) (kube_cronjob_spec_suspend
+      == 0)
+    eval_time: 20m
+    exp_samples: []

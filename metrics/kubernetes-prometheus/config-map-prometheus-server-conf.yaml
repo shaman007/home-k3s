@@ -11,155 +11,236 @@ data:
     - name: alerts
       rules:
       - alert: High Node Memory
-        expr: ((node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Cached_bytes - node_memory_SReclaimable_bytes - node_memory_Buffers_bytes)/node_memory_MemTotal_bytes)*100 > 90
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
         for: 3m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: High Memory Usage
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: High Swap Usage
         expr: ((node_memory_SwapTotal_bytes{host!="fedora"} - node_memory_SwapFree_bytes{host!="fedora"})/node_memory_SwapTotal_bytes{host!="fedora"})*100 > 40
         for: 3m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: High Swap Usage
-      - alert: High Load Avarage
-        expr: node_load5 > 20
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
+      - alert: NodeLoadHigh
+        expr: node_load5 / on(instance,job) count by(instance,job) (node_cpu_seconds_total{mode="idle"}) > 2
         for: 5m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
-          summary: High Load Avarage
+          summary: Load exceeds twice the logical CPU count.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: High Filesystem Usage
-        expr: ((node_filesystem_size_bytes{mountpoint="/", } - node_filesystem_free_bytes{mountpoint="/"})/node_filesystem_size_bytes{mountpoint="/"})*100 > 85
+        expr: 100 * (1 - node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay|squashfs"}) > 85
         for: 3m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: High Filesystem Usage
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: Mysql is down
         expr: mysql_up < 1
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Mysql is down
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: VaultMetricsTargetDown
-        expr: up{job="vault"} < 1
+        expr: up{job="openbao"} == 0 or absent(up{job="openbao"})
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Vault metrics target is down.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: VaultSealed
-        expr: max_over_time(vault_sys_sealed{job="vault"}[5m]) > 0
+        expr: vault_core_unsealed{job="openbao"} == 0
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Vault is sealed.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: Postgresql-bitwarden is down
         expr: pg_up{instance="bitwarden-postgres-metrics.bitwarden.svc.cluster.local:9187", job="postgres-bitwarden"} < 1
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Postgresql-bitwarden is down
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: Postgresql-keycloak is down
         expr: pg_up{instance="keycloak-postgres-metrics.keycloak.svc.cluster.local:9187", job="postgres-keycloak"} < 1
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Postgresql-keycloak is down
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: Postgresql-dawarich is down
         expr: pg_up{instance="dawarich-postgres-metrics.dawarich.svc.cluster.local:9187", job="postgres-dawarich"} < 1
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Postgresql-dawarich is down
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: Postgresql-mastodon is down
         expr: pg_up{instance="mastodon-postgres-metrics.mastodon.svc.cluster.local:9187", job="postgres-mastodon"} < 1
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Postgresql-mastodon is down
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: KubeJobFailed
-        expr: |
-          (kube_job_failed{job="kube-state-metrics",condition="true",namespace=~".*"} > 0)
+        expr: '(kube_job_failed{job="kube-state-metrics",condition="true",namespace=~".*"} > 0)
+
           and on (namespace, job_name)
+
           ((time() - kube_job_status_start_time{job="kube-state-metrics",namespace=~".*"}) < 3600)
+
+          '
         for: 10m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: Job failed to complete.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: TalosEtcdBackupMissing
-        expr: |
-          (time() - kube_cronjob_status_last_successful_time{namespace="talos-backup",cronjob="talos-backup"} > 7200)
-          or
-          (kube_cronjob_info{namespace="talos-backup",cronjob="talos-backup"}
-            unless on (namespace, cronjob)
-            kube_cronjob_status_last_successful_time{namespace="talos-backup",cronjob="talos-backup"})
-          or
-          absent(kube_cronjob_info{namespace="talos-backup",cronjob="talos-backup"})
+        expr: "(time() - kube_cronjob_status_last_successful_time{namespace=\"talos-backup\",cronjob=\"talos-backup\"} > 7200)\nor\n(kube_cronjob_info{namespace=\"talos-backup\",cronjob=\"\
+          talos-backup\"}\n  unless on (namespace, cronjob)\n  kube_cronjob_status_last_successful_time{namespace=\"talos-backup\",cronjob=\"talos-backup\"})\nor\nabsent(kube_cronjob_info{namespace=\"\
+          talos-backup\",cronjob=\"talos-backup\"})\n"
         for: 10m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Talos etcd backup has no successful scheduled run in the last two hours.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: TalosEtcdBackupSuspended
         expr: kube_cronjob_spec_suspend{namespace="talos-backup",cronjob="talos-backup"} == 1
         for: 15m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: Talos etcd backup scheduling is suspended.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: CPUThrottlingHigh
-        expr: sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) / sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_periods_total[5m])) > (25 / 100)
+        expr: sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) / sum by (cluster, container, pod, namespace) (increase(container_cpu_cfs_periods_total[5m]))
+          > (25 / 100)
         for: 5m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: Processes experience elevated CPU throttling.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: KubePodCrashLooping
         expr: max_over_time(kube_pod_container_status_waiting_reason{job="kube-state-metrics",namespace=~".*",reason="CrashLoopBackOff"}[5m]) >= 1
         for: 5m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: Pod is crash looping.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: KubePodNotReady
-        expr: sum by (namespace, pod, cluster) (max by (namespace, pod, cluster) (kube_pod_status_phase{job="kube-state-metrics",namespace=~".*",phase=~"Pending|Unknown|Failed"}) * on (namespace, pod, cluster) group_left (owner_kind) topk by (namespace, pod, cluster) (1, max by (namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"}))) > 0
+        expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"})) unless on(namespace,pod)
+          kube_pod_deletion_timestamp
         for: 15m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: Pod has been in a non-ready state for more than 15 minutes.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: KubeNodeNotReady
         expr: kube_node_status_condition{condition="Ready",job="kube-state-metrics",status="true"} == 0
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Node is not ready.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: KubeNodeUnreachable
-        expr: (kube_node_spec_taint{effect="NoSchedule",job="kube-state-metrics",key="node.kubernetes.io/unreachable"} unless ignoring (key, value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1
+        expr: (kube_node_spec_taint{effect="NoSchedule",job="kube-state-metrics",key="node.kubernetes.io/unreachable"} unless ignoring (key, value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"})
+          == 1
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: critical
         annotations:
           summary: Node is unreachable.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: TargetDown
         expr: 100 * (count by (cluster, job, namespace, service) (up{alert_on_down!="false"} == 0) / count by (cluster, job, namespace, service) (up{alert_on_down!="false"})) > 10
         for: 1m
         labels:
           severity: mail
+          owner: homelab
+          priority: warning
         annotations:
           summary: One or more targets are unreachable.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
       - alert: PVC is full!
         expr: max by (namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.95
         for: 1m
@@ -167,8 +248,960 @@ data:
           severity: mail
           pvc: '{{ $labels.persistentvolumeclaim }}'
           pvc_namespace: '{{ $labels.namespace }}'
+          owner: homelab
+          priority: critical
         annotations:
           summary: One or more PVC is >95% utilized.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          description: Inspect this resource and its recent events; see the linked runbook before making changes.
+    - name: expected-inventory
+      interval: 1m
+      rules:
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "hister", "", "")
+        labels:
+          job: hister
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "spotify", "", "")
+        labels:
+          job: spotify
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "longhorn-csi", "", "")
+        labels:
+          job: longhorn-csi
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "metrics-server", "", "")
+        labels:
+          job: metrics-server
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "snapshot-controller", "", "")
+        labels:
+          job: snapshot-controller
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "node-feature-discovery", "", "")
+        labels:
+          job: node-feature-discovery
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "firefox-sync", "", "")
+        labels:
+          job: firefox-sync
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "meilisearch", "", "")
+        labels:
+          job: meilisearch
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "external-secrets", "", "")
+        labels:
+          job: external-secrets
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kyverno", "", "")
+        labels:
+          job: kyverno
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "headlamp", "", "")
+        labels:
+          job: headlamp
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "mastodon", "", "")
+        labels:
+          job: mastodon
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "reloader", "", "")
+        labels:
+          job: reloader
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "argocd-repo-server", "", "")
+        labels:
+          job: argocd-repo-server
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "argocd-notifications", "", "")
+        labels:
+          job: argocd-notifications
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "alloy", "", "")
+        labels:
+          job: alloy
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "alertmanager", "", "")
+        labels:
+          job: alertmanager
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "thanos-sidecar", "", "")
+        labels:
+          job: thanos-sidecar
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "immich", "", "")
+        labels:
+          job: immich
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "metallb", "", "")
+        labels:
+          job: metallb
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "valkey-wordpress", "", "")
+        labels:
+          job: valkey-wordpress
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "crowdsec", "", "")
+        labels:
+          job: crowdsec
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "mysql-wordpress", "", "")
+        labels:
+          job: mysql-wordpress
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "mysql-nextcloud", "", "")
+        labels:
+          job: mysql-nextcloud
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-longhorn-manager", "", "")
+        labels:
+          job: kubernetes-longhorn-manager
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "postgres-bitwarden", "", "")
+        labels:
+          job: postgres-bitwarden
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "postgres-keycloak", "", "")
+        labels:
+          job: postgres-keycloak
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "postgres-dawarich", "", "")
+        labels:
+          job: postgres-dawarich
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "postgres-mastodon", "", "")
+        labels:
+          job: postgres-mastodon
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "rspamd", "", "")
+        labels:
+          job: rspamd
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "connectivity-exporter", "", "")
+        labels:
+          job: connectivity-exporter
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "valkey-mail", "", "")
+        labels:
+          job: valkey-mail
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "valkey-nextcloud", "", "")
+        labels:
+          job: valkey-nextcloud
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "traefik", "", "")
+        labels:
+          job: traefik
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "valkey-mastodon", "", "")
+        labels:
+          job: valkey-mastodon
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "valkey-dawarich", "", "")
+        labels:
+          job: valkey-dawarich
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "ferretdb", "", "")
+        labels:
+          job: ferretdb
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "external", "", "")
+        labels:
+          job: external
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "unifi", "", "")
+        labels:
+          job: unifi
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "grafana", "", "")
+        labels:
+          job: grafana
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "prometheus", "", "")
+        labels:
+          job: prometheus
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "thanos-querier", "", "")
+        labels:
+          job: thanos-querier
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "thanos-store-gateway", "", "")
+        labels:
+          job: thanos-store-gateway
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "thanos-compactor", "", "")
+        labels:
+          job: thanos-compactor
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "clamav-exporter", "", "")
+        labels:
+          job: clamav-exporter
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "collabora", "", "")
+        labels:
+          job: collabora
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "argocd-metrics", "", "")
+        labels:
+          job: argocd-metrics
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "argocd-server-metrics", "", "")
+        labels:
+          job: argocd-server-metrics
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "argocd-applicationset-controller", "", "")
+        labels:
+          job: argocd-applicationset-controller
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "keycloak", "", "")
+        labels:
+          job: keycloak
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "openbao", "", "")
+        labels:
+          job: openbao
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "harbor-core", "", "")
+        labels:
+          job: harbor-core
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "harbor-jobservice", "", "")
+        labels:
+          job: harbor-jobservice
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "element", "", "")
+        labels:
+          job: element
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "harbor-registry", "", "")
+        labels:
+          job: harbor-registry
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "harbor-exporter", "", "")
+        labels:
+          job: harbor-exporter
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "seaweedfs-metrics-master", "", "")
+        labels:
+          job: seaweedfs-metrics-master
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "seaweedfs-metrics-volume", "", "")
+        labels:
+          job: seaweedfs-metrics-volume
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "seaweedfs-metrics-filer", "", "")
+        labels:
+          job: seaweedfs-metrics-filer
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "seaweedfs-metrics-s3", "", "")
+        labels:
+          job: seaweedfs-metrics-s3
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "loki", "", "")
+        labels:
+          job: loki
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "loki-canary", "", "")
+        labels:
+          job: loki-canary
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "loki-chunks-cache", "", "")
+        labels:
+          job: loki-chunks-cache
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "loki-results-cache", "", "")
+        labels:
+          job: loki-results-cache
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "loki-headless", "", "")
+        labels:
+          job: loki-headless
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "node-exporter", "", "")
+        labels:
+          job: node-exporter
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-apiservers", "", "")
+        labels:
+          job: kubernetes-apiservers
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-nodes", "", "")
+        labels:
+          job: kubernetes-nodes
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-pods", "", "")
+        labels:
+          job: kubernetes-pods
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kube-state-metrics", "", "")
+        labels:
+          job: kube-state-metrics
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-cadvisor", "", "")
+        labels:
+          job: kubernetes-cadvisor
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-service-endpoints", "", "")
+        labels:
+          job: kubernetes-service-endpoints
+      - record: homelab_backup_max_age_seconds
+        expr: kube_cronjob_info{namespace="longhorn-system",cronjob=~"backup-daily-.*"} * 108000
+        labels:
+          schedule: daily
+      - record: homelab_backup_max_age_seconds
+        expr: kube_cronjob_info{namespace="longhorn-system",cronjob=~"backup-monthly-.*"} * 3024000
+        labels:
+          schedule: monthly
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-daily-retain1
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-daily-retain11
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-daily-retain30
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-daily-retain31-a
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-daily-retain31-b
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-daily-retain31-c
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-monthly-retain60-hister
+      - record: homelab_expected_backup_cronjob
+        expr: vector(1)
+        labels:
+          namespace: longhorn-system
+          cronjob: backup-monthly-retain60-mempalace
+    - name: homelab-platform
+      interval: 30s
+      rules:
+      - alert: ExpectedScrapeJobMissing
+        expr: homelab_expected_scrape_job unless on(job) count by(job) (up)
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: An expected scrape job disappeared from discovery.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PrometheusNotificationFailures
+        expr: increase(prometheus_notifications_errors_total[10m]) > 0 or increase(prometheus_notifications_dropped_total[10m]) > 0
+        for: 5m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+        annotations:
+          summary: Prometheus cannot reliably deliver alerts.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: AlertmanagerNotificationFailures
+        expr: increase(alertmanager_notifications_failed_total[10m]) > 0
+        for: 5m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+        annotations:
+          summary: Alertmanager notification delivery is failing.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: AlertmanagerPeersMissing
+        expr: alertmanager_cluster_members < 3
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Alertmanager has fewer than three peers.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: AlertmanagerDiscoveryEmpty
+        expr: prometheus_notifications_alertmanagers_discovered == 0
+        for: 5m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+        annotations:
+          summary: Prometheus has no Alertmanager.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: CertificateExpiring
+        expr: (min by(namespace,name) (certmanager_certificate_expiration_timestamp_seconds) - time()) < 14 * 86400
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Certificate expires within fourteen days.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: CertificateNotReady
+        expr: max by(namespace,name) (certmanager_certificate_ready_status{condition="True"}) == 0
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Certificate remains not ready.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ExternalSecretNotReady
+        expr: max by(namespace,name) (externalsecret_status_condition{condition="Ready",status="True"}) == 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Secret reconciliation is not ready.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: SecretStoreNotReady
+        expr: max by(namespace,name) (secretstore_status_condition{condition="Ready",status="True"}) == 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Secret reconciliation is not ready.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ClusterSecretStoreNotReady
+        expr: max by(namespace,name) (clustersecretstore_status_condition{condition="Ready",status="True"}) == 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Secret reconciliation is not ready.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ExternalSecretReconcileErrors
+        expr: sum by(namespace,name) (increase(externalsecret_sync_calls_error[15m])) > 5
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: External Secret has repeated reconciliation errors.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: DeploymentReplicasUnavailable
+        expr: kube_deployment_spec_replicas - kube_deployment_status_replicas_available > 0
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Deployment has fewer available replicas than desired.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: StatefulSetReplicasUnavailable
+        expr: kube_statefulset_replicas - kube_statefulset_status_replicas_ready > 0
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: StatefulSet has fewer ready replicas than desired.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: DaemonSetReplicasUnavailable
+        expr: kube_daemonset_status_desired_number_scheduled - kube_daemonset_status_number_available > 0
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: DaemonSet has fewer available pods than desired.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: DeploymentRolloutStuck
+        expr: kube_deployment_status_condition{condition="Progressing",status="false"} == 1
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Deployment exceeded its rollout deadline.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ArgoApplicationUnhealthy
+        expr: argocd_app_info{health_status=~"Degraded|Missing|Unknown"} == 1
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Argo application health is degraded.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ArgoApplicationOutOfSync
+        expr: argocd_app_info{sync_status="OutOfSync"} == 1
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Argo application remains out of sync.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ArgoApplicationSyncFailed
+        expr: argocd_app_info{phase=~"Failed|Error"} == 1
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Argo application sync failed.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PVCUsageWarning
+        expr: max by(namespace,persistentvolumeclaim) (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85 and max by(namespace,persistentvolumeclaim) (kubelet_volume_stats_used_bytes
+          / kubelet_volume_stats_capacity_bytes) <= 0.95
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: PVC usage exceeds 85%.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PVCInodesLow
+        expr: max by(namespace,persistentvolumeclaim) (kubelet_volume_stats_inodes_used / kubelet_volume_stats_inodes) > 0.90
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: PVC inode usage exceeds 90%.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PVCExhaustionPredicted
+        expr: (predict_linear(kubelet_volume_stats_available_bytes[6h], 86400) < 0) and (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.70)
+        for: 1h
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: PVC may exhaust capacity within 24 hours.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LonghornVolumeDegraded
+        expr: max by(volume,pvc,pvc_namespace) (longhorn_volume_robustness{state="degraded"}) == 1
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Longhorn volume has reduced replica redundancy.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LonghornVolumeFaulted
+        expr: max by(volume,pvc,pvc_namespace) (longhorn_volume_robustness{state="faulted"}) == 1
+        for: 5m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+        annotations:
+          summary: Longhorn volume is faulted.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LonghornBackupStale
+        expr: ((time() - kube_cronjob_status_last_successful_time) > on(namespace,cronjob) homelab_backup_max_age_seconds) and on(namespace,cronjob) (kube_cronjob_spec_suspend == 0)
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Longhorn backup is overdue for its daily or monthly schedule.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LonghornBackupNeverSucceeded
+        expr: ((time() - kube_cronjob_created) > on(namespace,cronjob) homelab_backup_max_age_seconds) unless on(namespace,cronjob) kube_cronjob_status_last_successful_time
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Scheduled Longhorn backup has never succeeded.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LonghornBackupSuspended
+        expr: kube_cronjob_spec_suspend{namespace="longhorn-system",cronjob=~"backup-.*"} == 1
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Longhorn backup schedule is suspended.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: RedisUnavailable
+        expr: redis_up == 0
+        for: 5m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+        annotations:
+          summary: Redis or Valkey is unavailable.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: RedisConnectionsRejected
+        expr: increase(redis_rejected_connections_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Redis or Valkey is rejecting connections.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: RedisMemoryNearLimit
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes > 0.90) and (redis_memory_max_bytes > 0)
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Redis memory exceeds 90% of its configured limit.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: RedisEvictions
+        expr: increase(redis_evicted_keys_total[15m]) > 100
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Redis is evicting more than 100 keys per fifteen minutes.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PostgresConnectionsHigh
+        expr: sum by(job,instance) (pg_stat_database_numbackends) / on(job,instance) pg_settings_max_connections > 0.80
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: PostgreSQL connections exceed 80% of capacity.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PostgresReplicationLag
+        expr: pg_replication_lag_seconds > 60 and on(job,instance) (pg_replication_is_replica == 1)
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: PostgreSQL replica is more than sixty seconds behind.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: MysqlConnectionsHigh
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.80
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: MySQL connections exceed 80% of capacity.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: TraefikHigh5xx
+        expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m])) / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.05) and (sum by(service) (increase(traefik_service_requests_total[10m]))
+          >= 100)
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Ingress service returns over 5% server errors with at least 100 requests per ten minutes.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: TraefikHighLatency
+        expr: (histogram_quantile(0.95, sum by(le,service) (rate(traefik_service_request_duration_seconds_bucket[10m]))) > 3) and (sum by(service) (increase(traefik_service_request_duration_seconds_count[10m]))
+          >= 100)
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Ingress p95 latency exceeds three seconds with at least 100 requests per ten minutes.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PrometheusRuleFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Prometheus rule evaluation is failing.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: PrometheusStorageFailures
+        expr: increase(prometheus_tsdb_compactions_failed_total[15m]) > 0 or increase(prometheus_tsdb_wal_corruptions_total[15m]) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Prometheus storage encountered errors.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ThanosUploadFailures
+        expr: increase(thanos_shipper_upload_failures_total[15m]) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Thanos cannot upload blocks.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ThanosCompactionHalted
+        expr: thanos_compact_halted == 1
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Thanos compaction is halted.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LokiIngestionLoss
+        expr: sum by(job,instance) (increase(loki_discarded_samples_total[15m])) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Loki is discarding log samples.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LokiWalFailure
+        expr: increase(loki_ingester_wal_disk_full_failures_total[15m]) > 0 or increase(loki_ingester_wal_corruptions_total[15m]) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Loki WAL encountered corruption or a full disk.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: AlloyConfigInvalid
+        expr: alloy_config_last_load_successful == 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Alloy failed to load its configuration.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: AlloyLogsDropped
+        expr: sum by(job,instance) (increase(loki_write_dropped_entries_total[15m])) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Alloy is dropping log entries.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: HubbleEventsLost
+        expr: sum by(instance) (rate(hubble_lost_events_total[10m])) > 1
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Hubble is losing more than one event per second.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: MetalLBConfigStale
+        expr: metallb_k8s_client_config_stale_bool == 1
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: MetalLB is using stale configuration.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LoadBalancerAddressMissing
+        expr: kube_service_spec_type{type="LoadBalancer"} unless on(namespace,service) kube_service_status_load_balancer_ingress
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: LoadBalancer service has no assigned ingress address.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: HarborQueueBacklog
+        expr: harbor_task_queue_size > 100
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Harbor job queue exceeds one hundred tasks.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: GPUHot
+        expr: max by(UUID,modelName) (DCGM_FI_DEV_GPU_TEMP) > 85
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: GPU temperature exceeds the configured 85 C warning threshold.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: GPURemapFailure
+        expr: max by(UUID,modelName) (DCGM_FI_DEV_ROW_REMAP_FAILURE) > 0 or max by(UUID,modelName) (DCGM_FI_DEV_UNCORRECTABLE_REMAPPED_ROWS) > 0
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: GPU reports remapping failure or uncorrectable remapped rows.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: GPUExporterMissing
+        expr: absent(DCGM_FI_DEV_GPU_TEMP)
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Expected GPU telemetry is missing.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: CoreDNSServerErrors
+        expr: sum by(instance) (rate(coredns_dns_responses_total{rcode="SERVFAIL"}[10m])) / sum by(instance) (rate(coredns_dns_responses_total[10m])) > 0.05 and sum by(instance) (increase(coredns_dns_responses_total[10m]))
+          >= 100
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: CoreDNS SERVFAIL fraction exceeds 5% with at least 100 responses per ten minutes.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: CoreDNSLatency
+        expr: histogram_quantile(0.99,sum by(instance,le) (rate(coredns_dns_request_duration_seconds_bucket[10m]))) > 1 and sum by(instance) (increase(coredns_dns_request_duration_seconds_count[10m]))
+          >= 100
+        for: 15m
+        labels: &id001
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: CoreDNS p99 latency exceeds one second.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: ContainerOOMKilled
+        expr: (increase(kube_pod_container_status_restarts_total[15m]) > 0) and on(namespace,pod,container) (kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1)
+        for: 5m
+        labels: *id001
+        annotations:
+          summary: Container restarted after an out-of-memory kill.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: LonghornBackupScheduleMissing
+        expr: homelab_expected_backup_cronjob unless on(namespace,cronjob) kube_cronjob_info
+        for: 30m
+        labels: *id001
+        annotations:
+          summary: An expected Longhorn backup CronJob is missing.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: CriticalHTTPSProbeFailed
+        expr: (connectivity_status{job="connectivity-exporter",host="sso.andreybondarenko.com"} == 0 or absent(connectivity_status{job="connectivity-exporter",host="sso.andreybondarenko.com"}))
+          or (connectivity_status{job="connectivity-exporter",host="harbor.andreybondarenko.com"} == 0 or absent(connectivity_status{job="connectivity-exporter",host="harbor.andreybondarenko.com"}))
+          or (connectivity_status{job="connectivity-exporter",host="mastodon.andreybondarenko.com"} == 0 or absent(connectivity_status{job="connectivity-exporter",host="mastodon.andreybondarenko.com"}))
+        for: 10m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+        annotations:
+          summary: Critical HTTPS endpoint is unavailable or its probe disappeared.
+          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
 
   prometheus.yaml: |-
     global:

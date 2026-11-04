@@ -250,3 +250,7 @@ Completed dashboard query validation: all 128 queries evaluated successfully aga
 - Twenty-five focused tests and the running Prometheus version's promtool validation passed. The 21 existing Prometheus alert rules were unchanged, healthy and inactive at final verification; the recommendations above were not implemented.
 - All 81 SecretStore/ExternalSecret objects were Ready. A concurrent OpenBao capability rollout was recovered using the verified replacement unseal share; all three replicas were updated and ready.
 - Unrelated MetalLB/Kyverno worktree changes were preserved. Monitoring changes were published through the explicitly authorized GitHub/GitOps workflow.
+
+## Authorized alerting follow-up
+
+The user subsequently requested implementation of the suggested alerts. See [Cluster monitoring alerts](monitoring-alerts.md) for the deployed rule scope, thresholds, routing, runbooks, tests and remaining instrumentation gaps. The earlier unchanged-alert statements describe the original audit handoff.

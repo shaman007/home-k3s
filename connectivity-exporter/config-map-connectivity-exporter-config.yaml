@@ -30,3 +30,9 @@ data:
         expect: 200
       - url:  http://nmcheck.gnome.org/check_network_status.txt
         expect: 200
+      - url: https://sso.andreybondarenko.com/realms/master/.well-known/openid-configuration
+        expect: 200
+      - url: https://harbor.andreybondarenko.com/api/v2.0/ping
+        expect: 200
+      - url: https://mastodon.andreybondarenko.com/health
+        expect: 200

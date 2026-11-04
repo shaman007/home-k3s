@@ -11,9 +11,14 @@ data:
     - '/etc/alertmanager-templates/*.tmpl'
     route:
       receiver: alert-emailer
-      group_by: ['alertname', 'priority']
+      group_by: ['alertname', 'priority', 'namespace', 'job']
       group_wait: 10s
-      repeat_interval: 30m
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+      - receiver: alert-emailer
+        matchers: ['priority="critical"']
+        repeat_interval: 30m
 
     receivers:
     - name: alert-emailer
