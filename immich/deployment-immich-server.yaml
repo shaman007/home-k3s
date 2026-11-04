@@ -61,6 +61,8 @@ spec:
           image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.3.5
           imagePullPolicy: IfNotPresent
           env:
+            - name: IMMICH_TELEMETRY_INCLUDE
+              value: all
             - name: DB_HOSTNAME
               value: immich-postgres
             - name: DB_USERNAME
@@ -85,6 +87,10 @@ spec:
           ports:
             - name: http
               containerPort: 2283
+            - name: api-metrics
+              containerPort: 8081
+            - name: worker-metrics
+              containerPort: 8082
           startupProbe:
             httpGet:
               path: /api/server/ping

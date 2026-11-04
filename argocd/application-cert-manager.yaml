@@ -48,7 +48,7 @@ spec:
             enabled: true
             minAvailable: 2
           prometheus:
-            enabled: false
+            enabled: true
           resources:
             requests:
               cpu: 10m

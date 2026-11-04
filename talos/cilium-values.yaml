@@ -77,3 +77,7 @@ tunnelProtocol: vxlan
 annotateK8sNode: true
 k8s:
   requireIPv6PodCIDR: true
+
+# Collect agent health in addition to operator, Envoy and Hubble metrics.
+prometheus:
+  enabled: true

@@ -176,3 +176,19 @@ spec:
                   name: grafana-dashboard-linux-host
               - configMap:
                   name: grafana-dashboard-crowdsec
+              - configMap:
+                  name: grafana-dashboard-application-workloads
+              - configMap:
+                  name: grafana-dashboard-metrics-collection
+              - configMap:
+                  name: grafana-dashboard-gpu-overview
+              - configMap:
+                  name: grafana-dashboard-network-metrics
+              - configMap:
+                  name: grafana-dashboard-platform-controllers
+              - configMap:
+                  name: grafana-dashboard-data-services
+              - configMap:
+                  name: grafana-dashboard-mysql
+              - configMap:
+                  name: grafana-dashboard-seaweedfs

@@ -19,3 +19,11 @@ spec:
               protocol: TCP
             - port: "9965"
               protocol: TCP
+            - port: "9962"
+              protocol: TCP
+            - port: "9120"
+              protocol: TCP
+            - port: "9140"
+              protocol: TCP
+            - port: "9141"
+              protocol: TCP

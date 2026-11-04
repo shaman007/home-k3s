@@ -1,0 +1,431 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-gpu-overview
+  namespace: monitoring
+data:
+  gpu-overview.json: |-
+    {
+      "uid": "gpu-overview",
+      "title": "GPU Overview",
+      "description": "NVIDIA DCGM metrics already collected from the GPU operator. Memory values are MiB as exported by DCGM. GPU utilization is distinct from Kubernetes CPU usage.",
+      "tags": [
+        "homelab",
+        "monitoring-audit"
+      ],
+      "schemaVersion": 41,
+      "version": 1,
+      "editable": true,
+      "refresh": "1m",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "GPU utilization",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_GPU_UTIL",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "GPU memory used",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_FB_USED * 1024 * 1024",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "GPU memory free",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_FB_FREE * 1024 * 1024",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "GPU temperature",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "celsius",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_GPU_TEMP",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "GPU power",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "watt",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_POWER_USAGE",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Encoder utilization",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_ENC_UTIL",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Decoder utilization",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_DEC_UTIL",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Uncorrectable remapped rows",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "DCGM_FI_DEV_UNCORRECTABLE_REMAPPED_ROWS",
+              "legendFormat": "{{Hostname}} / {{gpu}}",
+              "range": true
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": []
+      }
+    }

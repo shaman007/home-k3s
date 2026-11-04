@@ -80,7 +80,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(up{job=\"vault\"})",
+              "expr": "sum(up{job=\"openbao\"})",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -152,7 +152,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "max(vault_sys_sealed{job=\"vault\"})",
+              "expr": "1 - min(vault_core_unsealed{job=\"openbao\"})",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -211,7 +211,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(vault_sys_leader{job=\"vault\"})",
+              "expr": "sum(vault_core_active{job=\"openbao\"})",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -274,7 +274,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "avg(vault_expire_num_leases{job=\"vault\"})",
+              "expr": "avg(vault_expire_num_leases{job=\"openbao\"})",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -326,7 +326,7 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vault_core_handle_request_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_core_handle_request_count{job=\"openbao\"}[5m]))",
               "legendFormat": "requests",
               "range": true,
               "refId": "A"
@@ -378,13 +378,13 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum by (method) (rate(vault_route_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_route_read_kv__count{job=\"openbao\"}[5m]))",
               "legendFormat": "{{method}}",
               "range": true,
               "refId": "A"
             }
           ],
-          "title": "Route Activity",
+          "title": "KV Read Activity",
           "type": "timeseries"
         },
         {
@@ -430,21 +430,21 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vault_token_create_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_token_create_count{job=\"openbao\"}[5m]))",
               "legendFormat": "create",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(vault_token_store_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_token_store_count{job=\"openbao\"}[5m]))",
               "legendFormat": "store",
               "range": true,
               "refId": "B"
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(vault_token_lookup_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_token_lookup_count{job=\"openbao\"}[5m]))",
               "legendFormat": "lookup",
               "range": true,
               "refId": "C"
@@ -496,14 +496,14 @@ data:
           "targets": [
             {
               "editorMode": "code",
-              "expr": "sum(rate(vault_policy_get_policy_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_policy_get_policy_count{job=\"openbao\"}[5m]))",
               "legendFormat": "get",
               "range": true,
               "refId": "A"
             },
             {
               "editorMode": "code",
-              "expr": "sum(rate(vault_policy_set_policy_count{job=\"vault\"}[5m]))",
+              "expr": "sum(rate(vault_policy_set_policy_count{job=\"openbao\"}[5m]))",
               "legendFormat": "set",
               "range": true,
               "refId": "B"
@@ -525,7 +525,7 @@ data:
             "current": {
               "selected": true,
               "text": "prometheus-thanos",
-              "value": "prometheus-thanos"
+              "value": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
             },
             "hide": 0,
             "includeAll": false,

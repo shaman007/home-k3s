@@ -1,0 +1,631 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-platform-controllers
+  namespace: monitoring
+data:
+  platform-controllers.json: |-
+    {
+      "uid": "platform-controllers",
+      "title": "Platform Controller Metrics",
+      "description": "Certificates, secrets, admission policies, reloads and application telemetry. Counters with no events may not exist yet. New exporter data remains empty until rollout and scrape verification.",
+      "tags": [
+        "homelab",
+        "monitoring-audit"
+      ],
+      "schemaVersion": 41,
+      "version": 1,
+      "editable": true,
+      "refresh": "1m",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "Certificate lifetime remaining",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "certmanager_certificate_expiration_timestamp_seconds - time()",
+              "legendFormat": "{{namespace}} / {{name}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Certificate readiness",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "certmanager_certificate_ready_status{condition=\"True\"}",
+              "legendFormat": "{{namespace}} / {{name}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "ExternalSecret readiness",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "externalsecret_status_condition{job=\"external-secrets\"}",
+              "legendFormat": "{{namespace}} / {{name}} / {{condition}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "External Secrets reconcile errors",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (pod) (rate(controller_runtime_reconcile_errors_total{job=\"external-secrets\"}[$__rate_interval]))",
+              "legendFormat": "{{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Kyverno admission requests",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (request_allowed) (rate(kyverno_admission_requests_total{job=\"kyverno\"}[$__rate_interval]))",
+              "legendFormat": "{{request_allowed}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Kyverno policy results",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(rate(kyverno_validating_policy_results_total{job=\"kyverno\"}[$__rate_interval]))",
+              "legendFormat": "policy results",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Reloader executed reloads",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (pod) (rate(reloader_reload_executed_total{job=\"reloader\"}[$__rate_interval]))",
+              "legendFormat": "{{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Mastodon exporter sessions",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "ruby_collector_sessions_total{job=\"mastodon\"}",
+              "legendFormat": "{{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Mastodon exporter working",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "ruby_collector_working{job=\"mastodon\"}",
+              "legendFormat": "{{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "Immich collected metric families",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count by (__name__) ({job=\"immich\",__name__!~\"up|scrape_.*\"})",
+              "legendFormat": "{{__name__}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Headlamp target health",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "up{job=\"headlamp\"}",
+              "legendFormat": "{{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "type": "timeseries",
+          "title": "Argo repository requests",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (request_type) (rate(argocd_git_request_total{job=\"argocd-repo-server\"}[$__rate_interval]))",
+              "legendFormat": "{{request_type}}",
+              "range": true
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": []
+      }
+    }

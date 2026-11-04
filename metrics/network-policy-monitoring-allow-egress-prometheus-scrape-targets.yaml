@@ -21,6 +21,12 @@ spec:
           port: 8082
         - protocol: TCP
           port: 8083
+        - protocol: TCP
+          port: 8084
+        - protocol: TCP
+          port: 9001
+        - protocol: TCP
+          port: 9090
     - to:
         - namespaceSelector:
             matchLabels:
@@ -98,6 +104,8 @@ spec:
           port: 9964
         - protocol: TCP
           port: 9965
+        - protocol: TCP
+          port: 9962
     - to:
         - ipBlock:
             cidr: 192.168.1.0/24
@@ -110,6 +118,14 @@ spec:
           port: 9964
         - protocol: TCP
           port: 9965
+        - protocol: TCP
+          port: 9962
+        - protocol: TCP
+          port: 9120
+        - protocol: TCP
+          port: 9140
+        - protocol: TCP
+          port: 9141
     - to:
         - namespaceSelector:
             matchLabels:
@@ -155,6 +171,8 @@ spec:
           port: 9121
         - protocol: TCP
           port: 9187
+        - protocol: TCP
+          port: 9394
     - to:
         - namespaceSelector:
             matchLabels:
@@ -177,6 +195,8 @@ spec:
           port: 9100
         - protocol: TCP
           port: 10902
+        - protocol: TCP
+          port: 12345
     - to:
         - namespaceSelector:
             matchLabels:
@@ -240,3 +260,51 @@ spec:
       ports:
         - protocol: TCP
           port: 6060
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cert-manager
+      ports:
+        - protocol: TCP
+          port: 9402
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: external-secrets
+      ports:
+        - protocol: TCP
+          port: 8080
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kyverno
+      ports:
+        - protocol: TCP
+          port: 8000
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: headlamp
+      ports:
+        - protocol: TCP
+          port: 4466
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: immich
+      ports:
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 8082
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: metallb-system
+      ports:
+        - protocol: TCP
+          port: 9120
+        - protocol: TCP
+          port: 9140
+        - protocol: TCP
+          port: 9141

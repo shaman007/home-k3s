@@ -185,6 +185,313 @@ data:
         - targets:
           - "alertmanager.monitoring.svc:9093"
     scrape_configs:
+      - job_name: external-secrets
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - external-secrets
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '8080'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: kyverno
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - kyverno
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '8000'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: headlamp
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - headlamp
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '4466'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: mastodon
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - mastodon
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '9394'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: reloader
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - argocd
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '9090'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: argocd-repo-server
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - argocd
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '8084'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: argocd-notifications
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        static_configs:
+          - targets:
+              - argocd-notifications-controller-metrics.argocd.svc.cluster.local:9001
+      - job_name: alloy
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - monitoring
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '12345'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: alertmanager
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - monitoring
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '9093'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: thanos-sidecar
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - monitoring
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          action: keep
+          regex: prometheus-server
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: '10902'
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: immich
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - immich
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: 8081|8082
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: metallb
+        scheme: https
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        # MetalLB/FRR use ephemeral self-signed metrics certificates; matches the upstream chart TLS default.
+        tls_config:
+          insecure_skip_verify: true
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - metallb-system
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_number
+          action: keep
+          regex: 9120|9140|9141
+        - source_labels:
+          - __meta_kubernetes_namespace
+          target_label: namespace
+        - source_labels:
+          - __meta_kubernetes_pod_name
+          target_label: pod
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: valkey-wordpress
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        static_configs:
+        - targets:
+          - valkey.wordpress.svc.cluster.local:9121
+
       - job_name: crowdsec
         static_configs:
           - targets:
@@ -607,6 +914,9 @@ data:
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_label_app_kubernetes_io_name]
+            action: drop
+            regex: traefik;traefik
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
             regex: true
@@ -664,7 +974,7 @@ data:
           # avoid double-scraping node-exporter (handled by the dedicated job above)
           - source_labels: [__meta_kubernetes_service_name]
             action: drop
-            regex: node-exporter
+            regex: node-exporter|prometheus-service
 
           - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
             action: replace

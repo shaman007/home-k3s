@@ -1,0 +1,654 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-application-workloads
+  namespace: monitoring
+data:
+  application-workloads.json: |-
+    {
+      "uid": "application-workloads",
+      "title": "Application Workloads",
+      "description": "Shared resource and availability coverage for every installed workload. Select a namespace. Native application metrics require a separate exporter; empty series remain visible as no data.",
+      "tags": [
+        "homelab",
+        "monitoring-audit"
+      ],
+      "schemaVersion": 41,
+      "version": 1,
+      "editable": true,
+      "refresh": "1m",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "CPU cores by pod",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace,pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\",container!=\"\",container!=\"POD\"}[$__rate_interval]))",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Working set memory by pod",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace,pod) (container_memory_working_set_bytes{namespace=~\"$namespace\",container!=\"\",container!=\"POD\"})",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Container restarts in 1 hour",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace,pod) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[1h]))",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Ready containers",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace,pod) (kube_pod_container_status_ready{namespace=~\"$namespace\"})",
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Deployment unavailable replicas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "kube_deployment_status_replicas_unavailable{namespace=~\"$namespace\"}",
+              "legendFormat": "{{namespace}} / {{deployment}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "StatefulSet missing ready replicas",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "kube_statefulset_replicas{namespace=~\"$namespace\"} - kube_statefulset_status_replicas_ready{namespace=~\"$namespace\"}",
+              "legendFormat": "{{namespace}} / {{statefulset}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "DaemonSet unavailable pods",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "kube_daemonset_status_number_unavailable{namespace=~\"$namespace\"}",
+              "legendFormat": "{{namespace}} / {{daemonset}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "CPU requests by namespace",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cores",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace) (kube_pod_container_resource_requests{namespace=~\"$namespace\",resource=\"cpu\"})",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Memory requests by namespace",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace) (kube_pod_container_resource_requests{namespace=~\"$namespace\",resource=\"memory\"})",
+              "legendFormat": "{{namespace}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "PVC utilization",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "100 * max by (namespace,persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=~\"$namespace\"} / kubelet_volume_stats_capacity_bytes{namespace=~\"$namespace\"})",
+              "legendFormat": "{{namespace}} / {{persistentvolumeclaim}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "CronJob time since last successful run",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "time() - kube_cronjob_status_last_successful_time{namespace=~\"$namespace\"}",
+              "legendFormat": "{{namespace}} / {{cronjob}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "type": "timeseries",
+          "title": "Argo applications by sync and health",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count by (sync_status,health_status) (argocd_app_info)",
+              "legendFormat": "{{sync_status}} / {{health_status}}",
+              "range": true
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+            },
+            "query": {
+              "query": "label_values(kube_pod_info, namespace)",
+              "refId": "StandardVariableQuery"
+            },
+            "refresh": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "options": []
+          }
+        ]
+      }
+    }
