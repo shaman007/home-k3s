@@ -234,3 +234,5 @@ The installed Ollama 0.40.14 binary contains no OLLAMA_METRICS environment key, 
 Open WebUI native metrics were verified in Prometheus as http_server_requests_total, http_server_duration_milliseconds and aggregate webui_users_* series. Native endpoint probes found all four CSI control components already exposing roughly 200 metric families each. They are collected separately from Longhorn manager storage metrics.
 
 References: [Hister metrics and authentication](https://hister.org/docs/monitoring), [Your Spotify native metrics](https://github.com/Yooooomi/your_spotify/tree/master/apps/server#prometheus), [Ollama native metrics feature request](https://github.com/ollama/ollama/issues/3144).
+
+External Secrets policy correction: the added broad pod-selector ingress policy unintentionally isolated the previously unselected webhook and blocked admission traffic. It was narrowed immediately and removed from GitOps as redundant: the existing policy already permits metrics on non-webhook components, while the webhook retains its prior admission access. No controller, certificate, or fail-open behavior was changed.
