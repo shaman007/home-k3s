@@ -57,6 +57,10 @@ spec:
             secretKeyRef:
               name: firefox-sync-env
               key: SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET
+        - name: SYNC_STATSD_HOST
+          value: 127.0.0.1
+        - name: SYNC_STATSD_PORT
+          value: '8125'
         - name: SYNC_HOST
           value: 0.0.0.0
         - name: SYNC_PORT
@@ -109,6 +113,37 @@ spec:
         volumeMounts:
         - name: tmp
           mountPath: /tmp
+      - name: statsd-exporter
+        image: harbor.andreybondarenko.com/dockerhub/prom/statsd-exporter:v0.31.0
+        args:
+        - --statsd.listen-udp=127.0.0.1:8125
+        - --statsd.listen-tcp=
+        - --web.listen-address=:9102
+        ports:
+        - name: metrics
+          containerPort: 9102
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          capabilities:
+            drop: [ALL]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
       volumes:
       - name: tmp
         emptyDir: {}

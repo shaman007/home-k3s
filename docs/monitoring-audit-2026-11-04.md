@@ -9,7 +9,7 @@ Grafana 13.3.0 reported a healthy database. Grafana-managed alert rule inventory
 ## Implemented change set
 
 - Enable cert-manager metrics, Cilium agent metrics, Headlamp telemetry and Immich API/worker telemetry.
-- Add 14 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
+- Add 15 scrape jobs for External Secrets, Kyverno, Headlamp, Mastodon, Reloader, Argo repo-server/notifications, Alloy, Alertmanager, the Prometheus Thanos sidecar, Immich, MetalLB/FRR, Meilisearch, Firefox Sync and WordPress Valkey. Per-pod discovery retains replica identity; notifications uses its existing service because its container declares no metrics port.
 - Keep dedicated Traefik and Prometheus jobs and drop their redundant generic pod/service discovery targets.
 - Extend Prometheus egress and target ingress for the needed ports, including Cilium host/remote-node permissions. Add the Argo ingress policy to its Kustomization.
 - Provision six dashboards: Application Workloads, Metrics Collection, GPU Overview, Cluster Network Metrics, Platform Controller Metrics, and Database and Storage Metrics. The workload dashboard supplies shared resource coverage, not native business metrics, for workloads lacking an exporter.
@@ -18,7 +18,7 @@ Grafana 13.3.0 reported a healthy database. Grafana-managed alert rule inventory
 
 MetalLB controller/speaker and both FRR endpoints were checked through temporary port forwards. They require HTTPS and authentication; the existing Prometheus service-account credential successfully read all four exporters. The staged job keeps bearer authentication and follows the pinned upstream chart default for ephemeral self-signed metrics certificates (`insecure_skip_verify: true`). No credentials were persisted.
 
-Mastodon currently exports only five ruby_collector metric families. Scraping this exposes exporter health, but does not prove Rails/Sidekiq request and queue instrumentation works. Immich, Headlamp, Cilium-agent and cert-manager telemetry still require deployment before their series can be verified.
+The initial Mastodon exporter exposed only five ruby_collector metric families because application instrumentation was disabled. Enable the chart-equivalent web and Sidekiq environment flags while retaining the custom exporter and its uncapped CPU configuration. Select one web/embedded Sidekiq exporter per pod, including Sidekiq pods that do not declare a metrics container port. Immich, Headlamp, Cilium-agent and cert-manager telemetry still require deployment before their series can be verified.
 
 ## Every installed Argo application
 
@@ -51,7 +51,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 | external-secrets | external-secrets | `chart:external-secrets` | All three component exporters verified; scrape staged | Platform Controller Metrics |
 | external-secrets-network-policy | external-secrets | `external-secrets` | Configuration for external-secrets; All three component exporters verified; scrape staged | Platform Controller Metrics |
 | finance-ticker | monitoring | `metrics` | Collected | Finance Ticker |
-| firefox-sync | firefox-sync | `firefox-sync` | No Prometheus exporter configured; StatsD bridge required | Application Workloads |
+| firefox-sync | firefox-sync | `firefox-sync` | Local StatsD bridge and Prometheus collection prepared | Application Workloads |
 | gpu-operator | gpu-operator | `chart:gpu-operator` | Operator and DCGM collected | GPU Overview |
 | grafana | monitoring | `metrics/grafana` | Collected | Grafana metrics; Metrics Collection |
 | harbor | harbor | `chart:harbor` | Core/jobservice/registry/exporter collected | Harbor Overview |
@@ -80,8 +80,8 @@ Configuration-only applications inherit the owning component assessment; they ar
 | longhorn | longhorn-system | `chart:longhorn` | Manager collected; individual CSI sidecars not separately collected | Longhorn Example v1.1.0; Database and Storage Metrics |
 | longhorn-custom | longhorn-system | `longhorn` | Configuration for longhorn; Manager collected; individual CSI sidecars not separately collected | Longhorn Example v1.1.0; Database and Storage Metrics |
 | mail | mail | `mail` | Rspamd/Valkey collected; Postfix/Dovecot/Unbound no dedicated exporters | Rspamd stat; Database and Storage Metrics |
-| mastodon | mastodon | `chart:mastodon, chart:values` | PostgreSQL/Valkey collected; web exporter verified, scrape staged | Platform Controller Metrics; Database and Storage Metrics |
-| mastodon-custom | mastodon | `mastodon` | Configuration for mastodon; PostgreSQL/Valkey collected; web exporter verified, scrape staged | Platform Controller Metrics; Database and Storage Metrics |
+| mastodon | mastodon | `chart:mastodon, chart:values` | PostgreSQL/Valkey collected; web and embedded Sidekiq instrumentation enabled in follow-up | Platform Controller Metrics; Database and Storage Metrics |
+| mastodon-custom | mastodon | `mastodon` | Configuration for mastodon; PostgreSQL/Valkey collected; web and embedded Sidekiq instrumentation enabled in follow-up | Platform Controller Metrics; Database and Storage Metrics |
 | mempalace | mempalace | `mempalace` | No app exporter configured | Application Workloads |
 | metallb | metallb-system | `chart:metallb` | Controller/speaker/FRR HTTPS endpoints authenticated successfully; scrape staged | Cluster Network Metrics |
 | metallb-config | metallb-system | `metallb` | Configuration for metallb; Controller/speaker/FRR HTTPS endpoints authenticated successfully; scrape staged | Cluster Network Metrics |
@@ -123,7 +123,7 @@ Configuration-only applications inherit the owning component assessment; they ar
 
 - Home Assistant is an externally routed service, not a Kubernetes Deployment. Enabling its Prometheus integration and providing a long-lived token requires access to the external installation. Keep authentication enabled; do not expose `/api/prometheus` anonymously.
 - Meilisearch now has a dedicated `metrics.get` key stored in OpenBao with user approval. The prepared ExternalSecret supplies that restricted key to Prometheus; the master key is not copied into monitoring. Metrics flag, collection and native data verification are part of the follow-up rollout.
-- Firefox Sync uses StatsD. A StatsD-to-Prometheus bridge and mapping are needed; no native Prometheus endpoint is assumed.
+- Firefox Sync emits StatsD; a localhost-only StatsD exporter sidecar and Prometheus scrape are prepared. Its UDP receiver is not exposed through a Service or ingress. Application telemetry still requires verifying real emitted events after deployment.
 - Database exporters remain absent for Immich PostgreSQL/Valkey, Spotify backing PostgreSQL, Firefox Sync MySQL, Lenka MySQL and Harbor internal PostgreSQL/Redis. Existing application/exporter metrics do not replace those database diagnostics.
 - Other applications marked “No app exporter configured” have shared workload coverage. This is an observed configuration gap, not a claim that their upstream software cannot support an exporter. Adding third-party exporters/instrumentation requires selecting and validating the integration; it has not been silently represented as complete.
 - Stirling PDF native Prometheus support requires a Team/Enterprise licence according to current upstream documentation; no licence change is made.

@@ -90,6 +90,10 @@ mastodon:
           - name: prometheus
             containerPort: 9394
     extraEnvVars:
+      # Enable instrumentation while retaining the custom uncapped exporter.
+      MASTODON_PROMETHEUS_EXPORTER_ENABLED: "true"
+      PROMETHEUS_EXPORTER_HOST: 127.0.0.1
+      PROMETHEUS_EXPORTER_PORT: "9394"
       # Serve both address families advertised by the dual-stack Service.
       BIND: "[::]"
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
@@ -117,6 +121,10 @@ mastodon:
           repository: harbor.andreybondarenko.com/library/mastodon
           tag: 2026-11-04-100651
     extraEnvVars:
+      MASTODON_PROMETHEUS_EXPORTER_ENABLED: "true"
+      MASTODON_PROMETHEUS_EXPORTER_LOCAL: "true"
+      MASTODON_PROMETHEUS_EXPORTER_HOST: 0.0.0.0
+      MASTODON_PROMETHEUS_EXPORTER_PORT: "9394"
       # Serve both address families advertised by the dual-stack Service.
       BIND: "[::]"
       ALLOW_UNSAFE_AUTH_PROVIDER_REATTACH: "true"
