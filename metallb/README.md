@@ -15,3 +15,6 @@ See [dual-stack ingress](../docs/migrations/dual-stack-ingress/README.md) for th
 Cilium/Talos allocation model, firewall rules, verification and rollback order.
 
 See [private ingress](../traefik-private/README.md) for class isolation and internal DNS.
+
+See [staged FRR retirement](../docs/metallb-l2-retirement.md) for the reviewed
+L2-only backend migration, retained CRDs and verification/rollback steps.

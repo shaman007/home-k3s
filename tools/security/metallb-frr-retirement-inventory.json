@@ -1,0 +1,101 @@
+{
+  "retire": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "name": "metallb-frr-k8s-controller",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "name": "metallb-frr-k8s-frr-startup",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole",
+      "name": "metallb-frr-k8s-controller"
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRoleBinding",
+      "name": "metallb-frr-k8s-controller"
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "name": "metallb-frr-k8s-controller",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "name": "metallb-frr-k8s-nodestate-cleaner",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "name": "metallb-frr-k8s-controller",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "name": "metallb-frr-k8s-nodestate-cleaner",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "name": "frr-k8s-webhook-service",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "name": "metallb-frr-k8s",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "name": "metallb-frr-k8s-statuscleaner",
+      "namespace": "metallb-system"
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingWebhookConfiguration",
+      "name": "frr-k8s-validating-webhook-configuration"
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Secret",
+      "namespace": "metallb-system",
+      "name": "frr-k8s-webhook-server-cert"
+    }
+  ],
+  "retain": [
+    {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "kind": "CustomResourceDefinition",
+      "name": "bgpsessionstates.frrk8s.metallb.io"
+    },
+    {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "kind": "CustomResourceDefinition",
+      "name": "frrconfigurations.frrk8s.metallb.io"
+    },
+    {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "kind": "CustomResourceDefinition",
+      "name": "frrk8sconfigurations.frrk8s.metallb.io"
+    },
+    {
+      "apiVersion": "apiextensions.k8s.io/v1",
+      "kind": "CustomResourceDefinition",
+      "name": "frrnodestates.frrk8s.metallb.io"
+    }
+  ]
+}

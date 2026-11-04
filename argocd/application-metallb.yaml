@@ -16,12 +16,19 @@ spec:
     helm:
       values: |
         loadBalancerClass: metallb-l2
+        # All current Services use L2; no BGP peers or advertisements exist.
+        # Keep automatic pruning off during the staged FRR retirement.
+        frrk8s:
+          enabled: false
+          external: false
         controller:
           priorityClassName: homelab-critical
           securityContext:
             seccompProfile:
               type: RuntimeDefault
         speaker:
+          frr:
+            enabled: false
           priorityClassName: homelab-critical
           securityContext:
             seccompProfile:
@@ -35,5 +42,6 @@ spec:
     namespace: metallb-system
   syncPolicy:
     automated:
+      prune: false
       selfHeal: true
       enabled: true
