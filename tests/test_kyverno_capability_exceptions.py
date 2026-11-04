@@ -107,8 +107,8 @@ class CompanionGuardContractTests(unittest.TestCase):
         self.entries=[e for e in self.catalog['entries'] if e.get('requiredGuards')]
 
     def test_reviewed_scope_and_role_counts(self):
-        self.assertEqual(len(self.entries),52)
-        self.assertEqual(sum(len(v) for e in self.entries for v in e['requiredGuards'].values()),72)
+        self.assertEqual(len(self.entries),53)
+        self.assertEqual(sum(len(v) for e in self.entries for v in e['requiredGuards'].values()),73)
         list(gen.generate({**self.catalog,'entries':self.entries}))
 
     def test_reject_unapproved_roles_and_unknown_guard_fields(self):
@@ -154,3 +154,24 @@ class ImageRepositoryScopeTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class SpeakerRootCapabilityExceptionTests(unittest.TestCase):
+    def test_only_exact_reviewed_root_raw_l2_contract_generates(self):
+        catalog=json.loads((ROOT/'kyverno/exception-catalog.json').read_text())
+        original=next(e for e in catalog['entries'] if e['name']=='metallb-speaker')
+        list(gen.generate({**catalog,'entries':[original]}))
+        for mutation in ['kind','namespace','name','account','image','capability','uid','escalation','guard','policy']:
+            e=copy.deepcopy(original);rule=e['policies'][CAP]['containers']['speaker']
+            if mutation=='kind':e['kind']='Deployment'
+            if mutation=='namespace':e['namespace']='other'
+            if mutation=='name':e['name']='other'
+            if mutation=='account':e['serviceAccount']='other'
+            if mutation=='image':rule['image']='registry.invalid/speaker:1'
+            if mutation=='capability':rule['capabilities'].append('NET_ADMIN')
+            if mutation=='uid':rule['runAsUser']=1000
+            if mutation=='escalation':rule['allowPrivilegeEscalation']=True
+            if mutation=='guard':e['requiredGuards']['containers']['speaker'].pop('readOnlyRootFilesystem')
+            if mutation=='policy':e['policies'].pop(CAP)
+            with self.subTest(mutation=mutation),self.assertRaises((AssertionError,KeyError)):
+                list(gen.generate({**catalog,'entries':[e]}))

@@ -29,6 +29,18 @@ APPLICATION_CAPABILITIES = {
 }
 
 
+SPEAKER_GUARDS = {
+    'privileged': False, 'allowPrivilegeEscalation': False,
+    'readOnlyRootFilesystem': True, 'runAsNonRoot': False,
+    'runAsUser': 0, 'runAsGroup': 0,
+    'seccompProfile': {'type': 'RuntimeDefault'},
+    'capabilities': {'drop': ['ALL'], 'add': ['NET_RAW']}}
+
+
+def is_speaker(entry):
+    return (entry['kind'], entry['namespace'], entry['name']) == ('DaemonSet', 'metallb-system', 'metallb-speaker')
+
+
 def literal(value):
     return json.dumps(value, sort_keys=True)
 
@@ -170,6 +182,14 @@ def guard_terms(variable, expected):
 
 def expression(entry, policy):
     config = entry['policies'][policy]
+    if is_speaker(entry):
+        assert set(entry['policies']) == {'require-run-as-nonroot', 'require-drop-all-capabilities'}
+        assert entry['serviceAccount'] == 'metallb-speaker'
+        assert entry['requiredGuards'] == {'containers': {'speaker': SPEAKER_GUARDS}}
+        for reviewed in entry['policies'].values():
+            assert set(reviewed.get('containers', {})) == {'speaker'}
+            assert not reviewed.get('initContainers') and not reviewed.get('ephemeralContainers')
+            assert image_repository(reviewed['containers']['speaker']['image']) == 'quay.io/metallb/speaker'
     if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict'):
         for section, rules in config.items():
             for name, rule in rules.items():
@@ -195,6 +215,12 @@ def expression(entry, policy):
             assert set(rule) == {'image', 'capabilities'}
         for name, rule in config.get('containers', {}).items():
             if rule.get('requirePrivileged'):
+                continue
+            if is_speaker(entry):
+                assert name == 'speaker'
+                assert set(rule) == {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'}
+                assert rule['capabilities'] == ['NET_RAW'] and rule['runAsUser'] == 0
+                assert rule['allowPrivilegeEscalation'] is False
                 continue
             assert entry['kind'] == 'Deployment'
             key = (entry['namespace'], entry['name'], name)

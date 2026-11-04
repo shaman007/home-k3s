@@ -6622,3 +6622,105 @@ spec:
       \ == 0 && c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(null)) == false &&\
       \ c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(null)) == 0 && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null))\
       \ == {\"type\": \"RuntimeDefault\"})\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-capabilities-metallb-system-metallb-speaker
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-drop-all-capabilities
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Production UID-1000 rollout failed raw L2 sockets and IPv4/IPv6 ingress; verified UID-0 rollback restores service.
+      Retain only NET_RAW and all other reviewed guards.
+    evidence: docs/metallb-speaker-nonroot.md
+    reviewed-on: '2026-11-03'
+    review-trigger: repository/guard/startup/chart or ownership change
+    image-scope: exact registry/repository; tags and sha256 digests may change
+    approved-main-capabilities: '{"speaker": ["NET_RAW"]}'
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"metallb-system\" &&\n((object.kind == \"DaemonSet\" && object.metadata.name\
+      \ == \"metallb-speaker\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^metallb\\\\-speaker-[a-z0-9]+$\"\
+      ) && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"DaemonSet\" && o.name == \"metallb-speaker\"\
+      \ && o.?controller.orValue(false) == true))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"metallb\" &&\n  has(p.metadata.labels) && \"app.kubernetes.io/instance\"\
+      \ in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/instance\"] == \"metallb\" &&\n  has(p.metadata.labels)\
+      \ && \"app.kubernetes.io/component\" in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/component\"] == \"\
+      speaker\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"metallb-speaker\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || ((c.name == \"speaker\" && c.image.matches(\"^quay\\\\.io/metallb/speaker(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      ) && c.?securityContext.?privileged.orValue(false) == false && has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation)\
+      \ && c.securityContext.allowPrivilegeEscalation == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"NET_RAW\"]) && [\"NET_RAW\"].all(cap,\
+      \ cap in c.?securityContext.?capabilities.?add.orValue([]))))) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\"\
+      \ in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
+      \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?containers.orValue([]).exists(c,\
+      \ !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap == \"NET_BIND_SERVICE\")) && ((c.name == \"speaker\" && c.image.matches(\"^quay\\\\.io/metallb/speaker(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      ) && c.?securityContext.?privileged.orValue(false) == false && has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation)\
+      \ && c.securityContext.allowPrivilegeEscalation == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0))\
+      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"NET_RAW\"]) && [\"NET_RAW\"].all(cap,\
+      \ cap in c.?securityContext.?capabilities.?add.orValue([])))))) &&\n  p.spec.?containers.orValue([]).exists(c, c.name\
+      \ == \"speaker\" && c.?securityContext.?allowPrivilegeEscalation.orValue(null) == false && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"NET_RAW\"]) && [\"NET_RAW\"].all(cap,\
+      \ cap in c.?securityContext.?capabilities.?add.orValue([])) && c.?securityContext.?capabilities.?drop.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?drop.orValue([]).all(cap, cap in [\"ALL\"]) && [\"ALL\"].all(cap, cap in\
+      \ c.?securityContext.?capabilities.?drop.orValue([])) && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?readOnlyRootFilesystem.orValue(null)\
+      \ == true && c.?securityContext.?runAsGroup.orValue(p.spec.?securityContext.?runAsGroup.orValue(null)) == 0 && c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(null))\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(null)) == 0 && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null))\
+      \ == {\"type\": \"RuntimeDefault\"})\n)"
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: verified-root-metallb-system-metallb-speaker
+  namespace: kyverno
+spec:
+  policyRefs:
+  - name: require-run-as-nonroot
+    kind: ValidatingPolicy
+  expiresAt: '2027-02-01T00:00:00Z'
+  reportResult: skip
+  properties:
+    reason: Production UID-1000 rollout failed raw L2 sockets and IPv4/IPv6 ingress; verified UID-0 rollback restores service.
+      Retain only NET_RAW and all other reviewed guards.
+    evidence: docs/metallb-speaker-nonroot.md
+    reviewed-on: '2026-11-03'
+    review-trigger: repository/guard/startup/chart or ownership change
+    image-scope: exact registry/repository; tags and sha256 digests may change
+  matchConditions:
+  - name: exact-workload-and-approved-deviations
+    expression: "object.metadata.namespace == \"metallb-system\" &&\n((object.kind == \"DaemonSet\" && object.metadata.name\
+      \ == \"metallb-speaker\") || (object.kind == \"Pod\" && object.metadata.name.matches(\"^metallb\\\\-speaker-[a-z0-9]+$\"\
+      ) && object.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"DaemonSet\" && o.name == \"metallb-speaker\"\
+      \ && o.?controller.orValue(false) == true))) &&\n[(object.kind == \"Pod\" ? object : object.kind == \"CronJob\" ? object.spec.jobTemplate.spec.template\
+      \ : object.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels &&\
+      \ p.metadata.labels[\"app.kubernetes.io/name\"] == \"metallb\" &&\n  has(p.metadata.labels) && \"app.kubernetes.io/instance\"\
+      \ in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/instance\"] == \"metallb\" &&\n  has(p.metadata.labels)\
+      \ && \"app.kubernetes.io/component\" in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/component\"] == \"\
+      speaker\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"metallb-speaker\" &&\n  p.spec.?containers.orValue([]).all(c,\
+      \ (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) || ((c.name\
+      \ == \"speaker\" && c.image.matches(\"^quay\\\\.io/metallb/speaker(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))) &&\n  p.spec.?initContainers.orValue([]).all(c,\
+      \ (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) || false)\
+      \ &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
+      \ == true) || false) &&\n  (p.spec.?containers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
+      \ == true) && ((c.name == \"speaker\" && c.image.matches(\"^quay\\\\.io/metallb/speaker(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0)))) &&\n  p.spec.?containers.orValue([]).exists(c,\
+      \ c.name == \"speaker\" && c.?securityContext.?allowPrivilegeEscalation.orValue(null) == false && c.?securityContext.?capabilities.?add.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"NET_RAW\"]) && [\"NET_RAW\"].all(cap,\
+      \ cap in c.?securityContext.?capabilities.?add.orValue([])) && c.?securityContext.?capabilities.?drop.orValue([]).size()\
+      \ == 1 && c.?securityContext.?capabilities.?drop.orValue([]).all(cap, cap in [\"ALL\"]) && [\"ALL\"].all(cap, cap in\
+      \ c.?securityContext.?capabilities.?drop.orValue([])) && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?readOnlyRootFilesystem.orValue(null)\
+      \ == true && c.?securityContext.?runAsGroup.orValue(p.spec.?securityContext.?runAsGroup.orValue(null)) == 0 && c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(null))\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(null)) == 0 && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null))\
+      \ == {\"type\": \"RuntimeDefault\"})\n)"

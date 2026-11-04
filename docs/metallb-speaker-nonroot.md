@@ -116,3 +116,27 @@ findings). No OpenBao replacement is included; it requires an unseal-ready opera
 
 Rollback: remove the four new speaker Pod identity/group fields from chart values
 and publish. Preserve NET_RAW, L2 mode, VIPs and the one-at-a-time strategy.
+
+## Subsequent reviewed root audit exceptions
+
+The user subsequently authorized whitelisting the verified root requirement.
+The chart now explicitly declares UID/GID 0 and runAsNonRoot false, matching the
+working runtime identity. It retains only NET_RAW after drop ALL, no escalation,
+read-only root and RuntimeDefault, with one unavailable speaker at a time.
+This explicit identity also makes the audit exception contract unambiguous.
+
+Two audit-only exceptions are prepared: require-run-as-nonroot and
+require-drop-all-capabilities. They match only metallb-system/metallb-speaker,
+its DaemonSet-owned Pods, the three reviewed labels, service account
+metallb-speaker, and container speaker from the exact quay.io/metallb/speaker
+repository (tags/digests may change). Every reviewed guard must match. No init or
+ephemeral role is approved, no privilege/escalation/seccomp policy is exempted,
+and other noncompliant containers still fail. Existing expiry remains 2027-02-01.
+
+Validation: 74 real Kyverno 1.19.2 CEL positive/negative expectations passed,
+including repository/version/digest, namespace, labels, service account, Pod
+owner, UID/GID, non-root flag, seccomp, escalation, privileged flag, writable root,
+extra capability, missing drop ALL and unreviewed additional containers. All 312
+repository unit tests passed (16 skipped). After publication, verify the speaker
+root/capability findings become Skip while IPv4/IPv6 ingress and SSH stay healthy.
+These prepared exceptions do not change live policy reports before publication.

@@ -35,6 +35,10 @@ spec:
               maxUnavailable: 1
           priorityClassName: homelab-critical
           securityContext:
+            # Production raw L2 sockets require the reviewed root identity.
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
             seccompProfile:
               type: RuntimeDefault
         frr-k8s:

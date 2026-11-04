@@ -76,7 +76,8 @@ def main():
     speaker = after[('DaemonSet', 'metallb-speaker')]['spec']
     pod = speaker['template']['spec']
     assert pod['securityContext'] == {
-        'seccompProfile': {'type': 'RuntimeDefault'}}, 'Speaker non-root runtime was not compatible; retain reviewed root identity'
+        'runAsNonRoot': False, 'runAsUser': 0, 'runAsGroup': 0,
+        'seccompProfile': {'type': 'RuntimeDefault'}}, 'Retain the reviewed root identity'
     assert speaker['updateStrategy'] == {'type': 'RollingUpdate', 'rollingUpdate': {'maxUnavailable': 1}}
     assert pod['hostNetwork'] is True and not pod.get('hostPID') and not pod.get('hostIPC')
     assert not pod.get('initContainers'), 'Unexpected speaker init container'
