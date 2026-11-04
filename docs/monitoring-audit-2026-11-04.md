@@ -240,3 +240,13 @@ External Secrets policy correction: the added broad pod-selector ingress policy 
 Final native dashboard additions: Hister and Your Spotify use authenticated endpoint probes grounded in live metric families. Spotify business counters are lazy/event-dependent; process/Node.js metrics were verified immediately and absent business counters are not filled with artificial zeros. Application Workloads also exposes namespace-filtered Traefik service throughput, 5xx responses and p95 latency for applications without a native exporter. Two remaining Alloy timeouts were traced to ingress policies matching Deployment metadata labels rather than Pod labels; selectors were corrected to Bitwarden service=bitwarden and Nextcloud app=nextcloud,component=web.
 
 Completed dashboard query validation: all 128 queries evaluated successfully against live Prometheus; 125 returned series. The absent queries were an event-dependent OpenBao policy counter and Spotify ingestion/import counters. Source policy selectors were checked against live Pod-template labels. A final handoff rechecks target health, Argo state and provisioned dashboard count after the selector/dashboard sync.
+
+## Final verified outcome
+
+- All 92 Argo CD applications were Healthy and Synced at the final verification.
+- All 151 active Prometheus scrape targets were up, including the corrected Alloy sidecars, authenticated Hister/Spotify endpoints, CSI controllers and enabled platform/application telemetry.
+- Grafana contained 48 dashboards: 13 new dashboards were provisioned, with existing OpenBao, MySQL and SeaweedFS repairs retained. All new dashboard UIDs were re-read through the API after deployment.
+- All 128 shared/native/OpenBao query evaluations succeeded, with 125 returning series. The corrected MySQL panel was additionally verified with two live database series. Three event-dependent queries had no samples and were not filled with artificial zeros.
+- Twenty-five focused tests and the running Prometheus version's promtool validation passed. The 21 existing Prometheus alert rules were unchanged, healthy and inactive at final verification; the recommendations above were not implemented.
+- All 81 SecretStore/ExternalSecret objects were Ready. A concurrent OpenBao capability rollout was recovered using the verified replacement unseal share; all three replicas were updated and ready.
+- Unrelated MetalLB/Kyverno worktree changes were preserved. Monitoring changes were published through the explicitly authorized GitHub/GitOps workflow.
