@@ -29,7 +29,8 @@ def reviewed(doc, entry):
     assert c['name'] == entry['container'] and c['image'] == entry['image']
     assert c.get('command', []) == entry['command'] and c.get('args', []) == entry['args']
     if entry['kind'] == 'DaemonSet':
-        for index in [0, 2]:
+        for index in range(entry['count']):
+            if index == entry['index']: continue
             actual = pod['containers'][index]
             expected = entry['fixture']['spec']['template']['spec']['containers'][index]
             assert actual['name'] == expected['name'] and actual['image'] == expected['image']

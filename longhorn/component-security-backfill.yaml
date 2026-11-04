@@ -35,6 +35,7 @@ rules:
   - daemonsets
   resourceNames:
   - longhorn-csi-plugin
+  - longhorn-manager
   verbs:
   - get
   - patch
@@ -63,7 +64,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: '-1'
 data:
-  catalog.json: '{"reviewedOn": "2026-11-03", "entries": [{"kind": "Deployment", "name": "csi-attacher", "serviceAccount":
+  catalog.json: '{"reviewedOn": "2026-11-04", "entries": [{"kind": "Deployment", "name": "csi-attacher", "serviceAccount":
     "longhorn-csi-service-account", "container": "csi-attacher", "image": "docker.io/longhornio/csi-attacher:v4.13.0",
     "args": ["--v=2", "--csi-address=$(ADDRESS)", "--timeout=1m50s", "--retry-interval-max=1m", "--leader-election",
     "--leader-election-namespace=$(POD_NAMESPACE)", "--kube-api-qps=50", "--kube-api-burst=100", "--http-endpoint=:8000"],
@@ -248,7 +249,24 @@ data:
     "terminationMessagePath": "/dev/termination-log", "terminationMessagePolicy": "File"}], "dnsPolicy": "ClusterFirst",
     "priorityClassName": "longhorn-critical", "restartPolicy": "Always", "schedulerName": "default-scheduler", "securityContext":
     {}, "serviceAccount": "longhorn-service-account", "serviceAccountName": "longhorn-service-account", "terminationGracePeriodSeconds":
-    30}}, "strategy": {"rollingUpdate": {"maxSurge": "25%", "maxUnavailable": "25%"}, "type": "RollingUpdate"}}}}]}'
+    30}}, "strategy": {"rollingUpdate": {"maxSurge": "25%", "maxUnavailable": "25%"}, "type": "RollingUpdate"}}}},
+    {"kind": "DaemonSet", "name": "longhorn-manager", "serviceAccount": "longhorn-service-account", "container":
+    "pre-pull-share-manager-image", "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0", "args": [],
+    "command": ["sh", "-c", "echo share-manager image pulled && sleep infinity"], "index": 1, "count": 2, "uid":
+    65534, "gid": 65534, "fixture": {"apiVersion": "apps/v1", "kind": "DaemonSet", "metadata": {"name": "longhorn-manager",
+    "namespace": "longhorn-system"}, "spec": {"selector": {"matchLabels": {"app": "longhorn-manager"}}, "updateStrategy":
+    {"rollingUpdate": {"maxSurge": 0, "maxUnavailable": "100%"}, "type": "RollingUpdate"}, "template": {"metadata":
+    {"labels": {"app": "longhorn-manager", "app.kubernetes.io/instance": "longhorn", "app.kubernetes.io/managed-by":
+    "Helm", "app.kubernetes.io/name": "longhorn", "app.kubernetes.io/version": "v1.13.0", "helm.sh/chart": "longhorn-1.13.0"}},
+    "spec": {"serviceAccountName": "longhorn-service-account", "containers": [{"name": "longhorn-manager", "image":
+    "docker.io/longhornio/longhorn-manager:v1.13.0", "command": ["longhorn-manager", "-d", "daemon", "--engine-image",
+    "docker.io/longhornio/longhorn-engine:v1.13.0", "--instance-manager-image", "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+    "--share-manager-image", "docker.io/longhornio/longhorn-share-manager:v1.13.0", "--backing-image-manager-image",
+    "docker.io/longhornio/backing-image-manager:v1.13.0", "--support-bundle-manager-image", "docker.io/longhornio/support-bundle-kit:v0.0.98",
+    "--manager-image", "docker.io/longhornio/longhorn-manager:v1.13.0", "--service-account", "longhorn-service-account",
+    "--upgrade-version-check"], "securityContext": {"privileged": true}}, {"name": "pre-pull-share-manager-image",
+    "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0", "command": ["sh", "-c", "echo share-manager
+    image pulled && sleep infinity"]}]}}}}}]}'
   backfill.py: |
     #!/usr/bin/env python3
     """Preflight native mutations, then roll reviewed workloads one at a time."""
@@ -281,7 +299,8 @@ data:
         assert c['name'] == entry['container'] and c['image'] == entry['image']
         assert c.get('command', []) == entry['command'] and c.get('args', []) == entry['args']
         if entry['kind'] == 'DaemonSet':
-            for index in [0, 2]:
+            for index in range(entry['count']):
+                if index == entry['index']: continue
                 actual = pod['containers'][index]
                 expected = entry['fixture']['spec']['template']['spec']['containers'][index]
                 assert actual['name'] == expected['name'] and actual['image'] == expected['image']
@@ -382,7 +401,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   backoffLimit: 0
-  activeDeadlineSeconds: 2400
+  activeDeadlineSeconds: 2700
   template:
     metadata:
       labels:

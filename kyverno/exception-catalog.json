@@ -4892,9 +4892,49 @@
         "app.kubernetes.io/name": "longhorn"
       },
       "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/longhorn-prepull-hardening.md",
       "policies": {
         "disallow-privileged-containers": {
+          "containers": {
+            "longhorn-manager": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "longhorn-manager": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "longhorn-manager": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "longhorn-manager": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "disallow-privilege-escalation": {
           "containers": {
             "longhorn-manager": {
               "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
@@ -4916,7 +4956,22 @@
           },
           {
             "name": "pre-pull-share-manager-image",
-            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0"
+            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
+              "runAsGroup": 65534,
+              "allowPrivilegeEscalation": false,
+              "privileged": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
           }
         ],
         "initContainers": []
@@ -4929,7 +4984,8 @@
         }
       },
       "requiredPodGuards": {},
-      "guardReview": "docs/exception-guard-contract-review.md"
+      "guardReview": "docs/exception-guard-contract-review.md",
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "image-builder",

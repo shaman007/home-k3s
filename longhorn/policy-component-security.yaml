@@ -37,6 +37,7 @@ spec:
       - daemonsets
       resourceNames:
       - longhorn-csi-plugin
+      - longhorn-manager
   matchConditions:
   - name: namespace
     expression: request.namespace == "longhorn-system"
@@ -118,18 +119,31 @@ spec:
        p.containers[0].name == "longhorn-global-manager" &&
        p.containers[0].image == "docker.io/longhornio/longhorn-manager:v1.13.0" &&
        p.containers[0].?args.orValue([]) == [] &&
-       p.containers[0].?command.orValue([]) == ["longhorn-manager", "-d", "global"])
+       p.containers[0].?command.orValue([]) == ["longhorn-manager", "-d", "global"]) ||
+      (object.kind == "DaemonSet" &&
+       object.metadata.name == "longhorn-manager" &&
+       object.spec.template.metadata.?labels.orValue({})["app"] == "longhorn-manager" &&
+       p.?serviceAccountName.orValue("default") == "longhorn-service-account" &&
+       p.containers.size() == 2 &&
+       p.?initContainers.orValue([]).size() == 0 &&
+       p.containers[1].name == "pre-pull-share-manager-image" &&
+       p.containers[1].image == "docker.io/longhornio/longhorn-share-manager:v1.13.0" &&
+       p.containers[1].?args.orValue([]) == [] &&
+       p.containers[1].?command.orValue([]) == ["sh", "-c", "echo share-manager image pulled && sleep infinity"] &&
+       p.containers[0].name == "longhorn-manager" &&
+       p.containers[0].image == "docker.io/longhornio/longhorn-manager:v1.13.0" &&
+       p.containers[0].?securityContext.?privileged.orValue(false) == true)
       )
   variables:
   - name: index
     expression: '{"csi-attacher": 0, "csi-provisioner": 0, "csi-resizer": 0, "csi-snapshotter": 0, "longhorn-ui":
-      0, "longhorn-csi-plugin": 1, "longhorn-global-manager": 0}[string(object.metadata.name)]'
+      0, "longhorn-csi-plugin": 1, "longhorn-global-manager": 0, "longhorn-manager": 1}[string(object.metadata.name)]'
   - name: uid
     expression: '{"csi-attacher": 0, "csi-provisioner": 0, "csi-resizer": 0, "csi-snapshotter": 0, "longhorn-ui":
-      499, "longhorn-csi-plugin": 0, "longhorn-global-manager": 1000}[string(object.metadata.name)]'
+      499, "longhorn-csi-plugin": 0, "longhorn-global-manager": 1000, "longhorn-manager": 65534}[string(object.metadata.name)]'
   - name: gid
     expression: '{"csi-attacher": 0, "csi-provisioner": 0, "csi-resizer": 0, "csi-snapshotter": 0, "longhorn-ui":
-      486, "longhorn-csi-plugin": 0, "longhorn-global-manager": 1000}[string(object.metadata.name)]'
+      486, "longhorn-csi-plugin": 0, "longhorn-global-manager": 1000, "longhorn-manager": 65534}[string(object.metadata.name)]'
   - name: nonroot
     expression: variables.uid != 0
   mutations:

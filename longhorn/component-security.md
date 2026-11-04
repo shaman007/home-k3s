@@ -1,8 +1,10 @@
 # Longhorn component hardening
 
-This change covers five CSI client containers, the UI and the global manager, with exact
+This change covers five CSI client containers, the UI, the global manager and the
+image-prepull sidecar, with exact
 image references and workload contracts recorded in
-`component-security-catalog.json`. It does not modify the privileged CSI driver,
+`component-security-catalog.json`. The prepull sidecar follow-up is documented in
+[its runtime review](../docs/longhorn-prepull-hardening.md). It does not modify the privileged CSI driver,
 node-driver registrar, node managers, engines, or volume ownership.
 
 ## Reviewed requirements
@@ -56,7 +58,7 @@ Chart 1.13.0 exposes no UI container securityContext value, and the manager's
 CSI Deployment generator supplies no security contexts for these clients.
 `policy-component-security.yaml` uses a fail-open native Kubernetes
 MutatingAdmissionPolicy, independently of the five Audit/Ignore Kyverno policies.
-It matches only the seven reviewed workload identities in `longhorn-system`,
+It matches only the eight reviewed workload identities in `longhorn-system`,
 application labels, service accounts, exact container images, commands and
 arguments. The node DaemonSet also requires the two privileged companion images
 and their privileged flags to match. Only the selected container's security

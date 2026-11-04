@@ -26,7 +26,8 @@ def generate(catalog):
                  f'{c}.name == {json.dumps(e["container"])}', f'{c}.image == {json.dumps(e["image"])}',
                  f'{c}.?args.orValue([]) == {json.dumps(e["args"])}', f'{c}.?command.orValue([]) == {json.dumps(e["command"])}']
         if e['kind'] == 'DaemonSet':
-            for index in [0,2]:
+            for index in range(e['count']):
+                if index == e['index']: continue
                 companion = e['fixture']['spec']['template']['spec']['containers'][index]
                 parts += [f'p.containers[{index}].name == {json.dumps(companion["name"])}',
                           f'p.containers[{index}].image == {json.dumps(companion["image"])}',

@@ -1,5 +1,5 @@
 {
-  "reviewedOn": "2026-11-03",
+  "reviewedOn": "2026-11-04",
   "entries": [
     {
       "kind": "Deployment",
@@ -1378,6 +1378,98 @@
               "maxUnavailable": "25%"
             },
             "type": "RollingUpdate"
+          }
+        }
+      }
+    },
+    {
+      "kind": "DaemonSet",
+      "name": "longhorn-manager",
+      "serviceAccount": "longhorn-service-account",
+      "container": "pre-pull-share-manager-image",
+      "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+      "args": [],
+      "command": [
+        "sh",
+        "-c",
+        "echo share-manager image pulled && sleep infinity"
+      ],
+      "index": 1,
+      "count": 2,
+      "uid": 65534,
+      "gid": 65534,
+      "fixture": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {
+          "name": "longhorn-manager",
+          "namespace": "longhorn-system"
+        },
+        "spec": {
+          "selector": {
+            "matchLabels": {
+              "app": "longhorn-manager"
+            }
+          },
+          "updateStrategy": {
+            "rollingUpdate": {
+              "maxSurge": 0,
+              "maxUnavailable": "100%"
+            },
+            "type": "RollingUpdate"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "app": "longhorn-manager",
+                "app.kubernetes.io/instance": "longhorn",
+                "app.kubernetes.io/managed-by": "Helm",
+                "app.kubernetes.io/name": "longhorn",
+                "app.kubernetes.io/version": "v1.13.0",
+                "helm.sh/chart": "longhorn-1.13.0"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "longhorn-service-account",
+              "containers": [
+                {
+                  "name": "longhorn-manager",
+                  "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+                  "command": [
+                    "longhorn-manager",
+                    "-d",
+                    "daemon",
+                    "--engine-image",
+                    "docker.io/longhornio/longhorn-engine:v1.13.0",
+                    "--instance-manager-image",
+                    "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+                    "--share-manager-image",
+                    "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+                    "--backing-image-manager-image",
+                    "docker.io/longhornio/backing-image-manager:v1.13.0",
+                    "--support-bundle-manager-image",
+                    "docker.io/longhornio/support-bundle-kit:v0.0.98",
+                    "--manager-image",
+                    "docker.io/longhornio/longhorn-manager:v1.13.0",
+                    "--service-account",
+                    "longhorn-service-account",
+                    "--upgrade-version-check"
+                  ],
+                  "securityContext": {
+                    "privileged": true
+                  }
+                },
+                {
+                  "name": "pre-pull-share-manager-image",
+                  "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+                  "command": [
+                    "sh",
+                    "-c",
+                    "echo share-manager image pulled && sleep infinity"
+                  ]
+                }
+              ]
+            }
           }
         }
       }

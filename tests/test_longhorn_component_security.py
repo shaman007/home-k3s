@@ -26,7 +26,7 @@ class ComponentSecurityTests(unittest.TestCase):
         return doc
 
     def test_exact_scope_and_namespace_rbac(self):
-        self.assertEqual({e['name'] for e in self.entries},{'csi-attacher','csi-provisioner','csi-resizer','csi-snapshotter','longhorn-ui','longhorn-csi-plugin','longhorn-global-manager'})
+        self.assertEqual({e['name'] for e in self.entries},{'csi-attacher','csi-provisioner','csi-resizer','csi-snapshotter','longhorn-ui','longhorn-csi-plugin','longhorn-global-manager','longhorn-manager'})
         rules=next(d for d in self.bundle if d['kind']=='Role')['rules']
         for rule in rules:
             self.assertEqual(rule['verbs'],['get','patch']);self.assertEqual(rule['apiGroups'],['apps'])
@@ -49,8 +49,8 @@ class ComponentSecurityTests(unittest.TestCase):
             else:restored['template']['spec']['containers'][entry['index']].pop('securityContext')
             self.assertEqual(restored,doc['spec'])
             sc=spec['template']['spec']['containers'][entry['index']]['securityContext']
-            self.assertEqual(sc['runAsUser'],{'longhorn-ui':499,'longhorn-global-manager':1000}.get(entry['name'],0))
-            self.assertEqual(sc['runAsNonRoot'],entry['name'] in ['longhorn-ui','longhorn-global-manager'])
+            self.assertEqual(sc['runAsUser'],{'longhorn-ui':499,'longhorn-global-manager':1000,'longhorn-manager':65534}.get(entry['name'],0))
+            self.assertEqual(sc['runAsNonRoot'],entry['name'] in ['longhorn-ui','longhorn-global-manager','longhorn-manager'])
 
     def test_rollout_readiness_requires_updated_generation_and_all_replicas(self):
         for entry in self.entries:
