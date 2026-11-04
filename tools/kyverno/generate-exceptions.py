@@ -16,6 +16,18 @@ POLICIES = {'require-run-as-nonroot': 'root',
             'require-drop-all-capabilities': 'capabilities'}
 
 
+# Reviewed application roles only; permission-init exceptions retain their smaller
+# allowlist. No SYS_ADMIN, privileged containers or arbitrary main roles.
+APPLICATION_CAPABILITIES = {
+    ('backup-rsync', 'backup-rsync', 'sshd'): ({'CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'SETGID', 'SETUID', 'SYS_CHROOT', 'NET_BIND_SERVICE'}, 0, False),
+    ('mail', 'postfix', 'postfix-mail'): ({'CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID', 'NET_BIND_SERVICE'}, 0, False),
+    ('mail', 'dovecot', 'dovecot-mail'): ({'CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID', 'NET_BIND_SERVICE', 'SYS_CHROOT'}, 0, False),
+    ('plex', 'plex', 'plex'): ({'CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETGID', 'SETUID'}, 0, False),
+    ('nextcloud', 'collabora-collabora-online', 'collabora-online'): ({'CHOWN', 'FOWNER', 'SYS_CHROOT'}, 1001, True),
+    ('ripe-atlas', 'ripe-atlas', 'ripe-atlas'): ({'CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'FSETID', 'KILL', 'SETUID', 'SETGID', 'SETPCAP', 'NET_RAW'}, 0, True),
+}
+
+
 def literal(value):
     return json.dumps(value, sort_keys=True)
 
@@ -76,16 +88,17 @@ def approved(policy, allowed):
         if policy == 'require-run-as-nonroot':
             fields.append('c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0')
         if policy == 'require-drop-all-capabilities':
-            assert set(rule) == {'image', 'capabilities'}
+            assert set(rule) in ({'image', 'capabilities'}, {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'})
             caps = rule['capabilities']
             assert isinstance(caps, list)
             assert caps and len(caps) == len(set(caps))
-            assert set(caps) <= {'CHOWN', 'DAC_OVERRIDE', 'DAC_READ_SEARCH', 'FOWNER'}
+            if 'runAsUser' not in rule:
+                assert set(caps) <= {'CHOWN', 'DAC_OVERRIDE', 'DAC_READ_SEARCH', 'FOWNER'}
             actual = 'c.?securityContext.?capabilities.?add.orValue([])'
             fields.extend([
                 'c.?securityContext.?privileged.orValue(false) == false',
-                'c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false',
-                'c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0',
+                (f'has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation) && c.securityContext.allowPrivilegeEscalation == {literal(rule["allowPrivilegeEscalation"])}' if 'runAsUser' in rule else 'c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false'),
+                f'c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue({0 if "runAsUser" in rule else -1})) == {rule.get("runAsUser", 0)}',
                 'c.?securityContext.?capabilities.?drop.orValue([]) == ["ALL"]',
                 f'{actual}.size() == {len(caps)}',
                 f'{actual}.all(cap, cap in {literal(caps)})',
@@ -99,12 +112,23 @@ def approved(policy, allowed):
 def expression(entry, policy):
     config = entry['policies'][policy]
     if policy == 'require-drop-all-capabilities':
-        # Only the previously reviewed root permission-init roles may receive
-        # capability exceptions; never approve a main or ephemeral container.
-        assert config.get('initContainers') and not config.get('containers') and not config.get('ephemeralContainers')
-        root_roles = entry['policies']['require-run-as-nonroot'].get('initContainers', {})
-        for name, rule in config['initContainers'].items():
+        assert not config.get('ephemeralContainers')
+        assert config.get('initContainers') or config.get('containers')
+        for name, rule in config.get('initContainers', {}).items():
+            root_roles = entry['policies']['require-run-as-nonroot'].get('initContainers', {})
             assert name in root_roles and root_roles[name]['image'] == rule['image']
+            assert set(rule) == {'image', 'capabilities'}
+        for name, rule in config.get('containers', {}).items():
+            assert entry['kind'] == 'Deployment'
+            key = (entry['namespace'], entry['name'], name)
+            assert key in APPLICATION_CAPABILITIES
+            caps, uid, escalation = APPLICATION_CAPABILITIES[key]
+            assert set(rule) == {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'}
+            assert set(rule['capabilities']) == caps
+            assert rule['runAsUser'] == uid and rule['allowPrivilegeEscalation'] is escalation
+            review_policy = 'disallow-privilege-escalation' if escalation else 'require-run-as-nonroot'
+            reviewed = entry['policies'][review_policy]['containers']
+            assert name in reviewed and reviewed[name]['image'] == rule['image']
     ok = compliant(policy)
     terms = []
     actual = []
@@ -143,7 +167,10 @@ def generate(catalog):
             assert policy in POLICIES
             cap_properties = {}
             if policy == 'require-drop-all-capabilities':
-                cap_properties['approved-init-capabilities'] = literal({name: rule['capabilities'] for name, rule in entry['policies'][policy]['initContainers'].items()})
+                for section, key in [('initContainers', 'approved-init-capabilities'), ('containers', 'approved-main-capabilities')]:
+                    rules = entry['policies'][policy].get(section, {})
+                    if rules:
+                        cap_properties[key] = literal({name: rule['capabilities'] for name, rule in rules.items()})
             name = exception_name(entry, policy)
             assert name not in names
             names.add(name)
@@ -152,7 +179,7 @@ def generate(catalog):
                    'spec': {'policyRefs': [{'name': policy, 'kind': 'ValidatingPolicy'}],
                             'expiresAt': catalog['expiresAt'], 'reportResult': 'skip',
                             'properties': {'reason': entry['reason'], 'evidence': entry['evidence'],
-                                           'reviewed-on': catalog['reviewedOn'],
+                                           'reviewed-on': entry.get('reviewedOn', catalog['reviewedOn']),
                                            'review-trigger': 'image/chart/startup or ownership change', **cap_properties},
                             'matchConditions': [{'name': 'exact-workload-and-approved-deviations',
                                                  'expression': expression(entry, policy)}]}}

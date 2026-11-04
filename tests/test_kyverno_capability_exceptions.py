@@ -49,4 +49,31 @@ class CapabilityExceptionScopeTests(unittest.TestCase):
         self.reject()
 
 
+class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
+    def setUp(self):
+        catalog=json.loads((ROOT/'kyverno/exception-catalog.json').read_text())
+        self.entries=[copy.deepcopy(e) for e in catalog['entries'] if e.get('evidence')=='docs/capability-exception-review.md']
+        self.catalog={**catalog,'entries':self.entries}
+
+    def test_six_reviewed_workloads_generate(self):
+        self.assertEqual(len(self.entries),6)
+        self.assertEqual(sum(e['spec']['policyRefs'][0]['name']==CAP for e in gen.generate(self.catalog)),6)
+
+    def test_reject_changed_application_contracts(self):
+        for original in self.entries:
+            for mutation in ['capability','uid','escalation','role','workload','image','kind']:
+                with self.subTest(workload=original['name'],mutation=mutation):
+                    entry=copy.deepcopy(original)
+                    role,rule=next(iter(entry['policies'][CAP]['containers'].items()))
+                    if mutation=='capability': rule['capabilities'].append('SYS_ADMIN')
+                    if mutation=='uid': rule['runAsUser']+=1
+                    if mutation=='escalation': rule['allowPrivilegeEscalation']=not rule['allowPrivilegeEscalation']
+                    if mutation=='role': entry['policies'][CAP]['containers']['unapproved']=entry['policies'][CAP]['containers'].pop(role)
+                    if mutation=='workload': entry['name']='unapproved'
+                    if mutation=='image': rule['image']='registry.invalid/unreviewed:1'
+                    if mutation=='kind': entry['kind']='DaemonSet'
+                    with self.assertRaises((AssertionError,KeyError)):
+                        list(gen.generate({**self.catalog,'entries':[entry]}))
+
+
 if __name__=='__main__':unittest.main()

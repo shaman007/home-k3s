@@ -93,8 +93,13 @@ Two additional policies remain strictly Audit/Ignore:
   a container-level `Unconfined` override is reported.
 
 The seccomp audit has no exceptions. Capability exceptions are limited to the
-25 reviewed ownership-init roles above; mail, GPU, storage and other main-container
-capability requirements remain visible for separate review. Commands and volume
+25 reviewed ownership-init roles above and six reviewed application workloads:
+backup SSH, Postfix, Dovecot, Plex, Collabora and RIPE Atlas. Application exceptions
+require an exact capability set, reviewed UID and explicit escalation setting,
+non-privileged mode and drop ALL, in addition to existing image and workload
+identity checks. Postfix's CHOWN/FOWNER queue-init role is included. See
+[compatibility evidence](../docs/capability-exception-review.md).
+GPU and storage capability requirements remain visible for separate review. Commands and volume
 mounts are not pinned by the exception expressions; changes to startup or storage
 contracts require owner review under the existing RBAC/GitOps trust boundary. Existing namespace
 exclusions remain `kyverno` and `kube-system`. This change does not mutate or

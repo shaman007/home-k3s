@@ -1,10 +1,11 @@
 # Strategic merge patch for the existing unmanaged Deployment; not an Argo manifest.
-# Keeps its image, credentials, PVC, service and update strategy unchanged.
+# Pins the verified deployed image; keeps credentials, PVC, service and strategy.
 spec:
   template:
     spec:
       containers:
         - name: mysql
+          image: harbor.andreybondarenko.com/dockerhub/mysql:9@sha256:29abb0a179982e4a8928138bfc7f918af9eda64e7eeb1b1d084c1720a20159e6
           securityContext:
             runAsNonRoot: true
             runAsUser: 999

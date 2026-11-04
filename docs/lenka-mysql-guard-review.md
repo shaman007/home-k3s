@@ -4,7 +4,7 @@ The existing `lenka/mysql` Deployment is unmanaged: the Lenka Argo Application
 contains RBAC only. Do not put a partial Deployment into that auto-pruned directory.
 `tools/security/lenka-mysql-security.patch.yaml` is a strategic merge patch prepared
 for an explicitly authorized live patch, not an automatically deployed manifest.
-It preserves the current image, environment, PVC and rollout strategy.
+It pins the verified deployed image digest and preserves environment, PVC and rollout strategy.
 
 Runtime inspection found MySQL 9.7.2, PID 1 UID/GID 999, zero effective
 capabilities, existing seccomp filter mode 2, and no no-new-privileges guard.
@@ -22,8 +22,26 @@ verification after rollout on Talos. Production data is never mounted by this pr
 The root filesystem remains writable; this batch only introduces the requested guards.
 
 Run the probe with `python3 tools/security/test-lenka-mysql-guards.py`.
-A live rollout and cleared PolicyReports remain pending explicit cluster-change
-approval. A Git push alone will not deploy this patch.
+The user authorized the live patch on 2026-11-04. Deployment rollout completed:
+`mysql-74cd5cdb6b-hh7qx` is Ready with zero restarts. Authenticated SELECT 1 and
+application-table metadata queries succeeded. PID 1 has UID/GID 999, every
+capability set zero, NoNewPrivs=1 and Seccomp=2. All five Pod PolicyReport results
+pass (zero failures/skips). Service endpoint is Ready. Startup completed InnoDB
+recovery and reached ready-for-connections without permission errors.
+
+The unchanged mutable `mysql:9` tag resolved on the new node to index digest
+`sha256:29abb0a179982e4a8928138bfc7f918af9eda64e7eeb1b1d084c1720a20159e6`,
+different from the former Pod and isolated probe digest above. Both report MySQL
+9.7.2, but this is a real index difference, not merely index versus platform digest.
+The new deployed image has live startup/query/security-context evidence; isolated
+new-database/restart testing was on the former digest. The user subsequently authorized pinning this deployed digest; the pinned rollout
+completed and authenticated SELECT 1 and all runtime guards were verified again.
+The pin uses the repository-standard Harbor proxy; fetching its manifest returned
+the identical SHA-256 digest, so the registry change preserves image content.
+Final pinned Pod `mysql-866db44449-tnrq4` is Ready with zero restarts, authenticated
+SELECT 1 succeeds, runtime guards remain active, and all five Kyverno checks pass. No production SQL writes were performed.
+
+A Git push alone will not deploy this patch; the live Deployment remains unmanaged.
 
 # Running Pods without a matching PolicyReport
 

@@ -2284,12 +2284,31 @@
         "app": "backup-rsync"
       },
       "reason": "SSH master uses multi-user privilege separation.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/capability-exception-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
             "sshd": {
               "image": "harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "sshd": {
+              "image": "harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT",
+                "NET_BIND_SERVICE"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
             }
           },
           "initContainers": {}
@@ -2306,12 +2325,27 @@
             "name": "sshd",
             "image": "harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0",
             "securityContext": {
-              "allowPrivilegeEscalation": false
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "FOWNER",
+                  "SETGID",
+                  "SETUID",
+                  "SYS_CHROOT",
+                  "NET_BIND_SERVICE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
             }
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "mail",
@@ -2323,12 +2357,33 @@
         "tier": "mail"
       },
       "reason": "Dovecot master manages separate mail/authentication users.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/capability-exception-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
             "dovecot-mail": {
               "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "dovecot-mail": {
+              "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETGID",
+                "SETUID",
+                "NET_BIND_SERVICE",
+                "SYS_CHROOT"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
             }
           },
           "initContainers": {}
@@ -2346,12 +2401,29 @@
             "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root",
             "securityContext": {
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": false
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "FOWNER",
+                  "FSETID",
+                  "KILL",
+                  "SETGID",
+                  "SETUID",
+                  "NET_BIND_SERVICE",
+                  "SYS_CHROOT"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true
             }
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "mail",
@@ -2363,7 +2435,7 @@
         "tier": "mail"
       },
       "reason": "Postfix master manages separate users; init prepares queue ownership.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/capability-exception-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
@@ -2374,6 +2446,34 @@
           "initContainers": {
             "init-postfix-queue-perms": {
               "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223"
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "postfix-mail": {
+              "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETGID",
+                "SETUID",
+                "NET_BIND_SERVICE"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
+            }
+          },
+          "initContainers": {
+            "init-postfix-queue-perms": {
+              "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223",
+              "capabilities": [
+                "CHOWN",
+                "FOWNER"
+              ]
             }
           }
         }
@@ -2390,6 +2490,21 @@
             "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223",
             "securityContext": {
               "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "FOWNER",
+                  "FSETID",
+                  "KILL",
+                  "SETGID",
+                  "SETUID",
+                  "NET_BIND_SERVICE"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
               "readOnlyRootFilesystem": true
             }
           }
@@ -2399,11 +2514,24 @@
             "name": "init-postfix-queue-perms",
             "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223",
             "securityContext": {
-              "allowPrivilegeEscalation": false
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "FOWNER"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "runAsGroup": 0,
+              "runAsUser": 0
             }
           }
         ]
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "mail",
@@ -2504,12 +2632,31 @@
         "app": "plex"
       },
       "reason": "Linuxserver s6 startup prepares ownership and drops to the configured application user.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/capability-exception-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
             "plex": {
               "image": "harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "plex": {
+              "image": "harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETGID",
+                "SETUID"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
             }
           },
           "initContainers": {}
@@ -2526,12 +2673,27 @@
             "name": "plex",
             "image": "harbor.andreybondarenko.com/dockerhub/linuxserver/plex:1.43.5",
             "securityContext": {
-              "allowPrivilegeEscalation": false
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "FOWNER",
+                  "FSETID",
+                  "KILL",
+                  "SETGID",
+                  "SETUID"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              }
             }
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "ripe-atlas",
@@ -2543,7 +2705,7 @@
         "app.kubernetes.io/name": "ripe-atlas"
       },
       "reason": "Bootstrap prepares multi-user directories; the setuid measurement helper fails setresuid under no-new-privileges.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/capability-exception-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
@@ -2561,6 +2723,27 @@
           "containers": {
             "ripe-atlas": {
               "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "ripe-atlas": {
+              "image": "harbor.andreybondarenko.com/library/ripe-atlas:2026-11-02-095223",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "FOWNER",
+                "FSETID",
+                "KILL",
+                "SETUID",
+                "SETGID",
+                "SETPCAP",
+                "NET_RAW"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": true
             }
           },
           "initContainers": {}
@@ -2616,7 +2799,8 @@
             }
           }
         ]
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "mastodon",
@@ -2679,12 +2863,27 @@
         "app.kubernetes.io/name": "collabora-online"
       },
       "reason": "Document sandbox helpers require file capabilities; no-new-privileges failed the exact installed image.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/capability-exception-review.md",
       "policies": {
         "disallow-privilege-escalation": {
           "containers": {
             "collabora-online": {
               "image": "harbor.andreybondarenko.com/dockerhub/collabora/code:26.04.5.2.1"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "collabora-online": {
+              "image": "harbor.andreybondarenko.com/dockerhub/collabora/code:26.04.5.2.1",
+              "capabilities": [
+                "CHOWN",
+                "FOWNER",
+                "SYS_CHROOT"
+              ],
+              "runAsUser": 1001,
+              "allowPrivilegeEscalation": true
             }
           },
           "initContainers": {}
@@ -2708,7 +2907,10 @@
                   "ALL"
                 ]
               },
+              "privileged": false,
+              "runAsGroup": 1001,
               "runAsNonRoot": true,
+              "runAsUser": 1001,
               "seccompProfile": {
                 "type": "RuntimeDefault"
               }
@@ -2716,7 +2918,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "gpu-operator",
