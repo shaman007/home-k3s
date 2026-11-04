@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: argocd
 resources:
   # Large GitHub fetches can exceed Kustomize's default 27-second deadline.
-  - github.com/argoproj/argo-cd//manifests/cluster-install?ref=v3.5.7&timeout=120s
+  - github.com/argoproj/argo-cd//manifests/cluster-install?ref=v3.6.0&timeout=120s
 patches:
   # These ConfigMaps are customized by the separate argocd-deploy application.
   - target:
