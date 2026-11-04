@@ -205,8 +205,22 @@ def main():
                             if policy == 'disallow-privilege-escalation': sc.update(allowPrivilegeEscalation=False, privileged=False)
                             if policy == 'disallow-privileged-containers': sc['privileged'] = False
                             if policy == 'require-drop-all-capabilities': sc['capabilities'] = {'drop': ['ALL']}
+                            if policy == 'restrict-seccomp-strict': sc['seccompProfile'] = {'type': 'RuntimeDefault'}
                     case(changed, {policy: 'pass' if mutation == 'repaired' else 'fail'},
                          separate=entry['kind'] == 'Pod')
+                if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict'):
+                    for section, rules in approval.items():
+                        for role, rule in rules.items():
+                            if not rule.get('requirePrivileged'):
+                                continue
+                            for mutation in ['capability-declaration', 'seccomp-declaration', 'no-longer-privileged']:
+                                changed = copy.deepcopy(positive)
+                                variant_name(changed, policy + role + mutation)
+                                sc = next(c for c in changed['spec'][section] if c['name'] == role)['securityContext']
+                                if mutation == 'capability-declaration': sc['capabilities'] = {'add': ['NET_ADMIN']}
+                                if mutation == 'seccomp-declaration': sc['seccompProfile'] = {'type': 'Unconfined'}
+                                if mutation == 'no-longer-privileged': sc['privileged'] = False
+                                case(changed, {policy: 'fail'}, separate=entry['kind'] == 'Pod')
                 if policy == 'require-run-as-nonroot':
                     for role, rule in approval.get('containers', {}).items():
                         if not rule.get('requireHardened'):
@@ -225,6 +239,8 @@ def main():
                 if policy == 'require-drop-all-capabilities':
                     for section in ['containers', 'initContainers']:
                         for role, rule in approval.get(section, {}).items():
+                            if rule.get('requirePrivileged'):
+                                continue
                             mutations = ['extra-capability', 'missing-drop', 'escalation', 'privileged', 'changed-uid', 'moved-section', 'duplicate-capabilities', 'missing-escalation-guard', 'reordered']
                             for mutation in mutations:
                                 changed = copy.deepcopy(positive)

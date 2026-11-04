@@ -1,7 +1,8 @@
 # Reviewed application capability exceptions — 2026-11-04
 
 This batch changes audit classification, not workload privileges or runtime guards.
-All five policies stay Audit/Ignore; the seccomp policy has no exceptions. These
+All five policies stay Audit/Ignore. This batch added no seccomp exceptions;
+the subsequent privileged-runtime review adds narrowly scoped ones. These
 new exceptions report Skip, not Pass, and retain the existing 2027-02-01 expiry.
 No privileged-container or broad namespace exception is introduced.
 

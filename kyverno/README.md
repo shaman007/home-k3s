@@ -92,7 +92,11 @@ Two additional policies remain strictly Audit/Ignore:
   profile, including init and ephemeral containers. Pod-level inheritance works;
   a container-level `Unconfined` override is reported.
 
-The seccomp audit has no exceptions. Capability exceptions are limited to the
+The seccomp audit has narrow exceptions for already approved privileged roles;
+Kubernetes runs privileged containers unconfined regardless of the profile declaration.
+These require the existing privileged flag and unchanged image and capability/seccomp
+declarations. See [runtime review](../docs/privileged-runtime-audit-review.md).
+Capability exceptions are limited to those roles and the
 25 reviewed ownership-init roles above and six reviewed application workloads:
 backup SSH, Postfix, Dovecot, Plex, Collabora and RIPE Atlas. Application exceptions
 require an exact capability set, reviewed UID and explicit escalation setting,

@@ -2996,7 +2996,7 @@
         "app.kubernetes.io/component": "nvidia-dcgm-exporter"
       },
       "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "disallow-privileged-containers": {
           "containers": {
@@ -3039,6 +3039,42 @@
               "requirePrivileged": true
             }
           }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "nvidia-dcgm-exporter": {
+              "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.6.1-4.8.4-distroless",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "nvidia-dcgm-exporter": {
+              "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.6.1-4.8.4-distroless",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
         }
       },
       "snapshot": {
@@ -3062,7 +3098,8 @@
             }
           }
         ]
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "gpu-operator",
@@ -3291,7 +3328,7 @@
         "app": "nvidia-operator-validator"
       },
       "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "disallow-privileged-containers": {
           "containers": {
@@ -3368,6 +3405,78 @@
             "plugin-validation": {
               "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
               "requirePrivileged": true
+            }
+          }
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "nvidia-operator-validator": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "driver-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "cuda-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "plugin-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          }
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "nvidia-operator-validator": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {
+            "driver-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "toolkit-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "cuda-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "plugin-validation": {
+              "image": "nvcr.io/nvidia/gpu-operator:v26.7.2",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
             }
           }
         }
@@ -3421,7 +3530,8 @@
             }
           }
         ]
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",
@@ -3433,7 +3543,7 @@
         "longhorn.io/engine-image": "ei-2f3240cb"
       },
       "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "disallow-privileged-containers": {
           "containers": {
@@ -3461,6 +3571,28 @@
             }
           },
           "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "engine-image-ei-2f3240cb": {
+              "image": "docker.io/longhornio/longhorn-engine:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "engine-image-ei-2f3240cb": {
+              "image": "docker.io/longhornio/longhorn-engine:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
         }
       },
       "snapshot": {
@@ -3475,7 +3607,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",
@@ -3486,7 +3619,7 @@
         "app": "longhorn-csi-plugin"
       },
       "reason": "Pinned kernel-facing device/storage roles explicitly require privileged operation; only those named privileged roles are approved.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "disallow-privileged-containers": {
           "containers": {
@@ -3497,6 +3630,65 @@
             "longhorn-csi-plugin": {
               "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
               "requirePrivileged": true
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "node-driver-registrar": {
+              "image": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "longhorn-csi-plugin": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              },
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "node-driver-registrar": {
+              "image": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            },
+            "longhorn-csi-plugin": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {
+                "add": [
+                  "SYS_ADMIN"
+                ]
+              },
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "require-run-as-nonroot": {
+          "containers": {
+            "node-driver-registrar": {
+              "image": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+              "requirePrivileged": true
+            },
+            "longhorn-csi-plugin": {
+              "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+              "requirePrivileged": true
+            },
+            "longhorn-liveness-probe": {
+              "image": "docker.io/longhornio/livenessprobe:v2.20.0",
+              "requireHardened": true
             }
           },
           "initContainers": {}
@@ -3515,7 +3707,21 @@
           {
             "name": "longhorn-liveness-probe",
             "image": "docker.io/longhornio/livenessprobe:v2.20.0",
-            "securityContext": {}
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "privileged": false,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "runAsUser": 0,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
           },
           {
             "name": "longhorn-csi-plugin",
@@ -3532,7 +3738,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",
@@ -3662,7 +3869,7 @@
         "longhorn.io/node": "talos-d4h-k5m"
       },
       "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
@@ -3690,6 +3897,28 @@
             }
           },
           "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
         }
       },
       "snapshot": {
@@ -3704,7 +3933,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",
@@ -3728,7 +3958,7 @@
         "longhorn.io/node": "talos-qlw-pbh"
       },
       "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
@@ -3756,6 +3986,28 @@
             }
           },
           "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
         }
       },
       "snapshot": {
@@ -3770,7 +4022,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",
@@ -3794,7 +4047,7 @@
         "longhorn.io/node": "w386"
       },
       "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
@@ -3822,6 +4075,28 @@
             }
           },
           "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "instance-manager": {
+              "image": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
         }
       },
       "snapshot": {
@@ -3836,7 +4111,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",
@@ -3857,7 +4133,7 @@
         "longhorn.io/share-manager-image": "smi-efa90dfd"
       },
       "reason": "Exact operator-owned host-storage Pod requires privileged execution; owner UID, image and container identities are pinned.",
-      "evidence": "docs/non-root-audit.md#infrastructure-and-ownership-boundaries",
+      "evidence": "docs/privileged-runtime-audit-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
@@ -3885,6 +4161,28 @@
             }
           },
           "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "share-manager": {
+              "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
+        },
+        "restrict-seccomp-strict": {
+          "containers": {
+            "share-manager": {
+              "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+              "requirePrivileged": true,
+              "capabilityDeclaration": {},
+              "seccompDeclaration": {}
+            }
+          },
+          "initContainers": {}
         }
       },
       "snapshot": {
@@ -3899,7 +4197,8 @@
           }
         ],
         "initContainers": []
-      }
+      },
+      "reviewedOn": "2026-11-04"
     },
     {
       "namespace": "longhorn-system",

@@ -76,4 +76,29 @@ class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
                         list(gen.generate({**self.catalog,'entries':[entry]}))
 
 
+class PrivilegedRuntimeExceptionTests(unittest.TestCase):
+    def setUp(self):
+        self.catalog=json.loads((ROOT/'kyverno/exception-catalog.json').read_text())
+        self.entries=[e for e in self.catalog['entries'] if e['evidence']=='docs/privileged-runtime-audit-review.md']
+
+    def test_eight_reviewed_workloads(self):
+        self.assertEqual(len(self.entries),8)
+        list(gen.generate({**self.catalog,'entries':self.entries}))
+
+    def test_cannot_excuse_an_unreviewed_privileged_role(self):
+        for original in self.entries:
+            for mutation in ['approval','image','capabilities','seccomp','runtime-privileged']:
+                with self.subTest(workload=original['name'],mutation=mutation):
+                    e=copy.deepcopy(original)
+                    section=next(s for s,rules in e['policies'][CAP].items() if rules)
+                    name,rule=next(iter(e['policies'][CAP][section].items()))
+                    if mutation=='approval':e['policies'].pop('disallow-privileged-containers')
+                    if mutation=='image':rule['image']='registry.invalid/new:1'
+                    if mutation=='capabilities':rule['capabilityDeclaration']={'add':['NET_ADMIN']}
+                    if mutation=='seccomp':rule['seccompDeclaration']={'type':'Unconfined'}
+                    if mutation=='runtime-privileged':
+                        next(c for c in e['snapshot'][section] if c['name']==name)['securityContext']['privileged']=False
+                    with self.assertRaises(AssertionError):list(gen.generate({**self.catalog,'entries':[e]}))
+
+
 if __name__=='__main__':unittest.main()

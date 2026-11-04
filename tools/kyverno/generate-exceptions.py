@@ -13,7 +13,8 @@ OUTPUT = ROOT / 'kyverno/policy-exceptions-verified.yaml'
 POLICIES = {'require-run-as-nonroot': 'root',
             'disallow-privilege-escalation': 'escalation',
             'disallow-privileged-containers': 'privileged',
-            'require-drop-all-capabilities': 'capabilities'}
+            'require-drop-all-capabilities': 'capabilities',
+            'restrict-seccomp-strict': 'seccomp'}
 
 
 # Reviewed application roles only; permission-init exceptions retain their smaller
@@ -77,6 +78,8 @@ def compliant(policy):
     if policy == 'require-drop-all-capabilities':
         return ('"ALL" in c.?securityContext.?capabilities.?drop.orValue([]) && '
                 'c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == "NET_BIND_SERVICE")')
+    if policy == 'restrict-seccomp-strict':
+        return 'c.?securityContext.?seccompProfile.?type.orValue(p.spec.?securityContext.?seccompProfile.?type.orValue("")) in ["RuntimeDefault", "Localhost"]'
     raise ValueError(policy)
 
 
@@ -87,7 +90,7 @@ def approved(policy, allowed):
         fields = [f'c.name == {literal(name)}', f'c.image == {literal(rule["image"])}']
         if policy == 'require-run-as-nonroot':
             fields.append('c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0')
-        if policy == 'require-drop-all-capabilities':
+        if policy == 'require-drop-all-capabilities' and not rule.get('requirePrivileged'):
             assert set(rule) in ({'image', 'capabilities'}, {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'})
             caps = rule['capabilities']
             assert isinstance(caps, list)
@@ -103,6 +106,12 @@ def approved(policy, allowed):
                 f'{actual}.size() == {len(caps)}',
                 f'{actual}.all(cap, cap in {literal(caps)})',
                 f'{literal(caps)}.all(cap, cap in {actual})'])
+        if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict') and rule.get('requirePrivileged'):
+            assert set(rule) == {'image', 'requirePrivileged', 'capabilityDeclaration', 'seccompDeclaration'}
+            assert rule['requirePrivileged'] is True
+            fields.extend([
+                f'c.?securityContext.?capabilities.orValue({{}}) == {literal(rule["capabilityDeclaration"])}',
+                f'c.?securityContext.?seccompProfile.orValue({{}}) == {literal(rule["seccompDeclaration"])}'])
         if rule.get('requireHardened'):
             assert policy == 'require-run-as-nonroot'
             assert set(rule) == {'image', 'requireHardened'}
@@ -122,14 +131,32 @@ def approved(policy, allowed):
 
 def expression(entry, policy):
     config = entry['policies'][policy]
+    if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict'):
+        for section, rules in config.items():
+            for name, rule in rules.items():
+                if not rule.get('requirePrivileged'):
+                    assert policy != 'restrict-seccomp-strict'
+                    continue
+                assert 'disallow-privileged-containers' in entry['policies']
+                reviewed = entry['policies']['disallow-privileged-containers'].get(section, {})
+                assert name in reviewed and reviewed[name]['image'] == rule['image']
+                snapshot = next(c for c in entry['snapshot'][section] if c['name'] == name)
+                sc = snapshot['securityContext']
+                assert sc['privileged'] is True and snapshot['image'] == rule['image']
+                assert rule['capabilityDeclaration'] == sc.get('capabilities', {})
+                assert rule['seccompDeclaration'] == sc.get('seccompProfile', {})
     if policy == 'require-drop-all-capabilities':
         assert not config.get('ephemeralContainers')
         assert config.get('initContainers') or config.get('containers')
         for name, rule in config.get('initContainers', {}).items():
+            if rule.get('requirePrivileged'):
+                continue
             root_roles = entry['policies']['require-run-as-nonroot'].get('initContainers', {})
             assert name in root_roles and root_roles[name]['image'] == rule['image']
             assert set(rule) == {'image', 'capabilities'}
         for name, rule in config.get('containers', {}).items():
+            if rule.get('requirePrivileged'):
+                continue
             assert entry['kind'] == 'Deployment'
             key = (entry['namespace'], entry['name'], name)
             assert key in APPLICATION_CAPABILITIES
@@ -181,7 +208,7 @@ def generate(catalog):
                 for section, key in [('initContainers', 'approved-init-capabilities'), ('containers', 'approved-main-capabilities')]:
                     rules = entry['policies'][policy].get(section, {})
                     if rules:
-                        cap_properties[key] = literal({name: rule['capabilities'] for name, rule in rules.items()})
+                        cap_properties[key] = literal({name: rule.get('capabilities', 'existing reviewed privileged mode') for name, rule in rules.items()})
             name = exception_name(entry, policy)
             assert name not in names
             names.add(name)
