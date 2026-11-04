@@ -10,6 +10,18 @@ spec.loader.exec_module(audit)
 
 
 class AuditFixtureTests(unittest.TestCase):
+    def test_admission_normalization_does_not_touch_other_workloads(self):
+        from unittest.mock import patch
+        for kind, namespace, name in [('Deployment', 'longhorn-system', 'longhorn-manager'),
+                                      ('DaemonSet', 'other', 'longhorn-manager'),
+                                      ('DaemonSet', 'longhorn-system', 'other')]:
+            resource = {'kind': kind, 'metadata': {'namespace': namespace, 'name': name}}
+            with self.subTest(kind=kind, namespace=namespace, name=name), patch.object(audit.subprocess, 'run') as run:
+                result = audit.admitted_longhorn_manager(resource, 'unused')
+                self.assertEqual(result, resource)
+                self.assertIsNot(result, resource)
+                run.assert_not_called()
+
     def test_seccomp_negative_companion_is_unconfined(self):
         container = audit.noncompliant_container('restrict-seccomp-strict', 'unapproved')
         self.assertEqual(container['securityContext']['seccompProfile']['type'], 'Unconfined')

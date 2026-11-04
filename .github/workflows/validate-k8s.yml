@@ -83,6 +83,7 @@ jobs:
       - name: Check generated Kyverno exceptions and real CEL cases
         run: |
           python tools/kyverno/generate-exceptions.py --check
+          python tools/longhorn/test-manager-admission-audit.py --rendered "${RUNNER_TEMP}/rendered-applications"
           python tools/kyverno/test-audit-policies.py --rendered "${RUNNER_TEMP}/rendered-applications"
           python tools/longhorn/test-recurring-security-policy.py
           python tools/longhorn/generate-component-security.py --check

@@ -97,6 +97,32 @@ def noncompliant_container(policy, name):
     return {'name': name, 'image': 'registry.example.invalid/unapproved:1', 'securityContext': sc}
 
 
+def admitted_longhorn_manager(document, kyverno):
+    """Audit the chart after its real native prepull mutation, as in admission."""
+    if (document.get('kind'), document.get('metadata', {}).get('namespace'),
+            document.get('metadata', {}).get('name')) != ('DaemonSet', 'longhorn-system', 'longhorn-manager'):
+        return copy.deepcopy(document)
+    policy = next(d for d in yaml.safe_load_all((ROOT / 'longhorn/policy-component-security.yaml').read_text())
+                  if d and d['kind'] == 'MutatingAdmissionPolicy')
+    policy['apiVersion'] = 'policies.kyverno.io/v1'
+    policy['kind'] = 'MutatingPolicy'
+    policy['spec'].pop('reinvocationPolicy')
+    with tempfile.TemporaryDirectory(prefix='longhorn-admission-audit-') as directory:
+        directory = Path(directory)
+        (directory / 'policy.yaml').write_text(yaml.safe_dump(policy))
+        (directory / 'resource.yaml').write_text(yaml.safe_dump(document))
+        output = directory / 'admitted.yaml'
+        result = subprocess.run([kyverno, 'apply', str(directory / 'policy.yaml'),
+                                 '--resource', str(directory / 'resource.yaml'), '--output', str(output)],
+                                capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0 and 'error: 0' in result.stdout, result.stdout + result.stderr
+        documents = [d for d in yaml.safe_load_all(output.read_text()) if d] if output.exists() else []
+        assert len(documents) <= 1
+        # An unmatched contract stays unmodified and must fail the audit, rather
+        # than silently substituting the reviewed snapshot or hard-coded guards.
+        return documents[0] if documents else copy.deepcopy(document)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rendered', type=Path, required=True)
@@ -154,6 +180,7 @@ def main():
             if current:
                 # Use actual chart/source output when available; operator-created
                 # workloads retain reviewed sanitized snapshots in the catalog.
+                current = admitted_longhorn_manager(current, args.kyverno)
                 ps = pod_spec(current)
                 clean = {k: copy.deepcopy(ps[k]) for k in ['securityContext', 'serviceAccountName'] if k in ps}
                 for section in ['containers', 'initContainers', 'ephemeralContainers']:

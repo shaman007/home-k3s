@@ -49,3 +49,20 @@ CSI controller root results are Skip; all 24 capability/seccomp results across t
 12 approved privileged infrastructure Pods are Skip. All 118 live exception specs
 matched pushed Git exactly. A 56-case test using the fetched live CSI exceptions
 passed positive and changed-guard/identity cases. Current main CI remained running.
+
+
+## Rendered admission/audit CI regression
+
+Run 41826691990 tested the raw manager Helm manifest before its native prepull
+mutation and incorrectly expected four guarded exceptions to match. The audit
+harness now evaluates the real native policy with Kyverno 1.19.2 first, then audits
+that admitted DaemonSet. It never substitutes the catalog snapshot or blindly
+copies guards. An unmatched runtime contract remains raw and fails the audit.
+
+`tools/longhorn/test-manager-admission-audit.py --rendered <render-directory>`
+checks the actual chart through both stages: raw output reproduces the four Fail
+results, admitted output yields all five Skip results, an unreviewed image remains
+unmodified/failing, and adding SYS_ADMIN to the admitted helper still fails. Its
+20 real CEL expectations run before the full audit suite in CI. The existing
+native mutation scope/idempotence suite continues to validate the mutation itself.
+No production policy or exception is relaxed for this test correction.
