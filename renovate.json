@@ -32,6 +32,13 @@
   ],
   "packageRules": [
     {
+      "description": "Keep Mastodon Helm tags valid for chart version labels",
+      "matchManagers": ["helm-values"],
+      "matchFileNames": ["mastodon/mastodon-values.yaml"],
+      "matchPackageNames": ["harbor.andreybondarenko.com/library/mastodon"],
+      "pinDigests": false
+    },
+    {
       "description": "Keep GitHub Actions pinned to immutable commit SHAs",
       "matchManagers": ["github-actions"],
       "pinDigests": true
