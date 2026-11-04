@@ -1,4 +1,31 @@
-# MetalLB speaker non-root preparation
+# MetalLB speaker non-root trial and rollback
+
+## Production outcome: incompatible, rolled back
+
+The published trial (13043b50) reached UID/GID 1000 on all three nodes, but the
+speakers repeatedly failed creating ARP sockets with `operation not permitted`.
+Pods remained Ready despite this failure. IPv6 ingress failed; IPv4 ingress and
+SSH still responding could reflect cached neighbour entries and were not proof
+of healthy L2 announcement. The exact production capability/runtime cause is
+not established. Do not treat the Podman probe as proof of production CRI or
+host-network compatibility.
+
+The user authorized immediate restoration of the prior root identity. All four
+new identity/group fields were removed from the live DaemonSet; NET_RAW, drop
+ALL, no escalation, read-only root, RuntimeDefault and one-at-a-time rollout were
+retained. The Git rollback is prepared. MetalLB reconciliation is temporarily
+paused with `argocd.argoproj.io/skip-reconcile=true` until that rollback is pushed.
+The parent Application restored automated.enabled=true; the skip annotation is
+the effective hold. The first live rollback raced Argo before the hold took effect
+and was repeated after confirming the annotation. After Git contains the rollback, remove the pause,
+restore automated.enabled=true, and verify reconciliation and IPv4/IPv6/SSH.
+
+The proposed NET_RAW audit exception was withdrawn. Speaker root/capability
+findings must remain visible while production requirements are investigated.
+No OpenBao restart or broader privilege changes are part of this recovery.
+
+The following records the original isolated evidence and trial plan for diagnosis;
+it is superseded by the production failure above.
 
 Reviewed 2026-11-04, chart 0.16.1 and speaker image repository
 `quay.io/metallb/speaker`. The local probe image includes the deployed digest

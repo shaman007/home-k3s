@@ -76,8 +76,7 @@ def main():
     speaker = after[('DaemonSet', 'metallb-speaker')]['spec']
     pod = speaker['template']['spec']
     assert pod['securityContext'] == {
-        'runAsNonRoot': True, 'runAsUser': 1000, 'runAsGroup': 1000,
-        'fsGroup': 1000, 'seccompProfile': {'type': 'RuntimeDefault'}}, 'Unreviewed speaker identity'
+        'seccompProfile': {'type': 'RuntimeDefault'}}, 'Speaker non-root runtime was not compatible; retain reviewed root identity'
     assert speaker['updateStrategy'] == {'type': 'RollingUpdate', 'rollingUpdate': {'maxUnavailable': 1}}
     assert pod['hostNetwork'] is True and not pod.get('hostPID') and not pod.get('hostIPC')
     assert not pod.get('initContainers'), 'Unexpected speaker init container'
@@ -90,7 +89,7 @@ def main():
     assert all(set(volume) <= {'name', 'secret', 'configMap'} for volume in pod['volumes']), 'fsGroup review excludes persistent/host volumes'
     exclude = next(volume for volume in pod['volumes'] if volume['name'] == 'metallb-excludel2')
     assert exclude['configMap']['defaultMode'] == 0o400, 'Unexpected config mode'
-    print('Non-root speaker guards, NET_RAW, projected-only volumes and one-at-a-time rollout verified.')
+    print('Restored speaker identity, NET_RAW, projected-only volumes and one-at-a-time rollout verified.')
     print('Chart review passed: 3 narrowly changed resources; 17 FRR resources leave desired state, including 4 retained CRDs.')
     if args.live:
         def get(resource, namespace=None):
