@@ -206,6 +206,37 @@ data:
                          f"Unable to inspect Argo CD applications ({type(exc).__name__}).")
 
 
+    def collect_certificate_check(kube):
+        try:
+            certificates = kube("/apis/cert-manager.io/v1/certificates").get("items", [])
+            issuers = kube("/apis/cert-manager.io/v1/clusterissuers").get("items", [])
+            issues = []
+            warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 7, int)
+            for certificate in certificates:
+                status = certificate.get("status", {})
+                reasons = []
+                if not ready(status.get("conditions", [])):
+                    reasons.append("Certificate is not Ready")
+                if status.get("failedIssuanceAttempts", 0):
+                    reasons.append("Certificate issuance/renewal has failed attempts")
+                expires = parse_time(status.get("notAfter"))
+                if not expires or expires <= utc_now() + timedelta(days=warn_days):
+                    reasons.append("Certificate validity is missing or nearing expiry")
+                if reasons:
+                    issues.append({"namespace": certificate["metadata"].get("namespace", "-"),
+                                   "item": certificate["metadata"]["name"], "value": 1,
+                                   "message": "; ".join(reasons)})
+            for issuer in issuers:
+                if not ready(issuer.get("status", {}).get("conditions", [])):
+                    issues.append({"namespace": "-", "item": issuer["metadata"]["name"],
+                                   "value": 1, "message": "ClusterIssuer is not Ready"})
+            return check("cert_manager", bool(certificates) and bool(issuers) and not issues,
+                         f"Inspected {len(certificates)} Certificates and {len(issuers)} ClusterIssuers, including backend and canary certificates.", issues)
+        except Exception as exc:
+            return check("cert_manager", False,
+                         f"Unable to inspect certificate issuance ({type(exc).__name__}).")
+
+
     def longhorn_backup_check(volumes, recurring, backups, cutoff):
         """Check coverage per opted-in volume using completed backup creation times."""
         backup_jobs = [job for job in recurring if job.get("spec", {}).get("task") in {"backup", "backup-force"}]
@@ -324,13 +355,19 @@ data:
         return any(cert_name_matches(host, name) for name in names)
 
 
+    def is_internal_ingress_host(host, ingress_class=""):
+        return ingress_class == "traefik-private" or host.endswith((".k8s.my.lan", ".int.andreybondarenko.com"))
+
+
     def live_tls_cert_days_left(host, ingress_class="traefik"):
         if ingress_class == "traefik-private":
             connect_host = env("TRAEFIK_PRIVATE_HTTPS_HOST", "traefik-private.traefik.svc.cluster.local")
         else:
             connect_host = env("TRAEFIK_HTTPS_HOST", "traefik.traefik.svc.cluster.local")
         connect_port = env_num("TRAEFIK_HTTPS_PORT", 443, int)
-        ctx = ssl._create_unverified_context()
+        # Retain the private-CA probe only for legacy names during the migration.
+        # Public-domain names, including internal services, must pass chain and SNI checks.
+        ctx = ssl._create_unverified_context() if host.endswith(".k8s.my.lan") else ssl.create_default_context()
         with socket.create_connection((connect_host, connect_port), timeout=10) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as tls:
                 der_cert = tls.getpeercert(binary_form=True)
@@ -598,7 +635,7 @@ data:
 
     def main():
         kube = kube_client()
-        checks = [collect_argocd_check(kube)]
+        checks = [collect_argocd_check(kube), collect_certificate_check(kube)]
 
         externalsecrets = kube("/apis/external-secrets.io/v1/externalsecrets").get("items", [])
         es_fail = [{"namespace": x["metadata"]["namespace"], "item": x["metadata"]["name"], "value": 0} for x in externalsecrets if not ready(x.get("status", {}).get("conditions", []))]
@@ -647,7 +684,7 @@ data:
             throttle_routes[namespace] = hosts
         warn_days = env_num("CERT_EXPIRY_WARNING_DAYS", 7, int)
         public_suffixes = (".andreybondarenko.com", ".shaman007.com")
-        internal_suffixes = (".k8s.my.lan",)
+        internal_suffixes = (".k8s.my.lan", ".int.andreybondarenko.com")
         internal_guard_refs = (
             "traefik-internal-clients-only@kubernetescrd",
             "headlamp-local-network-only@kubernetescrd",
@@ -666,8 +703,9 @@ data:
             for host in ingress_tls_hosts(ingress):
                 ingress_class = ingress.get("spec", {}).get("ingressClassName", "traefik")
                 ingress_hosts.append((namespace, ingress_name, host, ingress_class))
-            public_hosts = [host for host in hosts if host.endswith(public_suffixes)]
-            internal_hosts = [host for host in hosts if host.endswith(internal_suffixes)]
+            ingress_class = ingress.get("spec", {}).get("ingressClassName", "traefik")
+            internal_hosts = [host for host in hosts if is_internal_ingress_host(host, ingress_class)]
+            public_hosts = [host for host in hosts if host.endswith(public_suffixes) and host not in internal_hosts]
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
             has_robots_guard = "traefik-robots-disallow-all@kubernetescrd" in middleware_ref
             has_internal_guard = any(ref in middleware_ref for ref in internal_guard_refs)

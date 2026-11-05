@@ -124,6 +124,49 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
                         self.report["live_tls_cert_days_left"]("test.k8s.my.lan", ingress_class)
                     connect.assert_called_once_with((destination, 443), timeout=10)
 
+    def test_internal_public_domain_uses_public_trust(self):
+        for host in ("grafana.int.andreybondarenko.com", "cloud.andreybondarenko.com"):
+            with self.subTest(host=host), patch("ssl.create_default_context") as verified, patch(
+                "ssl._create_unverified_context"
+            ) as unverified, patch("socket.create_connection", side_effect=RuntimeError("intercepted")):
+                with self.assertRaisesRegex(RuntimeError, "intercepted"):
+                    self.report["live_tls_cert_days_left"](host, "traefik-private")
+                verified.assert_called_once_with()
+                unverified.assert_not_called()
+
+    def test_new_internal_suffix_is_classified_as_internal(self):
+        internal = self.report["is_internal_ingress_host"]
+        self.assertTrue(internal("grafana.int.andreybondarenko.com"))
+        self.assertTrue(internal("grafana.w386.k8s.my.lan"))
+        self.assertTrue(internal("other.example.com", "traefik-private"))
+        self.assertFalse(internal("grafana.int.andreybondarenko.com.evil"))
+        self.assertFalse(internal("cloud.andreybondarenko.com", "traefik"))
+
+    def test_certificate_collection_checks_backend_expiry_and_failed_renewals(self):
+        certificate = {"metadata": {"namespace": "openbao", "name": "backend-tls"},
+                       "status": {"conditions": [{"type": "Ready", "status": "True"}],
+                                  "notAfter": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()}}
+        issuer = {"metadata": {"name": "internal-prod"},
+                  "status": {"conditions": [{"type": "Ready", "status": "True"}]}}
+        def kube(path):
+            return {"items": [certificate] if path.endswith("/certificates") else [issuer]}
+        check = self.report["collect_certificate_check"]
+        self.assertTrue(check(kube)["passed"])
+        certificate["status"]["failedIssuanceAttempts"] = 1
+        self.assertFalse(check(kube)["passed"])
+        del certificate["status"]["failedIssuanceAttempts"]
+        certificate["status"]["notAfter"] = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        self.assertFalse(check(kube)["passed"])
+        certificate["status"]["notAfter"] = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
+        issuer["status"]["conditions"][0]["status"] = "False"
+        self.assertFalse(check(kube)["passed"])
+
+    def test_certificate_collection_failure_keeps_email_report_running(self):
+        def denied(path):
+            raise PermissionError("denied")
+        self.assertFalse(self.report["collect_certificate_check"](denied)["passed"])
+        self.assertFalse(self.report["collect_certificate_check"](lambda _: {"items": []})["passed"])
+
     def test_token_renewal_uses_cronjob_last_success(self):
         now = datetime.now(timezone.utc)
         cronjob = {

@@ -1,0 +1,3286 @@
+{
+  "scan_root": "/home/shaman007/git",
+  "observed": "2026-11-05",
+  "scope": "candidate hostname inventory, not automatic replacement instructions; .local can also match code identifiers; ignored files and generated directories are excluded; no source lines or credentials copied",
+  "candidate_counts": {
+    "occurrences": 1108,
+    "files": 404,
+    "repositories": {
+      "Dockerfiles": 3,
+      "Strata": 115,
+      "bastioncam": 2,
+      "dns": 2,
+      "dotfiles": 7,
+      "home-k3s": 914,
+      "immich": 18,
+      "immich-v3.2.0-test": 18,
+      "unifi-infra": 29
+    },
+    "categories": {
+      "cluster_service": 666,
+      "dot_local_candidate_requires_review": 53,
+      "ingress_hostname": 240,
+      "kubernetes_api": 12,
+      "metadata_annotation": 19,
+      "other_internal_name": 85,
+      "retired_vault_alias_or_annotation": 33
+    },
+    "usage": {
+      "configuration_or_code": 767,
+      "documentation": 103,
+      "staged_or_historical_artifact": 93,
+      "tests": 145
+    }
+  },
+  "reference_scope": "Detailed rows cover known ingress names, Kubernetes API, OpenBao/Vault backend services and legacy metadata. Other .local matches require manual review and may be code identifiers.",
+  "other_internal_names": {
+    "clamav.clamav.csv.cluster.local": 1,
+    "home.lan": 2,
+    "k8s.my.lan": 13,
+    "m.k8s.my.lan": 5,
+    "master.k8s.my.lan": 2,
+    "mster.k8s.my.lan": 1,
+    "my.lan": 1,
+    "nas.lan": 2,
+    "omni-k8s.w386.k8s.my.lan": 6,
+    "omni-siderolink.w386.k8s.my.lan": 6,
+    "omni.w386.k8s.my.lan": 7,
+    "postfixadmin.w386.k8s.my.lan": 1,
+    "rapi.my.lan": 1,
+    "svc.cluster.local": 2,
+    "test.k8s.my.lan": 1,
+    "w386.k8s.my.lan": 18,
+    "w4.k8s.my.lan": 3,
+    "w7.k8s.my.lan": 2,
+    "wazuh.w386.k8s.my.lan": 4,
+    "webui.lan": 2,
+    "worker-01.k8s.my.lan": 2,
+    "worker-04.k8s.my.lan": 3
+  },
+  "references": [
+    {
+      "repository": "bastioncam",
+      "path": "bastioncam/README.md",
+      "line": 121,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "bastioncam",
+      "path": "bastioncam/deploy/collector/bastioncam-collector.service",
+      "line": 10,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dns",
+      "path": "dns/README.md",
+      "line": 16,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dns",
+      "path": "dns/manage.py",
+      "line": 29,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dotfiles",
+      "path": "dotfiles/.config/systemd/user/bastioncam.service",
+      "line": 11,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dotfiles",
+      "path": "dotfiles/.local/share/noctalia/plugins/k8s-health/desktop.luau",
+      "line": 2,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dotfiles",
+      "path": "dotfiles/.local/share/noctalia/plugins/k8s-health/desktop.luau",
+      "line": 101,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dotfiles",
+      "path": "dotfiles/.local/share/noctalia/plugins/markets/desktop.luau",
+      "line": 2,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dotfiles",
+      "path": "dotfiles/.local/share/noctalia/plugins/markets/desktop.luau",
+      "line": 102,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "dotfiles",
+      "path": "dotfiles/.zshrc",
+      "line": 33,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/CHANGELOG.md",
+      "line": 9384,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/CHANGELOG.md",
+      "line": 9448,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/mysql/secret-store.yaml",
+      "line": 17,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/omni/deployment/values.yaml",
+      "line": 99,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/omni/deployment/values.yaml",
+      "line": 104,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/deployment-traefik-detector-bootstrap.yaml",
+      "line": 57,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/secret-store-vault-secret-store.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/DEPRECATED/wazuh/secret-store-vault-secret-store.yaml",
+      "line": 13,
+      "hostname": "vault.vault.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd-deploy/certificate-argocd-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd-deploy/config-map-argocd-cm.yaml",
+      "line": 99,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd-deploy/ingress-argocd-ingress.yaml",
+      "line": 15,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd-deploy/ingress-argocd-ingress.yaml",
+      "line": 18,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd-deploy/secret-store-vault-secret-store.yaml",
+      "line": 15,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd/application-openbao.yaml",
+      "line": 78,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd/application-openbao.yaml",
+      "line": 100,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd/application-openbao.yaml",
+      "line": 102,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd/application-traefik-private.yaml",
+      "line": 123,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/argocd/application-traefik.yaml",
+      "line": 184,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bastioncam/certificate-bastioncam-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bastioncam/ingress-bastioncam.yaml",
+      "line": 13,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bastioncam/ingress-bastioncam.yaml",
+      "line": 16,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bitwarden/secret-store-vault-secret-store-db.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bitwarden/secret-store-vault-secret-store-db.yaml",
+      "line": 18,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bitwarden/secret-store-vault-secret-store.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/bitwarden/secret-store-vault-secret-store.yaml",
+      "line": 18,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/cert-manager/certificate-vault-acme-canary.yaml",
+      "line": 14,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/cert-manager/cluster-issuer-vault-acme.yaml",
+      "line": 10,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/comfyui/certificate-comfyui-vault-acme-tls.yaml",
+      "line": 10,
+      "hostname": "comfyui.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "comfyui.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/comfyui/ingress-comfyui.yaml",
+      "line": 18,
+      "hostname": "comfyui.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "comfyui.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/comfyui/ingress-comfyui.yaml",
+      "line": 22,
+      "hostname": "comfyui.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "comfyui.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/convertx/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/convertx/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/crowdsec/external-secrets.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/dawarich/secret-store-vault-secret-store-db.yaml",
+      "line": 11,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/dawarich/secret-store-vault-secret-store.yaml",
+      "line": 16,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/README.md",
+      "line": 10,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/README.md",
+      "line": 70,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/README.md",
+      "line": 217,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/README.md",
+      "line": 293,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/README.md",
+      "line": 338,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/phase1-verification.json",
+      "line": 4,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/talos-api-endpoint.patch.yaml",
+      "line": 2,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/talos-api-endpoint.patch.yaml",
+      "line": 5,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/infrastructure-vlan/talos-api-endpoint.patch.yaml",
+      "line": 8,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/README.md",
+      "line": 89,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 13,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 26,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 39,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 52,
+      "hostname": "comfyui.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "comfyui.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 65,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 78,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 91,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 104,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 117,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 130,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 143,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 156,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 169,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 182,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 195,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 208,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 221,
+      "hostname": "chat.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "chat.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/inventory.json",
+      "line": 234,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/openbao-dual-listener-application.yaml",
+      "line": 45,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/openbao-dual-listener-application.yaml",
+      "line": 60,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/openbao-dual-listener-application.yaml",
+      "line": 62,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 8,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 9,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 10,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 12,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 15,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 17,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 38,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 39,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 40,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 42,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 45,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 66,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 67,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 70,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 71,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 72,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 73,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 74,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 77,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 86,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 102,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 103,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 104,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 106,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 109,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 130,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 131,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 132,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 134,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 136,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 141,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 144,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 171,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 172,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 173,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 174,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 175,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 176,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 198,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 199,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 202,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 203,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 205,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 210,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 214,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 217,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 218,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 221,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 222,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 224,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 229,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 233,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "staged_or_historical_artifact"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 245,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/migrations/letsencrypt-internal/sso-inventory.json",
+      "line": 246,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "staged_or_historical_artifact",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/openbao-capability-rollout.md",
+      "line": 34,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/openbao-migration.md",
+      "line": 28,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/traefik-security-plugins.md",
+      "line": 70,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/traefik-security-plugins.md",
+      "line": 71,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/traefik-security-plugins.md",
+      "line": 71,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/docs/vault-acme-migration.md",
+      "line": 5,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/firefox-sync/secret-store-vault-secret-store.yaml",
+      "line": 10,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/headlamp/certificate-headlamp-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/headlamp/ingress-headlamp.yaml",
+      "line": 17,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/headlamp/ingress-headlamp.yaml",
+      "line": 20,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/headlamp/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/headlamp/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/hister/secret-store-vault-secret-store.yaml",
+      "line": 15,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/image-builder/secret-store-vault-secret-store.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/image-builder/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/immich/secret-store-vault-secret-store.yaml",
+      "line": 16,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/karakeep/secret-store-vault-secret-store.yaml",
+      "line": 15,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 4,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 21,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 35,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 86,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 88,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 93,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 172,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 178,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 196,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 198,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 203,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 238,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 289,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 290,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 291,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 292,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 293,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 295,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 300,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 397,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 406,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 437,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 439,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 444,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 694,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 709,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 760,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 761,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 763,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 766,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 772,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 784,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 789,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 839,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 840,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 844,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/master-realm.snapshot.json",
+      "line": 849,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/traefik-admin.client.json",
+      "line": 14,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/traefik-admin.client.json",
+      "line": 15,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/traefik-admin.client.json",
+      "line": 16,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/traefik-admin.client.json",
+      "line": 17,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/traefik-admin.client.json",
+      "line": 18,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/config/traefik-admin.client.json",
+      "line": 19,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/secret-store-vault-secret-store-db.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/secret-store-vault-secret-store-db.yaml",
+      "line": 18,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/keycloak/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/loki/secret-store-vault-secret-store.yaml",
+      "line": 16,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/longhorn/ingress-certificate-longhorn-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/longhorn/ingress-longhorn-ingress.yaml",
+      "line": 14,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/longhorn/ingress-longhorn-ingress.yaml",
+      "line": 17,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mail/certificate-rspamd-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mail/ingress-rspamd-ingress.yaml",
+      "line": 13,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mail/ingress-rspamd-ingress.yaml",
+      "line": 16,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mail/secret-store-vault-secret-store.yaml",
+      "line": 18,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store-db.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store-db.yaml",
+      "line": 12,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store-mastodon.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store-mastodon.yaml",
+      "line": 12,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store-redis.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store-redis.yaml",
+      "line": 12,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mastodon/secret-store-vault-secret-store.yaml",
+      "line": 15,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/README.md",
+      "line": 8,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/README.md",
+      "line": 46,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/certificate-mempalace-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/ingress-mempalace.yaml",
+      "line": 17,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/ingress-mempalace.yaml",
+      "line": 20,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/mempalace/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/README.md",
+      "line": 22,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 8,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 17,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 26,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 35,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 44,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 53,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 62,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 71,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 80,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 89,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 98,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 107,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 116,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 125,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 134,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 143,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 152,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 161,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 170,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 179,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 188,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 197,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 206,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 215,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 224,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 233,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/dashboards/index.json",
+      "line": 242,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/deployment-grafana.yaml",
+      "line": 91,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/secret-store-vault-secret-store.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/secret-store-vault-secret-store.yaml",
+      "line": 13,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/grafana/tools/export-dashboards.ps1",
+      "line": 2,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-alerts-ingress.yaml",
+      "line": 13,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-alerts-ingress.yaml",
+      "line": 16,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-certificate-alerts-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-certificate-grafana-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-certificate-prometheus-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-grafana-ingress.yaml",
+      "line": 13,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-grafana-ingress.yaml",
+      "line": 16,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-prometheus-ingress.yaml",
+      "line": 13,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-prometheus-ingress.yaml",
+      "line": 16,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos-compactor.yaml",
+      "line": 13,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos-compactor.yaml",
+      "line": 30,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos-compactor.yaml",
+      "line": 33,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos-store.yaml",
+      "line": 13,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos-store.yaml",
+      "line": 30,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos-store.yaml",
+      "line": 33,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos.yaml",
+      "line": 13,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos.yaml",
+      "line": 30,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/ingress-thanos.yaml",
+      "line": 33,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml",
+      "line": 1929,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml",
+      "line": 1935,
+      "hostname": "openbao-active.openbao.svc.cluster.local",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/kubernetes-prometheus/deployment-alertmanager.yaml",
+      "line": 63,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml",
+      "line": 44,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/secret-store-vault-secret-store.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/metrics/secret-store-vault-secret-store.yaml",
+      "line": 13,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/minecraft/secret-store-vault-secret-store.yaml",
+      "line": 11,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/nextcloud/certificate-office-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/nextcloud/ingress-office-ingress.yaml",
+      "line": 13,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/nextcloud/ingress-office-ingress.yaml",
+      "line": 16,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/nextcloud/secret-store-vault-secret-store-db.yaml",
+      "line": 16,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/ollama/certificate-ollama-vault-acme-tls.yaml",
+      "line": 10,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/ollama/ingress-ollama-ingress.yaml",
+      "line": 18,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/ollama/ingress-ollama-ingress.yaml",
+      "line": 22,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-terminal/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-terminal/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-webui/certificate-open-webui-internal-vault-acme-tls.yaml",
+      "line": 10,
+      "hostname": "chat.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "chat.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-webui/ingress-open-webui-internal.yaml",
+      "line": 18,
+      "hostname": "chat.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "chat.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-webui/ingress-open-webui-internal.yaml",
+      "line": 22,
+      "hostname": "chat.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "chat.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-webui/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/open-webui/secret-store-vault-secret-store.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/certificate-openbao-ingress-vault-acme-tls.yaml",
+      "line": 14,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/cron-job-vault-pki-renewer.yaml",
+      "line": 34,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/cron-job-vault-pki-renewer.yaml",
+      "line": 57,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/cron-job-vault-pki-renewer.yaml",
+      "line": 217,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/cron-job-vault-pki-renewer.yaml",
+      "line": 217,
+      "hostname": "openbao-active.openbao.svc.cluster.local",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/cron-job-vault-pki-renewer.yaml",
+      "line": 217,
+      "hostname": "openbao.openbao.svc.cluster.local",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/cron-job-vault-pki-renewer.yaml",
+      "line": 220,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/ingress-openbao-ingress.yaml",
+      "line": 15,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/ingress-openbao-ingress.yaml",
+      "line": 18,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/servers-transport-openbao-server.yaml",
+      "line": 12,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/openbao/tools/snapshot-rehearsal.sh",
+      "line": 21,
+      "hostname": "vault-active.vault.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/postgres/exporter/secret-store-vault-secret-store-db.yaml",
+      "line": 17,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/synapse/secret-store-vault-secret-store.yaml",
+      "line": 8,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/synapse/secret-store-vault-secret-store.yaml",
+      "line": 13,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/talos-backup/secret-store-vault-secret-store.yaml",
+      "line": 7,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "metadata_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/talos-backup/secret-store-vault-secret-store.yaml",
+      "line": 12,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_identity_registry_config_snapshots.py",
+      "line": 70,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_openbao_migration.py",
+      "line": 36,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "tests"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_openbao_migration.py",
+      "line": 40,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "tests"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_openbao_migration.py",
+      "line": 84,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_openbao_migration.py",
+      "line": 88,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "tests"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_openbao_migration.py",
+      "line": 196,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "tests"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_openbao_migration.py",
+      "line": 197,
+      "hostname": "vault.vault.svc",
+      "category": "cluster_service",
+      "usage": "tests"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_platform_health_report_logic.py",
+      "line": 140,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_platform_health_report_logic.py",
+      "line": 202,
+      "hostname": "chat.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "chat.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_platform_health_report_logic.py",
+      "line": 220,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 29,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 57,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "tests"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 79,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 91,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 102,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 110,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 202,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 210,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 259,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 267,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 275,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tests/test_vault_acme.py",
+      "line": 283,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "tests",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/certificates/inventory-sso.py",
+      "line": 12,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/certificates/inventory-sso.py",
+      "line": 47,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/certificates/scan-internal-domain-usage.py",
+      "line": 48,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/certificates/scan-internal-domain-usage.py",
+      "line": 52,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/firefox-sync/bootstrap-secrets.py",
+      "line": 10,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/godaddy-webhook/chart/values.yaml",
+      "line": 6,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/tools/provision-traefik-security.py",
+      "line": 22,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/traefik-private/values.yaml",
+      "line": 106,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/traefik/values.yaml",
+      "line": 159,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/unifi/poller/secret-store-vault-secret-store.yaml",
+      "line": 11,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/README.md",
+      "line": 9,
+      "hostname": "openbao-active.openbao.svc.cluster.local",
+      "category": "cluster_service",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/README.md",
+      "line": 32,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "documentation",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/README.md",
+      "line": 41,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "documentation"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/configure-pki-acme.sh",
+      "line": 35,
+      "hostname": "openbao-active.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/configure-pki-acme.sh",
+      "line": 35,
+      "hostname": "openbao-active.openbao.svc.cluster.local",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/configure-pki-acme.sh",
+      "line": 35,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/configure-pki-acme.sh",
+      "line": 35,
+      "hostname": "openbao.openbao.svc.cluster.local",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/vault/configure-pki-acme.sh",
+      "line": 55,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/wordpress/secret-store-vault-secret-store-db.yaml",
+      "line": 16,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "home-k3s",
+      "path": "home-k3s/your-spotify/secret-store-vault-secret-store.yaml",
+      "line": 11,
+      "hostname": "openbao.openbao.svc",
+      "category": "cluster_service",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/api-dns.tf",
+      "line": 3,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 9,
+      "hostname": "chat.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "chat.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 25,
+      "hostname": "bastioncam.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "bastioncam.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 57,
+      "hostname": "prometheus.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "prometheus.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 89,
+      "hostname": "alerts.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "alerts.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 105,
+      "hostname": "thanos.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 137,
+      "hostname": "openbao.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "openbao.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 169,
+      "hostname": "argocd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "argocd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 185,
+      "hostname": "longhorn.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "longhorn.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 201,
+      "hostname": "mempalace.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "mempalace.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 217,
+      "hostname": "grafana.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "grafana.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 233,
+      "hostname": "office.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "office.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 249,
+      "hostname": "vault.w386.k8s.my.lan",
+      "category": "retired_vault_alias_or_annotation",
+      "usage": "configuration_or_code"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 265,
+      "hostname": "rspamd.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "rspamd.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/dns.tf",
+      "line": 281,
+      "hostname": "headlamp.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "headlamp.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/internal-service-dns.tf",
+      "line": 3,
+      "hostname": "comfyui.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "comfyui.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/internal-service-dns.tf",
+      "line": 13,
+      "hostname": "ollama.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "ollama.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/internal-service-dns.tf",
+      "line": 24,
+      "hostname": "thanos-compactor.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-compactor.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/internal-service-dns.tf",
+      "line": 34,
+      "hostname": "thanos-store.w386.k8s.my.lan",
+      "category": "ingress_hostname",
+      "usage": "configuration_or_code",
+      "replacement": "thanos-store.int.andreybondarenko.com"
+    },
+    {
+      "repository": "unifi-infra",
+      "path": "unifi-infra/migrations/infrastructure-vlan/README.md",
+      "line": 54,
+      "hostname": "api.k8s.my.lan",
+      "category": "kubernetes_api",
+      "usage": "documentation"
+    }
+  ]
+}

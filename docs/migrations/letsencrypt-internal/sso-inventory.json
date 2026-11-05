@@ -1,0 +1,260 @@
+{
+  "keycloak_clients": [
+    {
+      "realm": "master",
+      "clientId": "argocd",
+      "enabled": true,
+      "current": {
+        "rootUrl": "https://argocd.w386.k8s.my.lan/",
+        "baseUrl": "https://argocd.w386.k8s.my.lan/",
+        "adminUrl": "https://argocd.w386.k8s.my.lan/",
+        "redirectUris": [
+          "https://argocd.w386.k8s.my.lan/auth/callback"
+        ],
+        "webOrigins": [
+          "https://argocd.w386.k8s.my.lan/"
+        ],
+        "post.logout.redirect.uris": "https://argocd.w386.k8s.my.lan/"
+      },
+      "proposed_public_names": {
+        "rootUrl": "https://argocd.int.andreybondarenko.com/",
+        "baseUrl": "https://argocd.int.andreybondarenko.com/",
+        "adminUrl": "https://argocd.int.andreybondarenko.com/",
+        "redirectUris": [
+          "https://argocd.int.andreybondarenko.com/auth/callback"
+        ],
+        "webOrigins": [
+          "https://argocd.int.andreybondarenko.com/"
+        ],
+        "post.logout.redirect.uris": "https://argocd.int.andreybondarenko.com/"
+      },
+      "retired_vault_alias_review": false
+    },
+    {
+      "realm": "master",
+      "clientId": "grafana",
+      "enabled": true,
+      "current": {
+        "rootUrl": "https://grafana.w386.k8s.my.lan/",
+        "baseUrl": "https://grafana.w386.k8s.my.lan/",
+        "adminUrl": "https://grafana.w386.k8s.my.lan/",
+        "redirectUris": [
+          "https://grafana.w386.k8s.my.lan/login/generic_oauth"
+        ],
+        "webOrigins": [
+          "https://grafana.w386.k8s.my.lan"
+        ]
+      },
+      "proposed_public_names": {
+        "rootUrl": "https://grafana.int.andreybondarenko.com/",
+        "baseUrl": "https://grafana.int.andreybondarenko.com/",
+        "adminUrl": "https://grafana.int.andreybondarenko.com/",
+        "redirectUris": [
+          "https://grafana.int.andreybondarenko.com/login/generic_oauth"
+        ],
+        "webOrigins": [
+          "https://grafana.int.andreybondarenko.com"
+        ]
+      },
+      "retired_vault_alias_review": false
+    },
+    {
+      "realm": "master",
+      "clientId": "graphana",
+      "enabled": true,
+      "current": {
+        "rootUrl": "https://grafana.w386.k8s.my.lan/",
+        "baseUrl": "https://grafana.w386.k8s.my.lan/",
+        "adminUrl": "",
+        "redirectUris": [
+          "https://grafana.w386.k8s.my.lan/",
+          "grafana.w386.k8s.my.lan",
+          "https://grafana.w386.k8s.my.lan/*",
+          "https://grafana.w386.k8s.my.lan",
+          "https://grafana.w386.k8s.my.lan/login/generic_oauth"
+        ],
+        "webOrigins": [
+          "https://grafana.w386.k8s.my.lan"
+        ]
+      },
+      "proposed_public_names": {
+        "rootUrl": "https://grafana.int.andreybondarenko.com/",
+        "baseUrl": "https://grafana.int.andreybondarenko.com/",
+        "adminUrl": "",
+        "redirectUris": [
+          "https://grafana.int.andreybondarenko.com/",
+          "grafana.w386.k8s.my.lan",
+          "https://grafana.int.andreybondarenko.com/*",
+          "https://grafana.int.andreybondarenko.com",
+          "https://grafana.int.andreybondarenko.com/login/generic_oauth"
+        ],
+        "webOrigins": [
+          "https://grafana.int.andreybondarenko.com"
+        ]
+      },
+      "retired_vault_alias_review": false
+    },
+    {
+      "realm": "master",
+      "clientId": "headlamp",
+      "enabled": true,
+      "current": {
+        "rootUrl": "https://headlamp.w386.k8s.my.lan",
+        "baseUrl": "https://headlamp.w386.k8s.my.lan/",
+        "adminUrl": "https://headlamp.w386.k8s.my.lan",
+        "redirectUris": [
+          "https://headlamp.w386.k8s.my.lan/oidc-callback"
+        ],
+        "webOrigins": [
+          "https://headlamp.w386.k8s.my.lan"
+        ]
+      },
+      "proposed_public_names": {
+        "rootUrl": "https://headlamp.int.andreybondarenko.com",
+        "baseUrl": "https://headlamp.int.andreybondarenko.com/",
+        "adminUrl": "https://headlamp.int.andreybondarenko.com",
+        "redirectUris": [
+          "https://headlamp.int.andreybondarenko.com/oidc-callback"
+        ],
+        "webOrigins": [
+          "https://headlamp.int.andreybondarenko.com"
+        ]
+      },
+      "retired_vault_alias_review": false
+    },
+    {
+      "realm": "master",
+      "clientId": "openbao",
+      "enabled": true,
+      "current": {
+        "rootUrl": "https://openbao.w386.k8s.my.lan",
+        "baseUrl": "https://openbao.w386.k8s.my.lan",
+        "adminUrl": "https://openbao.w386.k8s.my.lan",
+        "redirectUris": [
+          "https://openbao.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+          "http://127.0.0.1:8250/oidc/callback",
+          "https://openbao.w386.k8s.my.lan/oidc/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ],
+        "webOrigins": [
+          "http://localhost:8250",
+          "https://openbao.w386.k8s.my.lan",
+          "http://127.0.0.1:8250"
+        ],
+        "post.logout.redirect.uris": "https://openbao.w386.k8s.my.lan/"
+      },
+      "proposed_public_names": {
+        "rootUrl": "https://openbao.int.andreybondarenko.com",
+        "baseUrl": "https://openbao.int.andreybondarenko.com",
+        "adminUrl": "https://openbao.int.andreybondarenko.com",
+        "redirectUris": [
+          "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
+          "http://127.0.0.1:8250/oidc/callback",
+          "https://openbao.int.andreybondarenko.com/oidc/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ],
+        "webOrigins": [
+          "http://localhost:8250",
+          "https://openbao.int.andreybondarenko.com",
+          "http://127.0.0.1:8250"
+        ],
+        "post.logout.redirect.uris": "https://openbao.int.andreybondarenko.com/"
+      },
+      "retired_vault_alias_review": false
+    },
+    {
+      "realm": "master",
+      "clientId": "traefik-admin",
+      "enabled": true,
+      "current": {
+        "redirectUris": [
+          "https://thanos-compactor.w386.k8s.my.lan/oidc/callback",
+          "https://prometheus.w386.k8s.my.lan/oidc/callback",
+          "https://thanos.w386.k8s.my.lan/oidc/callback",
+          "https://thanos-store.w386.k8s.my.lan/oidc/callback",
+          "https://alerts.w386.k8s.my.lan/oidc/callback",
+          "https://longhorn.w386.k8s.my.lan/oidc/callback"
+        ],
+        "webOrigins": []
+      },
+      "proposed_public_names": {
+        "redirectUris": [
+          "https://thanos-compactor.int.andreybondarenko.com/oidc/callback",
+          "https://prometheus.int.andreybondarenko.com/oidc/callback",
+          "https://thanos.int.andreybondarenko.com/oidc/callback",
+          "https://thanos-store.int.andreybondarenko.com/oidc/callback",
+          "https://alerts.int.andreybondarenko.com/oidc/callback",
+          "https://longhorn.int.andreybondarenko.com/oidc/callback"
+        ],
+        "webOrigins": []
+      },
+      "retired_vault_alias_review": false
+    },
+    {
+      "realm": "master",
+      "clientId": "vault",
+      "enabled": true,
+      "current": {
+        "rootUrl": "https://vault.w386.k8s.my.lan",
+        "baseUrl": "https://vault.w386.k8s.my.lan",
+        "adminUrl": "",
+        "redirectUris": [
+          "https://vault.w386.k8s.my.lan/oidc/oidc/callback",
+          "https://vault.w386.k8s.my.lan/*",
+          "http://127.0.0.1:8250/oidc/callback",
+          "https://vault.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ],
+        "webOrigins": [
+          "http://localhost:8250",
+          "https://vault.w386.k8s.my.lan/",
+          "http://192.168.1.209:8200",
+          "http://127.0.0.1:8250"
+        ],
+        "post.logout.redirect.uris": "https://vault.w386.k8s.my.lan/"
+      },
+      "proposed_public_names": {
+        "rootUrl": "https://vault.w386.k8s.my.lan",
+        "baseUrl": "https://vault.w386.k8s.my.lan",
+        "adminUrl": "",
+        "redirectUris": [
+          "https://vault.w386.k8s.my.lan/oidc/oidc/callback",
+          "https://vault.w386.k8s.my.lan/*",
+          "http://127.0.0.1:8250/oidc/callback",
+          "https://vault.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ],
+        "webOrigins": [
+          "http://localhost:8250",
+          "https://vault.w386.k8s.my.lan/",
+          "http://192.168.1.209:8200",
+          "http://127.0.0.1:8250"
+        ],
+        "post.logout.redirect.uris": "https://vault.w386.k8s.my.lan/"
+      },
+      "retired_vault_alias_review": true
+    }
+  ],
+  "openbao_oidc": {
+    "client_id": "openbao",
+    "default_role": "keycloak",
+    "roles": [
+      {
+        "role": "keycloak",
+        "current_allowed_redirect_uris": [
+          "https://openbao.w386.k8s.my.lan/oidc/oidc/callback",
+          "https://openbao.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+          "http://127.0.0.1:8250/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ],
+        "proposed_allowed_redirect_uris": [
+          "https://openbao.int.andreybondarenko.com/oidc/oidc/callback",
+          "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
+          "http://127.0.0.1:8250/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ]
+      }
+    ]
+  },
+  "cutover_rule": "Add exact new redirects/origins while retaining old callbacks; switch base/root/admin URLs only after new DNS, certificates and routes work; remove legacy callbacks after login/logout verification."
+}

@@ -1,6 +1,8 @@
 # GoDaddy v3 cert-manager solver
 
-Work in progress for the internal certificate migration. This is not deployed.
+Staging solver deployed and validated on 2026-11-05. Production and backend
+cutover remain outstanding; see `docs/migrations/letsencrypt-internal/STAGING.md`
+from the repository root.
 
 Uses cert-manager's authenticated aggregated webhook server and GoDaddy's v3 DNS
 API with a PAT mounted at `/var/run/godaddy/token`. Solver group is
@@ -28,8 +30,9 @@ CGO_ENABLED=0 go build -trimpath -o /tmp/godaddy-webhook .
 ```
 
 The chart includes webhook TLS/APIService/RBAC, External Secrets integration,
-staging issuer and canary. It is staged outside Argo application paths and has not
-been installed. Image delivery, dedicated OpenBao auth role/policy and live staging
-issuance must be completed before any consumer cutover. Production issuance is
+staging issuer and canary. It is outside Argo application paths; staging is installed as Helm release
+`godaddy-webhook`. Image delivery, scoped OpenBao auth and live staging issuance,
+renewal and cleanup after restart have been verified. Production issuance and
+consumer cutover are still pending. Production issuance is
 disabled by default.
 No real GoDaddy writes are performed by the unit tests.

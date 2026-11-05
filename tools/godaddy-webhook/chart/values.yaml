@@ -1,7 +1,7 @@
 image:
   repository: harbor.andreybondarenko.com/library/godaddy-webhook
   # Required: pin the successfully built and tested image by digest.
-  digest: ""
+  digest: sha256:b848a323861e2491fe4686603a07dc2a5d1173464128860c161f9707575dc62a
 openbao:
   server: https://openbao.openbao.svc:8200
   # Switch to true only after the public backend listener is verified.

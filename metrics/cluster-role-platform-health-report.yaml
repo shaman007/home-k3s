@@ -37,3 +37,8 @@ rules:
     resources:
       - applications
     verbs: ["get", "list"]
+  - apiGroups: ["cert-manager.io"]
+    resources:
+      - certificates
+      - clusterissuers
+    verbs: ["get", "list"]

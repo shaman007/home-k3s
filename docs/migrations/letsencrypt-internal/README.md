@@ -1,6 +1,7 @@
 # Internal ingress migration to Let's Encrypt DNS-01
 
-Status: implementation in progress, 2026-11-05. No live migration has occurred.
+Status: staging solver/canaries deployed and verified on 2026-11-05.
+Production certificate and backend CA cutover remain outstanding. See `STAGING.md`.
 Selected suffix: `int.andreybondarenko.com` (user decision).
 
 ## Verified starting point
@@ -193,3 +194,6 @@ The solver chart supports its own backend migration with
 omits the private CA pin and refuses the old `.svc` URL. Its initial bootstrap
 mode continues to require the existing CA bundle. Do not enable system trust
 before the public backend alias and listener have passed live verification.
+
+The coordinated cross-repository and SSO migration plan is in
+`DOMAIN-MIGRATION-PLAN.md`, with hostname-only code and live SSO inventories.
