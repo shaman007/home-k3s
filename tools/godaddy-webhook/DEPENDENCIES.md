@@ -60,3 +60,26 @@ v0.42.0 in the screenshot, and v0.43.0 after the dependency update is pushed.
 - [GO-2026-6860](https://pkg.go.dev/vuln/GO-2026-6860)
 - [GO-2026-6866](https://pkg.go.dev/vuln/GO-2026-6866)
 - [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932)
+
+## x/crypto: openssl-ssleay flag in PowerPC assembly
+
+FOSSA on revision `8e4a21bb` flags `chacha20/chacha_ppc64x.s` in the pinned
+x/crypto version. The file retains CRYPTOGAMS/OpenSSL provenance comments and a
+BSD-style header. Its build constraint is `gc && !purego && (ppc64 || ppc64le)`.
+
+For this deployment's `GOOS=linux GOARCH=amd64 CGO_ENABLED=0`, `go list -json
+ golang.org/x/crypto/chacha20` lists this file under `IgnoredOtherFiles`.
+The seven x/crypto packages in the solver's production dependency graph contain
+no selected Go/C/assembly source with OpenSSL/SSLeay/CRYPTOGAMS references. The
+runtime image does not copy dependency source trees. This review therefore
+supports a project/version-scoped ignore for this architecture-excluded match,
+not a global license-policy override. Re-review if the target architecture or
+matched files change. No external FOSSA rule was modified.
+
+Suggested reason:
+
+> The matched chacha_ppc64x.s file is PowerPC-only and excluded from our
+> linux/amd64 build and runtime image. Verified using Go's IgnoredOtherFiles.
+> Re-review on architecture or dependency changes.
+
+[Exact upstream file](https://github.com/golang/crypto/blob/2f1f834330b2/chacha20/chacha_ppc64x.s).
