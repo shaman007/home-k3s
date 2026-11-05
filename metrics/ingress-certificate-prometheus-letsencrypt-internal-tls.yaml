@@ -1,0 +1,17 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: prometheus-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - prometheus.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod

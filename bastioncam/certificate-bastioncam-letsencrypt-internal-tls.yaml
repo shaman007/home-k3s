@@ -1,0 +1,17 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bastioncam-letsencrypt-internal-tls
+  namespace: bastioncam
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: bastioncam-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - bastioncam.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod

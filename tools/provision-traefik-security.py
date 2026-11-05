@@ -19,7 +19,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 SSO = 'https://sso.andreybondarenko.com'
-BAO = 'https://openbao.w386.k8s.my.lan'
+BAO = 'https://openbao.int.andreybondarenko.com'
 
 
 def request(url, method='GET', data=None, headers=None, missing=False):

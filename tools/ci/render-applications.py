@@ -57,14 +57,20 @@ def helm_args(app, source, sources, root, scratch, kubernetes_version):
     if options.keys() - supported:
         raise ValueError(f"Unsupported Helm options: {sorted(options.keys() - supported)}")
     repo = source["repoURL"]
-    chart = source["chart"]
-    if repo.startswith(("http://", "https://")):
-        chart_args = [chart, "--repo", repo]
+    if "chart" not in source:
+        if repo != REPO:
+            raise ValueError("External Git-hosted charts need explicit support")
+        chart_args = [str(local_path(root, source["path"]))]
     else:
-        chart_args = [repo if repo.startswith("oci://") else "oci://" + repo]
-        chart_args[0] = chart_args[0].rstrip("/") + "/" + chart
+        chart = source["chart"]
+        if repo.startswith(("http://", "https://")):
+            chart_args = [chart, "--repo", repo]
+        else:
+            chart_args = [repo if repo.startswith("oci://") else "oci://" + repo]
+            chart_args[0] = chart_args[0].rstrip("/") + "/" + chart
+        chart_args.extend(["--version", source["targetRevision"]])
     args = [os.environ.get("HELM", "helm"), "template", options.get("releaseName", app["metadata"]["name"]),
-            *chart_args, "--version", source["targetRevision"],
+            *chart_args,
             "--namespace", app["spec"]["destination"]["namespace"],
             "--kube-version", options.get("kubeVersion", kubernetes_version)]
     if not options.get("skipCrds", False):
@@ -112,7 +118,9 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
     if (path / "kustomization.yaml").exists() and "directory" not in source:
         return run(["kubectl", "kustomize", str(path)])
     if (path / "Chart.yaml").exists():
-        raise ValueError("Git-hosted Helm charts need explicit support before use")
+        if "directory" in source:
+            raise ValueError("A Git-hosted chart cannot also be a raw directory source")
+        return run(helm_args(app, source, sources, root, scratch, kubernetes_version), cwd=scratch)
     options = source.get("directory", {})
     if options.keys() - {"recurse", "include", "exclude"}:
         raise ValueError("Unsupported directory options")

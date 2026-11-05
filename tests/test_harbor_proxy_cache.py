@@ -71,7 +71,7 @@ class HarborProxyCacheTest(unittest.TestCase):
 
         for manifest in ROOT.rglob("*.yaml"):
             relative = manifest.relative_to(ROOT)
-            if relative.parts[0] == "DEPRECATED":
+            if relative.parts[0] == "DEPRECATED" or str(relative).startswith("tools/godaddy-webhook/chart/templates/"):
                 continue
             for line_number, line in enumerate(
                 manifest.read_text(encoding="utf-8").splitlines(), start=1

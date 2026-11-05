@@ -1,0 +1,32 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: comfyui-letsencrypt
+  namespace: comfyui
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,comfyui-hsts@kubernetescrd
+  labels:
+    app: comfyui
+    app.kubernetes.io/name: comfyui
+    app.kubernetes.io/instance: comfyui
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  tls:
+  - hosts:
+    - comfyui.int.andreybondarenko.com
+    secretName: comfyui-letsencrypt-internal-tls
+  ingressClassName: traefik-private
+  rules:
+  - host: comfyui.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: comfyui
+            port:
+              number: 8188

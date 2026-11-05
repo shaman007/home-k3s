@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - grafana.int.andreybondarenko.com
+    secretName: grafana-letsencrypt-internal-tls
+  rules:
+  - host: grafana.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-public-tls
+  namespace: openbao
+spec:
+  selector:
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/name: openbao
+    component: server
+    openbao-active: 'true'
+  ports:
+  - name: https
+    port: 8200
+    targetPort: 8202
+    protocol: TCP

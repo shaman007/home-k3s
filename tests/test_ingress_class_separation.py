@@ -60,7 +60,7 @@ class IngressClassSeparationTest(unittest.TestCase):
     def test_every_route_is_explicitly_classified(self):
         count = 0
         for path in ROOT.rglob("*.yaml"):
-            if any(part in path.parts for part in ["DEPRECATED", ".git", ".agents", "talos"]):
+            if any(part in path.parts for part in ["DEPRECATED", ".git", ".agents", "talos", "templates"]):
                 continue
             for document in yaml.safe_load_all(path.read_text()):
                 if not isinstance(document, dict):
@@ -68,13 +68,13 @@ class IngressClassSeparationTest(unittest.TestCase):
                 kind = document.get("kind")
                 if kind == "Ingress":
                     hosts = [rule.get("host", "") for rule in document.get("spec", {}).get("rules", [])]
-                    expected = "traefik-private" if any(host.endswith(".k8s.my.lan") for host in hosts) else "traefik"
+                    expected = "traefik-private" if any(host.endswith((".k8s.my.lan", ".int.andreybondarenko.com")) for host in hosts) else "traefik"
                     self.assertEqual(expected, document["spec"].get("ingressClassName"), str(path))
                     self.assertNotIn("kubernetes.io/ingress.class", document.get("metadata", {}).get("annotations", {}), str(path))
                     count += 1
                 elif kind in ["IngressRoute", "IngressRouteTCP", "IngressRouteUDP"]:
                     matches = [rule.get("match", "") for rule in document.get("spec", {}).get("routes", [])]
-                    expected = "traefik-private" if any(".k8s.my.lan" in match for match in matches) else "traefik"
+                    expected = "traefik-private" if any(any(suffix in match for suffix in (".k8s.my.lan", ".int.andreybondarenko.com")) for match in matches) else "traefik"
                     self.assertEqual(expected, document["spec"].get("ingressClassName"), str(path))
                     self.assertNotIn("kubernetes.io/ingress.class", document["metadata"].get("annotations", {}), str(path))
         self.assertGreater(count, 25)

@@ -16,7 +16,13 @@
     "https://longhorn.w386.k8s.my.lan/oidc/callback",
     "https://thanos.w386.k8s.my.lan/oidc/callback",
     "https://thanos-compactor.w386.k8s.my.lan/oidc/callback",
-    "https://thanos-store.w386.k8s.my.lan/oidc/callback"
+    "https://thanos-store.w386.k8s.my.lan/oidc/callback",
+    "https://prometheus.int.andreybondarenko.com/oidc/callback",
+    "https://alerts.int.andreybondarenko.com/oidc/callback",
+    "https://longhorn.int.andreybondarenko.com/oidc/callback",
+    "https://thanos.int.andreybondarenko.com/oidc/callback",
+    "https://thanos-compactor.int.andreybondarenko.com/oidc/callback",
+    "https://thanos-store.int.andreybondarenko.com/oidc/callback"
   ],
   "webOrigins": [],
   "attributes": {

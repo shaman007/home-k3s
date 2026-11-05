@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-server-letsencrypt-tls
+  namespace: openbao
+spec:
+  secretName: openbao-server-letsencrypt-tls
+  dnsNames:
+  - openbao-api.int.andreybondarenko.com
+  renewBefore: 720h
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod

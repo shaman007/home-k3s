@@ -1,3 +1,6 @@
+import importlib.util
+import sys
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -24,7 +27,7 @@ PROJECT_PLATFORM = {
     "crowdsec", "crowdsec-config",
     "argocd-deploy", "argocd-install", "cert-manager", "cilium", "coredns-custom",
     "external-secrets", "external-secrets-network-policy", "gpu-operator",
-    "headlamp", "metallb",
+    "headlamp", "metallb", "godaddy-webhook",
     "metallb-config", "metrics-server", "metrics-server-network-policy",
     "openbao", "openbao-custom", "openbao-network-policy", "reloader", "traefik",
     "traefik-network-policy", "traefik-private",
@@ -189,6 +192,17 @@ def repository_documents(application: dict):
         if source.get("repoURL") != REPOSITORY or "path" not in source:
             continue
         source_path = ROOT / source["path"]
+        if (source_path / "Chart.yaml").exists():
+            sys.path.insert(0, str(ROOT / "tools/ci"))
+            spec = importlib.util.spec_from_file_location("git_chart_renderer", ROOT / "tools/ci/render-applications.py")
+            renderer = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(renderer)
+            with tempfile.TemporaryDirectory() as temporary:
+                output = renderer.render_source(application, source, sources, ROOT, Path(temporary), "1.36.0")
+            for document in yaml.safe_load_all(output):
+                if isinstance(document, dict):
+                    yield source_path / "Chart.yaml", document
+            continue
         for pattern in ("*.yaml", "*.yml"):
             for manifest in source_path.rglob(pattern):
                 for document in yaml.safe_load_all(

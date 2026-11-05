@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openbao-ingress-letsencrypt
+  namespace: openbao
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - openbao.int.andreybondarenko.com
+    secretName: openbao-ingress-letsencrypt-internal-tls
+  rules:
+  - host: openbao.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: openbao
+            port:
+              number: 8200

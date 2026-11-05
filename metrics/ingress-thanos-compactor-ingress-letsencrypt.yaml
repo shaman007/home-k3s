@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thanos-compactor-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - thanos-compactor.int.andreybondarenko.com
+    secretName: thanos-compactor-letsencrypt-internal-tls
+  rules:
+  - host: thanos-compactor.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thanos-compactor
+            port:
+              number: 10902

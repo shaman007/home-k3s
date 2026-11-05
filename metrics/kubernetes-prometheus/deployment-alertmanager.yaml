@@ -60,7 +60,7 @@ spec:
           args:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"
-            - "--web.external-url=https://alerts.w386.k8s.my.lan"
+            - "--web.external-url=https://alerts.int.andreybondarenko.com"
             - "--cluster.listen-address=0.0.0.0:9094"
             - "--cluster.peer=alertmanager-cluster.monitoring.svc:9094"
           ports:

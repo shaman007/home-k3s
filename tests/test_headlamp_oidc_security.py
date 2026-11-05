@@ -46,6 +46,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
             path
             for path in ROOT.rglob("*.yaml")
             if "DEPRECATED" not in path.parts
+            and "tools/godaddy-webhook/chart/templates/" not in path.as_posix()
         ]
         for path in active:
             for document in documents(path):

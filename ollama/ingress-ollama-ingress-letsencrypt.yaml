@@ -1,0 +1,32 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: ollama
+  name: ollama-ingress-letsencrypt
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,ollama-hsts@kubernetescrd
+  labels:
+    app: ollama
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/instance: ollama
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  tls:
+  - hosts:
+    - ollama.int.andreybondarenko.com
+    secretName: ollama-letsencrypt-internal-tls
+  ingressClassName: traefik-private
+  rules:
+  - host: ollama.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ollama
+            port:
+              number: 11434

@@ -252,6 +252,8 @@ spec:
       ports:
         - protocol: TCP
           port: 8200
+        - protocol: TCP
+          port: 8202
     - to:
         - namespaceSelector:
             matchLabels:

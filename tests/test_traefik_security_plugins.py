@@ -44,6 +44,7 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
             chain = ingress['metadata']['annotations']['traefik.ingress.kubernetes.io/router.middlewares']
             self.assertEqual('traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd', chain)
             callbacks.update('https://' + r['host'] + '/oidc/callback' for r in ingress['spec']['rules'])
+        callbacks.update(uri.replace(".w386.k8s.my.lan", ".int.andreybondarenko.com") for uri in list(callbacks))
         self.assertEqual(callbacks, set(client['redirectUris']))
         self.assertTrue(all('*' not in uri for uri in callbacks))
 

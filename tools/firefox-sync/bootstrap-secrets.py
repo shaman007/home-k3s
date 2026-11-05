@@ -7,7 +7,7 @@ import secrets
 import urllib.error
 import urllib.request
 
-ADDRESS = 'https://openbao.w386.k8s.my.lan'
+ADDRESS = 'https://openbao.int.andreybondarenko.com'
 TOKEN_FILE = Path('/home/shaman007/.codex/skills/vault-operator/root-token.txt')
 KEYS = ('MYSQL_ROOT_PASSWORD', 'MYSQL_PASSWORD', 'SYNC_MASTER_SECRET',
         'SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET')

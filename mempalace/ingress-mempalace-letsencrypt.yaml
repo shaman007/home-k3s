@@ -1,0 +1,30 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mempalace-letsencrypt
+  namespace: mempalace
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+  labels:
+    app: mempalace
+    app.kubernetes.io/name: mempalace
+    app.kubernetes.io/instance: mempalace
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - mempalace.int.andreybondarenko.com
+    secretName: mempalace-letsencrypt-internal-tls
+  rules:
+  - host: mempalace.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mempalace
+            port:
+              number: 8765

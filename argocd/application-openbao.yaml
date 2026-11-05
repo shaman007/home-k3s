@@ -51,6 +51,8 @@ spec:
           extraVolumes:
             - type: secret
               name: openbao-server-tls
+            - type: secret
+              name: openbao-server-letsencrypt-tls
           affinity: |
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
@@ -89,6 +91,19 @@ spec:
                   cluster_address = "[::]:8201"
                   tls_cert_file = "/openbao/userconfig/openbao-server-tls/tls.crt"
                   tls_key_file = "/openbao/userconfig/openbao-server-tls/tls.key"
+                  telemetry {
+                    unauthenticated_metrics_access = "true"
+                  }
+                }
+
+                listener "tcp" {
+                  tls_disable = 0
+                  address = "[::]:8202"
+                  cluster_address = "[::]:8203"
+                  tls_cert_file = "/openbao/userconfig/openbao-server-letsencrypt-tls/tls.crt"
+                  tls_key_file = "/openbao/userconfig/openbao-server-letsencrypt-tls/tls.key"
+                  tls_auto_reload = true
+                  tls_auto_reload_interval = "30s"
                   telemetry {
                     unauthenticated_metrics_access = "true"
                   }

@@ -41,7 +41,7 @@ spec:
             - "--web.enable-lifecycle"
             - "--web.enable-otlp-receiver"
             - "--storage.tsdb.no-lockfile"
-            - "--web.external-url=https://prometheus.w386.k8s.my.lan"
+            - "--web.external-url=https://prometheus.int.andreybondarenko.com"
             - "--storage.tsdb.min-block-duration=2h"
             - "--storage.tsdb.max-block-duration=2h"
             - "--storage.tsdb.retention.time=3d"

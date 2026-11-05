@@ -96,7 +96,7 @@ data:
       - BackgroundScanReport
       - ClusterBackgroundScanReport
       - UpdateRequest
-  url: https://argocd.w386.k8s.my.lan
+  url: https://argocd.int.andreybondarenko.com
   oidc.config: |
     name: Keycloak
     issuer: https://sso.andreybondarenko.com/realms/master

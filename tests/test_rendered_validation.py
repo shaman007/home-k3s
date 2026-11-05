@@ -23,6 +23,20 @@ validate = module('validate', 'validate-rendered.py')
 
 
 class RenderValidationTest(unittest.TestCase):
+    def test_git_hosted_chart_uses_checkout_and_helm_values_without_remote_version(self):
+        chart = self.root / 'chart'
+        chart.mkdir()
+        (chart / 'Chart.yaml').write_text('apiVersion: v2\nname: test\nversion: 0.1.0\n')
+        source = {'repoURL': render.REPO, 'path': 'chart', 'targetRevision': 'main',
+                  'helm': {'releaseName': 'solver', 'values': 'productionEnabled: true\n'}}
+        with patch.object(render, 'run', return_value='rendered') as run:
+            self.assertEqual('rendered', render.render_source(self.app, source, [source], self.root, self.root, '1.36.0'))
+        args = run.call_args.args[0]
+        self.assertEqual(args[2:4], ['solver', str(chart)])
+        self.assertNotIn('--version', args)
+        self.assertIn('--values', args)
+        self.assertEqual('productionEnabled: true\n', (self.root / 'values.yaml').read_text())
+
     def test_remote_kustomize_fetch_retries_without_printing_diagnostics(self):
         failed = subprocess.CompletedProcess([], 1, 'private manifest', 'git fetch failed: private diagnostic')
         success = subprocess.CompletedProcess([], 0, 'rendered', '')

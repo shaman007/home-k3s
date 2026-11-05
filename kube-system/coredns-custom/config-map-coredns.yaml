@@ -1,0 +1,40 @@
+# Based on the live Talos Corefile observed 2026-11-05. Re-diff before rollout.
+# This is not the unused coredns-custom ConfigMap.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+            lameduck 5s
+        }
+        ready
+        log . {
+            class error
+        }
+        prometheus :9153
+        rewrite stop {
+            name exact openbao-api.int.andreybondarenko.com openbao-public-tls.openbao.svc.cluster.local
+            answer auto
+        }
+
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+            pods insecure
+            fallthrough in-addr.arpa ip6.arpa
+            ttl 30
+        }
+        forward . /etc/resolv.conf {
+           max_concurrent 1000
+        }
+        cache 30 {
+           disable success cluster.local
+           disable denial cluster.local
+        }
+        loop
+        reload
+        loadbalance
+    }
