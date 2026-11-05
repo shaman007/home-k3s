@@ -33,11 +33,11 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertTrue(values["server"]["ha"]["raft"]["enabled"])
         self.assertTrue(values["server"]["ha"]["raft"]["setNodeId"])
         self.assertEqual(
-            "https://openbao-active.openbao.svc:8200",
+            "https://openbao-api.int.andreybondarenko.com:8200",
             values["server"]["ha"]["apiAddr"],
         )
         self.assertIn(
-            'leader_api_addr = "https://openbao-active.openbao.svc:8200"',
+            'leader_api_addr = "https://openbao-api.int.andreybondarenko.com:8200"',
             values["server"]["ha"]["raft"]["config"],
         )
         self.assertNotIn(
@@ -49,6 +49,22 @@ class OpenBaoMigrationTest(unittest.TestCase):
             values["server"]["persistentVolumeClaimRetentionPolicy"],
         )
         self.assertFalse(values["snapshotAgent"]["enabled"])
+
+    def test_backend_uses_public_certificates_without_private_trust(self):
+        values = yaml.safe_load(load_yaml("argocd/application-openbao.yaml")["spec"]["source"]["helm"]["values"])
+        server = values["server"]
+        self.assertNotIn("BAO_CACERT", server["extraEnvironmentVars"])
+        self.assertEqual("openbao-api.int.andreybondarenko.com", server["extraEnvironmentVars"]["BAO_TLS_SERVER_NAME"])
+        self.assertEqual([{"type": "secret", "name": "openbao-server-letsencrypt-tls"}], server["extraVolumes"])
+        config = server["ha"]["raft"]["config"]
+        self.assertNotIn("leader_ca_cert_file", config)
+        self.assertNotIn("/openbao-server-tls/", config)
+        self.assertEqual(2, config.count("tls_auto_reload = true"))
+        self.assertIn('cluster_address = "[::]:8201"', config)
+        transport = load_yaml("openbao/servers-transport-openbao-server.yaml")["spec"]
+        self.assertEqual("openbao-api.int.andreybondarenko.com", transport["serverName"])
+        self.assertNotIn("rootCAs", transport)
+        self.assertTrue(load_yaml("openbao/cron-job-vault-pki-renewer.yaml")["spec"]["suspend"])
 
     def test_openbao_tls_data_is_runtime_managed(self):
         application = load_yaml("argocd/application-openbao-custom.yaml")
@@ -193,7 +209,9 @@ class OpenBaoMigrationTest(unittest.TestCase):
             source = path.read_text(encoding="utf-8")
             if "provider:" in source and "vault:" in source:
                 with self.subTest(path=path.relative_to(ROOT)):
-                    self.assertIn("https://openbao.openbao.svc:8200", source)
+                    self.assertIn("https://openbao-api.int.andreybondarenko.com:8200", source)
+                    self.assertNotIn("caBundle:", source)
+                    self.assertNotIn("caProvider:", source)
                     self.assertNotIn("https://vault.vault.svc:8200", source)
 
 

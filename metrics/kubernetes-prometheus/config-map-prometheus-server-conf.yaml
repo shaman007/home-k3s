@@ -1925,14 +1925,13 @@ data:
         scheme: https
         metrics_path: "/v1/sys/metrics"
         tls_config:
-          ca_file: /etc/prometheus-vault-ca/ca.crt
-          server_name: openbao.openbao.svc
+          server_name: openbao-api.int.andreybondarenko.com
         params:
           format:
             - prometheus
         static_configs:
         - targets:
-          - openbao-active.openbao.svc.cluster.local:8200
+          - openbao-api.int.andreybondarenko.com:8200
       - job_name: harbor-core
         scrape_interval: 45s
         scrape_timeout:  30s

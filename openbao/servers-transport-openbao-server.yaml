@@ -9,6 +9,4 @@ metadata:
     app.kubernetes.io/instance: openbao
     app.kubernetes.io/managed-by: argoCD
 spec:
-  serverName: openbao.openbao.svc
-  rootCAs:
-    - secret: openbao-server-tls
+  serverName: openbao-api.int.andreybondarenko.com

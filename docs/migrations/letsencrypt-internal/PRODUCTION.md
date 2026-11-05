@@ -32,3 +32,21 @@ Validation: 320 repository tests passed (16 skipped); runtime-contract validatio
 5. Retire old routes, certificates, DNS records, backend CA consumers, and private issuer only after consumer and renewal verification. Preserve Raft's intrinsic transport security and Kubernetes trust.
 
 The backend private CA has not yet been retired. Automatic approval review rejected a global Argo reconciliation hold because of its broad impact; no holds were applied. Continue through staged source pushes and normal GitOps reconciliation.
+
+## OpenBao bridge rollout completed
+
+All three OpenBao servers were rolled individually and unsealed. Leadership was transferred before replacing the original leader. Each server's 8202 listener passed ISRG-only certificate verification. The new backend name resolves through CoreDNS, and the OpenBao container's bundled system trust successfully validates it.
+
+A temporary SecretStore using the existing GoDaddy Kubernetes auth role authenticated through the new backend name without a CA bundle; it became Ready and was then removed. All 34 production SecretStores were Ready after the rollout.
+
+The shell `VAULT_UNSEAL` value was rejected. With explicit user authorization, the separate recovery material in the local operator file successfully unsealed the replacements. No recovery value was printed or copied. The existing shell helper still uses the stale shell value; use the verified recovery source for further controlled rolls.
+
+## GitOps phase 2 prepared (not deployed)
+
+- All active SecretStore sources, including embedded Traefik objects and the GoDaddy chart, use the public backend name without a private CA pin.
+- Traefik's OpenBao transport uses public SNI and system trust; both OpenBao ingress routes target the verified bridge Service.
+- Prometheus uses the public backend name and no longer mounts the private CA.
+- The primary listener and Raft retry-join configuration switch to public trust; the private TLS Secret is removed from the server mounts. Intrinsic Raft transport security and port 8201 remain intact.
+- The obsolete backend certificate renewer is suspended. Its old certificate and PKI role remain available for rollback until phase 2 is deployed and verified.
+
+Validation: 321 tests passed (16 skipped), runtime contracts passed, and six affected applications rendered. Push phase 2 before the next controlled server roll. After all servers and clients use public trust, remove the retired backend Secret and issuance role; do not remove shared PKI resources while legacy ingress certificates still depend on them.

@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/instance: vault-pki-renewer
     app.kubernetes.io/managed-by: argoCD
 spec:
+  suspend: true
   schedule: "27 4 * * *"
   concurrencyPolicy: Forbid
   jobTemplate:

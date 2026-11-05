@@ -47,10 +47,8 @@ spec:
             annotations:
               traefik.ingress.kubernetes.io/service.serverstransport: openbao-openbao-server@kubernetescrd
           extraEnvironmentVars:
-            BAO_CACERT: /openbao/userconfig/openbao-server-tls/ca.crt
+            BAO_TLS_SERVER_NAME: openbao-api.int.andreybondarenko.com
           extraVolumes:
-            - type: secret
-              name: openbao-server-tls
             - type: secret
               name: openbao-server-letsencrypt-tls
           affinity: |
@@ -77,7 +75,7 @@ spec:
           ha:
             enabled: true
             replicas: 3
-            apiAddr: "https://openbao-active.openbao.svc:8200"
+            apiAddr: "https://openbao-api.int.andreybondarenko.com:8200"
             clusterAddr: "https://$(HOSTNAME).openbao-internal:8201"
             raft:
               enabled: true
@@ -89,8 +87,10 @@ spec:
                   tls_disable = 0
                   address = "[::]:8200"
                   cluster_address = "[::]:8201"
-                  tls_cert_file = "/openbao/userconfig/openbao-server-tls/tls.crt"
-                  tls_key_file = "/openbao/userconfig/openbao-server-tls/tls.key"
+                  tls_cert_file = "/openbao/userconfig/openbao-server-letsencrypt-tls/tls.crt"
+                  tls_key_file = "/openbao/userconfig/openbao-server-letsencrypt-tls/tls.key"
+                  tls_auto_reload = true
+                  tls_auto_reload_interval = "30s"
                   telemetry {
                     unauthenticated_metrics_access = "true"
                   }
@@ -112,9 +112,8 @@ spec:
                 storage "raft" {
                   path = "/openbao/data"
                   retry_join {
-                    leader_api_addr = "https://openbao-active.openbao.svc:8200"
-                    leader_ca_cert_file = "/openbao/userconfig/openbao-server-tls/ca.crt"
-                    leader_tls_servername = "openbao.openbao.svc"
+                    leader_api_addr = "https://openbao-api.int.andreybondarenko.com:8200"
+                    leader_tls_servername = "openbao-api.int.andreybondarenko.com"
                   }
                 }
 
