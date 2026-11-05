@@ -1,0 +1,12 @@
+image:
+  repository: harbor.andreybondarenko.com/library/godaddy-webhook
+  # Required: pin the successfully built and tested image by digest.
+  digest: ""
+openbao:
+  server: https://openbao.openbao.svc:8200
+  # Switch to true only after the public backend listener is verified.
+  useSystemTrust: false
+  # Existing trusted public CA bundle (base64 PEM); not an API credential.
+  caBundle: ""
+productionEnabled: false
+stagingCanaryEnabled: true

@@ -1,0 +1,242 @@
+{
+  "observed": "2026-11-05",
+  "source": "repository Certificate manifests; names verified against live certificate inventory",
+  "suffix": "int.andreybondarenko.com",
+  "private_vip": "192.168.30.211",
+  "certificates": [
+    {
+      "source": "argocd-deploy/certificate-argocd-vault-acme-tls.yaml",
+      "namespace": "argocd",
+      "certificate": "argocd-vault-acme-tls",
+      "secret": "argocd-vault-acme-tls",
+      "old_names": [
+        "argocd.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "argocd.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "bastioncam/certificate-bastioncam-vault-acme-tls.yaml",
+      "namespace": "bastioncam",
+      "certificate": "bastioncam-vault-acme-tls",
+      "secret": "bastioncam-vault-acme-tls",
+      "old_names": [
+        "bastioncam.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "bastioncam.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "cert-manager/certificate-vault-acme-canary.yaml",
+      "namespace": "cert-manager",
+      "certificate": "vault-acme-canary",
+      "secret": "vault-acme-canary-tls",
+      "old_names": [
+        "vault.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "vault.int.andreybondarenko.com"
+      ],
+      "canary": true
+    },
+    {
+      "source": "comfyui/certificate-comfyui-vault-acme-tls.yaml",
+      "namespace": "comfyui",
+      "certificate": "comfyui-vault-acme-tls",
+      "secret": "comfyui-vault-acme-tls",
+      "old_names": [
+        "comfyui.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "comfyui.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "headlamp/certificate-headlamp-vault-acme-tls.yaml",
+      "namespace": "headlamp",
+      "certificate": "headlamp-vault-acme-tls",
+      "secret": "headlamp-vault-acme-tls",
+      "old_names": [
+        "headlamp.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "headlamp.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "longhorn/ingress-certificate-longhorn-vault-acme-tls.yaml",
+      "namespace": "longhorn-system",
+      "certificate": "longhorn-vault-acme-tls",
+      "secret": "longhorn-vault-acme-tls",
+      "old_names": [
+        "longhorn.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "longhorn.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "mail/certificate-rspamd-vault-acme-tls.yaml",
+      "namespace": "mail",
+      "certificate": "rspamd-vault-acme-tls",
+      "secret": "rspamd-vault-acme-tls",
+      "old_names": [
+        "rspamd.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "rspamd.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "mempalace/certificate-mempalace-vault-acme-tls.yaml",
+      "namespace": "mempalace",
+      "certificate": "mempalace-vault-acme-tls",
+      "secret": "mempalace-vault-acme-tls",
+      "old_names": [
+        "mempalace.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "mempalace.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "metrics/ingress-certificate-alerts-vault-acme-tls.yaml",
+      "namespace": "monitoring",
+      "certificate": "alerts-vault-acme-tls",
+      "secret": "alerts-vault-acme-tls",
+      "old_names": [
+        "alerts.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "alerts.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "metrics/ingress-certificate-grafana-vault-acme-tls.yaml",
+      "namespace": "monitoring",
+      "certificate": "grafana-vault-acme-tls",
+      "secret": "grafana-vault-acme-tls",
+      "old_names": [
+        "grafana.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "grafana.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "metrics/ingress-certificate-prometheus-vault-acme-tls.yaml",
+      "namespace": "monitoring",
+      "certificate": "prometheus-vault-acme-tls",
+      "secret": "prometheus-vault-acme-tls",
+      "old_names": [
+        "prometheus.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "prometheus.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "metrics/ingress-thanos-compactor.yaml",
+      "namespace": "monitoring",
+      "certificate": "thanos-compactor-vault-acme-tls",
+      "secret": "thanos-compactor-vault-acme-tls",
+      "old_names": [
+        "thanos-compactor.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "thanos-compactor.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "metrics/ingress-thanos-store.yaml",
+      "namespace": "monitoring",
+      "certificate": "thanos-store-vault-acme-tls",
+      "secret": "thanos-store-vault-acme-tls",
+      "old_names": [
+        "thanos-store.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "thanos-store.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "metrics/ingress-thanos.yaml",
+      "namespace": "monitoring",
+      "certificate": "thanos-vault-acme-tls",
+      "secret": "thanos-vault-acme-tls",
+      "old_names": [
+        "thanos.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "thanos.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "nextcloud/certificate-office-vault-acme-tls.yaml",
+      "namespace": "nextcloud",
+      "certificate": "office-vault-acme-tls",
+      "secret": "office-vault-acme-tls",
+      "old_names": [
+        "office.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "office.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "ollama/certificate-ollama-vault-acme-tls.yaml",
+      "namespace": "ollama",
+      "certificate": "ollama-vault-acme-tls",
+      "secret": "ollama-vault-acme-tls",
+      "old_names": [
+        "ollama.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "ollama.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "open-webui/certificate-open-webui-internal-vault-acme-tls.yaml",
+      "namespace": "open-webui",
+      "certificate": "open-webui-internal-vault-acme-tls",
+      "secret": "open-webui-internal-vault-acme-tls",
+      "old_names": [
+        "chat.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "chat.int.andreybondarenko.com"
+      ],
+      "canary": false
+    },
+    {
+      "source": "openbao/certificate-openbao-ingress-vault-acme-tls.yaml",
+      "namespace": "openbao",
+      "certificate": "openbao-ingress-vault-acme-tls",
+      "secret": "openbao-ingress-vault-acme-tls",
+      "old_names": [
+        "openbao.w386.k8s.my.lan"
+      ],
+      "new_names": [
+        "openbao.int.andreybondarenko.com"
+      ],
+      "canary": false
+    }
+  ]
+}

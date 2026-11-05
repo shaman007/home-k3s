@@ -1,0 +1,463 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress-letsencrypt
+  namespace: argocd
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - argocd.int.andreybondarenko.com
+    secretName: argocd-letsencrypt-internal-tls
+  rules:
+  - host: argocd.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bastioncam-letsencrypt
+  namespace: bastioncam
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-robots-disallow-all@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - bastioncam.int.andreybondarenko.com
+    secretName: bastioncam-letsencrypt-internal-tls
+  rules:
+  - host: bastioncam.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bastioncam
+            port:
+              name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: comfyui-letsencrypt
+  namespace: comfyui
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,comfyui-hsts@kubernetescrd
+  labels:
+    app: comfyui
+    app.kubernetes.io/name: comfyui
+    app.kubernetes.io/instance: comfyui
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  tls:
+  - hosts:
+    - comfyui.int.andreybondarenko.com
+    secretName: comfyui-letsencrypt-internal-tls
+  ingressClassName: traefik-private
+  rules:
+  - host: comfyui.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: comfyui
+            port:
+              number: 8188
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp-letsencrypt
+  namespace: headlamp
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: headlamp-local-network-only@kubernetescrd,headlamp-hsts@kubernetescrd
+  labels:
+    app: headlamp
+    app.kubernetes.io/name: headlamp
+    app.kubernetes.io/instance: headlamp
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - headlamp.int.andreybondarenko.com
+    secretName: headlamp-letsencrypt-internal-tls
+  rules:
+  - host: headlamp.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: headlamp
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-ingress-letsencrypt
+  namespace: longhorn-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - longhorn.int.andreybondarenko.com
+    secretName: longhorn-letsencrypt-internal-tls
+  rules:
+  - host: longhorn.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: longhorn-frontend
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rspamd-ingress-letsencrypt
+  namespace: mail
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - rspamd.int.andreybondarenko.com
+    secretName: rspamd-letsencrypt-internal-tls
+  rules:
+  - host: rspamd.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rspamd
+            port:
+              number: 11334
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mempalace-letsencrypt
+  namespace: mempalace
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+  labels:
+    app: mempalace
+    app.kubernetes.io/name: mempalace
+    app.kubernetes.io/instance: mempalace
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - mempalace.int.andreybondarenko.com
+    secretName: mempalace-letsencrypt-internal-tls
+  rules:
+  - host: mempalace.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mempalace
+            port:
+              number: 8765
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alerts-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - alerts.int.andreybondarenko.com
+    secretName: alerts-letsencrypt-internal-tls
+  rules:
+  - host: alerts.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: alertmanager
+            port:
+              number: 9093
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - grafana.int.andreybondarenko.com
+    secretName: grafana-letsencrypt-internal-tls
+  rules:
+  - host: grafana.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - prometheus.int.andreybondarenko.com
+    secretName: prometheus-letsencrypt-internal-tls
+  rules:
+  - host: prometheus.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thanos-compactor-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - thanos-compactor.int.andreybondarenko.com
+    secretName: thanos-compactor-letsencrypt-internal-tls
+  rules:
+  - host: thanos-compactor.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thanos-compactor
+            port:
+              number: 10902
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thanos-store-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - thanos-store.int.andreybondarenko.com
+    secretName: thanos-store-letsencrypt-internal-tls
+  rules:
+  - host: thanos-store.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thanos-store-gateway
+            port:
+              number: 10902
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: thanos-ingress-letsencrypt
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - thanos.int.andreybondarenko.com
+    secretName: thanos-letsencrypt-internal-tls
+  rules:
+  - host: thanos.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: thanos-querier
+            port:
+              number: 9090
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: office-ingress-letsencrypt
+  namespace: nextcloud
+  annotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,nextcloud-hsts@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - office.int.andreybondarenko.com
+    secretName: office-letsencrypt-internal-tls
+  rules:
+  - host: office.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: collabora-collabora-online
+            port:
+              number: 9980
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: ollama
+  name: ollama-ingress-letsencrypt
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,ollama-hsts@kubernetescrd
+  labels:
+    app: ollama
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/instance: ollama
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  tls:
+  - hosts:
+    - ollama.int.andreybondarenko.com
+    secretName: ollama-letsencrypt-internal-tls
+  ingressClassName: traefik-private
+  rules:
+  - host: ollama.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ollama
+            port:
+              number: 11434
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: open-webui-internal-letsencrypt
+  namespace: open-webui
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd,open-webui-hsts@kubernetescrd
+  labels:
+    app: open-webui
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/instance: open-webui
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  tls:
+  - hosts:
+    - chat.int.andreybondarenko.com
+    secretName: open-webui-internal-letsencrypt-internal-tls
+  ingressClassName: traefik-private
+  rules:
+  - host: chat.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: open-webui
+            port:
+              number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openbao-ingress-letsencrypt
+  namespace: openbao
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-internal-clients-only@kubernetescrd
+spec:
+  ingressClassName: traefik-private
+  tls:
+  - hosts:
+    - openbao.int.andreybondarenko.com
+    secretName: openbao-ingress-letsencrypt-internal-tls
+  rules:
+  - host: openbao.int.andreybondarenko.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: openbao
+            port:
+              number: 8200

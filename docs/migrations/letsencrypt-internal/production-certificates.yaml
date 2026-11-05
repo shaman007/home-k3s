@@ -1,0 +1,289 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-letsencrypt-internal-tls
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: argocd-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - argocd.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bastioncam-letsencrypt-internal-tls
+  namespace: bastioncam
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: bastioncam-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - bastioncam.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+  name: comfyui-letsencrypt-internal-tls
+  namespace: comfyui
+spec:
+  dnsNames:
+  - comfyui.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+  renewBefore: 720h
+  secretName: comfyui-letsencrypt-internal-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: headlamp-letsencrypt-internal-tls
+  namespace: headlamp
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: headlamp-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - headlamp.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: longhorn-letsencrypt-internal-tls
+  namespace: longhorn-system
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: longhorn-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - longhorn.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rspamd-letsencrypt-internal-tls
+  namespace: mail
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: rspamd-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - rspamd.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mempalace-letsencrypt-internal-tls
+  namespace: mempalace
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: mempalace-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - mempalace.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: alerts-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: alerts-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - alerts.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: grafana-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - grafana.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: prometheus-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - prometheus.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thanos-compactor-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: thanos-compactor-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - thanos-compactor.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thanos-store-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: thanos-store-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - thanos-store.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: thanos-letsencrypt-internal-tls
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: thanos-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - thanos.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: office-letsencrypt-internal-tls
+  namespace: nextcloud
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  secretName: office-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - office.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+  name: ollama-letsencrypt-internal-tls
+  namespace: ollama
+spec:
+  dnsNames:
+  - ollama.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+  renewBefore: 720h
+  secretName: ollama-letsencrypt-internal-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+  name: open-webui-internal-letsencrypt-internal-tls
+  namespace: open-webui
+spec:
+  dnsNames:
+  - chat.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod
+  renewBefore: 720h
+  secretName: open-webui-internal-letsencrypt-internal-tls
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-ingress-letsencrypt-internal-tls
+  namespace: openbao
+  annotations:
+    argocd.argoproj.io/sync-wave: '0'
+spec:
+  secretName: openbao-ingress-letsencrypt-internal-tls
+  renewBefore: 720h
+  dnsNames:
+  - openbao.int.andreybondarenko.com
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod

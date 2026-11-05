@@ -1,0 +1,224 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: godaddy-webhook
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: godaddy-webhook-auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: godaddy-webhook
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: godaddy-webhook-auth-reader
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+  - kind: ServiceAccount
+    name: godaddy-webhook
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-godaddy-v3
+rules:
+  - apiGroups: [acme.int.andreybondarenko.com]
+    resources: [godaddy-v3]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-godaddy-v3
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager-godaddy-v3
+subjects:
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: godaddy-webhook-selfsigned
+  namespace: {{ .Release.Namespace }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: godaddy-webhook-ca
+  namespace: {{ .Release.Namespace }}
+spec:
+  isCA: true
+  commonName: godaddy-webhook-ca
+  secretName: godaddy-webhook-ca
+  duration: 8760h
+  renewBefore: 720h
+  issuerRef:
+    name: godaddy-webhook-selfsigned
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: godaddy-webhook-ca
+  namespace: {{ .Release.Namespace }}
+spec:
+  ca:
+    secretName: godaddy-webhook-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: godaddy-webhook-serving
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: godaddy-webhook-serving
+  duration: 2160h
+  renewBefore: 360h
+  dnsNames:
+    - godaddy-webhook
+    - godaddy-webhook.{{ .Release.Namespace }}
+    - godaddy-webhook.{{ .Release.Namespace }}.svc
+  issuerRef:
+    name: godaddy-webhook-ca
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: godaddy-webhook
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app.kubernetes.io/name: godaddy-webhook
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.acme.int.andreybondarenko.com
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/godaddy-webhook-serving
+spec:
+  group: acme.int.andreybondarenko.com
+  version: v1alpha1
+  groupPriorityMinimum: 1000
+  versionPriority: 15
+  service:
+    name: godaddy-webhook
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: godaddy-webhook
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: godaddy-webhook
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: godaddy-webhook
+    spec:
+      serviceAccountName: godaddy-webhook
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: solver
+          image: "{{ .Values.image.repository }}@{{ required "image.digest must identify the built solver image" .Values.image.digest }}"
+          args:
+            - --secure-port=8443
+            - --tls-cert-file=/tls/tls.crt
+            - --tls-private-key-file=/tls/tls.key
+          ports:
+            - name: https
+              containerPort: 8443
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /readyz
+              port: https
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+            - name: token
+              mountPath: /var/run/godaddy
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tls
+          secret:
+            secretName: godaddy-webhook-serving
+        - name: token
+          secret:
+            secretName: godaddy-dns-token
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: godaddy-webhook
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: godaddy-webhook
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8443
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53

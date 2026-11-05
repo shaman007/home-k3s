@@ -1,0 +1,5 @@
+apiVersion: v2
+name: godaddy-webhook
+version: 0.1.0
+description: Restricted GoDaddy v3 DNS-01 solver for internal ingress certificates
+type: application

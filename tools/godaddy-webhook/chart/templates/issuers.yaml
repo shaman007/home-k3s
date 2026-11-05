@@ -1,0 +1,39 @@
+{{- $root := . -}}
+{{- $issuers := list (dict "name" "staging" "server" "https://acme-staging-v02.api.letsencrypt.org/directory") -}}
+{{- if .Values.productionEnabled -}}
+{{- $issuers = append $issuers (dict "name" "prod" "server" "https://acme-v02.api.letsencrypt.org/directory") -}}
+{{- end -}}
+{{- range $issuer := $issuers }}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-internal-{{ $issuer.name }}
+spec:
+  acme:
+    email: me@andreybondarenko.com
+    server: {{ $issuer.server }}
+    privateKeySecretRef:
+      name: letsencrypt-internal-{{ $issuer.name }}-account-key
+    solvers:
+      - selector:
+          dnsZones: [int.andreybondarenko.com]
+        dns01:
+          webhook:
+            groupName: acme.int.andreybondarenko.com
+            solverName: godaddy-v3
+{{- end }}
+{{- if .Values.stagingCanaryEnabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: letsencrypt-internal-staging-canary
+  namespace: {{ $root.Release.Namespace }}
+spec:
+  secretName: letsencrypt-internal-staging-canary
+  dnsNames: [acme-canary.int.andreybondarenko.com]
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-internal-staging
+{{- end }}

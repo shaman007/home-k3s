@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openbao
+  namespace: argocd
+spec:
+  project: platform
+  source:
+    repoURL: ghcr.io/openbao/charts
+    chart: openbao
+    targetRevision: 0.30.6
+    helm:
+      releaseName: openbao
+      parameters:
+      - name: global.tlsDisable
+        value: 'false'
+      - name: injector.enabled
+        value: 'false'
+      - name: server.ha.enabled
+        value: 'true'
+      - name: server.ha.raft.enabled
+        value: 'true'
+      - name: server.ha.raft.setNodeId
+        value: 'true'
+      - name: server.ha.replicas
+        value: '3'
+      values: "global:\n  tlsDisable: false\ninjector:\n  enabled: false\nserver:\n\
+        \  statefulSet:\n    securityContext:\n      container:\n        allowPrivilegeEscalation:\
+        \ false\n        capabilities:\n          drop:\n          - ALL\n  priorityClassName:\
+        \ homelab-critical\n  tolerations:\n  - key: node-role.kubernetes.io/control-plane\n\
+        \    operator: Exists\n    effect: NoSchedule\n  service:\n    annotations:\n\
+        \      traefik.ingress.kubernetes.io/service.serverstransport: openbao-openbao-server@kubernetescrd\n\
+        \  extraEnvironmentVars:\n    BAO_CACERT: /openbao/userconfig/openbao-server-tls/ca.crt\n\
+        \  extraVolumes:\n  - type: secret\n    name: openbao-server-tls\n  - type:\
+        \ secret\n    name: openbao-server-letsencrypt-tls\n  affinity: \"podAntiAffinity:\\\
+        n  requiredDuringSchedulingIgnoredDuringExecution:\\n\\\n    \\    - labelSelector:\\\
+        n        matchLabels:\\n          app.kubernetes.io/instance:\\\n    \\ openbao\\\
+        n          app.kubernetes.io/name: openbao\\n          component: server\\\
+        n\\\n    \\      topologyKey: kubernetes.io/hostname\\n\"\n  configAnnotation:\
+        \ true\n  dataStorage:\n    enabled: true\n    size: 10Gi\n    storageClass:\
+        \ longhorn\n    labels:\n      recurring-job.longhorn.io/source: enabled\n\
+        \      recurring-job.longhorn.io/backup-daily-retain31-c: enabled\n      recurring-job.longhorn.io/trim-daily-c:\
+        \ enabled\n  persistentVolumeClaimRetentionPolicy:\n    whenDeleted: Retain\n\
+        \    whenScaled: Retain\n  ha:\n    enabled: true\n    replicas: 3\n    apiAddr:\
+        \ https://openbao-active.openbao.svc:8200\n    clusterAddr: https://$(HOSTNAME).openbao-internal:8201\n\
+        \    raft:\n      enabled: true\n      setNodeId: true\n      config: \"ui\
+        \ = true\\n\\nlistener \\\"tcp\\\" {\\n  tls_disable = 0\\n  address = \\\"\
+        \\\n        [::]:8200\\\"\\n  cluster_address = \\\"[::]:8201\\\"\\n  tls_cert_file\
+        \ = \\\"/openbao/userconfig/openbao-server-tls/tls.crt\\\"\\\n        \\n\
+        \  tls_key_file = \\\"/openbao/userconfig/openbao-server-tls/tls.key\\\"\\\
+        n  telemetry\\\n        \\ {\\n    unauthenticated_metrics_access = \\\"true\\\
+        \"\\n  }\\n}\\n\\nlistener \\\"\\\n        tcp\\\" {\\n  tls_disable = 0\\\
+        n  address = \\\"[::]:8202\\\"\\n  cluster_address =\\\n        \\ \\\"[::]:8203\\\
+        \"\\n  tls_cert_file = \\\"/openbao/userconfig/openbao-server-letsencrypt-tls/tls.crt\\\
+        \"\\\n        \\n  tls_key_file = \\\"/openbao/userconfig/openbao-server-letsencrypt-tls/tls.key\\\
+        \"\\\n        \\n  tls_auto_reload = true\\n  tls_auto_reload_interval = \\\
+        \"30s\\\"\\n  telemetry\\\n        \\ {\\n    unauthenticated_metrics_access\
+        \ = \\\"true\\\"\\n  }\\n}\\n\\nstorage \\\"raft\\\"\\\n        \\ {\\n  path\
+        \ = \\\"/openbao/data\\\"\\n  retry_join {\\n    leader_api_addr = \\\"\\\n\
+        \        https://openbao-active.openbao.svc:8200\\\"\\n    leader_ca_cert_file\
+        \ = \\\"/openbao/userconfig/openbao-server-tls/ca.crt\\\"\\\n        \\n \
+        \   leader_tls_servername = \\\"openbao.openbao.svc\\\"\\n  }\\n}\\n\\nservice_registration\\\
+        \n        \\ \\\"kubernetes\\\" {}\\n\\ntelemetry {\\n  prometheus_retention_time\
+        \ = \\\"2m\\\"\\n\\\n        \\  disable_hostname = true\\n}\\n\"\nsnapshotAgent:\n\
+        \  enabled: false\n"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openbao
+  syncPolicy:
+    automated:
+      selfHeal: true
