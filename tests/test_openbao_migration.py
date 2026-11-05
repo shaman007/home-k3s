@@ -66,6 +66,16 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertNotIn("rootCAs", transport)
         self.assertTrue(load_yaml("openbao/cron-job-vault-pki-renewer.yaml")["spec"]["suspend"])
 
+    def test_ingress_bridge_uses_public_sni_transport(self):
+        bridge = load_yaml("openbao/service-openbao-public-tls.yaml")
+        self.assertEqual("openbao-openbao-server@kubernetescrd", bridge["metadata"]["annotations"]["traefik.ingress.kubernetes.io/service.serverstransport"])
+        self.assertEqual("https", bridge["metadata"]["annotations"]["traefik.ingress.kubernetes.io/service.serversscheme"])
+        self.assertEqual("true", bridge["spec"]["selector"]["openbao-active"])
+        self.assertEqual(8202, bridge["spec"]["ports"][0]["targetPort"])
+        for filename in ("openbao/ingress-openbao-ingress.yaml", "openbao/ingress-openbao-ingress-letsencrypt.yaml"):
+            ingress = load_yaml(filename)
+            self.assertEqual("openbao-public-tls", ingress["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"])
+
     def test_openbao_tls_data_is_runtime_managed(self):
         application = load_yaml("argocd/application-openbao-custom.yaml")
         ignored = application["spec"]["ignoreDifferences"]
@@ -82,28 +92,20 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertEqual({}, secret["data"])
         self.assertEqual("Opaque", secret["type"])
 
-    def test_cutover_pki_configuration_targets_openbao(self):
+    def test_retired_backend_issuer_cannot_be_recreated_by_bootstrap(self):
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(encoding="utf-8")
-        policy = (ROOT / "vault/policy-vault-pki-renewer.hcl").read_text(
-            encoding="utf-8"
-        )
-        renewer = (ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("pki-root/roles/openbao-server", script)
-        self.assertIn('path "pki-root/issue/openbao-server"', policy)
-        self.assertIn('"openbao" "openbao-server-tls"', renewer)
-        self.assertIn("reload_openbao_tls", renewer)
-        self.assertIn('kill -HUP "$pid"', renewer)
-        self.assertIn(
-            "path=https://openbao.w386.k8s.my.lan/v1/pki-int",
-            script,
-        )
-        self.assertNotIn(
-            "path=https://vault.w386.k8s.my.lan/v1/pki-int",
-            script,
-        )
+        policy = (ROOT / "vault/policy-vault-pki-renewer.hcl").read_text(encoding="utf-8")
+        renewer = load_yaml("openbao/cron-job-vault-pki-renewer.yaml")
+        self.assertNotIn("vault write pki-root/roles/openbao-server", script)
+        self.assertNotIn('path "pki-root/issue/openbao-server"', policy)
+        self.assertTrue(renewer["spec"]["suspend"])
+        pod = renewer["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        self.assertFalse(pod["automountServiceAccountToken"])
+        self.assertNotIn("volumes", pod)
+        self.assertNotIn("env", pod["containers"][0])
+        self.assertEqual([], load_yaml("openbao/role-vault-pki-renewer.yaml")["rules"])
+        self.assertFalse(load_yaml("openbao/service-account-vault-pki-renewer.yaml")["automountServiceAccountToken"])
+        self.assertIn("path=https://openbao.w386.k8s.my.lan/v1/pki-int", script)
 
     def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
         for path in (

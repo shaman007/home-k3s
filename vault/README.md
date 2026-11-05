@@ -1,45 +1,29 @@
 # Vault (retired rollback source)
 
-The Vault Helm application and public runtime resources are removed. Its two
-PVCs remain retained as a rollback source; OpenBao is the production endpoint.
+The Vault Helm application and public runtime resources are removed. Its two PVCs remain retained as a rollback source; OpenBao is the production endpoint.
 
-## Metrics
+## OpenBao backend TLS
 
-OpenBao metrics are exposed at `/v1/sys/metrics?format=prometheus`. Prometheus
-scrapes `openbao-active.openbao.svc.cluster.local:8200` via
-[`metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml`](../metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml).
+OpenBao uses the cert-manager Certificate `openbao/openbao-server-letsencrypt-tls` and the backend name `openbao-api.int.andreybondarenko.com`. External Secrets, Traefik, and Prometheus validate it with system trust. CoreDNS resolves the backend name to the leader-selected bridge Service.
 
-## Dashboard
+Both API listeners automatically reload the projected certificate every 30 seconds. A production renewal to revision 2 was verified on all three servers without pod restarts on 2026-11-05. Raft retains its intrinsic transport security on port 8201.
 
-Grafana provisions a Vault overview dashboard from [`metrics/grafana/config-map-grafana-dashboard-vault-overview.yaml`](../metrics/grafana/config-map-grafana-dashboard-vault-overview.yaml).
+The old backend leaf certificate was revoked, its private key was removed from `openbao-server-tls`, and the dedicated `pki-root/roles/openbao-server`, Kubernetes auth role `vault-pki-renewer`, and matching ACL policy were deleted. The empty Secret and suspended renewer are retained as GitOps tombstones. The renewer source has no credentials, token mounts, or RBAC permissions; its ServiceAccount disables token automount.
 
-## PKI Renewal
+Do not recreate the retired backend issuance role or restore the old private key. Recovery requires the verified unseal material; the old shell `VAULT_UNSEAL` value was rejected during this migration.
 
-The compatibility-named [`cron-job-vault-pki-renewer.yaml`](../openbao/cron-job-vault-pki-renewer.yaml)
-runs in the `openbao` namespace and authenticates to OpenBao through the
-`vault-pki-renewer` Kubernetes auth role. Its policy permits only the dedicated
-OpenBao server-certificate issuance role.
+## Metrics and dashboard
 
-All renewal targets must be created before the job runs. The renewer has no Secret `create` or `list` permission: namespace Roles restrict it to `get`, `update`, and `patch` on these fixed names:
+Prometheus scrapes `openbao-api.int.andreybondarenko.com:8200/v1/sys/metrics?format=prometheus` using public TLS. See [the scrape configuration](../metrics/kubernetes-prometheus/config-map-prometheus-server-conf.yaml). Grafana retains the [Vault overview dashboard](../metrics/grafana/config-map-grafana-dashboard-vault-overview.yaml).
 
-- `vault/vault-server-tls`
+## Legacy ingress PKI
 
-## PKI ACME
+The shared `pki-root` and `pki-int` mounts remain because legacy ingress certificates still depend on them. The compatibility-named ClusterIssuer `vault-acme` uses the restricted OpenBao ACME directory and the `w386-lab-intermediate` issuer. Retiring the backend credential does not revoke that issuer or its other leaf certificates.
 
-Internal ingress certificates use cert-manager with OpenBao's role-specific
-ACME directory backed by the restored `w386-lab-intermediate` issuer. The
-ClusterIssuer retains the compatibility name `vault-acme` but its server URL
-points to `openbao.w386.k8s.my.lan`.
+New internal ingress domains use Let’s Encrypt. Remove the legacy PKI only after the remaining old routes and certificate consumers have been retired. See [the production migration record](../docs/migrations/letsencrypt-internal/PRODUCTION.md).
 
-See [`docs/vault-acme-migration.md`](../docs/vault-acme-migration.md) for the
-security restrictions, network paths, validation sequence, and completed
-removal of the wildcard-copy targets.
+## External Secrets authentication
 
-## External Secrets Authentication
+All 34 live SecretStores use `https://openbao-api.int.andreybondarenko.com:8200` without a private CA pin. Existing application ServiceAccount, role, and policy names remain unchanged. All 49 ExternalSecrets completed a forced refresh after the cutover.
 
-OpenBao-backed SecretStores retain the `vault-auth` ServiceAccount and role
-names, but connect to `https://openbao.openbao.svc:8200`. The restored roles
-issue 15-minute tokens with 30-minute maximum TTLs and attach the application
-policy plus the minimal `external-secrets-token` lookup-self policy.
-
-The legacy token rotator is suspended, has no RBAC permissions, and does not reference its former bootstrap token. Its stub resources remain temporarily so Argo CD can reconcile the previous objects without relying on pruning.
+The legacy Vault token rotator remains suspended with empty RBAC and no bootstrap token reference.

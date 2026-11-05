@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   suspend: true
-  schedule: "27 4 * * *"
+  schedule: 27 4 * * *
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
@@ -23,228 +23,17 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           containers:
-            - name: renew
-              image: harbor.andreybondarenko.com/library/sync:2026-11-02-095223
-              imagePullPolicy: IfNotPresent
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop: ["ALL"]
-              env:
-                - name: VAULT_ADDR
-                  value: "https://openbao-active.openbao.svc:8200"
-                - name: VAULT_CACERT
-                  value: /openbao/tls/ca.crt
-                - name: VAULT_ROLE
-                  value: vault-pki-renewer
-                - name: CERT_TTL
-                  value: "720h"
-                - name: RENEW_BEFORE_SECONDS
-                  value: "604800"
-              volumeMounts:
-                - name: vault-ca
-                  mountPath: /openbao/tls
-                  readOnly: true
-                - name: vault-jwt
-                  mountPath: /var/run/secrets/vault
-                  readOnly: true
-              args:
-                - |
-                  set -euo pipefail
-
-                  vault_post() {
-                    path="$1"
-                    payload="$2"
-                    host="openbao-active.openbao.svc"
-                    port="8200"
-                    payload_length="${#payload}"
-
-                    response="$(
-                      {
-                        printf 'POST /v1/%s HTTP/1.0\r\n' "$path"
-                        printf 'Host: %s\r\n' "$host"
-                        if [ -n "${VAULT_TOKEN:-}" ]; then
-                          printf 'X-Vault-Token: %s\r\n' "$VAULT_TOKEN"
-                        fi
-                        printf 'Content-Type: application/json\r\n'
-                        printf 'Content-Length: %s\r\n' "$payload_length"
-                        printf 'Connection: close\r\n\r\n'
-                        printf '%s' "$payload"
-                      } | openssl s_client \
-                        -quiet \
-                        -connect "${host}:${port}" \
-                        -servername "$host" \
-                        -CAfile "$VAULT_CACERT" \
-                        2>/dev/null
-                    )"
-
-                    status_line="${response%%$'\r\n'*}"
-                    body="${response#*$'\r\n\r\n'}"
-                    case "$status_line" in
-                      *" 200 "*|*" 204 "*) ;;
-                      *)
-                        echo "Vault request failed: ${status_line}" >&2
-                        echo "$body" >&2
-                        return 1
-                        ;;
-                    esac
-
-                    printf '%s' "$body"
-                  }
-
-                  jwt="$(cat /var/run/secrets/vault/token)"
-                  login_payload="$(jq -cn --arg role "$VAULT_ROLE" --arg jwt "$jwt" '{role: $role, jwt: $jwt}')"
-                  VAULT_TOKEN=""
-                  login_response="$(vault_post "auth/kubernetes/login" "$login_payload")"
-                  VAULT_TOKEN="$(printf '%s' "$login_response" | jq -er '.auth.client_token')"
-
-                  issue_cert() {
-                    role="$1"
-                    common_name="$2"
-                    cert_path="$3"
-                    key_path="$4"
-                    alt_names="${5:-}"
-                    ca_path="${6:-}"
-
-                    payload="$(jq -cn \
-                      --arg cn "$common_name" \
-                      --arg ttl "$CERT_TTL" \
-                      --arg alt_names "$alt_names" \
-                      '{common_name: $cn, ttl: $ttl}
-                        + if $alt_names == "" then {} else {alt_names: $alt_names} end')"
-                    response="$(vault_post "pki-root/issue/${role}" "$payload")"
-
-                    printf '%s\n%s\n' \
-                      "$(printf '%s' "$response" | jq -r '.data.certificate')" \
-                      "$(printf '%s' "$response" | jq -r '.data.issuing_ca')" > "$cert_path"
-                    printf '%s\n' "$(printf '%s' "$response" | jq -r '.data.private_key')" > "$key_path"
-                    if [ -n "$ca_path" ]; then
-                      printf '%s\n' "$(printf '%s' "$response" | jq -r '.data.issuing_ca')" > "$ca_path"
-                    fi
-                  }
-
-                  secret_needs_renewal() {
-                    namespace="$1"
-                    name="$2"
-                    current_cert="/tmp/current-${namespace}-${name}.crt"
-
-                    if ! kubectl get secret "$name" -n "$namespace" >/dev/null 2>&1; then
-                      echo "Required TLS Secret ${namespace}/${name} is missing" >&2
-                      exit 1
-                    fi
-
-                    crt_b64="$(kubectl get secret "$name" -n "$namespace" -o jsonpath='{.data.tls\.crt}')"
-                    if [ -z "$crt_b64" ]; then
-                      return 0
-                    fi
-
-                    printf '%s' "$crt_b64" | base64 -d > "$current_cert"
-                    if openssl x509 -in "$current_cert" -noout -checkend "$RENEW_BEFORE_SECONDS" >/dev/null 2>&1; then
-                      return 1
-                    fi
-
-                    return 0
-                  }
-
-                  patch_secret() {
-                    namespace="$1"
-                    name="$2"
-                    cert_path="$3"
-                    key_path="$4"
-                    ca_path="${5:-}"
-
-                    cert_b64="$(base64 < "$cert_path" | tr -d '\n')"
-                    key_b64="$(base64 < "$key_path" | tr -d '\n')"
-                    ca_b64=""
-                    if [ -n "$ca_path" ]; then
-                      ca_b64="$(base64 < "$ca_path" | tr -d '\n')"
-                    fi
-
-                    patch="$(jq -cn \
-                      --arg cert "$cert_b64" \
-                      --arg key "$key_b64" \
-                      --arg ca "$ca_b64" \
-                      '{data: ({"tls.crt": $cert, "tls.key": $key}
-                        + if $ca == "" then {} else {"ca.crt": $ca} end)}')"
-                    kubectl patch secret "$name" -n "$namespace" --type merge --patch "$patch" >/dev/null
-                  }
-
-                  reload_openbao_tls() {
-                    expected_fingerprint="$(
-                      openssl x509 -in /tmp/openbao-server.crt -noout -fingerprint -sha256
-                    )"
-                    pods="$(
-                      kubectl get pods -n openbao \
-                        -l 'app.kubernetes.io/instance=openbao,app.kubernetes.io/name=openbao,component=server' \
-                        -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
-                    )"
-
-                    for pod in $pods; do
-                      attempt=0
-                      while :; do
-                        mounted_fingerprint="$(
-                          kubectl exec -n openbao "$pod" -- \
-                            cat /openbao/userconfig/openbao-server-tls/tls.crt 2>/dev/null |
-                            openssl x509 -noout -fingerprint -sha256 2>/dev/null || true
-                        )"
-                        if [ "$mounted_fingerprint" = "$expected_fingerprint" ]; then
-                          break
-                        fi
-                        attempt=$((attempt + 1))
-                        if [ "$attempt" -ge 36 ]; then
-                          echo "Timed out waiting for renewed TLS certificate in $pod" >&2
-                          return 1
-                        fi
-                        sleep 5
-                      done
-
-                      kubectl exec -n openbao "$pod" -- sh -ec '
-                        for comm in /proc/[0-9]*/comm; do
-                          if [ "$(cat "$comm")" = bao ]; then
-                            pid=${comm#/proc/}
-                            pid=${pid%/comm}
-                            kill -HUP "$pid"
-                            exit 0
-                          fi
-                        done
-                        echo "OpenBao process not found" >&2
-                        exit 1
-                      '
-                      echo "Reloaded renewed TLS certificate in $pod"
-                    done
-                  }
-
-                  if secret_needs_renewal "openbao" "openbao-server-tls"; then
-                    openbao_server_alt_names="openbao,openbao.openbao,openbao.openbao.svc.cluster.local,openbao-active,openbao-active.openbao,openbao-active.openbao.svc,openbao-active.openbao.svc.cluster.local,*.openbao-internal,*.openbao-internal.openbao,*.openbao-internal.openbao.svc,*.openbao-internal.openbao.svc.cluster.local"
-                    issue_cert \
-                      "openbao-server" \
-                      "openbao.openbao.svc" \
-                      /tmp/openbao-server.crt \
-                      /tmp/openbao-server.key \
-                      "$openbao_server_alt_names" \
-                      /tmp/openbao-server-ca.crt
-                    patch_secret \
-                      "openbao" \
-                      "openbao-server-tls" \
-                      /tmp/openbao-server.crt \
-                      /tmp/openbao-server.key \
-                      /tmp/openbao-server-ca.crt
-                    reload_openbao_tls
-                    echo "Rotated OpenBao API and Raft TLS secret"
-                  else
-                    echo "OpenBao API and Raft TLS secret still valid beyond renewal window"
-                  fi
-          volumes:
-            - name: vault-ca
-              secret:
-                secretName: openbao-server-tls
-                items:
-                  - key: ca.crt
-                    path: ca.crt
-            - name: vault-jwt
-              projected:
-                sources:
-                  - serviceAccountToken:
-                      path: token
-                      audience: vault
-                      expirationSeconds: 3600
+          - name: renew
+            image: harbor.andreybondarenko.com/library/sync:2026-11-02-095223
+            imagePullPolicy: IfNotPresent
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            command:
+            - /bin/sh
+            - -ec
+            - "echo \"Retired: OpenBao backend TLS is managed by cert-manager and\
+              \ Let\u2019s Encrypt.\""
+          automountServiceAccountToken: false

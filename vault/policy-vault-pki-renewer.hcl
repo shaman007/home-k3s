@@ -1,3 +1,1 @@
-path "pki-root/issue/openbao-server" {
-  capabilities = ["update"]
-}
+# Retired: no private backend certificate issuance permissions remain.

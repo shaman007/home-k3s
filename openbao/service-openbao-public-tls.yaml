@@ -4,6 +4,9 @@ kind: Service
 metadata:
   name: openbao-public-tls
   namespace: openbao
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: openbao-openbao-server@kubernetescrd
+    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   selector:
     app.kubernetes.io/instance: openbao

@@ -6,14 +6,5 @@ metadata:
   namespace: openbao
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
-rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames: ["openbao-server-tls"]
-    verbs: ["get", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "list"]
-  - apiGroups: [""]
-    resources: ["pods/exec"]
-    verbs: ["create"]
+# Retired backend issuer: retained as an empty GitOps tombstone.
+rules: []
