@@ -67,7 +67,7 @@ class IdentityRegistryConfigSnapshotsTest(unittest.TestCase):
             client for client in snapshot["clients"] if client["clientId"] == "openbao"
         )
         self.assertIn(
-            "https://openbao.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+            "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
             openbao["redirectUris"],
         )
         self.assertNotIn("password", snapshot["realm"].get("smtpServer", {}))

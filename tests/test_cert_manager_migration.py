@@ -205,8 +205,8 @@ class CertManagerMigrationTest(unittest.TestCase):
     }
 
     INTERNAL_TLS_INGRESSES = (
-        "comfyui/ingress-comfyui.yaml",
-        "ollama/ingress-ollama-ingress.yaml",
+        "comfyui/ingress-comfyui-letsencrypt.yaml",
+        "ollama/ingress-ollama-ingress-letsencrypt.yaml",
     )
 
     def test_year_uses_the_production_certificate(self):
@@ -293,7 +293,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                     {"secretName": secret_name},
                 )
 
-    def test_internal_tls_routes_do_not_request_public_certificates(self):
+    def test_internal_tls_routes_use_public_names_without_native_resolvers(self):
         resolver_annotation = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver"
         )
@@ -306,7 +306,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                     ingress["metadata"].get("annotations", {}),
                 )
                 hosts = [rule["host"] for rule in ingress["spec"]["rules"]]
-                self.assertTrue(all(host.endswith(".k8s.my.lan") for host in hosts))
+                self.assertTrue(all(host.endswith(".int.andreybondarenko.com") for host in hosts))
 
     def test_native_acme_route_references_are_removed(self):
         resolver_markers = (

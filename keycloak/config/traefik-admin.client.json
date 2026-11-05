@@ -11,12 +11,6 @@
   "serviceAccountsEnabled": false,
   "fullScopeAllowed": true,
   "redirectUris": [
-    "https://prometheus.w386.k8s.my.lan/oidc/callback",
-    "https://alerts.w386.k8s.my.lan/oidc/callback",
-    "https://longhorn.w386.k8s.my.lan/oidc/callback",
-    "https://thanos.w386.k8s.my.lan/oidc/callback",
-    "https://thanos-compactor.w386.k8s.my.lan/oidc/callback",
-    "https://thanos-store.w386.k8s.my.lan/oidc/callback",
     "https://prometheus.int.andreybondarenko.com/oidc/callback",
     "https://alerts.int.andreybondarenko.com/oidc/callback",
     "https://longhorn.int.andreybondarenko.com/oidc/callback",

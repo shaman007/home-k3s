@@ -29,7 +29,10 @@ def main():
     except ValueError:
         pass
     command.extend(['--glob', '!**/bench/results/**', PATTERN, str(args.root.resolve())])
-    result = subprocess.run(command, capture_output=True, text=True)
+    try:
+        result = subprocess.run(command, capture_output=True, text=True)
+    except FileNotFoundError:
+        raise SystemExit("Hostname inventory requires ripgrep (rg); install it before scanning") from None
     if result.returncode not in (0, 1):
         raise SystemExit('Scan failed; source/error bodies suppressed')
     entries=[]

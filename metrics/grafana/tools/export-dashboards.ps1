@@ -1,5 +1,5 @@
 ﻿param(
-  [string]$GrafanaUrl = "https://grafana.w386.k8s.my.lan",
+  [string]$GrafanaUrl = "https://grafana.int.andreybondarenko.com",
   [string]$GrafanaToken = $env:GRAFANA_TOKEN,
   [switch]$InsecureTls = $true,
   [string]$OutputDir = "metrics/grafana/dashboards/live",

@@ -6,8 +6,9 @@ import urllib.request
 ROOT=Path(__file__).resolve().parents[2]
 SSO='https://sso.andreybondarenko.com'
 BAO='https://openbao.int.andreybondarenko.com'
-ACTIVE={'argocd','grafana','headlamp','openbao','traefik-admin'}
-LEGACY={'graphana','vault'}
+# Grafana's persisted SSO configuration uses graphana; retain that live identity.
+ACTIVE={'argocd','grafana','graphana','headlamp','openbao','traefik-admin'}
+LEGACY={'vault'}
 
 def request(url,headers,method='GET',body=None):
  data=None if body is None else json.dumps(body).encode()
@@ -60,6 +61,10 @@ def main():
    actual=request(url,headers)
    for k,v in payload.items():
     matches=set(actual.get(k,[]))==set(v) if isinstance(v,list) else actual.get(k)==v
+    if k=='attributes':
+     # Keycloak drops empty attribute values when serializing a client.
+     normalize=lambda d:{name:value for name,value in d.items() if value not in ('',None)}
+     matches=normalize(actual.get(k,{}))==normalize(v)
     if not matches:raise RuntimeError('Client URL verification failed for '+cid+'/'+k)
   print(cid+': '+('updated ' if args.write else 'planned ')+', '.join(payload))
  root=(Path.home()/'.codex/skills/vault-operator/root-token.txt').read_text().splitlines()[0]

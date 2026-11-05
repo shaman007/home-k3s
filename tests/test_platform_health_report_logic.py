@@ -125,7 +125,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
                     connect.assert_called_once_with((destination, 443), timeout=10)
 
     def test_internal_public_domain_uses_public_trust(self):
-        for host in ("grafana.int.andreybondarenko.com", "cloud.andreybondarenko.com"):
+        for host in ("grafana.int.andreybondarenko.com", "cloud.andreybondarenko.com", "legacy.k8s.my.lan"):
             with self.subTest(host=host), patch("ssl.create_default_context") as verified, patch(
                 "ssl._create_unverified_context"
             ) as unverified, patch("socket.create_connection", side_effect=RuntimeError("intercepted")):

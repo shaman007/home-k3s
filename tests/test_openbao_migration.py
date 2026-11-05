@@ -72,7 +72,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertEqual("https", bridge["metadata"]["annotations"]["traefik.ingress.kubernetes.io/service.serversscheme"])
         self.assertEqual("true", bridge["spec"]["selector"]["openbao-active"])
         self.assertEqual(8202, bridge["spec"]["ports"][0]["targetPort"])
-        for filename in ("openbao/ingress-openbao-ingress.yaml", "openbao/ingress-openbao-ingress-letsencrypt.yaml"):
+        for filename in ("openbao/ingress-openbao-ingress-letsencrypt.yaml",):
             ingress = load_yaml(filename)
             self.assertEqual("openbao-public-tls", ingress["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"])
 
@@ -105,7 +105,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertNotIn("env", pod["containers"][0])
         self.assertEqual([], load_yaml("openbao/role-vault-pki-renewer.yaml")["rules"])
         self.assertFalse(load_yaml("openbao/service-account-vault-pki-renewer.yaml")["automountServiceAccountToken"])
-        self.assertIn("path=https://openbao.w386.k8s.my.lan/v1/pki-int", script)
+        self.assertNotIn("vault write", script)
 
     def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
         for path in (
@@ -122,9 +122,9 @@ class OpenBaoMigrationTest(unittest.TestCase):
                 )
 
         certificate = load_yaml(
-            "openbao/certificate-openbao-ingress-vault-acme-tls.yaml"
+            "openbao/certificate-openbao-ingress-letsencrypt-internal-tls.yaml"
         )
-        ingress = load_yaml("openbao/ingress-openbao-ingress.yaml")
+        ingress = load_yaml("openbao/ingress-openbao-ingress-letsencrypt.yaml")
         self.assertEqual(
             "0",
             certificate["metadata"]["annotations"][

@@ -1,0 +1,25 @@
+{
+  "keycloak_clients": [],
+  "openbao_oidc": {
+    "client_id": "openbao",
+    "default_role": "keycloak",
+    "roles": [
+      {
+        "role": "keycloak",
+        "current_allowed_redirect_uris": [
+          "https://openbao.int.andreybondarenko.com/oidc/oidc/callback",
+          "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
+          "http://127.0.0.1:8250/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ],
+        "proposed_allowed_redirect_uris": [
+          "https://openbao.int.andreybondarenko.com/oidc/oidc/callback",
+          "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
+          "http://127.0.0.1:8250/oidc/callback",
+          "http://localhost:8250/oidc/callback"
+        ]
+      }
+    ]
+  },
+  "cutover_rule": "Add exact new redirects/origins while retaining old callbacks; switch base/root/admin URLs only after new DNS, certificates and routes work; remove legacy callbacks after login/logout verification."
+}

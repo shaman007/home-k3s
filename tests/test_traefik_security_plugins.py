@@ -35,16 +35,15 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
         self.assertFalse(client['serviceAccountsEnabled'])
         self.assertEqual('S256', client['attributes']['pkce.code.challenge.method'])
         callbacks = set()
-        paths = ['metrics/ingress-prometheus-ingress.yaml', 'metrics/ingress-alerts-ingress.yaml',
-                 'longhorn/ingress-longhorn-ingress.yaml', 'metrics/ingress-thanos.yaml',
-                 'metrics/ingress-thanos-compactor.yaml', 'metrics/ingress-thanos-store.yaml']
+        paths = ['metrics/ingress-prometheus-ingress-letsencrypt.yaml', 'metrics/ingress-alerts-ingress-letsencrypt.yaml',
+                 'longhorn/ingress-longhorn-ingress-letsencrypt.yaml', 'metrics/ingress-thanos-ingress-letsencrypt.yaml',
+                 'metrics/ingress-thanos-compactor-ingress-letsencrypt.yaml', 'metrics/ingress-thanos-store-ingress-letsencrypt.yaml']
         for path in paths:
             ingress = next(d for d in documents(path) if d['kind'] == 'Ingress')
             self.assertEqual('traefik-private', ingress['spec']['ingressClassName'])
             chain = ingress['metadata']['annotations']['traefik.ingress.kubernetes.io/router.middlewares']
             self.assertEqual('traefik-internal-clients-only@kubernetescrd,traefik-admin-oidc@kubernetescrd', chain)
             callbacks.update('https://' + r['host'] + '/oidc/callback' for r in ingress['spec']['rules'])
-        callbacks.update(uri.replace(".w386.k8s.my.lan", ".int.andreybondarenko.com") for uri in list(callbacks))
         self.assertEqual(callbacks, set(client['redirectUris']))
         self.assertTrue(all('*' not in uri for uri in callbacks))
 

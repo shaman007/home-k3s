@@ -1,0 +1,31 @@
+{
+  "scan_root": "/home/shaman007/git",
+  "active_old_ingress_references_in_home_k3s": 0,
+  "preserved_categories": [
+    "Kubernetes API and node/service discovery names",
+    "metadata annotation namespaces",
+    "historical migration artifacts and test fixtures",
+    "deprecated application sources",
+    "disabled legacy UniFi records pending controlled application"
+  ],
+  "external_updates": [
+    "Installed Bastioncam collector unit and tracked unit",
+    "Installed Noctalia k8s-health and markets plugin URLs",
+    "Codex MemPalace endpoint",
+    "OpenBao and Grafana operator endpoint defaults",
+    "Earlier DNS-as-code, dotfiles and Bastioncam source updates"
+  ],
+  "dns_plan": {
+    "adds": 0,
+    "changes": 17,
+    "destroys": 0,
+    "applied": false
+  },
+  "sso": {
+    "old_domain_clients": 0,
+    "openbao_old_callbacks": 0,
+    "active_grafana_client_preserved": "graphana",
+    "retired_vault_client_enabled": false
+  },
+  "remaining_gate": "Push source removal, reconcile affected applications, remove any non-pruned legacy resources, then disable private ingress ACME and delete only its dedicated role. Preserve orangepi-monitoring and shared PKI."
+}

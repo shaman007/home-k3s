@@ -365,9 +365,8 @@ data:
         else:
             connect_host = env("TRAEFIK_HTTPS_HOST", "traefik.traefik.svc.cluster.local")
         connect_port = env_num("TRAEFIK_HTTPS_PORT", 443, int)
-        # Retain the private-CA probe only for legacy names during the migration.
-        # Public-domain names, including internal services, must pass chain and SNI checks.
-        ctx = ssl._create_unverified_context() if host.endswith(".k8s.my.lan") else ssl.create_default_context()
+        # Every ingress certificate must pass system trust and hostname verification.
+        ctx = ssl.create_default_context()
         with socket.create_connection((connect_host, connect_port), timeout=10) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as tls:
                 der_cert = tls.getpeercert(binary_form=True)

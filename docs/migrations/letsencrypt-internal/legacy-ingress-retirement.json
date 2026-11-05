@@ -1,0 +1,239 @@
+{
+  "resources": [
+    {
+      "kind": "Ingress",
+      "namespace": "argocd",
+      "name": "argocd-ingress",
+      "source": "argocd-deploy/ingress-argocd-ingress.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "argocd",
+      "name": "argocd-vault-acme-tls",
+      "source": "argocd-deploy/certificate-argocd-vault-acme-tls.yaml",
+      "secret": "argocd-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "comfyui",
+      "name": "comfyui",
+      "source": "comfyui/ingress-comfyui.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "comfyui",
+      "name": "comfyui-vault-acme-tls",
+      "source": "comfyui/certificate-comfyui-vault-acme-tls.yaml",
+      "secret": "comfyui-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "headlamp",
+      "name": "headlamp",
+      "source": "headlamp/ingress-headlamp.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "headlamp",
+      "name": "headlamp-vault-acme-tls",
+      "source": "headlamp/certificate-headlamp-vault-acme-tls.yaml",
+      "secret": "headlamp-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "longhorn-system",
+      "name": "longhorn-ingress",
+      "source": "longhorn/ingress-longhorn-ingress.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "longhorn-system",
+      "name": "longhorn-vault-acme-tls",
+      "source": "longhorn/ingress-certificate-longhorn-vault-acme-tls.yaml",
+      "secret": "longhorn-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "mail",
+      "name": "rspamd-ingress",
+      "source": "mail/ingress-rspamd-ingress.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "mail",
+      "name": "rspamd-vault-acme-tls",
+      "source": "mail/certificate-rspamd-vault-acme-tls.yaml",
+      "secret": "rspamd-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "mempalace",
+      "name": "mempalace",
+      "source": "mempalace/ingress-mempalace.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "mempalace",
+      "name": "mempalace-vault-acme-tls",
+      "source": "mempalace/certificate-mempalace-vault-acme-tls.yaml",
+      "secret": "mempalace-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "monitoring",
+      "name": "alerts-ingress",
+      "source": "metrics/ingress-alerts-ingress.yaml"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "monitoring",
+      "name": "grafana-ingress",
+      "source": "metrics/ingress-grafana-ingress.yaml"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "monitoring",
+      "name": "prometheus-ingress",
+      "source": "metrics/ingress-prometheus-ingress.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "monitoring",
+      "name": "alerts-vault-acme-tls",
+      "source": "metrics/ingress-certificate-alerts-vault-acme-tls.yaml",
+      "secret": "alerts-vault-acme-tls"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "monitoring",
+      "name": "grafana-vault-acme-tls",
+      "source": "metrics/ingress-certificate-grafana-vault-acme-tls.yaml",
+      "secret": "grafana-vault-acme-tls"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "monitoring",
+      "name": "prometheus-vault-acme-tls",
+      "source": "metrics/ingress-certificate-prometheus-vault-acme-tls.yaml",
+      "secret": "prometheus-vault-acme-tls"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "monitoring",
+      "name": "thanos-vault-acme-tls",
+      "source": "metrics/ingress-thanos.yaml",
+      "secret": "thanos-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "monitoring",
+      "name": "thanos-ingress",
+      "source": "metrics/ingress-thanos.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "monitoring",
+      "name": "thanos-compactor-vault-acme-tls",
+      "source": "metrics/ingress-thanos-compactor.yaml",
+      "secret": "thanos-compactor-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "monitoring",
+      "name": "thanos-compactor-ingress",
+      "source": "metrics/ingress-thanos-compactor.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "monitoring",
+      "name": "thanos-store-vault-acme-tls",
+      "source": "metrics/ingress-thanos-store.yaml",
+      "secret": "thanos-store-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "monitoring",
+      "name": "thanos-store-ingress",
+      "source": "metrics/ingress-thanos-store.yaml"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "nextcloud",
+      "name": "office-ingress",
+      "source": "nextcloud/ingress-office-ingress.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "nextcloud",
+      "name": "office-vault-acme-tls",
+      "source": "nextcloud/certificate-office-vault-acme-tls.yaml",
+      "secret": "office-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "ollama",
+      "name": "ollama-ingress",
+      "source": "ollama/ingress-ollama-ingress.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "ollama",
+      "name": "ollama-vault-acme-tls",
+      "source": "ollama/certificate-ollama-vault-acme-tls.yaml",
+      "secret": "ollama-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "open-webui",
+      "name": "open-webui-internal",
+      "source": "open-webui/ingress-open-webui-internal.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "open-webui",
+      "name": "open-webui-internal-vault-acme-tls",
+      "source": "open-webui/certificate-open-webui-internal-vault-acme-tls.yaml",
+      "secret": "open-webui-internal-vault-acme-tls"
+    },
+    {
+      "kind": "ClusterIssuer",
+      "namespace": null,
+      "name": "vault-acme",
+      "source": "cert-manager/cluster-issuer-vault-acme.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "cert-manager",
+      "name": "vault-acme-canary",
+      "source": "cert-manager/certificate-vault-acme-canary.yaml",
+      "secret": "vault-acme-canary-tls"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "openbao",
+      "name": "openbao-ingress-vault-acme-tls",
+      "source": "openbao/certificate-openbao-ingress-vault-acme-tls.yaml",
+      "secret": "openbao-ingress-vault-acme-tls"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "openbao",
+      "name": "openbao-ingress",
+      "source": "openbao/ingress-openbao-ingress.yaml"
+    },
+    {
+      "kind": "Ingress",
+      "namespace": "bastioncam",
+      "name": "bastioncam",
+      "source": "bastioncam/ingress-bastioncam.yaml"
+    },
+    {
+      "kind": "Certificate",
+      "namespace": "bastioncam",
+      "name": "bastioncam-vault-acme-tls",
+      "source": "bastioncam/certificate-bastioncam-vault-acme-tls.yaml",
+      "secret": "bastioncam-vault-acme-tls"
+    }
+  ],
+  "gate": "Reconcile source removal and verify no old ingress hosts or certificate consumers before retiring issuance. Preserve encrypted recovery backup."
+}

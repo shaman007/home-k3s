@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -32,12 +33,13 @@ class InternalDomainInventoryTest(unittest.TestCase):
             (root/'demo/node_modules').mkdir()
             (root/'demo/node_modules/ignored.txt').write_text('ignored.w386.k8s.my.lan')
             output=root/'report.json'
-            subprocess.run(['python3',str(TOOL),'--root',str(root),'--output',str(output)],check=True,capture_output=True)
+            result=subprocess.run([sys.executable,str(TOOL),'--root',str(root),'--output',str(output)],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr)
             report=json.loads(output.read_text())
             self.assertNotIn('fixture-secret-value',output.read_text())
             self.assertEqual(report['counts']['occurrences'],3)
             self.assertEqual(set(report['counts']['categories']),{'ingress_hostname','kubernetes_api','metadata_annotation'})
-            subprocess.run(['python3',str(TOOL),'--root',str(root),'--output',str(output)],check=True,capture_output=True)
+            subprocess.run([sys.executable,str(TOOL),'--root',str(root),'--output',str(output)],check=True,capture_output=True)
             self.assertEqual(json.loads(output.read_text())['counts']['occurrences'],3)
 
 

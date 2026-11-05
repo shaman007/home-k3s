@@ -1,7 +1,7 @@
 {
   "clients": [
     {
-      "adminUrl": "https://argocd.w386.k8s.my.lan/",
+      "adminUrl": "https://argocd.int.andreybondarenko.com/",
       "alwaysDisplayInConsole": false,
       "attributes": {
         "access.token.header.type.rfc9068": "false",
@@ -18,7 +18,7 @@
         "id.token.as.detached.signature": "false",
         "oauth2.device.authorization.grant.enabled": "false",
         "oidc.ciba.grant.enabled": "false",
-        "post.logout.redirect.uris": "https://argocd.w386.k8s.my.lan/",
+        "post.logout.redirect.uris": "https://argocd.int.andreybondarenko.com/",
         "realm_client": "false",
         "request.object.encryption.alg": "any",
         "request.object.encryption.enc": "any",
@@ -32,7 +32,7 @@
       },
       "authenticationFlowBindingOverrides": {},
       "authorizationServicesEnabled": true,
-      "baseUrl": "https://argocd.w386.k8s.my.lan/",
+      "baseUrl": "https://argocd.int.andreybondarenko.com/",
       "bearerOnly": false,
       "clientAuthenticatorType": "client-secret",
       "clientId": "argocd",
@@ -83,14 +83,14 @@
       ],
       "publicClient": false,
       "redirectUris": [
-        "https://argocd.w386.k8s.my.lan/auth/callback"
+        "https://argocd.int.andreybondarenko.com/auth/callback"
       ],
-      "rootUrl": "https://argocd.w386.k8s.my.lan/",
+      "rootUrl": "https://argocd.int.andreybondarenko.com/",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": true,
       "surrogateAuthRequired": false,
       "webOrigins": [
-        "https://argocd.w386.k8s.my.lan/"
+        "https://argocd.int.andreybondarenko.com/"
       ]
     },
     {
@@ -169,13 +169,13 @@
       ]
     },
     {
-      "adminUrl": "https://grafana.w386.k8s.my.lan/",
+      "adminUrl": "https://grafana.int.andreybondarenko.com/",
       "alwaysDisplayInConsole": false,
       "attributes": {
         "realm_client": "false"
       },
       "authenticationFlowBindingOverrides": {},
-      "baseUrl": "https://grafana.w386.k8s.my.lan/",
+      "baseUrl": "https://grafana.int.andreybondarenko.com/",
       "bearerOnly": false,
       "clientAuthenticatorType": "client-secret",
       "clientId": "grafana",
@@ -193,14 +193,14 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "redirectUris": [
-        "https://grafana.w386.k8s.my.lan/login/generic_oauth"
+        "https://grafana.int.andreybondarenko.com/login/generic_oauth"
       ],
-      "rootUrl": "https://grafana.w386.k8s.my.lan/",
+      "rootUrl": "https://grafana.int.andreybondarenko.com/",
       "serviceAccountsEnabled": false,
       "standardFlowEnabled": true,
       "surrogateAuthRequired": false,
       "webOrigins": [
-        "https://grafana.w386.k8s.my.lan"
+        "https://grafana.int.andreybondarenko.com"
       ]
     },
     {
@@ -235,7 +235,7 @@
       },
       "authenticationFlowBindingOverrides": {},
       "authorizationServicesEnabled": true,
-      "baseUrl": "https://grafana.w386.k8s.my.lan/",
+      "baseUrl": "https://grafana.int.andreybondarenko.com/",
       "bearerOnly": false,
       "clientAuthenticatorType": "client-secret",
       "clientId": "graphana",
@@ -286,18 +286,18 @@
       ],
       "publicClient": false,
       "redirectUris": [
-        "https://grafana.w386.k8s.my.lan/",
-        "grafana.w386.k8s.my.lan",
-        "https://grafana.w386.k8s.my.lan/*",
-        "https://grafana.w386.k8s.my.lan",
-        "https://grafana.w386.k8s.my.lan/login/generic_oauth"
+        "https://grafana.int.andreybondarenko.com/",
+        "grafana.int.andreybondarenko.com",
+        "https://grafana.int.andreybondarenko.com/*",
+        "https://grafana.int.andreybondarenko.com",
+        "https://grafana.int.andreybondarenko.com/login/generic_oauth"
       ],
-      "rootUrl": "https://grafana.w386.k8s.my.lan/",
+      "rootUrl": "https://grafana.int.andreybondarenko.com/",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": true,
       "surrogateAuthRequired": false,
       "webOrigins": [
-        "https://grafana.w386.k8s.my.lan"
+        "https://grafana.int.andreybondarenko.com"
       ]
     },
     {
@@ -394,7 +394,7 @@
       ]
     },
     {
-      "adminUrl": "https://headlamp.w386.k8s.my.lan",
+      "adminUrl": "https://headlamp.int.andreybondarenko.com",
       "alwaysDisplayInConsole": false,
       "attributes": {
         "backchannel.logout.revoke.offline.tokens": "false",
@@ -403,7 +403,7 @@
         "realm_client": "false"
       },
       "authenticationFlowBindingOverrides": {},
-      "baseUrl": "https://headlamp.w386.k8s.my.lan/",
+      "baseUrl": "https://headlamp.int.andreybondarenko.com/",
       "bearerOnly": false,
       "clientAuthenticatorType": "client-secret",
       "clientId": "headlamp",
@@ -434,14 +434,14 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "redirectUris": [
-        "https://headlamp.w386.k8s.my.lan/oidc-callback"
+        "https://headlamp.int.andreybondarenko.com/oidc-callback"
       ],
-      "rootUrl": "https://headlamp.w386.k8s.my.lan",
+      "rootUrl": "https://headlamp.int.andreybondarenko.com",
       "serviceAccountsEnabled": false,
       "standardFlowEnabled": true,
       "surrogateAuthRequired": false,
       "webOrigins": [
-        "https://headlamp.w386.k8s.my.lan"
+        "https://headlamp.int.andreybondarenko.com"
       ]
     },
     {
@@ -691,7 +691,6 @@
         "id.token.as.detached.signature": "false",
         "oauth2.device.authorization.grant.enabled": "false",
         "oidc.ciba.grant.enabled": "false",
-        "post.logout.redirect.uris": "https://vault.w386.k8s.my.lan/",
         "realm_client": "false",
         "request.object.encryption.alg": "any",
         "request.object.encryption.enc": "any",
@@ -706,7 +705,7 @@
       },
       "authenticationFlowBindingOverrides": {},
       "authorizationServicesEnabled": true,
-      "baseUrl": "https://vault.w386.k8s.my.lan",
+      "baseUrl": "",
       "bearerOnly": false,
       "clientAuthenticatorType": "client-secret",
       "clientId": "vault",
@@ -722,7 +721,7 @@
       ],
       "description": "",
       "directAccessGrantsEnabled": false,
-      "enabled": true,
+      "enabled": false,
       "frontchannelLogout": true,
       "fullScopeAllowed": true,
       "implicitFlowEnabled": false,
@@ -756,23 +755,12 @@
         }
       ],
       "publicClient": false,
-      "redirectUris": [
-        "https://vault.w386.k8s.my.lan/oidc/oidc/callback",
-        "https://vault.w386.k8s.my.lan/*",
-        "http://127.0.0.1:8250/oidc/callback",
-        "https://vault.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
-        "http://localhost:8250/oidc/callback"
-      ],
-      "rootUrl": "https://vault.w386.k8s.my.lan",
+      "redirectUris": [],
+      "rootUrl": "",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": true,
       "surrogateAuthRequired": false,
-      "webOrigins": [
-        "http://localhost:8250",
-        "https://vault.w386.k8s.my.lan/",
-        "http://192.168.1.209:8200",
-        "http://127.0.0.1:8250"
-      ]
+      "webOrigins": []
     },
     {
       "adminUrl": "",
@@ -781,12 +769,12 @@
         "backchannel.logout.session.required": "true",
         "display.on.consent.screen": "false",
         "frontchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "https://openbao.w386.k8s.my.lan/",
+        "post.logout.redirect.uris": "https://openbao.int.andreybondarenko.com/",
         "use.refresh.tokens": "true"
       },
       "authenticationFlowBindingOverrides": {},
       "authorizationServicesEnabled": false,
-      "baseUrl": "https://openbao.w386.k8s.my.lan",
+      "baseUrl": "https://openbao.int.andreybondarenko.com",
       "bearerOnly": false,
       "clientAuthenticatorType": "client-secret",
       "clientId": "openbao",
@@ -836,17 +824,17 @@
       ],
       "publicClient": false,
       "redirectUris": [
-        "https://openbao.w386.k8s.my.lan/oidc/oidc/callback",
-        "https://openbao.w386.k8s.my.lan/ui/vault/auth/oidc/oidc/callback",
+        "https://openbao.int.andreybondarenko.com/oidc/oidc/callback",
+        "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
         "http://127.0.0.1:8250/oidc/callback",
         "http://localhost:8250/oidc/callback"
       ],
-      "rootUrl": "https://openbao.w386.k8s.my.lan",
+      "rootUrl": "https://openbao.int.andreybondarenko.com",
       "serviceAccountsEnabled": false,
       "standardFlowEnabled": true,
       "surrogateAuthRequired": false,
       "webOrigins": [
-        "https://openbao.w386.k8s.my.lan",
+        "https://openbao.int.andreybondarenko.com",
         "http://127.0.0.1:8250",
         "http://localhost:8250"
       ]

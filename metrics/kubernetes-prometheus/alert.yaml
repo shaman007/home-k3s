@@ -48,6 +48,8 @@ data:
     {{ define "email.default.text" }}
     {{ template "__subject" . }}
 
+    View in Alertmanager: {{ template "__alertmanagerURL" . }}
+
     {{ if gt (len .Alerts.Firing) 0 -}}
     Alerts Firing:
     {{ template "__text_alert_list" .Alerts.Firing }}

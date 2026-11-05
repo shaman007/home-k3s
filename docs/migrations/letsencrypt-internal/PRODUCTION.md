@@ -66,3 +66,21 @@ An omitted public-SNI transport annotation on the new bridge Service caused ingr
 Final cleanup source turns the retired renewer into a credential-free suspended stub, empties its RBAC, disables its ServiceAccount token automount, and prevents the legacy PKI bootstrap helper from recreating the backend role. These cleanup changes still need a source push; the live backend credential and issuance permissions are already retired.
 
 Validation: 322 tests passed (16 skipped), including the bridge transport regression. The old shell unseal key remains stale; the explicitly authorized separate local recovery key successfully unsealed the servers. No recovery credential was printed or copied.
+
+## SSO and legacy ingress retirement prepared
+
+The backend cleanup at `87a4c399` is live: the old renewer is suspended, has no token automount or credential references, and its Role has no rules.
+
+All active Keycloak URL settings and the OpenBao OIDC callback list now use the new domains. Grafana's database-backed SSO settings use the client ID `graphana`, despite the deployment environment specifying `grafana`; both active client identities were retained, and the actual runtime client's URLs were migrated without rotating its credentials or invalidating sessions. Only the unused `vault` client was disabled. URL-only inventory finds zero old-domain Keycloak clients. Grafana and Argo's actual redirects reach valid Keycloak login forms; Headlamp and OpenBao callbacks are accepted with PKCE. Interactive user login/logout remains unverified.
+
+Remaining installed-client references were updated in the Bastioncam collector unit, two Noctalia plugin scripts, Codex's MemPalace endpoint, and the operator skill defaults. The collector was restarted and is active. Kubernetes API, node/service names, metadata annotation namespaces, historical documentation, fixtures, and deprecated sources remain intentionally unchanged.
+
+Source now removes 17 old ingress routes, 18 private certificates (including the canary), and the `vault-acme` ClusterIssuer. The retired PKI bootstrap script exits without making changes. The daily health checker requires verified TLS for every ingress. The current source scan finds no old ingress-domain references in active home-k3s code/configuration.
+
+Alertmanager's live external URL is `https://alerts.int.andreybondarenko.com`. Its deployed HTML email template rendered correct Alertmanager and Prometheus URLs without sending mail. The plain-text template previously lacked a direct Alertmanager link; source now includes one, validated with the deployed amtool template engine.
+
+The failed CI run `42032262832` stopped in the hostname-inventory subprocess test. CI now explicitly installs ripgrep, the scanner reports a missing executable clearly, and the test exposes controlled subprocess diagnostics and uses the test interpreter. A fresh GitHub run remains pending the next push.
+
+Validation: 314 tests passed (16 skipped), runtime contracts passed, and 13 affected applications rendered. UniFi's targeted retirement plan has zero additions, 17 in-place disables, and zero destroys; it has not been applied. Existing API/Omni/other unrelated records remain outside this plan.
+
+After pushing this source, verify Argo reconciles removal, delete any non-pruned old ingress/certificate resources and unused certificate Secrets from `legacy-ingress-retirement.json`, disable private ACME issuance, and remove `pki-int/roles/w386-k8s-my-lan-acme`. Preserve the shared PKI mounts and issuer: `pki-int/roles/orangepi-monitoring` still covers the separate `m.k8s.my.lan` monitoring identity. Do not disable the entire issuer or remove host private trust blindly. Apply the reviewed legacy DNS plan after the route cutover.
