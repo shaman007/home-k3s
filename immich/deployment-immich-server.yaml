@@ -59,7 +59,7 @@ spec:
               mountPath: /data
       containers:
         - name: immich-server
-          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.3.5
+          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.3.6
           imagePullPolicy: IfNotPresent
           env:
             - name: IMMICH_TELEMETRY_INCLUDE
