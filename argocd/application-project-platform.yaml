@@ -89,6 +89,13 @@ spec:
       - group: ""
         kind: Secret
         name: "sh.helm.release.v1.*"
+      # Exact runtime TLS Secret names generated for the tracked GoDaddy Certificates.
+      - group: ""
+        kind: Secret
+        name: "godaddy-webhook-serving"
+      - group: ""
+        kind: Secret
+        name: "letsencrypt-internal-staging-canary"
       # Kubernetes/Talos bootstrap inventory shared by applications in kube-system.
       - group: ""
         kind: ConfigMap

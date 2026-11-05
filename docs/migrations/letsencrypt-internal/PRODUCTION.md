@@ -84,3 +84,15 @@ The failed CI run `42032262832` stopped in the hostname-inventory subprocess tes
 Validation: 314 tests passed (16 skipped), runtime contracts passed, and 13 affected applications rendered. UniFi's targeted retirement plan has zero additions, 17 in-place disables, and zero destroys; it has not been applied. Existing API/Omni/other unrelated records remain outside this plan.
 
 After pushing this source, verify Argo reconciles removal, delete any non-pruned old ingress/certificate resources and unused certificate Secrets from `legacy-ingress-retirement.json`, disable private ACME issuance, and remove `pki-int/roles/w386-k8s-my-lan-acme`. Preserve the shared PKI mounts and issuer: `pki-int/roles/orangepi-monitoring` still covers the separate `m.k8s.my.lan` monitoring identity. Do not disable the entire issuer or remove host private trust blindly. Apply the reviewed legacy DNS plan after the route cutover.
+
+## Legacy ingress retirement completed — 2026-11-05
+
+Source `259090b1` was reconciled. All 17 old ingress routes, 18 legacy Certificate objects and their TLS Secrets, and the `vault-acme` ClusterIssuer are absent. All 18 retired leaves were revoked through the intermediate PKI. Private ingress ACME is disabled and its dedicated `w386-k8s-my-lan-acme` role was deleted. The unused private ACME account key and completed manual production canary were removed.
+
+The shared root/intermediate issuers and the exact `orangepi-monitoring` role were preserved unchanged. `m.k8s.my.lan` still resolves to `192.168.1.111`; its HTTPS endpoint was unreachable from the operator host (errno 113), so runtime monitoring could not be verified. `api.k8s.my.lan` remains enabled and resolves to `192.168.30.100`; Kubernetes API trust and kubeconfigs were not changed.
+
+UniFi cleanup destroyed all 22 old records: the 17 migrated service records plus `omni`, `omni-k8s`, `omni-siderolink`, `postfixadmin`, and retired `vault`. Their resource blocks and import stanzas were removed from `/home/shaman007/git/unifi-infra`. All 22 names no longer resolve, while all 17 new private records remain enabled at `192.168.30.211`. The full Terraform/OpenTofu configuration validates and a full plan would not recreate the deleted records. Its only remaining action is an unrelated in-place change to `unifi_client.g4_instant_left`, which was not applied.
+
+All Argo applications are Healthy/Synced. The deployed daily certificate check passes for 42 Certificates and four ClusterIssuers. Two generated TLS Secrets with names outside the existing `*-tls` orphan-ignore pattern still trigger orphan warnings; source now explicitly recognizes only `godaddy-webhook-serving` and `letsencrypt-internal-staging-canary`. This narrow reporting correction needs a source push; certificate readiness remains checked normally.
+
+GitHub validation run `42034528214` passed the previously failing inventory unit tests, runtime contracts, policy bundle generation, and application rendering; its remaining policy checks were still running at handoff. No email was sent during template/health verification.

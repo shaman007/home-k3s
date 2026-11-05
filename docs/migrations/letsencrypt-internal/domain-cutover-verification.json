@@ -17,9 +17,10 @@
   ],
   "dns_plan": {
     "adds": 0,
-    "changes": 17,
-    "destroys": 0,
-    "applied": false
+    "changes": 0,
+    "destroys": 22,
+    "applied": true,
+    "full_plan_remaining_unrelated_change": "unifi_client.g4_instant_left"
   },
   "sso": {
     "old_domain_clients": 0,
@@ -27,5 +28,5 @@
     "active_grafana_client_preserved": "graphana",
     "retired_vault_client_enabled": false
   },
-  "remaining_gate": "Push source removal, reconcile affected applications, remove any non-pruned legacy resources, then disable private ingress ACME and delete only its dedicated role. Preserve orangepi-monitoring and shared PKI."
+  "remaining_gate": "Legacy ingress resources and issuance retired. Shared PKI and Orange Pi monitoring role/DNS preserved. Interactive SSO login/logout and Orange Pi runtime reachability remain unverified."
 }
