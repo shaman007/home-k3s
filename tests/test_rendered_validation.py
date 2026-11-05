@@ -190,6 +190,16 @@ class RenderValidationTest(unittest.TestCase):
         self.assertFalse(list(validator.iter_errors('readable text')))
         self.assertTrue(list(validator.iter_errors('contains\x00control')))
 
+    def test_discovery_excludes_raw_webhook_templates_but_keeps_manifests(self):
+        discovery = module('discovery_webhook_test', 'list-k8s-manifest-files.py')
+        paths = {str(p.relative_to(ROOT)) for p in discovery.tracked_yaml_files(ROOT)}
+        self.assertNotIn('tools/godaddy-webhook/chart/templates/credentials.yaml', paths)
+        self.assertNotIn('tools/godaddy-webhook/chart/templates/solver.yaml', paths)
+        self.assertIn('argocd/application-godaddy-webhook.yaml', paths)
+        # The chart is still part of the required application render inventory.
+        app = yaml.safe_load((ROOT / 'argocd/application-godaddy-webhook.yaml').read_text())
+        self.assertEqual('tools/godaddy-webhook/chart', app['spec']['source']['path'])
+
     def test_discovery_excludes_talos_machine_configurations(self):
         discovery = module('discovery_test', 'list-k8s-manifest-files.py')
         files = discovery.tracked_yaml_files(ROOT)
