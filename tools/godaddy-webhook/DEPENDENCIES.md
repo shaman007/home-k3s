@@ -83,3 +83,22 @@ Suggested reason:
 > Re-review on architecture or dependency changes.
 
 [Exact upstream file](https://github.com/golang/crypto/blob/2f1f834330b2/chacha20/chacha_ppc64x.s).
+
+## Applied FOSSA disposition — 2026-11-05
+
+Rechecked x/text v0.43.0 for `GOOS=linux GOARCH=amd64 CGO_ENABLED=0`:
+17 production packages and 73 selected source files; none contains the matched
+CC-BY-SA material, and `internal/testtext` is not imported. FOSSA's inspected
+CC-BY-SA-2.0 match is in `unicode/norm/normalize_test.go`.
+
+Applied four reversible license-issue ignores in FOSSA, scoped to **home-k3s
+only**, **selected package version v0.43.0 only**, for CC-BY-SA-1.0, 2.0, 2.5,
+and 3.0. Issue IDs: 23173736, 23173737, 23173734, 23173735 respectively.
+The justification records the excluded test fixtures, production source inventory,
+and scratch-image contents, and requires re-review on dependency/build-content
+changes. No policy-wide/global approval or whole-dependency ignore was added.
+
+Verified after reloading revision `17d8a555`: **Active 0, Ignored 5** (the four
+new exceptions plus the existing architecture-excluded x/crypto exception).
+Earlier statements above that no external rule was modified describe the initial
+review, before this disposition was applied.
