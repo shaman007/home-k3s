@@ -81,6 +81,7 @@ jobs:
       - name: Check generated NetworkPolicy bundles
         run: |
           python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
+          python tools/monitoring/generate-queue-exporters.py --check
 
       - name: Render Argo CD applications
         run: |

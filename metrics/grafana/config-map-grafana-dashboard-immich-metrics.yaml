@@ -9,7 +9,7 @@ data:
     {
       "uid": "immich-metrics",
       "title": "Immich Application Metrics",
-      "description": "API and microservices telemetry from the two native endpoints. Queue panels show observed active-job gauges; no absent metric is presented as a successful zero.",
+      "description": "Native API/worker telemetry plus read-only BullMQ waiting, active, paused, delayed and retained-failure counts. Waiting includes prioritized jobs. Failed counts are retained jobs, not new-failure rates. Missing collection remains no data.",
       "tags": [
         "homelab",
         "monitoring-audit"
@@ -320,6 +320,306 @@ data:
               "refId": "A",
               "expr": "sum(rate(immich_asset_repository_create_duration_count{job=\"immich\"}[$__rate_interval]))",
               "legendFormat": "calls",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Waiting jobs by queue",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "immich_queue_jobs{state=\"waiting\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Active queued jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "immich_queue_jobs{state=\"active\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Retained failed jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "immich_queue_jobs{state=\"failed\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "Paused jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "immich_queue_jobs{state=\"paused\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "type": "timeseries",
+          "title": "Delayed jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "immich_queue_jobs{state=\"delayed\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "type": "timeseries",
+          "title": "Queue collector result (1 = success)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "redis_script_result{job=\"valkey-immich\"}",
+              "legendFormat": "collector",
               "range": true
             }
           ]

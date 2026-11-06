@@ -104,7 +104,28 @@ spec:
               memory: 64Mi
             limits:
               memory: 1Gi
+        - name: redis-exporter
+          image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.97.0
+          args: [--script=/collector/immich-queues.lua, --lua-script-read-only]
+          env:
+            - name: REDIS_ADDR
+              value: redis://localhost:6379
+          ports: [{name: redis-exporter, containerPort: 9121}]
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 64Mi}
+          volumeMounts:
+            - {name: queue-metrics, mountPath: /collector, readOnly: true}
       volumes:
+        - name: queue-metrics
+          configMap: {name: immich-queue-metrics}
         - name: data
           persistentVolumeClaim:
             claimName: immich-valkey-lh

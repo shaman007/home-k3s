@@ -206,3 +206,5 @@ spec:
                   name: grafana-dashboard-hister-metrics
               - configMap:
                   name: grafana-dashboard-spotify-metrics
+              - configMap:
+                  name: grafana-dashboard-mail-queues

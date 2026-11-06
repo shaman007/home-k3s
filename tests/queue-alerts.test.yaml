@@ -1,0 +1,1193 @@
+evaluation_interval: 1m
+tests:
+- name: healthy empty queues, retained dead jobs, paused and delayed work
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 60m
+    alertname: PostfixQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: MastodonQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: ImmichQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: PostfixQueueBacklog
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: PostfixQueueOldMail
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: PostfixQueueHeldMail
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: MastodonQueueBacklog
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: MastodonQueueOldJobs
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: MastodonRetryBacklog
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: ImmichQueueBacklog
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: ImmichQueueFailedJobs
+    exp_alerts: []
+- name: PostfixQueueBacklog boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 50+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: PostfixQueueBacklog
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: PostfixQueueBacklog
+    exp_alerts: []
+- name: PostfixQueueBacklog fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 51+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: PostfixQueueBacklog
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: PostfixQueueBacklog
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mail
+      exp_annotations:
+        summary: Postfix delivery queue exceeds fifty messages.
+        description: Inspect queue state counts, delivery logs, DNS and remote SMTP reachability. Do not flush or delete messages to clear this
+          alert.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: PostfixQueueOldMail boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 3600+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: PostfixQueueOldMail
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: PostfixQueueOldMail
+    exp_alerts: []
+- name: PostfixQueueOldMail fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 3601+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: PostfixQueueOldMail
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: PostfixQueueOldMail
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mail
+      exp_annotations:
+        summary: Postfix has queued mail older than one hour.
+        description: Age is measured from initial arrival, not entry into the current queue. Investigate delivery deferrals before changing mail.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: PostfixQueueHeldMail boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: PostfixQueueHeldMail
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: PostfixQueueHeldMail
+    exp_alerts: []
+- name: PostfixQueueHeldMail fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 1+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: PostfixQueueHeldMail
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: PostfixQueueHeldMail
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mail
+      exp_annotations:
+        summary: Postfix has held mail requiring review.
+        description: Held mail does not progress automatically. Confirm whether the hold is intentional; do not release messages automatically.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: MastodonQueueBacklog boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 100+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: MastodonQueueBacklog
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: MastodonQueueBacklog
+    exp_alerts: []
+- name: MastodonQueueBacklog fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 101+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: MastodonQueueBacklog
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: MastodonQueueBacklog
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mastodon
+        queue: default
+      exp_annotations:
+        summary: Mastodon queue default exceeds one hundred waiting jobs.
+        description: Compare waiting age, busy workers and database/Valkey health. Queue counts exclude executing jobs.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: MastodonQueueOldJobs boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 300+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: MastodonQueueOldJobs
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: MastodonQueueOldJobs
+    exp_alerts: []
+- name: MastodonQueueOldJobs fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 301+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: MastodonQueueOldJobs
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: MastodonQueueOldJobs
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mastodon
+        queue: default
+      exp_annotations:
+        summary: Mastodon queue default has a job waiting over five minutes.
+        description: Inspect worker availability and queue latency. Retry and scheduled sets are separate from runnable work.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: MastodonRetryBacklog boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 100+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: MastodonRetryBacklog
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: MastodonRetryBacklog
+    exp_alerts: []
+- name: MastodonRetryBacklog fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 101+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: MastodonRetryBacklog
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: MastodonRetryBacklog
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mastodon
+      exp_annotations:
+        summary: Mastodon retains over one hundred retrying jobs.
+        description: Federation failures can cause transient retries. Inspect sustained growth and worker logs; do not clear retry/dead sets.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: ImmichQueueBacklog boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 1000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: ImmichQueueBacklog
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: ImmichQueueBacklog
+    exp_alerts: []
+- name: ImmichQueueBacklog fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 1001+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: ImmichQueueBacklog
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: ImmichQueueBacklog
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: immich
+        queue: integrityCheck
+        state: waiting
+      exp_annotations:
+        summary: Immich queue integrityCheck exceeds one thousand waiting jobs.
+        description: Bulk imports can legitimately build a backlog. Compare active workers and queue trend before intervention. Paused/delayed
+          jobs are shown separately.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: ImmichQueueFailedJobs boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: ImmichQueueFailedJobs
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: ImmichQueueFailedJobs
+    exp_alerts: []
+- name: ImmichQueueFailedJobs fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 1+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: ImmichQueueFailedJobs
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: ImmichQueueFailedJobs
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: immich
+        queue: integrityCheck
+        state: failed
+      exp_annotations:
+        summary: Immich queue integrityCheck retains failed jobs.
+        description: This is a retained failure count, not a rate of new failures. Review the Immich admin job view; do not automatically retry
+          or delete jobs.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: PostfixQueueMetricsUnavailable boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: PostfixQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: PostfixQueueMetricsUnavailable
+    exp_alerts: []
+- name: PostfixQueueMetricsUnavailable fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 0+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: PostfixQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: PostfixQueueMetricsUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mail
+      exp_annotations:
+        summary: Postfix queue telemetry is unavailable.
+        description: Check scrape health and the non-root collector; missing data does not mean an empty queue.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: MastodonQueueMetricsUnavailable boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: MastodonQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: MastodonQueueMetricsUnavailable
+    exp_alerts: []
+- name: MastodonQueueMetricsUnavailable fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 0+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: MastodonQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: MastodonQueueMetricsUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mastodon
+      exp_annotations:
+        summary: Mastodon queue telemetry is unavailable.
+        description: Check Valkey exporter health, mounted script and the read-only collector result.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: ImmichQueueMetricsUnavailable boundary healthy
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 1+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: ImmichQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: ImmichQueueMetricsUnavailable
+    exp_alerts: []
+- name: ImmichQueueMetricsUnavailable fires after hold
+  interval: 1m
+  input_series:
+  - series: up{job="postfix-queue"}
+    values: 1+0x65
+  - series: postfix_queue_scrape_success{job="postfix-queue"}
+    values: 1+0x65
+  - series: up{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-mastodon"}
+    values: 1+0x65
+  - series: up{job="valkey-immich"}
+    values: 1+0x65
+  - series: redis_script_result{job="valkey-immich"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: postfix_queue_messages{job="postfix-queue",queue="hold"}
+    values: 0+0x65
+  - series: postfix_queue_oldest_age_seconds{job="postfix-queue",queue="deferred"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_queue_default_latency_seconds"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"}
+    values: 1793+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_waiting"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_failed"}
+    values: 0+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_paused"}
+    values: 5000+0x65
+  - series: redis_script_values{job="valkey-immich",key="immich_queue_integrityCheck_delayed"}
+    values: 5000+0x65
+  alert_rule_test:
+  - eval_time: 9m
+    alertname: ImmichQueueMetricsUnavailable
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: ImmichQueueMetricsUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: immich
+      exp_annotations:
+        summary: Immich queue telemetry is unavailable.
+        description: Check Valkey exporter health and BullMQ queue inventory; missing metadata fails collection.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+- name: all queue telemetry absent
+  interval: 1m
+  input_series: []
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: PostfixQueueMetricsUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mail
+      exp_annotations:
+        summary: Postfix queue telemetry is unavailable.
+        description: Check scrape health and the non-root collector; missing data does not mean an empty queue.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+  - eval_time: 10m
+    alertname: MastodonQueueMetricsUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: mastodon
+      exp_annotations:
+        summary: Mastodon queue telemetry is unavailable.
+        description: Check Valkey exporter health, mounted script and the read-only collector result.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+  - eval_time: 10m
+    alertname: ImmichQueueMetricsUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        application: immich
+      exp_annotations:
+        summary: Immich queue telemetry is unavailable.
+        description: Check Valkey exporter health and BullMQ queue inventory; missing metadata fails collection.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+  promql_expr_test:
+  - expr: immich_queue_jobs or mastodon_queue_waiting_jobs or postfix_queue_messages
+    eval_time: 10m
+    exp_samples: []

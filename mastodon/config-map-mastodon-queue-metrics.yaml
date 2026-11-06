@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastodon-queue-metrics
+  namespace: mastodon
+data:
+  mastodon-queues.lua: "-- Executed with EVAL_RO. Fixed queues cover empty installations; add discovered\n-- Sidekiq queues\
+    \ without ever exporting a job body or an argument.\nlocal result = {}\nlocal queues = {default=true, ingress=true, scheduler=true,\
+    \ pull=true, push=true, mailers=true}\nfor _, name in ipairs(redis.call('SMEMBERS', 'queues')) do\n  if string.match(name,\
+    \ '^[%w_%-]+$') then queues[name] = true end\nend\nlocal function emit(key, value)\n  table.insert(result, key)\n  table.insert(result,\
+    \ tostring(value))\nend\nlocal now = tonumber(redis.call('TIME')[1])\nfor name, _ in pairs(queues) do\n  local key = 'queue:'\
+    \ .. name\n  local size = redis.call('LLEN', key)\n  emit('mastodon_queue_' .. name .. '_waiting', size)\n  local latency\
+    \ = 0\n  local tail = redis.call('LINDEX', key, -1)\n  if tail then\n    local item = cjson.decode(tail)\n    local timestamp\
+    \ = tonumber(item.enqueued_at)\n    if not timestamp then error('missing enqueue timestamp') end\n    -- Sidekiq 7 uses\
+    \ seconds, Sidekiq 8 uses milliseconds.\n    if timestamp > 100000000000 then timestamp = timestamp / 1000 end\n    latency\
+    \ = math.max(0, now - timestamp)\n  end\n  emit('mastodon_queue_' .. name .. '_latency_seconds', latency)\nend\nfor _,\
+    \ state in ipairs({'retry', 'dead', 'schedule'}) do\n  emit('mastodon_' .. state .. '_jobs', redis.call('ZCARD', state))\n\
+    end\nreturn result\n"

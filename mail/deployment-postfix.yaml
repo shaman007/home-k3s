@@ -34,6 +34,9 @@ spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       volumes:
+        - name: queue-exporter
+          configMap:
+            name: postfix-queue-exporter
         - name: mail-certs
           secret:
             secretName: mail-tls
@@ -158,5 +161,37 @@ spec:
               memory: "64Mi"
             limits:
               memory: "128Mi"
+        - name: queue-exporter
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-02-095223
+          command: [perl, /collector/postfix-queue-exporter.pl]
+          ports:
+            - name: queue-metrics
+              containerPort: 9154
+          securityContext:
+            runAsUser: 100
+            runAsGroup: 102
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {memory: 64Mi}
+          readinessProbe:
+            httpGet: {path: /healthz, port: queue-metrics}
+          livenessProbe:
+            httpGet: {path: /healthz, port: queue-metrics}
+          volumeMounts:
+            - name: queue-exporter
+              mountPath: /collector
+              readOnly: true
+            - name: spool
+              mountPath: /var/spool/postfix
+              readOnly: true
+            - name: main-cf
+              mountPath: /etc/postfix/main.cf
+              subPath: main.cf
+              readOnly: true
       nodeSelector:
         kubernetes.io/hostname: w386

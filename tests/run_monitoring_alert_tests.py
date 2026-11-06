@@ -27,3 +27,8 @@ with tempfile.TemporaryDirectory() as directory:
     test = directory / 'test.yaml'
     test.write_text(yaml.safe_dump(fixtures, sort_keys=False))
     subprocess.run([sys.argv[1], 'test', 'rules', str(test)], check=True)
+    # Queue fixtures also exercise the shipped normalization recording rules.
+    queues = yaml.safe_load((root / 'tests/queue-alerts.test.yaml').read_text())
+    queues['rule_files'] = [str(full)]
+    test.write_text(yaml.safe_dump(queues, sort_keys=False))
+    subprocess.run([sys.argv[1], 'test', 'rules', str(test)], check=True)

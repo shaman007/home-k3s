@@ -170,6 +170,8 @@ spec:
           port: 9121
         - protocol: TCP
           port: 11334
+        - protocol: TCP
+          port: 9154
     - to:
         - namespaceSelector:
             matchLabels:
@@ -309,6 +311,8 @@ spec:
           port: 8081
         - protocol: TCP
           port: 8082
+        - protocol: TCP
+          port: 9121
     - to:
         - namespaceSelector:
             matchLabels:

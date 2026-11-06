@@ -153,7 +153,7 @@ names.append(dashboard('firefox-sync-metrics', 'Firefox Sync Metrics',
 ]))
 
 names.append(dashboard('mastodon-metrics', 'Mastodon Application Metrics',
-    'Native web/Puma and embedded Sidekiq metrics. Queue-depth and per-job completion metrics are not inferred from busy-worker gauges. PostgreSQL and Valkey have separate data-service panels.', [
+    'Native web/Puma and embedded Sidekiq metrics, plus read-only Sidekiq queue counts and waiting age from Valkey. Retry/dead sets retain failures; they are not new-failure counters.', [
     ('Web requests by status', 'sum by (status) (rate(ruby_http_requests_total{job="mastodon"}[$__rate_interval]))', 'ops', '{{status}}'),
     ('Puma request backlog', 'sum by (pod) (ruby_puma_request_backlog{job="mastodon"})', 'short', '{{pod}}'),
     ('Puma thread pool capacity', 'sum by (pod) (ruby_puma_thread_pool_capacity{job="mastodon"})', 'short', '{{pod}}'),
@@ -162,16 +162,28 @@ names.append(dashboard('mastodon-metrics', 'Mastodon Application Metrics',
     ('Web database connections waiting', 'sum by (pod) (ruby_active_record_connection_pool_waiting{job="mastodon"})', 'short', '{{pod}}'),
     ('Sidekiq database connections waiting', 'sum by (pod) (active_record_connection_pool_waiting{job="mastodon"})', 'short', '{{pod}}'),
     ('Web and Sidekiq targets', 'up{job="mastodon"}', 'short', '{{pod}}'),
+    ('Waiting jobs by queue', 'mastodon_queue_waiting_jobs', 'short', '{{queue}}'),
+    ('Oldest waiting job age', 'mastodon_queue_oldest_age_seconds', 's', '{{queue}}'),
+    ('Retry set', 'mastodon_retry_jobs', 'short', 'retrying jobs'),
+    ('Dead set (retained)', 'mastodon_dead_jobs', 'short', 'dead jobs'),
+    ('Scheduled jobs', 'mastodon_scheduled_jobs', 'short', 'scheduled'),
+    ('Queue collector result (1 = success)', 'redis_script_result{job="valkey-mastodon"}', 'short', 'collector'),
 ]))
 
 names.append(dashboard('immich-metrics', 'Immich Application Metrics',
-    'API and microservices telemetry from the two native endpoints. Queue panels show observed active-job gauges; no absent metric is presented as a successful zero.', [
+    'Native API/worker telemetry plus read-only BullMQ waiting, active, paused, delayed and retained-failure counts. Waiting includes prioritized jobs. Failed counts are retained jobs, not new-failure rates. Missing collection remains no data.', [
     ('Telemetry endpoint health', 'up{job="immich"}', 'short', '{{instance}}'),
     ('Process memory', 'process_memory_usage{job="immich"}', 'bytes', '{{instance}}'),
     ('Process CPU utilization', '100 * process_cpu_utilization{job="immich"}', 'percent', '{{instance}} / {{process_cpu_state}}'),
     ('Active jobs by queue', 'sum by (__name__) ({job="immich",__name__=~"immich_queues_.*_active"})', 'short', '{{__name__}}'),
     ('Worker job runs', 'sum(rate(immich_job_repository_run_duration_count{job="immich"}[$__rate_interval]))', 'ops', 'runs'),
     ('Asset creation calls', 'sum(rate(immich_asset_repository_create_duration_count{job="immich"}[$__rate_interval]))', 'ops', 'calls'),
+    ('Waiting jobs by queue', 'immich_queue_jobs{state="waiting"}', 'short', '{{queue}}'),
+    ('Active queued jobs', 'immich_queue_jobs{state="active"}', 'short', '{{queue}}'),
+    ('Retained failed jobs', 'immich_queue_jobs{state="failed"}', 'short', '{{queue}}'),
+    ('Paused jobs', 'immich_queue_jobs{state="paused"}', 'short', '{{queue}}'),
+    ('Delayed jobs', 'immich_queue_jobs{state="delayed"}', 'short', '{{queue}}'),
+    ('Queue collector result (1 = success)', 'redis_script_result{job="valkey-immich"}', 'short', 'collector'),
 ]))
 
 names.append(dashboard('meilisearch-metrics', 'Meilisearch Metrics',
@@ -218,6 +230,14 @@ names.append(dashboard('spotify-metrics', 'Your Spotify Metrics',
     ('Application HTTP requests', 'sum(rate(http_requests_total{job="spotify"}[$__rate_interval]))', 'ops', 'requests'),
     ('Tracks ingested', 'sum(rate(ingested_tracks_total{job="spotify"}[$__rate_interval]))', 'ops', 'tracks'),
     ('Imports in 24 hours', 'sum(increase(imports_total{job="spotify"}[24h]))', 'short', 'imports'),
+]))
+
+names.append(dashboard('mail-queues', 'Mail Delivery Queues',
+    'Read-only Postfix queue counts and oldest initial-arrival age. Held mail is separate from delivery backlog. No mail content or addresses are exported. Missing collection is not an empty queue.', [
+    ('Messages by queue', 'postfix_queue_messages{job="postfix-queue"}', 'short', '{{queue}}'),
+    ('Oldest message arrival age by queue', 'postfix_queue_oldest_age_seconds{job="postfix-queue"}', 's', '{{queue}}'),
+    ('Queue collection successful', 'postfix_queue_scrape_success{job="postfix-queue"}', 'short', 'collection'),
+    ('Exporter reachable', 'up{job="postfix-queue"}', 'short', 'target'),
 ]))
 
 if __name__ == '__main__':

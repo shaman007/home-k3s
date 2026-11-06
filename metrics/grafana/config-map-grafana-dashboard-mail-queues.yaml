@@ -1,0 +1,231 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-mail-queues
+  namespace: monitoring
+data:
+  mail-queues.json: |-
+    {
+      "uid": "mail-queues",
+      "title": "Mail Delivery Queues",
+      "description": "Read-only Postfix queue counts and oldest initial-arrival age. Held mail is separate from delivery backlog. No mail content or addresses are exported. Missing collection is not an empty queue.",
+      "tags": [
+        "homelab",
+        "monitoring-audit"
+      ],
+      "schemaVersion": 41,
+      "version": 1,
+      "editable": true,
+      "refresh": "1m",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "Messages by queue",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "postfix_queue_messages{job=\"postfix-queue\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Oldest message arrival age by queue",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "postfix_queue_oldest_age_seconds{job=\"postfix-queue\"}",
+              "legendFormat": "{{queue}}",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Queue collection successful",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "postfix_queue_scrape_success{job=\"postfix-queue\"}",
+              "legendFormat": "collection",
+              "range": true
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Exporter reachable",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 1,
+                "showPoints": "never",
+                "spanNulls": false
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "showLegend": true,
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "up{job=\"postfix-queue\"}",
+              "legendFormat": "target",
+              "range": true
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": []
+      }
+    }

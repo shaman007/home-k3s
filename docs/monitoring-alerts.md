@@ -113,7 +113,39 @@ No commit or push was performed by the assistant.
 
 ## Instrumentation gaps
 
-External Home Assistant remains outside the agreed cluster scope. The receiving rsync daemon has no successful-backup timestamp; no freshness rule can establish externally initiated backup success. Mail queue depth/age, Mastodon Sidekiq waiting/retry depth and Immich pending/failed queues are not exported by the installed collectors. Immich active jobs are not a backlog metric. These need instrumentation before useful rules can be added. No dummy always-empty alerts were installed for those signals. Driver-specific GPU faults require an actual exported fault signal; generic container OOM and remap telemetry are covered.
+External Home Assistant remains outside the agreed cluster scope. The external rsync job is also outside scope; the receiving daemon cannot establish externally initiated backup success. Driver-specific GPU faults require an actual exported fault signal; generic container OOM and remap telemetry are covered.
+
+## Application queues
+
+Prepared locally on 2026-11-06; this section does not establish deployment.
+
+- **Mail:** `postfix-queue` scrapes a non-root sidecar on TCP/9154. It runs `postqueue -j` against the existing showq socket with a read-only spool mount, exports counts and oldest initial-arrival age for active/deferred/incoming/hold/maildrop, and discards addresses, recipients and all other message fields. The Postfix UID/GID is 100:102; no added capabilities or privilege escalation. Failed command execution, invalid records and timeouts produce failed collection or a failed scrape, never invented empty queues. The command has an eight-second timeout and HTTP requests have a ten-second timeout.
+- **Mastodon:** the existing Valkey exporter evaluates `mastodon-queues.lua` through `EVAL_RO`. It counts each known/discovered Sidekiq waiting list, reads only the oldest entry to calculate enqueue age, and counts retry/dead/scheduled sorted sets. Only aggregates leave Valkey. Seconds and millisecond enqueue timestamps are supported. Dead jobs and scheduled jobs have dashboard panels; their presence alone does not trigger an alert.
+- **Immich:** a Valkey exporter sidecar uses `EVAL_RO` and the 19 installed BullMQ queue names. It reads lengths/cardinalities only, not job hashes or failure messages. Waiting includes prioritized work and excludes the legacy priority marker. Active, paused, delayed and retained failed jobs stay separate. Missing expected queue metadata fails collection; update the queue inventory after an Immich version changes its queue names. Empty list/set keys are valid zeroes only after queue metadata is present.
+
+| Alert | Threshold | Hold |
+| --- | --- | --- |
+| PostfixQueueMetricsUnavailable, MastodonQueueMetricsUnavailable, ImmichQueueMetricsUnavailable | Missing/down exporter or unsuccessful collector | 10 minutes |
+| PostfixQueueBacklog | More than 50 delivery messages, excluding held mail | 15 minutes |
+| PostfixQueueOldMail | Oldest delivery message arrival more than 1 hour ago | 15 minutes |
+| PostfixQueueHeldMail | Any held message | 30 minutes |
+| MastodonQueueBacklog | More than 100 waiting jobs in a queue | 15 minutes |
+| MastodonQueueOldJobs | Oldest waiting job over 5 minutes | 15 minutes |
+| MastodonRetryBacklog | More than 100 retry jobs | 30 minutes |
+| ImmichQueueBacklog | More than 1,000 waiting jobs in a queue | 30 minutes |
+| ImmichQueueFailedJobs | Any retained failed job in a queue | 30 minutes |
+
+All use the existing `severity: mail` route with warning priority. These initial operational thresholds allow short bursts and imports; review them against normal workload history. Retained failed jobs are not a new-failure rate. Queue depth is not proof of stuck processing, and active jobs are not backlog. Postfix age measures time since initial arrival, not time spent in the current subqueue.
+
+The **Mail Delivery Queues** dashboard is mounted through Grafana's existing projected dashboard volume. **Mastodon Application Metrics** and **Immich Application Metrics** gain queue panels. Failed or absent collection remains no data, accompanied by collection-health panels and separate availability alerts.
+
+Read-only preflight found no mail backlog or Mastodon waiting/retry jobs. Mastodon retained 1,793 dead jobs and 24 scheduled jobs. Immich retained seven `integrityCheck` failures and one `backgroundTask` failure, with no waiting jobs. Those are pre-existing observations, not failures introduced by the collectors. If unchanged at deployment, the two Immich failure alerts will fire after their hold time. Review them in the admin job view without automatically retrying or deleting anything.
+
+Deployment changes the Postfix Deployment and both Valkey StatefulSet templates. Postfix uses Recreate; adding the sidecars/mounts requires pod replacement and can briefly interrupt mail submission, Mastodon or Immich. Preserve all PVCs and queue data. Publish through the approved GitOps workflow and verify reconciliation, exporter reachability, `redis_script_result == 1`, successful mail queue collection, all six queue recording rules, loaded alerts and Grafana panels over multiple scrapes. No test mail, synthetic production jobs, retries, queue flushing or deletion are needed.
+
+Triage from the queue panel into application/worker logs, dependency health and application administration. Federation retries and bulk imports can be legitimate. Do not clear queues or release held messages merely to silence an alert.
+
+Collector source lives in `tools/monitoring/`; regenerate the three ConfigMaps with `python tools/monitoring/generate-queue-exporters.py`, and check with `--check`. The pinned exporter supports read-only Lua collection and script success metrics; see its [v1.97.0 implementation](https://github.com/oliver006/redis_exporter/blob/v1.97.0/exporter/lua.go). Queue alert fixtures cover normalization, exact thresholds, hold periods, healthy retained/paused/delayed work and absent telemetry. Run them with the existing monitoring alert test command below.
 
 ## Validation
 

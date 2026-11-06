@@ -15,5 +15,8 @@ spec:
     - name: redis
       port: 6379
       targetPort: redis
+    - name: redis-exporter
+      port: 9121
+      targetPort: redis-exporter
   selector:
     app: immich-valkey

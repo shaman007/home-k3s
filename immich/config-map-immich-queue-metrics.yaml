@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: immich-queue-metrics
+  namespace: immich
+data:
+  immich-queues.lua: "-- BullMQ storage names verified against the installed Immich queue inventory.\n-- Count containers\
+    \ only; never read job hashes, payloads or failure messages.\nlocal queues = {'thumbnailGeneration', 'metadataExtraction',\
+    \ 'videoConversion',\n  'faceDetection', 'facialRecognition', 'smartSearch', 'duplicateDetection',\n  'backgroundTask',\
+    \ 'storageTemplateMigration', 'migration', 'search', 'sidecar',\n  'library', 'notifications', 'backupDatabase', 'ocr',\
+    \ 'workflow', 'integrityCheck', 'editor'}\nlocal result = {}\nlocal function emit(queue, state, value)\n  table.insert(result,\
+    \ 'immich_queue_' .. queue .. '_' .. state)\n  table.insert(result, tostring(value))\nend\nfor _, queue in ipairs(queues)\
+    \ do\n  local prefix = 'immich_bull:' .. queue .. ':'\n  if redis.call('EXISTS', prefix .. 'meta') ~= 1 then error('missing\
+    \ queue metadata') end\n  -- BullMQ wait includes a legacy deprecated priority marker; do not count it.\n  local waiting\
+    \ = redis.call('LLEN', prefix .. 'wait')\n  if redis.call('LINDEX', prefix .. 'wait', -1) == '0:0' then waiting = waiting\
+    \ - 1 end\n  emit(queue, 'waiting', waiting + redis.call('ZCARD', prefix .. 'prioritized'))\n  for _, state in ipairs({'active',\
+    \ 'paused'}) do\n    emit(queue, state, redis.call('LLEN', prefix .. state))\n  end\n  for _, state in ipairs({'failed',\
+    \ 'delayed'}) do\n    emit(queue, state, redis.call('ZCARD', prefix .. state))\n  end\nend\nreturn result\n"

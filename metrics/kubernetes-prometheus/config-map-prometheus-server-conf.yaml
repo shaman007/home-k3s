@@ -1324,6 +1324,153 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
 
+    - name: application-queues
+      rules:
+      - record: mastodon_queue_waiting_jobs
+        expr: max by (queue) (label_replace(redis_script_values{job="valkey-mastodon",key=~"mastodon_queue_.+_waiting"}, "queue", "$1", "key", "mastodon_queue_(.+)_waiting"))
+      - record: mastodon_queue_oldest_age_seconds
+        expr: max by (queue) (label_replace(redis_script_values{job="valkey-mastodon",key=~"mastodon_queue_.+_latency_seconds"}, "queue", "$1", "key", "mastodon_queue_(.+)_latency_seconds"))
+      - record: mastodon_retry_jobs
+        expr: max(redis_script_values{job="valkey-mastodon",key="mastodon_retry_jobs"})
+      - record: mastodon_dead_jobs
+        expr: max(redis_script_values{job="valkey-mastodon",key="mastodon_dead_jobs"})
+      - record: mastodon_scheduled_jobs
+        expr: max(redis_script_values{job="valkey-mastodon",key="mastodon_schedule_jobs"})
+      - record: immich_queue_jobs
+        expr: max by (queue,state) (label_replace(label_replace(redis_script_values{job="valkey-immich",key=~"immich_queue_.+_(waiting|active|paused|failed|delayed)"}, "queue", "$1", "key",
+          "immich_queue_(.+)_(waiting|active|paused|failed|delayed)"), "state", "$2", "key", "immich_queue_(.+)_(waiting|active|paused|failed|delayed)"))
+      - alert: PostfixQueueMetricsUnavailable
+        expr: max((min(up{job="postfix-queue"}) == 0) or (min(postfix_queue_scrape_success{job="postfix-queue"}) == 0) or absent(postfix_queue_scrape_success{job="postfix-queue"}))
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mail
+        annotations:
+          summary: Postfix queue telemetry is unavailable.
+          description: Check scrape health and the non-root collector; missing data does not mean an empty queue.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: MastodonQueueMetricsUnavailable
+        expr: max((min(up{job="valkey-mastodon"}) == 0) or (min(redis_script_result{job="valkey-mastodon"}) != 1) or absent(redis_script_result{job="valkey-mastodon"}))
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mastodon
+        annotations:
+          summary: Mastodon queue telemetry is unavailable.
+          description: Check Valkey exporter health, mounted script and the read-only collector result.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: ImmichQueueMetricsUnavailable
+        expr: max((min(up{job="valkey-immich"}) == 0) or (min(redis_script_result{job="valkey-immich"}) != 1) or absent(redis_script_result{job="valkey-immich"}))
+        for: 10m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: immich
+        annotations:
+          summary: Immich queue telemetry is unavailable.
+          description: Check Valkey exporter health and BullMQ queue inventory; missing metadata fails collection.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: PostfixQueueBacklog
+        expr: sum(postfix_queue_messages{job="postfix-queue",queue=~"active|deferred|incoming|maildrop"}) > 50
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mail
+        annotations:
+          summary: Postfix delivery queue exceeds fifty messages.
+          description: Inspect queue state counts, delivery logs, DNS and remote SMTP reachability. Do not flush or delete messages to clear this alert.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: PostfixQueueOldMail
+        expr: max(postfix_queue_oldest_age_seconds{job="postfix-queue",queue=~"active|deferred|incoming|maildrop"}) > 3600
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mail
+        annotations:
+          summary: Postfix has queued mail older than one hour.
+          description: Age is measured from initial arrival, not entry into the current queue. Investigate delivery deferrals before changing mail.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: PostfixQueueHeldMail
+        expr: sum(postfix_queue_messages{job="postfix-queue",queue="hold"}) > 0
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mail
+        annotations:
+          summary: Postfix has held mail requiring review.
+          description: Held mail does not progress automatically. Confirm whether the hold is intentional; do not release messages automatically.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: MastodonQueueBacklog
+        expr: mastodon_queue_waiting_jobs > 100
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mastodon
+        annotations:
+          summary: Mastodon queue {{ $labels.queue }} exceeds one hundred waiting jobs.
+          description: Compare waiting age, busy workers and database/Valkey health. Queue counts exclude executing jobs.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: MastodonQueueOldJobs
+        expr: mastodon_queue_oldest_age_seconds > 300
+        for: 15m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mastodon
+        annotations:
+          summary: Mastodon queue {{ $labels.queue }} has a job waiting over five minutes.
+          description: Inspect worker availability and queue latency. Retry and scheduled sets are separate from runnable work.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: MastodonRetryBacklog
+        expr: mastodon_retry_jobs > 100
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: mastodon
+        annotations:
+          summary: Mastodon retains over one hundred retrying jobs.
+          description: Federation failures can cause transient retries. Inspect sustained growth and worker logs; do not clear retry/dead sets.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: ImmichQueueBacklog
+        expr: immich_queue_jobs{state="waiting"} > 1000
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: immich
+        annotations:
+          summary: Immich queue {{ $labels.queue }} exceeds one thousand waiting jobs.
+          description: Bulk imports can legitimately build a backlog. Compare active workers and queue trend before intervention. Paused/delayed jobs are shown separately.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+      - alert: ImmichQueueFailedJobs
+        expr: immich_queue_jobs{state="failed"} > 0
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          application: immich
+        annotations:
+          summary: Immich queue {{ $labels.queue }} retains failed jobs.
+          description: This is a retained failure count, not a rate of new failures. Review the Immich admin job view; do not automatically retry or delete jobs.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
   prometheus.yaml: |-
     global:
       scrape_interval: 5s
@@ -2291,3 +2438,15 @@ data:
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_name
+      - job_name: postfix-queue
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        static_configs:
+        - targets:
+          - postfix-queue.mail.svc.cluster.local:9154
+      - job_name: valkey-immich
+        scrape_interval: 45s
+        scrape_timeout: 15s
+        static_configs:
+        - targets:
+          - immich-valkey.immich.svc.cluster.local:9121

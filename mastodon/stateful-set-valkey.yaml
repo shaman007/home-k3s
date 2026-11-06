@@ -52,6 +52,8 @@ spec:
           resources: {requests: {cpu: 40m, memory: 64Mi}, limits: {memory: 512Mi}}
         - name: redis-exporter
           image: harbor.andreybondarenko.com/dockerhub/oliver006/redis_exporter:v1.97.0
+          args: [--script=/collector/mastodon-queues.lua, --lua-script-read-only]
+          volumeMounts: [{name: queue-metrics, mountPath: /collector, readOnly: true}]
           env:
             - name: REDIS_ADDR
               value: redis://localhost:6379
@@ -61,6 +63,9 @@ spec:
           ports: [{name: redis-exporter, containerPort: 9121}]
           securityContext: *security
           resources: {requests: {cpu: 10m, memory: 64Mi}, limits: {memory: 64Mi}}
+      volumes:
+        - name: queue-metrics
+          configMap: {name: mastodon-queue-metrics}
   volumeClaimTemplates:
     - metadata: {name: data}
       spec: {accessModes: [ReadWriteOnce], storageClassName: longhorn, resources: {requests: {storage: 1Gi}}}
