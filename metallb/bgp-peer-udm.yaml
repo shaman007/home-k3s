@@ -1,0 +1,21 @@
+apiVersion: metallb.io/v1beta2
+kind: BGPPeer
+metadata:
+  # Retain the established trial peer identity; FRR rejects duplicate peers.
+  name: udm-bgp-trial
+  namespace: metallb-system
+spec:
+  myASN: 65040
+  peerASN: 65030
+  peerAddress: 192.168.30.1
+  holdTime: 9s
+  # IPv4 BGP only. The existing IPv6 service address remains advertised via L2.
+  dualStackAddressFamily: false
+  nodeSelectors:
+    - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+            - talos-qlw-pbh
+            - talos-d4h-k5m
+            - w386

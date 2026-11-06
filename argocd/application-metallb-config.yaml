@@ -14,7 +14,7 @@ spec:
     targetRevision: main
     directory:
       recurse: false
-      include: "{ip-address-pool-*.yaml,l2-advertisement-*.yaml}"
+      include: "{ip-address-pool-*.yaml,l2-advertisement-*.yaml,bgp-peer-*.yaml,bgp-advertisement-*.yaml}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: metallb-system

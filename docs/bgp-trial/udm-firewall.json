@@ -1,0 +1,44 @@
+{
+  "action": "ALLOW",
+  "connection_state_type": "ALL",
+  "connection_states": [],
+  "create_allow_respond": true,
+  "destination": {
+    "ips": [
+      "192.168.40.240"
+    ],
+    "match_opposite_ips": false,
+    "match_opposite_ports": false,
+    "matching_target": "IP",
+    "matching_target_type": "SPECIFIC",
+    "port": "8080",
+    "port_matching_type": "SPECIFIC",
+    "zone_id": "6ae0608fca472a14b81a3dd5"
+  },
+  "enabled": true,
+  "icmp_typename": "ANY",
+  "icmp_v6_typename": "ANY",
+  "index": 10004,
+  "ip_version": "IPV4",
+  "logging": false,
+  "match_ip_sec": false,
+  "match_opposite_protocol": false,
+  "name": "TEMP workstation to Kubernetes BGP trial",
+  "predefined": false,
+  "protocol": "tcp",
+  "schedule": {
+    "mode": "ALWAYS"
+  },
+  "source": {
+    "zone_id": "677e587203d851722d4a8e6f",
+    "matching_target": "IP",
+    "matching_target_type": "SPECIFIC",
+    "ips": [
+      "192.168.1.112"
+    ],
+    "match_opposite_ips": false,
+    "port_matching_type": "ANY",
+    "match_opposite_ports": false,
+    "match_mac": false
+  }
+}

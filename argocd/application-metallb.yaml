@@ -16,10 +16,11 @@ spec:
     helm:
       values: |
         loadBalancerClass: metallb-l2
-        # All current Services use L2; no BGP peers or advertisements exist.
-        # Keep automatic pruning off during the staged FRR retirement.
+        # FRR-K8s permits IPv4 BGP advertisements from the dual-stack pool.
+        # L2 stays enabled for same-VLAN clients and the existing IPv6 VIP.
+        # Keep automatic pruning off during the backend migration.
         frrk8s:
-          enabled: false
+          enabled: true
           external: false
         controller:
           priorityClassName: homelab-critical
