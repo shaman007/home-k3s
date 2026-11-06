@@ -5,8 +5,8 @@ in OpenBao. Critical alerts retain
 30-minute repeats; other alerts retain four-hour repeats. Resolved notifications
 remain disabled for both integrations.
 
-The ExternalSecret reads `kv/telegram`, properties `token` and `chat_id`, through
-the existing monitoring SecretStore. Store the numeric destination ID as `chat_id`.
+The ExternalSecret reads `kv/telegram`, properties `token` and `id`, through
+the existing monitoring SecretStore. Store the numeric destination ID as `id`.
 Both values are mounted read-only and read through Alertmanager file settings;
 neither value nor the bot username is included in Git. The `bot_name` property
 can be maintained in OpenBao for reference; Alertmanager does not require it.
