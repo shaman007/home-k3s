@@ -11,9 +11,8 @@ spreading is not an acceptance requirement.
 | 192.168.30.210/32: public Traefik | 192.168.30.209, 192.168.30.242 |
 | 192.168.30.211/32: private Traefik | 192.168.30.100, 192.168.30.209 |
 | 192.168.30.213/32: backup-rsync | 192.168.30.242 |
-| 192.168.40.240/32: retained trial | All three nodes |
 
-All three BGP sessions are Established. These four prefixes are the only BGP
+All three BGP sessions are Established. These three prefixes are the only BGP
 routes on the UDM; it advertises zero routes to the cluster. Next hops were
 matched exactly against each Service's ready EndpointSlices. FRR-K8s has three
 5/5-ready Pods, the status cleaner is ready, and the MetalLB controller and all
@@ -55,7 +54,14 @@ by the assistant; unrelated concurrent Longhorn worktree changes were preserved.
 The UDM configuration was updated in its existing object
 `6aeda3a53563a3fcce7f329a`, using `udm-services.conf`; SD-WAN redistribution remains
 disabled. Existing firewall policies, DNS and port forwards were not edited.
-The prior isolated test and its temporary HTTP firewall policy remain available.
+The isolated test and its temporary HTTP firewall policy were subsequently
+retired on 2026-11-06. Its namespace, service, pods, address pool and advertisement
+are gone, together with the HTTP firewall policy and generated return rule.
+The UDM now accepts only the three production /32s, with maximum-prefix three.
+The shared peer retains its historical name `udm-bgp-trial` because it is used
+by production; renaming it is unnecessary session churn. The UDM configuration
+description is now `Kubernetes IPv4 service routing`. Obsolete test deployment
+manifests were removed; `udm-services.conf` remains the production configuration.
 
 Limits: no physical node failure, router reboot persistence, established-session
 survival, complete mail delivery or actual backup transfer was tested. FRR's
@@ -118,7 +124,7 @@ historical `review-metallb-l2.py` is a retirement-specific audit for chart
 - `metallb/bgp-advertisement-services.yaml`: selects only the two existing
   production pools and the UDM peer, with host-route aggregation lengths.
 - `docs/bgp-trial/udm-services.conf`: accepts exactly the three production IPv4
-  VIPs and the existing test /32; raises the per-peer limit to four. Exports no
+  VIPs, with a per-peer limit of three. Exports no
   routes and keeps SD-WAN redistribution disabled in the existing API object.
 
 Checks completed: YAML parsing; Helm 0.16.2 render comparison; Helm lint; exact
@@ -128,7 +134,11 @@ resources. New components' container images/security contexts were inspected.
 FRR startup, mixed-pool IPv4 advertisements and production forwarding were
 subsequently verified as recorded above.
 
-## Rollout procedure
+## Original rollout procedure (historical)
+
+The trial referred to below existed during the original rollout and has since
+been retired. These steps record the completed transition, not a current
+instruction to recreate the test.
 
 1. Capture the current application desired state, auto-sync/reconciliation state,
    non-secret MetalLB configuration, Service addresses and ready endpoints, UDM
@@ -174,14 +184,15 @@ while the upstream production advertisement can be reconciled again.
 
 Remove only `BGPAdvertisement/routed-services` first, and confirm all three
 production /32s disappear from the UDM BGP table. Existing L2 advertisements
-should continue providing the original behavior. Restore the existing UDM
-config object's content from `udm.conf` and its one-prefix limit.
+should continue providing the original behavior. The production-only UDM
+acceptance policy may remain while no production prefixes are advertised.
+Do not restore the deleted trial prefix or its obsolete one-prefix policy.
 
 If necessary, restore the captured native backend desired state and prior
 reconciliation settings, with production BGP advertisements absent. Do not
 delete any retained FRR CRDs, namespaces, PVCs, IP pools or existing L2
 advertisements. Unused FRR workload cleanup is a separate reviewed operation;
-keep pruning disabled. Recheck the isolated trial and every production baseline.
+keep pruning disabled. Recheck every production baseline.
 
 References: [native backend validation in MetalLB 0.16.2](https://github.com/metallb/metallb/blob/v0.16.2/internal/config/validation.go)
 and [MetalLB BGP configuration](https://metallb.io/configuration/_advanced_bgp_configuration/).
