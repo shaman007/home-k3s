@@ -20,6 +20,9 @@ spec:
         app.kubernetes.io/component: exporter
         app.kubernetes.io/name: node-exporter
     spec:
+      # netdev uses netlink in the process network namespace, even with host /sys.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       priorityClassName: homelab-essential
       automountServiceAccountToken: false
       tolerations:
@@ -36,7 +39,8 @@ spec:
             - --no-collector.wifi
             - --no-collector.hwmon
             - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/pods/.+)($|/)
-            - --collector.netclass.ignored-devices=^(veth.*)$
+            - --collector.netclass.ignored-devices=^(veth.*|lxc.*)$
+            - --collector.netdev.device-exclude=^(veth.*|lxc.*)$
           name: node-exporter
           image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
           imagePullPolicy: IfNotPresent

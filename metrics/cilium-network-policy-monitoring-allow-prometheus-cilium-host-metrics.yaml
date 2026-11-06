@@ -13,6 +13,9 @@ spec:
         - remote-node
       toPorts:
         - ports:
+            # node-exporter uses the host network to collect node interfaces.
+            - port: "9100"
+              protocol: TCP
             - port: "9963"
               protocol: TCP
             - port: "9964"
