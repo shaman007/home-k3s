@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
   annotations:
     configmap.reloader.stakater.com/auto: "true"
+    secret.reloader.stakater.com/reload: "alertmanager-telegram"
 spec:
   replicas: 3
   strategy:
@@ -93,6 +94,9 @@ spec:
             limits:
               memory: 128Mi
           volumeMounts:
+            - name: telegram-token
+              mountPath: /etc/alertmanager-telegram
+              readOnly: true
             - name: config-volume
               mountPath: /etc/alertmanager
             - name: templates-volume
@@ -100,6 +104,10 @@ spec:
             - name: alertmanager
               mountPath: /alertmanager
       volumes:
+        - name: telegram-token
+          secret:
+            secretName: alertmanager-telegram
+            defaultMode: 0440
         - name: config-volume
           configMap:
             name: alertmanager-config

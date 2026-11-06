@@ -29,3 +29,8 @@ data:
         smarthost: traefik.traefik.svc.cluster.local:587
         require_tls: false
         text: '{{ template "email.default.text" . }}'
+      telegram_configs:
+      - bot_token_file: /etc/alertmanager-telegram/token
+        chat_id_file: /etc/alertmanager-telegram/chat_id
+        send_resolved: false
+        parse_mode: HTML
