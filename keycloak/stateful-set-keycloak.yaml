@@ -58,7 +58,7 @@ spec:
               memory: 32Mi
       containers:
         - name: keycloak
-          image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.8.1
+          image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.8.2
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
