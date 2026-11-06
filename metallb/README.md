@@ -1,9 +1,9 @@
 # MetalLB
 
-The [all-service IPv4 BGP migration](../docs/bgp-trial/services-migration.md) is
-prepared locally but not deployed. Its FRR-K8s backend and production BGP
-advertisement must be rolled out in that order. Existing L2 advertisements and
-all service addresses are retained.
+The [all-service IPv4 BGP migration](../docs/bgp-trial/services-migration.md) was
+deployed and verified on 2026-11-06. FRR-K8s advertises the three existing IPv4
+service addresses to the UDM for routed traffic. Existing L2 advertisements and
+all service addresses are retained; IPv6 remains on L2.
 
 MetalLB advertises reserved Layer 2 VIPs on Infrastructure VLAN 30, using
 `loadBalancerClass: metallb-l2`:

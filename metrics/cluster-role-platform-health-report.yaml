@@ -7,6 +7,7 @@ rules:
   - apiGroups: [""]
     resources:
       - pods
+      - persistentvolumeclaims
       - secrets
       - services
     verbs: ["get", "list"]

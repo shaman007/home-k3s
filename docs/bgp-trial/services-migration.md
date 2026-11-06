@@ -1,7 +1,67 @@
 # IPv4 BGP for all current MetalLB services
 
-Prepared 2026-11-06; **not deployed**. The isolated IPv4 trial is still the only
-live BGP advertisement. Load spreading is not an acceptance requirement.
+Deployed and verified 2026-11-06. All three production services now use IPv4 BGP
+for routed traffic, retaining their original addresses and L2 access. Load
+spreading is not an acceptance requirement.
+
+## Live result
+
+| Route | Active UDM next hops |
+| --- | --- |
+| 192.168.30.210/32: public Traefik | 192.168.30.209, 192.168.30.242 |
+| 192.168.30.211/32: private Traefik | 192.168.30.100, 192.168.30.209 |
+| 192.168.30.213/32: backup-rsync | 192.168.30.242 |
+| 192.168.40.240/32: retained trial | All three nodes |
+
+All three BGP sessions are Established. These four prefixes are the only BGP
+routes on the UDM; it advertises zero routes to the cluster. Next hops were
+matched exactly against each Service's ready EndpointSlices. FRR-K8s has three
+5/5-ready Pods, the status cleaner is ready, and the MetalLB controller and all
+speakers are ready with zero container restarts after their rollout. All
+MetalLB ConfigurationStates are Valid.
+
+Verification completed:
+
+- All four original LoadBalancer Service specs and VIP status entries match the
+  pre-rollout snapshot exactly. All IP pool and L2Advertisement specs also match.
+- Public and private HTTPS over L2 returned 200; public IPv6 HTTPS and HTTP/3
+  returned 200. Routed Wi-Fi public HTTPS/HTTP/3 and WireGuard private HTTPS passed.
+- Certificate-verified TLS 1.3 handshakes passed for SMTP STARTTLS on 25 and 587,
+  IMAPS on 993, and ManageSieve STARTTLS on 4190, from L2 and routed Wi-Fi sources.
+- Minecraft returned a valid server-status response over L2 and routed Wi-Fi.
+- Backup SSH returned its protocol banner over L2 and permitted routed WireGuard
+  access. No backup data was changed and no mail was sent.
+- Private ingress stayed unreachable from untrusted Wi-Fi, preserving its
+  existing source restriction.
+- Independent external HTTPS checks from Warsaw and London both returned 200
+  at the public WAN IPv4 address. [External report](https://check-host.net/check-report/55ec8168k20).
+- Temporarily excluding w386 from the production BGPAdvertisement reduced public
+  ingress to `.242` and private ingress to `.100`. Twenty of twenty routed public
+  HTTPS requests and twenty of twenty routed private HTTPS requests returned 200;
+  backup's `.242` route and routed SSH remained available. All advertisement
+  paths were restored and checked against ready endpoints again.
+- `metallb`, `metallb-config` and `argocd-applications` are Healthy/Synced, with
+  their original reconciliation/pruning settings. No migration holds or parent
+  exclusions remain. The temporary WireGuard activation was disconnected,
+  restoring the workstation's original interface state.
+
+The repository independently advanced to `14b166453be940924ee713710983edc4f20342e4`
+during the operation and already contained the prepared BGP manifests. Argo
+therefore created the production advertisement at 10:11:13 UTC while FRR was
+still starting, earlier than the planned trial-only gate. Production probes
+passed during startup and after convergence. No commit or push was performed
+by the assistant; unrelated concurrent Longhorn worktree changes were preserved.
+
+The UDM configuration was updated in its existing object
+`6aeda3a53563a3fcce7f329a`, using `udm-services.conf`; SD-WAN redistribution remains
+disabled. Existing firewall policies, DNS and port forwards were not edited.
+The prior isolated test and its temporary HTTP firewall policy remain available.
+
+Limits: no physical node failure, router reboot persistence, established-session
+survival, complete mail delivery or actual backup transfer was tested. FRR's
+shipped root/network-capability helpers produce Kyverno audit findings; no
+enforcement settings or exceptions were changed to suppress them. The original
+same-VLAN routed-pool asymmetry is avoided by retaining L2 for existing VIPs.
 
 ## Scope and intended behavior
 
@@ -48,7 +108,7 @@ have been changed, and no additional blanket exemption is proposed. The
 historical `review-metallb-l2.py` is a retirement-specific audit for chart
 0.16.1; it is not a validator for this new backend configuration.
 
-## Prepared files and checks
+## Configuration files and pre-rollout checks
 
 - `argocd/application-metallb.yaml`: enables bundled FRR-K8s, retains chart
   0.16.2, speaker security context/rolling strategy and disabled pruning.
@@ -65,10 +125,10 @@ Checks completed: YAML parsing; Helm 0.16.2 render comparison; Helm lint; exact
 preservation of existing speaker rollout strategy; no chart resource removals;
 only controller/speaker/backend RBAC modifications among existing rendered
 resources. New components' container images/security contexts were inspected.
-No live backend change or production advertisement has been made. FRR startup,
-mixed-pool IPv4 advertisements and production forwarding are not yet verified.
+FRR startup, mixed-pool IPv4 advertisements and production forwarding were
+subsequently verified as recorded above.
 
-## Controlled rollout
+## Rollout procedure
 
 1. Capture the current application desired state, auto-sync/reconciliation state,
    non-secret MetalLB configuration, Service addresses and ready endpoints, UDM
@@ -105,6 +165,12 @@ mixed-pool IPv4 advertisements and production forwarding are not yet verified.
    configuration. Do not commit or push without a separate user request.
 
 ## Rollback
+
+First protect the targeted applications from parent reconciliation and pause
+their automatic sync, recording and preserving unrelated existing holds. The
+current upstream manifests include BGP, so deleting an advertisement without
+this protection would let Argo recreate it. Do not restore a native backend
+while the upstream production advertisement can be reconciled again.
 
 Remove only `BGPAdvertisement/routed-services` first, and confirm all three
 production /32s disappear from the UDM BGP table. Existing L2 advertisements

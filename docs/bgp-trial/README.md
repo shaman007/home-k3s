@@ -1,8 +1,12 @@
 # Isolated IPv4 BGP trial
 
-Deployed and verified on 2026-11-06. The trial remains running. These files are
-manual trial configuration, outside Argo application source paths; no commit,
-push, production ingress migration, or OpenTofu apply was performed.
+The initial trial was deployed and verified on 2026-11-06 and remains running.
+The [subsequent production rollout](services-migration.md) enabled FRR-K8s and
+IPv4 BGP for all three existing services, preserving L2 and service addresses.
+The configuration and measurements below describe the initial native-backend
+trial. Its namespace, service and pool remain manual trial resources outside
+Argo source paths; the shared BGP peer is now managed by `metallb-config`.
+No commit or push was performed by the assistant.
 
 ## Configuration
 
@@ -93,6 +97,10 @@ saved. The only UniFi configuration objects created are:
 
 ## Rollback
 
+The peer and UDM BGP configuration are now shared with production: do not delete
+them or their production prefix allowances just to remove the test service.
+Use the production rollout's rollback procedure to undo production BGP.
+
 Remove only the trial, leaving existing ingress, MetalLB, VLANs and storage in
 place. The following commands are rollback instructions, not actions performed
 as part of verification:
@@ -100,16 +108,17 @@ as part of verification:
 ```sh
 kubectl delete service bgp-trial -n bgp-trial
 kubectl delete bgpadvertisement bgp-trial -n metallb-system
-kubectl delete bgppeer udm-bgp-trial -n metallb-system
 kubectl delete ipaddresspool bgp-trial -n metallb-system
 kubectl delete namespace bgp-trial
 ```
 
-In UniFi, delete the named trial BGP configuration and temporary firewall policy;
-confirm the generated return policy disappears. Do not modify other routing or
-zone configuration. Verify the test `/32` is absent, the original L2 pools and
-advertisements remain, and repeat the public/private IPv4 and public IPv6 HTTPS
-checks. The original UniFi BGP configuration list was empty.
+In UniFi, remove only the `192.168.40.240/32` permit from the shared BGP config,
+lower its maximum-prefix limit to three, and delete the temporary workstation
+HTTP firewall policy. Confirm its generated return policy disappears. Retain
+all three production /32 permits and the shared BGP peer. Verify the test /32
+is absent, production BGP/L2 routes remain, and repeat public/private IPv4 and
+public IPv6 HTTPS checks. Update `udm-services.conf` to match if retiring the
+test permanently.
 
 References: [UniFi BGP](https://help.ui.com/hc/en-us/articles/16271338193559-UniFi-Border-Gateway-Protocol-BGP)
 and [MetalLB BGP behavior](https://metallb.io/concepts/bgp/).

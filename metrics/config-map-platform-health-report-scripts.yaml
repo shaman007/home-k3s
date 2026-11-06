@@ -280,6 +280,61 @@ data:
                      details, issues)
 
 
+    def pvc_trim_coverage_check(pvcs, volumes, recurring):
+        """Check every PVC; unsupported storage must remain visible for explicit review."""
+        jobs = [j for j in recurring if j.get("spec", {}).get("task") == "filesystem-trim"
+                and not j["metadata"].get("deletionTimestamp")]
+        by_name = {v["metadata"]["name"]: v for v in volumes}
+        details, issues = [], []
+        for pvc in pvcs:
+            spec = pvc.get("spec", {})
+            meta = pvc["metadata"]
+            if spec.get("storageClassName") != "longhorn" or spec.get("volumeMode", "Filesystem") != "Filesystem":
+                detail = {"namespace": meta.get("namespace", "-"), "item": meta["name"],
+                          "value": 0, "value_name": "pvc_trim_covered",
+                          "message": "No configured filesystem-trim mechanism for storage class "
+                                     + str(spec.get("storageClassName")) + " / mode "
+                                     + spec.get("volumeMode", "Filesystem") + "; explicit review required"}
+                details.append(detail)
+                issues.append(detail)
+                continue
+            volume = by_name.get(spec.get("volumeName"), {})
+            labels = volume.get("metadata", {}).get("labels", {})
+            covered = bool(volume) and not volume["metadata"].get("deletionTimestamp") and any(
+                labels.get("recurring-job.longhorn.io/" + j["metadata"]["name"]) == "enabled"
+                or any(labels.get("recurring-job-group.longhorn.io/" + g) == "enabled"
+                       for g in j.get("spec", {}).get("groups", [])) for j in jobs)
+            detail = {"namespace": meta.get("namespace", "-"), "item": meta["name"],
+                      "value": int(covered), "value_name": "pvc_trim_covered"}
+            details.append(detail)
+            if not covered:
+                issues.append(dict(detail, message="Missing Longhorn volume or filesystem-trim assignment"))
+        return check("pvc_trim_coverage", bool(details) and not issues,
+                     f"Trim coverage: {len(details) - len(issues)}/{len(details)} PVC(s) have configured filesystem trim.",
+                     details, issues)
+
+
+    EXPECTED_LONGHORN_TRIM_JOBS = {"trim-daily-a", "trim-daily-b", "trim-daily-c", "trim-hourly", "trim-15min"}
+
+
+    def longhorn_trim_guard_check(cronjobs, recurring):
+        guard = next((c for c in cronjobs if c["metadata"]["name"] == "trim-coverage-guard"), {})
+        healthy, _ = cronjob_recently_succeeded(guard, utc_now() - timedelta(hours=1))
+        detail = {"namespace": "longhorn-system", "item": "trim-coverage-guard",
+                  "value": int(healthy), "value_name": "longhorn_trim_guard_healthy"}
+        actual = {j["metadata"]["name"] for j in recurring
+                  if j.get("spec", {}).get("task") == "filesystem-trim"
+                  and not j["metadata"].get("deletionTimestamp")}
+        missing = sorted(EXPECTED_LONGHORN_TRIM_JOBS - actual)
+        issues = [] if healthy else [detail]
+        issues.extend({"namespace": "longhorn-system", "item": name, "value": 0,
+                       "value_name": "longhorn_expected_trim_job_present",
+                       "message": "GitOps filesystem-trim RecurringJob is missing"} for name in missing)
+        return check("longhorn_trim_guard", healthy and not missing,
+                     "Trim guard must have succeeded within one hour; all GitOps trim definitions must exist.",
+                     [detail] + issues if healthy else issues, issues)
+
+
     def longhorn_maintenance_check(recurring, cronjobs, cutoff):
         """CronJob status survives Job history and terminated-Pod garbage collection."""
         by_owner = {}
@@ -775,8 +830,11 @@ data:
         recurring = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/recurringjobs").get("items", [])
         lh_cronjobs = kube("/apis/batch/v1/namespaces/longhorn-system/cronjobs").get("items", [])
         checks.append(longhorn_maintenance_check(recurring, lh_cronjobs, recent_cutoff))
+        checks.append(longhorn_trim_guard_check(lh_cronjobs, recurring))
 
         volumes = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/volumes").get("items", [])
+        pvcs = kube("/api/v1/persistentvolumeclaims").get("items", [])
+        checks.append(pvc_trim_coverage_check(pvcs, volumes, recurring))
         backups = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/backups").get("items", [])
         checks.append(longhorn_backup_check(volumes, recurring, backups, recent_cutoff))
 

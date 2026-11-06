@@ -1,6 +1,6 @@
 # Proposed normalized Longhorn recurring jobs.
 # Generated from live cluster state on 2026-03-11.
-# This file is intentionally descriptive and is not wired into Argo yet.
+# Managed by the longhorn-custom Argo CD Application.
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:

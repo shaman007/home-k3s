@@ -1,0 +1,218 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trim-coverage-guard
+  namespace: longhorn-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: trim-coverage-guard
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: trim-coverage-guard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: trim-coverage-guard
+subjects:
+- kind: ServiceAccount
+  name: trim-coverage-guard
+  namespace: longhorn-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: trim-coverage-guard
+  namespace: longhorn-system
+rules:
+- apiGroups:
+  - longhorn.io
+  resources:
+  - volumes
+  verbs:
+  - get
+  - list
+  - patch
+- apiGroups:
+  - longhorn.io
+  resources:
+  - recurringjobs
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: trim-coverage-guard
+  namespace: longhorn-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: trim-coverage-guard
+subjects:
+- kind: ServiceAccount
+  name: trim-coverage-guard
+  namespace: longhorn-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trim-coverage-guard
+  namespace: longhorn-system
+data:
+  guard.py: |
+    """Restore missing trim labels without changing existing schedules or backup labels."""
+    import json
+    import os
+    from pathlib import Path
+    import ssl
+    import urllib.request
+
+    PREFIX = '/apis/longhorn.io/v1beta2/namespaces/longhorn-system/'
+    LABEL = 'recurring-job.longhorn.io/trim-daily-a'
+
+
+    def assignments(labels, jobs):
+        keys = {'recurring-job.longhorn.io/' + j['metadata']['name'] for j in jobs}
+        keys.update('recurring-job-group.longhorn.io/' + g
+                    for j in jobs for g in j.get('spec', {}).get('groups', []))
+        return {key: 'enabled' for key in keys if labels.get(key) == 'enabled'}
+
+
+    def selected(labels, jobs):
+        return bool(assignments(labels, jobs))
+
+
+    def repair_volume(api, volume, jobs):
+        meta = volume['metadata']
+        if meta.get('deletionTimestamp'):
+            return
+        existing = assignments(meta.get('labels', {}), jobs)
+        repair = existing or {LABEL: 'enabled'}
+        # PVC source labels can replace volume labels. Repair the source first,
+        # copying the existing effective cadence instead of adding another schedule.
+        ks = volume.get('status', {}).get('kubernetesStatus', {})
+        if ks.get('namespace') and ks.get('pvcName') and not ks.get('lastPVCRefAt'):
+            path = '/api/v1/namespaces/' + ks['namespace'] + '/persistentvolumeclaims/' + ks['pvcName']
+            pvc = api(path)
+            if (pvc.get('spec', {}).get('volumeName') == meta['name']
+                    and not pvc['metadata'].get('deletionTimestamp')):
+                if pvc.get('spec', {}).get('volumeMode', 'Filesystem') != 'Filesystem':
+                    return
+                labels = pvc['metadata'].get('labels', {})
+                if not existing and labels.get('recurring-job.longhorn.io/source') == 'enabled':
+                    repair = assignments(labels, jobs) or repair
+                if labels.get('recurring-job.longhorn.io/source') == 'enabled' and not selected(labels, jobs):
+                    api(path, {'metadata': {'resourceVersion': pvc['metadata']['resourceVersion'], 'labels': repair}})
+        if not existing:
+            path = PREFIX + 'volumes/' + meta['name']
+            api(path, {'metadata': {'resourceVersion': meta['resourceVersion'], 'labels': repair}})
+            print('Restored trim coverage:', meta['name'])
+
+
+    def reconcile(api):
+        jobs = [j for j in api(PREFIX + 'recurringjobs')['items']
+                if j.get('spec', {}).get('task') == 'filesystem-trim' and not j['metadata'].get('deletionTimestamp')]
+        if not any(j['metadata']['name'] == 'trim-daily-a' for j in jobs):
+            raise RuntimeError('GitOps trim-daily-a RecurringJob is missing; refusing to assign a dangling label')
+        failures = []
+        for volume in api(PREFIX + 'volumes')['items']:
+            try:
+                repair_volume(api, volume, jobs)
+            except Exception as exc:
+                # Do not let a stale PVC reference or one conflict starve later volumes.
+                # Never print API response bodies, tokens, or other exception contents.
+                name = volume['metadata']['name']
+                print('Trim coverage repair failed:', name, type(exc).__name__)
+                failures.append(name)
+        if failures:
+            raise RuntimeError(f'Trim coverage repair failed for {len(failures)} volume(s)')
+
+
+    def main():
+        sa = Path('/var/run/secrets/kubernetes.io/serviceaccount')
+        context = ssl.create_default_context(cafile=str(sa / 'ca.crt'))
+        host = 'https://' + os.environ['KUBERNETES_SERVICE_HOST'] + ':' + os.environ['KUBERNETES_SERVICE_PORT']
+        def api(path, patch=None):
+            headers = {'Authorization': 'Bearer ' + (sa / 'token').read_text().strip()}
+            if patch is not None:
+                headers['Content-Type'] = 'application/merge-patch+json'
+            request = urllib.request.Request(host + path, headers=headers,
+                        data=json.dumps(patch).encode() if patch is not None else None,
+                        method='PATCH' if patch is not None else 'GET')
+            with urllib.request.urlopen(request, context=context, timeout=20) as response:
+                return json.load(response)
+        reconcile(api)
+
+
+    if __name__ == '__main__':
+        main()
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: trim-coverage-guard
+  namespace: longhorn-system
+spec:
+  schedule: '*/15 * * * *'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app: trim-coverage-guard
+        spec:
+          serviceAccountName: trim-coverage-guard
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: guard
+            image: harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine
+            command:
+            - python3
+            - /config/guard.py
+            env:
+            - name: PYTHONDONTWRITEBYTECODE
+              value: '1'
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+            volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          volumes:
+          - name: config
+            configMap:
+              name: trim-coverage-guard
