@@ -24,7 +24,11 @@ The platform health report separately checks every PVC. Filesystem PVCs in the
 `longhorn` StorageClass are checked against actual Longhorn volume labels and
 live trim job definitions. Empty inventory, missing volumes, and missing
 assignments fail. Other StorageClasses and raw block PVCs also fail with an
-explicit-review message rather than silently disappearing from coverage.
+explicit-review message rather than silently disappearing from coverage. Approved
+unsupported PVCs remain visible with a separate `pvc_trim_unsupported` metric
+and a reason; they are excluded from the required trim denominator. Exceptions
+match namespace, PVC name, StorageClass, volume mode, and bound PV, so a changed
+binding or storage type requires a fresh review.
 The existing schedule-aware maintenance check detects missing, suspended, and
 stale generated trim CronJobs. A separate guard check fails when the guard is
 missing, suspended, or has not succeeded within one hour, or any of the five
@@ -38,8 +42,10 @@ on `/dev/sda1`, mounted at
 `/var/mnt/storage` on `talos-d4h-k5m`. Read-only inspection on 2026-11-06 found
 model `ST24000NM002H-3K`, rotational flag `1`, and both `discard_max_bytes` and
 `discard_max_hw_bytes` equal to `0`. This device does not support discard, so a
-host fstrim job cannot provide trim coverage. An explicit scope exception for
-these PVCs remains pending user confirmation. No host configuration is changed.
+host fstrim job cannot provide trim coverage. The user approved recording
+`plex/plex-lib` and `immich/immich-library-hdd` as unsupported on 2026-11-06.
+These exact PVCs and their current `local-storage` and `immich-library-hdd` PV
+bindings are declared in `PVC_TRIM_UNSUPPORTED` in the platform health report. No host configuration is changed.
 See the [Linux block queue documentation](https://www.kernel.org/doc/html/latest/block/queue-sysfs.html).
 
 Repository validation does not deploy this change. After authorized GitOps

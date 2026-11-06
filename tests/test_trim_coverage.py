@@ -185,3 +185,46 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertEqual('trim-coverage-guard', pod['serviceAccountName'])
         self.assertTrue(pod['securityContext']['runAsNonRoot'])
         self.assertTrue(pod['containers'][0]['securityContext']['readOnlyRootFilesystem'])
+
+    def test_approved_plex_exception_is_visible_and_not_counted_as_trimmed(self):
+        local = {'metadata': {'namespace': 'plex', 'name': 'plex-lib'},
+                 'spec': {'storageClassName': 'local-path', 'volumeName': 'local-storage'}}
+        self.volume['metadata']['labels']['recurring-job.longhorn.io/trim-daily-a'] = 'enabled'
+        result = self.check(pvcs=[self.pvc, local])
+        self.assertTrue(result['passed'])
+        self.assertIn('1/1 PVC(s)', result['summary'])
+        self.assertIn('1 explicitly approved unsupported', result['summary'])
+        exception = next(d for d in result['details'] if d['item'] == 'plex-lib')
+        self.assertEqual('pvc_trim_unsupported', exception['value_name'])
+        self.assertIn('Approved exception', exception['message'])
+
+    def test_plex_exception_cannot_hide_changed_binding_storage_or_other_pvc(self):
+        for namespace, name, storage, volume, mode in [
+            ('other', 'plex-lib', 'local-path', 'local-storage', 'Filesystem'),
+            ('immich', 'immich-library-hdd', 'local-path', 'replacement', 'Filesystem'),
+            ('plex', 'plex-lib', 'local-path', 'new-disk', 'Filesystem'),
+            ('plex', 'plex-lib', 'longhorn', 'local-storage', 'Filesystem'),
+            ('plex', 'plex-lib', 'local-path', 'local-storage', 'Block'),
+        ]:
+            with self.subTest(namespace=namespace, name=name, storage=storage, volume=volume, mode=mode):
+                pvc = {'metadata': {'namespace': namespace, 'name': name},
+                       'spec': {'storageClassName': storage, 'volumeName': volume, 'volumeMode': mode}}
+                result = self.check(pvcs=[pvc])
+                self.assertFalse(result['passed'])
+                self.assertEqual([name], [d['item'] for d in result['review_details']])
+
+    def test_both_approved_hdd_exceptions_are_visible_and_scoped(self):
+        pvcs = [
+            {'metadata': {'namespace': 'plex', 'name': 'plex-lib'},
+             'spec': {'storageClassName': 'local-path', 'volumeName': 'local-storage'}},
+            {'metadata': {'namespace': 'immich', 'name': 'immich-library-hdd'},
+             'spec': {'storageClassName': 'local-path', 'volumeName': 'immich-library-hdd'}},
+        ]
+        self.volume['metadata']['labels']['recurring-job.longhorn.io/trim-daily-a'] = 'enabled'
+        result = self.check(pvcs=[self.pvc] + pvcs)
+        self.assertTrue(result['passed'])
+        self.assertIn('1/1 PVC(s)', result['summary'])
+        self.assertIn('2 explicitly approved unsupported', result['summary'])
+        self.assertEqual(2, sum(d['value_name'] == 'pvc_trim_unsupported' for d in result['details']))
+        self.assertEqual({('plex', 'plex-lib'), ('immich', 'immich-library-hdd')},
+                         set(self.report['PVC_TRIM_UNSUPPORTED']))

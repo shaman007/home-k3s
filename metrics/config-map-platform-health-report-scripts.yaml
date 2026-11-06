@@ -280,15 +280,40 @@ data:
                      details, issues)
 
 
+    # Explicitly approved on 2026-11-06. Match the binding as well as PVC identity
+    # so migration to another disk or StorageClass requires a fresh review.
+    PVC_TRIM_UNSUPPORTED = {
+        ("immich", "immich-library-hdd"): {
+            "storageClassName": "local-path", "volumeName": "immich-library-hdd",
+            "volumeMode": "Filesystem",
+            "reason": "Approved exception: ST24000NM002H-3K on talos-d4h-k5m has discard_max_hw_bytes=0",
+        },
+        ("plex", "plex-lib"): {
+            "storageClassName": "local-path", "volumeName": "local-storage",
+            "volumeMode": "Filesystem",
+            "reason": "Approved exception: ST24000NM002H-3K on talos-d4h-k5m has discard_max_hw_bytes=0",
+        },
+    }
+
+
     def pvc_trim_coverage_check(pvcs, volumes, recurring):
         """Check every PVC; unsupported storage must remain visible for explicit review."""
         jobs = [j for j in recurring if j.get("spec", {}).get("task") == "filesystem-trim"
                 and not j["metadata"].get("deletionTimestamp")]
         by_name = {v["metadata"]["name"]: v for v in volumes}
         details, issues = [], []
+        unsupported = 0
         for pvc in pvcs:
             spec = pvc.get("spec", {})
             meta = pvc["metadata"]
+            exception = PVC_TRIM_UNSUPPORTED.get((meta.get("namespace"), meta["name"]))
+            if exception and all(spec.get(field, "Filesystem" if field == "volumeMode" else None) == exception[field]
+                                 for field in ("storageClassName", "volumeName", "volumeMode")):
+                unsupported += 1
+                details.append({"namespace": meta["namespace"], "item": meta["name"],
+                                "value": 1, "value_name": "pvc_trim_unsupported",
+                                "message": exception["reason"]})
+                continue
             if spec.get("storageClassName") != "longhorn" or spec.get("volumeMode", "Filesystem") != "Filesystem":
                 detail = {"namespace": meta.get("namespace", "-"), "item": meta["name"],
                           "value": 0, "value_name": "pvc_trim_covered",
@@ -310,7 +335,8 @@ data:
             if not covered:
                 issues.append(dict(detail, message="Missing Longhorn volume or filesystem-trim assignment"))
         return check("pvc_trim_coverage", bool(details) and not issues,
-                     f"Trim coverage: {len(details) - len(issues)}/{len(details)} PVC(s) have configured filesystem trim.",
+                     f"Trim coverage: {len(details) - len(issues) - unsupported}/{len(details) - unsupported} PVC(s) have configured filesystem trim; "
+                     f"{unsupported} explicitly approved unsupported PVC(s).",
                      details, issues)
 
 
