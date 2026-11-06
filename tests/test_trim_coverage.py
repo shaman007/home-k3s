@@ -228,3 +228,26 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertEqual(2, sum(d['value_name'] == 'pvc_trim_unsupported' for d in result['details']))
         self.assertEqual({('plex', 'plex-lib'), ('immich', 'immich-library-hdd')},
                          set(self.report['PVC_TRIM_UNSUPPORTED']))
+
+    def test_batch_pvc_attachment_window_and_source_assignment(self):
+        window = yaml.safe_load((ROOT / 'ooni/cron-job-ooniprobe-trim-window.yaml').read_text())
+        check = self.report['pvc_trim_attachment_check']
+        self.assertTrue(check([window])['passed'])
+        self.assertFalse(check([])['passed'])
+        import copy
+        for fault in ['suspend', 'schedule', 'timeZone', 'claim']:
+            broken = copy.deepcopy(window)
+            if fault == 'suspend': broken['spec']['suspend'] = True
+            elif fault == 'schedule': broken['spec']['schedule'] = '0 1 * * *'
+            elif fault == 'timeZone': broken['spec']['timeZone'] = 'Europe/Prague'
+            else: broken['spec']['jobTemplate']['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim']['claimName'] = 'other'
+            self.assertFalse(check([broken])['passed'])
+        pod = window['spec']['jobTemplate']['spec']['template']['spec']
+        self.assertFalse(pod['automountServiceAccountToken'])
+        self.assertIn('time.sleep(900)', pod['containers'][0]['command'][-1])
+        self.assertTrue(pod['securityContext']['runAsNonRoot'])
+        pvc = yaml.safe_load((ROOT / 'ooni/persistent-volume-claim-ooniprobe.yaml').read_text())
+        self.assertEqual('enabled', pvc['metadata']['labels']['recurring-job.longhorn.io/trim-daily-a'])
+        jobs = list(yaml.safe_load_all((ROOT / 'longhorn/recurring-jobs-proposed.yaml').read_text()))
+        daily = next(j for j in jobs if j['metadata']['name'] == 'trim-daily-a')
+        self.assertEqual('5 0 * * *', daily['spec']['cron'])

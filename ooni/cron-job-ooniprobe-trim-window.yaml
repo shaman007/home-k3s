@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ooniprobe-trim-window
+  namespace: ooni
+spec:
+  # Longhorn trim-daily-a runs at 00:05 UTC. Mount the otherwise idle PVC
+  # beforehand so its frontend is available for filesystem trim.
+  schedule: "0 0 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1200
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ooniprobe-trim-window
+        spec:
+          automountServiceAccountToken: false
+          priorityClassName: homelab-batch
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            fsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: mount-window
+              image: harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine
+              command: [python3, -c, "import time; print('OONI PVC mounted for nightly Longhorn trim', flush=True); time.sleep(900)"]
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 64Mi
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: ooniprobe-data

@@ -340,6 +340,21 @@ data:
                      details, issues)
 
 
+    def pvc_trim_attachment_check(cronjobs):
+        window = next((c for c in cronjobs if c["metadata"]["name"] == "ooniprobe-trim-window"), {})
+        spec = window.get("spec", {})
+        pod = spec.get("jobTemplate", {}).get("spec", {}).get("template", {}).get("spec", {})
+        mounts_pvc = any(v.get("persistentVolumeClaim", {}).get("claimName") == "ooniprobe-data"
+                         for v in pod.get("volumes", []))
+        healthy = bool(window) and not window["metadata"].get("deletionTimestamp") and not spec.get("suspend", False)
+        healthy = healthy and spec.get("schedule") == "0 0 * * *" and spec.get("timeZone") == "Etc/UTC" and mounts_pvc
+        detail = {"namespace": "ooni", "item": "ooniprobe-trim-window", "value": int(healthy),
+                  "value_name": "pvc_trim_attachment_window_configured"}
+        return check("pvc_trim_attachment", healthy,
+                     "OONI PVC attachment window must exist, be enabled at 00:00 UTC, and mount ooniprobe-data before daily trim.",
+                     [detail], [] if healthy else [detail])
+
+
     EXPECTED_LONGHORN_TRIM_JOBS = {"trim-daily-a", "trim-daily-b", "trim-daily-c", "trim-hourly", "trim-15min"}
 
 
@@ -857,6 +872,8 @@ data:
         lh_cronjobs = kube("/apis/batch/v1/namespaces/longhorn-system/cronjobs").get("items", [])
         checks.append(longhorn_maintenance_check(recurring, lh_cronjobs, recent_cutoff))
         checks.append(longhorn_trim_guard_check(lh_cronjobs, recurring))
+        ooni_cronjobs = kube("/apis/batch/v1/namespaces/ooni/cronjobs").get("items", [])
+        checks.append(pvc_trim_attachment_check(ooni_cronjobs))
 
         volumes = kube("/apis/longhorn.io/v1beta2/namespaces/longhorn-system/volumes").get("items", [])
         pvcs = kube("/api/v1/persistentvolumeclaims").get("items", [])

@@ -8,6 +8,7 @@ metadata:
     app.kubernetes.io/instance: ooniprobe
     app.kubernetes.io/managed-by: argoCD
     recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/trim-daily-a: enabled
     recurring-job.longhorn.io/backup-daily-retain31-c: enabled
 spec:
   accessModes:

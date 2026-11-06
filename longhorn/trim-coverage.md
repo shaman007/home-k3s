@@ -53,3 +53,16 @@ publication/reconciliation, verify the guard completes, the coverage report pass
 for all filesystem Longhorn PVCs, and trim CronJobs successfully execute on their
 configured schedules. Longhorn CronJob success is schedule-level evidence; it is
 not proof of the number of bytes reclaimed on each filesystem.
+
+## Detached batch volumes
+
+OONI's probe is a daily CronJob, so its PVC normally detaches between runs.
+A live trim verification on 2026-11-06 exposed that Longhorn's trim API is
+unavailable while that frontend is detached, even with recurring jobs allowed
+on detached volumes. `ooni/cron-job-ooniprobe-trim-window.yaml` mounts the PVC
+at 00:00 UTC for 15 minutes, covering `trim-daily-a` at 00:05 UTC. It needs no
+API credentials or privileged container and writes no application files.
+The platform report checks that this attachment job exists, is enabled at the
+expected UTC schedule, and mounts the correct PVC. The existing Longhorn
+maintenance check monitors successful trim execution itself. The OONI PVC's
+trim label is also explicit in its source manifest.
