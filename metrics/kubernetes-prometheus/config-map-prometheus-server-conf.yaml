@@ -338,6 +338,10 @@ data:
         labels:
           job: metallb
       - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "unifi-bgp", "", "")
+        labels:
+          job: unifi-bgp
+      - record: homelab_expected_scrape_job
         expr: label_replace(vector(1), "job", "valkey-wordpress", "", "")
         labels:
           job: valkey-wordpress
@@ -1094,6 +1098,123 @@ data:
           summary: MetalLB is using stale configuration.
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+      - alert: BGPNeighborUnavailable
+        expr: (max by(node) (kube_pod_info{namespace="metallb-system"} and on(namespace,pod) kube_pod_owner{namespace="metallb-system",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"})) unless on(node) (max by(node) (frrk8s_bgp_session_up{job="metallb",peer="192.168.30.1",vrf="default"} == 1))
+        for: 2m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: metallb
+          component: bgp
+        annotations:
+          summary: UDM BGP session is down or missing on {{ $labels.node }}.
+          description: Expected FRR node has no established IPv4 session to 192.168.30.1. Check exporter health, FRR state and the UDM peer; L2 may still work.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: BGPServiceRouteUnavailable
+        expr: label_join(max by(namespace,service,ip) (kube_service_status_load_balancer_ingress{ip=~"192[.]168[.]30[.](210|211|213)"}), "service", "/", "namespace", "service") unless on(service,ip) (max by(service,ip) ((metallb_speaker_announced{job="metallb",protocol="bgp"} == 1) and on(node) (max by(node) (frrk8s_bgp_session_up{job="metallb",peer="192.168.30.1",vrf="default"} == 1))))
+        for: 2m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+          job: metallb
+          component: bgp
+        annotations:
+          summary: No usable BGP advertisement for {{ $labels.service }} ({{ $labels.ip }}).
+          description: No speaker announces this allocated IPv4 service address through a node with an established UDM session. L2 reachability alone does not clear this condition.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: FRRConfigUnavailable
+        expr: (max by(node) (kube_pod_info{namespace="metallb-system"} and on(namespace,pod) kube_pod_owner{namespace="metallb-system",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"})) unless on(node) max by(node) ((frrk8s_k8s_client_config_loaded_bool{job="metallb"} == 1) and (frrk8s_k8s_client_config_stale_bool{job="metallb"} == 0))
+        for: 5m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: metallb
+          component: bgp
+        annotations:
+          summary: FRR configuration is stale, unloaded or unobservable on {{ $labels.node }}.
+          description: Inspect FRR controller/reloader logs and authenticated metrics on ports 9140/9141. Do not restart nodes or delete service IP pools to clear the alert.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: BGPPrefixAdvertisementMismatch
+        expr: (count by(node) (count by(node,ip) (metallb_speaker_announced{job="metallb",protocol="bgp",ip!~".*:.*"} == 1))) unless on(node) ((max by(node) (frrk8s_bgp_announced_prefixes_total{job="metallb",peer="192.168.30.1",vrf="default"})) == on(node) (count by(node) (count by(node,ip) (metallb_speaker_announced{job="metallb",protocol="bgp",ip!~".*:.*"} == 1))))
+        for: 5m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: metallb
+          component: bgp
+        annotations:
+          summary: FRR IPv4 prefix count differs from MetalLB intent on {{ $labels.node }}.
+          description: The current FRR advertised-prefix gauge must match unique IPv4 addresses announced by the local speaker. Counts vary with ready endpoints; IPv6 stays on L2 and is excluded.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: BGPUnexpectedReceivedRoutes
+        expr: frrk8s_bgp_received_prefixes_total{job="metallb",peer="192.168.30.1",vrf="default"} > 0
+        for: 5m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: metallb
+          component: bgp
+        annotations:
+          summary: FRR receives unexpected routes from the UDM on {{ $labels.node }}.
+          description: This design exports no UDM routes to Kubernetes. Check the UDM outbound route-map and FRR inbound policy before changing routing.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: UDMBGPCollectionUnavailable
+        expr: (unifi_bgp_scrape_success{job="unifi-bgp"} == 0) or (time() - unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp"} > 120) or absent(unifi_bgp_scrape_success{job="unifi-bgp"})
+        for: 5m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: unifi-bgp
+          component: bgp
+        annotations:
+          summary: UDM BGP route-table monitoring is unavailable.
+          description: Check the read-only bgp-exporter sidecar, UniFi credentials and controller API. Failed collection does not reuse old route health.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: UDMBGPRouteMissing
+        expr: (unifi_bgp_route_active_next_hops{job="unifi-bgp"} == 0) and on(instance) (unifi_bgp_scrape_success{job="unifi-bgp"} == 1)
+        for: 2m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+          job: unifi-bgp
+          component: bgp
+        annotations:
+          summary: UDM has no active Kubernetes next hop for {{ $labels.prefix }}.
+          description: The controller forwarding table lacks a usable BGP route for this production VIP. Existing L2 access may still succeed; inspect UDM prefix filters and received routes.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: UDMBGPPeerUnavailable
+        expr: (unifi_bgp_peer_established{job="unifi-bgp"} == 0) and on(instance) (unifi_bgp_scrape_success{job="unifi-bgp"} == 1)
+        for: 2m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: unifi-bgp
+          component: bgp
+        annotations:
+          summary: UDM BGP peer {{ $labels.peer }} is not established.
+          description: The router reports a missing, down or wrong-AS Kubernetes neighbor. Compare FRR session telemetry before changing routing.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: UDMBGPPolicyViolation
+        expr: ((unifi_bgp_policy_violations{job="unifi-bgp"} > 0) or (unifi_bgp_exported_routes{job="unifi-bgp"} > 0)) and on(instance) (unifi_bgp_scrape_success{job="unifi-bgp"} == 1)
+        for: 2m
+        labels:
+          severity: mail
+          priority: critical
+          owner: homelab
+          job: unifi-bgp
+          component: bgp
+        annotations:
+          summary: UDM BGP route exchange differs from the reviewed policy.
+          description: Inspect peer/reason labels. Only the three production /32s, the three Kubernetes neighbors and zero UDM route exports are expected.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
       - alert: LoadBalancerAddressMissing
         expr: kube_service_spec_type{type="LoadBalancer"} unless on(namespace,service) kube_service_status_load_balancer_ingress
         for: 10m
@@ -1653,6 +1774,12 @@ data:
         - source_labels:
           - __meta_kubernetes_pod_node_name
           target_label: node
+      - job_name: unifi-bgp
+        scrape_interval: 45s
+        scrape_timeout: 10s
+        static_configs:
+        - targets:
+          - unifi-poller.unifi.svc.cluster.local:9131
       - job_name: valkey-wordpress
         scrape_interval: 45s
         scrape_timeout: 15s

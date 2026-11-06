@@ -87,7 +87,7 @@ names.append(dashboard('gpu-overview', 'GPU Overview',
 ]))
 
 names.append(dashboard('network-metrics', 'Cluster Network Metrics',
-    'Cilium, Hubble, CoreDNS and MetalLB metrics. Agent and MetalLB series appear after their collection changes reconcile. No packet inspection features are enabled by this dashboard.', [
+    'Cilium, Hubble and IPv4 service BGP metrics from MetalLB/FRR and read-only UDM API collection. Compare speaker intent with installed UDM next hops. L2 and IPv6 remain active. No packet inspection features are enabled.', [
     ('Hubble flows', 'sum by (verdict) (rate(hubble_flows_processed_total[$__rate_interval]))', 'ops', '{{verdict}}'),
     ('Hubble dropped packets', 'sum by (reason) (rate(hubble_drop_total[$__rate_interval]))', 'pps', '{{reason}}'),
     ('Hubble lost events', 'sum by (source) (rate(hubble_lost_events_total[$__rate_interval]))', 'ops', '{{source}}'),
@@ -96,6 +96,16 @@ names.append(dashboard('network-metrics', 'Cluster Network Metrics',
     ('CoreDNS response codes', 'sum by (rcode) (rate(coredns_dns_responses_total[$__rate_interval]))', 'ops', '{{rcode}}'),
     ('MetalLB target health', 'up{job="metallb"}', 'short', '{{pod}} / {{instance}}'),
     ('Cilium dropped packets', 'sum by (reason,direction) (rate(cilium_drop_count_total[$__rate_interval]))', 'pps', '{{direction}} / {{reason}}'),
+    ('UDM BGP sessions (1 = established)', 'frrk8s_bgp_session_up{job="metallb",peer="192.168.30.1",vrf="default"}', 'short', '{{node}} / {{peer}}'),
+    ('FRR IPv4 advertised prefixes', 'frrk8s_bgp_announced_prefixes_total{job="metallb",peer="192.168.30.1",vrf="default"}', 'short', '{{node}}'),
+    ('IPv4 service BGP paths with established sessions', 'count by(service,ip) ((metallb_speaker_announced{job="metallb",protocol="bgp",ip!~".*:.*"} == 1) and on(node) max by(node) (frrk8s_bgp_session_up{job="metallb",peer="192.168.30.1",vrf="default"} == 1))', 'short', '{{service}} / {{ip}}'),
+    ('FRR stale configuration (0 = healthy)', 'frrk8s_k8s_client_config_stale_bool{job="metallb"}', 'short', '{{node}}'),
+    ('Unexpected routes received from UDM (expected 0)', 'frrk8s_bgp_received_prefixes_total{job="metallb",peer="192.168.30.1",vrf="default"}', 'short', '{{node}}'),
+    ('UDM BGP collection (1 = successful)', 'unifi_bgp_scrape_success{job="unifi-bgp"}', 'short', '{{instance}}'),
+    ('UDM installed active service next hops', 'unifi_bgp_route_active_next_hops{job="unifi-bgp"}', 'short', '{{prefix}}'),
+    ('UDM neighbor state (1 = established)', 'unifi_bgp_peer_established{job="unifi-bgp"}', 'short', '{{peer}}'),
+    ('UDM routes exported to Kubernetes (expected 0)', 'unifi_bgp_exported_routes{job="unifi-bgp"}', 'short', '{{peer}}'),
+    ('UDM routing policy violations (expected 0)', 'unifi_bgp_policy_violations{job="unifi-bgp"}', 'short', '{{reason}}'),
 ]))
 
 names.append(dashboard('platform-controllers', 'Platform Controller Metrics',

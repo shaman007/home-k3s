@@ -16,8 +16,92 @@ The set retains 21 existing alerts (correcting OpenBao selectors, memory/load/fi
 - Databases: Redis/Valkey down, rejected connections, more than one hundred evictions per fifteen minutes, configured memory limit above 90% (unlimited memory excluded). PostgreSQL/MySQL connections above 80%; PostgreSQL replica lag above sixty seconds only on replicas. Existing server-down rules retained.
 - Ingress: service 5xx fraction above 5%, p95 latency above three seconds; both require at least one hundred requests per ten minutes. Independent HTTPS probes from the connectivity-exporter check SSO OpenID discovery, Harbor ping and Mastodon health, including certificate verification and exact HTTP 200. Failure or missing probe persists ten minutes. The exporter Deployment explicitly loads the mounted configuration because the image entrypoint otherwise selects its bundled file. These are in-cluster probes of public routes, not an external Internet vantage point.
 - Monitoring: rule evaluation, TSDB/WAL, Thanos upload/halted compaction, Loki discard/WAL and Alloy config/log-drop failures.
-- Networking: CoreDNS SERVFAIL above 5% or p99 latency above one second, minimum one hundred responses/requests per ten minutes. Hubble loss above one event per second. MetalLB stale configuration or a LoadBalancer service lacking an address for ten minutes. Pool fullness alone is deliberately not an alert: reserved pools are fully allocated by design. FRR/BGP is retired. Normal Cilium policy-denied traffic is not treated as a network outage.
+- Networking: CoreDNS SERVFAIL above 5% or p99 latency above one second, minimum one hundred responses/requests per ten minutes. Hubble loss above one event per second. MetalLB stale configuration or a LoadBalancer service lacking an address for ten minutes. Pool fullness alone is deliberately not an alert: reserved pools are fully allocated by design. FRR-K8s IPv4 BGP coverage is described below. Normal Cilium policy-denied traffic is not treated as a network outage.
 - Applications/GPU: Harbor queue above one hundred tasks; GPU temperature above a conservative operational warning threshold of 85 C (not a claim about its hardware maximum), remap failures/uncorrectable remapped rows, missing GPU telemetry, and container restarts after OOM kills. GPU utilization alone does not page.
+
+## BGP
+
+Added 2026-11-06 after the production UDM BGP rollout. The existing authenticated
+`metallb` scrape job already collects controller/speaker 9120, FRR controller
+9140 and FRR metrics 9141; all ten targets were healthy during verification.
+The nine new alerts retain the existing email receiver and priority routing.
+
+- `BGPNeighborUnavailable`: warning after two minutes of a down or missing UDM
+  session on an expected FRR node. Expected nodes come from Pod/DaemonSet
+  ownership in kube-state-metrics. Other healthy MetalLB targets cannot mask it.
+- `BGPServiceRouteUnavailable`: critical after two minutes without an IPv4
+  advertisement for an assigned production address on a node with an
+  established UDM session. A different node's session, L2 announcement or IPv6
+  announcement cannot satisfy this join. Scope is `.210`, `.211`, `.213`.
+- `FRRConfigUnavailable`: warning after five minutes of stale, unloaded or
+  missing FRR controller configuration telemetry on an expected node.
+- `BGPPrefixAdvertisementMismatch`: warning after five minutes when FRR's
+  advertised-prefix gauge is missing or differs from the local speaker's
+  unique IPv4 address count. Despite its `_total` suffix, do not rate this
+  gauge. Expected counts follow service endpoints, not a fixed three per node;
+  IPv6 intent is excluded because IPv6 uses L2.
+- `BGPUnexpectedReceivedRoutes`: warning after five minutes of nonzero received
+  prefixes; the cluster should accept no UDM routes.
+
+Router-side collection runs as a read-only sidecar on the existing UniFi poller,
+using its existing Secret without new Kubernetes permissions. The collector
+reads the neighbor and forwarding-table APIs every 45 seconds, exposes 9131,
+and is scraped as `unifi-bgp`. The existing local-controller TLS exception is
+explicit; credentials and cookies remain in memory and are never exported.
+Its security context is non-root, read-only-root, RuntimeDefault, drop-ALL, with
+32Mi requested/64Mi limited memory and no CPU limit. Metrics access is limited
+to monitoring; outbound access remains the existing controller HTTPS allowance.
+
+- `UDMBGPCollectionUnavailable`: warning after five minutes of failed, missing
+  or stale collection (last success over 120 seconds old). Collection failures
+  do not re-export cached route health and cannot create route-missing alarms.
+- `UDMBGPRouteMissing`: critical after two minutes without an installed active
+  reviewed Kubernetes next hop for a production /32, gated on successful API
+  collection. This catches router rejection even when FRR remains established.
+- `UDMBGPPeerUnavailable`: warning after two minutes of a missing/down/wrong-AS
+  peer reported by the router, gated on successful collection.
+- `UDMBGPPolicyViolation`: critical after two minutes of unexpected peers,
+  prefixes, active next hops, remote ASNs, or nonzero UDM route exports.
+
+The collector intentionally expects only the three reviewed node IPs and three
+production /32s. Update its `PEERS`/`PREFIXES` inventory alongside the router
+payload when adding nodes or VIPs; a unit test checks they match. Regenerate
+its ConfigMap with `python tools/monitoring/generate-unifi-bgp-exporter.py`.
+
+The provisioned Cluster Network Metrics dashboard (`network-metrics`) shows
+local and router sessions, intended prefixes/paths, installed UDM next hops,
+collection freshness, config health, route exchange and policy violations. Missing series remain absent, rather than synthetic zeroes.
+
+First inspect `up{job="metallb"}` on 9140/9141, session/config metrics, MetalLB
+ConfigurationStates, ready EndpointSlices and FRR reloader logs. Then inspect
+UDM neighbors and its `/32` route table. Traefik services currently have two
+eligible nodes each; backup-rsync has one. Do not withdraw the last backup path
+or restart nodes merely to test an alert.
+
+Router telemetry now checks installed forwarding entries as well as FRR intent;
+HTTPS probes alone can still succeed via retained L2. These checks establish
+control-plane route state, not packet delivery through every application or
+survival of established connections. Email routing is unchanged and inbox
+delivery was not retested. No production routing fault or test email was
+injected. Twenty-three rule fixtures cover failures, missing telemetry,
+wrong-node joins, L2/IPv6 masking, route rejection, API failures and hold periods.
+Collector unit tests check missing routes, active next hops, unexpected policy,
+malformed data, read-only endpoints, redirect rejection and generated source.
+
+Live verification on 2026-11-06: all nine alerts loaded, healthy/inactive; ten
+MetalLB/FRR targets up; three local sessions; successful UDM collection with
+2/2/1 installed next hops, three router peers, zero exports and zero violations.
+The dashboard was re-read through Grafana's API. Prometheus used hot reload;
+its original Pod remained running and the reloader annotation was restored.
+
+The uncommitted live rollout temporarily holds `kubernetes-prometheus`,
+`grafana` and `unifi-exporter` auto-sync and excludes only their application
+manifests from the parent. After the matching source is committed/pushed and
+verified, restore their original automatic policies and remove those three
+parent exclusions, retaining the pre-existing hypermind/omni/strata exclusions.
+The new narrow egress policy is live and will be adopted by the updated
+`monitoring-network-policy` application include list when the source lands.
+No commit or push was performed by the assistant.
 
 ## Triage
 

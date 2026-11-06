@@ -199,3 +199,957 @@ tests:
       == 0)
     eval_time: 20m
     exp_samples: []
+- name: BGP healthy including IPv6 intent excluded from IPv4 prefix counts
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPNeighborUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPServiceRouteUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: FRRConfigUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPPrefixAdvertisementMismatch
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPUnexpectedReceivedRoutes
+    exp_alerts: []
+- name: BGP down session waits for duration
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: BGPNeighborUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPNeighborUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: UDM BGP session is down or missing on node-a.
+        description: Expected FRR node has no established IPv4 session to 192.168.30.1. Check exporter health, FRR state and the UDM peer; L2 may still work.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP missing session metric while scrape job survives
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPNeighborUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: UDM BGP session is down or missing on node-a.
+        description: Expected FRR node has no established IPv4 session to 192.168.30.1. Check exporter health, FRR state and the UDM peer; L2 may still work.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP all exporter telemetry missing
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPNeighborUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: UDM BGP session is down or missing on node-a.
+        description: Expected FRR node has no established IPv4 session to 192.168.30.1. Check exporter health, FRR state and the UDM peer; L2 may still work.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP service has no session-backed route
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: BGPServiceRouteUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPServiceRouteUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: metallb
+        component: bgp
+        namespace: traefik
+        service: traefik/traefik
+        ip: 192.168.30.210
+      exp_annotations:
+        summary: No usable BGP advertisement for traefik/traefik (192.168.30.210).
+        description: No speaker announces this allocated IPv4 service address through a node with an established UDM session. L2 reachability alone does not clear this condition.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP different-node session cannot validate an advertisement
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-b",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPServiceRouteUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: metallb
+        component: bgp
+        namespace: traefik
+        service: traefik/traefik
+        ip: 192.168.30.210
+      exp_annotations:
+        summary: No usable BGP advertisement for traefik/traefik (192.168.30.210).
+        description: No speaker announces this allocated IPv4 service address through a node with an established UDM session. L2 reachability alone does not clear this condition.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP L2 success cannot mask missing BGP advertisement
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="layer2"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPServiceRouteUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: metallb
+        component: bgp
+        namespace: traefik
+        service: traefik/traefik
+        ip: 192.168.30.210
+      exp_annotations:
+        summary: No usable BGP advertisement for traefik/traefik (192.168.30.210).
+        description: No speaker announces this allocated IPv4 service address through a node with an established UDM session. L2 reachability alone does not clear this condition.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP IPv6 intent cannot mask missing IPv4 advertisement
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPServiceRouteUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: metallb
+        component: bgp
+        namespace: traefik
+        service: traefik/traefik
+        ip: 192.168.30.210
+      exp_annotations:
+        summary: No usable BGP advertisement for traefik/traefik (192.168.30.210).
+        description: No speaker announces this allocated IPv4 service address through a node with an established UDM session. L2 reachability alone does not clear this condition.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: FRR stale config
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: FRRConfigUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: FRRConfigUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: FRR configuration is stale, unloaded or unobservable on node-a.
+        description: Inspect FRR controller/reloader logs and authenticated metrics on ports 9140/9141. Do not restart nodes or delete service IP pools to clear the alert.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: FRR unloaded config
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: FRRConfigUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: FRRConfigUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: FRR configuration is stale, unloaded or unobservable on node-a.
+        description: Inspect FRR controller/reloader logs and authenticated metrics on ports 9140/9141. Do not restart nodes or delete service IP pools to clear the alert.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: FRR missing controller metric
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: FRRConfigUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: FRR configuration is stale, unloaded or unobservable on node-a.
+        description: Inspect FRR controller/reloader logs and authenticated metrics on ports 9140/9141. Do not restart nodes or delete service IP pools to clear the alert.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP wrong advertised prefix count 0
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: BGPPrefixAdvertisementMismatch
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPPrefixAdvertisementMismatch
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: FRR IPv4 prefix count differs from MetalLB intent on node-a.
+        description: The current FRR advertised-prefix gauge must match unique IPv4 addresses announced by the local speaker. Counts vary with ready endpoints; IPv6 stays on L2 and is excluded.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP wrong advertised prefix count 2
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 2+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: BGPPrefixAdvertisementMismatch
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPPrefixAdvertisementMismatch
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: FRR IPv4 prefix count differs from MetalLB intent on node-a.
+        description: The current FRR advertised-prefix gauge must match unique IPv4 addresses announced by the local speaker. Counts vary with ready endpoints; IPv6 stays on L2 and is excluded.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP missing advertised prefix metric
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: BGPPrefixAdvertisementMismatch
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+      exp_annotations:
+        summary: FRR IPv4 prefix count differs from MetalLB intent on node-a.
+        description: The current FRR advertised-prefix gauge must match unique IPv4 addresses announced by the local speaker. Counts vary with ready endpoints; IPv6 stays on L2 and is excluded.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: BGP unexpected route import
+  interval: 1m
+  input_series:
+  - series: kube_pod_info{namespace="metallb-system",pod="frr-a",node="node-a"}
+    values: 1+0x10
+  - series: kube_pod_owner{namespace="metallb-system",pod="frr-a",owner_kind="DaemonSet",owner_name="metallb-frr-k8s"}
+    values: 1+0x10
+  - series: frrk8s_bgp_session_up{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_loaded_bool{job="metallb",node="node-a"}
+    values: 1+0x10
+  - series: frrk8s_k8s_client_config_stale_bool{job="metallb",node="node-a"}
+    values: 0+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="192.168.30.210",protocol="bgp"}
+    values: 1+0x10
+  - series: metallb_speaker_announced{job="metallb",node="node-a",service="traefik/traefik",ip="2a02:e98:c0:181e::210",protocol="bgp"}
+    values: 1+0x10
+  - series: kube_service_status_load_balancer_ingress{namespace="traefik",service="traefik",ip="192.168.30.210"}
+    values: 1+0x10
+  - series: frrk8s_bgp_announced_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  - series: frrk8s_bgp_received_prefixes_total{job="metallb",node="node-a",peer="192.168.30.1",vrf="default"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: BGPUnexpectedReceivedRoutes
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: BGPUnexpectedReceivedRoutes
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: metallb
+        component: bgp
+        node: node-a
+        peer: 192.168.30.1
+        vrf: default
+      exp_annotations:
+        summary: FRR receives unexpected routes from the UDM on node-a.
+        description: This design exports no UDM routes to Kubernetes. Check the UDM outbound route-map and FRR inbound policy before changing routing.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: UDM healthy router telemetry
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+60x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 2+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 0+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+- name: UDM route rejected despite working FRR session
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+60x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 0+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 0+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+        instance: router
+        prefix: 192.168.30.210/32
+      exp_annotations:
+        summary: UDM has no active Kubernetes next hop for 192.168.30.210/32.
+        description: The controller forwarding table lacks a usable BGP route for this production VIP. Existing L2 access may still succeed; inspect UDM prefix filters and received routes.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+- name: UDM down peer
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+60x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 2+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 0+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+        instance: router
+        peer: 192.168.30.100
+      exp_annotations:
+        summary: UDM BGP peer 192.168.30.100 is not established.
+        description: The router reports a missing, down or wrong-AS Kubernetes neighbor. Compare FRR session telemetry before changing routing.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+- name: UDM unexpected routing policy
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+60x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 2+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 1+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+        instance: router
+        reason: unexpected_prefix
+      exp_annotations:
+        summary: UDM BGP route exchange differs from the reviewed policy.
+        description: Inspect peer/reason labels. Only the three production /32s, the three Kubernetes neighbors and zero UDM route exports are expected.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: UDM unexpectedly exports routes
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+60x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 2+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 0+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: critical
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+        instance: router
+        peer: 192.168.30.100
+      exp_annotations:
+        summary: UDM BGP route exchange differs from the reviewed policy.
+        description: Inspect peer/reason labels. Only the three production /32s, the three Kubernetes neighbors and zero UDM route exports are expected.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+- name: UDM API failure alerts collection rather than missing routes
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 0+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+60x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 0+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 0+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+        instance: router
+      exp_annotations:
+        summary: UDM BGP route-table monitoring is unavailable.
+        description: Check the read-only bgp-exporter sidecar, UniFi credentials and controller API. Failed collection does not reuse old route health.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+- name: UDM completely absent exporter
+  interval: 1m
+  input_series: []
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+      exp_annotations:
+        summary: UDM BGP route-table monitoring is unavailable.
+        description: Check the read-only bgp-exporter sidecar, UniFi credentials and controller API. Failed collection does not reuse old route health.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+- name: UDM stale collection timestamp
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x10
+  - series: unifi_bgp_last_success_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 0+0x10
+  - series: unifi_bgp_route_active_next_hops{job="unifi-bgp",instance="router",prefix="192.168.30.210/32"}
+    values: 2+0x10
+  - series: unifi_bgp_peer_established{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 1+0x10
+  - series: unifi_bgp_policy_violations{job="unifi-bgp",instance="router",reason="unexpected_prefix"}
+    values: 0+0x10
+  - series: unifi_bgp_exported_routes{job="unifi-bgp",instance="router",peer="192.168.30.100"}
+    values: 0+0x10
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPCollectionUnavailable
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+        instance: router
+      exp_annotations:
+        summary: UDM BGP route-table monitoring is unavailable.
+        description: Check the read-only bgp-exporter sidecar, UniFi credentials and controller API. Failed collection does not reuse old route health.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+  - eval_time: 1m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPRouteMissing
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPeerUnavailable
+    exp_alerts: []
+  - eval_time: 1m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []
+  - eval_time: 8m
+    alertname: UDMBGPPolicyViolation
+    exp_alerts: []

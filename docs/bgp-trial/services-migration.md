@@ -54,6 +54,11 @@ by the assistant; unrelated concurrent Longhorn worktree changes were preserved.
 The UDM configuration was updated in its existing object
 `6aeda3a53563a3fcce7f329a`, using `udm-services.conf`; SD-WAN redistribution remains
 disabled. Existing firewall policies, DNS and port forwards were not edited.
+The separate `/home/shaman007/git/unifi-infra` project now manages that existing
+object as `unifi_bgp.kubernetes` in `bgp.tf`, using `bgp-kubernetes.conf`. The
+resource was imported by site name `default` without a router update. Its full
+plan showed no BGP changes, additions or deletions; only unrelated camera-client
+drift remained. Keep that FRR payload identical to `udm-services.conf` here.
 The isolated test and its temporary HTTP firewall policy were subsequently
 retired on 2026-11-06. Its namespace, service, pods, address pool and advertisement
 are gone, together with the HTTP firewall policy and generated return rule.

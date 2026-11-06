@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-allow-egress-unifi-bgp
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus-server
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: unifi
+          podSelector:
+            matchLabels:
+              app: unifi-poller
+      ports:
+        - protocol: TCP
+          port: 9131

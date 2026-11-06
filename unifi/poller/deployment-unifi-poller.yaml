@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/name: unifi-poller
     app.kubernetes.io/instance: unifi-poller
     app.kubernetes.io/managed-by: argoCD
+  annotations:
+    configmap.reloader.stakater.com/reload: unifi-bgp-exporter
 spec:
   selector:
     matchLabels:
@@ -20,6 +22,52 @@ spec:
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
       containers:
+        - name: bgp-exporter
+          image: harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine@sha256:1afb480ba8d3b3b7a8439a84f2365ce5c75ac45a79cf07daa091b49235cbe27b
+          command: [python3, -B, /scripts/exporter.py]
+          env:
+            - name: UNIFI_URL
+              value: https://192.168.1.1
+            - name: UNIFI_USERNAME
+              value: shaman007
+            - name: UNIFI_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: unifi-password
+                  key: password
+            - name: UNIFI_VERIFY_TLS
+              value: "false"
+          ports:
+            - name: bgp-metrics
+              containerPort: 9131
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: bgp-metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: bgp-metrics
+          volumeMounts:
+            - name: bgp-exporter
+              mountPath: /scripts
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
         - name: unifi-poller
           image: harbor.andreybondarenko.com/github/unpoller/unpoller:v5.9.4
           imagePullPolicy: IfNotPresent
@@ -74,3 +122,7 @@ spec:
               memory: "128Mi"
           ports:
             - containerPort: 9130
+      volumes:
+        - name: bgp-exporter
+          configMap:
+            name: unifi-bgp-exporter

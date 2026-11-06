@@ -8,6 +8,10 @@ metadata:
     app: unifi-poller
 spec:
   ports:
-    - port: 9130
+    - name: unpoller
+      port: 9130
+    - name: bgp
+      port: 9131
+      targetPort: bgp-metrics
   selector:
     app: unifi-poller
