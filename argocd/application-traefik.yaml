@@ -10,7 +10,7 @@ spec:
   project: platform
   source:
     repoURL: https://traefik.github.io/charts
-    targetRevision: 42.3.0
+    targetRevision: 42.3.1
     chart: traefik
     helm:
       releaseName: traefik
@@ -362,13 +362,13 @@ spec:
             argocd.argoproj.io/sync-options: ServerSideApply=true
             metallb.io/loadBalancerIPs: "192.168.30.210,2a02:e98:c0:181e::210"
           spec:
+            type: LoadBalancer
             externalTrafficPolicy: Local
             loadBalancerClass: metallb-l2
             ipFamilyPolicy: RequireDualStack
             ipFamilies:
               - IPv4
               - IPv6
-          type: LoadBalancer
         resources:
           requests:
             cpu: 25m

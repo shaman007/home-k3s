@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://traefik.github.io/charts
     chart: traefik
-    targetRevision: 42.3.0
+    targetRevision: 42.3.1
     helm:
       skipCrds: true
       releaseName: traefik-private
@@ -38,12 +38,12 @@ spec:
             enabled: true
             ingressClass: traefik-private
         service:
-          type: LoadBalancer
           single: true
           annotations:
             metallb.io/loadBalancerIPs: 192.168.30.211
             metallb.io/address-pool: private-ingress
           spec:
+            type: LoadBalancer
             externalTrafficPolicy: Local
             loadBalancerClass: metallb-l2
             ipFamilyPolicy: SingleStack
