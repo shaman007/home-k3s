@@ -21,12 +21,12 @@ providers:
     enabled: true
     ingressClass: traefik-private
 service:
-  type: LoadBalancer
   single: true
   annotations:
     metallb.io/loadBalancerIPs: 192.168.30.211
     metallb.io/address-pool: private-ingress
   spec:
+    type: LoadBalancer
     externalTrafficPolicy: Local
     loadBalancerClass: metallb-l2
     ipFamilyPolicy: SingleStack

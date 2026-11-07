@@ -51,12 +51,12 @@ experimental:
       version: v0.2.2
 # Expose via MetalLB using a dedicated LAN VIP for router port-forwards.
 service:
-  type: LoadBalancer
   single: true
   annotations:
     argocd.argoproj.io/sync-options: ServerSideApply=true
     metallb.io/loadBalancerIPs: "192.168.30.210,2a02:e98:c0:181e::210"
   spec:
+    type: LoadBalancer
     externalTrafficPolicy: Local
     loadBalancerClass: metallb-l2
     ipFamilyPolicy: RequireDualStack
