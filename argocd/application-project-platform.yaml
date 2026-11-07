@@ -76,6 +76,10 @@ spec:
   orphanedResources:
     warn: true
     ignore:
+      # MetalLB speakers generate per-node FRR configuration for active BGP sessions.
+      - group: frrk8s.metallb.io
+        kind: FRRConfiguration
+        name: "metallb-*"
       # cert-manager and Helm create these after their parent resources reconcile.
       - group: ""
         kind: Secret
