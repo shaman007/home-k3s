@@ -170,6 +170,21 @@ data:
       fileinto :create "Trash";
       stop;
     }
+    # Some providers omit the original message from notification DSNs.
+    if allof (
+      envelope :localpart :is "to" "shaman007",
+      envelope :is "from" "",
+      address :is "To" "notifications@andreybondarenko.com",
+      address :is "From" "Postmaster@au.com",
+      header :contains "Content-Type" "multipart/report",
+      header :contains "Content-Type" "delivery-status",
+      body :raw :contains "Action: failed",
+      body :raw :contains "Status: 5.1.1",
+      body :raw :contains "User unknown"
+    ) {
+      fileinto :create "Trash";
+      stop;
+    }
   90-sieve: |
     sieve_script mastodon_registration_bounces {
       type = before
