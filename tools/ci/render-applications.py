@@ -6,6 +6,7 @@ validating a different deployment. Outputs may contain generated chart Secrets.
 """
 import argparse
 import fnmatch
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,12 +14,52 @@ import re
 import subprocess
 import tempfile
 import time
+import urllib.parse
+import urllib.request
 
 import yaml
 from ci_yaml import load, load_all
 
 ROOT = Path(__file__).resolve().parents[2]
 REPO = "https://github.com/shaman007/home-k3s.git"
+
+
+class HelmDownloadError(RuntimeError):
+    """A transient chart download failure; diagnostics stay private."""
+
+
+def github_chart_fallback(source, scratch):
+    """Fetch the exact indexed chart through GitHub's release-asset API."""
+    def fetch(url, accept="application/json"):
+        request = urllib.request.Request(url, headers={"Accept": accept})
+        with urllib.request.urlopen(request, timeout=60) as response:
+            return response.read()
+
+    repo = source["repoURL"]
+    if not repo.startswith(("http://", "https://")):
+        raise ValueError("Fallback requires an HTTP Helm repository")
+    index = load(fetch(repo.rstrip("/") + "/index.yaml").decode())
+    entries = index["entries"][source["chart"]]
+    entry = next(e for e in entries if str(e["version"]) == str(source["targetRevision"]))
+    digest = entry.get("digest", "")
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError("Fallback requires a SHA-256 chart digest")
+    for url in entry["urls"]:
+        parsed = urllib.parse.urlsplit(url)
+        match = re.fullmatch(r"/([^/]+)/([^/]+)/releases/download/([^/]+)/([^/]+)", parsed.path)
+        if parsed.scheme != "https" or parsed.netloc != "github.com" or not match:
+            continue
+        owner, repository, tag, filename = match.groups()
+        api = f"https://api.github.com/repos/{owner}/{repository}/releases"
+        release = json.loads(fetch(f"{api}/tags/{tag}"))
+        asset = next(a for a in release["assets"] if a["name"] == urllib.parse.unquote(filename))
+        archive = fetch(f"{api}/assets/{int(asset['id'])}", "application/octet-stream")
+        if hashlib.sha256(archive).hexdigest() != digest:
+            raise ValueError("Fallback chart digest mismatch")
+        path = scratch / "verified-chart.tgz"
+        path.write_bytes(archive)
+        return path
+    raise ValueError("No GitHub release asset in the pinned chart index entry")
 
 
 def run(args, cwd=None):
@@ -33,7 +74,11 @@ def run(args, cwd=None):
             print(f"Remote Kustomize fetch failed; retrying ({attempt + 2}/3)", flush=True)
             time.sleep(2 ** (attempt + 1))
             continue
-        raise RuntimeError(f"{args[0]} {args[1]} failed (exit {result.returncode}); run this source locally to inspect its diagnostic output")
+        transient_helm_download = (Path(args[0]).name == "helm" and args[1] == "template"
+                                   and "failed to fetch https://github.com/" in result.stderr
+                                   and re.search(r"\b(?:429|500|502|503|504)\b", result.stderr))
+        error = HelmDownloadError if transient_helm_download else RuntimeError
+        raise error(f"{args[0]} {args[1]} failed (exit {result.returncode}); run this source locally to inspect its diagnostic output")
 
 
 def local_path(root, value):
@@ -103,7 +148,22 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
         raise ValueError("Unsupported application source options")
     if "chart" in source:
         args = helm_args(app, source, sources, root, scratch, kubernetes_version)
-        output = run(args, cwd=scratch)
+        try:
+            output = run(args, cwd=scratch)
+        except HelmDownloadError:
+            print("GitHub chart download unavailable; trying digest-verified release API", flush=True)
+            try:
+                archive = github_chart_fallback(source, scratch)
+            except Exception:
+                # Network exceptions can include signed redirect URLs. Keep them private.
+                raise RuntimeError("Digest-verified chart download fallback failed") from None
+            fallback_args = args.copy()
+            fallback_args[3] = str(archive)
+            for flag in ("--repo", "--version"):
+                if flag in fallback_args:
+                    position = fallback_args.index(flag)
+                    del fallback_args[position:position + 2]
+            output = run(fallback_args, cwd=scratch)
         if args[3].startswith("oci://"):
             # Helm 4 writes OCI pull metadata to stdout before the YAML stream.
             # Remove only its known preamble, never arbitrary non-manifest YAML.

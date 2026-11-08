@@ -63,6 +63,72 @@ class RenderValidationTest(unittest.TestCase):
                 render.run(args)
             self.assertEqual(1, call.call_count)
 
+    def test_github_download_failure_is_classified_without_leaking_diagnostics(self):
+        for binary in ['helm', '/tmp/helm']:
+            failed = subprocess.CompletedProcess([], 1, 'private manifest',
+                'Error: failed to fetch https://github.com/org/repo/releases/download/v1/chart.tgz : 504 Gateway Time-out private')
+            with patch.object(render.subprocess, 'run', return_value=failed), self.assertRaises(render.HelmDownloadError) as error:
+                render.run([binary, 'template', 'release', 'chart'])
+            self.assertNotIn('private', str(error.exception))
+
+    def test_template_and_permanent_download_errors_do_not_use_fallback(self):
+        for diagnostic in ['Error: template: chart: invalid value 504',
+                           'Error: failed to fetch https://github.com/org/repo/chart.tgz : 404 Not Found',
+                           'Error: failed to fetch https://other.invalid/chart.tgz : 504 Gateway Time-out']:
+            with self.subTest(diagnostic=diagnostic), patch.object(render.subprocess, 'run', return_value=
+                    subprocess.CompletedProcess([], 1, '', diagnostic)), self.assertRaises(RuntimeError) as error:
+                render.run(['helm', 'template', 'release', 'chart'])
+            self.assertNotIsInstance(error.exception, render.HelmDownloadError)
+
+    def test_github_chart_fallback_verifies_digest_before_using_archive(self):
+        import hashlib
+        import io
+        import json
+        archive = b'chart archive'
+        source = {'repoURL': 'https://charts.invalid/', 'chart': 'test', 'targetRevision': '1.2.3'}
+        url = 'https://github.com/org/repo/releases/download/v1.2.3/test-1.2.3.tgz'
+        for digest in [hashlib.sha256(archive).hexdigest(), '0' * 64, None]:
+            entry = {'version': '1.2.3', 'digest': digest, 'urls': [url]}
+            index = yaml.safe_dump({'entries': {'test': [{'version': '9.9.9'}, entry]}}).encode()
+            responses = [io.BytesIO(index), io.BytesIO(json.dumps({'assets': [
+                {'name': 'test-1.2.3.tgz', 'id': 42}]}).encode()), io.BytesIO(archive)]
+            destination = self.root / 'verified-chart.tgz'
+            destination.unlink(missing_ok=True)
+            with self.subTest(digest=digest), patch.object(render.urllib.request, 'urlopen', side_effect=responses) as fetch:
+                if digest == hashlib.sha256(archive).hexdigest():
+                    self.assertEqual(destination, render.github_chart_fallback(source, self.root))
+                    self.assertEqual(archive, destination.read_bytes())
+                    self.assertEqual('https://api.github.com/repos/org/repo/releases/assets/42', fetch.call_args.args[0].full_url)
+                    self.assertEqual('application/octet-stream', fetch.call_args.args[0].get_header('Accept'))
+                else:
+                    with self.assertRaises(ValueError):
+                        render.github_chart_fallback(source, self.root)
+                    self.assertFalse(destination.exists())
+
+    def test_download_fallback_preserves_helm_render_options(self):
+        source = {'repoURL': 'https://charts.invalid', 'chart': 'test', 'targetRevision': '1.2.3',
+                  'helm': {'values': 'replicas: 2', 'parameters': [{'name': 'replicas', 'value': '3'}]}}
+        archive = self.root / 'verified-chart.tgz'
+        with patch.object(render, 'run', side_effect=[render.HelmDownloadError('private'), 'rendered']) as run, \
+                patch.object(render, 'github_chart_fallback', return_value=archive), patch('builtins.print'):
+            self.assertEqual('rendered', render.render_source(self.app, source, [source], self.root, self.root, '1.37.1'))
+        original, fallback = [call.args[0] for call in run.call_args_list]
+        expected = original.copy()
+        expected[3] = str(archive)
+        for flag in ['--repo', '--version']:
+            position = expected.index(flag)
+            del expected[position:position + 2]
+        self.assertEqual(expected, fallback)
+
+    def test_download_fallback_errors_hide_signed_urls(self):
+        source = {'repoURL': 'https://charts.invalid', 'chart': 'test', 'targetRevision': '1.2.3'}
+        with patch.object(render, 'run', side_effect=render.HelmDownloadError('private')), \
+                patch.object(render, 'github_chart_fallback', side_effect=ValueError('signed-secret-url')), \
+                patch('builtins.print'), self.assertRaises(RuntimeError) as error:
+            render.render_source(self.app, source, [source], self.root, self.root, '1.37.1')
+        self.assertNotIn('signed-secret', str(error.exception))
+        self.assertTrue(error.exception.__suppress_context__)
+
     def test_additional_crd_url_supports_pinned_runtime_controller_release(self):
         source = {'version': 'v1.14.2', 'url': 'https://example.invalid/v{version}/crd.yaml'}
         self.assertEqual('https://example.invalid/v1.14.2/crd.yaml', validate.additional_crd_url(source))
