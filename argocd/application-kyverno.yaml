@@ -77,6 +77,12 @@ spec:
                   kubernetes.io/metadata.name: monitoring
         reportsController:
           replicas: 2
+          extraArgs:
+            autoMemLimitRatio: "0.7"
+          image:
+            registry: harbor.andreybondarenko.com
+            repository: library/kyverno-reports-controller
+            tag: v1.19.2-provider-cache.3@sha256:0a44d24fc8aa065860c09da35f5c3c228f94628088e73e5755d9bfe8d0475b48
           resources:
             requests:
               cpu: 100m
