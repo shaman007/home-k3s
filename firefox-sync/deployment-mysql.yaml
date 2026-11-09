@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: mysql
-        image: harbor.andreybondarenko.com/dockerhub/mysql:8.4@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902
+        image: harbor.andreybondarenko.com/dockerhub/mysql:26.10@sha256:3819b2b23835c4a73c8b022fafc33c8095c0f81c929a8b7a84613d2fba6c52f5
         args:
         - --socket=/tmp/mysql.sock
         - --pid-file=/tmp/mysql.pid
