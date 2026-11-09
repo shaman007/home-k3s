@@ -1,0 +1,331 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadb-rehearsal-data
+  namespace: firefox-sync
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-rehearsal
+  namespace: firefox-sync
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mariadb-rehearsal
+  template:
+    metadata:
+      labels:
+        app: mariadb-rehearsal
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: homelab-standard
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: mariadb
+        image: harbor.andreybondarenko.com/dockerhub/mariadb:12.3.3@sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9
+        args:
+        - --socket=/tmp/mysql.sock
+        - --pid-file=/tmp/mysql.pid
+        - --secure-file-priv=/tmp
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_0900_ai_ci
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          runAsUser: 999
+          runAsGroup: 999
+          seccompProfile:
+            type: RuntimeDefault
+          readOnlyRootFilesystem: true
+        ports:
+        - name: mysql
+          containerPort: 3306
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: MYSQL_ROOT_PASSWORD
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: MYSQL_PASSWORD
+        - name: MARIADB_DATABASE
+          value: syncstorage
+        - name: MARIADB_USER
+          value: sync
+        - name: MARIADB_ROOT_HOST
+          value: localhost
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: tmp
+          mountPath: /tmp
+        - name: init
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        startupProbe:
+          tcpSocket:
+            port: mysql
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          tcpSocket:
+            port: mysql
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: mysql
+          periodSeconds: 20
+          failureThreshold: 6
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mariadb-rehearsal-data
+      - name: tmp
+        emptyDir: {}
+      - name: init
+        configMap:
+          name: mysql-init
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-rehearsal
+  namespace: firefox-sync
+spec:
+  selector:
+    app: mariadb-rehearsal
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firefox-sync-mariadb-check
+  namespace: firefox-sync
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: firefox-sync-mariadb-check
+  template:
+    metadata:
+      labels:
+        app: firefox-sync-mariadb-check
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: homelab-standard
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: syncserver
+        image: harbor.andreybondarenko.com/github/mozilla-services/syncstorage-rs/syncserver-mysql:0.24.1@sha256:9ca8df54026925f88c443e9cd3a26a0f0bdac055cde47ff181497526566992a6
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          seccompProfile:
+            type: RuntimeDefault
+          readOnlyRootFilesystem: true
+        ports:
+        - name: http
+          containerPort: 8000
+        env:
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: MYSQL_PASSWORD
+        - name: SYNC_MASTER_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: SYNC_MASTER_SECRET
+        - name: SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: firefox-sync-env
+              key: SYNC_TOKENSERVER__FXA_METRICS_HASH_SECRET
+        - name: SYNC_STATSD_HOST
+          value: 127.0.0.1
+        - name: SYNC_STATSD_PORT
+          value: '8125'
+        - name: SYNC_HOST
+          value: 0.0.0.0
+        - name: SYNC_PORT
+          value: '8000'
+        - name: SYNC_ENVIRONMENT
+          value: prod
+        - name: SYNC_SYNCSTORAGE__DATABASE_URL
+          value: mysql://sync:$(MYSQL_PASSWORD)@mariadb-rehearsal:3306/syncstorage
+        - name: SYNC_TOKENSERVER__DATABASE_URL
+          value: mysql://sync:$(MYSQL_PASSWORD)@mariadb-rehearsal:3306/tokenserver
+        - name: SYNC_TOKENSERVER__ENABLED
+          value: 'true'
+        - name: SYNC_TOKENSERVER__RUN_MIGRATIONS
+          value: 'true'
+        - name: SYNC_TOKENSERVER__NODE_TYPE
+          value: mysql
+        - name: SYNC_TOKENSERVER__FXA_EMAIL_DOMAIN
+          value: api.accounts.firefox.com
+        - name: SYNC_TOKENSERVER__FXA_OAUTH_SERVER_URL
+          value: https://oauth.accounts.firefox.com
+        - name: SYNC_TOKENSERVER__INIT_NODE_URL
+          value: https://sync.andreybondarenko.com
+        - name: RUST_LOG
+          value: info
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        startupProbe:
+          httpGet:
+            path: /__heartbeat__
+            port: http
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /__heartbeat__
+            port: http
+          periodSeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /__lbheartbeat__
+            port: http
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      - name: statsd-exporter
+        image: harbor.andreybondarenko.com/dockerhub/prom/statsd-exporter:v0.31.0
+        args:
+        - --statsd.listen-udp=127.0.0.1:8125
+        - --statsd.listen-tcp=
+        - --web.listen-address=:9102
+        ports:
+        - name: metrics
+          containerPort: 9102
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        readinessProbe:
+          tcpSocket:
+            port: metrics
+        livenessProbe:
+          tcpSocket:
+            port: metrics
+      volumes:
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mariadb-rehearsal
+  namespace: firefox-sync
+spec:
+  podSelector:
+    matchLabels:
+      app: mariadb-rehearsal
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: firefox-sync-mariadb-check
+    ports:
+    - protocol: TCP
+      port: 3306
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: syncserver-mariadb-check
+  namespace: firefox-sync
+spec:
+  podSelector:
+    matchLabels:
+      app: firefox-sync-mariadb-check
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: mariadb-rehearsal
+    ports:
+    - protocol: TCP
+      port: 3306
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        - 169.254.0.0/16
+    ports:
+    - protocol: TCP
+      port: 443

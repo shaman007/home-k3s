@@ -1,0 +1,8 @@
+{
+  "description": "Keep Firefox Sync MariaDB on the validated 12.3 LTS series",
+  "matchManagers": ["kubernetes"],
+  "matchFileNames": ["firefox-sync/deployment-mariadb.yaml"],
+  "matchPackageNames": ["harbor.andreybondarenko.com/dockerhub/mariadb"],
+  "allowedVersions": "/^12\\.3\\./",
+  "pinDigests": true
+}

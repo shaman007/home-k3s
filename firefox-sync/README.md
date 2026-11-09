@@ -22,6 +22,11 @@ Firefox profile was not modified; the test profiles remain separate.
 The volume currently has a recurring filesystem trim assignment but no recurring
 backup job. No backup recovery claim is made.
 
+MariaDB migration preparation (not deployed): see
+[the compatibility assessment and cutover runbook](../docs/migrations/firefox-sync-mariadb/README.md).
+It retains MySQL and its PVC, uses a separate MariaDB volume, and requires data
+comparison and runtime verification before accepting the transition.
+
 ## Deployment prerequisites
 
 - Create DNS `sync.andreybondarenko.com` pointing to the same ingress endpoint as
