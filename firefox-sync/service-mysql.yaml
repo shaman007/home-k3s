@@ -5,7 +5,7 @@ metadata:
   namespace: firefox-sync
 spec:
   selector:
-    app: mysql
+    app: mariadb
   ports:
   - name: tcp
     port: 3306

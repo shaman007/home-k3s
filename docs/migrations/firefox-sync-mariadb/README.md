@@ -1,6 +1,8 @@
 # Firefox Sync 0.24.1: MySQL → MariaDB preparation
 
-Prepared 2026-11-09. **Not deployed or runtime-tested on MariaDB.** All YAML here
+Prepared and executed 2026-11-09. **Production now runs on MariaDB 12.3.3.**
+See [execution results and GitOps handoff](EXECUTION.md). The initial live cutover
+preceded publication; reconciliation must resume only against the final MariaDB manifests. All YAML here
 is outside the Argo Application source (`firefox-sync/`); do not point Argo at this
 directory or submit the entire directory as Kubernetes resources (it includes
 strategic merge patch fragments).
@@ -9,8 +11,8 @@ strategic merge patch fragments).
 
 The running server and GitOps manifest both pin `syncserver-mysql:0.24.1` at
 `sha256:9ca8df54026925f88c443e9cd3a26a0f0bdac055cde47ff181497526566992a6`.
-The source is MySQL 8.4.13 with a separate 5 GiB Longhorn `mysql-data` PVC.
-Argo reported Synced/Healthy and no namespace Warning events were present.
+The migration source was MySQL 8.4.13 with a separate 5 GiB Longhorn `mysql-data` PVC.
+Argo reported Synced/Healthy before maintenance.
 
 - The [0.24.1 changelog](https://github.com/mozilla-services/syncstorage-rs/blob/0.24.1/CHANGELOG.md)
   includes the MariaDB compatibility fix released in 0.22.0, commit
@@ -20,14 +22,14 @@ Argo reported Synced/Healthy and no namespace Warning events were present.
 - All six Syncstorage and nine Tokenserver `up.sql` migrations in the pinned
   release were inspected: ordinary InnoDB tables, indexes, a temporary stored
   procedure, and DML; no evident MySQL-only blocker was found. This is a source
-  review, not proof that migrations execute successfully on MariaDB.
+  review; all migrations subsequently executed successfully during rehearsal.
 - Existing storage tables use `latin1_swedish_ci`; Tokenserver uses a mixture of
   `utf8mb4_0900_ai_ci` and `utf8mb3_general_ci`. Preserve these definitions and the
   Diesel migration history by logical dump/import of **both** databases.
 - Target: `mariadb:12.3.3` (LTS), official multi-platform manifest digest
   `sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9`,
-  resolved read-only with skopeo on 2026-11-09. The Harbor proxy path still needs
-  an actual image pull at rehearsal. [Official image source](https://github.com/MariaDB/mariadb-docker/blob/bdfe641466a5312bb97d06a1a4e1fb411c49e6b6/12.3/Dockerfile)
+  resolved read-only with skopeo on 2026-11-09. The Harbor proxy pull and non-root
+  startup passed during rehearsal. [Official image source](https://github.com/MariaDB/mariadb-docker/blob/bdfe641466a5312bb97d06a1a4e1fb411c49e6b6/12.3/Dockerfile)
   identifies this release as Stable / Long Term Support.
 - MariaDB [supports `utf8mb4_0900_ai_ci` as an alias](https://mariadb.com/docs/server/reference/data-types/string-data-types/character-sets/supported-character-sets-and-collations)
   for `utf8mb4_uca1400_nopad_ai_ci`. This is Unicode 14 rather than MySQL's
@@ -144,9 +146,10 @@ After production writes to MariaDB, the old MySQL is stale. Do not blindly switc
 back: stop writers and plan a verified reverse logical transfer or explicitly
 accept the loss of post-cutover writes. Preserve both volumes and signing secrets.
 
-## Validation still required
+## Validation status
 
-Source review supports proceeding to rehearsal. It does **not** establish runtime
-compatibility. Candidate image pull/startup, fresh migrations, frozen-data import,
-row comparison, Hawk operations, Mozilla OAuth/Tokenserver and two-client Firefox
-sync remain execution gates. No cluster resources were modified during preparation.
+Fresh migrations, frozen-data import, all-table value comparison and the expanded
+Hawk API suite passed on MariaDB, including public production HTTPS. The user
+chose to verify actual Firefox sign-in and two-client sync themselves. A physical
+backup restore remains untested. See [execution details](EXECUTION.md) for retained
+volumes, backup completion and the temporary GitOps reconciliation pause.

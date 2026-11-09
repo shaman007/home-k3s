@@ -36,17 +36,22 @@ def main():
 
     # Reserved high range, independent from the tokenserver's sequential enrollment IDs.
     uid = 4_000_000_000 + secrets.randbelow(1_000_000)
-    salt = secrets.token_hex(6)
-    payload = json.dumps({'uid': uid, 'node': args.url, 'expires': time.time() + 120,
-                          'salt': salt, 'fxa_uid': secrets.token_hex(16),
-                          'fxa_kid': secrets.token_hex(16)}, separators=(',', ':')).encode()
-    signing_key = hkdf(b'services.mozilla.com/tokenlib/v1/signing')
-    token = base64.urlsafe_b64encode(payload + hmac.new(signing_key, payload, hashlib.sha256).digest()).decode()
-    key = base64.urlsafe_b64encode(hkdf(
-        ('services.mozilla.com/tokenlib/v1/derive/' + token).encode(), salt.encode()))
+    fxa_uid, fxa_kid = secrets.token_hex(16), secrets.token_hex(16)
+    clients = []
+    for _ in range(2):
+        salt = secrets.token_hex(6)
+        payload = json.dumps({'uid': uid, 'node': args.url, 'expires': time.time() + 300,
+                              'salt': salt, 'fxa_uid': fxa_uid,
+                              'fxa_kid': fxa_kid}, separators=(',', ':')).encode()
+        signing_key = hkdf(b'services.mozilla.com/tokenlib/v1/signing')
+        token = base64.urlsafe_b64encode(payload + hmac.new(signing_key, payload, hashlib.sha256).digest()).decode()
+        key = base64.urlsafe_b64encode(hkdf(
+            ('services.mozilla.com/tokenlib/v1/derive/' + token).encode(), salt.encode()))
+        clients.append((token, key))
     base = f'/1.5/{uid}'
 
-    def request(method, path, body=None):
+    def request(method, path, body=None, client=0):
+        token, key = clients[client]
         body_bytes = None if body is None else json.dumps(body).encode()
         ts = str(int(time.time()))
         nonce = secrets.token_hex(6)
@@ -83,11 +88,33 @@ def main():
         status, _ = request('PUT', base + '/storage/bookmarks/bootstrap-smoke', record)
         if status != 200:
             raise RuntimeError('Storage write did not return HTTP 200')
-        status, body = request('GET', base + '/storage/bookmarks/bootstrap-smoke')
+        status, body = request('GET', base + '/storage/bookmarks/bootstrap-smoke', client=1)
         actual = json.loads(body)
         if status != 200 or actual.get('payload') != record['payload']:
             raise RuntimeError('Storage read did not match the written payload')
-        print('Authenticated Hawk storage write/read matched.')
+        print('Two independently Hawk-authenticated API clients: write/read matched.')
+        first = {'id': 'batch-one', 'payload': secrets.token_hex(24)}
+        second = {'id': 'batch-two', 'payload': secrets.token_hex(24)}
+        status, body = request('POST', base + '/storage/bookmarks?batch=true', [first], client=1)
+        batch = json.loads(body)
+        if status != 202 or not batch.get('batch') or batch.get('failed'):
+            raise RuntimeError('Batch staging failed')
+        status, body = request('GET', base + '/storage/bookmarks?full=1')
+        if status != 200 or any(item['id'] == first['id'] for item in json.loads(body)):
+            raise RuntimeError('Staged batch unexpectedly visible before commit')
+        batch_id = urllib.parse.quote(str(batch['batch']), safe='')
+        status, body = request('POST', base + '/storage/bookmarks?batch=' + batch_id + '&commit=true',
+                               [second], client=1)
+        if status != 200 or json.loads(body).get('failed'):
+            raise RuntimeError('Batch commit failed')
+        for expected in (first, second):
+            status, body = request('GET', base + '/storage/bookmarks/' + expected['id'])
+            if status != 200 or json.loads(body).get('payload') != expected['payload']:
+                raise RuntimeError('Committed batch did not match across API clients')
+        status, body = request('GET', base + '/info/collections', client=1)
+        if status != 200 or float(json.loads(body).get('bookmarks', 0)) <= 0:
+            raise RuntimeError('Collection timestamp was not updated')
+        print('Batch staging isolation, commit, cross-client reads and collection timestamp passed.')
     finally:
         if written:
             request('DELETE', base + '/storage')

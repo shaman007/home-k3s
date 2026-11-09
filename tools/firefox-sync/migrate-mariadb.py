@@ -50,7 +50,9 @@ def tables(target):
     rows = query(target, "SELECT TABLE_SCHEMA,TABLE_NAME FROM information_schema.TABLES "
                  "WHERE TABLE_SCHEMA IN ('syncstorage','tokenserver') "
                  "AND TABLE_TYPE='BASE TABLE' ORDER BY TABLE_SCHEMA,TABLE_NAME")
-    return [tuple(row.split('\t')) for row in rows]
+    # INFORMATION_SCHEMA collations differ between engines (notably underscores
+    # and digits). Compare metadata in Python's stable byte-compatible order.
+    return sorted(tuple(row.split('\t')) for row in rows)
 
 
 def check_frozen():

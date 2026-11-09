@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: mysql-data
   namespace: firefox-sync
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
   accessModes:
   - ReadWriteOnce

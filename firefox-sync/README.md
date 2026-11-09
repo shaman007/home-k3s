@@ -4,28 +4,37 @@ Self-hosted Syncstorage and Tokenserver, with Mozilla accounts for sign-in.
 This syncs Firefox-supported data (bookmarks, history, passwords, tabs, add-ons,
 and selected settings), rather than cloning an entire profile directory.
 
-Status: deployed on 2026-11-03 and adopted by Argo CD. The Firefox Sync
-Application is Synced and Healthy against the published Git configuration.
-MySQL and Sync are Ready; the Longhorn volume is healthy with two replicas;
+Status: initially deployed on 2026-11-03; migrated live to MariaDB 12.3.3 LTS on
+2026-11-09. MariaDB and Sync are Ready; the active Longhorn volume is healthy
+with two replicas. During the initial live migration, Firefox Sync alone was
+held with `argocd.argoproj.io/skip-reconcile=true` until the final MariaDB
+manifests were published. Remove that temporary guard only after publication
+and verify actual Argo Synced/Healthy adoption; cached status while skipped
+is not reconciliation proof. Parent Argo auto-sync uses its original policy.
+
 OpenBao SecretStore and ExternalSecret are Ready. Both database schemas and the
 public tokenserver node are initialized. Public DNS resolves, the certificate is
 Ready, and public HTTPS certificate validation succeeds. Health endpoints return
 200 and unauthenticated token requests return 401. An authenticated synthetic
 storage write/read/cleanup passed through the public HTTPS ingress with certificate
 validation enabled. The app can reach Mozilla OAuth keys over trusted HTTPS.
-Real Firefox verification completed: the user reported successful synchronization
+Initial MySQL-era Firefox verification completed: the user reported successful synchronization
 between two isolated test profiles. Server-side checks confirmed one enrolled
 Mozilla account, two client records, two tab records, and 45 bookmark records.
 Record payloads and account identifiers were not inspected. The normal desktop
-Firefox profile was not modified; the test profiles remain separate.
+Firefox profile was not modified.
 
-The volume currently has a recurring filesystem trim assignment but no recurring
-backup job. No backup recovery claim is made.
+The active volume has a recurring filesystem trim assignment but no recurring
+backup job. The retained original MySQL PVC is protected against Argo pruning.
+Its pre-migration snapshot was backed up to the existing SeaweedFS target; a
+physical backup restore has not been tested.
 
-MariaDB migration preparation (not deployed): see
+MariaDB migration procedure and [execution results](../docs/migrations/firefox-sync-mariadb/EXECUTION.md): see
 [the compatibility assessment and cutover runbook](../docs/migrations/firefox-sync-mariadb/README.md).
-It retains MySQL and its PVC, uses a separate MariaDB volume, and requires data
-comparison and runtime verification before accepting the transition.
+All 10 imported tables matched by count and SHA-256 value fingerprints. Fresh
+migrations and two Hawk API clients passed write/read, batch staging/commit,
+timestamp and cleanup checks on isolated MariaDB and public production HTTPS.
+The user will verify actual Firefox sign-in and cross-profile sync separately.
 
 ## Deployment prerequisites
 
@@ -48,12 +57,14 @@ comparison and runtime verification before accepting the transition.
   Do not create the auto-syncing Argo Application until its source is published;
   unpublished source cannot provide GitOps reconciliation.
 
-The dedicated MySQL 8.4 instance uses a 5 GiB Longhorn PVC. Both database schemas
+The dedicated MariaDB 12.3.3 instance uses a 5 GiB Longhorn `mariadb-data` PVC.
+The stopped MySQL Deployment and separate `mysql-data` PVC remain for recovery;
+never attach the MySQL datadir to MariaDB. Both database schemas
 and the non-root app user are initialized automatically. Sync migrations and the
 public node URL are initialized by the pinned Mozilla server. Database credentials
-are initialization values: changing OpenBao passwords alone does not rotate MySQL
+are initialization values: changing OpenBao passwords alone does not rotate database
 users. Preserve the PVC and OpenBao secret together; restore both for recovery.
-Include them in the existing backup process before treating this as durable storage.
+Include the active database in the existing backup process before treating this as durable storage.
 The app needs outbound HTTPS for Mozilla OAuth, plus DNS and MySQL access.
 
 ## Verify

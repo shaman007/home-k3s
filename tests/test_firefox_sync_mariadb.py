@@ -13,6 +13,12 @@ SPEC.loader.exec_module(migration)
 
 
 class MigrationTests(unittest.TestCase):
+    def test_metadata_order_is_independent_of_database_collation(self):
+        with patch.object(migration, 'query', side_effect=[
+                ['syncstorage\t__diesel_schema_migrations', 'syncstorage\tbatch_upload_items', 'syncstorage\tbatch_uploads'],
+                ['syncstorage\tbatch_uploads', 'syncstorage\tbatch_upload_items', 'syncstorage\t__diesel_schema_migrations']]):
+            self.assertEqual(migration.tables(False), migration.tables(True))
+
     def test_default_plan_does_not_access_cluster(self):
         with patch('sys.argv', ['migrate']), patch.object(migration, 'check_frozen') as check:
             migration.main()
