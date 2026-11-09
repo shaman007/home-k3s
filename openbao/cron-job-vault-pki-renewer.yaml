@@ -24,7 +24,7 @@ spec:
               type: RuntimeDefault
           containers:
           - name: renew
-            image: harbor.andreybondarenko.com/library/sync:2026-11-02-095223
+            image: harbor.andreybondarenko.com/library/sync:2026-11-09-022903
             imagePullPolicy: IfNotPresent
             securityContext:
               allowPrivilegeEscalation: false
