@@ -75,7 +75,7 @@ spec:
             sizeLimit: 500Mi
       initContainers:
         - name: init-postfix-queue-perms
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-02-095223
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
           imagePullPolicy: IfNotPresent
           command:
             - /usr/bin/sh
@@ -97,7 +97,7 @@ spec:
                 - FOWNER
       containers:
         - name: postfix-mail
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-02-095223
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 587
@@ -162,7 +162,7 @@ spec:
             limits:
               memory: "128Mi"
         - name: queue-exporter
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-02-095223
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
           command: [perl, /collector/postfix-queue-exporter.pl]
           ports:
             - name: queue-metrics
