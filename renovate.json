@@ -7,7 +7,7 @@
     "harbor.andreybondarenko.com/github": "ghcr.io",
     "harbor.andreybondarenko.com/quay": "quay.io"
   },
-  "gitAuthor": "Andrey Bondarenko <me@andreybondarenko.com>",
+  "platformCommit": "enabled",
   "prHourlyLimit": 0,
   "ignorePaths": ["DEPRECATED/**"],
   "argocd": {
