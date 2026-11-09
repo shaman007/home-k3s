@@ -43,7 +43,7 @@ spec:
             sizeLimit: 100Mi
       containers:
         - name: mnecraft
-          image: harbor.andreybondarenko.com/dockerhub/itzg/minecraft-server:2026.10.1
+          image: harbor.andreybondarenko.com/dockerhub/itzg/minecraft-server:2026.11.0
           imagePullPolicy: IfNotPresent
           env:
             - name: EULA
