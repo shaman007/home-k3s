@@ -2,6 +2,11 @@ name: Renovate
 
 on:
   workflow_dispatch:
+    inputs:
+      migrate_legacy_prs:
+        description: Recreate the five legacy Renovate PR branches with App-signed commits
+        type: boolean
+        default: false
   schedule:
     - cron: "0 3 * * *"
 
@@ -39,3 +44,6 @@ jobs:
         env:
           RENOVATE_PLATFORM_COMMIT: "enabled"
           RENOVATE_REPOSITORIES: ${{ github.repository }}
+          # One-off migration from the old PAT account; disabled for scheduled runs.
+          RENOVATE_IGNORE_PR_AUTHOR: ${{ inputs.migrate_legacy_prs && 'true' || 'false' }}
+          RENOVATE_CHECKED_BRANCHES: ${{ inputs.migrate_legacy_prs && 'renovate/renovatebot-github-action-46.x,renovate/harbor.andreybondarenko.com-library-sync-2026.x,renovate/harbor.andreybondarenko.com-library-ripe-atlas-2026.x,renovate/harbor.andreybondarenko.com-library-php-2026.x,renovate/harbor.andreybondarenko.com-library-ooniprobe-2026.x' || '' }}

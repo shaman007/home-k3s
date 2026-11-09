@@ -41,3 +41,17 @@ branches containing manual edits without reviewing those edits first.
 
 Signed commits satisfy the signature requirement; reviews, status checks, and
 other branch protections still apply.
+
+### One-off migration of legacy PRs
+
+For the five existing PAT-authored PRs (#1108, #1109, #1111, #1112, #1113), run
+the workflow manually with `migrate_legacy_prs` enabled. This enables
+`ignorePrAuthor` for that run so the App can find the old account's PRs, and
+passes their exact branch names through `checkedBranches` to request regeneration.
+Scheduled runs and ordinary manual runs leave both migration settings disabled.
+
+Review each PR for manual edits before using this option: forced regeneration
+can discard branch edits and may select a newer dependency version. Verify all
+commits in each resulting PR, including any historical merge commits, rather
+than checking only its latest commit. Remove this migration option after the
+five PRs have been migrated or closed.
