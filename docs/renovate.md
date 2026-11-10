@@ -48,15 +48,22 @@ Minor and patch updates are eligible for PR automerge after CI passes. Major
 updates and Argo CD minor/major upgrades still require manual merging.
 Pin and digest-only updates are not included in the automerge rule.
 
-`platformAutomerge` is disabled so Renovate evaluates checks before merging,
-instead of delegating the decision to GitHub's required-check configuration.
-Keep the default test checking enabled; do not set `ignoreTests: true` or
-`statusCheckNames: null`. The App still respects branch protections.
+`platformAutomerge` is enabled so Renovate asks GitHub to merge eligible PRs
+when branch protections pass. Enable **Allow auto-merge** in repository settings
+and require CI checks on `main` before publishing this configuration. Keep signed
+commits required, and keep the default test checking enabled.
 
-Merging happens during a Renovate run, not immediately when CI finishes. With
-the current daily schedule, this can wait until the next scheduled run, or a
-manual workflow dispatch. Renovate may rebase an outdated PR and wait for its CI
-again; normally only one PR per target branch is automerged per run.
+The required checks are `validate-manifests`, `pre-commit`, the three
+`Codacy Security Scan` jobs (bandit, opengrep, shellcheck), the four CodeQL
+`Analyze` jobs (actions, go, python, ruby), and the code-scanning results:
+`CodeQL`, `Bandit (reported by Codacy)`, `Opengrep (reported by Codacy)`, and
+`Shellcheck (reported by Codacy)`. `validate-manifests` aggregates input validation
+and every Kyverno CEL matrix shard. Keep this list aligned with workflow changes.
+
+Renovate must run once to enable native auto-merge on each eligible PR. After
+that, GitHub can merge when required CI passes without another Renovate run.
+Branches must be up to date with `main`; if they fall behind, Renovate may need
+to rebase them and CI must pass again. No branch-protection bypass is needed.
 
 ### One-off migration of legacy PRs
 

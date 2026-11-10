@@ -9,7 +9,7 @@
   },
   "platformCommit": "enabled",
   "automergeType": "pr",
-  "platformAutomerge": false,
+  "platformAutomerge": true,
   "prHourlyLimit": 0,
   "ignorePaths": ["DEPRECATED/**"],
   "argocd": {
