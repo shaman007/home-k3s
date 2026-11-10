@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Write a reviewable, unsubmitted one-off Podman build Job with its exact source."""
 import base64
+import copy
 import gzip
 import hashlib
 import io
@@ -45,6 +46,20 @@ job = {'apiVersion':'batch/v1','kind':'Job','metadata':{'name':name,'namespace':
  'template':{'metadata':{'labels':{'app.kubernetes.io/name':'podman-builder','app.kubernetes.io/instance':'podman-builder'}},'spec':{
  'automountServiceAccountToken':False,'restartPolicy':'Never','nodeSelector':{'kubernetes.io/arch':'amd64'},
  'containers':[container], 'volumes':[{'name':'source','configMap':{'name':name}},{'name':'workspace','emptyDir':{'sizeLimit':'2Gi'}},{'name':'storage','emptyDir':{'sizeLimit':'10Gi'}}]}}}}
+# Reuse the reviewed signing runtime and secret references from the scheduled builder.
+base = yaml.safe_load((root.parents[1] / 'image-builder/cron-job-podman-builder.yaml').read_text())
+base_pod = base['spec']['jobTemplate']['spec']['template']['spec']
+pod = job['spec']['template']['spec']
+pod['initContainers'] = copy.deepcopy([c for c in base_pod['initContainers'] if c['name'] in {'copy-busybox', 'copy-cosign'}])
+pod['volumes'] += copy.deepcopy([v for v in base_pod['volumes'] if v['name'].startswith('signing-')])
+container['volumeMounts'] += copy.deepcopy([v for v in base_pod['containers'][0]['volumeMounts'] if v['name'].startswith('signing-')])
+container['env'] += copy.deepcopy([v for v in base_pod['containers'][0]['env'] if v['name'] in {'COSIGN_KEY', 'COSIGN_PUBLIC_KEY', 'COSIGN_PASSWORD', 'DOCKER_CONFIG', 'REGISTRY_AUTH_FILE'}])
+container['args'][0] = container['args'][0].replace('set -Eeuo pipefail', 'set -Eeuo pipefail\n export PATH="/tools:$PATH"\n mkdir -p "$DOCKER_CONFIG"')
+container['args'][0] = container['args'][0].replace(' cat /tmp/image.digest', ''' digest=$(cat /tmp/image.digest)
+ [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+ cosign sign --yes --key "$COSIGN_KEY" "${IMAGE%:*}@$digest"
+ cosign verify --key "$COSIGN_PUBLIC_KEY" "${IMAGE%:*}@$digest"
+ printf '%s\\n' "$digest"''')
 output=Path('/tmp')/(name+'.yaml')
 output.write_text(yaml.safe_dump_all([config,job],sort_keys=False,explicit_start=True))
 print('Build manifest:',output)

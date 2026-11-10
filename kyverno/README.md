@@ -1,5 +1,9 @@
 # Kyverno audit rollout
 
+Image-signature audits and producer signing are prepared separately; see the
+[supply-chain rollout](../docs/supply-chain/README.md) for coverage, trust identities,
+Harbor prerequisites and the checks required before enforcement.
+
 Kyverno 1.19.2 (Helm charts 3.9.2) is deployed by the `kyverno` and
 `kyverno-policies` Argo CD Applications in a dedicated `kyverno` AppProject.
 The controller and upstream policies use pinned official Helm charts. The

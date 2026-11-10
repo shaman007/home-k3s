@@ -1,5 +1,10 @@
 # Image builder
 
+The repository CronJob now enables `SIGN=1` with Cosign and a dedicated encrypted
+key from OpenBao; the live CronJob remains unchanged until publication and sync.
+See the [signing rollout](../docs/supply-chain/README.md) for the ExternalSecret,
+public key, Kyverno audit policy and destination-registry acceptance checks.
+
 The `podman-builder` CronJob checks out the public Dockerfiles repository with
 the upstream Kubernetes `git-sync` image every Monday at 02:29 UTC, then builds
 it with the upstream Podman stable image. It runs privileged Podman with
@@ -42,6 +47,7 @@ control and cannot be enforced by the Kubernetes Secret.
 The ExternalSecret currently maps `kv/harbor` properties `user` and `password`
 to the runtime-only `podman-builder-harbor` Secret. The associated SecretStore
 uses the namespace-bound `vault-auth` ServiceAccount and the
-`external-secrets-image-builder` Vault Kubernetes auth role. Replace this shared
+`external-secrets-image-builder` Vault Kubernetes auth role. Its narrow signing
+policy is separate from Harbor credential access. Replace this shared
 credential with the scoped robot account described above before treating Harbor
 least privilege as complete.

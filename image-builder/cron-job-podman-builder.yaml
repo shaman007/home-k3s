@@ -57,6 +57,57 @@ spec:
                   mountPath: /workspace
                 - name: git-tmp
                   mountPath: /tmp
+            - name: copy-busybox
+              image: harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0
+              command:
+              - /bin/cp
+              - /bin/busybox
+              - /tools/busybox
+              volumeMounts:
+              - &id001
+                name: signing-tools
+                mountPath: /tools
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                readOnlyRootFilesystem: true
+                runAsUser: 0
+                runAsGroup: 0
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+            - name: copy-cosign
+              image: harbor.andreybondarenko.com/github/sigstore/cosign/cosign:v3.0.6
+              command:
+              - /tools/busybox
+              - cp
+              - /ko-app/cosign
+              - /tools/cosign
+              volumeMounts:
+              - *id001
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
+                readOnlyRootFilesystem: true
+                runAsUser: 0
+                runAsGroup: 0
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
           containers:
             - name: build
               image: quay.io/podman/stable:v5.8.9
@@ -68,6 +119,8 @@ spec:
               args:
                 - |
                   set -Eeuo pipefail
+                  export PATH="/tools:$PATH"
+                  mkdir -p "$DOCKER_CONFIG"
                   printf '%s' "$HARBOR_PASSWORD" | podman login "$REGISTRY" \
                     --username "$HARBOR_USERNAME" \
                     --password-stdin
@@ -100,6 +153,21 @@ spec:
                   value: harbor.andreybondarenko.com
                 - name: NAMESPACE
                   value: library
+                - name: SIGN
+                  value: '1'
+                - name: COSIGN_KEY
+                  value: /var/run/signing/cosign.key
+                - name: COSIGN_PUBLIC_KEY
+                  value: /var/run/signing-public/cosign.pub
+                - name: COSIGN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: podman-builder-signing
+                      key: password
+                - name: DOCKER_CONFIG
+                  value: /workspace/registry-auth
+                - name: REGISTRY_AUTH_FILE
+                  value: /workspace/registry-auth/config.json
               resources:
                 requests:
                   cpu: 500m
@@ -111,6 +179,15 @@ spec:
                   mountPath: /workspace
                 - name: container-storage
                   mountPath: /var/lib/containers
+                - name: signing-tools
+                  mountPath: /tools
+                  readOnly: true
+                - name: signing-key
+                  mountPath: /var/run/signing
+                  readOnly: true
+                - name: signing-public
+                  mountPath: /var/run/signing-public
+                  readOnly: true
           volumes:
             - name: workspace
               emptyDir:
@@ -121,3 +198,16 @@ spec:
             - name: git-tmp
               emptyDir:
                 sizeLimit: 128Mi
+            - name: signing-tools
+              emptyDir:
+                sizeLimit: 256Mi
+            - name: signing-key
+              secret:
+                secretName: podman-builder-signing
+                defaultMode: 256
+                items:
+                - key: cosign.key
+                  path: cosign.key
+            - name: signing-public
+              configMap:
+                name: podman-builder-signing-public

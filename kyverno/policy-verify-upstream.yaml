@@ -1,0 +1,86 @@
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-cilium-release-images
+  annotations:
+    policies.kyverno.io/source: https://docs.cilium.io/en/stable/configuration/verify-image-signatures/
+spec:
+  validationActions:
+  - Audit
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+  matchImageReferences:
+  - glob: quay.io/cilium/cilium:*
+  - glob: quay.io/cilium/cilium@*
+  - glob: quay.io/cilium/operator-generic:*
+  - glob: quay.io/cilium/operator-generic@*
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+    required: true
+  attestors:
+  - name: publisher
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github\.com/cilium/cilium/\.github/workflows/build-images-releases\.yaml@refs/tags/v[^/]+$
+      ctlog:
+        url: https://rekor.sigstore.dev
+  validations:
+  - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.publisher])).all(result,
+      result > 0)
+    message: Image must carry a valid signature from its upstream release publisher
+---
+apiVersion: policies.kyverno.io/v1
+kind: ImageValidatingPolicy
+metadata:
+  name: verify-kubernetes-images
+  annotations:
+    policies.kyverno.io/source: https://kubernetes.io/docs/tasks/administer-cluster/verify-signed-artifacts/
+spec:
+  validationActions:
+  - Audit
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+  matchImageReferences:
+  - glob: registry.k8s.io/*
+  validationConfigurations:
+    mutateDigest: false
+    verifyDigest: false
+    required: true
+  attestors:
+  - name: publisher
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://accounts.google.com
+          subject: krel-trust@k8s-releng-prod.iam.gserviceaccount.com
+      ctlog:
+        url: https://rekor.sigstore.dev
+  validations:
+  - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.publisher])).all(result,
+      result > 0)
+    message: Image must carry a valid signature from its upstream release publisher

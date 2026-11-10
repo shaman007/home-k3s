@@ -90,6 +90,7 @@ EXPECTED_CLUSTER_PERMISSIONS = {
         ("rbac.authorization.k8s.io", "ClusterRole"),
         ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
         ("policies.kyverno.io", "ValidatingPolicy"),
+        ("policies.kyverno.io", "ImageValidatingPolicy"),
     },
     "applications": {
         ("", "Namespace"),

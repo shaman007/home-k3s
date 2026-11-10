@@ -25,6 +25,8 @@ spec:
     kind: ClusterRoleBinding
   - group: policies.kyverno.io
     kind: ValidatingPolicy
+  - group: policies.kyverno.io
+    kind: ImageValidatingPolicy
   namespaceResourceWhitelist:
   - group: '*'
     kind: '*'

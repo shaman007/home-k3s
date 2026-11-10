@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: podman-builder-signing-public
+  namespace: image-builder
+data:
+  cosign.pub: '-----BEGIN PUBLIC KEY-----
+
+    MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfi0XzPtSZGYDC23AQfmxdlrkBL+Q
+
+    H9Xf65VWTlPLplKxqMZBCVhs1LESys/sz7sXEb16L8F2SMxeNYWMONclTQ==
+
+    -----END PUBLIC KEY-----
+
+    '

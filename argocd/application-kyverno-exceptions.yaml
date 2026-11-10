@@ -12,7 +12,7 @@ spec:
     targetRevision: main
     path: kyverno
     directory:
-      include: '{policy-exceptions-*.yaml,policy-require-*.yaml}'
+      include: '{policy-exceptions-*.yaml,policy-require-*.yaml,policy-verify-*.yaml}'
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno
