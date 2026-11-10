@@ -22,6 +22,87 @@ class AuditFixtureTests(unittest.TestCase):
                 self.assertIsNot(result, resource)
                 run.assert_not_called()
 
+    def test_policy_partition_preserves_assertions_and_exception_scope(self):
+        import tempfile
+        import yaml
+        policies = [{'kind': 'ValidatingPolicy', 'metadata': {'name': name}}
+                    for name in ['first', 'second']]
+        def exception(name, policy, namespace):
+            return {'metadata': {'name': name, 'namespace': namespace},
+                    'spec': {'policyRefs': [{'kind': 'ValidatingPolicy', 'name': policy}]}}
+        exceptions = [exception('local', 'first', 'one'),
+                      exception('other-namespace', 'first', 'two'),
+                      exception('other-policy', 'second', 'one')]
+        original = {'kind': 'Pod', 'metadata': {'name': 'same', 'namespace': 'one'},
+                    'spec': {'containers': [{'name': 'app', 'image': 'example:1'}]}}
+        import copy
+        changed = copy.deepcopy(original)
+        changed['spec']['containers'][0]['image'] = 'unreviewed:1'
+        cases = [(original, {'first': 'skip', 'second': 'pass'}, False),
+                 (changed, {'first': 'fail'}, True)]
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'cases'
+            counts = audit.write_test_cases(cases, policies, exceptions, output)
+            self.assertEqual(counts, {'first': 2, 'second': 1})
+            seen = []
+            for file in output.rglob('kyverno-test.yaml'):
+                test = yaml.safe_load(file.read_text())
+                docs = list(yaml.safe_load_all((file.parent / test['resources'][0]).read_text()))
+                self.assertEqual(len(docs), 1)
+                for ref in test['results']:
+                    seen.append((docs[0], ref['policy'], ref['result']))
+                loaded = list(yaml.safe_load_all((file.parent / test['exceptions'][0]).read_text()))
+                expected = exceptions[:2] if test['results'][0]['policy'] == 'first' else exceptions[2:]
+                self.assertEqual(loaded, expected)
+            self.assertCountEqual(seen, [(original, 'first', 'skip'),
+                                         (original, 'second', 'pass'), (changed, 'first', 'fail')])
+            # Refuse stale fixture directories rather than mixing in old tests.
+            with self.assertRaises(FileExistsError):
+                audit.write_test_cases(cases, policies, exceptions, output)
+
+    def test_smaller_shards_preserve_every_case_and_all_applicable_exceptions(self):
+        import json
+        import tempfile
+        import yaml
+        from collections import Counter
+        policy = {'kind': 'ValidatingPolicy', 'metadata': {'name': 'require-run-as-nonroot'}}
+        exceptions = [{'metadata': {'name': name}, 'spec': {'policyRefs': [
+            {'kind': 'ValidatingPolicy', 'name': policy['metadata']['name']}]}}
+            for name in ['reviewed', 'other-workload']]
+        cases = []
+        for i in range(7):
+            # Separate variants deliberately retain the same identity.
+            doc = {'kind': 'Pod', 'metadata': {'name': 'same' if i % 2 else f'app-{i}'},
+                   'spec': {'variant': i}}
+            cases.append((doc, {policy['metadata']['name']: 'skip' if i % 2 else 'fail'}, bool(i % 2)))
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'cases'
+            counts = audit.write_test_cases(cases, [policy], exceptions, output, max_cases_per_shard=3)
+            self.assertEqual(sorted(counts.values()), [2, 2, 3])
+            self.assertEqual(json.loads((output / 'counts.json').read_text()), counts)
+            seen = Counter()
+            for folder in output.iterdir():
+                if not folder.is_dir():
+                    continue
+                self.assertEqual(list(yaml.safe_load_all((folder / 'exceptions.yaml').read_text())), exceptions)
+                self.assertEqual(len(list(folder.glob('case-*'))), 1)
+                actual = 0
+                for file in folder.rglob('kyverno-test.yaml'):
+                    test = yaml.safe_load(file.read_text())
+                    self.assertLessEqual(len(test['metadata']['name']), 63)
+                    resources = list(yaml.safe_load_all((file.parent / test['resources'][0]).read_text()))
+                    for ref in test['results']:
+                        matches = [d for d in resources if d['metadata']['name'] == ref['resources'][0]]
+                        self.assertEqual(len(matches), 1)
+                        seen[json.dumps([matches[0], ref['policy'], ref['result']], sort_keys=True)] += 1
+                        actual += 1
+                self.assertEqual(actual, counts[folder.name])
+            expected = Counter(json.dumps([doc, name, result], sort_keys=True)
+                               for doc, refs, _ in cases for name, result in refs.items())
+            self.assertEqual(seen, expected)
+            with self.assertRaises(ValueError):
+                audit.write_test_cases(cases, [policy], exceptions, Path(tmp) / 'invalid', 0)
+
     def test_seccomp_negative_companion_is_unconfined(self):
         container = audit.noncompliant_container('restrict-seccomp-strict', 'unapproved')
         self.assertEqual(container['securityContext']['seccompProfile']['type'], 'Unconfined')

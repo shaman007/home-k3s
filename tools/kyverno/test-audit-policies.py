@@ -123,11 +123,77 @@ def admitted_longhorn_manager(document, kyverno):
         return documents[0] if documents else copy.deepcopy(document)
 
 
+def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=256):
+    """Partition assertions without changing resources or exception scope.
+
+    Keep every exception referring to the selected policy, including exceptions
+    for other workloads/namespaces: negative cases must still detect overmatching.
+    Pod variants with the same identity stay in independent CLI test folders.
+    """
+    if max_cases_per_shard < 1:
+        raise ValueError('Shard size must be positive')
+    output.mkdir(parents=True, exist_ok=False)
+    counts = {}
+    for policy in policies:
+        name = policy['metadata']['name']
+        selected = [(index, document, expected, separate)
+                    for index, (document, expected, separate) in enumerate(cases)
+                    if name in expected]
+        assert selected, f'No assertions for {name}'
+        shard_count = (len(selected) + max_cases_per_shard - 1) // max_cases_per_shard
+        relevant = [e for e in exceptions if any(
+            r['name'] == name and r['kind'] == policy['kind']
+            for r in e['spec']['policyRefs'])]
+        for shard in range(shard_count):
+            shard_name = name if shard_count == 1 else f'{name}-part-{shard + 1}-of-{shard_count}'
+            folder = output / shard_name
+            folder.mkdir()
+            (folder / 'policies.yaml').write_text(yaml.safe_dump(policy, sort_keys=False))
+            (folder / 'exceptions.yaml').write_text(yaml.safe_dump_all(relevant, sort_keys=False))
+            resources, results = [], []
+            count = 0
+
+            def write_test(target, documents, refs):
+                (target / 'resources.yaml').write_text(yaml.safe_dump_all(documents, sort_keys=False))
+                prefix = '' if target == folder else '../'
+                test = {'apiVersion': 'cli.kyverno.io/v1alpha1', 'kind': 'Test',
+                        'metadata': {'name': shard_name if target == folder else shard_name + '-' + target.name},
+                        'policies': [prefix + 'policies.yaml'], 'resources': ['resources.yaml'],
+                        'exceptions': [prefix + 'exceptions.yaml'], 'results': refs}
+                (target / 'kyverno-test.yaml').write_text(yaml.safe_dump(test, sort_keys=False))
+
+            # Round-robin assignment balances separate Pod cases and batched
+            # resources instead of concentrating expensive case types in one shard.
+            for index, document, expected, separate in selected[shard::shard_count]:
+                ref = {'policy': name, 'kind': document['kind'],
+                       'resources': [document['metadata']['name']], 'result': expected[name]}
+                count += 1
+                if separate:
+                    target = folder / f'case-{index:04d}'
+                    target.mkdir()
+                    write_test(target, [document], [ref])
+                else:
+                    resources.append(document)
+                    results.append(ref)
+            if results:
+                write_test(folder, resources, results)
+            assert count, f'No assertions for {name}'
+            counts[shard_name] = count
+    assert sum(counts.values()) == sum(len(expected) for _, expected, _ in cases)
+    (output / 'counts.json').write_text(json.dumps(counts, sort_keys=True, indent=2) + '\n')
+    return counts
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--rendered', type=Path, required=True)
+    parser.add_argument('--output', type=Path, help='Prepare sanitized policy-sharded CLI fixtures without running them')
     parser.add_argument('--kyverno', default='kyverno')
+    parser.add_argument('--max-cases-per-shard', type=int, default=256,
+                        help='Maximum assertions per policy shard (default: 256)')
     args = parser.parse_args()
+    if args.max_cases_per_shard < 1:
+        parser.error('--max-cases-per-shard must be positive')
     version = subprocess.check_output([args.kyverno, 'version'], text=True)
     if '1.19.2' not in version:
         raise SystemExit('Tests require the pinned Kyverno CLI 1.19.2')
@@ -152,26 +218,12 @@ def main():
     count = 0
     with tempfile.TemporaryDirectory(prefix='kyverno-audit-tests-') as temporary:
         work = Path(temporary)
-        (work / 'policies.yaml').write_text(yaml.safe_dump_all(policies, sort_keys=False))
-        (work / 'exceptions.yaml').write_text(yaml.safe_dump_all(exceptions, sort_keys=False))
-        resources, results = [], []
+        cases = []
 
         def case(document, expected, separate=False):
             nonlocal count
             count += len(expected)
-            refs = [{'policy': policy, 'kind': document['kind'], 'resources': [document['metadata']['name']],
-                     'result': result} for policy, result in expected.items()]
-            if separate:
-                folder = work / ('case-' + str(count))
-                folder.mkdir()
-                (folder / 'resources.yaml').write_text(yaml.safe_dump(document, sort_keys=False))
-                test = {'apiVersion': 'cli.kyverno.io/v1alpha1', 'kind': 'Test',
-                        'metadata': {'name': folder.name}, 'policies': ['../policies.yaml'],
-                        'resources': ['resources.yaml'], 'exceptions': ['../exceptions.yaml'], 'results': refs}
-                (folder / 'kyverno-test.yaml').write_text(yaml.safe_dump(test, sort_keys=False))
-            else:
-                resources.append(document)
-                results.extend(refs)
+            cases.append((copy.deepcopy(document), expected.copy(), separate))
 
         for index, entry in enumerate(catalog['entries']):
             expected_skip = {p: 'skip' for p in entry['policies']}
@@ -334,13 +386,12 @@ def main():
         audit_case('seccomp-localhost', lambda p: p['spec']['securityContext'].update(seccompProfile={'type': 'Localhost', 'localhostProfile': 'profiles/approved.json'}), seccomp, 'pass')
         for section in ['initContainers', 'ephemeralContainers']:
             audit_case('seccomp-' + section.lower(), lambda p, s=section: p['spec'].update({s: [{'name': 'other', 'image': 'registry.example.invalid/app:1', 'securityContext': {'seccompProfile': {'type': 'Unconfined'}}}]}), seccomp, 'fail')
-        (work / 'resources.yaml').write_text(yaml.safe_dump_all(resources, sort_keys=False))
-        (work / 'kyverno-test.yaml').write_text(yaml.safe_dump(
-            {'apiVersion': 'cli.kyverno.io/v1alpha1', 'kind': 'Test', 'metadata': {'name': 'audit-exceptions'},
-             'policies': ['policies.yaml'], 'resources': ['resources.yaml'],
-             'exceptions': ['exceptions.yaml'], 'results': results}, sort_keys=False))
-        print(f'Testing {count} exact-match/negative/audit expectations with Kyverno 1.19.2', flush=True)
-        subprocess.run([args.kyverno, 'test', str(work), '--fail-only', '--remove-color'], check=True)
+        output = args.output if args.output else work / 'tests'
+        counts = write_test_cases(cases, policies, exceptions, output, args.max_cases_per_shard)
+        print(f'Prepared {count} exact-match/negative/audit expectations: {json.dumps(counts, sort_keys=True)}', flush=True)
+        if not args.output:
+            subprocess.run([args.kyverno, 'test', str(output), '--fail-only', '--remove-color',
+                            '--require-tests'], check=True)
 
 
 if __name__ == '__main__':
