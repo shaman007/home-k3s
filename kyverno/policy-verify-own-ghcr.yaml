@@ -3,7 +3,8 @@ kind: ImageValidatingPolicy
 metadata:
   name: verify-dockerfiles-ghcr
 spec:
-  validationActions: [Audit]
+  validationActions:
+  - Audit
   failurePolicy: Ignore
   evaluation:
     admission:
@@ -12,81 +13,105 @@ spec:
       enabled: true
   matchConstraints:
     resourceRules:
-      - apiGroups: ['']
-        apiVersions: [v1]
-        operations: [CREATE, UPDATE]
-        resources: [pods, pods/ephemeralcontainers]
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
   matchImageReferences:
-    - glob: ghcr.io/shaman007/canitiser:*
-    - glob: ghcr.io/shaman007/canitiser@*
-    - glob: ghcr.io/shaman007/connectivity-exporter-local:*
-    - glob: ghcr.io/shaman007/connectivity-exporter-local@*
-    - glob: ghcr.io/shaman007/crowdsec-rootless:*
-    - glob: ghcr.io/shaman007/crowdsec-rootless@*
-    - glob: ghcr.io/shaman007/external-access-daily-report:*
-    - glob: ghcr.io/shaman007/external-access-daily-report@*
-    - glob: ghcr.io/shaman007/mastodon:*
-    - glob: ghcr.io/shaman007/mastodon@*
-    - glob: ghcr.io/shaman007/ooniprobe:*
-    - glob: ghcr.io/shaman007/ooniprobe@*
-    - glob: ghcr.io/shaman007/php:*
-    - glob: ghcr.io/shaman007/php@*
-    - glob: ghcr.io/shaman007/postfix:*
-    - glob: ghcr.io/shaman007/postfix@*
-    - glob: ghcr.io/shaman007/ripe-atlas:*
-    - glob: ghcr.io/shaman007/ripe-atlas@*
-    - glob: ghcr.io/shaman007/sync:*
-    - glob: ghcr.io/shaman007/sync@*
+  - glob: ghcr.io/shaman007/canitiser:*
+  - glob: ghcr.io/shaman007/canitiser@*
+  - glob: ghcr.io/shaman007/connectivity-exporter-local:*
+  - glob: ghcr.io/shaman007/connectivity-exporter-local@*
+  - glob: ghcr.io/shaman007/crowdsec-rootless:*
+  - glob: ghcr.io/shaman007/crowdsec-rootless@*
+  - glob: ghcr.io/shaman007/external-access-daily-report:*
+  - glob: ghcr.io/shaman007/external-access-daily-report@*
+  - glob: ghcr.io/shaman007/mastodon:*
+  - glob: ghcr.io/shaman007/mastodon@*
+  - glob: ghcr.io/shaman007/ooniprobe:*
+  - glob: ghcr.io/shaman007/ooniprobe@*
+  - glob: ghcr.io/shaman007/php:*
+  - glob: ghcr.io/shaman007/php@*
+  - glob: ghcr.io/shaman007/postfix:*
+  - glob: ghcr.io/shaman007/postfix@*
+  - glob: ghcr.io/shaman007/ripe-atlas:*
+  - glob: ghcr.io/shaman007/ripe-atlas@*
+  - glob: ghcr.io/shaman007/sync:*
+  - glob: ghcr.io/shaman007/sync@*
   validationConfigurations:
     mutateDigest: false
     verifyDigest: false
     required: true
   attestors:
-    - name: dockerfiles
-      cosign:
-        keyless:
-          identities:
-            - issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: '^https://github\.com/shaman007/Dockerfiles/\.github/workflows/docker-publish\.yml@refs/(heads/main|tags/v[0-9]+\.[0-9]+\.[0-9]+)$'
-        ctlog:
-          url: https://rekor.sigstore.dev
+  - name: dockerfiles
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github\.com/shaman007/Dockerfiles/\.github/workflows/docker-publish\.yml@refs/(heads/main|tags/v[0-9]+\.[0-9]+\.[0-9]+)$
+      ctlog:
+        url: https://rekor.sigstore.dev
   validations:
-    - expression: >-
-        images.containers.map(image, verifyImageSignatures(image, [attestors.dockerfiles])).all(result, result > 0)
-      message: Image must be signed by the Dockerfiles publishing workflow
+  - expression: (images.containers + images.initContainers + images.ephemeralContainers).map(image,
+      verifyImageSignatures(image, [attestors.dockerfiles])).all(result, result >
+      0)
+    message: Image must be signed by the Dockerfiles publishing workflow
+  autogen:
+    podControllers:
+      controllers: []
 ---
 apiVersion: policies.kyverno.io/v1
 kind: ImageValidatingPolicy
 metadata:
   name: verify-bastioncam-ghcr
 spec:
-  validationActions: [Audit]
+  validationActions:
+  - Audit
   failurePolicy: Ignore
   matchConstraints:
     resourceRules:
-      - apiGroups: ['']
-        apiVersions: [v1]
-        operations: [CREATE, UPDATE]
-        resources: [pods, pods/ephemeralcontainers]
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
   matchImageReferences:
-    - glob: ghcr.io/shaman007/bastioncam:*
-    - glob: ghcr.io/shaman007/bastioncam@*
+  - glob: ghcr.io/shaman007/bastioncam:*
+  - glob: ghcr.io/shaman007/bastioncam@*
   validationConfigurations:
     mutateDigest: false
     verifyDigest: false
     required: true
   attestors:
-    - name: bastioncam
-      cosign:
-        keyless:
-          identities:
-            - issuer: https://token.actions.githubusercontent.com
-              subjectRegExp: '^https://github\.com/shaman007/bastioncam/\.github/workflows/container\.yml@refs/(heads/main|tags/v[^/]+)$'
-        ctlog:
-          url: https://rekor.sigstore.dev
+  - name: bastioncam
+    cosign:
+      keyless:
+        identities:
+        - issuer: https://token.actions.githubusercontent.com
+          subjectRegExp: ^https://github\.com/shaman007/bastioncam/\.github/workflows/container\.yml@refs/(heads/main|tags/v[^/]+)$
+      ctlog:
+        url: https://rekor.sigstore.dev
   validations:
-    - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.bastioncam])).all(result, result > 0)
-      message: Image must be signed by the Bastioncam publishing workflow
+  - expression: (images.containers + images.initContainers + images.ephemeralContainers).map(image,
+      verifyImageSignatures(image, [attestors.bastioncam])).all(result, result > 0)
+    message: Image must be signed by the Bastioncam publishing workflow
+  autogen:
+    podControllers:
+      controllers: []
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
 ---
 apiVersion: policies.kyverno.io/v1
 kind: ImageValidatingPolicy
@@ -107,7 +132,6 @@ spec:
       - UPDATE
       resources:
       - pods
-      - pods/ephemeralcontainers
   matchImageReferences:
   - glob: ghcr.io/shaman007/immich-server:*
   - glob: ghcr.io/shaman007/immich-server@*
@@ -127,6 +151,14 @@ spec:
       ctlog:
         url: https://rekor.sigstore.dev
   validations:
-  - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.immich])).all(result,
-      result > 0)
+  - expression: (images.containers + images.initContainers + images.ephemeralContainers).map(image,
+      verifyImageSignatures(image, [attestors.immich])).all(result, result > 0)
     message: Image must be signed by the user-owned Immich publishing workflow
+  autogen:
+    podControllers:
+      controllers: []
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true

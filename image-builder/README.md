@@ -1,7 +1,7 @@
 # Image builder
 
 The repository CronJob now enables `SIGN=1` with Cosign and a dedicated encrypted
-key from OpenBao; the live CronJob remains unchanged until publication and sync.
+key from OpenBao. Source changes deploy through normal publication and Argo sync.
 See the [signing rollout](../docs/supply-chain/README.md) for the ExternalSecret,
 public key, Kyverno audit policy and destination-registry acceptance checks.
 

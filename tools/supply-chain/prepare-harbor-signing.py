@@ -22,7 +22,7 @@ def prepare(public_key):
     build["volumeMounts"] = [x for x in build["volumeMounts"] if x["name"] not in {"signing-tools", "signing-key", "signing-public"}]
     tools_mount = {"name": "signing-tools", "mountPath": "/tools"}
     pod["initContainers"] += [
-        {"name": "copy-busybox", "image": "harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0",
+        {"name": "copy-busybox", "image": "harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0-musl",
          "command": ["/bin/cp", "/bin/busybox", "/tools/busybox"],
          "volumeMounts": [tools_mount]},
         {"name": "copy-cosign", "image": "harbor.andreybondarenko.com/github/sigstore/cosign/cosign:v3.0.6",
@@ -70,7 +70,7 @@ def prepare(public_key):
     spec["matchImageReferences"] = [{"glob": "harbor.andreybondarenko.com/library/*"}]
     spec["attestors"] = [{"name": "homelab", "cosign": {"key": {"data": public_key},
         "ctlog": {"url": "https://rekor.sigstore.dev"}}}]
-    spec["validations"] = [{"expression": "images.containers.map(image, verifyImageSignatures(image, [attestors.homelab])).all(result, result > 0)",
+    spec["validations"] = [{"expression": "(images.containers + images.initContainers + images.ephemeralContainers).map(image, verifyImageSignatures(image, [attestors.homelab])).all(result, result > 0)",
                             "message": "Image must be signed by the homelab signing key"}]
     return {"cron-job-podman-builder.yaml": cron, "external-secret-signing.yaml": external,
             "config-map-signing-public.yaml": config, "policy-verify-own-harbor.yaml": base}

@@ -19,7 +19,6 @@ spec:
       - UPDATE
       resources:
       - pods
-      - pods/ephemeralcontainers
   matchImageReferences:
   - glob: quay.io/cilium/cilium:*
   - glob: quay.io/cilium/cilium@*
@@ -39,9 +38,17 @@ spec:
       ctlog:
         url: https://rekor.sigstore.dev
   validations:
-  - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.publisher])).all(result,
-      result > 0)
+  - expression: (images.containers + images.initContainers + images.ephemeralContainers).map(image,
+      verifyImageSignatures(image, [attestors.publisher])).all(result, result > 0)
     message: Image must carry a valid signature from its upstream release publisher
+  autogen:
+    podControllers:
+      controllers: []
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true
 ---
 apiVersion: policies.kyverno.io/v1
 kind: ImageValidatingPolicy
@@ -64,7 +71,6 @@ spec:
       - UPDATE
       resources:
       - pods
-      - pods/ephemeralcontainers
   matchImageReferences:
   - glob: registry.k8s.io/*
   validationConfigurations:
@@ -81,6 +87,14 @@ spec:
       ctlog:
         url: https://rekor.sigstore.dev
   validations:
-  - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.publisher])).all(result,
-      result > 0)
+  - expression: (images.containers + images.initContainers + images.ephemeralContainers).map(image,
+      verifyImageSignatures(image, [attestors.publisher])).all(result, result > 0)
     message: Image must carry a valid signature from its upstream release publisher
+  autogen:
+    podControllers:
+      controllers: []
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true

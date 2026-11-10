@@ -1,8 +1,7 @@
 # Image and release signing
 
-This change prepares signing in the local repositories. It is not a deployment:
-no Git changes have been published and no live admission configuration has changed.
-The approved signing key and dedicated builder role have been provisioned in OpenBao;
+Signing sources have been published and the initial audit rollout is in progress.
+The approved signing key and dedicated builder role are provisioned in OpenBao;
 only the public key is in Git. Audit reports do not block images.
 
 ## Publishing paths
@@ -51,8 +50,12 @@ and [Kubernetes](https://kubernetes.io/docs/tasks/administer-cluster/verify-sign
 
 All initial policies use Audit/Ignore, with digest mutation explicitly disabled.
 They resolve signatures for the requested image but do not require digest syntax
-yet. Their initial resource scope is Pods, including init/ephemeral image
-extraction and updates to `pods/ephemeralcontainers`; verify runtime coverage.
+yet. Pod policies scan all three image lists: regular, init and ephemeral containers.
+Generated admission-only companion policies handle updates to
+`pods/ephemeralcontainers`. Background list/watch checks apply only to Pods;
+subresource policies explicitly disable background scanning. Autogeneration is
+disabled to retain this Pod-only scope. Regenerate companions with
+`python3 tools/supply-chain/generate-ephemeral-policies.py` and check with `--check`.
 The AppProject permits ImageValidatingPolicy and the existing policy Application
 includes these files. The existing force-fail-open controller setting remains.
 An unmatched image is outside coverage even if a report shows a vacuous Pass.
@@ -67,7 +70,7 @@ decision (replacement, reviewed digest, or exception) before blanket enforcement
 
 ## Enable Harbor signing
 
-The live CronJob is unchanged; its repository template now enables signing. The
+The CronJob template enables signing. The
 Dockerfiles script supports `SIGN=1` and checks Cosign/key prerequisites before
 building. It records each Podman manifest push digest or the Docker Buildx output
 digest, signs that digest, and verifies it. Failed signing/verification fails the
@@ -143,7 +146,7 @@ as downloadable files, not automatic package-manager verification.
 
 1. Publish reviewed source changes without enabling Deny. Run each actual producer
    and verify its signatures from the destination registry/release independently.
-2. Check Argo sync, all six image policies Ready, admission/report health, and
+2. Check Argo sync, all twelve image policies Ready, admission/report health, and
    per-policy report errors. Check signing/registry access from Kyverno's namespace.
 3. Use safe unscheduled fixtures containing a valid signed image, an unsigned
    image, a wrong-signer signature, a tampered file, mixed signed/unsigned
@@ -165,7 +168,7 @@ never delete images or workload data as part of rollback.
 
 ## Verification performed
 
-- All 376 repository tests passed (21 skipped) using the existing CI virtualenv;
+- All 377 repository tests passed (21 skipped) using the existing CI virtualenv;
   focused signing/builder/project tests also passed after builder integration.
 - Dockerfiles' three mocked build tests verified digest-only signing, read-back
   verification, and failure before latest publication when signing fails.
@@ -173,7 +176,7 @@ never delete images or workload data as part of rollback.
   An intentionally wrong publisher identity failed without evaluation errors.
   Existing unsigned Canitiser images failed in regular, init and ephemeral roles,
   with zero evaluation errors. These were local fixtures, never admitted Pods.
-- Six policies validated against the live CRD schema; Argo source rendering,
+- Twelve policies validated against the live CRD schema; Argo source rendering,
   actionlint, shell syntax, generated builder idempotence and strict Kubernetes
   schema checks passed.
 - OpenBao encrypted-key/public-key correspondence, KV read-back, policy and
@@ -183,3 +186,22 @@ Still unverified: a newly signed own image through GHCR/Harbor, actual release
 OIDC signing, External Secrets reconciliation using the new role, Talos execution
 of the signing init containers, webhook enforcement, and third-party proxy-cache
 signature preservation. Publication and destination-registry tests are required.
+
+## Initial rollout repairs
+
+The first live rollout exposed two issues that offline schema checks did not catch:
+
+- A policy matching `pods/ephemeralcontainers` with background scans enabled
+  fails Kyverno's reporting RBAC readiness checks. Pod background policies and
+  generated admission-only subresource policies now have separate scopes,
+  without granting unnecessary subresource list/watch rights.
+- The default BusyBox binary requires a dynamic loader absent from the distroless
+  Cosign image. The builder now uses the musl variant; its ELF was independently
+  verified as statically linked before the retry.
+
+The validation expression explicitly concatenates `images.containers`,
+`images.initContainers` and `images.ephemeralContainers`. Relying on
+`required: true` to reject unchecked init/ephemeral images produces false failures
+for correctly signed images. Actual signed Cilium images now pass in all three
+roles in CLI tests. The initial failed Job stopped in initialization before any
+image build or publication.

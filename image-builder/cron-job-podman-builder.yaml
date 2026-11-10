@@ -58,7 +58,7 @@ spec:
                 - name: git-tmp
                   mountPath: /tmp
             - name: copy-busybox
-              image: harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0
+              image: harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0-musl
               command:
               - /bin/cp
               - /bin/busybox

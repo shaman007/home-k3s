@@ -1,6 +1,6 @@
 # Kyverno audit rollout
 
-Image-signature audits and producer signing are prepared separately; see the
+Image-signature audits and producer signing have a separate rollout; see the
 [supply-chain rollout](../docs/supply-chain/README.md) for coverage, trust identities,
 Harbor prerequisites and the checks required before enforcement.
 
@@ -24,8 +24,8 @@ capability audit from this directory.
   ValidatingAdmissionPolicy generation and default image-registry mutation are
   disabled.
 - Background mutation/generation and cleanup controllers are disabled because
-  this rollout only validates and reports. No mutation/image-signature policy
-  is installed.
+  this rollout only validates and reports. No image digest mutation is enabled. Signature checks use Audit/Ignore;
+  Pod background policies have separate admission-only ephemeral-update companions.
 - The namespace enforces Restricted Pod Security. Containers have memory budgets
   and no CPU limits. Ingress permits Kyverno and monitoring namespaces; a CiliumNetworkPolicy in
   the policy chart additionally permits API-server/node identities on TCP 9443.

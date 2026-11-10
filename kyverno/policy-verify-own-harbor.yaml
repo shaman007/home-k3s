@@ -17,7 +17,6 @@ spec:
       - UPDATE
       resources:
       - pods
-      - pods/ephemeralcontainers
   matchImageReferences:
   - glob: harbor.andreybondarenko.com/library/*
   validationConfigurations:
@@ -40,6 +39,14 @@ spec:
       ctlog:
         url: https://rekor.sigstore.dev
   validations:
-  - expression: images.containers.map(image, verifyImageSignatures(image, [attestors.homelab])).all(result,
-      result > 0)
+  - expression: (images.containers + images.initContainers + images.ephemeralContainers).map(image,
+      verifyImageSignatures(image, [attestors.homelab])).all(result, result > 0)
     message: Image must be signed by the homelab signing key
+  autogen:
+    podControllers:
+      controllers: []
+  evaluation:
+    admission:
+      enabled: true
+    background:
+      enabled: true

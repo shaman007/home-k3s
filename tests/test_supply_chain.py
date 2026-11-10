@@ -50,6 +50,21 @@ class SignatureTrustTests(unittest.TestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             load('prepare-harbor-signing').prepare('not a public key')
 
+    def test_subresources_have_admission_checks_without_background_rbac(self):
+        generated = load('generate-ephemeral-policies')
+        self.assertEqual(generated.OUTPUT.read_text(), generated.generate())
+        docs = list(yaml.safe_load_all(generated.generate()))
+        self.assertEqual(len(docs), 6)
+        for policy in docs:
+            spec = policy['spec']
+            self.assertFalse(spec['evaluation']['background']['enabled'])
+            self.assertTrue(spec['evaluation']['admission']['enabled'])
+            self.assertEqual(spec['matchConstraints']['resourceRules'][0]['resources'], ['pods/ephemeralcontainers'])
+            expression = spec['validations'][0]['expression']
+            self.assertIn('images.initContainers', expression)
+            self.assertIn('images.ephemeralContainers', expression)
+            self.assertEqual(spec['validationActions'], ['Audit'])
+
     def test_harbor_renderer_preserves_integrated_signing_contract(self):
         public = (ROOT / 'docs/supply-chain/cosign.pub').read_text()
         documents = load('prepare-harbor-signing').prepare(public)
