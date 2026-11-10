@@ -54,13 +54,6 @@ spec:
       port: 8000
   egress:
   - to:
-    - podSelector:
-        matchLabels:
-          app: mysql
-    ports:
-    - protocol: TCP
-      port: 3306
-  - to:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:
@@ -71,26 +64,6 @@ spec:
     ports:
     - protocol: TCP
       port: 443
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: mysql
-  namespace: firefox-sync
-spec:
-  podSelector:
-    matchLabels:
-      app: mysql
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: firefox-sync
-    ports:
-    - protocol: TCP
-      port: 3306
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

@@ -77,3 +77,21 @@ Renovate is limited to MariaDB `12.3.x` for this Deployment.
 After real client writes to MariaDB, the old MySQL is stale. Preserve both PVCs;
 do not switch back blindly without stopping writers and verifying a reverse
 transfer or explicitly accepting loss of post-cutover changes.
+
+
+## Backup and cleanup follow-up — 2026-11-10
+
+The production PVC is now the recurring-job label source and selects daily
+`backup-daily-retain31-b` (02:05 UTC, retain 31) plus `trim-daily-a`.
+Both the baseline backup `firefox-sync-mariadb-daily-baseline-20261109` and the
+scheduled backup `backup-4fac17cee3c74968` completed at 100%; the scheduler's
+last successful run was 2026-11-10T02:05:59Z. This supersedes the initial
+no-recurring-backup limitation above; physical restore verification remains open.
+
+The old MySQL Deployment and its obsolete ingress/egress NetworkPolicy rules
+are removed. Service `mysql`, ConfigMap `mysql-init`, and the MySQL protocol URLs
+remain active MariaDB dependencies. The rehearsal PVC was removed separately
+at the user's request. The original `mysql-data` PVC remains protected and must
+not be deleted as part of cleanup. A reminder for 2026-11-16 at 09:00 Europe/Prague
+asks the user to review backup/sync health before deleting that old PVC; it does
+not authorize automatic deletion.

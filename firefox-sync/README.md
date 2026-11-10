@@ -24,8 +24,10 @@ Mozilla account, two client records, two tab records, and 45 bookmark records.
 Record payloads and account identifiers were not inspected. The normal desktop
 Firefox profile was not modified.
 
-The active volume has a recurring filesystem trim assignment but no recurring
-backup job. The retained original MySQL PVC is protected against Argo pruning.
+The active volume has daily filesystem trim and the Longhorn
+`backup-daily-retain31-b` backup assignment (02:05 UTC daily, 31 retained copies).
+Both the verification backup and the scheduled 2026-11-10 backup completed.
+The retained original MySQL PVC is protected against Argo pruning.
 Its pre-migration snapshot was backed up to the existing SeaweedFS target; a
 physical backup restore has not been tested.
 
@@ -58,7 +60,8 @@ The user will verify actual Firefox sign-in and cross-profile sync separately.
   unpublished source cannot provide GitOps reconciliation.
 
 The dedicated MariaDB 12.3.3 instance uses a 5 GiB Longhorn `mariadb-data` PVC.
-The stopped MySQL Deployment and separate `mysql-data` PVC remain for recovery;
+The old MySQL Deployment is removed; the separate `mysql-data` PVC remains
+for recovery;
 never attach the MySQL datadir to MariaDB. Both database schemas
 and the non-root app user are initialized automatically. Sync migrations and the
 public node URL are initialized by the pinned Mozilla server. Database credentials
