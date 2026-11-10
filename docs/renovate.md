@@ -62,8 +62,11 @@ and every Kyverno CEL matrix shard. Keep this list aligned with workflow changes
 
 Renovate must run once to enable native auto-merge on each eligible PR. After
 that, GitHub can merge when required CI passes without another Renovate run.
-Branches must be up to date with `main`; if they fall behind, Renovate may need
-to rebase them and CI must pass again. No branch-protection bypass is needed.
+The `main` protection does not require branches to be up to date, so one automatic
+merge does not force every queued PR through another rebase/CI cycle. All 13 CI
+checks and signed commits remain required. CI validates each PR's tested revision;
+it does not necessarily cover integration with the latest `main`. No
+branch-protection bypass is needed.
 
 ### One-off migration of legacy PRs
 
