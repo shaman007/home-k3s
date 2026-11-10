@@ -60,9 +60,8 @@ The user will verify actual Firefox sign-in and cross-profile sync separately.
   unpublished source cannot provide GitOps reconciliation.
 
 The dedicated MariaDB 12.3.3 instance uses a 5 GiB Longhorn `mariadb-data` PVC.
-The old MySQL Deployment is removed; the separate `mysql-data` PVC remains
-for recovery;
-never attach the MySQL datadir to MariaDB. Both database schemas
+The old MySQL Deployment and `mysql-data` PVC are retired.
+Never attach a MySQL datadir to MariaDB. Both database schemas
 and the non-root app user are initialized automatically. Sync migrations and the
 public node URL are initialized by the pinned Mozilla server. Database credentials
 are initialization values: changing OpenBao passwords alone does not rotate database

@@ -1,0 +1,32 @@
+# Let argocd-cm's /status ignore apply to these untracked runtime resources.
+# Spec changes and health transitions still trigger reconciliation.
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicy
+metadata:
+  name: longhorn-argocd-resource-updates
+spec:
+  failurePolicy: Ignore
+  reinvocationPolicy: IfNeeded
+  matchConstraints:
+    resourceRules:
+    - apiGroups: [longhorn.io]
+      apiVersions: [v1beta2]
+      operations: [CREATE, UPDATE]
+      resources: [nodes, engines, volumes]
+  matchConditions:
+  - name: namespace
+    expression: request.namespace == 'longhorn-system'
+  mutations:
+  - patchType: ApplyConfiguration
+    applyConfiguration:
+      expression: >-
+        Object{metadata: Object.metadata{annotations: {
+          'argocd.argoproj.io/ignore-resource-updates': 'true'
+        }}}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionPolicyBinding
+metadata:
+  name: longhorn-argocd-resource-updates
+spec:
+  policyName: longhorn-argocd-resource-updates

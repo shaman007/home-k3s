@@ -831,6 +831,18 @@ data:
                 record = {}
             if isinstance(record, dict) and record.get("level") == "info":
                 message = record.get("msg", "")
+                # A resource name containing "exceptions" is not failure evidence.
+                # Match known successful messages, retaining errors and unfamiliar info.
+                if container == "argocd-notifications-controller" and message in ("Start processing", "Processing completed"):
+                    return True
+                if container == "argocd-application-controller" and message in (
+                    "Reconciliation completed", "GetRepoObjs stats",
+                    "Skipping auto-sync: application status is Synced",
+                    "No status changes. Skipping patch",
+                ):
+                    return True
+                if container == "argocd-repo-server" and (message == "manifest cache hit" or message.startswith("manifest cache hit:")):
+                    return True
                 if container == "argocd-application-controller" and message.startswith("Adding resource result,"):
                     if "status: 'Synced'" in message and "phase: 'Running'" in message:
                         return True

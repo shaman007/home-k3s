@@ -79,17 +79,20 @@ spec:
           mountPath: /docker-entrypoint-initdb.d
           readOnly: true
         startupProbe:
-          tcpSocket:
-            port: mysql
+          exec:
+            command: [healthcheck.sh, --connect, --innodb_initialized]
+          timeoutSeconds: 5
           periodSeconds: 5
           failureThreshold: 60
         readinessProbe:
-          tcpSocket:
-            port: mysql
+          exec:
+            command: [healthcheck.sh, --connect, --innodb_initialized]
+          timeoutSeconds: 5
           periodSeconds: 5
         livenessProbe:
-          tcpSocket:
-            port: mysql
+          exec:
+            command: [healthcheck.sh, --connect, --innodb_initialized]
+          timeoutSeconds: 5
           periodSeconds: 20
           failureThreshold: 6
       volumes:

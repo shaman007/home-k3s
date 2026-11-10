@@ -95,3 +95,16 @@ at the user's request. The original `mysql-data` PVC remains protected and must
 not be deleted as part of cleanup. A reminder for 2026-11-16 at 09:00 Europe/Prague
 asks the user to review backup/sync health before deleting that old PVC; it does
 not authorize automatic deletion.
+
+## Old MySQL retirement — 2026-11-10
+
+The user explicitly authorized deleting `mysql-data`, superseding the retention
+requirement above. The detached old volume caused `trim-daily-a-29904485` to fail
+with `Action [trimFilesystem] not available`. The attachment-window workaround
+was removed, and the old PVC and failed/recovery jobs were deleted.
+The active `mariadb-data` PVC is unchanged.
+
+Firefox Sync reconciliation is temporarily skipped to prevent the published old
+PVC manifest from recreating it. After publishing the manifest removal, remove
+`argocd.argoproj.io/skip-reconcile` from the `firefox-sync` Application and verify
+Synced/Healthy. The earlier PVC retirement reminder is obsolete.

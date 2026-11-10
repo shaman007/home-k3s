@@ -124,6 +124,25 @@ class LogsCheckLogicTest(unittest.TestCase):
         self.assertEqual([item], filtered['noise_candidates'])
         self.assertIn('deprecated', '\n'.join(self.report['build_log_batches'](filtered)))
 
+    def test_argo_exception_resource_names_do_not_turn_success_into_faults(self):
+        cases = [
+            ('argocd-notifications-controller', 'Start processing'),
+            ('argocd-notifications-controller', 'Processing completed'),
+            ('argocd-application-controller', 'Reconciliation completed'),
+            ('argocd-repo-server', 'manifest cache hit'),
+            ('argocd-repo-server', 'manifest cache hit: kyverno-exceptions'),
+        ]
+        for container, message in cases:
+            with self.subTest(container=container):
+                item = dict(self.entry(''), namespace='argocd', container=container)
+                for level, expected in [('info', True), ('error', False), ('warning', False)]:
+                    item['line'] = json.dumps(dict(level=level, msg=message,
+                                                  application='kyverno-exceptions'))
+                    self.assertEqual(expected, self.report['is_false_positive']('real_fault_candidates', item))
+                item['line'] = json.dumps(dict(level='info', msg='exception while processing',
+                                              application='kyverno-exceptions'))
+                self.assertFalse(self.report['is_false_positive']('real_fault_candidates', item))
+
     def test_dawarich_frames_do_not_hide_database_failure(self):
         frame = self.entry("actionpack (8.1.3.1) lib/action_dispatch/middleware/show_exceptions.rb:32:in 'ActionDispatch::ShowExceptions#call'")
         frame.update(namespace='dawarich', container='dawarich')
