@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: mariadb
-        image: harbor.andreybondarenko.com/dockerhub/mariadb:12.3.3@sha256:d46e102fa8b9b72bfcdeb56f9dd538742092119dc8b11f31fe662605cd234cd9
+        image: harbor.andreybondarenko.com/dockerhub/mariadb:13.0.2@sha256:f4054da26e3a9dd6c8b5cc97363e544408b15c0fb369d7359c25dc04826eb6e1
         args:
         - --socket=/tmp/mysql.sock
         - --pid-file=/tmp/mysql.pid
