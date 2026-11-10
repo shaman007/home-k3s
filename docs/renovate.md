@@ -42,6 +42,22 @@ branches containing manual edits without reviewing those edits first.
 Signed commits satisfy the signature requirement; reviews, status checks, and
 other branch protections still apply.
 
+## Automerge
+
+Minor and patch updates are eligible for PR automerge after CI passes. Major
+updates and Argo CD minor/major upgrades still require manual merging.
+Pin and digest-only updates are not included in the automerge rule.
+
+`platformAutomerge` is disabled so Renovate evaluates checks before merging,
+instead of delegating the decision to GitHub's required-check configuration.
+Keep the default test checking enabled; do not set `ignoreTests: true` or
+`statusCheckNames: null`. The App still respects branch protections.
+
+Merging happens during a Renovate run, not immediately when CI finishes. With
+the current daily schedule, this can wait until the next scheduled run, or a
+manual workflow dispatch. Renovate may rebase an outdated PR and wait for its CI
+again; normally only one PR per target branch is automerged per run.
+
 ### One-off migration of legacy PRs
 
 For the five existing PAT-authored PRs (#1108, #1109, #1111, #1112, #1113), run

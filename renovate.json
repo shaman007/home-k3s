@@ -8,6 +8,8 @@
     "harbor.andreybondarenko.com/quay": "quay.io"
   },
   "platformCommit": "enabled",
+  "automergeType": "pr",
+  "platformAutomerge": false,
   "prHourlyLimit": 0,
   "ignorePaths": ["DEPRECATED/**"],
   "argocd": {
@@ -51,7 +53,7 @@
     },
     {
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": false
+      "automerge": true
     },
     {
       "matchUpdateTypes": ["major"],
