@@ -70,7 +70,7 @@ def main():
     if len(pods) != 2:
         raise RuntimeError(f"Expected two running cache replicas, found {len(pods)}")
     for pod in pods:
-        process = subprocess.Popen(
+        with subprocess.Popen(
             [
                 "kubectl",
                 "port-forward",
@@ -86,48 +86,53 @@ def main():
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-        )
-        try:
-            line = process.stdout.readline()
-            if not line.startswith("Forwarding from 127.0.0.1:"):
-                raise RuntimeError("Could not start loopback port-forward")
-            port = int(line.split("127.0.0.1:", 1)[1].split(" ", 1)[0])
-            for _ in range(100):
-                if process.poll() is not None:
-                    raise RuntimeError("port-forward exited")
-                try:
-                    with socket.create_connection(("127.0.0.1", port), timeout=0.1):
-                        break
-                except OSError:
-                    time.sleep(0.1)
-            first = fetch(port, args.path)
-            if args.expect_missing or args.expect_private:
-                expected = 404 if args.expect_missing else 403
-                if first[0] != expected:
-                    raise RuntimeError(f"{pod}: expected {expected}, got {first[0]}")
-                print(pod, "origin revocation verified:", expected)
-                continue
-            second = fetch(port, args.path)
-            if first[0] != 200 or second[0] != 200 or first[2] != second[2] or second[1] != "HIT":
-                raise RuntimeError(f"{pod}: repeat hit and identical body not verified")
-            if args.expect_body_sha256 and second[2] != args.expect_body_sha256:
-                raise RuntimeError(f"{pod}: body does not match the current object")
-            for path, headers in [
-                (args.path + "?verification=1", {}),
-                (args.path, {"Range": "bytes=0-0"}),
-                (args.path, {"Cookie": "cache-verification=1"}),
-            ]:
-                status, cache, _ = fetch(port, path, headers)
-                if cache != "BYPASS" or status not in (200, 206):
-                    raise RuntimeError(f"{pod}: query/range/cookie bypass not verified")
-            print(pod, "repeat HIT, identical body and query/range/cookie bypass verified")
-        finally:
-            process.terminate()
+        ) as process:
             try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait()
+                line = process.stdout.readline()
+                if not line.startswith("Forwarding from 127.0.0.1:"):
+                    raise RuntimeError("Could not start loopback port-forward")
+                port = int(line.split("127.0.0.1:", 1)[1].split(" ", 1)[0])
+                for _ in range(100):
+                    if process.poll() is not None:
+                        raise RuntimeError("port-forward exited")
+                    try:
+                        with socket.create_connection(("127.0.0.1", port), timeout=0.1):
+                            break
+                    except OSError:
+                        time.sleep(0.1)
+                first = fetch(port, args.path)
+                if args.expect_missing or args.expect_private:
+                    expected = 404 if args.expect_missing else 403
+                    if first[0] != expected:
+                        raise RuntimeError(f"{pod}: expected {expected}, got {first[0]}")
+                    print(pod, "origin revocation verified:", expected)
+                    continue
+                second = fetch(port, args.path)
+                if (
+                    first[0] != 200
+                    or second[0] != 200
+                    or first[2] != second[2]
+                    or second[1] != "HIT"
+                ):
+                    raise RuntimeError(f"{pod}: repeat hit and identical body not verified")
+                if args.expect_body_sha256 and second[2] != args.expect_body_sha256:
+                    raise RuntimeError(f"{pod}: body does not match the current object")
+                for path, headers in [
+                    (args.path + "?verification=1", {}),
+                    (args.path, {"Range": "bytes=0-0"}),
+                    (args.path, {"Cookie": "cache-verification=1"}),
+                ]:
+                    status, cache, _ = fetch(port, path, headers)
+                    if cache != "BYPASS" or status not in (200, 206):
+                        raise RuntimeError(f"{pod}: query/range/cookie bypass not verified")
+                print(pod, "repeat HIT, identical body and query/range/cookie bypass verified")
+            finally:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
 
 
 if __name__ == "__main__":

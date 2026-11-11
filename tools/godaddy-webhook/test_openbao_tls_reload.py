@@ -98,57 +98,57 @@ listener "tcp" {{
  tls_auto_reload_interval = "5s"
 }}
 ''')
-        with (root / "server.log").open("w+") as log:
-            process = subprocess.Popen(
+        with (root / "server.log").open("w+", encoding="utf-8") as log:
+            with subprocess.Popen(
                 [str(args.binary.resolve()), "server", "-config=" + str(config)],
                 stdout=log,
                 stderr=log,
                 env={k: v for k, v in os.environ.items() if not k.startswith(("VAULT_", "BAO_"))},
-            )
-            try:
-                deadline = time.monotonic() + 20
-                while time.monotonic() < deadline:
-                    if process.poll() is not None:
-                        raise RuntimeError("Fixture server exited before becoming ready")
-                    try:
-                        if (
-                            fingerprint(context, old_port) == first
-                            and fingerprint(context, new_port) == first
-                        ):
-                            break
-                    except (OSError, ssl.SSLError):
-                        pass
-                    time.sleep(0.2)
-                else:
-                    raise RuntimeError("Dual TLS listeners did not become ready")
-                (root / "next").symlink_to(root / "second", target_is_directory=True)
-                (root / "next").replace(root / "current")
-                deadline = time.monotonic() + 20
-                while time.monotonic() < deadline:
-                    if fingerprint(context, new_port) == second:
-                        break
-                    time.sleep(0.5)
-                else:
-                    raise RuntimeError("Projected certificate rotation was not reloaded")
-                if fingerprint(context, old_port) != first:
-                    raise AssertionError("Original listener changed unexpectedly")
-                if process.poll() is not None:
-                    raise AssertionError("Server exited after reload")
-                print(
-                    (
-                        "PASS: dual listeners, hostname "
-                        "verification, projected-file rotation, "
-                        "automatic reload, original listener "
-                        "preserved"
-                    )
-                )
-            finally:
-                process.terminate()
+            ) as process:
                 try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait()
+                    deadline = time.monotonic() + 20
+                    while time.monotonic() < deadline:
+                        if process.poll() is not None:
+                            raise RuntimeError("Fixture server exited before becoming ready")
+                        try:
+                            if (
+                                fingerprint(context, old_port) == first
+                                and fingerprint(context, new_port) == first
+                            ):
+                                break
+                        except (OSError, ssl.SSLError):
+                            pass
+                        time.sleep(0.2)
+                    else:
+                        raise RuntimeError("Dual TLS listeners did not become ready")
+                    (root / "next").symlink_to(root / "second", target_is_directory=True)
+                    (root / "next").replace(root / "current")
+                    deadline = time.monotonic() + 20
+                    while time.monotonic() < deadline:
+                        if fingerprint(context, new_port) == second:
+                            break
+                        time.sleep(0.5)
+                    else:
+                        raise RuntimeError("Projected certificate rotation was not reloaded")
+                    if fingerprint(context, old_port) != first:
+                        raise AssertionError("Original listener changed unexpectedly")
+                    if process.poll() is not None:
+                        raise AssertionError("Server exited after reload")
+                    print(
+                        (
+                            "PASS: dual listeners, hostname "
+                            "verification, projected-file rotation, "
+                            "automatic reload, original listener "
+                            "preserved"
+                        )
+                    )
+                finally:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
 
 
 if __name__ == "__main__":

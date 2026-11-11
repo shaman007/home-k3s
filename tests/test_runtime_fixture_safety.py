@@ -1,12 +1,25 @@
 """Check opt-in runtime fixture safety without launching processes or contacting pods."""
 
+from contextlib import contextmanager
+from functools import partial
+import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import test_mastodon_bounce_filter_runtime as bounce
 import test_static_assets_runtime as assets
+import test_media_cache_runtime as media
+
+
+@contextmanager
+def tracked_directory(allocate, directories, **options):
+    """Record a real private directory while preserving its context cleanup contract."""
+    with allocate(**options) as directory:
+        directories.append(Path(directory))
+        yield directory
 
 
 class SieveFixtureSafetyTest(unittest.TestCase):
@@ -129,3 +142,83 @@ class NginxFixtureSafetyTest(unittest.TestCase):
                 (conf / "mime.types").symlink_to(outside)
                 with self.assertRaisesRegex(RuntimeError, "conf fixture"):
                     assets.fixture_source()
+
+
+class RuntimeResourceCleanupTests(unittest.TestCase):
+    """Clean partial setup without launching servers, subprocesses or cluster commands."""
+
+    def test_bind_failure_releases_private_directory(self):
+        """Server construction failures cannot leak either runtime suite's temporary tree."""
+        allocate = tempfile.TemporaryDirectory
+        for module, parent, owner, attribute in (
+            (assets, assets.StaticAssetsRuntimeTest, assets, "PHPServer"),
+            (media, media.MediaCacheRuntimeTest, media.http.server, "ThreadingHTTPServer"),
+        ):
+            with self.subTest(module=module.__name__):
+                runtime = type("DisposableRuntime", (parent,), {})
+                directories = []
+
+                with (
+                    patch.object(assets, "fixture_source", return_value=Path.cwd()),
+                    patch.object(
+                        module.tempfile,
+                        "TemporaryDirectory",
+                        side_effect=partial(tracked_directory, allocate, directories),
+                    ),
+                    patch.object(owner, attribute, side_effect=OSError("synthetic bind failure")),
+                ):
+                    try:
+                        with self.assertRaisesRegex(OSError, "bind failure"):
+                            runtime.setUpClass()
+                    finally:
+                        runtime.doClassCleanups()
+                self.assertEqual(len(directories), 1)
+                self.assertFalse(directories[0].exists())
+
+    def test_config_failure_stops_and_closes_origin(self):
+        """A config parse failure before the startup loop still shuts down the origin."""
+        runtime = type("DisposableMedia", (media.MediaCacheRuntimeTest,), {})
+        server = MagicMock()
+        server.__enter__.return_value = server
+        with (
+            patch.object(media.http.server, "ThreadingHTTPServer", return_value=server),
+            patch.object(media.threading, "Thread") as thread,
+            patch.object(media.yaml, "safe_load_all", side_effect=ValueError("synthetic config")),
+        ):
+            try:
+                with self.assertRaisesRegex(ValueError, "synthetic config"):
+                    runtime.setUpClass()
+            finally:
+                runtime.doClassCleanups()
+        thread.return_value.start.assert_called_once()
+        server.shutdown.assert_called_once()
+        server.__exit__.assert_called_once()
+        self.assertFalse(runtime.directory.exists())
+
+    def test_port_forward_failure_terminates_and_exits_context(self):
+        """A malformed forwarding announcement still reaps the child and closes its context."""
+        spec = importlib.util.spec_from_file_location(
+            "media_probe", assets.ROOT / "tools/check_mastodon_media_cache.py"
+        )
+        probe = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(probe)
+        process = MagicMock()
+        process.__enter__.return_value = process
+        process.stdout.readline.return_value = "not a forwarding announcement"
+        pods = {
+            "items": [
+                {"metadata": {"name": name}, "status": {"phase": "Running"}}
+                for name in ("first", "second")
+            ]
+        }
+        response = MagicMock(stdout=json.dumps(pods).encode())
+        with (
+            patch.object(probe.subprocess, "run", return_value=response),
+            patch.object(probe.subprocess, "Popen", return_value=process),
+            patch("sys.argv", ["media-probe"]),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "loopback port-forward"):
+                probe.main()
+        process.terminate.assert_called_once()
+        process.wait.assert_called_once_with(timeout=5)
+        process.__exit__.assert_called_once()

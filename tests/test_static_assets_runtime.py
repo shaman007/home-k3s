@@ -90,10 +90,11 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         source = fixture_source()
-        cls.temp = tempfile.TemporaryDirectory(prefix="static-assets-")
-        cls.base = Path(cls.temp.name)
-        cls.php = PHPServer(("127.0.0.1", 0), PHP)
+        directory = cls.enterClassContext(tempfile.TemporaryDirectory(prefix="static-assets-"))
+        cls.base = Path(directory)
+        cls.php = cls.enterClassContext(PHPServer(("127.0.0.1", 0), PHP))
         threading.Thread(target=cls.php.serve_forever, daemon=True).start()
+        cls.addClassCleanup(cls.php.shutdown)
         cls.processes, cls.logs, cls.ports = [], [], {}
         try:
             for app, config_file, root_path in [
@@ -197,9 +198,6 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 process.wait()
         for log in cls.logs:
             log.close()
-        cls.php.shutdown()
-        cls.php.server_close()
-        cls.temp.cleanup()
 
     def get(self, app, path, headers=None):
         """Request a local fixture server and return its status, headers, and body."""

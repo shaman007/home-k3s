@@ -1359,3 +1359,30 @@ The full suite ran 456 tests successfully with 21 opt-in skips. Ruff and diff
 checks passed. Because the generated policies are unchanged, this source-only
 refactor does not establish any new admission or deployment behavior. Publication
 and genuine scanner refresh remain necessary for remote alert closure.
+
+
+### Close probe pipes and register class fixture cleanup before setup failures
+
+The Mastodon media-cache check and isolated OpenBao TLS-reload probe now use
+Popen contexts around their existing terminate/wait/kill finalizers. This keeps
+the bounded shutdown behavior and also closes process-owned pipes when startup,
+validation or normal execution exits. Their two local R1732 warnings are gone.
+The TLS fixture log also specifies UTF-8 explicitly.
+
+The static-asset and media-cache runtime suites now enter TemporaryDirectory
+and server contexts through unittest.enterClassContext and register server
+shutdown immediately after starting its thread. This covers allocation, bind
+and config-read failures before the existing process-startup cleanup guard.
+Class teardown still terminates child processes and closes logs; unittest then
+shuts down/closes servers and removes temporary trees, including setup failures.
+Pylint still reports the class-context allocations and class-owned child process
+allocations; these warnings remain open for separate evidence-based review.
+
+Three new offline regressions verify both suites remove their temporary tree
+when server binding fails, the media origin shuts down/closes after early config
+failure, and malformed forwarding output still terminates/waits and exits the
+process context. All ten fixture-safety tests pass, as does full Pylint for that
+regression module. The full suite ran 459 tests successfully with 21 opt-in skips.
+Ruff and diff checks passed; Bandit reported no analysis errors. No process,
+server, cluster command, external request or live workload was executed by these
+mocked regressions. Publication and scanner refresh are still required.

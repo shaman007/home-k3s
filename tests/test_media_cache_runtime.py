@@ -96,11 +96,14 @@ class MediaCacheRuntimeTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.temp = tempfile.TemporaryDirectory(prefix="media-cache-test-")
-        cls.directory = Path(cls.temp.name)
-        cls.origin = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Origin)
+        directory = cls.enterClassContext(tempfile.TemporaryDirectory(prefix="media-cache-test-"))
+        cls.directory = Path(directory)
+        cls.origin = cls.enterClassContext(
+            http.server.ThreadingHTTPServer(("127.0.0.1", 0), Origin)
+        )
         cls.origin.daemon_threads = True
         threading.Thread(target=cls.origin.serve_forever, daemon=True).start()
+        cls.addClassCleanup(cls.origin.shutdown)
         config = next(
             d["data"]["nginx.conf"]
             for d in yaml.safe_load_all((ROOT / "seaweedfs/media-cache.yaml").read_text())
@@ -186,9 +189,6 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                 process.wait()
         for log in cls.logs:
             log.close()
-        cls.origin.shutdown()
-        cls.origin.server_close()
-        cls.temp.cleanup()
 
     def fixture(self, **extra):
         """Register a uniquely named media object with overridable origin metadata."""
