@@ -2165,3 +2165,33 @@ in them and no analysis errors. No container or network server was started. Sour
 fixes await genuine published rescanning; no alert was dismissed in this batch.
 The separately refreshed pre-change GitHub inventory reported 174 open findings;
 this batch does not claim those source fixes are already reconciled remotely.
+
+
+### Review container-private temporary paths and Django-plugin recurrences
+
+Dismissed exact B108 findings #8020 and #7980 as false positives. Plex's
+/tmp/guard-output.mkv is generated from synthetic media by the fixture container;
+its startup has --network=none, a disposable configuration volume and read-only
+media/hook mounts, with no host /tmp bind. Dovecot's /tmp:rw,mode=1777,size=256m is
+an explicit private container tmpfs under the reviewed read-only-root and
+no-new-privileges command. Neither is a predictable shared host temporary file.
+Existing probe tests verify cleanup and output rejection. Comments require review
+if either path becomes host/shared storage or its disposable-data contract changes.
+
+Also dismissed twelve exact E5110 recurrences: #8043, #8042, #8041, #8040, #8039,
+#8038, #8037, #8036, #8030, #7278, #7240 and #7194. The initial analyzed revision
+contains 138 Python modules and no Django imports. Every newer analyzed revision
+encountered during concurrent scans was independently re-audited by AST before
+mutation; exact file bytes match the retained sources. These are non-Django
+utilities/tests receiving the scanner's Django-not-configured diagnostic, not an
+application with missing runtime settings. Comments reopen the findings if Django
+source/settings are introduced. No Django initialization or dummy configuration
+was added to silence the plugin, and no global scanner rule was disabled.
+
+Thirty-five probe-command/security regressions passed without launching containers.
+Exact rule, tool, path, message and source/state guards preceded dismissal;
+independent inventory confirms all fourteen IDs are absent. GitHub now reports
+159 open findings: Bandit 82, modern Pylint 14, Prospector 56 and Opengrep 7.
+The reduction from the preceding 175 snapshot includes fourteen reviewed decisions
+and two concurrent scanner closures. No production data or credentials were read,
+no operational configuration changed and no push was performed.
