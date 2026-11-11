@@ -2874,3 +2874,44 @@ Ruff passes, Bandit has no analysis errors, and full Pylint reports only a share
 container-security argument-list duplicate heuristic. No source suppressions were
 added. Runtime findings await genuine rescanning and review; none were dismissed
 and no push was performed.
+
+
+### Review rendered validation, opt-in Sieve fixtures and report failure boundary
+
+Dismissed exact validator findings 7473/7471/7469 after reviewing both subprocess
+references. Curl uses a fixed absolute executable, HTTPS-only initial/redirect
+protocols, validated URL and bounded connection/transfer/process durations. The
+other command is fixed kubeconform schema validation, with checked-in Kubernetes
+version, an owner-only temporary input file and a 300-second timeout. Its PATH
+is trusted operator/CI configuration. Neither call uses a shell or mutates the
+cluster; diagnostics do not print rendered Secret values. All 33 rendering and
+validation regressions pass. Reopen for untrusted execution configuration or
+expanded command/input scope.
+
+Dismissed exact opt-in Sieve findings 7981/6889/6888 after inspecting the entire
+module's sole subprocess call and all callers. The pod and namespace are fixed,
+argv separates kubectl exec options with --, commands have a 60-second timeout
+and PATH is trusted operator configuration. Fixture allocation accepts only the
+expected private mktemp directory pattern; cleanup is registered before writes
+and compilation, and shell writes pass the private path positionally with quotes
+and umask 077. Tests use synthetic messages and explicit RUN_CLUSTER_TESTS opt-in.
+Eighteen mocked fixture-safety tests pass, including allocation rejection, deployed
+script mismatch, setup-failure cleanup, positional writes and command deadlines.
+These checks do not establish live Dovecot behavior; no live integration ran.
+Reopen for changed execution trust, allocation/write scope or cleanup behavior.
+
+Dismissed published network-report W0718 finding 8097 after verifying its analyzed
+source includes the privacy fix. The model boundary preserves measured evidence,
+issues ANALYSIS INCOMPLETE and exits unsuccessfully while retaining only the error
+type. All nineteen report regressions pass, including local and mocked-delivery
+privacy/failure paths and expected-public-port guards. Reopen for concealed model
+failures, weakened verdicts or private diagnostics.
+
+Exact alert identity and source-byte guards preceded all seven decisions. No
+source suppressions or code changes were needed. All seventy relevant tests pass;
+the last full-suite result remains 545 tests with 16 skips. No container, cluster
+command, SMTP delivery, real credential or external service ran in this review.
+No push was performed.
+
+Independent live inventory confirms all seven absent: 36 open (Bandit 28,
+Pylint three, Opengrep five).
