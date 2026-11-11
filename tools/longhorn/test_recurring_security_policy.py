@@ -75,20 +75,32 @@ def fixture(name):
     }
 
 
-def main():
-    """Evaluate the native policy's CEL/JSONPatch using the pinned Kyverno engine."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kyverno", default="kyverno")
-    args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
-    policy, _ = list(
-        yaml.safe_load_all((ROOT / "longhorn/policy-recurring-job-security.yaml").read_text())
-    )
-    names = policy["spec"]["matchConstraints"]["resourceRules"][0]["resourceNames"]
-    policy["apiVersion"] = "policies.kyverno.io/v1"
-    policy["kind"] = "MutatingPolicy"
-    policy["spec"].pop("reinvocationPolicy")
+def mutate_recurring_fixture(name, mutation):
+    """Construct each original negative recurring-job identity or pod-spec case."""
+    doc = fixture(name)
+    ps = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+    c = ps["containers"][0]
+    if mutation == "namespace":
+        doc["metadata"]["namespace"] = "unreviewed"
+    if mutation == "name":
+        doc = fixture("unreviewed")
+    if mutation == "labels":
+        doc["metadata"]["labels"] = {}
+    if mutation == "account":
+        ps["serviceAccountName"] = "unreviewed"
+    if mutation == "image":
+        c["image"] = "registry.invalid/changed:1"
+    if mutation == "command":
+        c["command"] = ["longhorn-manager", "daemon"]
+    if mutation == "extra-container":
+        ps["containers"].append({"name": "other", "image": backfill.IMAGE})
+    if mutation == "init-container":
+        ps["initContainers"] = [{"name": "other", "image": backfill.IMAGE}]
+    return doc
+
+
+def recurring_cases(names):
+    """Retain both initial-context variants and every reviewed scope rejection."""
     cases = []
     for name in names:
         doc = fixture(name)
@@ -108,70 +120,75 @@ def main():
         "extra-container",
         "init-container",
     ]:
-        doc = fixture(names[0])
-        ps = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-        c = ps["containers"][0]
-        if mutation == "namespace":
-            doc["metadata"]["namespace"] = "unreviewed"
-        if mutation == "name":
-            doc = fixture("unreviewed")
-        if mutation == "labels":
-            doc["metadata"]["labels"] = {}
-        if mutation == "account":
-            ps["serviceAccountName"] = "unreviewed"
-        if mutation == "image":
-            c["image"] = "registry.invalid/changed:1"
-        if mutation == "command":
-            c["command"] = ["longhorn-manager", "daemon"]
-        if mutation == "extra-container":
-            ps["containers"].append({"name": "other", "image": backfill.IMAGE})
-        if mutation == "init-container":
-            ps["initContainers"] = [{"name": "other", "image": backfill.IMAGE}]
+        doc = mutate_recurring_fixture(names[0], mutation)
         cases.append((doc, False))
-    with tempfile.TemporaryDirectory(prefix="longhorn-policy-cases-") as temp:
-        temp = Path(temp)
-        p = temp / "policy.yaml"
-        p.write_text(yaml.safe_dump(policy))
-        for i, (doc, changed) in enumerate(cases):
-            r = temp / "resource.yaml"
-            o = temp / "out.yaml"
-            r.write_text(yaml.safe_dump(doc))
-            result = subprocess.run(
-                [args.kyverno, "apply", str(p), "--resource", str(r), "--output", str(o)],
-                text=True,
+    return cases
+
+
+def check_recurring_cases(kyverno, policy_path, temp, cases):
+    """Check exact native mutation and reinvocation while retaining unmatched resources."""
+    for i, (doc, changed) in enumerate(cases):
+        r = temp / "resource.yaml"
+        o = temp / "out.yaml"
+        r.write_text(yaml.safe_dump(doc))
+        result = subprocess.run(
+            [kyverno, "apply", str(policy_path), "--resource", str(r), "--output", str(o)],
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+        if not result.returncode == 0:
+            raise AssertionError(result.stdout + result.stderr)
+        if "error: 0" not in result.stdout:
+            raise AssertionError(result.stdout)
+        emitted = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
+        if changed:
+            if not len(emitted) == 1:
+                raise AssertionError((i, result.stdout))
+            if not emitted[0]["spec"] == backfill.expected_spec(doc):
+                raise AssertionError((i, emitted))
+            # Idempotence matters because updates can be reinvoked.
+            r.write_text(yaml.safe_dump(emitted[0]))
+            o.unlink()
+            subprocess.run(
+                [kyverno, "apply", str(policy_path), "--resource", str(r), "--output", str(o)],
+                check=True,
                 capture_output=True,
                 timeout=30,
-                check=False,
             )
-            if not result.returncode == 0:
-                raise AssertionError(result.stdout + result.stderr)
-            if "error: 0" not in result.stdout:
-                raise AssertionError(result.stdout)
-            emitted = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
-            if changed:
-                if not len(emitted) == 1:
-                    raise AssertionError((i, result.stdout))
-                if not emitted[0]["spec"] == backfill.expected_spec(doc):
-                    raise AssertionError((i, emitted))
-                # Idempotence matters because updates can be reinvoked.
-                r.write_text(yaml.safe_dump(emitted[0]))
-                o.unlink()
-                subprocess.run(
-                    [args.kyverno, "apply", str(p), "--resource", str(r), "--output", str(o)],
-                    check=True,
-                    capture_output=True,
-                    timeout=30,
-                )
-                if (
-                    not next((d for d in yaml.safe_load_all(o.read_text()) if d))["spec"]
-                    == emitted[0]["spec"]
-                ):
-                    raise AssertionError
-            else:
-                if not (not emitted or emitted[0] == doc):
-                    raise AssertionError((i, emitted))
-            if o.exists():
-                o.unlink()
+            if (
+                not next((d for d in yaml.safe_load_all(o.read_text()) if d))["spec"]
+                == emitted[0]["spec"]
+            ):
+                raise AssertionError
+        else:
+            if not (not emitted or emitted[0] == doc):
+                raise AssertionError((i, emitted))
+        if o.exists():
+            o.unlink()
+
+
+def main():
+    """Evaluate the native policy's CEL/JSONPatch using the pinned Kyverno engine."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kyverno", default="kyverno")
+    args = parser.parse_args()
+    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
+        raise AssertionError
+    policy, _ = list(
+        yaml.safe_load_all((ROOT / "longhorn/policy-recurring-job-security.yaml").read_text())
+    )
+    names = policy["spec"]["matchConstraints"]["resourceRules"][0]["resourceNames"]
+    policy["apiVersion"] = "policies.kyverno.io/v1"
+    policy["kind"] = "MutatingPolicy"
+    policy["spec"].pop("reinvocationPolicy")
+    cases = recurring_cases(names)
+    with tempfile.TemporaryDirectory(prefix="longhorn-policy-cases-") as temp:
+        temp = Path(temp)
+        policy_path = temp / "policy.yaml"
+        policy_path.write_text(yaml.safe_dump(policy))
+        check_recurring_cases(args.kyverno, policy_path, temp, cases)
     print(f"{len(cases)} CEL scope/mutation cases and {len(names) * 2} idempotence checks passed")
 
 

@@ -18,6 +18,103 @@ b = importlib.util.module_from_spec(s)
 s.loader.exec_module(b)
 
 
+def mutate_guard_fixture(doc, e, mutation):
+    """Create each unreviewed identity, mount, volume and privilege fixture independently."""
+    changed = copy.deepcopy(doc)
+    pod = changed["spec"]["template"]["spec"]
+    target = e["targets"][0]
+    c = pod[target["section"]][target["index"]]
+    if mutation == "namespace":
+        changed["metadata"]["namespace"] = "unreviewed"
+    if mutation == "name":
+        changed["metadata"]["name"] = "unreviewed"
+    if mutation == "label":
+        changed["spec"]["template"]["metadata"]["labels"][next(iter(e["labels"]))] = "unreviewed"
+    if mutation == "account":
+        pod["serviceAccountName"] = "unreviewed"
+    if mutation == "image":
+        c["image"] = "registry.invalid/unreviewed:1"
+    if mutation == "command":
+        c["command"] = ["unreviewed"]
+    if mutation == "mount":
+        c.setdefault("volumeMounts", []).append({"name": "extra", "mountPath": "/unreviewed"})
+    if mutation == "volume":
+        pod.setdefault("volumes", []).append({"name": "extra", "emptyDir": {}})
+    if mutation == "count":
+        pod["containers"].append({"name": "extra", "image": "registry.invalid/extra:1"})
+    if mutation == "privileged":
+        c.setdefault("securityContext", {})["privileged"] = True
+    return changed
+
+
+def check_guard_environment(doc, e, evaluate):
+    """Reject changes to each required literal environment value or downward-API field."""
+    count = 0
+    for target in e["targets"]:
+        for key in target.get("requiredEnv", {}):
+            changed = copy.deepcopy(doc)
+            container = changed["spec"]["template"]["spec"][target["section"]][target["index"]]
+            next(v for v in container["env"] if v["name"] == key)["value"] = "unreviewed"
+            if not evaluate(changed) == changed:
+                raise AssertionError(e["name"] + ": ignored critical env " + key)
+            count += 1
+        for key in target.get("requiredFieldRefs", {}):
+            changed = copy.deepcopy(doc)
+            container = changed["spec"]["template"]["spec"][target["section"]][target["index"]]
+            next(v for v in container["env"] if v["name"] == key)["valueFrom"]["fieldRef"][
+                "fieldPath"
+            ] = "metadata.name"
+            if not evaluate(changed) == changed:
+                raise AssertionError
+            count += 1
+    return count
+
+
+def check_guard_entry(e, evaluate):
+    """Retain every positive, idempotence, environment and scope guard for one entry."""
+    count = 0
+    doc = copy.deepcopy(e["fixture"])
+    b.reviewed(doc, e)
+    for existing in [False, True]:
+        original = copy.deepcopy(doc)
+        if existing:
+            for t in e["targets"]:
+                original["spec"]["template"]["spec"][t["section"]][t["index"]].setdefault(
+                    "securityContext", {}
+                )["readOnlyRootFilesystem"] = True
+        result = evaluate(original)
+        if not result["spec"] == b.expected_spec(original, e):
+            raise AssertionError(e["name"] + ": wrong mutation")
+        if not evaluate(result) == result:
+            raise AssertionError(e["name"] + ": not idempotent")
+        b.reviewed(result, e)
+        count += 2
+    for mutation in [
+        "namespace",
+        "name",
+        "label",
+        "account",
+        "image",
+        "command",
+        "mount",
+        "volume",
+        "count",
+        "privileged",
+    ]:
+        changed = mutate_guard_fixture(doc, e, mutation)
+        if not evaluate(changed) == changed:
+            raise AssertionError(e["name"] + ": mutated unreviewed " + mutation)
+        count += 1
+    count += check_guard_environment(doc, e, evaluate)
+    if e["kind"] == "DaemonSet":
+        changed = copy.deepcopy(doc)
+        changed["spec"]["updateStrategy"]["rollingUpdate"]["maxUnavailable"] = "100%"
+        if not evaluate(changed) == changed:
+            raise AssertionError
+        count += 1
+    return count
+
+
 def main():
     """Exercise native guard CEL with the pinned Kyverno CLI, never against the cluster."""
     parser = argparse.ArgumentParser()
@@ -69,92 +166,7 @@ def main():
             return documents[0] if documents else doc
 
         for e in entries:
-            doc = copy.deepcopy(e["fixture"])
-            b.reviewed(doc, e)
-            for existing in [False, True]:
-                original = copy.deepcopy(doc)
-                if existing:
-                    for t in e["targets"]:
-                        original["spec"]["template"]["spec"][t["section"]][t["index"]].setdefault(
-                            "securityContext", {}
-                        )["readOnlyRootFilesystem"] = True
-                result = evaluate(original)
-                if not result["spec"] == b.expected_spec(original, e):
-                    raise AssertionError(e["name"] + ": wrong mutation")
-                if not evaluate(result) == result:
-                    raise AssertionError(e["name"] + ": not idempotent")
-                b.reviewed(result, e)
-                count += 2
-            for mutation in [
-                "namespace",
-                "name",
-                "label",
-                "account",
-                "image",
-                "command",
-                "mount",
-                "volume",
-                "count",
-                "privileged",
-            ]:
-                changed = copy.deepcopy(doc)
-                pod = changed["spec"]["template"]["spec"]
-                target = e["targets"][0]
-                c = pod[target["section"]][target["index"]]
-                if mutation == "namespace":
-                    changed["metadata"]["namespace"] = "unreviewed"
-                if mutation == "name":
-                    changed["metadata"]["name"] = "unreviewed"
-                if mutation == "label":
-                    changed["spec"]["template"]["metadata"]["labels"][next(iter(e["labels"]))] = (
-                        "unreviewed"
-                    )
-                if mutation == "account":
-                    pod["serviceAccountName"] = "unreviewed"
-                if mutation == "image":
-                    c["image"] = "registry.invalid/unreviewed:1"
-                if mutation == "command":
-                    c["command"] = ["unreviewed"]
-                if mutation == "mount":
-                    c.setdefault("volumeMounts", []).append(
-                        {"name": "extra", "mountPath": "/unreviewed"}
-                    )
-                if mutation == "volume":
-                    pod.setdefault("volumes", []).append({"name": "extra", "emptyDir": {}})
-                if mutation == "count":
-                    pod["containers"].append({"name": "extra", "image": "registry.invalid/extra:1"})
-                if mutation == "privileged":
-                    c.setdefault("securityContext", {})["privileged"] = True
-                if not evaluate(changed) == changed:
-                    raise AssertionError(e["name"] + ": mutated unreviewed " + mutation)
-                count += 1
-            for target in e["targets"]:
-                for key in target.get("requiredEnv", {}):
-                    changed = copy.deepcopy(doc)
-                    container = changed["spec"]["template"]["spec"][target["section"]][
-                        target["index"]
-                    ]
-                    next(v for v in container["env"] if v["name"] == key)["value"] = "unreviewed"
-                    if not evaluate(changed) == changed:
-                        raise AssertionError(e["name"] + ": ignored critical env " + key)
-                    count += 1
-                for key in target.get("requiredFieldRefs", {}):
-                    changed = copy.deepcopy(doc)
-                    container = changed["spec"]["template"]["spec"][target["section"]][
-                        target["index"]
-                    ]
-                    next(v for v in container["env"] if v["name"] == key)["valueFrom"]["fieldRef"][
-                        "fieldPath"
-                    ] = "metadata.name"
-                    if not evaluate(changed) == changed:
-                        raise AssertionError
-                    count += 1
-            if e["kind"] == "DaemonSet":
-                changed = copy.deepcopy(doc)
-                changed["spec"]["updateStrategy"]["rollingUpdate"]["maxUnavailable"] = "100%"
-                if not evaluate(changed) == changed:
-                    raise AssertionError
-                count += 1
+            count += check_guard_entry(e, evaluate)
     print(str(count) + " mutation/scope/idempotence checks passed")
 
 

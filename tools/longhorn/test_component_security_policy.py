@@ -19,20 +19,34 @@ b = importlib.util.module_from_spec(s)
 s.loader.exec_module(b)
 
 
-def main():
-    """Exercise the native component policy's CEL/JSONPatch through Kyverno 1.19.2."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--kyverno", default="kyverno")
-    args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
-    policy, _ = list(
-        yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
-    )
-    policy["apiVersion"] = "policies.kyverno.io/v1"
-    policy["kind"] = "MutatingPolicy"
-    policy["spec"].pop("reinvocationPolicy")
-    entries = json.loads((ROOT / "longhorn/component-security-catalog.json").read_text())["entries"]
+def mutate_component_fixture(entry, mutation):
+    """Construct an out-of-scope component fixture without modifying the catalog."""
+    doc = copy.deepcopy(entry["fixture"])
+    pod = doc["spec"]["template"]["spec"]
+    c = pod["containers"][entry["index"]]
+    if mutation == "namespace":
+        doc["metadata"]["namespace"] = "unreviewed"
+    if mutation == "name":
+        doc["metadata"]["name"] = "unreviewed"
+    if mutation == "labels":
+        doc["spec"]["template"]["metadata"]["labels"] = {"app": "unreviewed"}
+    if mutation == "account":
+        pod["serviceAccountName"] = "unreviewed"
+    if mutation == "image":
+        c["image"] = "registry.invalid/changed:1"
+    if mutation == "args":
+        c["args"] = ["--unreviewed"]
+    if mutation == "command":
+        c["command"] = ["unreviewed"]
+    if mutation == "extra-container":
+        pod["containers"].append({"name": "unreviewed", "image": "registry.invalid/changed:1"})
+    if mutation == "init-container":
+        pod["initContainers"] = [{"name": "unreviewed", "image": "registry.invalid/changed:1"}]
+    return doc
+
+
+def component_cases(entries):
+    """Preserve all positive, identity-mismatch and DaemonSet-ordering cases."""
     cases = []
     for entry in entries:
         for initial in ["missing", "existing"]:
@@ -57,31 +71,7 @@ def main():
             "extra-container",
             "init-container",
         ]:
-            doc = copy.deepcopy(entry["fixture"])
-            pod = doc["spec"]["template"]["spec"]
-            c = pod["containers"][entry["index"]]
-            if mutation == "namespace":
-                doc["metadata"]["namespace"] = "unreviewed"
-            if mutation == "name":
-                doc["metadata"]["name"] = "unreviewed"
-            if mutation == "labels":
-                doc["spec"]["template"]["metadata"]["labels"] = {"app": "unreviewed"}
-            if mutation == "account":
-                pod["serviceAccountName"] = "unreviewed"
-            if mutation == "image":
-                c["image"] = "registry.invalid/changed:1"
-            if mutation == "args":
-                c["args"] = ["--unreviewed"]
-            if mutation == "command":
-                c["command"] = ["unreviewed"]
-            if mutation == "extra-container":
-                pod["containers"].append(
-                    {"name": "unreviewed", "image": "registry.invalid/changed:1"}
-                )
-            if mutation == "init-container":
-                pod["initContainers"] = [
-                    {"name": "unreviewed", "image": "registry.invalid/changed:1"}
-                ]
+            doc = mutate_component_fixture(entry, mutation)
             cases.append((entry, doc, False))
         if entry["kind"] == "DaemonSet":
             doc = copy.deepcopy(entry["fixture"])
@@ -91,46 +81,70 @@ def main():
             pod = doc["spec"]["template"]["spec"]
             pod["containers"][0], pod["containers"][1] = pod["containers"][1], pod["containers"][0]
             cases.append((entry, doc, False))
+    return cases
+
+
+def evaluate_component(kyverno, policy_path, temp, doc):
+    """Evaluate one isolated fixture and reject failed or multiple-resource output."""
+    r = temp / "resource.yaml"
+    o = temp / "out.yaml"
+    r.write_text(yaml.safe_dump(doc))
+    if o.exists():
+        o.unlink()
+    result = subprocess.run(
+        [kyverno, "apply", str(policy_path), "--resource", str(r), "--output", str(o)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    if not (result.returncode == 0 and "error: 0" in result.stdout):
+        raise AssertionError(result.stdout + result.stderr)
+    docs = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
+    if not len(docs) <= 1:
+        raise AssertionError
+    return docs[0] if docs else doc
+
+
+def check_component_cases(kyverno, policy_path, temp, cases):
+    """Require exact mutation, idempotence and no changes outside the reviewed scope."""
+    for entry, doc, changed in cases:
+        output = evaluate_component(kyverno, policy_path, temp, doc)
+        if changed:
+            if not output["spec"] == b.expected_spec(doc, entry):
+                raise AssertionError(
+                    (
+                        entry["name"],
+                        "unexpected spec changes",
+                    )
+                )
+            if not evaluate_component(kyverno, policy_path, temp, output) == output:
+                raise AssertionError((entry["name"], "not idempotent"))
+        else:
+            if not output == doc:
+                raise AssertionError((entry["name"], "mutated out-of-scope resource"))
+
+
+def main():
+    """Exercise the native component policy's CEL/JSONPatch through Kyverno 1.19.2."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--kyverno", default="kyverno")
+    args = parser.parse_args()
+    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
+        raise AssertionError
+    policy, _ = list(
+        yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
+    )
+    policy["apiVersion"] = "policies.kyverno.io/v1"
+    policy["kind"] = "MutatingPolicy"
+    policy["spec"].pop("reinvocationPolicy")
+    entries = json.loads((ROOT / "longhorn/component-security-catalog.json").read_text())["entries"]
+    cases = component_cases(entries)
     with tempfile.TemporaryDirectory(prefix="longhorn-component-tests-") as temp:
         temp = Path(temp)
-        p = temp / "policy.yaml"
-        p.write_text(yaml.safe_dump(policy))
-
-        def evaluate(doc):
-            r = temp / "resource.yaml"
-            o = temp / "out.yaml"
-            r.write_text(yaml.safe_dump(doc))
-            if o.exists():
-                o.unlink()
-            result = subprocess.run(
-                [args.kyverno, "apply", str(p), "--resource", str(r), "--output", str(o)],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                check=False,
-            )
-            if not (result.returncode == 0 and "error: 0" in result.stdout):
-                raise AssertionError(result.stdout + result.stderr)
-            docs = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
-            if not len(docs) <= 1:
-                raise AssertionError
-            return docs[0] if docs else doc
-
-        for entry, doc, changed in cases:
-            output = evaluate(doc)
-            if changed:
-                if not output["spec"] == b.expected_spec(doc, entry):
-                    raise AssertionError(
-                        (
-                            entry["name"],
-                            "unexpected spec changes",
-                        )
-                    )
-                if not evaluate(output) == output:
-                    raise AssertionError((entry["name"], "not idempotent"))
-            else:
-                if not output == doc:
-                    raise AssertionError((entry["name"], "mutated out-of-scope resource"))
+        policy_path = temp / "policy.yaml"
+        policy_path.write_text(yaml.safe_dump(policy))
+        check_component_cases(args.kyverno, policy_path, temp, cases)
     print(
         (
             f"{len(cases)}"

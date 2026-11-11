@@ -1104,3 +1104,39 @@ bounded/complete model batches and SMTP TLS failure. The full suite passes
 tests and full Pylint on their test module pass. No sensor, model, SMTP or cluster
 endpoint was contacted. Deployment and GitHub reconciliation require publication;
 the commit is local only and must not be pushed by the agent.
+
+
+### Policy harness complexity and reviewed constants (2026-11-11)
+
+Separated fixture mutation, case generation and result checking in the Longhorn
+component/recurring-job harnesses and infrastructure guard harness. Nine Pylint
+complexity diagnostics are removed: one excessive-locals, branches and statements
+finding per harness. Each module passes full Pylint when analyzed individually.
+The combined analysis retains the same three cross-file duplicate-code advisories
+as the original source; no checks were suppressed to hide them.
+
+Independent extraction of the original main functions at 4a6ac9c8 confirms that
+all 92 component and 36 recurring-job fixture/expectation tuples are identical,
+without modifying their input catalogs. Expanding the new infrastructure helper
+bodies reproduces the complete original per-entry check AST. Required environment
+values/field references, extra-container/volume/mount rejections, DaemonSet order,
+exact mutation and idempotence checks remain intact.
+
+Verified the official Kyverno 1.19.2 archive against the same SHA-256 pinned by
+CI, then ran the real offline CEL engine: 92 component mutation/scope cases plus
+16 idempotence checks, 36 recurring-job cases plus 28 idempotence checks, and 74
+infrastructure mutation/scope/idempotence checks pass. The full repository suite
+passes (436 tests, 21 opt-in checks skipped). Ruff E2/E713/E714 and diff checks
+pass. No Kubernetes API, production workloads or persistent data were touched.
+
+Individually reviewed and dismissed three exact false positives with comments:
+Bandit #7516 and Prospector #7808 mistake the public 15m refresh cadence constant
+for a credential; its related store interval is 900 seconds. Existing logging
+regressions verify Secret values are excluded from diagnostics. Opengrep #7621
+misclassifies mode 0700 as broadly permissive: group/other bits are zero and the
+private render directory is owner-only; output files are 0600. The existing
+regression verifies an inherited 0755 directory is restricted to 0700. Each
+scanner, source path and current instance revision was checked before PATCH,
+and each response confirmed the precise false-positive reason and comment.
+Analysis history and all source checks remain enabled. These decisions do not
+classify other subprocess, TLS or Kubernetes-context findings as false positives.
