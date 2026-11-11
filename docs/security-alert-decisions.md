@@ -1386,3 +1386,28 @@ regression module. The full suite ran 459 tests successfully with 21 opt-in skip
 Ruff and diff checks passed; Bandit reported no analysis errors. No process,
 server, cluster command, external request or live workload was executed by these
 mocked regressions. Publication and scanner refresh are still required.
+
+
+### Pin system executables without disrupting the custom kubectl installation
+
+Replaced seven implicit PATH lookups with explicit /usr/bin executable paths:
+four Git calls in the manifest inventory/runtime-contract validators, OpenSSL
+calls in signing-key validation and the isolated TLS fixture, and the network
+report's systemctl service-health queries. Local inspection confirmed these
+system tools exist at the selected paths. The network report remains standalone.
+The affected source instances correspond to #7513, #7512, #7504, #7503, #7510,
+#7500 and #7544; they await publication and scanner refresh rather than dismissal.
+Kubectl remains unchanged because the operator intentionally uses a home/bin
+installation; trusting a guessed system location would break legitimate use.
+
+Two permanent regressions execute real read-only Git inventory commands and
+invalid-public-key validation with hostile replacement executables as the entire
+PATH. The inventories still return the actual tracked checkout, and a fake
+successful OpenSSL cannot bypass invalid signing-key rejection. These tests use
+only local files and system commands; no service, credential or cluster is read.
+
+The full suite ran 461 tests successfully with 21 opt-in skips. The new regression
+module passes full Pylint; Ruff and diff checks passed. Bandit B607 reports zero
+findings and zero analysis errors across all five changed source modules and the
+new regression module. Other subprocess audit findings remain open for separate
+review; no scanner rule or validation gate was disabled.

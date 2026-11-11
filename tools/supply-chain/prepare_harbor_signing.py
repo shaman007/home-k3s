@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def prepare(public_key):
     """Validate the public key and render staged Harbor signing manifests."""
     subprocess.run(
-        ["openssl", "pkey", "-pubin", "-noout"],
+        ["/usr/bin/openssl", "pkey", "-pubin", "-noout"],
         input=public_key,
         text=True,
         check=True,

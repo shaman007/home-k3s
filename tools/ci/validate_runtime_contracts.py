@@ -46,7 +46,7 @@ def repo_root() -> Path:
     """Resolve the checkout root through Git without changing repository state."""
     return Path(
         subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
+            ["/usr/bin/git", "rev-parse", "--show-toplevel"],
             check=True,
             capture_output=True,
             text=True,
@@ -57,7 +57,7 @@ def repo_root() -> Path:
 def tracked_yaml_files(root: Path) -> list[Path]:
     """List tracked YAML inputs while excluding archives and raw Helm templates."""
     result = subprocess.run(
-        ["git", "ls-files", "-z", "--", "*.yaml", "*.yml"],
+        ["/usr/bin/git", "ls-files", "-z", "--", "*.yaml", "*.yml"],
         cwd=root,
         check=True,
         capture_output=True,

@@ -377,7 +377,7 @@ def assess_monitoring(evidence, issue):
     """Check service, disk, freshness and capture health in their original issue order."""
     health = {
         name: subprocess.run(
-            ["systemctl", "is-active", name], check=False, capture_output=True, text=True
+            ["/usr/bin/systemctl", "is-active", name], check=False, capture_output=True, text=True
         ).stdout.strip()
         for name in ("suricata", "ntopng", "evebox")
     }

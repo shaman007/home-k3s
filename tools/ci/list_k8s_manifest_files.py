@@ -23,7 +23,7 @@ def tracked_yaml_files(repo_root: Path) -> list[Path]:
     """List tracked YAML paths using null-delimited Git output."""
     result = subprocess.run(
         [
-            "git",
+            "/usr/bin/git",
             "ls-files",
             "-z",
             "--",
@@ -71,7 +71,7 @@ def main() -> int:
 
     repo_root = Path(
         subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
+            ["/usr/bin/git", "rev-parse", "--show-toplevel"],
             check=True,
             capture_output=True,
             text=True,

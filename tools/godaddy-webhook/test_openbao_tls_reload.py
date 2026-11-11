@@ -30,7 +30,7 @@ def certificate(directory):
     directory.mkdir()
     subprocess.run(
         [
-            "openssl",
+            "/usr/bin/openssl",
             "req",
             "-x509",
             "-newkey",
