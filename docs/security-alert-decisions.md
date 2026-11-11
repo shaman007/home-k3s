@@ -1034,3 +1034,38 @@ no current-source finding was dismissed on the basis of a missing renamed path.
 All 132 Python modules also pass the selected naming, unused-value/import,
 missing-docstring, line-length and multiple-statement checks. Changes remain
 uncommitted and unpushed by the agent; no one-off alert JSON was added to the tree.
+
+
+### PowerShell retirement by user decision (2026-11-11)
+
+The user explicitly requested removal of all PowerShell tooling because Windows
+is no longer used. Removed the Longhorn recurring-job exporter and the Grafana
+live-dashboard exporter/vendor-sync script. This also removes the unused Grafana
+exporter's insecure-TLS default rather than maintaining an obsolete client.
+No replacement exporter, PowerShell runtime or new tool dependency was added.
+The temporary runtime downloaded before this scope correction was removed.
+
+Removed PSScriptAnalyzer from manual dispatch choices and the tool matrix.
+Converted the Karakeep and NetworkPolicy command examples to Bash, including the
+Meilisearch authenticated requests and historical dump example. The examples pass
+bearer headers through stdin, keep the key out of argv, and use fail-fast pipeline
+handling. Removed current dashboard instructions for the deleted scripts.
+Historical security-review entries and migration inventory records remain history.
+
+The four historical PSScriptAnalyzer findings (#1880, #1881, #1882 and #1883)
+were retired as won't fix with per-alert comments describing the explicit user
+decision. Their old source paths and historical revision were checked before
+mutation; responses confirmed the exact reason and comment. This is a retirement
+decision, not a claim of a successful PowerShell rescan. Source deletion and the
+workflow change still require publication by the user.
+
+Validation: no PowerShell source files or active PowerShell invocation references
+remain in the repository tooling/workflows or updated runbooks. Workflow
+Actionlint/ShellCheck and git diff --check pass; twelve Bash documentation blocks
+parse successfully. The recurring-job snapshot's parsed resources are identical
+before and after its obsolete provenance comment was replaced. Dashboard data,
+JSON snapshots, Longhorn resources and live cluster state were not changed.
+
+An independent API refresh confirms zero open PowerShell findings and 487 open
+findings overall after the user published the preceding renderer batch. The
+PowerShell source removal above remains uncommitted at this verification.

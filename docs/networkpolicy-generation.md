@@ -7,19 +7,19 @@ the application directory.
 
 Generate a bundle:
 
-```powershell
+```bash
 python tools/networkpolicy/generate_common_networkpolicies.py tools/networkpolicy/common-policies/convertx.yaml
 ```
 
 Generate all bundles:
 
-```powershell
+```bash
 python tools/networkpolicy/generate_common_networkpolicies.py tools/networkpolicy/common-policies
 ```
 
 Check that a committed bundle is still in sync with its catalog:
 
-```powershell
+```bash
 python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
 ```
 

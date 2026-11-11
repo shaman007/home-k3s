@@ -1,4 +1,4 @@
-# Exported from the live cluster with .\tools\longhorn\export-recurring-jobs.ps1
+# Historical Longhorn recurring-job snapshot retained as reference data.
 # Includes Longhorn RecurringJob resources for task=backup and task=filesystem-trim.
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob

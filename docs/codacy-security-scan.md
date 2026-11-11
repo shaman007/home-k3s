@@ -73,9 +73,10 @@ preventing an incomplete analysis from replacing historical results. Prospector
 uses a shared `Prospector_pylint` rule; its `(syntax-error)` diagnostic suffix is
 checked as well as the dedicated Pylint rule IDs. Explicit failed SARIF
 invocations are rejected for every scanner, including security tools, even when
-the report contains no findings. Python 3 Pylint and Remark have
-completed genuine uploads and reconciled historical findings. Other targeted
-linters still need verification; no empty reports or bulk dismissals substitute
+the report contains no findings. Python 3 Pylint, Prospector and Remark have
+completed genuine uploads and reconciled historical findings. PowerShell tooling
+was retired at the user's request after moving off Windows; PSScriptAnalyzer is no
+longer a dispatch option, and its four old findings have retirement comments; no empty reports or bulk dismissals substitute
 for a scan.
 
 The first manual Remark run
