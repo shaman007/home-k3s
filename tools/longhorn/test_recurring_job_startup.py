@@ -92,7 +92,7 @@ def main():
         (account / "namespace").write_text("longhorn-system")
         subprocess.run(
             [
-                "openssl",
+                "/usr/bin/openssl",
                 "req",
                 "-x509",
                 "-newkey",
@@ -128,7 +128,7 @@ def main():
                 MockAPI.task, MockAPI.calls = task, []
                 result = subprocess.run(
                     [
-                        "podman",
+                        "/usr/bin/podman",
                         "run",
                         "--rm",
                         "--user",

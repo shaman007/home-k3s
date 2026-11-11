@@ -176,7 +176,7 @@ def main():
             )
             container = subprocess.check_output(
                 [
-                    "podman",
+                    "/usr/bin/podman",
                     "run",
                     "--rm",
                     "-d",
@@ -203,7 +203,7 @@ def main():
             try:
                 for _ in range(80):
                     logs = subprocess.check_output(
-                        ["podman", "logs", container], text=True, stderr=subprocess.STDOUT
+                        ["/usr/bin/podman", "logs", container], text=True, stderr=subprocess.STDOUT
                     )
                     if "Global controllers started; serving as leader" in logs:
                         with urllib.request.urlopen(
@@ -213,7 +213,7 @@ def main():
                                 raise AssertionError
                         state = subprocess.check_output(
                             [
-                                "podman",
+                                "/usr/bin/podman",
                                 "exec",
                                 container,
                                 "sh",
@@ -246,7 +246,7 @@ def main():
                     raise AssertionError(logs[-5000:])
             finally:
                 subprocess.run(
-                    ["podman", "stop", "--time", "3", container],
+                    ["/usr/bin/podman", "stop", "--time", "3", container],
                     check=True,
                     stdout=subprocess.DEVNULL,
                 )

@@ -2034,3 +2034,27 @@ diff checks passed; Bandit reported no analysis errors. The opt-in real Nginx
 runtime remained skipped; no runtime binary or production configuration was
 launched. No scanner rules or assertions were removed. Source fixes await genuine
 published rescanning; no alert was dismissed in this batch.
+
+
+### Pin Longhorn startup probe system executables
+
+Replaced six bare executable names across recurring-job and global-manager startup
+probes with reviewed /usr/bin paths: five Podman commands and one OpenSSL fixture
+certificate command. Complete-module AST comparison, normalizing only those
+constants, proves all other arguments, options, checks and cleanup are unchanged.
+Bandit reports no B607 findings in either module and no analysis errors. Other
+subprocess/import review findings remain open for individual review. Custom
+kubectl and kubeconform installation paths were deliberately not changed.
+
+A real OpenSSL version invocation ignored a hostile PATH containing a fake
+openssl executable. Podman's hostile-PATH version invocation could not complete
+because its configuration initialization attempted a chmod in the sandbox's
+read-only /run/user/1000/libpod; no runtime permissions or configuration were
+changed to bypass that restriction. A normal Podman version command confirmed
+the pinned system executable is installed. Container runtime behavior remains
+unverified; no container was launched by this batch.
+
+The full suite ran 510 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed. Joint Pylint retains only the existing shared container-flag
+fragment duplication heuristic. No scanner rule was suppressed. These six source
+fixes await genuine published rescanning; no alert was dismissed in this batch.
