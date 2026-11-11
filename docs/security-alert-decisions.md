@@ -2812,3 +2812,36 @@ Runtime alerts remain open pending published rescanning and review. No alert was
 dismissed and no push was performed.
 
 The full suite ran 540 tests successfully with 16 skips using isolated JSON::PP.
+
+
+### Review bounded credential lookup command provenance
+
+Reviewed exact Bandit findings 8070/8069/8068 in benchmark_credentials.py,
+7549/7548/8084 in Firefox Sync verify_storage.py, and 7486/8082/8081 in
+provision_traefik_security.py. Every current module exactly matches its analyzed
+revision. Complete subprocess-reference inspection finds one launch per module;
+the administrator module additionally uses SubprocessError for sanitized failure
+handling. Commands are fixed read-only kubectl get secret argv, shell=False,
+--request-timeout=15s and a 30-second process deadline. Firefox Sync and Keycloak
+resource/namespace names are literals. Benchmark namespace/name selectors are
+validated before execution, rejecting flags, shell syntax, paths and invalid DNS
+identifiers. These import/argv warnings are false positives for the reviewed calls.
+
+The B607 decisions explicitly rely on PATH being trusted operator/CI execution
+configuration, retaining support for custom kubectl installations. These helpers
+are operator-invoked tools, not execution services accepting an untrusted caller's
+PATH. This does not establish safety under attacker-controlled process environments.
+Reopen for untrusted PATH/executable provenance, broader command operations or
+changed selector validation. Each alert includes that boundary and reopening rule.
+
+All four credential-selection and 21 administrator/Sync HTTP boundary tests pass.
+They cover invalid selectors before process creation, exact bounded commands,
+environment-only behavior, no credential fallback after a failed selected lookup,
+timeout prevention of downstream HTTP, and existing transport/privacy/cleanup
+contracts. Commands, credentials and HTTP are synthetic/mocked: no real kubectl,
+secret, administrator write, storage operation or external service was accessed.
+The last full-suite result remains 540 tests with 16 skips. No source suppression
+or code change was required by this decision batch, and no push was performed.
+
+Independent API inventory confirms all nine absent: 43 open (Bandit 34, Pylint
+four, Opengrep five).
