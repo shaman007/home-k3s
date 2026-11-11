@@ -127,6 +127,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                         "-c",
                         str(directory / "nginx.conf"),
                     ],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )

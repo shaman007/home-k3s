@@ -322,7 +322,7 @@ def assess(evidence, config):
 
     health = {
         name: subprocess.run(
-            ["systemctl", "is-active", name], capture_output=True, text=True
+            ["systemctl", "is-active", name], check=False, capture_output=True, text=True
         ).stdout.strip()
         for name in ("suricata", "ntopng", "evebox")
     }

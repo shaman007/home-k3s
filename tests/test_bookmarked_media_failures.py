@@ -36,7 +36,12 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
 
     def execute(self, script):
         return subprocess.run(
-            ["/bin/sh", "-c", script], env=self.env, capture_output=True, text=True, timeout=10
+            ["/bin/sh", "-c", script],
+            check=False,
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
 
     def upload_script(self):

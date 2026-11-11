@@ -126,6 +126,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 cls.logs.append(log)
                 check = subprocess.run(
                     [BINARY, "-e", "stderr", "-t", "-p", str(directory), "-c", str(path)],
+                    check=False,
                     capture_output=True,
                     text=True,
                 )

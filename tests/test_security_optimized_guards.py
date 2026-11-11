@@ -1,15 +1,50 @@
 """Security preconditions must survive Python's optimized execution mode."""
 
+import copy
 from pathlib import Path
 import subprocess
 import sys
+import types
 import unittest
+from unittest.mock import patch
+
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class OptimizedSecurityGuardsTest(unittest.TestCase):
+    def test_mail_smoke_check_rejects_unsafe_context_in_optimized_mode(self):
+        path = ROOT / "tools/security/test-mail-capability-guards.py"
+        document = yaml.safe_load((ROOT / "mail/deployment-dovecot.yaml").read_text())
+        for optimization in (0, 2):
+            module = types.ModuleType("mail_smoke_guard_fixture")
+            module.__file__ = str(path)
+            exec(
+                compile(path.read_text(), str(path), "exec", optimize=optimization), module.__dict__
+            )
+            with patch.object(
+                module.subprocess, "run", side_effect=RuntimeError("Unexpected execution")
+            ):
+                with patch.object(module.yaml, "safe_load", return_value=document):
+                    arguments, _ = module.command("dovecot")
+                    self.assertIn("--read-only", arguments)
+                    self.assertIn("--cap-drop=ALL", arguments)
+                for field, value in (
+                    ("allowPrivilegeEscalation", True),
+                    ("readOnlyRootFilesystem", False),
+                    ("capabilities", {"add": ["SYS_ADMIN"]}),
+                ):
+                    with self.subTest(optimization=optimization, field=field):
+                        unsafe = copy.deepcopy(document)
+                        unsafe["spec"]["template"]["spec"]["containers"][0]["securityContext"][
+                            field
+                        ] = value
+                        with patch.object(module.yaml, "safe_load", return_value=unsafe):
+                            with self.assertRaises(AssertionError):
+                                module.command("dovecot")
+
     def test_rejection_and_preflight_cases_with_optimization(self):
         # These suites exercise malformed exception catalogs, changed workload
         # identities, unhealthy storage and absent admission mutations. They
@@ -22,8 +57,22 @@ class OptimizedSecurityGuardsTest(unittest.TestCase):
         ):
             with self.subTest(pattern=pattern):
                 result = subprocess.run(
-                    [sys.executable, "-O", "-B", "-m", "unittest", "discover",
-                     "-s", "tests", "-p", pattern, "-q"],
-                    cwd=ROOT, capture_output=True, text=True, timeout=60,
+                    [
+                        sys.executable,
+                        "-O",
+                        "-B",
+                        "-m",
+                        "unittest",
+                        "discover",
+                        "-s",
+                        "tests",
+                        "-p",
+                        pattern,
+                        "-q",
+                    ],
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
                 )
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)

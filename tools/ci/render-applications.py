@@ -67,7 +67,9 @@ def github_chart_fallback(source, scratch):
 def run(args, cwd=None):
     """Run a renderer with bounded transient-fetch retries and private diagnostics."""
     for attempt in range(3):
-        result = subprocess.run(args, cwd=cwd, text=True, capture_output=True, timeout=300)
+        result = subprocess.run(
+            args, check=False, cwd=cwd, text=True, capture_output=True, timeout=300
+        )
         if not result.returncode:
             return result.stdout
         # Kustomize fetches pinned GitHub bases with git. Retry fetch failures,

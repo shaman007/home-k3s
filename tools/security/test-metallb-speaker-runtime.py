@@ -6,14 +6,15 @@ namespace. The tested UID 1000 process retains only NET_RAW and cannot alter lin
 The real speaker also reads the config and creates ARP/NDP responders. This is
 not a substitute for a post-rollout test of MetalLB's own ARP/NDP responders.
 """
+
 from pathlib import Path
 import subprocess
 import tempfile
 import time
 
-IMAGE = 'quay.io/frrouting/frr:10.4.3'  # Existing local Python/ip diagnostic image.
-SPEAKER = 'quay.io/metallb/speaker:v0.16.1'
-PROBE = r'''
+IMAGE = "quay.io/frrouting/frr:10.4.3"  # Existing local Python/ip diagnostic image.
+SPEAKER = "quay.io/metallb/speaker:v0.16.1"
+PROBE = r"""
 import os,socket,struct,subprocess
 from pathlib import Path
 assert os.getuid()==1000 and os.getgid()==1000
@@ -61,13 +62,14 @@ s.setsockopt(socket.IPPROTO_IPV6,socket.IPV6_LEAVE_GROUP,group)
 for port in [7946,9120]:
  with socket.socket() as listener: listener.bind(('127.0.0.1',port));listener.listen(1)
 print('PASS: UID/GID 1000, group-readable config, root-only negative, NET_RAW-only ARP/NDP, multicast join/leave, high listeners, NNP/seccomp, no NET_ADMIN')
-'''
+"""
 
 
 def run(*args, check=True):
-    result = subprocess.run(['podman', *args], capture_output=True, text=True, timeout=90)
+    result = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90)
     if check:
-        assert result.returncode == 0, result.stdout[-2500:] + result.stderr[-2500:]
+        if not (result.returncode == 0):
+            raise AssertionError(result.stdout[-2500:] + result.stderr[-2500:])
         return result.stdout.strip()
     return result
 
@@ -75,78 +77,155 @@ def run(*args, check=True):
 def main():
     holder = None
     speakers = []
-    with tempfile.TemporaryDirectory(prefix='speaker-nonroot-') as directory:
+    with tempfile.TemporaryDirectory(prefix="speaker-nonroot-") as directory:
         directory = Path(directory)
         directory.chmod(0o755)
-        (directory / 'probe.py').write_text(PROBE)
-        (directory / 'kubeconfig').write_text('apiVersion: v1\nkind: Config\nclusters:\n- name: fixture\n  cluster:\n    server: http://127.0.0.1:18080\ncontexts:\n- name: fixture\n  context:\n    cluster: fixture\n    user: fixture\ncurrent-context: fixture\nusers:\n- name: fixture\n  user: {}\n')
-        for name, mode in [('group-readable.yaml', 0o440), ('root-only.yaml', 0o400)]:
+        (directory / "probe.py").write_text(PROBE)
+        (directory / "kubeconfig").write_text(
+            "apiVersion: v1\nkind: Config\nclusters:\n- name: fixture\n  cluster:\n    server: http://127.0.0.1:18080\ncontexts:\n- name: fixture\n  context:\n    cluster: fixture\n    user: fixture\ncurrent-context: fixture\nusers:\n- name: fixture\n  user: {}\n"
+        )
+        for name, mode in [("group-readable.yaml", 0o440), ("root-only.yaml", 0o400)]:
             path = directory / name
-            path.write_text('announcedInterfacesToExclude: []\n')
+            path.write_text("announcedInterfacesToExclude: []\n")
             path.chmod(mode)
-            subprocess.run(['podman', 'unshare', 'chown', '0:1000' if mode == 0o440 else '0:0', str(path)], check=True)
+            subprocess.run(
+                ["podman", "unshare", "chown", "0:1000" if mode == 0o440 else "0:0", str(path)],
+                check=True,
+            )
         try:
-            holder = run('run', '-d', '--network=none', '--cap-drop=ALL', '--cap-add=NET_ADMIN',
-                         '--security-opt=no-new-privileges', '--entrypoint=/bin/sh', IMAGE, '-ec',
-                         'ip link set lo up; ip link add fixture0 type veth peer name fixture1; '
-                         'ip link set fixture0 up; ip link set fixture1 up; '
-                         'ip addr add fe80::1/64 dev fixture0 nodad; '
-                         'ip addr add fe80::2/64 dev fixture1 nodad; sleep 300')
+            holder = run(
+                "run",
+                "-d",
+                "--network=none",
+                "--cap-drop=ALL",
+                "--cap-add=NET_ADMIN",
+                "--security-opt=no-new-privileges",
+                "--entrypoint=/bin/sh",
+                IMAGE,
+                "-ec",
+                "ip link set lo up; ip link add fixture0 type veth peer name fixture1; "
+                "ip link set fixture0 up; ip link set fixture1 up; "
+                "ip addr add fe80::1/64 dev fixture0 nodad; "
+                "ip addr add fe80::2/64 dev fixture1 nodad; sleep 300",
+            )
             for _ in range(20):
-                if run('exec', holder, 'ip', 'link', 'show', 'fixture1', check=False).returncode == 0:
+                if (
+                    run("exec", holder, "ip", "link", "show", "fixture1", check=False).returncode
+                    == 0
+                ):
                     break
                 time.sleep(0.1)
-            args = ['run', '--rm', '--network=container:' + holder, '--user=1000:1000',
-                    '--read-only', '--cap-drop=ALL', '--cap-add=NET_RAW',
-                    '--security-opt=no-new-privileges', '-v', str(directory) + ':/fixture:ro,z']
-            print(run(*args, '--entrypoint=python3', IMAGE, '/fixture/probe.py'))
-            run(*args, '--entrypoint=/speaker', SPEAKER, '--help')
-            print('PASS: pinned speaker CLI starts non-root with NET_RAW only and read-only root')
+            args = [
+                "run",
+                "--rm",
+                "--network=container:" + holder,
+                "--user=1000:1000",
+                "--read-only",
+                "--cap-drop=ALL",
+                "--cap-add=NET_RAW",
+                "--security-opt=no-new-privileges",
+                "-v",
+                str(directory) + ":/fixture:ro,z",
+            ]
+            print(run(*args, "--entrypoint=python3", IMAGE, "/fixture/probe.py"))
+            run(*args, "--entrypoint=/speaker", SPEAKER, "--help")
+            print("PASS: pinned speaker CLI starts non-root with NET_RAW only and read-only root")
             # The real speaker reads the projected-mode fixture and opens its own
             # ARP/NDP responders. Kubernetes is deliberately unreachable (loopback
             # API): this proves pre-API initialization, not cache sync/readiness.
             # Hold API discovery open long enough for the interface-scan goroutine;
             # a refused connection can terminate main before it finishes scanning.
-            api = run('run', '-d', '--network=container:' + holder, '--user=1000:1000',
-                      '--cap-drop=ALL', '--security-opt=no-new-privileges', '--entrypoint=python3',
-                      IMAGE, '-c', 'from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer; import time\nclass H(BaseHTTPRequestHandler):\n def do_GET(self): time.sleep(30); self.send_error(503)\n def log_message(self,*a): pass\nThreadingHTTPServer(("127.0.0.1",18080),H).serve_forever()')
+            api = run(
+                "run",
+                "-d",
+                "--network=container:" + holder,
+                "--user=1000:1000",
+                "--cap-drop=ALL",
+                "--security-opt=no-new-privileges",
+                "--entrypoint=python3",
+                IMAGE,
+                "-c",
+                'from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer; import time\nclass H(BaseHTTPRequestHandler):\n def do_GET(self): time.sleep(30); self.send_error(503)\n def log_message(self,*a): pass\nThreadingHTTPServer(("127.0.0.1",18080),H).serve_forever()',
+            )
             speakers.append(api)
             time.sleep(0.3)
-            for config, succeeds in [('group-readable.yaml', True), ('root-only.yaml', False)]:
-                speaker = run('run', '-d', '--network=container:' + holder, '--user=1000:1000',
-                              '--read-only', '--cap-drop=ALL', '--cap-add=NET_RAW',
-                              '--security-opt=no-new-privileges', '-v', str(directory) + ':/fixture:ro,z',
-                              '-v', str(directory / config) + ':/etc/metallb/excludel2.yaml:ro,z',
-                              '-e', 'KUBECONFIG=/fixture/kubeconfig', '--entrypoint=/speaker', SPEAKER,
-                              '--namespace=fixture', '--node-name=fixture', '--pod-name=fixture',
-                              '--ml-bindaddr=127.0.0.1', '--log-level=debug')
+            for config, succeeds in [("group-readable.yaml", True), ("root-only.yaml", False)]:
+                speaker = run(
+                    "run",
+                    "-d",
+                    "--network=container:" + holder,
+                    "--user=1000:1000",
+                    "--read-only",
+                    "--cap-drop=ALL",
+                    "--cap-add=NET_RAW",
+                    "--security-opt=no-new-privileges",
+                    "-v",
+                    str(directory) + ":/fixture:ro,z",
+                    "-v",
+                    str(directory / config) + ":/etc/metallb/excludel2.yaml:ro,z",
+                    "-e",
+                    "KUBECONFIG=/fixture/kubeconfig",
+                    "--entrypoint=/speaker",
+                    SPEAKER,
+                    "--namespace=fixture",
+                    "--node-name=fixture",
+                    "--pod-name=fixture",
+                    "--ml-bindaddr=127.0.0.1",
+                    "--log-level=debug",
+                )
                 speakers.append(speaker)
                 for _ in range(30):
-                    logs = run('logs', speaker)
-                    if ('created NDP responder for interface' in logs if succeeds else 'permission denied' in logs):
+                    logs = run("logs", speaker)
+                    if (
+                        "created NDP responder for interface" in logs
+                        if succeeds
+                        else "permission denied" in logs
+                    ):
                         break
                     time.sleep(0.1)
                 if succeeds:
-                    assert 'created ARP responder for interface' in logs and 'created NDP responder for interface' in logs, logs[-3000:]
-                    assert 'failed to create ARP responder' not in logs and 'failed to create NDP responder' not in logs
+                    if not (
+                        "created ARP responder for interface" in logs
+                        and "created NDP responder for interface" in logs
+                    ):
+                        raise AssertionError(logs[-3000:])
+                    if not (
+                        "failed to create ARP responder" not in logs
+                        and "failed to create NDP responder" not in logs
+                    ):
+                        raise AssertionError
                 else:
-                    assert 'excludel2.yaml: permission denied' in logs, logs[-3000:]
-                run('rm', '-f', speaker)
+                    if not ("excludel2.yaml: permission denied" in logs):
+                        raise AssertionError(logs[-3000:])
+                run("rm", "-f", speaker)
                 speakers.remove(speaker)
-            print('PASS: real speaker reads group-owned config and creates ARP/NDP responders; root-only config is rejected')
-            negative = run('run', '--rm', '--network=container:' + holder, '--user=1000:1000',
-                           '--cap-drop=ALL', '--security-opt=no-new-privileges', '--entrypoint=python3',
-                           IMAGE, '-c', 'import socket; socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(0x0806))', check=False)
-            assert negative.returncode != 0 and 'PermissionError' in negative.stderr, 'NET_RAW negative control failed'
-            print('PASS: dropping NET_RAW prevents ARP raw socket creation')
+            print(
+                "PASS: real speaker reads group-owned config and creates ARP/NDP responders; root-only config is rejected"
+            )
+            negative = run(
+                "run",
+                "--rm",
+                "--network=container:" + holder,
+                "--user=1000:1000",
+                "--cap-drop=ALL",
+                "--security-opt=no-new-privileges",
+                "--entrypoint=python3",
+                IMAGE,
+                "-c",
+                "import socket; socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(0x0806))",
+                check=False,
+            )
+            if not (negative.returncode != 0 and "PermissionError" in negative.stderr):
+                raise AssertionError("NET_RAW negative control failed")
+            print("PASS: dropping NET_RAW prevents ARP raw socket creation")
         finally:
             for speaker in speakers:
-                run('rm', '-f', speaker)
+                run("rm", "-f", speaker)
             if holder:
-                run('rm', '-f', holder)
+                run("rm", "-f", holder)
             # Restore rootless-user ownership before tempfile cleanup.
-            subprocess.run(['podman', 'unshare', 'chown', '-R', '0:0', str(directory)], check=True)
+            subprocess.run(["podman", "unshare", "chown", "-R", "0:0", str(directory)], check=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -177,11 +177,14 @@ class LonghornReportTest(unittest.TestCase):
         role = yaml.safe_load(
             (ROOT / "metrics/cluster-role-platform-health-report.yaml").read_text()
         )
-        self.assertTrue(
-            any(
-                "longhorn.io" in r["apiGroups"]
-                and "volumes" in r["resources"]
-                and "list" in r["verbs"]
-                for r in role["rules"]
-            )
-        )
+        for rule in role["rules"]:
+            for field in ("apiGroups", "resources", "verbs"):
+                self.assertIsInstance(rule[field], list)
+        permissions = {
+            (api_group, resource, verb)
+            for rule in role["rules"]
+            for api_group in rule["apiGroups"]
+            for resource in rule["resources"]
+            for verb in rule["verbs"]
+        }
+        self.assertIn(("longhorn.io", "volumes", "list"), permissions)

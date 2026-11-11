@@ -191,6 +191,39 @@ in Actions history. The next analysis,
 [run 43001909513](https://github.com/shaman007/home-k3s/actions/runs/43001909513),
 completed successfully with Actions, Go and Python jobs and no Ruby job.
 
+## Standalone smoke-test checks
+
+Converted the remaining 189 `assert` statements in 23 standalone smoke-test tools
+to unconditional conditional failures. Original predicates, error messages and
+surrounding executable ASTs were compared against the mechanical expansion; all
+compile in optimized mode. Bandit B101 now reports no issues anywhere under
+`tools/`. This fixes the checks instead of suppressing test findings.
+
+An additional regression compiles the actual mail smoke-test helper normally and
+with optimization, verifies its valid read-only command arguments, and checks that
+privilege escalation, a writable root filesystem and excess capabilities are each
+rejected before a subprocess can execute. The full suite passed: 386 tests, 21 skips.
+The full container smoke probes were not run as part of this source-only change.
+
+Six subprocess calls now explicitly set `check=False` where callers inspect return
+codes themselves or intentionally test failure paths. This preserves their previous
+default behavior and resolves current Pylint W1510 diagnostics in those files.
+
+CodeQL recreated the previously reviewed RBAC false positive as alert 4019 after
+source reformatting changed its fingerprint. The regression now validates that
+RBAC fields are lists and checks a set of `(API group, resource, verb)` tuples.
+This also rejects malformed string fields that substring membership could accept;
+matching rescan verification is pending rather than another repeated dismissal.
+
+## Legacy rescan requirement
+
+The legacy Pylint analysis category is
+`.github/workflows/codacy.yml:codacy-security-scan`, with an empty matrix environment.
+It still reports historical results because the current workflow selects only
+Bandit, Opengrep and Shellcheck. Matching genuine legacy analyses must be refreshed
+before claiming closure of their source fixes. No empty substitute reports or bulk
+dismissals have been used to manufacture a reduction.
+
 ## Remaining dispositions
 
 Router TLS verification, subprocess audit findings and remaining lint/correctness

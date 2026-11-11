@@ -268,6 +268,7 @@ def main():
                 config["kubernetesVersion"],
                 str(path),
             ],
+            check=False,
             capture_output=True,
             text=True,
             timeout=300,
