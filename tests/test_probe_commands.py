@@ -695,3 +695,28 @@ class MetallbSpeakerGuardTests(unittest.TestCase):
                 probe.check_speaker("fixture", False)
         with patch.object(probe, "run", return_value="excludel2.yaml: permission denied"):
             probe.check_speaker("fixture", False)
+
+
+class ServiceCapabilityCommandTests(unittest.TestCase):
+    """Keep service smoke probes on trusted executable lookup with bounded execution."""
+
+    def test_service_probe_uses_trusted_runner_and_keeps_guards(self):
+        """A hostile PATH cannot select Podman, and existing runtime guard checks still pass."""
+        probe = load_probe("test_service_capability_guards.py")
+        status = "CapEff:\t0000000000000000\nCapBnd:\t0000000000000000\nNoNewPrivs:\t1\nSeccomp:\t2"
+        result = subprocess.CompletedProcess([], 0, status, "")
+        with (
+            patch.dict(os.environ, {"PATH": "/untrusted/fixture"}),
+            patch.object(probe, "run_command", side_effect=commands.run_command),
+            patch.object(commands.shutil, "which", return_value="/usr/bin/podman") as resolve,
+            patch.object(commands.subprocess, "run", return_value=result) as execute,
+        ):
+            probe.smoke("fixture-image", "1000:1000", [], "fixture command")
+        resolve.assert_called_once_with("podman", path=commands.SYSTEM_PATH)
+        self.assertEqual(execute.call_args.args[0][0], "/usr/bin/podman")
+        self.assertEqual(
+            execute.call_args.kwargs,
+            {"shell": False, "timeout": 60, "check": False, "capture_output": True, "text": True},
+        )
+        self.assertIn("--network=none", execute.call_args.args[0])
+        self.assertEqual(execute.call_args.args[0][-1], "fixture command")

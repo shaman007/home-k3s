@@ -2195,3 +2195,24 @@ independent inventory confirms all fourteen IDs are absent. GitHub now reports
 The reduction from the preceding 175 snapshot includes fourteen reviewed decisions
 and two concurrent scanner closures. No production data or credentials were read,
 no operational configuration changed and no push was performed.
+
+
+### Route service capability smoke probes through trusted command execution
+
+Replaced the remaining direct subprocess launch in the Unbound/OpenBao service
+capability smoke probe with the existing shared probe_commands.run_command.
+The runner resolves named executables only from /usr/bin:/bin, requires explicit
+argument sequences, sets shell=False and enforces finite positive timeouts.
+The service probe retains its original 60-second limit, capture/text/check options,
+all container arguments, fixture shell body and explicit runtime guard checks.
+No custom kubectl executable selection was changed.
+
+Added a regression with a hostile environment PATH that verifies trusted Podman
+resolution, exact subprocess safety/options, isolated network and unchanged fixture
+script argument while the existing guard checks complete. The full suite ran 515
+tests successfully with 21 opt-in skips. Both changed modules pass full Pylint,
+Ruff and diff checks; Bandit reports no direct subprocess/import findings in the
+service probe and no analysis errors. Its existing container temporary-path
+heuristics remain for separate review. No container, OpenBao account, production
+secret or Kubernetes API was used. Source findings await genuine published
+rescanning; no alert was dismissed in this batch.

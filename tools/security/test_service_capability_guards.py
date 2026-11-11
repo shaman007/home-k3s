@@ -5,8 +5,9 @@ Uses rootless Podman with no production mounts, credentials or published ports.
 """
 
 from pathlib import Path
-import subprocess
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -26,7 +27,7 @@ def smoke(image, user, caps, script, extra=()):
     command += ["--cap-add=" + cap for cap in caps]
     command += list(extra)
     command += ["--entrypoint", "/bin/sh", image, "-ec", script]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=60, check=False)
+    result = run_command(command, capture_output=True, text=True, timeout=60, check=False)
     if not result.returncode == 0:
         raise AssertionError(result.stdout[-3000:] + result.stderr[-3000:])
     expected = "0000000000000400" if caps else "0000000000000000"
