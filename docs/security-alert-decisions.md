@@ -1287,3 +1287,28 @@ its synchronous behavior. All six bootstrap tests and all 33 rendered-validation
 tests passed; the focused Pylint check, Ruff and diff checks passed. No live
 OpenBao service, cluster resource or credential file was used. The source fix
 still requires publication and scanner refresh.
+
+
+### Simplify synthetic tool benchmark request and trial handling
+
+Grouped endpoint/model/provider/context/timeout settings in an immutable request
+record shared by selection and synthesis. Split tool-call validation and one
+trial's result collection from CLI parsing and incremental report persistence.
+Updated all four direct transport test callers to the new explicit interface.
+Local Pylint no longer reports excessive request arguments, positional arguments,
+main locals or main statements. The existing broad exception boundary remains
+open: preserving failure-stage evidence and later trials needs separate review.
+
+A transient comparison of sixteen provider/outcome combinations against the
+preceding implementation confirmed identical trial results and ordered request
+payloads, including wrong/missing tools, wrong namespaces, invalid arguments,
+missing call identifiers and failures in selection or synthesis. Three permanent
+offline tests cover both providers' valid fixture round trips, namespace refusal
+without synthesis, and selection failure recording. Existing real urllib redirect
+and sanitized-error tests, credential scoping and explicit timeout checks pass.
+No model service, Kubernetes secret, external tool or network endpoint was used.
+
+The full suite ran 453 tests successfully with 21 opt-in skips. The test module
+passes full Pylint; Ruff and diff checks passed, and Bandit reported no analysis
+errors. Source fixes await publication and genuine scanner refresh; no scanner
+rule or validation gate was disabled.

@@ -48,7 +48,9 @@ class BenchmarkHttpTests(unittest.TestCase):
         ]:
             with self.subTest(base=base), patch.object(urllib.request, "build_opener") as build:
                 with self.assertRaises(ValueError):
-                    tool_calls.post(base, "fixture", [], "", "openai", 1024)
+                    tool_calls.post(
+                        tool_calls.RequestOptions(base, "fixture", "openai", 1024), [], ""
+                    )
                 build.assert_not_called()
 
     def test_invalid_cli_url_fails_before_secret_lookup(self):
@@ -97,7 +99,11 @@ class BenchmarkHttpTests(unittest.TestCase):
                         ),
                     ):
                         with self.assertRaisesRegex(RuntimeError, f"HTTP {status}") as error:
-                            tool_calls.post(base, "fixture", [], marker, provider, 1024)
+                            tool_calls.post(
+                                tool_calls.RequestOptions(base, "fixture", provider, 1024),
+                                [],
+                                marker,
+                            )
                         self.assertEqual(visits, [url])
                         self.assertNotIn(marker, str(error.exception))
                         self.assertTrue(all(body.closed for body in buffers))
@@ -111,7 +117,11 @@ class BenchmarkHttpTests(unittest.TestCase):
             opener.open.return_value = body
             with patch.object(urllib.request, "build_opener", return_value=opener):
                 response, elapsed = tool_calls.post(
-                    "https://fixture.invalid/proxy/", "fixture-model", [], marker, provider, 2048, 7
+                    tool_calls.RequestOptions(
+                        "https://fixture.invalid/proxy/", "fixture-model", provider, 2048, 7
+                    ),
+                    [],
+                    marker,
                 )
             request = opener.open.call_args.args[0]
             payload = json.loads(request.data)
@@ -202,7 +212,91 @@ class BenchmarkHttpTests(unittest.TestCase):
             ):
                 with self.assertRaises(RuntimeError) as caught:
                     tool_calls.post(
-                        "https://fixture.invalid", "fixture", [], marker, "openai", 1024
+                        tool_calls.RequestOptions(
+                            "https://fixture.invalid", "fixture", "openai", 1024
+                        ),
+                        [],
+                        marker,
                     )
                 self.assertNotIn(marker, str(caught.exception))
         self.assertTrue(body.closed)
+
+
+class ToolTrialTests(unittest.TestCase):
+    """Preserve automatic tool selection and stage-specific failure evidence."""
+
+    def test_valid_call_synthesizes_with_provider_specific_result(self):
+        """Both providers receive the fixed quota fixture and their expected tool identifier."""
+        for provider in ("openai", "ollama"):
+            with self.subTest(provider=provider):
+                options = tool_calls.RequestOptions(
+                    "http://localhost:8080", "fixture", provider, 1024
+                )
+                message = {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "fixture",
+                            "function": {
+                                "name": "get_namespace_storage",
+                                "arguments": '{"namespace":"bench-demo"}',
+                            },
+                        }
+                    ],
+                }
+                first = (
+                    {"message": message}
+                    if provider == "ollama"
+                    else {"choices": [{"message": message}]}
+                )
+                final = {"content": "Quota must be at least 20Gi"}
+                second = (
+                    {"message": final}
+                    if provider == "ollama"
+                    else {"choices": [{"message": final}]}
+                )
+                with patch.object(
+                    tool_calls, "post", side_effect=[(first, 1), (second, 2)]
+                ) as post:
+                    row = tool_calls.run_trial(options, "", 0)
+                self.assertTrue(row["valid_tool_call"])
+                self.assertEqual(row["answer"], final["content"])
+                result = post.call_args.args[1][-1]
+                self.assertEqual(json.loads(result["content"]), tool_calls.FIXTURE)
+                field = "tool_name" if provider == "ollama" else "tool_call_id"
+                self.assertEqual(
+                    result[field], "get_namespace_storage" if provider == "ollama" else "fixture"
+                )
+
+    def test_invalid_namespace_does_not_synthesize(self):
+        """A tool call targeting another namespace cannot receive the fixture result."""
+        options = tool_calls.RequestOptions("http://localhost:8080", "fixture", "ollama", 1024)
+        response = {
+            "message": {
+                "tool_calls": [
+                    {
+                        "function": {
+                            "name": "get_namespace_storage",
+                            "arguments": {"namespace": "another"},
+                        }
+                    }
+                ]
+            }
+        }
+        with patch.object(tool_calls, "post", return_value=(response, 1)) as post:
+            row = tool_calls.run_trial(options, "", 0)
+        self.assertFalse(row["valid_tool_call"])
+        self.assertNotIn("answer", row)
+        post.assert_called_once()
+
+    def test_selection_failure_retains_failure_stage(self):
+        """A failed selection is recorded without attempting synthesis."""
+        options = tool_calls.RequestOptions("http://localhost:8080", "fixture", "openai", 1024)
+        with patch.object(
+            tool_calls, "post", side_effect=RuntimeError("synthetic failure")
+        ) as post:
+            row = tool_calls.run_trial(options, "", 0)
+        self.assertEqual(row["failure_stage"], "selection")
+        self.assertIn("RuntimeError", row["error"])
+        post.assert_called_once()

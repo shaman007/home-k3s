@@ -6,6 +6,7 @@ fixture. Preserve both responses to review tool choice, arguments and synthesis.
 """
 
 import argparse
+from dataclasses import dataclass
 import base64
 import json
 import os
@@ -42,10 +43,21 @@ FIXTURE = {
 }
 
 
-def post(url, model, messages, key, provider, context, timeout_s=1800):
+@dataclass(frozen=True)
+class RequestOptions:
+    """Keep inference endpoint, model and protocol limits together across both stages."""
+
+    url: str
+    model: str
+    provider: str
+    context: int
+    timeout_s: float = 1800
+
+
+def post(options, messages, key):
     """Send a synthetic tool-call request and return the response and elapsed time."""
     payload = {
-        "model": model,
+        "model": options.model,
         "messages": messages,
         "tools": [TOOL],
         "temperature": 0,
@@ -53,29 +65,83 @@ def post(url, model, messages, key, provider, context, timeout_s=1800):
         "max_tokens": 1024,
     }
     path = "/v1/chat/completions"
-    if provider == "ollama":
+    if options.provider == "ollama":
         path = "/api/chat"
         payload = {
-            "model": model,
+            "model": options.model,
             "messages": messages,
             "tools": [TOOL],
             "stream": False,
             "think": "low",
             "keep_alive": "30s",
-            "options": {"temperature": 0, "num_ctx": context, "num_predict": 1024},
+            "options": {"temperature": 0, "num_ctx": options.context, "num_predict": 1024},
         }
     headers = {"Content-Type": "application/json"}
     if key:
         headers["Authorization"] = "Bearer " + key
     req = urllib.request.Request(
-        validate_base_url(url) + path, data=json.dumps(payload).encode(), headers=headers
+        validate_base_url(options.url) + path, data=json.dumps(payload).encode(), headers=headers
     )
     started = time.monotonic()
-    with open_response(req, timeout=timeout_s) as response:
+    with open_response(req, timeout=options.timeout_s) as response:
         result = json.load(response)
     if result.get("error"):
         raise RuntimeError("Inference API returned an error; inspect server logs")
-    return result, time.monotonic() - started
+    return (result, time.monotonic() - started)
+
+
+def valid_tool_call(calls):
+    """Accept exactly the synthetic storage tool and its expected namespace argument."""
+    valid = len(calls) == 1 and calls[0]["function"]["name"] == "get_namespace_storage"
+    if valid:
+        arguments = calls[0]["function"]["arguments"]
+        if isinstance(arguments, str):
+            arguments = json.loads(arguments)
+        valid = arguments == {"namespace": "bench-demo"}
+    return valid
+
+
+def run_trial(options, key, repeat):
+    """Record selection and synthesis outcomes separately for one synthetic trial."""
+    row = {"repeat": repeat + 1}
+    stage = "selection"
+    started = time.monotonic()
+    try:
+        messages = [{"role": "user", "content": PROMPT}]
+        response, elapsed = post(options, messages, key)
+        row.update({"selection_response": response, "selection_seconds": elapsed})
+        message = (
+            response["message"]
+            if options.provider == "ollama"
+            else response["choices"][0]["message"]
+        )
+        calls = message.get("tool_calls") or []
+        valid = valid_tool_call(calls)
+        row["valid_tool_call"] = valid
+        if valid:
+            messages.append(
+                {k: v for k, v in message.items() if k in ("role", "content", "tool_calls")}
+            )
+            tool_result = {"role": "tool", "content": json.dumps(FIXTURE)}
+            if options.provider == "ollama":
+                tool_result["tool_name"] = "get_namespace_storage"
+            else:
+                tool_result["tool_call_id"] = calls[0]["id"]
+            messages.append(tool_result)
+            stage = "synthesis"
+            response, elapsed = post(options, messages, key)
+            row.update({"synthesis_response": response, "synthesis_seconds": elapsed})
+            final = (
+                response["message"]
+                if options.provider == "ollama"
+                else response["choices"][0]["message"]
+            )
+            row["answer"] = final.get("content")
+    except Exception as error:
+        row["error"] = f"{type(error).__name__}: {error}"
+        row["failure_stage"] = stage
+    row["elapsed_s"] = time.monotonic() - started
+    return row
 
 
 def main():
@@ -128,66 +194,11 @@ def main():
         "runs": [],
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    options = RequestOptions(
+        args.url, args.model, args.provider, args.context, args.request_timeout_s
+    )
     for repeat in range(args.runs):
-        row = {"repeat": repeat + 1}
-        stage = "selection"
-        started = time.monotonic()
-        try:
-            messages = [{"role": "user", "content": PROMPT}]
-            response, elapsed = post(
-                args.url,
-                args.model,
-                messages,
-                key,
-                args.provider,
-                args.context,
-                args.request_timeout_s,
-            )
-            row.update({"selection_response": response, "selection_seconds": elapsed})
-            message = (
-                response["message"]
-                if args.provider == "ollama"
-                else response["choices"][0]["message"]
-            )
-            calls = message.get("tool_calls") or []
-            valid = len(calls) == 1 and calls[0]["function"]["name"] == "get_namespace_storage"
-            if valid:
-                arguments = calls[0]["function"]["arguments"]
-                if isinstance(arguments, str):
-                    arguments = json.loads(arguments)
-                valid = arguments == {"namespace": "bench-demo"}
-            row["valid_tool_call"] = valid
-            if valid:
-                messages.append(
-                    {k: v for k, v in message.items() if k in ("role", "content", "tool_calls")}
-                )
-                tool_result = {"role": "tool", "content": json.dumps(FIXTURE)}
-                if args.provider == "ollama":
-                    tool_result["tool_name"] = "get_namespace_storage"
-                else:
-                    tool_result["tool_call_id"] = calls[0]["id"]
-                messages.append(tool_result)
-                stage = "synthesis"
-                response, elapsed = post(
-                    args.url,
-                    args.model,
-                    messages,
-                    key,
-                    args.provider,
-                    args.context,
-                    args.request_timeout_s,
-                )
-                row.update({"synthesis_response": response, "synthesis_seconds": elapsed})
-                final = (
-                    response["message"]
-                    if args.provider == "ollama"
-                    else response["choices"][0]["message"]
-                )
-                row["answer"] = final.get("content")
-        except Exception as error:
-            row["error"] = f"{type(error).__name__}: {error}"
-            row["failure_stage"] = stage
-        row["elapsed_s"] = time.monotonic() - started
+        row = run_trial(options, key, repeat)
         report["runs"].append(row)
         args.out.write_text(json.dumps(report, indent=2) + "\n")
         print(
