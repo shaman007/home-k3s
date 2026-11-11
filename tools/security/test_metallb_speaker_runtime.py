@@ -117,6 +117,33 @@ def run(*args, check=True):
     return result
 
 
+def check_speaker(speaker, succeeds):
+    """Require both network responders or the exact expected projected-file denial."""
+    for _ in range(30):
+        logs = run("logs", speaker)
+        if (
+            "created NDP responder for interface" in logs
+            if succeeds
+            else "permission denied" in logs
+        ):
+            break
+        time.sleep(0.1)
+    if succeeds:
+        if not (
+            "created ARP responder for interface" in logs
+            and "created NDP responder for interface" in logs
+        ):
+            raise AssertionError(logs[-3000:])
+        if not (
+            "failed to create ARP responder" not in logs
+            and "failed to create NDP responder" not in logs
+        ):
+            raise AssertionError
+    else:
+        if "excludel2.yaml: permission denied" not in logs:
+            raise AssertionError(logs[-3000:])
+
+
 def main():
     """Isolated non-root speaker prerequisites: no LAN interfaces, VIPs or secrets."""
     holder = None
@@ -236,29 +263,7 @@ def main():
                     "--log-level=debug",
                 )
                 speakers.append(speaker)
-                for _ in range(30):
-                    logs = run("logs", speaker)
-                    if (
-                        "created NDP responder for interface" in logs
-                        if succeeds
-                        else "permission denied" in logs
-                    ):
-                        break
-                    time.sleep(0.1)
-                if succeeds:
-                    if not (
-                        "created ARP responder for interface" in logs
-                        and "created NDP responder for interface" in logs
-                    ):
-                        raise AssertionError(logs[-3000:])
-                    if not (
-                        "failed to create ARP responder" not in logs
-                        and "failed to create NDP responder" not in logs
-                    ):
-                        raise AssertionError
-                else:
-                    if "excludel2.yaml: permission denied" not in logs:
-                        raise AssertionError(logs[-3000:])
+                check_speaker(speaker, succeeds)
                 run("rm", "-f", speaker)
                 speakers.remove(speaker)
             print(

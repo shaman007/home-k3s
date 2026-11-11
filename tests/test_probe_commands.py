@@ -638,3 +638,34 @@ class HisterFixtureGuardTests(unittest.TestCase):
         self.assertIn("HISTER__SERVER__BASE_URL=http://127.0.0.1:8080/", argv)
         self.assertIn("HISTER_DATA_DIR=/data", argv)
         self.assertNotIn("HISTER__SERVER__BASE_URL=https://production.invalid/", argv)
+
+
+class MetallbSpeakerGuardTests(unittest.TestCase):
+    """Keep responder initialization and projected-file denial checks fail-closed."""
+
+    def test_positive_case_requires_both_responders_and_no_creation_failure(self):
+        """NDP readiness cannot hide missing ARP or either responder's creation failure."""
+        probe = load_probe("test_metallb_speaker_runtime.py")
+        good = (
+            "created ARP responder for interface fixture0; "
+            "created NDP responder for interface fixture0"
+        )
+        for logs in (
+            "created NDP responder for interface fixture0",
+            good + "; failed to create ARP responder",
+            good + "; failed to create NDP responder",
+        ):
+            with self.subTest(logs=logs), patch.object(probe, "run", return_value=logs):
+                with self.assertRaises(AssertionError):
+                    probe.check_speaker("fixture", True)
+        with patch.object(probe, "run", return_value=good):
+            probe.check_speaker("fixture", True)
+
+    def test_negative_case_requires_the_projected_configuration_denial(self):
+        """An unrelated permission error cannot satisfy the root-only configuration control."""
+        probe = load_probe("test_metallb_speaker_runtime.py")
+        with patch.object(probe, "run", return_value="unrelated: permission denied"):
+            with self.assertRaises(AssertionError):
+                probe.check_speaker("fixture", False)
+        with patch.object(probe, "run", return_value="excludel2.yaml: permission denied"):
+            probe.check_speaker("fixture", False)

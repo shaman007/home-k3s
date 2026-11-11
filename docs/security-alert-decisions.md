@@ -1997,3 +1997,21 @@ coverage remains green. The full suite ran 508 tests successfully with 21 opt-in
 skips. Ruff and diff checks passed; Bandit reported no analysis errors. No actual
 container, volume, Hister data, network endpoint or credentials were used. Source
 fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Separate MetalLB speaker responder and file-permission verification
+
+Extracted the real-speaker log polling and positive/negative result checks from
+the isolated speaker probe, removing its excessive-branches warning. Expanding
+the helper reproduces the entire original module AST, preserving all fixture
+commands, polling limits, NET_RAW controls, projected-file ownership checks and
+cleanup. The source and updated regression module pass full Pylint without
+suppressions. No runtime check or scanner rule was removed.
+
+Two permanent regressions require both ARP and NDP initialization with neither
+creation failure, and require the exact excludel2.yaml permission denial rather
+than an unrelated permission error. Positive cases remain accepted. The full suite
+ran 510 tests successfully with 21 opt-in skips. Ruff and diff checks passed;
+Bandit reported no analysis errors. Verification did not launch containers, create
+interfaces, open raw sockets, announce addresses or contact the Kubernetes API.
+Source fixes await genuine published rescanning; no alert was dismissed in this batch.
