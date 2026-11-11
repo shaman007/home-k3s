@@ -2423,3 +2423,35 @@ The full suite with the temporary Perl dependency ran 517 tests successfully wit
 16 skips, five fewer than the prior run. Current GitHub inventory is 73: Bandit
 59, modern Pylint seven and Opengrep seven. No system dependency was installed,
 no credential or production mail payload was read, and no push was performed.
+
+
+### Review exception-only imports, trusted probe execution and HTTPS schema fetch
+
+Dismissed exact import heuristics #8051, #8050 and #8019. The three test modules
+use subprocess only for CalledProcessError/TimeoutExpired exception types or
+CompletedProcess fixtures; none launches a process through that import. Audited
+all references and retained the exception/fixture contracts. Comments reopen the
+finding if an actual launch or alias is introduced.
+
+Reviewed the shared probe runner's exact #7774 and #7773 findings. It accepts only
+explicit argv sequences, resolves named executables from /usr/bin:/bin or accepts
+an explicitly caller-selected absolute path, rejects relative paths and process-
+control overrides, sets shell=False, and requires finite positive deadlines.
+Existing regressions verify hostile PATH handling, literal metacharacters, rejected
+shell/executable/env overrides, malformed argv and missing/invalid execution limits.
+Dismissed these generic subprocess/import heuristics with reopening conditions
+for untrusted program/code sources or relaxed guards; no launch protection changed.
+
+Reviewed only schema-download call #7792 in validate_rendered.py: fixed
+/usr/bin/curl, prevalidated HTTPS URL, explicit HTTPS-only initial/redirect protocols,
+connection and whole-transfer limits, and a process deadline. The regression
+rejects HTTP before transport and checks all flags/deadlines. Dismissed this exact
+call with protocol/argument provenance reopening conditions. Other subprocess
+findings in that module remain open for separate review.
+
+Source bytes, exact rules/paths/states and analyzed revisions were checked before
+mutation. Independent inventory confirms all six reviewed IDs absent. The full
+suite with isolated JSON::PP ran 517 tests successfully with 16 skips. No production
+command, credential, network endpoint or cluster was used by the boundary tests.
+No source, scanner exclusion or runtime configuration changed. Current GitHub
+total is 67: Bandit 53, modern Pylint seven and Opengrep seven. No push was performed.
