@@ -11,7 +11,7 @@ doc = {
     "apiVersion": "v1",
     "kind": "ConfigMap",
     "metadata": {"name": "unifi-bgp-exporter", "namespace": "unifi"},
-    "data": {"exporter.py": (root / "tools/monitoring/unifi-bgp-exporter.py").read_text()},
+    "data": {"exporter.py": (root / "tools/monitoring/unifi_bgp_exporter.py").read_text()},
 }
 text = yaml.safe_dump(doc, sort_keys=False, width=120)
 if "--check" in sys.argv:

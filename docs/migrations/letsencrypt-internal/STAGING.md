@@ -6,7 +6,7 @@ and backend cutover are later stages. The first live stage was executed and veri
 
 ## Image delivery
 
-`tools/godaddy-webhook/prepare-build.py` generates a one-off Job manifest under
+`tools/godaddy-webhook/prepare_build.py` generates a one-off Job manifest under
 `/tmp`, bundling exactly Dockerfile, go.mod, go.sum and main.go in a ConfigMap.
 The source archive hash selects the Job name and image tag. The Job runs the
 same privileged Podman image as the existing image-builder CronJob, inherits its

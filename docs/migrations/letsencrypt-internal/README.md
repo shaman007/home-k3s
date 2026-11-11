@@ -175,7 +175,7 @@ Backend bridge rollout order:
    advertised-address changes need a separate controlled rollout. OpenBao's
    intrinsic Raft mTLS remains managed by OpenBao.
 
-A local test helper `tools/godaddy-webhook/test-openbao-tls-reload.py` exercises
+A local test helper `tools/godaddy-webhook/test_openbao_tls_reload.py` exercises
 both loopback listeners and atomic projected-file rotation with generated fixture
 certificates, without initializing OpenBao or using production credentials.
 This supports the reload design; it does not prove live Raft rollout, public CA

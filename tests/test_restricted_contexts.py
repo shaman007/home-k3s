@@ -6,7 +6,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "restricted_contexts", ROOT / "tools/ci/check-restricted-contexts.py"
+    "restricted_contexts", ROOT / "tools/ci/check_restricted_contexts.py"
 )
 policy = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(policy)
@@ -14,6 +14,7 @@ spec.loader.exec_module(policy)
 
 class RestrictedContextTests(unittest.TestCase):
     """Check inherited Restricted contexts and reject unsafe container overrides."""
+
     def pod(self):
         """Build a restricted pod fixture with inherited nonroot and seccomp settings."""
         return {

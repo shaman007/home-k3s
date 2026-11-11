@@ -54,9 +54,7 @@ def looks_like_k8s_manifest(path: Path) -> bool:
     except UnicodeDecodeError:
         return False
 
-    has_api_version = any(
-        line.lstrip().startswith("apiVersion:") for line in content.splitlines()
-    )
+    has_api_version = any(line.lstrip().startswith("apiVersion:") for line in content.splitlines())
     has_kind = any(line.lstrip().startswith("kind:") for line in content.splitlines())
     return has_api_version and has_kind
 

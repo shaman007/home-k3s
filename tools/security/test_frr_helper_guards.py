@@ -99,7 +99,7 @@ def main():
                 raise AssertionError(run("logs", daemon))
             # Production helpers use vtysh to query these daemon sockets.
             data = run("exec", daemon, "/usr/bin/vtysh", "-c", "show bgp vrf all json")
-            if 'default' not in data:
+            if "default" not in data:
                 raise AssertionError(data)
             info = run(
                 "exec",
@@ -108,7 +108,7 @@ def main():
                 "-ec",
                 'stat -c "%u:%g %a" /var/run/frr/bgpd.vty; cat /proc/1/status',
             )
-            if '100:102 770' not in info:
+            if "100:102 770" not in info:
                 raise AssertionError(info)
             # Root reloader retains only DAC_OVERRIDE to read owner-100 mode-0600 config.
             (d / "reload/frr.conf").write_text(
@@ -151,7 +151,7 @@ def main():
             if not ("CapEff:\t0000000000000002" in output and "NoNewPrivs:\t1" in output):
                 raise AssertionError(output)
             running = run("exec", daemon, "/usr/bin/vtysh", "-c", "show running-config")
-            if 'bgp router-id 192.0.2.2' not in running:
+            if "bgp router-id 192.0.2.2" not in running:
                 raise AssertionError(output + "\n" + running)
             # Exercise the actual reloader shell, lock, signal and status path.
             reloader = run(
@@ -348,7 +348,7 @@ def main():
                 time.sleep(0.2)
             else:
                 raise AssertionError(p.stdout + p.stderr + run("logs", metrics))
-            if 'failed to fetch BGP neighbors' in run('logs', metrics):
+            if "failed to fetch BGP neighbors" in run("logs", metrics):
                 raise AssertionError
             status_exporter = run(
                 *exporter_args,

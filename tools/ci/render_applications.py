@@ -16,10 +16,10 @@ import subprocess
 import tempfile
 import time
 import urllib.parse
-import urllib.request
 
 import yaml
 from ci_yaml import load, load_all
+from http_download import fetch
 
 ROOT = Path(__file__).resolve().parents[2]
 REPO = "https://github.com/shaman007/home-k3s.git"
@@ -32,14 +32,9 @@ class HelmDownloadError(RuntimeError):
 def github_chart_fallback(source, scratch):
     """Fetch the exact indexed chart through GitHub's release-asset API."""
 
-    def fetch(url, accept="application/json"):
-        request = urllib.request.Request(url, headers={"Accept": accept})
-        with urllib.request.urlopen(request, timeout=60) as response:
-            return response.read()
-
     repo = source["repoURL"]
-    if not repo.startswith(("http://", "https://")):
-        raise ValueError("Fallback requires an HTTP Helm repository")
+    if not repo.startswith("https://"):
+        raise ValueError("Fallback requires an HTTPS Helm repository")
     index = load(fetch(repo.rstrip("/") + "/index.yaml").decode())
     entries = index["entries"][source["chart"]]
     entry = next(e for e in entries if str(e["version"]) == str(source["targetRevision"]))

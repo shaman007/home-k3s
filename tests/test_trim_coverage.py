@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class TrimCoverageTest(unittest.TestCase):
     """Verify trim-job assignment, retained exceptions, and reconciliation failures."""
+
     @classmethod
     def setUpClass(cls):
         documents = list(
@@ -142,7 +143,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.pvc["metadata"]["labels"] = {"recurring-job.longhorn.io/source": "enabled"}
         writes = []
 
-        def api(path, patch=None):
+        def api(_path, patch=None):
             if patch:
                 writes.append(patch)
             return self.pvc
@@ -188,6 +189,7 @@ class TrimCoverageTest(unittest.TestCase):
                 return {"items": [failed, self.volume]}
             if path.endswith("/broken"):
                 raise RuntimeError("conflict")
+            self.assertIsNotNone(patch)
             writes.append(path)
             return None
 
@@ -207,7 +209,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.pvc["spec"]["volumeName"] = "replacement"
         self.volume["status"] = {"kubernetesStatus": {"namespace": "app", "pvcName": "data"}}
 
-        def api(path, patch=None):
+        def api(_path, patch=None):
             self.assertIsNone(patch)
             return self.pvc
 

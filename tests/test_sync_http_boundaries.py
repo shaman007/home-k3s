@@ -17,7 +17,7 @@ from test_firefox_sync_bootstrap import bootstrap
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "sync_storage_probe", ROOT / "tools/firefox-sync/verify-storage.py"
+    "sync_storage_probe", ROOT / "tools/firefox-sync/verify_storage.py"
 )
 probe = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(probe)
@@ -49,9 +49,7 @@ class SyncHttpBoundaryTests(unittest.TestCase):
                 patch.object(urllib.request, "build_opener") as build,
             ):
                 with self.assertRaises(ValueError):
-                    bootstrap.Transport(
-                        url, {"sync.andreybondarenko.com"}, allow_loopback=True
-                    )
+                    bootstrap.Transport(url, {"sync.andreybondarenko.com"}, allow_loopback=True)
                 build.assert_not_called()
 
     def test_requests_cannot_leave_the_configured_origin(self):
@@ -103,9 +101,7 @@ class SyncHttpBoundaryTests(unittest.TestCase):
                             patch.object(
                                 urllib.request,
                                 "build_opener",
-                                side_effect=fixture_opener(
-                                    url, status, visits, buffers, target
-                                ),
+                                side_effect=fixture_opener(url, status, visits, buffers, target),
                             ),
                         ):
                             transport = bootstrap.Transport(
@@ -168,19 +164,11 @@ class SyncHttpBoundaryTests(unittest.TestCase):
     def test_probe_sanitizes_redirect_errors_and_closes_response(self):
         """Stop a redirected authenticated read before writing or forwarding its Hawk token."""
         body = io.BytesIO(secrets.token_bytes(18))
-        error = urllib.error.HTTPError(
-            "https://elsewhere.invalid", 302, "private", {}, body
-        )
-        data = {
-            "data": {
-                "SYNC_MASTER_SECRET": base64.b64encode(secrets.token_bytes(32)).decode()
-            }
-        }
+        error = urllib.error.HTTPError("https://elsewhere.invalid", 302, "private", {}, body)
+        data = {"data": {"SYNC_MASTER_SECRET": base64.b64encode(secrets.token_bytes(32)).decode()}}
         with (
             patch("sys.argv", ["probe"]),
-            patch.object(
-                probe.subprocess, "check_output", return_value=json.dumps(data).encode()
-            ),
+            patch.object(probe.subprocess, "check_output", return_value=json.dumps(data).encode()),
             patch.object(probe.Transport, "open", side_effect=error) as request,
             self.assertRaisesRegex(RuntimeError, "HTTP 302") as caught,
         ):

@@ -15,7 +15,7 @@ s = importlib.util.spec_from_file_location(
 b = importlib.util.module_from_spec(s)
 s.loader.exec_module(b)
 s = importlib.util.spec_from_file_location(
-    "infra_generate", ROOT / "tools/security/generate-infra-guards.py"
+    "infra_generate", ROOT / "tools/security/generate_infra_guards.py"
 )
 g = importlib.util.module_from_spec(s)
 s.loader.exec_module(g)
@@ -23,6 +23,7 @@ s.loader.exec_module(g)
 
 class InfrastructureGuardTests(unittest.TestCase):
     """Exercise exact workload scope, preflight failures, and guarded infrastructure backfill."""
+
     def setUp(self):
         self.catalog = json.loads((ROOT / "infra-guards/catalog.json").read_text())
         self.entries = self.catalog["entries"]
@@ -151,6 +152,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __enter__(self):
                 return self
 
@@ -163,6 +165,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append((req.get_method(), req.full_url))
@@ -193,6 +196,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __init__(self, doc):
                 self.doc = doc
 
@@ -208,6 +212,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 e = next(e for e in entries if req.full_url.split("?")[0].endswith("/" + e["name"]))
@@ -244,13 +249,14 @@ class InfrastructureGuardTests(unittest.TestCase):
         e = next(e for e in self.entries if e["namespace"] == "longhorn-system")
         calls = []
         spec = importlib.util.spec_from_file_location(
-            "storage_guard", ROOT / "tools/longhorn/backfill-component-security.py"
+            "storage_guard", ROOT / "tools/longhorn/backfill_component_security.py"
         )
         storage = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(storage)
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __init__(self, doc):
                 self.doc = doc
 
@@ -266,6 +272,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
@@ -369,6 +376,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __enter__(self):
                 return self
 
@@ -390,6 +398,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append(req.get_method())

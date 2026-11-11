@@ -19,7 +19,7 @@ from http_fixture import fixture_opener
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
-    "admin_client", ROOT / "tools/provision-traefik-security.py"
+    "admin_client", ROOT / "tools/provision_traefik_security.py"
 )
 client = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(client)
@@ -49,9 +49,7 @@ class AdministrativeHttpTests(unittest.TestCase):
                 patch.object(client.urllib.request, "build_opener") as build,
             ):
                 with self.assertRaises(RuntimeError):
-                    client.request(
-                        url, headers={"Authorization": "Bearer " + self.marker}
-                    )
+                    client.request(url, headers={"Authorization": "Bearer " + self.marker})
                 build.assert_not_called()
 
     def test_credential_headers_cannot_cross_services(self):
@@ -89,9 +87,7 @@ class AdministrativeHttpTests(unittest.TestCase):
                             side_effect=fixture_opener(url, status, visits, buffers),
                         ),
                     ):
-                        with self.assertRaisesRegex(
-                            RuntimeError, f"HTTP {status}"
-                        ) as caught:
+                        with self.assertRaisesRegex(RuntimeError, f"HTTP {status}") as caught:
                             client.request(
                                 url,
                                 method=method,
@@ -135,9 +131,7 @@ class AdministrativeHttpTests(unittest.TestCase):
             opener.open.side_effect = error
             with (
                 self.subTest(status=status, missing=missing),
-                patch.object(
-                    client.urllib.request, "build_opener", return_value=opener
-                ),
+                patch.object(client.urllib.request, "build_opener", return_value=opener),
             ):
                 if status == 404 and missing:
                     self.assertIsNone(client.request(url, missing=missing))
@@ -166,9 +160,7 @@ class AdministrativeHttpTests(unittest.TestCase):
         ):
             self.assertEqual(client.keycloak_token(), self.marker)
         req = transport.call_args.args[0]
-        self.assertEqual(
-            req.full_url, client.SSO + "/realms/master/protocol/openid-connect/token"
-        )
+        self.assertEqual(req.full_url, client.SSO + "/realms/master/protocol/openid-connect/token")
         self.assertEqual(req.get_method(), "POST")
         form = urllib.parse.parse_qs(req.data.decode())
         self.assertEqual(form["password"], [self.marker])

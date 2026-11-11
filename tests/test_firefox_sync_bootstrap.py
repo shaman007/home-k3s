@@ -15,7 +15,7 @@ from http_fixture import fixture_opener
 sys.path.insert(0, str(Path(__file__).parents[1] / "tools/firefox-sync"))
 SPEC = importlib.util.spec_from_file_location(
     "firefox_sync_bootstrap",
-    Path(__file__).parents[1] / "tools/firefox-sync/bootstrap-secrets.py",
+    Path(__file__).parents[1] / "tools/firefox-sync/bootstrap_secrets.py",
 )
 bootstrap = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(bootstrap)
@@ -78,16 +78,12 @@ class BootstrapTests(unittest.TestCase):
         def handler(request, **_kwargs):
             self.assertEqual(request.get_header("X-vault-token"), "hvs.fake-test-token")
             seen.append((request.method, request.full_url))
-            return Response(
-                {"data": {"data": existing}} if request.method == "GET" else {}
-            )
+            return Response({"data": {"data": existing}} if request.method == "GET" else {})
 
         output = self.run_bootstrap(handler)
         self.assertNotIn("preserve-test-secret", output)
         self.assertNotIn("hvs.fake-test-token", output)
-        self.assertEqual(
-            [method for method, url in seen if "/kv/data/" in url], ["GET"]
-        )
+        self.assertEqual([method for method, url in seen if "/kv/data/" in url], ["GET"])
         self.assertEqual(len(seen), 3)
 
     def test_refuses_partial_existing_secret_without_writing(self):
@@ -140,9 +136,7 @@ class BootstrapTests(unittest.TestCase):
             error = bootstrap.urllib.error.HTTPError(
                 "https://private.invalid", status, "private fixture response", {}, body
             )
-            responses = iter(
-                [error, io.BytesIO(b"{}"), io.BytesIO(b"{}"), io.BytesIO(b"{}")]
-            )
+            responses = iter([error, io.BytesIO(b"{}"), io.BytesIO(b"{}"), io.BytesIO(b"{}")])
 
             def handler(*_args, **_kwargs):
                 response = next(responses)
@@ -152,9 +146,7 @@ class BootstrapTests(unittest.TestCase):
 
             with self.subTest(status=status):
                 if status == 404:
-                    self.assertIn(
-                        "Created dedicated Sync secrets", self.run_bootstrap(handler)
-                    )
+                    self.assertIn("Created dedicated Sync secrets", self.run_bootstrap(handler))
                 else:
                     with self.assertRaisesRegex(RuntimeError, "HTTP 500") as caught:
                         self.run_bootstrap(handler)

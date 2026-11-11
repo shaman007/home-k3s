@@ -12,7 +12,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 s = importlib.util.spec_from_file_location(
-    "backfill", ROOT / "tools/longhorn/backfill-component-security.py"
+    "backfill", ROOT / "tools/longhorn/backfill_component_security.py"
 )
 b = importlib.util.module_from_spec(s)
 s.loader.exec_module(b)
@@ -20,6 +20,7 @@ s.loader.exec_module(b)
 
 class ComponentSecurityTests(unittest.TestCase):
     """Verify component mutation identity, healthy storage gates, and guarded rollout."""
+
     def setUp(self):
         self.catalog = json.loads((ROOT / "longhorn/component-security-catalog.json").read_text())
         self.entries = self.catalog["entries"]
@@ -146,6 +147,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __init__(self, doc):
                 self.doc = doc
 
@@ -161,6 +163,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append((req.method, req.full_url))
@@ -195,6 +198,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __init__(self, doc):
                 self.doc = doc
 
@@ -210,6 +214,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
@@ -251,7 +256,7 @@ class ComponentSecurityTests(unittest.TestCase):
         data = next(d["data"] for d in self.bundle if d["kind"] == "ConfigMap")
         self.assertEqual(
             data["backfill.py"],
-            (ROOT / "tools/longhorn/backfill-component-security.py").read_text(),
+            (ROOT / "tools/longhorn/backfill_component_security.py").read_text(),
         )
         self.assertEqual(json.loads(data["catalog.json"]), self.catalog)
 
@@ -335,6 +340,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __init__(self, doc):
                 self.doc = doc
 
@@ -350,6 +356,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append(req.get_method())

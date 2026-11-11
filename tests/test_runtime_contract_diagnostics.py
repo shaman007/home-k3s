@@ -9,7 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "runtime_contract_diagnostics", ROOT / "tools/ci/validate-runtime-contracts.py"
+    "runtime_contract_diagnostics", ROOT / "tools/ci/validate_runtime_contracts.py"
 )
 contracts = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(contracts)
@@ -17,6 +17,7 @@ spec.loader.exec_module(contracts)
 
 class RuntimeContractDiagnosticsTest(unittest.TestCase):
     """Require manifest diagnostics to retain locations without exposing sensitive values."""
+
     def test_external_secret_errors_do_not_echo_manifest_values(self):
         """Verify external secret errors do not echo manifest values."""
         marker = "synthetic-sensitive-value-must-not-be-logged"

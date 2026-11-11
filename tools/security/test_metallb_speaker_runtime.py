@@ -258,7 +258,7 @@ def main():
                     ):
                         raise AssertionError
                 else:
-                    if 'excludel2.yaml: permission denied' not in logs:
+                    if "excludel2.yaml: permission denied" not in logs:
                         raise AssertionError(logs[-3000:])
                 run("rm", "-f", speaker)
                 speakers.remove(speaker)

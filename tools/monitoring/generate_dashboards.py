@@ -91,7 +91,7 @@ def query_variable(name, query):
 
 
 names = []
-ns = 'namespace=~"$namespace"'
+NAMESPACE_FILTER = 'namespace=~"$namespace"'
 names.append(
     dashboard(
         "application-workloads",
@@ -108,7 +108,7 @@ names.append(
                 (
                     f"sum by (namespace,pod) (rate(container_cpu_usage_seconds_tot"
                     f"al{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f',container!="",container!="POD"}}[$__rate_interval]))'
                 ),
                 "cores",
@@ -118,7 +118,7 @@ names.append(
                 "Working set memory by pod",
                 (
                     f"sum by (namespace,pod) (container_memory_working_set_bytes{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f',container!="",container!="POD"}})'
                 ),
                 "bytes",
@@ -129,7 +129,7 @@ names.append(
                 (
                     f"sum by (namespace,pod) (increase(kube_pod_container_status_r"
                     f"estarts_total{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f"}}[1h]))"
                 ),
                 "short",
@@ -137,13 +137,13 @@ names.append(
             ),
             (
                 "Ready containers",
-                f"sum by (namespace,pod) (kube_pod_container_status_ready{{{ns}}})",
+                f"sum by (namespace,pod) (kube_pod_container_status_ready{{{NAMESPACE_FILTER}}})",
                 "short",
                 "{{namespace}} / {{pod}}",
             ),
             (
                 "Deployment unavailable replicas",
-                f"kube_deployment_status_replicas_unavailable{{{ns}}}",
+                f"kube_deployment_status_replicas_unavailable{{{NAMESPACE_FILTER}}}",
                 "short",
                 "{{namespace}} / {{deployment}}",
             ),
@@ -151,9 +151,9 @@ names.append(
                 "StatefulSet missing ready replicas",
                 (
                     f"kube_statefulset_replicas{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f"}} - kube_statefulset_status_replicas_ready{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f"}}"
                 ),
                 "short",
@@ -161,13 +161,17 @@ names.append(
             ),
             (
                 "DaemonSet unavailable pods",
-                f"kube_daemonset_status_number_unavailable{{{ns}}}",
+                f"kube_daemonset_status_number_unavailable{{{NAMESPACE_FILTER}}}",
                 "short",
                 "{{namespace}} / {{daemonset}}",
             ),
             (
                 "CPU requests by namespace",
-                f'sum by (namespace) (kube_pod_container_resource_requests{{{ns},resource="cpu"}})',
+                (
+                    "sum by (namespace) (kube_pod_container_resource_requests{"
+                    f'{NAMESPACE_FILTER},resource="cpu"'
+                    "})"
+                ),
                 "cores",
                 "{{namespace}}",
             ),
@@ -175,7 +179,7 @@ names.append(
                 "Memory requests by namespace",
                 (
                     f"sum by (namespace) (kube_pod_container_resource_requests{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f',resource="memory"}})'
                 ),
                 "bytes",
@@ -186,9 +190,9 @@ names.append(
                 (
                     f"100 * max by (namespace,persistentvolumeclaim) (kubelet_volu"
                     f"me_stats_used_bytes{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f"}} / kubelet_volume_stats_capacity_bytes{{"
-                    f"{ns}"
+                    f"{NAMESPACE_FILTER}"
                     f"}})"
                 ),
                 "percent",
@@ -196,7 +200,7 @@ names.append(
             ),
             (
                 "CronJob time since last successful run",
-                f"time() - kube_cronjob_status_last_successful_time{{{ns}}}",
+                f"time() - kube_cronjob_status_last_successful_time{{{NAMESPACE_FILTER}}}",
                 "s",
                 "{{namespace}} / {{cronjob}}",
             ),

@@ -32,7 +32,7 @@ The next prepared changes are:
   zero bounding/effective capabilities. This does not test production TLS,
   unsealing or multi-node Raft behavior.
 
-Reproduce with `python3 tools/security/test-service-capability-guards.py` using
+Reproduce with `python3 tools/security/test_service_capability_guards.py` using
 rootless Podman. The probes use disposable storage, no production credentials,
 no published ports and no external network. Both proposed workloads pass the
 actual strict capability CEL policy without exceptions and Kubernetes schemas.
@@ -60,7 +60,7 @@ The existing writable nginx cache/runtime volumes remain available. Publishing
 these Pod-template changes replaces both web Pods; verify each real application
 afterward, including normal uploads and Nextcloud WebDAV.
 
-`python3 tools/security/test-nginx-readonly-content.py` passed for both nginx
+`python3 tools/security/test_nginx_readonly_content.py` passed for both nginx
 roles with the unchanged repository configurations, UID/GID 33, drop ALL,
 no-new-privileges and seccomp. Static files/media, FastCGI forwarding, 2MiB POST
 bodies and Nextcloud's streamed PUT path worked against an isolated mock FastCGI
@@ -87,7 +87,7 @@ new volume is introduced. PHP/Nginx mounts, identities, resources and all other
 Pod fields remain unchanged. Publishing this template change replaces the whole
 Nextcloud web Pod, so check the web application as well as the collector.
 
-`python3 tools/security/test-nextcloud-alloy-readonly.py` passed using the exact
+`python3 tools/security/test_nextcloud_alloy_readonly.py` passed using the exact
 live v1.21.3 image digest, UID/GID 33, drop ALL, no-new-privileges and seccomp.
 The actual repository pipeline read initial and appended fixture logs and sent
 them to an isolated mock Loki; native Snappy decompression verified their content.
@@ -126,7 +126,7 @@ and search after restart with persisted index data. Effective/bounding sets
 were zero, with UID/GID 65532, no-new-privileges and seccomp active. No production
 index, configuration, credentials or remote content were mounted or fetched.
 
-Reproduce with `python3 tools/security/test-hister-readonly-root.py` using
+Reproduce with `python3 tools/security/test_hister_readonly_root.py` using
 rootless Podman. After publication, verify StatefulSet replacement readiness and
 read-only root, existing-index access and normal client indexing/search. The
 manual template changes do not activate its Job. No audit policy/exception changes
@@ -176,6 +176,10 @@ that the remaining sets are minimal. Strict capability audit findings remain
 visible, and no new exceptions are introduced. Plex's separate cross-node UDP
 SNAT correction and required post-publication checks are in its README.
 
+Install probe dependencies with `python3 -m pip install -r tools/security/requirements.txt`.
+The Plex probe parses bounded identity/preferences XML with `defusedxml`,
+rejecting DTDs, entities and external resources before reading any referenced file.
+
 ### Single-GPU discovery and read-only Dovecot follow-up (2026-11-03)
 
 The only physical GPU is on `talos-d4h-k5m`, currently exposing eight time-sliced
@@ -218,7 +222,7 @@ Dovecot's writable paths, identities, credentials and configuration are unchange
 No additional audit exceptions are introduced: both still fail the strict
 capability rule because their retained capabilities exceed NET_BIND_SERVICE.
 
-`python3 tools/security/test-mail-capability-guards.py` passed against the same
+`python3 tools/security/test_mail_capability_guards.py` passed against the same
 images and repository configuration with disposable TLS/user identities and
 storage. Dovecot passed IMAPS authentication and read-only INBOX selection.
 Postfix passed its HAProxy PROXY preamble, SMTP EHLO, STARTTLS, fixture SASL
@@ -256,7 +260,7 @@ probe. Opening/saving a production document remains a rollout follow-up.
 Existing narrow escalation exceptions remain unchanged; the capability audit
 finding remains visible.
 
-Reproduce with `python3 tools/security/test-backup-collabora-guards.py` using
+Reproduce with `python3 tools/security/test_backup_collabora_guards.py` using
 rootless Podman. Test SSH identities are generated in a temporary private
 directory and removed on exit. Both manifests passed chart/schema validation;
 publication and live replacement verification remain required.
@@ -333,7 +337,7 @@ five live helpers were checked (the latter is
 No production data or credentials were used. Reproduce with:
 
 ```sh
-python3 tools/postgres/test-permission-init-caps.py
+python3 tools/postgres/test_permission_init_caps.py
 ```
 
 Only the init capability fields change. The existing commands still create
@@ -396,9 +400,9 @@ with the reduced effective/bounding sets (`0x3` and `0x9`) and read-only root
 filesystems. Contents, ownership and modes were verified. Reproduce with:
 
 ```sh
-python3 tools/security/test-permission-helper-guards.py
+python3 tools/security/test_permission_helper_guards.py
 # Also exercise the public-package installation phases, without production jobs:
-python3 tools/security/test-permission-helper-guards.py --installers
+python3 tools/security/test_permission_helper_guards.py --installers
 ```
 
 After publication, verify Hister/Postfix rollouts and the next normal media job.

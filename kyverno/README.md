@@ -138,9 +138,9 @@ data or guards. See [rollout safety review](../docs/longhorn-rollout-safety.md).
 Generate and check the deterministic exception bundle with:
 
 ```sh
-python tools/kyverno/generate-exceptions.py --check
-python tools/ci/render-applications.py --output /tmp/rendered-applications
-python tools/kyverno/test-audit-policies.py --rendered /tmp/rendered-applications
+python tools/kyverno/generate_exceptions.py --check
+python tools/ci/render_applications.py --output /tmp/rendered-applications
+python tools/kyverno/test_audit_policies.py --rendered /tmp/rendered-applications
 ```
 
 CI installs the checksum-pinned Kyverno 1.19.2 CLI and evaluates the actual

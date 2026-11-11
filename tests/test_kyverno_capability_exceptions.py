@@ -9,7 +9,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 s = importlib.util.spec_from_file_location(
-    "exceptions", ROOT / "tools/kyverno/generate-exceptions.py"
+    "exceptions", ROOT / "tools/kyverno/generate_exceptions.py"
 )
 gen = importlib.util.module_from_spec(s)
 s.loader.exec_module(gen)
@@ -18,6 +18,7 @@ CAP = "require-drop-all-capabilities"
 
 class CapabilityExceptionScopeTests(unittest.TestCase):
     """Reject capability exceptions outside the reviewed helper-container contract."""
+
     def setUp(self):
         catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.catalog = {
@@ -69,6 +70,7 @@ class CapabilityExceptionScopeTests(unittest.TestCase):
 
 class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
     """Restrict application capability exceptions to reviewed workload identities."""
+
     def setUp(self):
         catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.entries = [
@@ -122,6 +124,7 @@ class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
 
 class PrivilegedRuntimeExceptionTests(unittest.TestCase):
     """Reject privileged runtime exceptions for unreviewed workload roles."""
+
     def setUp(self):
         self.catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.entries = [
@@ -161,6 +164,7 @@ class PrivilegedRuntimeExceptionTests(unittest.TestCase):
 
 class CompanionGuardContractTests(unittest.TestCase):
     """Require reviewed companion roles and recognized security guard fields."""
+
     def setUp(self):
         self.catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.entries = [e for e in self.catalog["entries"] if e.get("requiredGuards")]
@@ -211,6 +215,7 @@ class CompanionGuardContractTests(unittest.TestCase):
 
 class ImageRepositoryScopeTests(unittest.TestCase):
     """Distinguish reviewed image repositories from substituted or implicit references."""
+
     def test_tags_and_digests_do_not_change_repository(self):
         """Verify tags and digests do not change repository."""
         repository = "registry.example:5000/team/app"
@@ -247,6 +252,7 @@ if __name__ == "__main__":
 
 class SpeakerRootCapabilityExceptionTests(unittest.TestCase):
     """Limit the speaker exception to the reviewed root and raw-network contract."""
+
     def test_only_exact_reviewed_root_raw_l2_contract_generates(self):
         """Limit speaker exceptions to the exact reviewed root and raw-network L2 contract."""
         catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())

@@ -13,7 +13,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 s = importlib.util.spec_from_file_location(
-    "backfill", ROOT / "tools/longhorn/backfill-component-security.py"
+    "backfill", ROOT / "tools/longhorn/backfill_component_security.py"
 )
 b = importlib.util.module_from_spec(s)
 s.loader.exec_module(b)

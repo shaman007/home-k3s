@@ -8,18 +8,22 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-J = json.dumps
+json_literal = json.dumps
 
 
-def C(value):
+def cel_literal(value):
     # CEL map literals otherwise infer a single value type and reject mixed
     # Kubernetes fields such as a volume's name plus configMap object.
     """Render catalog values as CEL literals with explicit dynamic map values."""
     if isinstance(value, dict):
-        return "{" + ", ".join(J(k) + ": dyn(" + C(v) + ")" for k, v in value.items()) + "}"
+        return (
+            "{"
+            + ", ".join(json_literal(k) + ": dyn(" + cel_literal(v) + ")" for k, v in value.items())
+            + "}"
+        )
     if isinstance(value, list):
-        return "[" + ", ".join(C(v) for v in value) + "]"
-    return J(value)
+        return "[" + ", ".join(cel_literal(v) for v in value) + "]"
+    return json_literal(value)
 
 
 def generate(catalog):
@@ -31,30 +35,35 @@ def generate(catalog):
         pod = e["fixture"]["spec"]["template"]["spec"]
         identity = (
             f"object.metadata.namespace == "
-            f"{J(e['namespace'])}"
+            f"{json_literal(e['namespace'])}"
             f" && object.kind == "
-            f"{J(e['kind'])}"
+            f"{json_literal(e['kind'])}"
             f" && object.metadata.name == "
-            f"{J(e['name'])}"
+            f"{json_literal(e['name'])}"
         )
-        terms = [identity, f'p.?serviceAccountName.orValue("default") == {J(e["serviceAccount"])}']
+        terms = [
+            identity,
+            f'p.?serviceAccountName.orValue("default") == {json_literal(e["serviceAccount"])}',
+        ]
         for label, value in e["labels"].items():
             terms.append(
-                f"object.spec.template.metadata.?labels.orValue({{}})[{J(label)}] == {J(value)}"
+                f"object.spec.template.metadata.?labels.orValue({{}})"
+                f"[{json_literal(label)}] == {json_literal(value)}"
             )
         for section in ["containers", "initContainers"]:
             terms.append(f"p.?{section}.orValue([]).size() == {len(pod[section])}")
             for i, c in enumerate(pod[section]):
                 ref = f"p.{section}[{i}]"
-                terms.extend([f"{ref}.{k} == {J(c[k])}" for k in ["name", "image"]])
+                terms.extend([f"{ref}.{k} == {json_literal(c[k])}" for k in ["name", "image"]])
                 terms.extend(
-                    f"{ref}.?{k}.orValue([]) == {C(c.get(k, []))}"
+                    f"{ref}.?{k}.orValue([]) == {cel_literal(c.get(k, []))}"
                     for k in ["command", "args", "volumeMounts"]
                 )
-        terms.append(f"p.?volumes.orValue([]) == {C(pod.get('volumes', []))}")
+        terms.append(f"p.?volumes.orValue([]) == {cel_literal(pod.get('volumes', []))}")
         if e["kind"] == "DaemonSet":
             terms.append(
-                f"object.spec.updateStrategy == {C(e['fixture']['spec']['updateStrategy'])}"
+                "object.spec.updateStrategy == "
+                f"{cel_literal(e['fixture']['spec']['updateStrategy'])}"
             )
         mutation_parts = []
         for target in e["targets"]:
@@ -73,9 +82,9 @@ def generate(catalog):
                         f"["
                         f"{index}"
                         f"].?env.orValue([]).exists(v, v.name == "
-                        f"{J(key)}"
+                        f"{json_literal(key)}"
                         f' && v.?value.orValue("") == '
-                        f"{J(value)}"
+                        f"{json_literal(value)}"
                         f")"
                     )
                 )
@@ -87,10 +96,10 @@ def generate(catalog):
                         f"["
                         f"{index}"
                         f"].?env.orValue([]).exists(v, v.name == "
-                        f"{J(key)}"
+                        f"{json_literal(key)}"
                         f" && v.?valueFrom.?fieldRef.?fieldPath.or"
                         f'Value("") == '
-                        f"{J(path_value)}"
+                        f"{json_literal(path_value)}"
                         f")"
                     )
                 )
@@ -102,14 +111,18 @@ def generate(catalog):
                     f"{ref}"
                     f".securityContext) ? "
                     f'[JSONPatch{{op:"add",path:'
-                    f"{J(path)}"
+                    f"{json_literal(path)}"
                     f",value:{{}}}}] : [])"
                 )
             )
             mutation_parts.append(
                 "["
                 + ", ".join(
-                    'JSONPatch{op:"add",path:' + J(path + "/" + key) + ",value:" + J(value) + "}"
+                    'JSONPatch{op:"add",path:'
+                    + json_literal(path + "/" + key)
+                    + ",value:"
+                    + json_literal(value)
+                    + "}"
                     for key, value in target["guards"].items()
                 )
                 + "]"
@@ -118,13 +131,17 @@ def generate(catalog):
             path = "/spec/template/spec/securityContext"
             mutation_parts.append(
                 '(!has(object.spec.template.spec.securityContext) ? [JSONPatch{op:"add",path:'
-                + J(path)
+                + json_literal(path)
                 + ",value:{}}] : [])"
             )
             mutation_parts.append(
                 "["
                 + ", ".join(
-                    'JSONPatch{op:"add",path:' + J(path + "/" + key) + ",value:" + J(value) + "}"
+                    'JSONPatch{op:"add",path:'
+                    + json_literal(path + "/" + key)
+                    + ",value:"
+                    + json_literal(value)
+                    + "}"
                     for key, value in e["podGuards"].items()
                 )
                 + "]"
@@ -183,6 +200,7 @@ def generate(catalog):
             },
         },
     }
+
     def meta(namespace):
         """Build metadata for a named guard resource in the supplied namespace."""
         return {"name": name, "namespace": namespace}
@@ -258,10 +276,10 @@ def generate(catalog):
             "kind": "ConfigMap",
             "metadata": meta("kyverno"),
             "data": {
-                "catalog.json": J(catalog),
+                "catalog.json": json_literal(catalog),
                 "backfill.py": (ROOT / "tools/security/infra_guard_backfill.py").read_text(),
                 "storage_guard.py": (
-                    ROOT / "tools/longhorn/backfill-component-security.py"
+                    ROOT / "tools/longhorn/backfill_component_security.py"
                 ).read_text(),
             },
         }
@@ -330,7 +348,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    text = "# Generated by tools/security/generate-infra-guards.py.\n" + yaml.safe_dump_all(
+    text = "# Generated by tools/security/generate_infra_guards.py.\n" + yaml.safe_dump_all(
         generate(json.loads((ROOT / "infra-guards/catalog.json").read_text())),
         sort_keys=False,
         width=120,

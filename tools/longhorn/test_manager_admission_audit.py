@@ -11,7 +11,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location(
-    "audit", ROOT / "tools/kyverno/test-audit-policies.py"
+    "audit", ROOT / "tools/kyverno/test_audit_policies.py"
 )
 audit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit)

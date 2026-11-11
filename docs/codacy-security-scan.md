@@ -33,7 +33,7 @@ inputs are documented in its pinned
 
 Codacy CLI 7.9.25 can emit multiple batches for the same scanner (the failing
 Opengrep run emitted five). GitHub no longer combines runs with the same tool and
-category, so `tools/ci/prepare-codacy-sarif.py` combines the batches before upload.
+category, so `tools/ci/prepare_codacy_sarif.py` combines the batches before upload.
 It preserves results, fingerprints and invocations, deduplicates identical rule
 definitions, and remaps rule and artifact indices into the combined tables.
 Different driver metadata stays in separate runs. Missing runs, conflicting rules,

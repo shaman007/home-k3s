@@ -27,6 +27,7 @@ def load(name):
 
 class SignatureTrustTests(unittest.TestCase):
     """Verify signature-policy identity scope and admission coverage without unsafe rollout."""
+
     def test_audits_preserve_rollout_safety_and_restrict_identity(self):
         """Verify audits preserve rollout safety and restrict identity."""
         docs = list(yaml.safe_load_all((ROOT / "kyverno/policy-verify-own-ghcr.yaml").read_text()))
@@ -62,11 +63,11 @@ class SignatureTrustTests(unittest.TestCase):
     def test_harbor_preparation_refuses_invalid_key(self):
         """Verify Harbor preparation refuses invalid key."""
         with self.assertRaises(subprocess.CalledProcessError):
-            load("prepare-harbor-signing").prepare("not a public key")
+            load("prepare_harbor_signing").prepare("not a public key")
 
     def test_subresources_have_admission_checks_without_background_rbac(self):
         """Verify subresources have admission checks without background RBAC."""
-        generated = load("generate-ephemeral-policies")
+        generated = load("generate_ephemeral_policies")
         self.assertEqual(generated.OUTPUT.read_text(), generated.generate())
         docs = list(yaml.safe_load_all(generated.generate()))
         self.assertEqual(len(docs), 6)
@@ -86,7 +87,7 @@ class SignatureTrustTests(unittest.TestCase):
     def test_harbor_renderer_preserves_integrated_signing_contract(self):
         """Verify Harbor renderer preserves integrated signing contract."""
         public = (ROOT / "docs/supply-chain/cosign.pub").read_text()
-        documents = load("prepare-harbor-signing").prepare(public)
+        documents = load("prepare_harbor_signing").prepare(public)
         self.assertEqual(
             documents["cron-job-podman-builder.yaml"],
             yaml.safe_load((ROOT / "image-builder/cron-job-podman-builder.yaml").read_text()),
@@ -97,7 +98,7 @@ class SignatureTrustTests(unittest.TestCase):
 
     def test_harbor_renderer_preserves_updated_helper_images(self):
         """Verify Harbor renderer preserves updated helper images."""
-        module = load("prepare-harbor-signing")
+        module = load("prepare_harbor_signing")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for relative in (
@@ -125,8 +126,9 @@ class SignatureTrustTests(unittest.TestCase):
 
 class ReleaseSigningTests(unittest.TestCase):
     """Exercise release signing, exact-workflow verification, and upload ordering."""
+
     def setUp(self):
-        self.module = load("sign-release-assets")
+        self.module = load("sign_release_assets")
         self.asset = {"id": 123, "name": "app.tar.gz", "updated_at": "2026-11-10"}
         self.env = patch.dict(
             os.environ,

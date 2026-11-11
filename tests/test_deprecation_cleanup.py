@@ -22,8 +22,8 @@ def module(name, filename):
     return result
 
 
-render = module("cleanup_render", "render-applications.py")
-contracts = module("cleanup_contracts", "validate-runtime-contracts.py")
+render = module("cleanup_render", "render_applications.py")
+contracts = module("cleanup_contracts", "validate_runtime_contracts.py")
 
 
 def document(path):
@@ -33,6 +33,7 @@ def document(path):
 
 class DeprecationCleanupTest(unittest.TestCase):
     """Verify retained ingress and runtime contracts after deprecated-resource cleanup."""
+
     def test_env_guard_is_in_the_real_argo_application_render(self):
         """Verify env guard is in the real Argo application render."""
         app = document("argocd/application-traefik-network-policy.yaml")

@@ -311,7 +311,7 @@ def repository_documents(application: dict):
         if (source_path / "Chart.yaml").exists():
             sys.path.insert(0, str(ROOT / "tools/ci"))
             spec = importlib.util.spec_from_file_location(
-                "git_chart_renderer", ROOT / "tools/ci/render-applications.py"
+                "git_chart_renderer", ROOT / "tools/ci/render_applications.py"
             )
             renderer = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(renderer)
@@ -332,6 +332,7 @@ def repository_documents(application: dict):
 
 class ArgoCdProjectsTest(unittest.TestCase):
     """Check that applications and resource permissions fit their assigned projects."""
+
     @classmethod
     def setUpClass(cls):
         """Load the application inventory once for all project-policy checks."""

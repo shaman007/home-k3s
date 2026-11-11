@@ -9,7 +9,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "unifi_bgp", ROOT / "tools/monitoring/unifi-bgp-exporter.py"
+    "unifi_bgp", ROOT / "tools/monitoring/unifi_bgp_exporter.py"
 )
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
@@ -17,6 +17,7 @@ spec.loader.exec_module(m)
 
 class UniFiBGPExporterTests(unittest.TestCase):
     """Reject missing or unexpected BGP state while preserving reviewed route metrics."""
+
     def setUp(self):
         self.neighbors = [
             {
@@ -159,7 +160,7 @@ class UniFiBGPExporterTests(unittest.TestCase):
         """Verify generated ConfigMap matches reviewed source."""
         cm = yaml.safe_load((ROOT / "unifi/poller/config-map-unifi-bgp-exporter.yaml").read_text())
         self.assertEqual(
-            (ROOT / "tools/monitoring/unifi-bgp-exporter.py").read_text(), cm["data"]["exporter.py"]
+            (ROOT / "tools/monitoring/unifi_bgp_exporter.py").read_text(), cm["data"]["exporter.py"]
         )
 
     def test_reviewed_inventory_matches_router_configuration(self):

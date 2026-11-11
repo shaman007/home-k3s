@@ -64,7 +64,7 @@ ConfigMap, LoadBalancer Service, pool or advertisement changes are introduced.
 An exact before/after Helm comparison verified these boundaries.
 
 ```sh
-python3 tools/security/test-metallb-speaker-runtime.py
+python3 tools/security/test_metallb_speaker_runtime.py
 ```
 
 The accompanying chart-0.16.1 review used the now-removed

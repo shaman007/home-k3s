@@ -7,7 +7,7 @@ ceilings. A missing Helm value does not necessarily remove a chart default:
 GPU Operator's controller and Cilium's CNI installer require `limits.cpu: null`.
 
 CI renders every Application, then runs
-`python tools/ci/check-container-resources.py --rendered <directory>` to check
+`python tools/ci/check_container_resources.py --rendered <directory>` to check
 regular and init containers, including chart hooks. The check considers the
 LimitRanges in the rendered inventory. Operator-generated pods also need review
 of the operator CR/settings and verification after deployment; they are not

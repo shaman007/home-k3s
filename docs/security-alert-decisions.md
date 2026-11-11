@@ -741,3 +741,62 @@ plan/help mode. Bandit decreased from 223 to 221 findings with zero analysis
 errors, resolving both Sync tools' B310 findings without suppression. GitHub
 counts require publication and rescan. `git diff --check` passes. Changes
 remain unstaged and uncommitted.
+
+### Larger Bandit, naming, and unused-argument batch (2026-11-11)
+
+Reduced local Bandit findings from 221 to 215, with zero analysis errors:
+
+- Both benchmark clients now validate explicit HTTP/HTTPS service URLs before
+  secret lookup, reject every redirect before replaying credential-bearing
+  requests, close responses, and sanitize HTTP/transport failures. Explicit
+  local/cluster HTTP endpoints remain supported. Provider payloads, streaming
+  completion/usage data, timeout settings, and partial deadline results remain
+  covered by regressions.
+- Chart fallback downloads now require HTTPS for initial URLs and every redirect.
+  Signed cross-host HTTPS downloads remain supported. The archive still must
+  match its pinned index SHA-256 before Helm can use it. Failure messages do not
+  expose signed URLs.
+- Plex identity/preferences parsing now uses defusedxml with DTDs, entities and
+  external resources forbidden, a 1 MiB document limit, and sanitized errors.
+  The pinned defusedxml dependency is recorded in tools/security/requirements.txt
+  and installed by CI. This resolves B405 and both B314 findings; the HTTP changes
+  resolve three B310 findings. No Bandit rules were disabled.
+
+Renamed 54 Python CLI/source filenames to snake_case and updated active code,
+workflow, hook, operator-documentation, service-unit and generator references.
+Historical migration inventories, changelog entries and immutable Git links
+were preserved. The generated artifacts were synchronized. External callers
+must use the new underscore filenames; no installed scripts or live workloads
+were updated by this task.
+
+Resolved all 71 naming findings: filenames, constant/function names, and twelve
+HTTP method implementations. Framework-required do_GET/do_POST/do_PUT/do_PATCH/
+do_HEAD names remain explicit aliases of snake_case implementations. AST
+comparison verifies identical signatures and bodies for all twelve callbacks.
+Canonical executable AST comparison verifies the naming-only changes in 48
+renamed modules; six modules with intentional HTTP/XML hardening or preceding
+HTTP changes were excluded from that equivalence claim.
+
+Removed two unused internal report parameters, marked genuinely ignored callback
+arguments explicitly, and strengthened the trim fixture to require a patch on
+its write path. All ten remaining unused-argument findings are resolved. No
+runtime security predicates were removed.
+
+Final full-repository Pylint scan: 235 findings, down from 316. All 129 Python
+modules now have zero invalid-name, unused-variable, unused-argument,
+unused-import, missing-module/class/function-docstring, line-too-long, and
+multiple-statements findings. The line-length gate is 100 characters. Legacy
+GitHub scanner counts may remain stale; these source checks do not dismiss them.
+The existing storage_guard local-import analysis limitation remains documented.
+
+Validation: the full suite passed (407 tests, 21 skipped). After regrouping two
+URL-validation conditions without changing their predicates, the ten benchmark
+and chart HTTP tests passed again. All five generators with check modes pass;
+all three modified workflows pass actionlint with ShellCheck. Canonical parsed
+comparison confirms unchanged resource semantics in the five modified Kubernetes
+YAML artifacts, including embedded Python callback aliases. No nonhistorical
+references to old Python filenames remain. Selected CLI help/plan entry points
+work under their new names. git diff --check passes. No real credentials,
+provisioning operations, container-runtime probes, or live deployments were used.
+GitHub alert closure still requires publication and rescan. Changes remain
+unstaged and uncommitted.

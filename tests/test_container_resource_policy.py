@@ -9,7 +9,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "container_resources", ROOT / "tools/ci/check-container-resources.py"
+    "container_resources", ROOT / "tools/ci/check_container_resources.py"
 )
 policy = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(policy)
@@ -17,6 +17,7 @@ spec.loader.exec_module(policy)
 
 class ContainerResourcePolicyTests(unittest.TestCase):
     """Check resource policy defaults, explicit requirements, and operator-created templates."""
+
     def workload(self, resources=None, init=None):
         """Build a Deployment with configurable application and init-container resources."""
         return {

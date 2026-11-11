@@ -61,9 +61,7 @@ def main():
             error.close()
             if missing_ok and error.code == 404:
                 return None
-            raise RuntimeError(
-                f"OpenBao {method} {path} failed: HTTP {error.code}"
-            ) from None
+            raise RuntimeError(f"OpenBao {method} {path} failed: HTTP {error.code}") from None
         except Exception:
             raise RuntimeError(
                 f"OpenBao {method} {path} failed; details suppressed to protect credentials"
@@ -105,9 +103,7 @@ def main():
             "token_ttl": "1h",
         },
     )
-    print(
-        "Configured namespace-scoped External Secrets access. No secret values printed."
-    )
+    print("Configured namespace-scoped External Secrets access. No secret values printed.")
 
 
 if __name__ == "__main__":

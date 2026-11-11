@@ -17,6 +17,8 @@ import time
 import urllib.request
 import base64
 
+from benchmark_http import open_response, validate_base_url
+
 
 class BenchmarkDeadline(Exception):
     """Signal that a benchmark request exceeded its whole-request deadline."""
@@ -76,7 +78,7 @@ def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=
     if key:
         headers["Authorization"] = "Bearer " + key
     req = urllib.request.Request(
-        base.rstrip("/") + path, data=json.dumps(payload).encode(), headers=headers
+        validate_base_url(base) + path, data=json.dumps(payload).encode(), headers=headers
     )
     started = time.monotonic()
     first = first_visible = None
@@ -84,7 +86,7 @@ def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=
     finish_reason = None
     with (
         request_deadline(deadline_s) as deadline,
-        urllib.request.urlopen(req, timeout=1800) as response,
+        open_response(req, timeout=1800) as response,
     ):
         for line in response:
             line = line.decode().strip()
@@ -185,9 +187,12 @@ def main():
     args = parser.parse_args()
     if args.request_deadline_s < 0:
         parser.error("--request-deadline-s must be nonnegative")
+    try:
+        args.url = validate_base_url(args.url)
+    except ValueError:
+        parser.error("Use an HTTP or HTTPS service URL without credentials or suffixes")
     key = os.environ.get("LLM_API_KEY", "")
     if args.kubernetes_secret:
-
         namespace, name = args.kubernetes_secret.split("/", 1)
         secret = json.loads(
             subprocess.check_output(

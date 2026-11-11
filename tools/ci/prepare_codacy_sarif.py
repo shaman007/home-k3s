@@ -26,7 +26,9 @@ def prepare(report, reject_parser_errors=False):
         if key not in groups:
             groups[key] = {
                 "tool": {"driver": {**driver, "rules": []}},
-                "results": [], "invocations": [], "artifacts": [],
+                "results": [],
+                "invocations": [],
+                "artifacts": [],
             }
         merged = groups[key]
         target_rules = merged["tool"]["driver"]["rules"]

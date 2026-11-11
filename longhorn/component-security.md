@@ -129,10 +129,10 @@ retain their previous templates until ordinary cleanup.
 Generate and test:
 
 ```sh
-python3 tools/longhorn/generate-component-security.py --check
-python3 tools/longhorn/test-component-security-policy.py --kyverno /path/to/kyverno-1.19.2
+python3 tools/longhorn/generate_component_security.py --check
+python3 tools/longhorn/test_component_security_policy.py --kyverno /path/to/kyverno-1.19.2
 # Manual isolated startup test: requires Podman, the pinned image and free local port 9505.
-python3 tools/longhorn/test-global-manager-startup.py
+python3 tools/longhorn/test_global_manager_startup.py
 ```
 
 To roll back, disable/remove this policy's binding first, then restore only the

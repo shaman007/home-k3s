@@ -43,7 +43,7 @@ BUILTIN_GROUPS = {
 }
 
 
-def unicode_pattern(validator, pattern, instance, schema):
+def unicode_pattern(_validator, pattern, instance, _schema):
     # Kubernetes CRDs use RE2 Unicode categories (e.g. Cilium's \PC).
     # Python's built-in re cannot evaluate those patterns.
     """Validate CRD string patterns with Kubernetes-compatible Unicode categories."""
@@ -198,7 +198,7 @@ def main():
             for doc in documents((args.rendered / (name + ".yaml")).read_text())
         )
     spec = importlib.util.spec_from_file_location(
-        "discovery", ROOT / "tools/ci/list-k8s-manifest-files.py"
+        "discovery", ROOT / "tools/ci/list_k8s_manifest_files.py"
     )
     discovery = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(discovery)

@@ -9,7 +9,7 @@ from pathlib import Path
 import unittest
 
 spec = importlib.util.spec_from_file_location(
-    "network_report", Path(__file__).parents[1] / "tools/network-daily-report.py"
+    "network_report", Path(__file__).parents[1] / "tools/network_daily_report.py"
 )
 report = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(report)
@@ -17,6 +17,7 @@ spec.loader.exec_module(report)
 
 class VerdictTests(unittest.TestCase):
     """Prevent unsupported all-clear verdicts and constrain expected-service exceptions."""
+
     def assessment(self, signature="ET MALWARE Known C2"):
         """Build an inbound network assessment targeting a configured public service."""
         return {
@@ -105,6 +106,7 @@ class VerdictTests(unittest.TestCase):
 
 class CollectorTests(unittest.TestCase):
     """Count final flow snapshots once without inflating observed traffic totals."""
+
     def test_flow_snapshots_are_deduplicated(self):
         """Verify flow snapshots are deduplicated."""
         now = dt.datetime.now(dt.timezone.utc)

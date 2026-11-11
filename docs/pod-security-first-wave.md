@@ -53,7 +53,7 @@ separately enabling Restricted enforcement for this namespace. See
 
 ## Verification and rollout
 
-Render every Argo Application and run check-restricted-contexts.py. It is a
+Render every Argo Application and run check_restricted_contexts.py. It is a
 regression guard for common Linux contexts, not a complete implementation of
 versioned Pod Security Standards. It includes init containers, Jobs and CronJobs,
 and covers already-enforced namespaces as well as this wave.

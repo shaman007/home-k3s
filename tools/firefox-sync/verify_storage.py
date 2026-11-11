@@ -28,9 +28,7 @@ def main():
     parser.add_argument("--url", default="http://127.0.0.1:18000")
     args = parser.parse_args()
     try:
-        transport = Transport(
-            args.url, {"sync.andreybondarenko.com"}, allow_loopback=True
-        )
+        transport = Transport(args.url, {"sync.andreybondarenko.com"}, allow_loopback=True)
     except ValueError:
         parser.error("Use a local HTTP tunnel or https://sync.andreybondarenko.com")
     origin = transport.origin
@@ -94,11 +92,7 @@ def main():
         if body_bytes is not None:
             digest = base64.b64encode(
                 hashlib.sha256(
-                    b"hawk.1.payload\n"
-                    + content_type.encode()
-                    + b"\n"
-                    + body_bytes
-                    + b"\n"
+                    b"hawk.1.payload\n" + content_type.encode() + b"\n" + body_bytes + b"\n"
                 ).digest()
             ).decode()
         normalized = "\n".join(
@@ -115,9 +109,7 @@ def main():
                 "",
             ]
         )
-        mac = base64.b64encode(
-            hmac.new(key, normalized.encode(), hashlib.sha256).digest()
-        ).decode()
+        mac = base64.b64encode(hmac.new(key, normalized.encode(), hashlib.sha256).digest()).decode()
         authorization = f'Hawk id="{token}", ts="{ts}", nonce="{nonce}", mac="{mac}"'
         if digest:
             authorization += f', hash="{digest}"'
@@ -138,15 +130,11 @@ def main():
             error.close()
             raise RuntimeError(f"{method} {path}: HTTP {error.code}") from None
         except Exception:
-            raise RuntimeError(
-                f"{method} {path}: transport failure (details suppressed)"
-            ) from None
+            raise RuntimeError(f"{method} {path}: transport failure (details suppressed)") from None
 
     status, body = request("GET", base + "/info/collections")
     if status != 200 or json.loads(body) != {}:
-        raise RuntimeError(
-            "Synthetic user already contains data; refusing to write or delete"
-        )
+        raise RuntimeError("Synthetic user already contains data; refusing to write or delete")
     written = False
     try:
         record = {"id": "bootstrap-smoke", "payload": secrets.token_hex(24)}
@@ -155,18 +143,14 @@ def main():
         status, _ = request("PUT", base + "/storage/bookmarks/bootstrap-smoke", record)
         if status != 200:
             raise RuntimeError("Storage write did not return HTTP 200")
-        status, body = request(
-            "GET", base + "/storage/bookmarks/bootstrap-smoke", client=1
-        )
+        status, body = request("GET", base + "/storage/bookmarks/bootstrap-smoke", client=1)
         actual = json.loads(body)
         if status != 200 or actual.get("payload") != record["payload"]:
             raise RuntimeError("Storage read did not match the written payload")
         print("Two independently Hawk-authenticated API clients: write/read matched.")
         first = {"id": "batch-one", "payload": secrets.token_hex(24)}
         second = {"id": "batch-two", "payload": secrets.token_hex(24)}
-        status, body = request(
-            "POST", base + "/storage/bookmarks?batch=true", [first], client=1
-        )
+        status, body = request("POST", base + "/storage/bookmarks?batch=true", [first], client=1)
         batch = json.loads(body)
         if status != 202 or not batch.get("batch") or batch.get("failed"):
             raise RuntimeError("Batch staging failed")

@@ -7,6 +7,10 @@ release name, `$values` files, inline values and parameter overrides. Kustomize
 sources are built with `kubectl kustomize`; directory sources honor include,
 exclude and recurse settings. Unsupported source options fail explicitly.
 
+The GitHub chart-download fallback accepts HTTPS origins and HTTPS redirects only.
+Signed release-asset redirects remain supported, and the downloaded archive must
+match the SHA-256 digest from the pinned chart index before Helm can use it.
+
 `tools/ci/validation-config.yaml` pins the target Kubernetes version. Update it
 and the workflow's kubectl version with cluster upgrades. The kubeconform archive
 is checked against the reviewed release SHA-256 before extraction; update both
@@ -36,8 +40,8 @@ kubeconform required):
 
 ```sh
 python -m unittest discover -s tests
-python tools/ci/render-applications.py --output /tmp/home-k3s-rendered
-python tools/ci/validate-rendered.py --rendered /tmp/home-k3s-rendered
+python tools/ci/render_applications.py --output /tmp/home-k3s-rendered
+python tools/ci/validate_rendered.py --rendered /tmp/home-k3s-rendered
 ```
 
 Use an empty output directory. Rendered files can contain generated chart Secrets;
@@ -48,7 +52,7 @@ Helm diagnostics, reproduce the failing source locally and keep output private.
 complete application inventory.
 
 Container memory budgets and the absence of CPU limits are checked after
-rendering with `tools/ci/check-container-resources.py`. Namespace LimitRanges
+rendering with `tools/ci/check_container_resources.py`. Namespace LimitRanges
 are considered for admission defaults. See [container resource policy](container-resources.md)
 for operator-generated pods, sizing evidence and rollout requirements.
 
@@ -71,13 +75,13 @@ in separate test folders.
 Prepare and run the complete suite locally:
 
 ```sh
-python tools/kyverno/test-audit-policies.py --rendered /tmp/home-k3s-rendered
+python tools/kyverno/test_audit_policies.py --rendered /tmp/home-k3s-rendered
 ```
 
 To retain sanitized fixtures instead of immediately evaluating them:
 
 ```sh
-python tools/kyverno/test-audit-policies.py --rendered /tmp/home-k3s-rendered \
+python tools/kyverno/test_audit_policies.py --rendered /tmp/home-k3s-rendered \
   --output /tmp/home-k3s-audit-cases
 kyverno test /tmp/home-k3s-audit-cases --fail-only --remove-color --require-tests
 ```
@@ -90,7 +94,7 @@ The existing `validate-manifests` required check succeeds only after both the
 input validations and all policy matrix jobs succeed. Superseded workflow runs
 on the same branch or pull request are canceled.
 
-`tools/kyverno/benchmark-audit-policies.py` compares two retained fixture trees.
+`tools/kyverno/benchmark_audit_policies.py` compares two retained fixture trees.
 Before timing anything it requires an exact multiset match of the complete input
 resource, policy name and expected result for every assertion, plus identical
 policy contents and applicable exception scope. It then runs the
@@ -99,7 +103,7 @@ layout's policies and exception scope. Use `--sample-every 1` for a full-suite
 comparison; sampling is only a local benchmark option and is never used in CI.
 
 ```sh
-python tools/kyverno/benchmark-audit-policies.py \
+python tools/kyverno/benchmark_audit_policies.py \
   --baseline /tmp/legacy-audit-cases --optimized /tmp/home-k3s-audit-cases \
   --output /tmp/audit-comparison --sample-every 20
 ```

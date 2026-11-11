@@ -25,7 +25,7 @@ No source lines, credentials or client secrets are copied into the report.
 | dns | 1 | OpenBao URL used to retrieve the GoDaddy token |
 
 `domain-usage-inventory.json` gives file/line/hostname references and categories.
-`scan-internal-domain-usage.py` can regenerate the full candidate report under
+`scan_internal_domain_usage.py` can regenerate the full candidate report under
 `/tmp`. `.local` matches can also be programming-language identifiers: review
 those manually instead of replacing them.
 

@@ -8,12 +8,23 @@ from pathlib import Path
 import subprocess
 import tempfile
 import time
-import xml.etree.ElementTree as ET
 
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 CAPS = ["CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "KILL", "SETGID", "SETUID"]
+
+
+def parse_xml(document):
+    """Read bounded Plex XML without DTDs, entities, external resources, or private errors."""
+    if len(document) > 1024 * 1024:
+        raise RuntimeError("Plex XML exceeds the probe response limit")
+    try:
+        return ET.fromstring(document, forbid_dtd=True, forbid_entities=True, forbid_external=True)
+    except (DefusedXmlException, ET.ParseError):
+        raise RuntimeError("Plex XML is invalid or contains forbidden declarations") from None
 
 
 def run(args, timeout=90):
@@ -93,7 +104,7 @@ def main():
                         check=False,
                     )
                     if p.returncode == 0:
-                        root = ET.fromstring(p.stdout)
+                        root = parse_xml(p.stdout)
                         if not root.tag == "MediaContainer":
                             raise AssertionError
                         return
@@ -127,9 +138,7 @@ def main():
                     "/tmp/guard-output.mkv",
                 ]
             )
-            if (
-                int(run(['podman', 'exec', cid, 'stat', '-c', '%s', '/tmp/guard-output.mkv'])) <= 0
-            ):
+            if int(run(["podman", "exec", cid, "stat", "-c", "%s", "/tmp/guard-output.mkv"])) <= 0:
                 raise AssertionError
             # Restart against the same preferences to exercise the non-empty hook branch.
             run(["podman", "restart", cid])
@@ -143,7 +152,7 @@ def main():
                     "/config/Library/Application Support/Plex Media Server/Preferences.xml",
                 ]
             )
-            p = ET.fromstring(prefs)
+            p = parse_xml(prefs)
             if not p.attrib["ScheduledLibraryUpdatesEnabled"] == "0":
                 raise AssertionError
             if not p.attrib["FSEventLibraryUpdatesEnabled"] == "1":

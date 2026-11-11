@@ -21,7 +21,7 @@ seccomp profile is compatibility evidence; Kubernetes RuntimeDefault still needs
 verification after rollout on Talos. Production data is never mounted by this probe.
 The root filesystem remains writable; this batch only introduces the requested guards.
 
-Run the probe with `python3 tools/security/test-lenka-mysql-guards.py`.
+Run the probe with `python3 tools/security/test_lenka_mysql_guards.py`.
 The user authorized the live patch on 2026-11-04. Deployment rollout completed:
 `mysql-74cd5cdb6b-hh7qx` is Ready with zero restarts. Authenticated SELECT 1 and
 application-table metadata queries succeeded. PID 1 has UID/GID 999, every

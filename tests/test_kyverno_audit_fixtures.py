@@ -13,7 +13,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "audit_cases", ROOT / "tools/kyverno/test-audit-policies.py"
+    "audit_cases", ROOT / "tools/kyverno/test_audit_policies.py"
 )
 audit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit)
@@ -21,6 +21,7 @@ spec.loader.exec_module(audit)
 
 class AuditFixtureTests(unittest.TestCase):
     """Preserve policy assertions and applicable exceptions across generated test shards."""
+
     def test_admission_normalization_does_not_touch_other_workloads(self):
         """Verify admission normalization does not touch other workloads."""
 

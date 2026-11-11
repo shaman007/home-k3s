@@ -9,7 +9,6 @@ import subprocess
 import stat
 from unittest.mock import patch
 import hashlib
-import io
 import json
 
 import yaml
@@ -26,12 +25,13 @@ def module(name, file):
     return result
 
 
-render = module("render", "render-applications.py")
-validate = module("validate", "validate-rendered.py")
+render = module("render", "render_applications.py")
+validate = module("validate", "validate_rendered.py")
 
 
 class RenderValidationTest(unittest.TestCase):
     """Exercise safe rendering, source retrieval, schema checks, and custom-resource validation."""
+
     def test_rendered_secret_output_is_owner_only(self):
         """Verify rendered secret output is owner only."""
         (self.root / "tools/ci").mkdir(parents=True)
@@ -178,26 +178,24 @@ class RenderValidationTest(unittest.TestCase):
             entry = {"version": "1.2.3", "digest": digest, "urls": [url]}
             index = yaml.safe_dump({"entries": {"test": [{"version": "9.9.9"}, entry]}}).encode()
             responses = [
-                io.BytesIO(index),
-                io.BytesIO(json.dumps({"assets": [{"name": "test-1.2.3.tgz", "id": 42}]}).encode()),
-                io.BytesIO(archive),
+                index,
+                json.dumps({"assets": [{"name": "test-1.2.3.tgz", "id": 42}]}).encode(),
+                archive,
             ]
             destination = self.root / "verified-chart.tgz"
             destination.unlink(missing_ok=True)
             with (
                 self.subTest(digest=digest),
-                patch.object(render.urllib.request, "urlopen", side_effect=responses) as fetch,
+                patch.object(render, "fetch", side_effect=responses) as fetch,
             ):
                 if digest == hashlib.sha256(archive).hexdigest():
                     self.assertEqual(destination, render.github_chart_fallback(source, self.root))
                     self.assertEqual(archive, destination.read_bytes())
                     self.assertEqual(
                         "https://api.github.com/repos/org/repo/releases/assets/42",
-                        fetch.call_args.args[0].full_url,
+                        fetch.call_args.args[0],
                     )
-                    self.assertEqual(
-                        "application/octet-stream", fetch.call_args.args[0].get_header("Accept")
-                    )
+                    self.assertEqual("application/octet-stream", fetch.call_args.args[1])
                 else:
                     with self.assertRaises(ValueError):
                         render.github_chart_fallback(source, self.root)
@@ -521,7 +519,7 @@ class RenderValidationTest(unittest.TestCase):
 
     def test_discovery_excludes_raw_webhook_templates_but_keeps_manifests(self):
         """Verify discovery excludes raw webhook templates but keeps manifests."""
-        discovery = module("discovery_webhook_test", "list-k8s-manifest-files.py")
+        discovery = module("discovery_webhook_test", "list_k8s_manifest_files.py")
         paths = {str(p.relative_to(ROOT)) for p in discovery.tracked_yaml_files(ROOT)}
         self.assertNotIn("tools/godaddy-webhook/chart/templates/credentials.yaml", paths)
         self.assertNotIn("tools/godaddy-webhook/chart/templates/solver.yaml", paths)
@@ -532,7 +530,7 @@ class RenderValidationTest(unittest.TestCase):
 
     def test_discovery_excludes_talos_machine_configurations(self):
         """Verify discovery excludes talos machine configurations."""
-        discovery = module("discovery_test", "list-k8s-manifest-files.py")
+        discovery = module("discovery_test", "list_k8s_manifest_files.py")
         files = discovery.tracked_yaml_files(ROOT)
         self.assertNotIn(ROOT / "talos-existing-storage-volume.yaml", files)
         self.assertFalse(any(p.is_relative_to(ROOT / "talos") for p in files))

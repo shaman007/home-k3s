@@ -22,7 +22,7 @@ for resource, filename, extra in [
         document.pop("status", None)
     (out / f"kyverno-cache-{filename}.json").write_text(json.dumps(data))
 spec = importlib.util.spec_from_file_location(
-    "audit", root / "tools/kyverno/test-audit-policies.py"
+    "audit", root / "tools/kyverno/test_audit_policies.py"
 )
 audit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit)

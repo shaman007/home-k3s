@@ -4,7 +4,7 @@ Prepared and executed 2026-11-09. **Production now runs on MariaDB 12.3.3.**
 See [execution results and GitOps handoff](EXECUTION.md), including the subsequent
 retirement of the old MySQL deployment and PVC. The procedure below records the
 completed migration, not the current production layout. Its one-off transfer
-helper was removed during cleanup; the reusable `tools/firefox-sync/verify-storage.py`
+helper was removed during cleanup; the reusable `tools/firefox-sync/verify_storage.py`
 probe remains available. All YAML here
 is outside the Argo Application source (`firefox-sync/`); do not point Argo at this
 directory or submit the entire directory as Kubernetes resources (it includes
@@ -81,7 +81,7 @@ writable `/tmp`; root filesystem remains read-only and UID/GID remains 999.
    that all fresh Diesel migrations succeed, then port-forward
    `deployment/firefox-sync-mariadb-check` local port 18000 to pod port 8000.
    Check both heartbeat endpoints and the expected unauthenticated Tokenserver
-   401. Run `python3 tools/firefox-sync/verify-storage.py` against its default
+   401. Run `python3 tools/firefox-sync/verify_storage.py` against its default
    local URL: this authorized rehearsal writes/reads/deletes synthetic records
    only in `mariadb-rehearsal-data`. Require a passing result before downtime.
    Stop the rehearsal Sync Deployment after testing and retain its volume.

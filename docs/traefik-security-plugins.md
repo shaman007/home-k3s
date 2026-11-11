@@ -59,7 +59,7 @@ reads only the dedicated KV path.
 Check prerequisites without changing configuration:
 
 ```sh
-python3 tools/provision-traefik-security.py
+python3 tools/provision_traefik_security.py
 ```
 
 The explicit `--write` option provisions or repairs only the dedicated client,
@@ -276,14 +276,14 @@ operator helper reads each cache pod directly through a loopback port-forward,
 using a canonical Host header and never exposing object bodies or credentials:
 
 ```sh
-python3 tools/check-mastodon-media-cache.py --path /mastodon/cache-pilot/fixture.txt
+python3 tools/check_mastodon_media_cache.py --path /mastodon/cache-pilot/fixture.txt
 ```
 
 After warming both replicas, overwrite the same fixture with different bytes
 and verify the new SHA256 without purging:
 
 ```sh
-python3 tools/check-mastodon-media-cache.py --path /mastodon/cache-pilot/fixture.txt \
+python3 tools/check_mastodon_media_cache.py --path /mastodon/cache-pilot/fixture.txt \
   --expect-body-sha256 <current-body-sha256>
 ```
 

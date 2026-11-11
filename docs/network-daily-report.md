@@ -1,7 +1,7 @@
 # Orange Pi daily network report
 
 The Orange Pi runs `/usr/local/sbin/network-daily-report`, maintained in
-`tools/network-daily-report.py`. Its systemd timer schedules 08:00 Europe/Prague
+`tools/network_daily_report.py`. Its systemd timer schedules 08:00 Europe/Prague
 with catch-up after downtime. Input is the last 24 hours of retained Suricata
 EVE JSON, including rotated gzip files. Outputs and configuration are under
 `/var/lib/network-daily-report` on NVMe. Mail uses STARTTLS on the existing server.

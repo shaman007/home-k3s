@@ -21,7 +21,7 @@ with network=none and no production mounts. Only the echo/sleep command ran;
 the share-manager server was never started. It stayed Running as UID/GID 65534,
 printed the expected message, had zero effective/permitted/bounding capabilities,
 NoNewPrivs=1 and Seccomp=2. The fixture was removed. Reproduce with
-`python3 tools/security/test-longhorn-prepull-guards.py`.
+`python3 tools/security/test_longhorn_prepull_guards.py`.
 
 The manager's existing reviewed privileged requirement gains matching root,
 escalation, capability and seccomp audit exceptions. These only approve the main
@@ -59,7 +59,7 @@ harness now evaluates the real native policy with Kyverno 1.19.2 first, then aud
 that admitted DaemonSet. It never substitutes the catalog snapshot or blindly
 copies guards. An unmatched runtime contract remains raw and fails the audit.
 
-`tools/longhorn/test-manager-admission-audit.py --rendered <render-directory>`
+`tools/longhorn/test_manager_admission_audit.py --rendered <render-directory>`
 checks the actual chart through both stages: raw output reproduces the four Fail
 results, admitted output yields all five Skip results, an unreviewed image remains
 unmodified/failing, and adding SYS_ADMIN to the admitted helper still fails. Its

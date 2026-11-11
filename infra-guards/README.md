@@ -30,10 +30,10 @@ The deployed UID-1000 init containers exited zero, both DaemonSets became ready,
 and GPU access remained available in Plex, Immich, NLLB and both Ollama workloads.
 
 ```sh
-python3 tools/security/test-infra-guard-runtime.py
-python3 tools/security/test-gpu-config-init-guards.py
-python3 tools/security/generate-infra-guards.py --check
-python3 tools/security/test-infra-guard-policy.py --kyverno /path/to/kyverno
+python3 tools/security/test_infra_guard_runtime.py
+python3 tools/security/test_gpu_config_init_guards.py
+python3 tools/security/generate_infra_guards.py --check
+python3 tools/security/test_infra_guard_policy.py --kyverno /path/to/kyverno
 ```
 
 ## Persistence and scope

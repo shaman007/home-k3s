@@ -26,6 +26,7 @@ BINARY = os.environ.get("NGINX_BINARY")
 
 class Origin(http.server.BaseHTTPRequestHandler):
     """Serve controlled origin metadata and content for media-cache runtime probes."""
+
     protocol_version = "HTTP/1.1"
     objects = {}
     heads = 0
@@ -75,19 +76,24 @@ class Origin(http.server.BaseHTTPRequestHandler):
         if not head:
             self.wfile.write(body)
 
-    def do_HEAD(self):
+    def do_head(self):
         """Count origin metadata probes and serve headers without an object body."""
         type(self).heads += 1
         self.respond(head=True)
 
-    def do_GET(self):
+    do_HEAD = do_head
+
+    def do_get(self):
         """Serve an origin object through the shared response implementation."""
         self.respond()
+
+    do_GET = do_get
 
 
 @unittest.skipUnless(BINARY, "Set NGINX_BINARY to run real proxy behavior tests")
 class MediaCacheRuntimeTest(unittest.TestCase):
     """Exercise origin validation, privacy boundaries, and cache behavior with real Nginx."""
+
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory(prefix="media-cache-test-")

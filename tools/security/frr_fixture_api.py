@@ -31,6 +31,7 @@ POD = {
 
 class Handler(BaseHTTPRequestHandler):
     """Serve synthetic API operations for isolated FRR security-guard probes."""
+
     def respond(self, data, code=200):
         """Write a JSON fixture response with the requested HTTP status."""
         self.send_response(code)
@@ -38,7 +39,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 
-    def do_GET(self):
+    def do_get(self):
         """Serve mock discovery, Pod identity, resource reads, and watch bookmarks."""
         path = urlparse(self.path).path
         query = parse_qs(urlparse(self.path).query)
@@ -164,17 +165,25 @@ class Handler(BaseHTTPRequestHandler):
             404,
         )
 
-    def do_POST(self):
+    do_GET = do_get
+
+    def do_post(self):
         """Dispatch a synthetic create or authentication-review request."""
         self.write_request()
 
-    def do_PUT(self):
+    do_POST = do_post
+
+    def do_put(self):
         """Dispatch a synthetic resource replacement request."""
         self.write_request()
 
-    def do_PATCH(self):
+    do_PUT = do_put
+
+    def do_patch(self):
         """Dispatch a synthetic resource patch request."""
         self.write_request()
+
+    do_PATCH = do_patch
 
     def write_request(self):
         """Answer synthetic auth reviews or store submitted mock resource state."""

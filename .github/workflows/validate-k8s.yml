@@ -38,7 +38,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pyyaml jsonschema regex
+          python -m pip install jsonschema regex -r tools/security/requirements.txt
 
       - name: Install kubeconform
         env:
@@ -66,7 +66,7 @@ jobs:
 
       - name: Validate runtime contracts
         run: |
-          python tools/ci/validate-runtime-contracts.py
+          python tools/ci/validate_runtime_contracts.py
 
       - name: Run repository unit tests
         env:
@@ -77,17 +77,17 @@ jobs:
       - name: Check generated NetworkPolicy bundles
         run: |
           python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
-          python tools/monitoring/generate-queue-exporters.py --check
+          python tools/monitoring/generate_queue_exporters.py --check
 
       - name: Render Argo CD applications
         run: |
-          python tools/ci/render-applications.py --output "${RUNNER_TEMP}/rendered-applications"
+          python tools/ci/render_applications.py --output "${RUNNER_TEMP}/rendered-applications"
 
       - name: Prepare generated Kyverno exceptions and real CEL cases
         id: audit-cases
         run: |
-          python tools/kyverno/generate-exceptions.py --check
-          python tools/kyverno/test-audit-policies.py --rendered "${RUNNER_TEMP}/rendered-applications" --output "${RUNNER_TEMP}/kyverno-audit-cases"
+          python tools/kyverno/generate_exceptions.py --check
+          python tools/kyverno/test_audit_policies.py --rendered "${RUNNER_TEMP}/rendered-applications" --output "${RUNNER_TEMP}/kyverno-audit-cases"
           python - <<'PYTHON'
           import json, os
           from pathlib import Path
@@ -107,37 +107,37 @@ jobs:
 
       - name: Check Longhorn manager admission and audit
         run: |
-          python tools/longhorn/test-manager-admission-audit.py --rendered "${RUNNER_TEMP}/rendered-applications"
+          python tools/longhorn/test_manager_admission_audit.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
       - name: Check Longhorn recurring-job CEL mutation and scope
         run: |
-          python tools/longhorn/test-recurring-security-policy.py
+          python tools/longhorn/test_recurring_security_policy.py
 
       - name: Check Longhorn component CEL mutation and scope
         run: |
-          python tools/longhorn/generate-component-security.py --check
-          python tools/longhorn/test-component-security-policy.py
+          python tools/longhorn/generate_component_security.py --check
+          python tools/longhorn/test_component_security_policy.py
 
       - name: Check infrastructure guard CEL mutation and scope
         run: |
-          python tools/security/generate-infra-guards.py --check
-          python tools/security/test-infra-guard-policy.py
+          python tools/security/generate_infra_guards.py --check
+          python tools/security/test_infra_guard_policy.py
 
       - name: Check CrowdSec rootless mount contracts
         run: |
-          python tools/ci/check-crowdsec-rootless.py --rendered "${RUNNER_TEMP}/rendered-applications"
+          python tools/ci/check_crowdsec_rootless.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
       - name: Check container memory budgets and absence of CPU limits
         run: |
-          python tools/ci/check-container-resources.py --rendered "${RUNNER_TEMP}/rendered-applications"
+          python tools/ci/check_container_resources.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
       - name: Check Restricted namespace pod security contexts
         run: |
-          python tools/ci/check-restricted-contexts.py --rendered "${RUNNER_TEMP}/rendered-applications"
+          python tools/ci/check_restricted_contexts.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
       - name: Validate rendered and tracked manifests
         run: |
-          python tools/ci/validate-rendered.py --rendered "${RUNNER_TEMP}/rendered-applications"
+          python tools/ci/validate_rendered.py --rendered "${RUNNER_TEMP}/rendered-applications"
 
   audit-cel:
     name: Audit CEL (${{ matrix.shard }})

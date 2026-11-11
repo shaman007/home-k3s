@@ -33,7 +33,7 @@ do not require NET_RAW. The live service has UDP sockets on 1900, 32410, 32412,
 zero effective capabilities. Port 5353 is declared but was not listening in the
 pre-change snapshot.
 
-`python3 tools/security/test-plex-capability-guards.py` passed offline image
+`python3 tools/security/test_plex_capability_guards.py` passed offline image
 startup, HTTP identity, FFV1-to-MJPEG software transcoding as UID 1000, and restart
 against persisted test preferences through the repository's real init hook.
 It checks the proposed bounding set, no-new-privileges and seccomp. The test

@@ -55,7 +55,7 @@ Generated admission-only companion policies handle updates to
 `pods/ephemeralcontainers`. Background list/watch checks apply only to Pods;
 subresource policies explicitly disable background scanning. Autogeneration is
 disabled to retain this Pod-only scope. Regenerate companions with
-`python3 tools/supply-chain/generate-ephemeral-policies.py` and check with `--check`.
+`python3 tools/supply-chain/generate_ephemeral_policies.py` and check with `--check`.
 The AppProject permits ImageValidatingPolicy and the existing policy Application
 includes these files. The existing force-fail-open controller setting remains.
 An unmatched image is outside coverage even if a report shows a vacuous Pass.
@@ -95,7 +95,7 @@ The old Harbor role was preserved. Remaining rollout steps are below. Do not com
 3. Render a concrete rollout using the actual public key:
 
    ```sh
-   python3 tools/supply-chain/prepare-harbor-signing.py \
+   python3 tools/supply-chain/prepare_harbor_signing.py \
      --public-key /path/to/cosign.pub --output /tmp/harbor-signing-rollout
    ```
 

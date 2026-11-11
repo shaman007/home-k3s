@@ -35,4 +35,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
-        run: python3 tools/supply-chain/sign-release-assets.py
+        run: python3 tools/supply-chain/sign_release_assets.py

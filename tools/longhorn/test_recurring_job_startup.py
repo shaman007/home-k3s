@@ -19,6 +19,7 @@ IMAGE = "docker.io/longhornio/longhorn-manager:v1.13.0"
 
 class MockAPI(http.server.BaseHTTPRequestHandler):
     """Serve synthetic Kubernetes API responses for isolated startup-policy probes."""
+
     task = "snapshot"
     calls = []
     manager_port = None
@@ -26,13 +27,17 @@ class MockAPI(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
-    def do_GET(self):
+    def do_get(self):
         """Handle a fixture API GET through the shared synthetic response dispatcher."""
         self.respond()
 
-    def do_PUT(self):
+    do_GET = do_get
+
+    def do_put(self):
         """Handle a fixture API PUT through the shared synthetic response dispatcher."""
         self.respond()
+
+    do_PUT = do_put
 
     def respond(self):
         """Serve the synthetic Kubernetes or manager API response for the fixture request."""

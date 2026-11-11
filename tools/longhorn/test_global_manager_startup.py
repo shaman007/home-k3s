@@ -67,22 +67,29 @@ RESOURCE_KINDS = {
 
 class MockAPI(http.server.BaseHTTPRequestHandler):
     """Serve synthetic Kubernetes API responses for isolated startup-policy probes."""
+
     lease = None
 
     def log_message(self, *args):
         pass
 
-    def do_GET(self):
+    def do_get(self):
         """Handle a fixture API GET through the shared synthetic response dispatcher."""
         self.respond()
 
-    def do_POST(self):
+    do_GET = do_get
+
+    def do_post(self):
         """Handle a fixture API POST through the shared synthetic response dispatcher."""
         self.respond()
 
-    def do_PUT(self):
+    do_POST = do_post
+
+    def do_put(self):
         """Handle a fixture API PUT through the shared synthetic response dispatcher."""
         self.respond()
+
+    do_PUT = do_put
 
     def mock_lease(self):
         """Build a synthetic current leader-election Lease for the manager probe."""

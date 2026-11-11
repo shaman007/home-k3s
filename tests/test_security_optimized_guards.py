@@ -15,15 +15,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class OptimizedSecurityGuardsTest(unittest.TestCase):
     """Require security preconditions to reject unsafe inputs even under Python optimization."""
+
     def test_mail_smoke_check_rejects_unsafe_context_in_optimized_mode(self):
         """Verify mail smoke check rejects unsafe context in optimized mode."""
-        path = ROOT / "tools/security/test-mail-capability-guards.py"
+        path = ROOT / "tools/security/test_mail_capability_guards.py"
         document = yaml.safe_load((ROOT / "mail/deployment-dovecot.yaml").read_text())
         for optimization in (0, 2):
             namespace = {"__name__": "mail_smoke_guard_fixture", "__file__": str(path)}
-            exec(
-                compile(path.read_text(), str(path), "exec", optimize=optimization), namespace
-            )
+            exec(compile(path.read_text(), str(path), "exec", optimize=optimization), namespace)
             with patch.object(
                 namespace["subprocess"], "run", side_effect=RuntimeError("Unexpected execution")
             ):

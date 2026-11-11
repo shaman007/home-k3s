@@ -91,7 +91,7 @@ jobs:
           if [[ "$LEGACY_SCAN" == true ]]; then
             options+=(--reject-parser-errors)
           fi
-          python3 tools/ci/prepare-codacy-sarif.py "$SARIF_FILE" "$PREPARED_SARIF_FILE" "${options[@]}"
+          python3 tools/ci/prepare_codacy_sarif.py "$SARIF_FILE" "$PREPARED_SARIF_FILE" "${options[@]}"
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file

@@ -66,7 +66,7 @@ to monitoring; outbound access remains the existing controller HTTPS allowance.
 The collector intentionally expects only the three reviewed node IPs and three
 production /32s. Update its `PEERS`/`PREFIXES` inventory alongside the router
 payload when adding nodes or VIPs; a unit test checks they match. Regenerate
-its ConfigMap with `python tools/monitoring/generate-unifi-bgp-exporter.py`.
+its ConfigMap with `python tools/monitoring/generate_unifi_bgp_exporter.py`.
 
 The provisioned Cluster Network Metrics dashboard (`network-metrics`) shows
 local and router sessions, intended prefixes/paths, installed UDM next hops,
@@ -145,7 +145,7 @@ Deployment changes the Postfix Deployment and both Valkey StatefulSet templates.
 
 Triage from the queue panel into application/worker logs, dependency health and application administration. Federation retries and bulk imports can be legitimate. Do not clear queues or release held messages merely to silence an alert.
 
-Collector source lives in `tools/monitoring/`; regenerate the three ConfigMaps with `python tools/monitoring/generate-queue-exporters.py`, and check with `--check`. The pinned exporter supports read-only Lua collection and script success metrics; see its [v1.97.0 implementation](https://github.com/oliver006/redis_exporter/blob/v1.97.0/exporter/lua.go). Queue alert fixtures cover normalization, exact thresholds, hold periods, healthy retained/paused/delayed work and absent telemetry. Run them with the existing monitoring alert test command below.
+Collector source lives in `tools/monitoring/`; regenerate the three ConfigMaps with `python tools/monitoring/generate_queue_exporters.py`, and check with `--check`. The pinned exporter supports read-only Lua collection and script success metrics; see its [v1.97.0 implementation](https://github.com/oliver006/redis_exporter/blob/v1.97.0/exporter/lua.go). Queue alert fixtures cover normalization, exact thresholds, hold periods, healthy retained/paused/delayed work and absent telemetry. Run them with the existing monitoring alert test command below.
 
 ## Validation
 

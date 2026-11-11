@@ -63,6 +63,7 @@ def main():
             )
         # Do not publish partial results or certify a release changed during signing.
         current = json.loads(run("gh", "api", endpoint, capture_output=True, text=True).stdout)
+
         def fields(items):
             """Compare unsigned asset identities and update timestamps deterministically."""
             return sorted(
@@ -70,6 +71,7 @@ def main():
                 for a in items
                 if not a["name"].endswith(".sigstore.json")
             )
+
         if fields(assets) != fields(current["assets"]):
             raise SystemExit("Release assets changed while signing; retry after uploads finish")
         for asset in assets:

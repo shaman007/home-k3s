@@ -56,7 +56,7 @@ client compatibility, not completion of a real snapshot, backup or trim.
 Reproduce the isolated startup test on a host with Podman and OpenSSL:
 
 ```sh
-python3 tools/longhorn/test-recurring-job-startup.py
+python3 tools/longhorn/test_recurring_job_startup.py
 ```
 
 The test uses only synthetic local authentication/TLS material and temporary
@@ -66,7 +66,7 @@ files. It needs the exact image locally and creates no Kubernetes resources.
 
 `longhorn-custom` deploys the policy, binding and dedicated backfill RBAC before
 its PostSync hook. The hook runs the program in
-`tools/longhorn/backfill-recurring-security.py` (embedded in its ConfigMap).
+`tools/longhorn/backfill_recurring_security.py` (embedded in its ConfigMap).
 Its service account may only get/patch the 14 named CronJobs in `longhorn-system`.
 It cannot create Jobs, Pods, snapshots or backups, or modify other namespaces.
 

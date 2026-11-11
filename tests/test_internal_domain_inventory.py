@@ -10,7 +10,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-TOOL = ROOT / "tools/certificates/scan-internal-domain-usage.py"
+TOOL = ROOT / "tools/certificates/scan_internal_domain_usage.py"
 spec = importlib.util.spec_from_file_location("domain_inventory", TOOL)
 scanner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(scanner)
@@ -18,6 +18,7 @@ spec.loader.exec_module(scanner)
 
 class InternalDomainInventoryTest(unittest.TestCase):
     """Find complete internal hostnames without exporting surrounding source secrets."""
+
     def test_complete_hostnames_and_fqdn_are_recognized(self):
         """Verify complete hostnames and fqdn are recognized."""
         pattern = re.compile(scanner.PATTERN)

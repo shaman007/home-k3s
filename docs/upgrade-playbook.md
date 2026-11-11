@@ -79,7 +79,7 @@ these runtime checks:
 
 ## Repo guardrails
 
-CI now runs `tools/ci/validate-runtime-contracts.py` in addition to
+CI now runs `tools/ci/validate_runtime_contracts.py` in addition to
 `kubeconform`. The validator is intentionally narrow and currently blocks:
 
 - HTTP probes against `/`

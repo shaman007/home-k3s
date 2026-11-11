@@ -20,9 +20,9 @@ with tarfile.open(fileobj=buffer, mode="w") as archive:
         entry.mode = 0o644
         archive.addfile(entry, io.BytesIO(payload))
 source = gzip.compress(buffer.getvalue(), mtime=0)
-source_hash = hashlib.sha256(source).hexdigest()
-name = "godaddy-webhook-build-" + source_hash[:12]
-image = "harbor.andreybondarenko.com/library/godaddy-webhook:" + source_hash[:12]
+SOURCE_HASH = hashlib.sha256(source).hexdigest()
+name = "godaddy-webhook-build-" + SOURCE_HASH[:12]
+IMAGE = "harbor.andreybondarenko.com/library/godaddy-webhook:" + SOURCE_HASH[:12]
 config = {
     "apiVersion": "v1",
     "kind": "ConfigMap",
@@ -58,7 +58,7 @@ container = {
             "name": "HARBOR_PASSWORD",
             "valueFrom": {"secretKeyRef": {"name": "podman-builder-harbor", "key": "password"}},
         },
-        {"name": "IMAGE", "value": image},
+        {"name": "IMAGE", "value": IMAGE},
         {"name": "STORAGE_DRIVER", "value": "overlay"},
     ],
     "resources": {"requests": {"cpu": "500m", "memory": "1Gi"}, "limits": {"memory": "4Gi"}},
@@ -139,6 +139,6 @@ container["args"][0] = container["args"][0].replace(
 output = Path("/tmp") / (name + ".yaml")
 output.write_text(yaml.safe_dump_all([config, job], sort_keys=False, explicit_start=True))
 print("Build manifest:", output)
-print("Source archive SHA256:", source_hash)
-print("Target image:", image)
+print("Source archive SHA256:", SOURCE_HASH)
+print("Target image:", IMAGE)
 print("No Job was submitted")

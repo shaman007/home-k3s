@@ -11,12 +11,12 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
-    "backfill", ROOT / "tools/longhorn/backfill-recurring-security.py"
+    "backfill", ROOT / "tools/longhorn/backfill_recurring_security.py"
 )
 b = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(b)
 spec = importlib.util.spec_from_file_location(
-    "fixtures", ROOT / "tools/longhorn/test-recurring-security-policy.py"
+    "fixtures", ROOT / "tools/longhorn/test_recurring_security_policy.py"
 )
 f = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(f)
@@ -24,6 +24,7 @@ spec.loader.exec_module(f)
 
 class RecurringSecurityTests(unittest.TestCase):
     """Verify recurring-job mutation scope and metadata-only backfill prerequisites."""
+
     def setUp(self):
         self.policy, self.binding = yaml.safe_load_all(
             (ROOT / "longhorn/policy-recurring-job-security.yaml").read_text()
@@ -69,7 +70,7 @@ class RecurringSecurityTests(unittest.TestCase):
         data = next(d["data"] for d in self.bundle if d["kind"] == "ConfigMap")
         self.assertEqual(
             data["backfill.py"],
-            (ROOT / "tools/longhorn/backfill-recurring-security.py").read_text(),
+            (ROOT / "tools/longhorn/backfill_recurring_security.py").read_text(),
         )
         self.assertEqual(json.loads(data["names.json"]), self.names)
 
@@ -91,6 +92,7 @@ class RecurringSecurityTests(unittest.TestCase):
 
         class Response:
             """Provide a context-managed synthetic response for isolated API-client tests."""
+
             def __init__(self, doc):
                 self.doc = doc
 
@@ -106,6 +108,7 @@ class RecurringSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
+
             def open(self, req, **_kwargs):
                 """Record the request and return simulated CronJob state for the preflight."""
                 calls.append((req.method, req.full_url))

@@ -157,9 +157,9 @@ class LogsCheckLogicTest(unittest.TestCase):
         item = self.entry(
             json.dumps(
                 {
-                    'level': "info",
-                    'kind': "PolicyException",
-                    'msg': (
+                    "level": "info",
+                    "kind": "PolicyException",
+                    "msg": (
                         "Adding resource result, status: 'Synced', phase: 'Running', "
                         "message: 'updated'"
                     ),
@@ -182,9 +182,9 @@ class LogsCheckLogicTest(unittest.TestCase):
         ]:
             item["line"] = json.dumps(
                 {
-                    'level': level,
-                    'msg': message,
-                    'args': "[helm template . --api-versions kyverno.io/v2/PolicyException]",
+                    "level": level,
+                    "msg": message,
+                    "args": "[helm template . --api-versions kyverno.io/v2/PolicyException]",
                 }
             )
             self.assertEqual(
@@ -221,16 +221,16 @@ class LogsCheckLogicTest(unittest.TestCase):
                 item = dict(self.entry(""), namespace="argocd", container=container)
                 for level, expected in [("info", True), ("error", False), ("warning", False)]:
                     item["line"] = json.dumps(
-                        {'level': level, 'msg': message, 'application': "kyverno-exceptions"}
+                        {"level": level, "msg": message, "application": "kyverno-exceptions"}
                     )
                     self.assertEqual(
                         expected, self.report["is_false_positive"]("real_fault_candidates", item)
                     )
                 item["line"] = json.dumps(
                     {
-                        'level': "info",
-                        'msg': "exception while processing",
-                        'application': "kyverno-exceptions",
+                        "level": "info",
+                        "msg": "exception while processing",
+                        "application": "kyverno-exceptions",
                     }
                 )
                 self.assertFalse(self.report["is_false_positive"]("real_fault_candidates", item))
@@ -265,7 +265,7 @@ class LogsCheckLogicTest(unittest.TestCase):
         """Collect every hourly window and expose capped results."""
         calls = []
 
-        def query(q, start, end, limit):
+        def query(_query, start, end, limit):
             calls.append((start, end))
             return [self.entry("timeout")] * limit if len(calls) == 1 else []
 
@@ -328,7 +328,7 @@ class LogsCheckLogicTest(unittest.TestCase):
         """Use fast batch analysis while retaining the final synthesis stage."""
         calls = []
 
-        def analyst(system, prompt, **kwargs):
+        def analyst(_system, _prompt, **kwargs):
             calls.append(kwargs.get("model", "default"))
             return "Evidence reviewed"
 

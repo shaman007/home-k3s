@@ -14,6 +14,8 @@ import subprocess
 import time
 import urllib.request
 
+from benchmark_http import open_response, validate_base_url
+
 
 TOOL = {
     "type": "function",
@@ -66,10 +68,10 @@ def post(url, model, messages, key, provider, context, timeout_s=1800):
     if key:
         headers["Authorization"] = "Bearer " + key
     req = urllib.request.Request(
-        url.rstrip("/") + path, data=json.dumps(payload).encode(), headers=headers
+        validate_base_url(url) + path, data=json.dumps(payload).encode(), headers=headers
     )
     started = time.monotonic()
-    with urllib.request.urlopen(req, timeout=timeout_s) as response:
+    with open_response(req, timeout=timeout_s) as response:
         result = json.load(response)
     if result.get("error"):
         raise RuntimeError("Inference API returned an error; inspect server logs")
@@ -100,6 +102,10 @@ def main():
     args = parser.parse_args()
     if args.request_timeout_s <= 0:
         parser.error("--request-timeout-s must be positive")
+    try:
+        args.url = validate_base_url(args.url)
+    except ValueError:
+        parser.error("Use an HTTP or HTTPS service URL without credentials or suffixes")
     key = os.environ.get("LLM_API_KEY", "")
     if args.kubernetes_secret:
         namespace, name = args.kubernetes_secret.split("/", 1)

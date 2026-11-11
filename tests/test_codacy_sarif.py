@@ -10,7 +10,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("sarif", ROOT / "tools/ci/prepare-codacy-sarif.py")
+spec = importlib.util.spec_from_file_location("sarif", ROOT / "tools/ci/prepare_codacy_sarif.py")
 sarif = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sarif)
 
@@ -43,6 +43,7 @@ def batch(rule, filename):
 
 class CodacySarifTest(unittest.TestCase):
     """Verify finding preservation, index remapping, and safe SARIF upload preparation."""
+
     def test_codacy_hash_becomes_metadata_without_losing_colocated_findings(self):
         """Verify Codacy hash becomes metadata without losing colocated findings."""
         runs = [batch(rule, "same.py") for rule in ("first", "second")]
@@ -97,7 +98,7 @@ class CodacySarifTest(unittest.TestCase):
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "tools/ci/prepare-codacy-sarif.py"),
+                    str(ROOT / "tools/ci/prepare_codacy_sarif.py"),
                     str(source),
                     str(output),
                     "--reject-parser-errors",
@@ -204,7 +205,7 @@ class CodacySarifTest(unittest.TestCase):
             source.write_text(json.dumps(report))
             source.chmod(0o444)
             original = source.read_bytes()
-            command = [sys.executable, str(ROOT / "tools/ci/prepare-codacy-sarif.py"), str(source)]
+            command = [sys.executable, str(ROOT / "tools/ci/prepare_codacy_sarif.py"), str(source)]
             result = subprocess.run(
                 command + [str(output)], capture_output=True, text=True, check=False
             )

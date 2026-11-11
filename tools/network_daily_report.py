@@ -735,7 +735,7 @@ def apply_verdict(assessment, findings, error=None):
         )
 
 
-def render_report(assessment, evidence, now, notes, error=None):
+def render_report(assessment, now, error=None):
     # Executive body remains useful even if the model fails. Technical details stay in attachments.
     """Render the final assessment as plain text and escaped HTML."""
     lines = [
@@ -874,7 +874,7 @@ def main():
     apply_verdict(assessment, notes, error)
     (folder / "assessment.json").write_text(json.dumps(assessment, indent=2))
     (folder / "model-findings.json").write_text(json.dumps(notes, indent=2))
-    body, markup = render_report(assessment, evidence, now, notes, error)
+    body, markup = render_report(assessment, now, error)
     (folder / "report.txt").write_text(body)
     (folder / "report.html").write_text(markup)
     if args.send or args.preview:

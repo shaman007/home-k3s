@@ -15,7 +15,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location(
-    "backfill", ROOT / "tools/longhorn/backfill-recurring-security.py"
+    "backfill", ROOT / "tools/longhorn/backfill_recurring_security.py"
 )
 backfill = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(backfill)

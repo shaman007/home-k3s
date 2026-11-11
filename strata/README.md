@@ -109,10 +109,10 @@ streaming API. Forward Ollama to localhost:11434 and Strata to localhost:18080;
 run each provider separately:
 
 ```sh
-python3 tools/benchmark-local-llm.py --provider ollama \
+python3 tools/benchmark_local_llm.py --provider ollama \
   --url http://127.0.0.1:11434 --model gpt-oss:20b \
   --out /tmp/llm-comparison/gpt-oss.json
-python3 tools/benchmark-local-llm.py --provider strata \
+python3 tools/benchmark_local_llm.py --provider strata \
   --url http://127.0.0.1:18080 --model strata \
   --kubernetes-secret strata/strata-api-key \
   --request-deadline-s 300 \
@@ -137,7 +137,7 @@ The bounded suite retains partial responses with `incomplete: true` and
 `finish_reason: client_deadline`; do not score them as complete answers.
 This optional deadline requires POSIX signals and runs in the main thread.
 
-For a synthetic tool round trip, use `tools/benchmark-llm-tools.py` with the same
+For a synthetic tool round trip, use `tools/benchmark_llm_tools.py` with the same
 URL, model and secret options. Add `--provider ollama --context 32768` for the
 Ollama baseline; the default OpenAI-compatible mode uses the context configured
 on the server. This test supplies fixture data and never executes a real cluster
@@ -145,3 +145,8 @@ tool. Review the final quota answer as well as the tool arguments. Retain API
 failures and cold-load timings alongside successful warm runs.
 Use `--request-timeout-s 300` to bound socket inactivity on each non-streaming
 tool-selection or synthesis request; reports identify the stage of any failure.
+
+Both benchmark clients keep requests on the explicitly selected service and refuse
+redirects, including redirects to the same host. HTTP errors and transport failures
+are recorded without response bodies, URL credentials or private server diagnostics.
+Plain HTTP remains available for explicitly selected local or cluster inference services.

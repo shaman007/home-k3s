@@ -76,7 +76,7 @@ saturated simultaneous-generation performance is claimed.
 
 ## Supplemental tool check
 
-`tools/benchmark-llm-tools.py` tests automatic selection of the read-only
+`tools/benchmark_llm_tools.py` tests automatic selection of the read-only
 `get_namespace_storage` function for namespace `bench-demo`, followed by a
 synthetic tool result: 10Gi used, 15Gi hard limit, proposed new claim 10Gi.
 No actual cluster tool is executed. Correct synthesis requires a **20Gi total

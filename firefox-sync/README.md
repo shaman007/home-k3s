@@ -42,7 +42,7 @@ The user will verify actual Firefox sign-in and cross-profile sync separately.
 
 - Create DNS `sync.andreybondarenko.com` pointing to the same ingress endpoint as
   `keep.andreybondarenko.com` (observed IPv4: `81.19.4.105`; verify before changing).
-- After explicit approval, run `python3 tools/firefox-sync/bootstrap-secrets.py --execute`.
+- After explicit approval, run `python3 tools/firefox-sync/bootstrap_secrets.py --execute`.
   It generates four independent secrets directly in OpenBao, preserves an existing
   complete secret, and grants only the dedicated namespace access. No secret files
   or values are printed. Passwords are hexadecimal, suitable for database URLs.
@@ -74,7 +74,7 @@ The app needs outbound HTTPS for Mozilla OAuth, plus DNS and MySQL access.
 Check ExternalSecret Ready, bound PVC, both Deployments ready, successful schema
 migration logs, and Certificate Ready. Verify HTTPS `/__heartbeat__` and
 `/__lbheartbeat__`. An unauthenticated request to `/1.0/sync/1.5` should be rejected.
-`tools/firefox-sync/verify-storage.py` performs a synthetic Hawk-authenticated
+`tools/firefox-sync/verify_storage.py` performs a synthetic Hawk-authenticated
 write/read/cleanup against a local-only port-forward on port 18000, or the public
 endpoint with `--url https://sync.andreybondarenko.com` (trusted HTTPS required). It reads the
 master secret in memory without printing it. It does not verify Mozilla OAuth.
