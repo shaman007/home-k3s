@@ -25,6 +25,7 @@ BINARY = os.environ.get("NGINX_BINARY")
 
 
 class Origin(http.server.BaseHTTPRequestHandler):
+    """Serve controlled origin metadata and content for media-cache runtime probes."""
     protocol_version = "HTTP/1.1"
     objects = {}
     heads = 0
@@ -83,6 +84,7 @@ class Origin(http.server.BaseHTTPRequestHandler):
 
 @unittest.skipUnless(BINARY, "Set NGINX_BINARY to run real proxy behavior tests")
 class MediaCacheRuntimeTest(unittest.TestCase):
+    """Exercise origin validation, privacy boundaries, and cache behavior with real Nginx."""
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory(prefix="media-cache-test-")

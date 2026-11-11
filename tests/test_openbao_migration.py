@@ -14,6 +14,7 @@ def load_yaml(path: str):
 
 
 class OpenBaoMigrationTest(unittest.TestCase):
+    """Verify the pinned OpenBao deployment, public trust, and migration integration."""
     def test_openbao_release_is_pinned_and_ha_configured(self):
         application = load_yaml("argocd/application-openbao.yaml")
         source = application["spec"]["source"]

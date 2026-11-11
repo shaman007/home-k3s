@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CrowdSecRootlessMigrationTest(unittest.TestCase):
+    """Require the migration and runtime to share the persistent CrowdSec database."""
     def test_migration_and_runtime_share_the_same_persistent_database(self):
         values = yaml.safe_load((ROOT / 'crowdsec/values.yaml').read_text())
         lapi = values['lapi']
@@ -29,6 +30,7 @@ class CrowdSecRootlessMigrationTest(unittest.TestCase):
 
 
 class CrowdSecRootlessAgentMountTest(unittest.TestCase):
+    """Require writable parents for CrowdSec agent ConfigMap subpath mounts."""
     def test_configmap_subpaths_have_a_writable_parent(self):
         values = yaml.safe_load((ROOT / 'crowdsec/values.yaml').read_text())
         mount = next(v for v in values['agent']['extraVolumeMounts']
@@ -40,6 +42,7 @@ class CrowdSecRootlessAgentMountTest(unittest.TestCase):
 
 
 class CrowdSecRenderedMountContractTest(unittest.TestCase):
+    """Check rendered mount isolation and writable parent requirements."""
     @classmethod
     def setUpClass(cls):
         import importlib.util

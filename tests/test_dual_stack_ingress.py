@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DualStackIngressTest(unittest.TestCase):
+    """Check address allocation and service routing across IPv4 and IPv6 ingress."""
     def test_dual_stack_vips_preserve_primary_ipv4_and_match_pool(self):
         app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
         embedded = yaml.safe_load(app["spec"]["source"]["helm"]["values"])

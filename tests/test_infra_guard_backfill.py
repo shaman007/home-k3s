@@ -22,6 +22,7 @@ s.loader.exec_module(g)
 
 
 class InfrastructureGuardTests(unittest.TestCase):
+    """Exercise exact workload scope, preflight failures, and guarded infrastructure backfill."""
     def setUp(self):
         self.catalog = json.loads((ROOT / "infra-guards/catalog.json").read_text())
         self.entries = self.catalog["entries"]
@@ -143,6 +144,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         outer = self
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __enter__(self):
                 return self
 
@@ -153,6 +155,7 @@ class InfrastructureGuardTests(unittest.TestCase):
                 return json.dumps(outer.healthy(e)).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 calls.append((req.get_method(), req.full_url))
                 return Response()
@@ -180,6 +183,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         outer = self
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __init__(self, doc):
                 self.doc = doc
 
@@ -193,6 +197,7 @@ class InfrastructureGuardTests(unittest.TestCase):
                 return json.dumps(self.doc).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 e = next(e for e in entries if req.full_url.split("?")[0].endswith("/" + e["name"]))
                 doc = outer.healthy(e)
@@ -233,6 +238,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         spec.loader.exec_module(storage)
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __init__(self, doc):
                 self.doc = doc
 
@@ -246,6 +252,7 @@ class InfrastructureGuardTests(unittest.TestCase):
                 return json.dumps(self.doc).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 calls.append(req.get_method())
                 if req.full_url.endswith("/volumes"):
@@ -344,6 +351,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         calls = []
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __enter__(self):
                 return self
 
@@ -363,6 +371,7 @@ class InfrastructureGuardTests(unittest.TestCase):
                 ).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 calls.append(req.get_method())
                 return Response()

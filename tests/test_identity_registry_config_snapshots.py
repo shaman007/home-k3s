@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class IdentityRegistryConfigSnapshotsTest(unittest.TestCase):
+    """Verify expected registry and identity-client snapshots without retained secrets."""
     def test_harbor_snapshot_covers_every_proxy_cache(self):
         snapshot = yaml.safe_load(
             (ROOT / "harbor/config/harbor.snapshot.yaml").read_text(encoding="utf-8")

@@ -18,6 +18,7 @@ IMAGE = "docker.io/longhornio/longhorn-manager:v1.13.0"
 
 
 class MockAPI(http.server.BaseHTTPRequestHandler):
+    """Serve synthetic Kubernetes API responses for isolated startup-policy probes."""
     task = "snapshot"
     calls = []
     manager_port = None

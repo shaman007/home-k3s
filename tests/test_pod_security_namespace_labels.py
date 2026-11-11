@@ -21,6 +21,7 @@ def load_yaml(path: str) -> dict:
 
 
 class PodSecurityNamespaceLabelsTest(unittest.TestCase):
+    """Verify versioned admission labels without removing reviewed privileged exceptions."""
     def test_explicit_namespaces_have_restricted_audit_and_warn(self):
         for path in (
             "comfyui/namespace-comfyui.yaml",

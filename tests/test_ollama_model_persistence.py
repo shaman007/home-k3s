@@ -14,6 +14,7 @@ def load_yaml(path: str) -> dict:
 
 
 class OllamaModelPersistenceTest(unittest.TestCase):
+    """Require persistent model reuse and the reviewed GPU deployment configuration."""
     def test_both_deployments_use_the_discovered_nvidia_gpu(self):
         for path in (
             "ollama/deployment-ollama.yaml",

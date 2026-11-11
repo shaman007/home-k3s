@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TrimCoverageTest(unittest.TestCase):
+    """Verify trim-job assignment, retained exceptions, and reconciliation failures."""
     @classmethod
     def setUpClass(cls):
         documents = list(

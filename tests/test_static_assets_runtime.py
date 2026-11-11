@@ -39,6 +39,7 @@ def receive(stream, length):
 
 
 class PHP(socketserver.BaseRequestHandler):
+    """Return a synthetic private FastCGI response for static-asset cache tests."""
     def handle(self):
         while True:
             version, kind, request_id, length, padding, _ = struct.unpack(
@@ -59,12 +60,14 @@ class PHP(socketserver.BaseRequestHandler):
 
 
 class PHPServer(socketserver.ThreadingTCPServer):
+    """Serve concurrent local FastCGI fixture requests without retaining worker threads."""
     allow_reuse_address = True
     daemon_threads = True
 
 
 @unittest.skipUnless(BINARY, "Set STATIC_NGINX_BINARY to exercise real static asset behavior")
 class StaticAssetsRuntimeTest(unittest.TestCase):
+    """Exercise real Nginx static caching while keeping private PHP responses private."""
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory(prefix="static-assets-")

@@ -66,6 +66,7 @@ def helm_values(application_name: str) -> dict:
 
 
 class HarborProxyCacheTest(unittest.TestCase):
+    """Check approved image origins, proxy-cache coverage, and relevant resource contracts."""
     def test_direct_image_declarations_use_harbor_or_are_approved_exceptions(self):
         image_pattern = re.compile(r"^\s*(?:-\s*)?image:\s*['\"]?([^'\"#\s]+)")
         violations = []

@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class BookmarkedMediaFailureTest(unittest.TestCase):
+    """Exercise incomplete and failed media processing without hiding errors."""
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

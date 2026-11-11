@@ -22,6 +22,7 @@ spec.loader.exec_module(f)
 
 
 class RecurringSecurityTests(unittest.TestCase):
+    """Verify recurring-job mutation scope and metadata-only backfill prerequisites."""
     def setUp(self):
         self.policy, self.binding = yaml.safe_load_all(
             (ROOT / "longhorn/policy-recurring-job-security.yaml").read_text()
@@ -84,6 +85,7 @@ class RecurringSecurityTests(unittest.TestCase):
         calls = []
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __init__(self, doc):
                 self.doc = doc
 
@@ -97,6 +99,7 @@ class RecurringSecurityTests(unittest.TestCase):
                 return json.dumps(self.doc).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 calls.append((req.method, req.full_url))
                 name = req.full_url.split("/cronjobs/")[1].split("?")[0]

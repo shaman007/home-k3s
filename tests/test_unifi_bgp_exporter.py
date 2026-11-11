@@ -16,6 +16,7 @@ spec.loader.exec_module(m)
 
 
 class UniFiBGPExporterTests(unittest.TestCase):
+    """Reject missing or unexpected BGP state while preserving reviewed route metrics."""
     def setUp(self):
         self.neighbors = [
             {

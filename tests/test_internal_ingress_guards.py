@@ -16,6 +16,7 @@ ALLOWED_GUARDS = {
 
 
 class InternalIngressGuardTest(unittest.TestCase):
+    """Require reviewed client-network guards on internal ingress routes."""
     def test_every_internal_ingress_has_a_client_guard(self):
         missing = []
         for path in ROOT.rglob("ingress*.yaml"):

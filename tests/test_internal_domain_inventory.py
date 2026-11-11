@@ -17,6 +17,7 @@ spec.loader.exec_module(scanner)
 
 
 class InternalDomainInventoryTest(unittest.TestCase):
+    """Find complete internal hostnames without exporting surrounding source secrets."""
     def test_complete_hostnames_and_fqdn_are_recognized(self):
         pattern = re.compile(scanner.PATTERN)
         for host in (

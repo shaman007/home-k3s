@@ -16,6 +16,7 @@ SPEC.loader.exec_module(migration)
 
 
 class MigrationTests(unittest.TestCase):
+    """Require frozen data, empty candidates, and matching values for database migration."""
     def test_metadata_order_is_independent_of_database_collation(self):
         with patch.object(
             migration,

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LegacyIngressRetirementTest(unittest.TestCase):
+    """Keep retired issuance sources disabled while preserving private certificate routes."""
     def test_legacy_sources_are_removed(self):
         resources = json.loads(
             (

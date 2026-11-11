@@ -104,11 +104,13 @@ def render(metrics, success, last_success):
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Reject HTTP redirects when making authenticated router API requests."""
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
 
 
 class Controller:
+    """Collect router BGP neighbors and routes with explicit collection-success state."""
     def __init__(self):
         self.base = os.environ["UNIFI_URL"].rstrip("/")
         context = ssl.create_default_context()
@@ -186,6 +188,7 @@ def main():
             time.sleep(45)
 
     class Handler(http.server.BaseHTTPRequestHandler):
+        """Expose current BGP collection metrics over HTTP."""
         def do_GET(self):
             if self.path not in ("/metrics", "/healthz"):
                 self.send_error(404)

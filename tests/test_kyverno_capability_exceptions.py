@@ -16,6 +16,7 @@ CAP = "require-drop-all-capabilities"
 
 
 class CapabilityExceptionScopeTests(unittest.TestCase):
+    """Reject capability exceptions outside the reviewed helper-container contract."""
     def setUp(self):
         catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.catalog = {
@@ -59,6 +60,7 @@ class CapabilityExceptionScopeTests(unittest.TestCase):
 
 
 class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
+    """Restrict application capability exceptions to reviewed workload identities."""
     def setUp(self):
         catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.entries = [
@@ -109,6 +111,7 @@ class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
 
 
 class PrivilegedRuntimeExceptionTests(unittest.TestCase):
+    """Reject privileged runtime exceptions for unreviewed workload roles."""
     def setUp(self):
         self.catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.entries = [
@@ -145,6 +148,7 @@ class PrivilegedRuntimeExceptionTests(unittest.TestCase):
 
 
 class CompanionGuardContractTests(unittest.TestCase):
+    """Require reviewed companion roles and recognized security guard fields."""
     def setUp(self):
         self.catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         self.entries = [e for e in self.catalog["entries"] if e.get("requiredGuards")]
@@ -191,6 +195,7 @@ class CompanionGuardContractTests(unittest.TestCase):
 
 
 class ImageRepositoryScopeTests(unittest.TestCase):
+    """Distinguish reviewed image repositories from substituted or implicit references."""
     def test_tags_and_digests_do_not_change_repository(self):
         repository = "registry.example:5000/team/app"
         for suffix in ["", ":v1", "@sha256:" + "a" * 64, ":v2@sha256:" + "b" * 64]:
@@ -224,6 +229,7 @@ if __name__ == "__main__":
 
 
 class SpeakerRootCapabilityExceptionTests(unittest.TestCase):
+    """Limit the speaker exception to the reviewed root and raw-network contract."""
     def test_only_exact_reviewed_root_raw_l2_contract_generates(self):
         catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
         original = next(e for e in catalog["entries"] if e["name"] == "metallb-speaker")

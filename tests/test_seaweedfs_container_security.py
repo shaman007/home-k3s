@@ -11,6 +11,7 @@ MANIFEST = ROOT / "seaweedfs/deployment-seaweedfs-s3.yaml"
 
 
 class SeaweedFSContainerSecurityTest(unittest.TestCase):
+    """Require restricted containers and scoped writable storage paths."""
     @classmethod
     def setUpClass(cls):
         deployment = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))

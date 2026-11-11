@@ -15,6 +15,7 @@ def load_yaml(path: str) -> dict:
 
 
 class LowRiskContainerSecurityTest(unittest.TestCase):
+    """Verify reviewed non-root identities and restricted stateless workload contexts."""
     def assert_restricted_container(self, path: str, uid: int, gid: int):
         workload = load_yaml(path)
         pod_spec = workload["spec"]["template"]["spec"]

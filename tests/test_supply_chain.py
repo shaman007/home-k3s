@@ -25,6 +25,7 @@ def load(name):
 
 
 class SignatureTrustTests(unittest.TestCase):
+    """Verify signature-policy identity scope and admission coverage without unsafe rollout."""
     def test_audits_preserve_rollout_safety_and_restrict_identity(self):
         docs = list(yaml.safe_load_all((ROOT / "kyverno/policy-verify-own-ghcr.yaml").read_text()))
         self.assertEqual(len(docs), 3)
@@ -117,6 +118,7 @@ class SignatureTrustTests(unittest.TestCase):
 
 
 class ReleaseSigningTests(unittest.TestCase):
+    """Exercise release signing, exact-workflow verification, and upload ordering."""
     def setUp(self):
         self.module = load("sign-release-assets")
         self.asset = {"id": 123, "name": "app.tar.gz", "updated_at": "2026-11-10"}

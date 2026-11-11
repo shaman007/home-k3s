@@ -12,6 +12,7 @@ NETWORK_POLICIES = ROOT / "image-builder" / "network-policy-podman-builder.yaml"
 
 
 class ImageBuilderSecurityTest(unittest.TestCase):
+    """Check builder privileges, scheduled execution, credentials, and source-image contracts."""
     def setUp(self):
         self.cronjob = yaml.safe_load(CRONJOB.read_text(encoding="utf-8"))
         self.pod_spec = self.cronjob["spec"]["jobTemplate"]["spec"]["template"]["spec"]

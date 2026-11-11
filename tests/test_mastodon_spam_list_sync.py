@@ -78,6 +78,7 @@ def run_import(**env):
 
 @unittest.skipUnless(shutil.which("ruby"), "Ruby required")
 class SpamListSyncTest(unittest.TestCase):
+    """Preserve manual moderation rules and reject bad sources before applying changes."""
     def test_preview_and_apply_preserve_manual_rules(self):
         for apply in ("false", "true"):
             with self.subTest(apply=apply):

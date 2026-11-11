@@ -15,6 +15,7 @@ RENOVATE = ROOT / "renovate.json"
 
 
 class ArgoCdInstallGitopsTest(unittest.TestCase):
+    """Require pinned Argo CD installation sources and their GitOps integration."""
     def test_upstream_install_is_version_pinned(self):
         manifest = yaml.safe_load(KUSTOMIZATION.read_text(encoding="utf-8"))
 

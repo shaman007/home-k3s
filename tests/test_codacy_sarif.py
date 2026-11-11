@@ -41,6 +41,7 @@ def batch(rule, filename):
 
 
 class CodacySarifTest(unittest.TestCase):
+    """Verify finding preservation, index remapping, and safe SARIF upload preparation."""
     def test_codacy_hash_becomes_metadata_without_losing_colocated_findings(self):
         runs = [batch(rule, "same.py") for rule in ("first", "second")]
         for index, run in enumerate(runs):

@@ -66,6 +66,7 @@ RESOURCE_KINDS = {
 
 
 class MockAPI(http.server.BaseHTTPRequestHandler):
+    """Serve synthetic Kubernetes API responses for isolated startup-policy probes."""
     lease = None
 
     def log_message(self, *args):

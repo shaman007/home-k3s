@@ -3,6 +3,7 @@ import yaml
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
+    """Reject duplicate YAML mapping keys instead of silently replacing earlier values."""
     def construct_mapping(self, node, deep=False):
         seen = set()
         for key_node, _ in node.value:

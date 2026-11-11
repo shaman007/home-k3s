@@ -23,6 +23,7 @@ def has_port(document: str, port: int) -> bool:
 
 
 class KubernetesApiNetworkPolicyTest(unittest.TestCase):
+    """Allow current control-plane API endpoints and reject retired endpoint references."""
     def test_kubernetes_api_policies_include_current_control_plane_endpoint(self):
         offenders = []
 

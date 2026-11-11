@@ -13,6 +13,7 @@ spec.loader.exec_module(policy)
 
 
 class RestrictedContextTests(unittest.TestCase):
+    """Check inherited Restricted contexts and reject unsafe container overrides."""
     def pod(self):
         return {
             "securityContext": {"runAsNonRoot": True, "seccompProfile": {"type": "RuntimeDefault"}},

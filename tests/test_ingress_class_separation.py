@@ -14,6 +14,7 @@ def chart_values(name):
 
 
 class IngressClassSeparationTest(unittest.TestCase):
+    """Keep public and private controllers, services, and CRD ownership separate."""
     def test_controllers_have_disjoint_explicit_class_filters(self):
         for name, ingress_class in [("traefik", "traefik"), ("traefik-private", "traefik-private")]:
             values = chart_values(name)

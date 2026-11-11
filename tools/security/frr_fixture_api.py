@@ -30,6 +30,7 @@ POD = {
 
 
 class Handler(BaseHTTPRequestHandler):
+    """Serve synthetic API operations for isolated FRR security-guard probes."""
     def respond(self, data, code=200):
         self.send_response(code)
         self.send_header("Content-Type", "application/json")

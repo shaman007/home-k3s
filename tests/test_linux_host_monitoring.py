@@ -17,6 +17,7 @@ EXTERNAL_EGRESS = (
 
 
 class LinuxHostMonitoringTest(unittest.TestCase):
+    """Verify host scrape alert treatment and provisioned Linux monitoring dashboards."""
     def setUp(self):
         prometheus_config_map = yaml.safe_load(PROMETHEUS.read_text(encoding="utf-8"))
         self.prometheus = yaml.safe_load(prometheus_config_map["data"]["prometheus.yaml"])

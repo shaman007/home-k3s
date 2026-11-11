@@ -13,6 +13,7 @@ ANALYTICS_APP = ROOT / "argocd" / "application-external-access-analytics.yaml"
 
 
 class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
+    """Keep external-access content and access grants separate from platform-health reporting."""
     def test_external_access_report_does_not_embed_platform_health(self):
         source = SCRIPT_MANIFEST.read_text(encoding="utf-8")
 

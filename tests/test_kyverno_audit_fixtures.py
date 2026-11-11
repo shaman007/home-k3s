@@ -13,6 +13,7 @@ spec.loader.exec_module(audit)
 
 
 class AuditFixtureTests(unittest.TestCase):
+    """Preserve policy assertions and applicable exceptions across generated test shards."""
     def test_admission_normalization_does_not_touch_other_workloads(self):
         from unittest.mock import patch
 

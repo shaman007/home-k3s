@@ -18,6 +18,7 @@ import urllib.request
 
 
 class BenchmarkDeadline(Exception):
+    """Signal that a benchmark request exceeded its whole-request deadline."""
     pass
 
 

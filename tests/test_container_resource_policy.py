@@ -13,6 +13,7 @@ spec.loader.exec_module(policy)
 
 
 class ContainerResourcePolicyTests(unittest.TestCase):
+    """Check resource policy defaults, explicit requirements, and operator-created templates."""
     def workload(self, resources=None, init=None):
         return {
             "kind": "Deployment",

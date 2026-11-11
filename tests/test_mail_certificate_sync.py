@@ -14,6 +14,7 @@ def load_yaml(path: str) -> dict:
 
 
 class MailCertificateSyncTest(unittest.TestCase):
+    """Check mail certificate renewal integration and retirement of the legacy exporter."""
     def test_cert_manager_transition_releases_http01_from_traefik(self):
         application = load_yaml("argocd/application-cert-manager.yaml")
         issuer = load_yaml("cert-manager/cluster-issuer-letsencrypt-prod.yaml")

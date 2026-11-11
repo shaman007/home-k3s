@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class OptimizedSecurityGuardsTest(unittest.TestCase):
+    """Require security preconditions to reject unsafe inputs even under Python optimization."""
     def test_mail_smoke_check_rejects_unsafe_context_in_optimized_mode(self):
         path = ROOT / "tools/security/test-mail-capability-guards.py"
         document = yaml.safe_load((ROOT / "mail/deployment-dovecot.yaml").read_text())

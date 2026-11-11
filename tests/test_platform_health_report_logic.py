@@ -24,6 +24,7 @@ def load_report_functions():
 
 
 class PlatformHealthReportLogicTest(unittest.TestCase):
+    """Exercise health assessment while preserving workload identity and collection meaning."""
     @classmethod
     def setUpClass(cls):
         cls.report = load_report_functions()

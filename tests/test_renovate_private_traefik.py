@@ -14,6 +14,7 @@ VALUES = "traefik-private/values.yaml"
 
 
 class PrivateTraefikRenovateTest(unittest.TestCase):
+    """Keep private Traefik image updates synchronized across both value sources."""
     def test_future_image_updates_cover_both_equal_value_sources(self):
         config = json.loads((ROOT / "renovate.json").read_text())
         managers = [

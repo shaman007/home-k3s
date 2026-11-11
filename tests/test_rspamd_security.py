@@ -11,6 +11,7 @@ DEPLOYMENT = ROOT / "mail" / "deployment-rspamd.yaml"
 
 
 class RspamdSecurityTest(unittest.TestCase):
+    """Check the image-compatible runtime identity and scoped permission-init capabilities."""
     def setUp(self):
         deployment = yaml.safe_load(DEPLOYMENT.read_text(encoding="utf-8"))
         self.pod_spec = deployment["spec"]["template"]["spec"]

@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PostfixChrootContractTest(unittest.TestCase):
+    """Require the capability needed by explicitly chrooted Postfix services."""
     def test_chrooted_services_require_sys_chroot(self):
         deployment = yaml.safe_load((ROOT / "mail/deployment-postfix.yaml").read_text())
         container = deployment["spec"]["template"]["spec"]["containers"][0]

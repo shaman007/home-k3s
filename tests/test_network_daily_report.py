@@ -16,6 +16,7 @@ spec.loader.exec_module(report)
 
 
 class VerdictTests(unittest.TestCase):
+    """Prevent unsupported all-clear verdicts and constrain expected-service exceptions."""
     def assessment(self, signature="ET MALWARE Known C2"):
         return {
             "issues": [],
@@ -94,6 +95,7 @@ class VerdictTests(unittest.TestCase):
 
 
 class CollectorTests(unittest.TestCase):
+    """Count final flow snapshots once without inflating observed traffic totals."""
     def test_flow_snapshots_are_deduplicated(self):
         now = dt.datetime.now(dt.timezone.utc)
         event = {

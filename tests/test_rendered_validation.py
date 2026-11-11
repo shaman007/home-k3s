@@ -26,6 +26,7 @@ validate = module("validate", "validate-rendered.py")
 
 
 class RenderValidationTest(unittest.TestCase):
+    """Exercise safe rendering, source retrieval, schema checks, and custom-resource validation."""
     def test_rendered_secret_output_is_owner_only(self):
         (self.root / "tools/ci").mkdir(parents=True)
         (self.root / "tools/ci/validation-config.yaml").write_text("kubernetesVersion: 1.37.2\n")

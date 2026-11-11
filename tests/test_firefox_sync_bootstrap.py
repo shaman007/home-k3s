@@ -16,6 +16,7 @@ SPEC.loader.exec_module(bootstrap)
 
 
 class Response:
+    """Provide a context-managed synthetic response for isolated API-client tests."""
     def __init__(self, data):
         self.data = data
 
@@ -30,6 +31,7 @@ class Response:
 
 
 class BootstrapTests(unittest.TestCase):
+    """Preserve existing secrets and scoped auth bindings during Firefox Sync bootstrap."""
     def run_bootstrap(self, handler, token='hvs.fake-test-token\nnot-a-token\n'):
         with tempfile.TemporaryDirectory() as directory:
             token_path = Path(directory) / 'token'

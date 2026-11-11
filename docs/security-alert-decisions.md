@@ -406,3 +406,22 @@ Full regression suite passed: 394 tests, 21 skipped. The archived regression sui
 was not executed; its executable AST is unchanged. No live cluster/API operations
 or generated manifest changes were performed. Matching GitHub reconciliation still
 requires publication and the normal Python lint rescan.
+
+## Missing class documentation completion and remote progress
+
+A fresh inventory found 95 missing class docstrings across 64 Python files.
+Added specific descriptions for test suites, synthetic API fixtures, response
+handlers, YAML loaders/dumpers, and runtime helpers. After removing class-docstring
+nodes, before/after ASTs and pre-existing literal values match exactly.
+Synchronized the embedded UniFi exporter; its executable AST and other manifest
+fields remain unchanged. All 127 Python files now pass missing-module-docstring,
+missing-class-docstring, long-line and multiple-statement checks. Full suite passed:
+394 tests, 21 skips. Archived tests were not executed; their executable ASTs match.
+
+[Automatic run 43010251271](https://github.com/shaman007/home-k3s/actions/runs/43010251271)
+on `4692b6b6` passed all four jobs, including Python 3 Pylint. This verifies the
+normal automatic lint matrix introduced in `6fd86d5e`. A subsequent open-alert API
+count showed 2,955 total open findings and 1,020 Python 3 Pylint findings, compared
+with 2,357 in the first genuine refreshed Python 3 analysis. Those remote counts
+precede this class-documentation batch; its alert closure awaits publication and
+rescan. Legacy Pylint and other remaining findings still require further work.

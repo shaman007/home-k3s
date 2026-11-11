@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @unittest.skipUnless(os.environ.get("RUN_CLUSTER_TESTS") == "1", "requires live Dovecot")
 class MastodonBounceFilterRuntimeTest(unittest.TestCase):
+    """Exercise the Mastodon bounce filter with isolated runtime fixtures."""
     @classmethod
     def setUpClass(cls):
         cls.script = yaml.safe_load((ROOT / "mail/config-map-dovecot-cf.yaml").read_text())["data"][

@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TraefikHATest(unittest.TestCase):
+    """Verify unique resource identities and consistent high-availability values."""
     def test_extra_objects_have_unique_resource_identities(self):
         app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
         sources = {

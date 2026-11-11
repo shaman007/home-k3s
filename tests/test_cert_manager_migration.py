@@ -19,6 +19,7 @@ def load_yaml_documents(path: str) -> list[dict]:
 
 
 class CertManagerMigrationTest(unittest.TestCase):
+    """Require production certificates and cert-manager secrets on migrated routes."""
     PRODUCTION_CERTIFICATES = {
         "bitwarden/certificate-bitwarden-tls.yaml": (
             "bitwarden", "bitwarden-tls", ["bitwarden.andreybondarenko.com"]

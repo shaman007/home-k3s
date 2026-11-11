@@ -19,6 +19,7 @@ AVAILABLE = (
 
 @unittest.skipUnless(AVAILABLE, "Perl JSON::PP and IO::Socket::INET required")
 class PostfixQueueTests(unittest.TestCase):
+    """Check queue counts and arrival ages without exporting mail content or addresses."""
     def parse(self, records):
         return subprocess.run(
             [PERL, str(SOURCE), "--parse", "2000"],

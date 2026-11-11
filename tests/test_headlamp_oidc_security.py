@@ -14,6 +14,7 @@ def documents(path: Path):
 
 
 class HeadlampOidcSecurityTest(unittest.TestCase):
+    """Check OIDC secrets, restricted runtime, and absence of long-lived admin credentials."""
     def test_headlamp_uses_oidc_secret(self):
         deployment = documents(ROOT / "headlamp" / "deployment-headlamp.yaml")[0]
         container = deployment["spec"]["template"]["spec"]["containers"][0]

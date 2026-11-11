@@ -18,6 +18,7 @@ s.loader.exec_module(b)
 
 
 class ComponentSecurityTests(unittest.TestCase):
+    """Verify component mutation identity, healthy storage gates, and guarded rollout."""
     def setUp(self):
         self.catalog = json.loads((ROOT / "longhorn/component-security-catalog.json").read_text())
         self.entries = self.catalog["entries"]
@@ -138,6 +139,7 @@ class ComponentSecurityTests(unittest.TestCase):
         outer = self
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __init__(self, doc):
                 self.doc = doc
 
@@ -151,6 +153,7 @@ class ComponentSecurityTests(unittest.TestCase):
                 return json.dumps(self.doc).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 calls.append((req.method, req.full_url))
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
@@ -182,6 +185,7 @@ class ComponentSecurityTests(unittest.TestCase):
         outer = self
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __init__(self, doc):
                 self.doc = doc
 
@@ -195,6 +199,7 @@ class ComponentSecurityTests(unittest.TestCase):
                 return json.dumps(self.doc).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
                 doc = outer.healthy(entry)
@@ -314,6 +319,7 @@ class ComponentSecurityTests(unittest.TestCase):
         calls = []
 
         class Response:
+            """Provide a context-managed synthetic response for isolated API-client tests."""
             def __init__(self, doc):
                 self.doc = doc
 
@@ -327,6 +333,7 @@ class ComponentSecurityTests(unittest.TestCase):
                 return json.dumps(self.doc).encode()
 
         class Opener:
+            """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
                 calls.append(req.get_method())
                 if req.full_url.endswith("/volumes"):

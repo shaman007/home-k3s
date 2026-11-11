@@ -13,6 +13,7 @@ KUBELET_POLICY = (
 
 
 class MetricsServerGitopsTest(unittest.TestCase):
+    """Check the official chart, GitOps wiring, and kubelet network access."""
     def test_metrics_server_app_installs_official_chart(self):
         source = APP.read_text(encoding="utf-8")
 

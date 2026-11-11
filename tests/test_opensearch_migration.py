@@ -14,6 +14,7 @@ def documents(path: Path):
 
 
 class OpenSearchMigrationTest(unittest.TestCase):
+    """Check staged search cutover, internal connectivity, and network isolation."""
     def test_opensearch_application_is_present_for_staged_cutover(self):
         application = yaml.safe_load(
             (ROOT / "argocd/application-opensearch.yaml").read_text(

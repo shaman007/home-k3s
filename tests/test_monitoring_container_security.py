@@ -18,6 +18,7 @@ def container_by_name(pod_spec: dict, name: str, section: str = "containers") ->
 
 
 class MonitoringContainerSecurityTest(unittest.TestCase):
+    """Require restricted monitoring containers and explicit writable state volumes."""
     def assert_restricted(self, container: dict, uid: int):
         security = container["securityContext"]
 

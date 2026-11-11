@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LonghornReportTest(unittest.TestCase):
+    """Check deployed Longhorn report logic, health assessment, and supporting access."""
     @classmethod
     def setUpClass(cls):
         source = yaml.safe_load(

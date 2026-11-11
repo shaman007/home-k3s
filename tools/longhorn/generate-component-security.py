@@ -16,6 +16,7 @@ s.loader.exec_module(b)
 
 
 class Dumper(yaml.SafeDumper):
+    """Write multiline strings as YAML block scalars in generated security manifests."""
     pass
 
 

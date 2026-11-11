@@ -30,6 +30,7 @@ def document(path):
 
 
 class DeprecationCleanupTest(unittest.TestCase):
+    """Verify retained ingress and runtime contracts after deprecated-resource cleanup."""
     def test_env_guard_is_in_the_real_argo_application_render(self):
         app = document("argocd/application-traefik-network-policy.yaml")
         source = app["spec"]["source"]

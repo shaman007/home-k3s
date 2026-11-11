@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class HypermindCrawlerAccessTest(unittest.TestCase):
+    """Preserve archived honeypot logging, streaming, and intentional crawler access."""
     def test_honeypot_records_forwarded_ips_on_pvc_and_keeps_sse_streaming(self):
         def load(name):
             return yaml.safe_load((ROOT / "hypermind" / name).read_text())

@@ -12,6 +12,7 @@ LOGS_CHECK_SECRET = ROOT / "metrics" / "external-secret-logs-check-grafana-token
 
 
 class LogsCheckGrafanaAccessTest(unittest.TestCase):
+    """Require secret-backed authenticated Grafana access for the log checker."""
     def test_logs_check_app_includes_grafana_token_secret(self):
         source = LOGS_CHECK_APP.read_text(encoding="utf-8")
 

@@ -16,6 +16,7 @@ spec.loader.exec_module(contracts)
 
 
 class RuntimeContractDiagnosticsTest(unittest.TestCase):
+    """Require manifest diagnostics to retain locations without exposing sensitive values."""
     def test_external_secret_errors_do_not_echo_manifest_values(self):
         marker = "synthetic-sensitive-value-must-not-be-logged"
         for kind in ("ExternalSecret", "SecretStore", "ClusterSecretStore", "Secret"):
