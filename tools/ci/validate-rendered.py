@@ -46,6 +46,7 @@ BUILTIN_GROUPS = {
 def unicode_pattern(validator, pattern, instance, schema):
     # Kubernetes CRDs use RE2 Unicode categories (e.g. Cilium's \PC).
     # Python's built-in re cannot evaluate those patterns.
+    """Validate CRD string patterns with Kubernetes-compatible Unicode categories."""
     if isinstance(instance, str) and regex.search(pattern, instance) is None:
         yield jsonschema.ValidationError("pattern constraint")
 
@@ -56,6 +57,7 @@ CRDValidator = jsonschema.validators.extend(
 
 
 def documents(text):
+    """Yield nonempty resources, expanding Kubernetes List documents."""
     for doc in load_all(text):
         if not doc:
             continue
@@ -96,6 +98,7 @@ def convert_schema(schema):
 
 
 def collect_schemas(docs):
+    """Index converted schemas for every served custom-resource version."""
     schemas = {}
     for doc in docs:
         if doc.get("kind") != "CustomResourceDefinition":
@@ -149,6 +152,7 @@ def crd_errors(doc):
 
 
 def custom_errors(doc, schemas):
+    """Return CRD validation locations and constraints without resource values."""
     key = (doc["apiVersion"], doc["kind"])
     if key not in schemas:
         return ["missing schema"]
@@ -161,6 +165,7 @@ def custom_errors(doc, schemas):
 
 def additional_crd_url(source):
     # Runtime-installed APIs such as Talos have no Helm application version.
+    """Resolve an extra CRD URL from its explicit or Helm application version."""
     if "version" in source:
         version = source["version"]
     else:
@@ -173,6 +178,7 @@ def additional_crd_url(source):
 
 
 def main():
+    """Validate rendered resources against built-in and served custom schemas."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
     args = parser.parse_args()

@@ -51,11 +51,18 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertFalse(values["snapshotAgent"]["enabled"])
 
     def test_backend_uses_public_certificates_without_private_trust(self):
-        values = yaml.safe_load(load_yaml("argocd/application-openbao.yaml")["spec"]["source"]["helm"]["values"])
+        values = yaml.safe_load(
+            load_yaml("argocd/application-openbao.yaml")["spec"]["source"]["helm"]["values"]
+        )
         server = values["server"]
         self.assertNotIn("BAO_CACERT", server["extraEnvironmentVars"])
-        self.assertEqual("openbao-api.int.andreybondarenko.com", server["extraEnvironmentVars"]["BAO_TLS_SERVER_NAME"])
-        self.assertEqual([{"type": "secret", "name": "openbao-server-letsencrypt-tls"}], server["extraVolumes"])
+        self.assertEqual(
+            "openbao-api.int.andreybondarenko.com",
+            server["extraEnvironmentVars"]["BAO_TLS_SERVER_NAME"],
+        )
+        self.assertEqual(
+            [{"type": "secret", "name": "openbao-server-letsencrypt-tls"}], server["extraVolumes"]
+        )
         config = server["ha"]["raft"]["config"]
         self.assertNotIn("leader_ca_cert_file", config)
         self.assertNotIn("/openbao-server-tls/", config)
@@ -68,13 +75,26 @@ class OpenBaoMigrationTest(unittest.TestCase):
 
     def test_ingress_bridge_uses_public_sni_transport(self):
         bridge = load_yaml("openbao/service-openbao-public-tls.yaml")
-        self.assertEqual("openbao-openbao-server@kubernetescrd", bridge["metadata"]["annotations"]["traefik.ingress.kubernetes.io/service.serverstransport"])
-        self.assertEqual("https", bridge["metadata"]["annotations"]["traefik.ingress.kubernetes.io/service.serversscheme"])
+        self.assertEqual(
+            "openbao-openbao-server@kubernetescrd",
+            bridge["metadata"]["annotations"][
+                "traefik.ingress.kubernetes.io/service.serverstransport"
+            ],
+        )
+        self.assertEqual(
+            "https",
+            bridge["metadata"]["annotations"][
+                "traefik.ingress.kubernetes.io/service.serversscheme"
+            ],
+        )
         self.assertEqual("true", bridge["spec"]["selector"]["openbao-active"])
         self.assertEqual(8202, bridge["spec"]["ports"][0]["targetPort"])
         for filename in ("openbao/ingress-openbao-ingress-letsencrypt.yaml",):
             ingress = load_yaml(filename)
-            self.assertEqual("openbao-public-tls", ingress["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"])
+            self.assertEqual(
+                "openbao-public-tls",
+                ingress["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"],
+            )
 
     def test_openbao_tls_data_is_runtime_managed(self):
         application = load_yaml("argocd/application-openbao-custom.yaml")
@@ -104,7 +124,11 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertNotIn("volumes", pod)
         self.assertNotIn("env", pod["containers"][0])
         self.assertEqual([], load_yaml("openbao/role-vault-pki-renewer.yaml")["rules"])
-        self.assertFalse(load_yaml("openbao/service-account-vault-pki-renewer.yaml")["automountServiceAccountToken"])
+        self.assertFalse(
+            load_yaml("openbao/service-account-vault-pki-renewer.yaml")[
+                "automountServiceAccountToken"
+            ]
+        )
         self.assertNotIn("vault write", script)
 
     def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
@@ -116,65 +140,48 @@ class OpenBaoMigrationTest(unittest.TestCase):
                 resource = load_yaml(path)
                 self.assertEqual(
                     "-2",
-                    resource["metadata"]["annotations"][
-                        "argocd.argoproj.io/sync-wave"
-                    ],
+                    resource["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"],
                 )
 
-        certificate = load_yaml(
-            "openbao/certificate-openbao-ingress-letsencrypt-internal-tls.yaml"
-        )
+        certificate = load_yaml("openbao/certificate-openbao-ingress-letsencrypt-internal-tls.yaml")
         ingress = load_yaml("openbao/ingress-openbao-ingress-letsencrypt.yaml")
         self.assertEqual(
             "0",
-            certificate["metadata"]["annotations"][
-                "argocd.argoproj.io/sync-wave"
-            ],
+            certificate["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"],
         )
         self.assertEqual(
             "0",
-            ingress["metadata"]["annotations"][
-                "argocd.argoproj.io/sync-wave"
-            ],
+            ingress["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"],
         )
 
     def test_server_can_reach_kubernetes_service_registration_api(self):
         policies = list(
             yaml.safe_load_all(
-                (ROOT / "openbao/network-policy-openbao-allow-egress-kube-api-cilium.yaml")
-                .read_text(encoding="utf-8")
+                (
+                    ROOT / "openbao/network-policy-openbao-allow-egress-kube-api-cilium.yaml"
+                ).read_text(encoding="utf-8")
             )
         )
         self.assertEqual(2, len(policies))
         for policy in policies:
             self.assertEqual("CiliumNetworkPolicy", policy["kind"])
-            self.assertEqual(
-                ["kube-apiserver"], policy["spec"]["egress"][0]["toEntities"]
-            )
+            self.assertEqual(["kube-apiserver"], policy["spec"]["egress"][0]["toEntities"])
             service = policy["spec"]["egress"][1]["toServices"][0]["k8sService"]
-            self.assertEqual(
-                {"namespace": "default", "serviceName": "kubernetes"}, service
-            )
+            self.assertEqual({"namespace": "default", "serviceName": "kubernetes"}, service)
 
     def test_traefik_can_reach_acme_solver_and_openbao(self):
-        solver_policy = load_yaml(
-            "openbao/network-policy-allow-cert-manager-http01-solver.yaml"
-        )
+        solver_policy = load_yaml("openbao/network-policy-allow-cert-manager-http01-solver.yaml")
         self.assertEqual(
             {"acme.cert-manager.io/http01-solver": "true"},
             solver_policy["spec"]["podSelector"]["matchLabels"],
         )
-        self.assertEqual(
-            8089, solver_policy["spec"]["ingress"][0]["ports"][0]["port"]
-        )
+        self.assertEqual(8089, solver_policy["spec"]["ingress"][0]["ports"][0]["port"])
 
         traefik_policy = load_yaml(
             "traefik/network-policy-traefik-allow-egress-ingress-namespaces.yaml"
         )
         namespaces = {
-            selector["namespaceSelector"]["matchLabels"][
-                "kubernetes.io/metadata.name"
-            ]
+            selector["namespaceSelector"]["matchLabels"]["kubernetes.io/metadata.name"]
             for selector in traefik_policy["spec"]["egress"][0]["to"]
         }
         self.assertIn("openbao", namespaces)
@@ -182,15 +189,11 @@ class OpenBaoMigrationTest(unittest.TestCase):
     def test_openbao_can_reach_external_keycloak_discovery(self):
         policies = list(
             yaml.safe_load_all(
-                (ROOT / "openbao/network-policy-openbao.yaml").read_text(
-                    encoding="utf-8"
-                )
+                (ROOT / "openbao/network-policy-openbao.yaml").read_text(encoding="utf-8")
             )
         )
         egress = next(
-            policy
-            for policy in policies
-            if policy["metadata"]["name"] == "openbao-allow-egress"
+            policy for policy in policies if policy["metadata"]["name"] == "openbao-allow-egress"
         )
         cidrs = {
             target["ipBlock"]["cidr"]

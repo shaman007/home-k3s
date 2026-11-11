@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 from pathlib import Path
 
 import yaml
@@ -44,6 +43,7 @@ EXPECTED_SECRET_STORE_REFRESH_INTERVAL = 900
 
 
 def repo_root() -> Path:
+    """Resolve the checkout root through Git without changing repository state."""
     return Path(
         subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
@@ -55,6 +55,7 @@ def repo_root() -> Path:
 
 
 def tracked_yaml_files(root: Path) -> list[Path]:
+    """List tracked YAML inputs while excluding archives and raw Helm templates."""
     result = subprocess.run(
         ["git", "ls-files", "-z", "--", "*.yaml", "*.yml"],
         cwd=root,
@@ -77,6 +78,7 @@ def tracked_yaml_files(root: Path) -> list[Path]:
 
 
 def load_documents(path: Path) -> list[tuple[int, dict]]:
+    """Read mapping documents and report parse locations without source snippets."""
     try:
         raw_documents = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
     except yaml.YAMLError as exc:
@@ -93,6 +95,7 @@ def load_documents(path: Path) -> list[tuple[int, dict]]:
 
 
 def workload_containers(document: dict) -> list[dict]:
+    """Return regular containers from a workload template, or an empty list."""
     try:
         return document["spec"]["template"]["spec"]["containers"]
     except KeyError:
@@ -100,6 +103,7 @@ def workload_containers(document: dict) -> list[dict]:
 
 
 def check_http_probe_paths(path: Path, document_index: int, document: dict) -> list[str]:
+    """Report brittle HTTP probe routes unless an exact exception is reviewed."""
     errors: list[str] = []
     if document.get("kind") not in WORKLOAD_KINDS:
         return errors
@@ -129,6 +133,7 @@ def check_http_probe_paths(path: Path, document_index: int, document: dict) -> l
 
 
 def check_deprecated_args(path: Path, document_index: int, document: dict) -> list[str]:
+    """Report retired container flags and their supported replacements."""
     errors: list[str] = []
     if document.get("kind") not in WORKLOAD_KINDS:
         return errors
@@ -146,6 +151,7 @@ def check_deprecated_args(path: Path, document_index: int, document: dict) -> li
 
 
 def check_deprecated_service_fields(path: Path, document_index: int, document: dict) -> list[str]:
+    """Reject legacy Service address fields with provider-specific alternatives."""
     if document.get("kind") != "Service":
         return []
     replacements = {
@@ -160,6 +166,7 @@ def check_deprecated_service_fields(path: Path, document_index: int, document: d
 
 
 def check_external_secret_targets(path: Path, document_index: int, document: dict) -> list[str]:
+    """Require explicit ExternalSecret targets without logging their values."""
     errors: list[str] = []
     if document.get("kind") != "ExternalSecret":
         return errors
@@ -186,6 +193,7 @@ def check_external_secret_targets(path: Path, document_index: int, document: dic
 
 
 def check_secret_refresh_intervals(path: Path, document_index: int, document: dict) -> list[str]:
+    """Check the reviewed refresh cadence for External Secrets resources."""
     errors: list[str] = []
     kind = document.get("kind")
     spec = document.get("spec", {})
@@ -214,6 +222,7 @@ def check_secret_refresh_intervals(path: Path, document_index: int, document: di
 
 
 def main() -> int:
+    """Validate tracked manifests and return a nonzero status for contract failures."""
     root = repo_root()
     errors: list[str] = []
 

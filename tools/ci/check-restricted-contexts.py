@@ -12,6 +12,7 @@ import yaml
 
 
 def violations(spec):
+    """Return missing or unsafe Linux Restricted pod-security settings."""
     errors = []
     pod = spec.get("securityContext") or {}
     for flag in ("hostNetwork", "hostPID", "hostIPC"):
@@ -45,6 +46,7 @@ def violations(spec):
 
 
 def templates(doc):
+    """Yield pod specifications from supported workload and pod documents."""
     kind = doc.get("kind")
     if kind == "Pod":
         yield doc["spec"]
@@ -62,6 +64,7 @@ def templates(doc):
 
 
 def main():
+    """Check rendered pod templates only in namespaces enforcing Restricted."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
     args = parser.parse_args()

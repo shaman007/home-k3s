@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PROMETHEUS = ROOT / "metrics" / "kubernetes-prometheus" / "config-map-prometheus-server-conf.yaml"
 DASHBOARD = ROOT / "metrics" / "grafana" / "config-map-grafana-dashboard-linux-host.yaml"
 GRAFANA = ROOT / "metrics" / "grafana" / "deployment-grafana.yaml"
-EXTERNAL_EGRESS = ROOT / "metrics" / "network-policy-monitoring-allow-egress-prometheus-external.yaml"
+EXTERNAL_EGRESS = (
+    ROOT / "metrics" / "network-policy-monitoring-allow-egress-prometheus-external.yaml"
+)
 
 
 class LinuxHostMonitoringTest(unittest.TestCase):
@@ -26,9 +28,7 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         )
         static_config = job["static_configs"][0]
 
-        self.assertEqual(
-            static_config["targets"], ["192.168.1.112:9100"]
-        )
+        self.assertEqual(static_config["targets"], ["192.168.1.112:9100"])
         self.assertEqual(static_config["labels"]["host"], "fedora")
         self.assertEqual(static_config["labels"]["alert_on_down"], "false")
 
@@ -56,16 +56,12 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         self.assertEqual(len(dashboard["panels"]), 18)
         for panel in dashboard["panels"]:
             self.assertNotIn("alert", panel)
-        self.assertIn(
-            "grafana-dashboard-linux-host", GRAFANA.read_text(encoding="utf-8")
-        )
+        self.assertIn("grafana-dashboard-linux-host", GRAFANA.read_text(encoding="utf-8"))
 
     def test_prometheus_can_reach_node_exporter_port(self):
         policy = yaml.safe_load(EXTERNAL_EGRESS.read_text(encoding="utf-8"))
         ports = {
-            port["port"]
-            for egress in policy["spec"]["egress"]
-            for port in egress.get("ports", [])
+            port["port"] for egress in policy["spec"]["egress"] for port in egress.get("ports", [])
         }
 
         self.assertIn(9100, ports)

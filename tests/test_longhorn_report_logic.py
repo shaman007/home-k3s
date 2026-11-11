@@ -9,118 +9,179 @@ ROOT = Path(__file__).resolve().parents[1]
 class LonghornReportTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = yaml.safe_load((ROOT / 'metrics/config-map-platform-health-report-scripts.yaml').read_text())['data']['platform-health-report.py']
-        cls.report = {'__name__': 'test'}
-        exec(compile(source, 'report', 'exec'), cls.report)
+        source = yaml.safe_load(
+            (ROOT / "metrics/config-map-platform-health-report-scripts.yaml").read_text()
+        )["data"]["platform-health-report.py"]
+        cls.report = {"__name__": "test"}
+        exec(compile(source, "report", "exec"), cls.report)
 
     def setUp(self):
         self.now = datetime(2026, 9, 17, 12, tzinfo=timezone.utc)
-        self.original_utc_now = self.report['utc_now']
-        self.report['utc_now'] = lambda: self.now
-        self.addCleanup(self.report.__setitem__, 'utc_now', self.original_utc_now)
+        self.original_utc_now = self.report["utc_now"]
+        self.report["utc_now"] = lambda: self.now
+        self.addCleanup(self.report.__setitem__, "utc_now", self.original_utc_now)
         self.cutoff = self.now - timedelta(hours=24)
-        self.jobs = [self.job('daily', 'backup', ['protected']), self.job('trim', 'filesystem-trim')]
+        self.jobs = [
+            self.job("daily", "backup", ["protected"]),
+            self.job("trim", "filesystem-trim"),
+        ]
 
-    def job(self, name, task, groups=None, cron='0 1 * * *', created=None):
-        metadata = {'name': name}
+    def job(self, name, task, groups=None, cron="0 1 * * *", created=None):
+        metadata = {"name": name}
         if created:
-            metadata['creationTimestamp'] = created.isoformat()
-        return {'metadata': metadata, 'spec': {'task': task, 'groups': groups or [], 'cron': cron}}
+            metadata["creationTimestamp"] = created.isoformat()
+        return {"metadata": metadata, "spec": {"task": task, "groups": groups or [], "cron": cron}}
 
     def volume(self, name, labels=None):
-        return {'metadata': {'name': name, 'labels': labels if labels is not None else {'recurring-job.longhorn.io/daily': 'enabled'}}}
+        return {
+            "metadata": {
+                "name": name,
+                "labels": labels
+                if labels is not None
+                else {"recurring-job.longhorn.io/daily": "enabled"},
+            }
+        }
 
-    def backup(self, volume, age=1, state='Completed', target='default'):
-        return {'status': {'volumeName': volume, 'backupTargetName': target, 'state': state,
-                           'backupCreatedAt': (self.now-timedelta(hours=age)).isoformat(),
-                           'lastSyncedAt': self.now.isoformat()}}
+    def backup(self, volume, age=1, state="Completed", target="default"):
+        return {
+            "status": {
+                "volumeName": volume,
+                "backupTargetName": target,
+                "state": state,
+                "backupCreatedAt": (self.now - timedelta(hours=age)).isoformat(),
+                "lastSyncedAt": self.now.isoformat(),
+            }
+        }
 
     def check_backups(self, volumes, backups):
-        return self.report['longhorn_backup_check'](volumes, self.jobs, backups, self.cutoff)
+        return self.report["longhorn_backup_check"](volumes, self.jobs, backups, self.cutoff)
 
     def test_fresh_backup_cannot_hide_stale_or_missing_volume(self):
-        result = self.check_backups([self.volume('fresh'), self.volume('stale'), self.volume('missing')],
-                                    [self.backup('fresh'), self.backup('stale', age=168)])
-        self.assertFalse(result['passed'])
-        self.assertEqual({'stale', 'missing'}, {d['item'] for d in result['review_details']})
+        result = self.check_backups(
+            [self.volume("fresh"), self.volume("stale"), self.volume("missing")],
+            [self.backup("fresh"), self.backup("stale", age=168)],
+        )
+        self.assertFalse(result["passed"])
+        self.assertEqual({"stale", "missing"}, {d["item"] for d in result["review_details"]})
 
     def test_refresh_timestamp_does_not_make_old_backup_fresh(self):
-        self.assertFalse(self.check_backups([self.volume('v')], [self.backup('v', age=168)])['passed'])
+        self.assertFalse(
+            self.check_backups([self.volume("v")], [self.backup("v", age=168)])["passed"]
+        )
 
     def test_group_membership_is_resolved_and_trim_only_volume_is_excluded(self):
-        volumes = [self.volume('group', {'recurring-job-group.longhorn.io/protected': 'enabled'}),
-                   self.volume('trim', {'recurring-job.longhorn.io/trim': 'enabled'})]
-        result = self.check_backups(volumes, [self.backup('group')])
-        self.assertTrue(result['passed'])
-        self.assertEqual(['group'], [d['item'] for d in result['details']])
+        volumes = [
+            self.volume("group", {"recurring-job-group.longhorn.io/protected": "enabled"}),
+            self.volume("trim", {"recurring-job.longhorn.io/trim": "enabled"}),
+        ]
+        result = self.check_backups(volumes, [self.backup("group")])
+        self.assertTrue(result["passed"])
+        self.assertEqual(["group"], [d["item"] for d in result["details"]])
 
     def test_latest_success_wins_over_historical_errors(self):
-        self.assertTrue(self.check_backups([self.volume('v')], [self.backup('v', 48, 'Error'), self.backup('v')])['passed'])
+        self.assertTrue(
+            self.check_backups(
+                [self.volume("v")], [self.backup("v", 48, "Error"), self.backup("v")]
+            )["passed"]
+        )
 
     def test_failed_backup_and_wrong_target_do_not_count(self):
-        for backup in [self.backup('v', state='Error'), self.backup('v', target='other')]:
+        for backup in [self.backup("v", state="Error"), self.backup("v", target="other")]:
             with self.subTest(backup=backup):
-                self.assertFalse(self.check_backups([self.volume('v')], [backup])['passed'])
+                self.assertFalse(self.check_backups([self.volume("v")], [backup])["passed"])
 
     def test_no_expected_volumes_is_not_healthy(self):
-        self.assertFalse(self.check_backups([], [])['passed'])
+        self.assertFalse(self.check_backups([], [])["passed"])
 
     def cronjob(self, name, age=1, suspended=False, created=None, successful=True):
-        metadata = {'name': name, 'ownerReferences': [{'kind': 'RecurringJob', 'apiVersion': 'longhorn.io/v1beta2', 'name': name}]}
+        metadata = {
+            "name": name,
+            "ownerReferences": [
+                {"kind": "RecurringJob", "apiVersion": "longhorn.io/v1beta2", "name": name}
+            ],
+        }
         if created:
-            metadata['creationTimestamp'] = created.isoformat()
-        status = {'lastSuccessfulTime': (self.now-timedelta(hours=age)).isoformat()} if successful else {}
-        return {'metadata': metadata, 'spec': {'suspend': suspended}, 'status': status}
+            metadata["creationTimestamp"] = created.isoformat()
+        status = (
+            {"lastSuccessfulTime": (self.now - timedelta(hours=age)).isoformat()}
+            if successful
+            else {}
+        )
+        return {"metadata": metadata, "spec": {"suspend": suspended}, "status": status}
 
     def test_maintenance_passes_without_any_pod_history(self):
-        result = self.report['longhorn_maintenance_check'](self.jobs, [self.cronjob('daily'), self.cronjob('trim')], self.cutoff)
-        self.assertTrue(result['passed'])
+        result = self.report["longhorn_maintenance_check"](
+            self.jobs, [self.cronjob("daily"), self.cronjob("trim")], self.cutoff
+        )
+        self.assertTrue(result["passed"])
 
     def test_each_missing_stale_suspended_job_fails(self):
-        for cronjobs in [[self.cronjob('trim')], [self.cronjob('daily', age=48), self.cronjob('trim')],
-                         [self.cronjob('daily', suspended=True), self.cronjob('trim')]]:
-            result = self.report['longhorn_maintenance_check'](self.jobs, cronjobs, self.cutoff)
-            self.assertFalse(result['passed'])
-            self.assertEqual(['daily'], [d['item'] for d in result['review_details']])
+        for cronjobs in [
+            [self.cronjob("trim")],
+            [self.cronjob("daily", age=48), self.cronjob("trim")],
+            [self.cronjob("daily", suspended=True), self.cronjob("trim")],
+        ]:
+            result = self.report["longhorn_maintenance_check"](self.jobs, cronjobs, self.cutoff)
+            self.assertFalse(result["passed"])
+            self.assertEqual(["daily"], [d["item"] for d in result["review_details"]])
 
     def test_new_monthly_job_is_healthy_until_its_first_due_run(self):
-        monthly = self.job('monthly', 'backup', cron='15 4 1 * *', created=self.now)
-        cronjob = self.cronjob('monthly', created=self.now, successful=False)
-        result = self.report['longhorn_maintenance_check'](
-            [monthly, self.job('trim', 'filesystem-trim')],
-            [cronjob, self.cronjob('trim')],
+        monthly = self.job("monthly", "backup", cron="15 4 1 * *", created=self.now)
+        cronjob = self.cronjob("monthly", created=self.now, successful=False)
+        result = self.report["longhorn_maintenance_check"](
+            [monthly, self.job("trim", "filesystem-trim")],
+            [cronjob, self.cronjob("trim")],
             self.cutoff,
         )
-        self.assertTrue(result['passed'])
+        self.assertTrue(result["passed"])
 
     def test_overdue_monthly_job_without_success_fails(self):
-        monthly = self.job('monthly', 'backup', cron='15 4 1 * *', created=self.now - timedelta(days=90))
-        cronjob = self.cronjob('monthly', created=self.now - timedelta(days=90), successful=False)
-        result = self.report['longhorn_maintenance_check'](
-            [monthly, self.job('trim', 'filesystem-trim')],
-            [cronjob, self.cronjob('trim')],
+        monthly = self.job(
+            "monthly", "backup", cron="15 4 1 * *", created=self.now - timedelta(days=90)
+        )
+        cronjob = self.cronjob("monthly", created=self.now - timedelta(days=90), successful=False)
+        result = self.report["longhorn_maintenance_check"](
+            [monthly, self.job("trim", "filesystem-trim")],
+            [cronjob, self.cronjob("trim")],
             self.cutoff,
         )
-        self.assertFalse(result['passed'])
-        self.assertEqual(['monthly'], [d['item'] for d in result['review_details']])
+        self.assertFalse(result["passed"])
+        self.assertEqual(["monthly"], [d["item"] for d in result["review_details"]])
 
     def test_monthly_job_grace_period_boundary(self):
         due = datetime(2026, 10, 1, 4, 15, tzinfo=timezone.utc)
-        for elapsed, passed in [(timedelta(hours=12, microseconds=-1), True),
-                                (timedelta(hours=12), False)]:
+        for elapsed, passed in [
+            (timedelta(hours=12, microseconds=-1), True),
+            (timedelta(hours=12), False),
+        ]:
             with self.subTest(elapsed=elapsed):
                 self.now = due + elapsed
                 created = due - timedelta(days=90)
-                result = self.report['longhorn_maintenance_check'](
-                    [self.job('monthly', 'backup', cron='15 4 1 * *', created=created),
-                     self.job('trim', 'filesystem-trim')],
-                    [self.cronjob('monthly', created=created, successful=False), self.cronjob('trim')],
+                result = self.report["longhorn_maintenance_check"](
+                    [
+                        self.job("monthly", "backup", cron="15 4 1 * *", created=created),
+                        self.job("trim", "filesystem-trim"),
+                    ],
+                    [
+                        self.cronjob("monthly", created=created, successful=False),
+                        self.cronjob("trim"),
+                    ],
                     self.now - timedelta(hours=24),
                 )
-                self.assertEqual(passed, result['passed'])
-                self.assertEqual([] if passed else ['monthly'],
-                                 [d['item'] for d in result['review_details']])
+                self.assertEqual(passed, result["passed"])
+                self.assertEqual(
+                    [] if passed else ["monthly"], [d["item"] for d in result["review_details"]]
+                )
 
     def test_report_role_can_read_volume_inventory(self):
-        role = yaml.safe_load((ROOT / 'metrics/cluster-role-platform-health-report.yaml').read_text())
-        self.assertTrue(any('longhorn.io' in r['apiGroups'] and 'volumes' in r['resources'] and 'list' in r['verbs'] for r in role['rules']))
+        role = yaml.safe_load(
+            (ROOT / "metrics/cluster-role-platform-health-report.yaml").read_text()
+        )
+        self.assertTrue(
+            any(
+                "longhorn.io" in r["apiGroups"]
+                and "volumes" in r["resources"]
+                and "list" in r["verbs"]
+                for r in role["rules"]
+            )
+        )

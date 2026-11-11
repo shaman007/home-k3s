@@ -22,10 +22,7 @@ class InternalIngressGuardTest(unittest.TestCase):
             for document in yaml.safe_load_all(path.read_text(encoding="utf-8")):
                 if not document or document.get("kind") != "Ingress":
                     continue
-                hosts = {
-                    rule.get("host", "")
-                    for rule in document.get("spec", {}).get("rules", [])
-                }
+                hosts = {rule.get("host", "") for rule in document.get("spec", {}).get("rules", [])}
                 internal_hosts = sorted(host for host in hosts if host.endswith(INTERNAL_SUFFIX))
                 if not internal_hosts:
                     continue
@@ -55,7 +52,13 @@ class InternalIngressGuardTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            ["192.168.30.0/24", "2a02:e98:c0:181e::/64", "192.168.4.0/24", "10.42.0.0/16", "fd74:67a:1fcf:4200::/56"],
+            [
+                "192.168.30.0/24",
+                "2a02:e98:c0:181e::/64",
+                "192.168.4.0/24",
+                "10.42.0.0/16",
+                "fd74:67a:1fcf:4200::/56",
+            ],
             middleware["spec"]["ipAllowList"]["sourceRange"],
         )
 

@@ -82,8 +82,8 @@ writes. No live workload or namespace mutation was performed by this repository
 preparation. Commit/push and live rollout require user authorization.
 
 References:
-- https://kubernetes.io/docs/concepts/security/pod-security-admission/
-- https://kubernetes.io/docs/concepts/security/pod-security-standards/
+- <https://kubernetes.io/docs/concepts/security/pod-security-admission/>
+- <https://kubernetes.io/docs/concepts/security/pod-security-standards/>
 
 ## Open Terminal rollout correction
 

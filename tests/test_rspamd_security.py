@@ -23,7 +23,9 @@ class RspamdSecurityTest(unittest.TestCase):
         self.assertEqual(11333, security["runAsGroup"])
         self.assertFalse(security["allowPrivilegeEscalation"])
         self.assertEqual(["ALL"], security["capabilities"]["drop"])
-        self.assertEqual("RuntimeDefault", self.pod_spec["securityContext"]["seccompProfile"]["type"])
+        self.assertEqual(
+            "RuntimeDefault", self.pod_spec["securityContext"]["seccompProfile"]["type"]
+        )
 
     def test_permission_init_has_only_required_capabilities(self):
         security = self.init["securityContext"]

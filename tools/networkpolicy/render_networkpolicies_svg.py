@@ -42,7 +42,9 @@ def parse_args():
     parser.add_argument(
         "--input",
         type=pathlib.Path,
-        help="Optional input JSON file from `kubectl get networkpolicies --all-namespaces -o json`.",
+        help=(
+            "Optional input JSON file from `kubectl get networkpolicies --all-namespaces -o json`."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -295,7 +297,9 @@ def graph_node_from_peer(peer, current_namespace):
         return make_graph_node(exact_name, exact_name, False)
 
     if namespace_selector and pod_selector:
-        label = f"{format_namespace_selector(namespace_selector)} & pod{format_selector(pod_selector)}"
+        label = (
+            f"{format_namespace_selector(namespace_selector)} & pod{format_selector(pod_selector)}"
+        )
         return make_graph_node(f"special:selector:{label}", label, True)
 
     if namespace_selector:
@@ -418,9 +422,7 @@ def build_connection_graph(payload, namespace_sections):
         out_counts[edge["source"]] += edge["count"]
         in_counts[edge["target"]] += edge["count"]
 
-    referenced_namespaces = {
-        edge["source"] for edge in edges if not edge["source_special"]
-    } | {
+    referenced_namespaces = {edge["source"] for edge in edges if not edge["source_special"]} | {
         edge["target"] for edge in edges if not edge["target_special"]
     }
     extra_namespaces = sorted(referenced_namespaces - set(namespace_names))
@@ -464,11 +466,29 @@ def render_overview(namespace_sections, context_label, updated_at):
         f'<text x="{PAGE_MARGIN}" y="58" class="title">Kubernetes NetworkPolicy Inventory</text>'
     )
     lines.append(
-        f'<text x="{PAGE_MARGIN}" y="85" class="subtitle">Context: {xml(context_label)} | Generated: {xml(updated_at)} | Namespaces: {total_namespaces} | Policies: {total_policies}</text>'
+        (
+            '<text x="'
+            f"{PAGE_MARGIN}"
+            '" y="85" class="subtitle">Context: '
+            f"{xml(context_label)}"
+            " | Generated: "
+            f"{xml(updated_at)}"
+            " | Namespaces: "
+            f"{total_namespaces}"
+            " | Policies: "
+            f"{total_policies}"
+            "</text>"
+        )
     )
 
     lines.append(
-        f'<rect x="{PAGE_MARGIN}" y="106" width="{SVG_WIDTH - PAGE_MARGIN * 2}" height="82" rx="18" class="overview-panel" />'
+        (
+            '<rect x="'
+            f"{PAGE_MARGIN}"
+            '" y="106" width="'
+            f"{SVG_WIDTH - PAGE_MARGIN * 2}"
+            '" height="82" rx="18" class="overview-panel" />'
+        )
     )
     legend_y = 134
     legend_items = [
@@ -480,7 +500,15 @@ def render_overview(namespace_sections, context_label, updated_at):
     legend_x = PAGE_MARGIN + 20
     for class_name, label in legend_items:
         lines.append(
-            f'<rect x="{legend_x}" y="{legend_y - 16}" width="18" height="18" rx="4" class="{class_name}" />'
+            (
+                '<rect x="'
+                f"{legend_x}"
+                '" y="'
+                f"{legend_y - 16}"
+                '" width="18" height="18" rx="4" class="'
+                f"{class_name}"
+                '" />'
+            )
         )
         lines.append(
             f'<text x="{legend_x + 28}" y="{legend_y - 2}" class="legend">{xml(label)}</text>'
@@ -495,13 +523,37 @@ def render_overview(namespace_sections, context_label, updated_at):
         y = grid_top + row * (OVERVIEW_BOX_HEIGHT + 12)
         stats = section["stats"]
         lines.append(
-            f'<rect x="{x}" y="{y}" width="{OVERVIEW_BOX_WIDTH}" height="{OVERVIEW_BOX_HEIGHT}" rx="14" class="namespace-chip" />'
+            (
+                '<rect x="'
+                f"{x}"
+                '" y="'
+                f"{y}"
+                '" width="'
+                f"{OVERVIEW_BOX_WIDTH}"
+                '" height="'
+                f"{OVERVIEW_BOX_HEIGHT}"
+                '" rx="14" class="namespace-chip" />'
+            )
         )
         lines.append(
             f'<text x="{x + 14}" y="{y + 24}" class="chip-title">{xml(section["namespace"])}</text>'
         )
         lines.append(
-            f'<text x="{x + 14}" y="{y + 46}" class="chip-subtitle">{stats["total"]} policies | IN {stats["ingress"]} | OUT {stats["egress"]} | deny {stats["deny"]}</text>'
+            (
+                '<text x="'
+                f"{x + 14}"
+                '" y="'
+                f"{y + 46}"
+                '" class="chip-subtitle">'
+                f"{stats['total']}"
+                " policies | IN "
+                f"{stats['ingress']}"
+                " | OUT "
+                f"{stats['egress']}"
+                " | deny "
+                f"{stats['deny']}"
+                "</text>"
+            )
         )
 
     rows = math.ceil(len(namespace_sections) / OVERVIEW_COLUMNS)
@@ -539,16 +591,45 @@ def render_connection_graph(graph_data, start_y):
 
     parts = []
     parts.append(
-        f'<rect x="{panel_x}" y="{panel_y}" width="{panel_width}" height="{panel_height}" rx="22" class="graph-panel" />'
+        (
+            '<rect x="'
+            f"{panel_x}"
+            '" y="'
+            f"{panel_y}"
+            '" width="'
+            f"{panel_width}"
+            '" height="'
+            f"{panel_height}"
+            '" rx="22" class="graph-panel" />'
+        )
     )
     parts.append(
         f'<text x="{panel_x + 20}" y="{panel_y + 34}" class="section-title">Connection Graph</text>'
     )
     parts.append(
-        f'<text x="{panel_x + 20}" y="{panel_y + 56}" class="section-subtitle">Namespace-level directed flows aggregated from policy peers. Sources are on the left, targets are on the right.</text>'
+        (
+            '<text x="'
+            f"{panel_x + 20}"
+            '" y="'
+            f"{panel_y + 56}"
+            '" class="section-subtitle">Namespace-level directed flows '
+            "aggregated from policy peers. Sources are on the left, "
+            "targets are on the right.</text>"
+        )
     )
     parts.append(
-        f'<text x="{panel_x + 20}" y="{panel_y + 76}" class="section-subtitle">Visible cross-namespace or special-target links: {graph_data["visible_edge_count"]} | Hidden same-namespace links: {graph_data["hidden_self_edges"]}</text>'
+        (
+            '<text x="'
+            f"{panel_x + 20}"
+            '" y="'
+            f"{panel_y + 76}"
+            '" class="section-subtitle">Visible cross-namespace or '
+            "special-target links: "
+            f"{graph_data['visible_edge_count']}"
+            " | Hidden same-namespace links: "
+            f"{graph_data['hidden_self_edges']}"
+            "</text>"
+        )
     )
 
     legend_y = panel_y + 98
@@ -560,25 +641,53 @@ def render_connection_graph(graph_data, start_y):
     legend_x = panel_x + 20
     for class_name, label in legend_items:
         parts.append(
-            f'<line x1="{legend_x}" y1="{legend_y}" x2="{legend_x + 26}" y2="{legend_y}" class="{class_name}" />'
+            (
+                '<line x1="'
+                f"{legend_x}"
+                '" y1="'
+                f"{legend_y}"
+                '" x2="'
+                f"{legend_x + 26}"
+                '" y2="'
+                f"{legend_y}"
+                '" class="'
+                f"{class_name}"
+                '" />'
+            )
         )
         parts.append(
             f'<text x="{legend_x + 36}" y="{legend_y + 4}" class="legend">{xml(label)}</text>'
         )
         legend_x += 310
 
-    parts.append(
-        f'<text x="{left_x}" y="{panel_y + 118}" class="graph-heading">Sources</text>'
-    )
-    parts.append(
-        f'<text x="{right_x}" y="{panel_y + 118}" class="graph-heading">Targets</text>'
-    )
+    parts.append(f'<text x="{left_x}" y="{panel_y + 118}" class="graph-heading">Sources</text>')
+    parts.append(f'<text x="{right_x}" y="{panel_y + 118}" class="graph-heading">Targets</text>')
 
     parts.append(
-        f'<line x1="{left_x + GRAPH_NODE_WIDTH + 8}" y1="{row_top - 16}" x2="{left_x + GRAPH_NODE_WIDTH + 8}" y2="{panel_y + panel_height - 20}" class="graph-guide" />'
+        (
+            '<line x1="'
+            f"{left_x + GRAPH_NODE_WIDTH + 8}"
+            '" y1="'
+            f"{row_top - 16}"
+            '" x2="'
+            f"{left_x + GRAPH_NODE_WIDTH + 8}"
+            '" y2="'
+            f"{panel_y + panel_height - 20}"
+            '" class="graph-guide" />'
+        )
     )
     parts.append(
-        f'<line x1="{right_x - 8}" y1="{row_top - 16}" x2="{right_x - 8}" y2="{panel_y + panel_height - 20}" class="graph-guide" />'
+        (
+            '<line x1="'
+            f"{right_x - 8}"
+            '" y1="'
+            f"{row_top - 16}"
+            '" x2="'
+            f"{right_x - 8}"
+            '" y2="'
+            f"{panel_y + panel_height - 20}"
+            '" class="graph-guide" />'
+        )
     )
 
     for edge in graph_data["edges"]:
@@ -590,7 +699,31 @@ def render_connection_graph(graph_data, start_y):
         opacity = min(0.72, 0.24 + edge["count"] * 0.09)
         klass = edge_class(edge)
         parts.append(
-            f'<path d="M {x1} {y1} C {x1 + GRAPH_CURVE} {y1}, {x2 - GRAPH_CURVE} {y2}, {x2} {y2}" class="edge {klass}" style="stroke-width:{stroke_width};opacity:{opacity}" />'
+            (
+                '<path d="M '
+                f"{x1}"
+                " "
+                f"{y1}"
+                " C "
+                f"{x1 + GRAPH_CURVE}"
+                " "
+                f"{y1}"
+                ", "
+                f"{x2 - GRAPH_CURVE}"
+                " "
+                f"{y2}"
+                ", "
+                f"{x2}"
+                " "
+                f"{y2}"
+                '" class="edge '
+                f"{klass}"
+                '" style="stroke-width:'
+                f"{stroke_width}"
+                ";opacity:"
+                f"{opacity}"
+                '" />'
+            )
         )
         if edge["count"] >= 3:
             label_x = (x1 + x2) / 2
@@ -604,13 +737,41 @@ def render_connection_graph(graph_data, start_y):
         node_class = "graph-node special" if node["is_special"] else "graph-node"
         out_value = graph_data["out_counts"].get(node["key"], 0)
         parts.append(
-            f'<rect x="{left_x}" y="{y}" width="{GRAPH_NODE_WIDTH}" height="{GRAPH_NODE_HEIGHT}" rx="10" class="{node_class}" />'
+            (
+                '<rect x="'
+                f"{left_x}"
+                '" y="'
+                f"{y}"
+                '" width="'
+                f"{GRAPH_NODE_WIDTH}"
+                '" height="'
+                f"{GRAPH_NODE_HEIGHT}"
+                '" rx="10" class="'
+                f"{node_class}"
+                '" />'
+            )
         )
         parts.append(
-            f'<text x="{left_x + 12}" y="{y + 14}" class="graph-node-label">{xml(node["label"])}</text>'
+            (
+                '<text x="'
+                f"{left_x + 12}"
+                '" y="'
+                f"{y + 14}"
+                '" class="graph-node-label">'
+                f"{xml(node['label'])}"
+                "</text>"
+            )
         )
         parts.append(
-            f'<text x="{left_x + GRAPH_NODE_WIDTH - 10}" y="{y + 14}" text-anchor="end" class="graph-node-metric">{out_value}</text>'
+            (
+                '<text x="'
+                f"{left_x + GRAPH_NODE_WIDTH - 10}"
+                '" y="'
+                f"{y + 14}"
+                '" text-anchor="end" class="graph-node-metric">'
+                f"{out_value}"
+                "</text>"
+            )
         )
 
     for index, node in enumerate(graph_data["right_nodes"]):
@@ -618,13 +779,41 @@ def render_connection_graph(graph_data, start_y):
         node_class = "graph-node special" if node["is_special"] else "graph-node"
         in_value = graph_data["in_counts"].get(node["key"], 0)
         parts.append(
-            f'<rect x="{right_x}" y="{y}" width="{GRAPH_NODE_WIDTH}" height="{GRAPH_NODE_HEIGHT}" rx="10" class="{node_class}" />'
+            (
+                '<rect x="'
+                f"{right_x}"
+                '" y="'
+                f"{y}"
+                '" width="'
+                f"{GRAPH_NODE_WIDTH}"
+                '" height="'
+                f"{GRAPH_NODE_HEIGHT}"
+                '" rx="10" class="'
+                f"{node_class}"
+                '" />'
+            )
         )
         parts.append(
-            f'<text x="{right_x + 12}" y="{y + 14}" class="graph-node-label">{xml(node["label"])}</text>'
+            (
+                '<text x="'
+                f"{right_x + 12}"
+                '" y="'
+                f"{y + 14}"
+                '" class="graph-node-label">'
+                f"{xml(node['label'])}"
+                "</text>"
+            )
         )
         parts.append(
-            f'<text x="{right_x + GRAPH_NODE_WIDTH - 10}" y="{y + 14}" text-anchor="end" class="graph-node-metric">{in_value}</text>'
+            (
+                '<text x="'
+                f"{right_x + GRAPH_NODE_WIDTH - 10}"
+                '" y="'
+                f"{y + 14}"
+                '" text-anchor="end" class="graph-node-metric">'
+                f"{in_value}"
+                "</text>"
+            )
         )
 
     return "\n".join(parts), panel_y + panel_height + 26
@@ -637,12 +826,30 @@ def render_namespace_section(section):
     parts = []
 
     parts.append(
-        f'<rect x="{x}" y="{y}" width="{SECTION_WIDTH}" height="{section["height"]}" rx="22" class="namespace-panel" />'
+        (
+            '<rect x="'
+            f"{x}"
+            '" y="'
+            f"{y}"
+            '" width="'
+            f"{SECTION_WIDTH}"
+            '" height="'
+            f"{section['height']}"
+            '" rx="22" class="namespace-panel" />'
+        )
     )
     parts.append(
         f'<text x="{x + 16}" y="{y + 30}" class="section-title">{xml(section["namespace"])}</text>'
     )
-    stats_line = f'{stats["total"]} policies | IN {stats["ingress"]} | OUT {stats["egress"]} | deny {stats["deny"]}'
+    stats_line = (
+        f"{stats['total']}"
+        " policies | IN "
+        f"{stats['ingress']}"
+        " | OUT "
+        f"{stats['egress']}"
+        " | deny "
+        f"{stats['deny']}"
+    )
     parts.append(
         f'<text x="{x + 16}" y="{y + 52}" class="section-subtitle">{xml(stats_line)}</text>'
     )
@@ -650,13 +857,41 @@ def render_namespace_section(section):
     cursor_y = y + 70
     for policy in section["policies"]:
         parts.append(
-            f'<rect x="{x + 12}" y="{cursor_y}" width="{POLICY_WIDTH}" height="{policy["height"]}" rx="16" class="policy {policy["kind"]}" />'
+            (
+                '<rect x="'
+                f"{x + 12}"
+                '" y="'
+                f"{cursor_y}"
+                '" width="'
+                f"{POLICY_WIDTH}"
+                '" height="'
+                f"{policy['height']}"
+                '" rx="16" class="policy '
+                f"{policy['kind']}"
+                '" />'
+            )
         )
         parts.append(
-            f'<text x="{x + 24}" y="{cursor_y + 24}" class="policy-title">{xml(policy["name"])}</text>'
+            (
+                '<text x="'
+                f"{x + 24}"
+                '" y="'
+                f"{cursor_y + 24}"
+                '" class="policy-title">'
+                f"{xml(policy['name'])}"
+                "</text>"
+            )
         )
         parts.append(
-            f'<text x="{x + 24}" y="{cursor_y + 42}" class="policy-subtitle">{xml(policy["types"])}</text>'
+            (
+                '<text x="'
+                f"{x + 24}"
+                '" y="'
+                f"{cursor_y + 42}"
+                '" class="policy-subtitle">'
+                f"{xml(policy['types'])}"
+                "</text>"
+            )
         )
         text_y = cursor_y + 62
         for line in policy["lines"]:
@@ -675,61 +910,92 @@ def render_svg(namespace_sections, graph_data, context_label):
     positioned, total_height = layout_namespaces(namespace_sections, graph_end_y)
     sections_svg = "\n".join(render_namespace_section(section) for section in positioned)
 
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_WIDTH}" height="{total_height}" viewBox="0 0 {SVG_WIDTH} {total_height}" role="img" aria-labelledby="title desc">
-  <title id="title">Kubernetes NetworkPolicy Inventory</title>
-  <desc id="desc">Overview, connection graph, and per-namespace inventory of live Kubernetes NetworkPolicy objects.</desc>
-  <defs>
-    <style>
-      .bg {{ fill: #f4f1e8; }}
-      .title {{ font: 700 {TITLE_FONT}px 'Segoe UI', Arial, sans-serif; fill: #1d2a33; }}
-      .subtitle {{ font: 500 {SUBTITLE_FONT}px 'Segoe UI', Arial, sans-serif; fill: #50606c; }}
-      .legend {{ font: 600 {SMALL_FONT}px 'Segoe UI', Arial, sans-serif; fill: #33424d; }}
-      .overview-panel {{ fill: #fffaf0; stroke: #d9c9a3; stroke-width: 1.4; }}
-      .namespace-chip {{ fill: #fdfdfc; stroke: #d7dee2; stroke-width: 1.2; }}
-      .chip-title {{ font: 700 14px 'Segoe UI', Arial, sans-serif; fill: #23333d; }}
-      .chip-subtitle {{ font: 500 12px 'Segoe UI', Arial, sans-serif; fill: #5d6f7a; }}
-      .graph-panel {{ fill: #fcfcfb; stroke: #d8e0e4; stroke-width: 1.5; }}
-      .graph-heading {{ font: 700 13px 'Segoe UI', Arial, sans-serif; fill: #2b3d46; }}
-      .graph-guide {{ stroke: #d8dee2; stroke-width: 1; }}
-      .graph-node {{ fill: #f0f7fb; stroke: #aac1cf; stroke-width: 1; }}
-      .graph-node.special {{ fill: #fdf2df; stroke: #d6ba84; }}
-      .graph-node-label {{ font: 600 11px 'Segoe UI', Arial, sans-serif; fill: #20323c; }}
-      .graph-node-metric {{ font: 700 11px Consolas, 'Courier New', monospace; fill: #455a66; }}
-      .edge {{ fill: none; }}
-      .edge.ingress {{ stroke: #4d88c7; marker-end: url(#arrow-ingress); }}
-      .edge.egress {{ stroke: #d48a2b; marker-end: url(#arrow-egress); }}
-      .edge.both {{ stroke: #4a9b69; marker-end: url(#arrow-both); }}
-      .edge-count {{ font: 700 10px Consolas, 'Courier New', monospace; fill: #52656f; text-anchor: middle; }}
-      .namespace-panel {{ fill: #fbfcfb; stroke: #d9e0e3; stroke-width: 1.6; }}
-      .section-title {{ font: 700 {SECTION_TITLE_FONT}px 'Segoe UI', Arial, sans-serif; fill: #18303d; }}
-      .section-subtitle {{ font: 600 12px 'Segoe UI', Arial, sans-serif; fill: #5d6a73; }}
-      .policy-title {{ font: 700 13px 'Segoe UI', Arial, sans-serif; fill: #12222c; }}
-      .policy-subtitle {{ font: 600 11px 'Segoe UI', Arial, sans-serif; fill: #4b5f69; }}
-      .policy-body {{ font: 500 {MONO_FONT}px Consolas, 'Courier New', monospace; fill: #24333b; }}
-      .policy {{ stroke-width: 1.1; }}
-      .policy.ingress {{ fill: #edf6ff; stroke: #98bde6; }}
-      .policy.egress {{ fill: #fff3df; stroke: #d8b574; }}
-      .policy.mixed {{ fill: #ebf7ef; stroke: #8dbca0; }}
-      .policy.deny-both {{ fill: #fdebea; stroke: #db8e88; }}
-      .policy.deny-ingress {{ fill: #f6edff; stroke: #b39bcf; }}
-      .policy.deny-egress {{ fill: #fff0ea; stroke: #d9a08e; }}
-    </style>
-    <marker id="arrow-ingress" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M 0 0 L 10 4 L 0 8 z" fill="#4d88c7" />
-    </marker>
-    <marker id="arrow-egress" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M 0 0 L 10 4 L 0 8 z" fill="#d48a2b" />
-    </marker>
-    <marker id="arrow-both" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M 0 0 L 10 4 L 0 8 z" fill="#4a9b69" />
-    </marker>
-  </defs>
-  <rect class="bg" x="0" y="0" width="{SVG_WIDTH}" height="{total_height}" />
-  {overview_svg}
-  {graph_svg}
-  {sections_svg}
-</svg>
-"""
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="'
+        f"{SVG_WIDTH}"
+        '" height="'
+        f"{total_height}"
+        '" viewBox="0 0 '
+        f"{SVG_WIDTH}"
+        " "
+        f"{total_height}"
+        '" role="img" aria-labelledby="title desc">\n  <title '
+        'id="title">Kubernetes NetworkPolicy Inventory</title>\n  '
+        '<desc id="desc">Overview, connection graph, and '
+        "per-namespace inventory of live Kubernetes NetworkPolicy "
+        "objects.</desc>\n  <defs>\n    <style>\n      .bg { fill: "
+        "#f4f1e8; }\n      .title { font: 700 "
+        f"{TITLE_FONT}"
+        "px 'Segoe UI', Arial, sans-serif; fill: #1d2a33; }\n      "
+        ".subtitle { font: 500 "
+        f"{SUBTITLE_FONT}"
+        "px 'Segoe UI', Arial, sans-serif; fill: #50606c; }\n      "
+        ".legend { font: 600 "
+        f"{SMALL_FONT}"
+        "px 'Segoe UI', Arial, sans-serif; fill: #33424d; }\n      "
+        ".overview-panel { fill: #fffaf0; stroke: #d9c9a3; "
+        "stroke-width: 1.4; }\n      .namespace-chip { fill: #fdfdfc; "
+        "stroke: #d7dee2; stroke-width: 1.2; }\n      .chip-title { "
+        "font: 700 14px 'Segoe UI', Arial, sans-serif; fill: "
+        "#23333d; }\n      .chip-subtitle { font: 500 12px 'Segoe "
+        "UI', Arial, sans-serif; fill: #5d6f7a; }\n      .graph-panel "
+        "{ fill: #fcfcfb; stroke: #d8e0e4; stroke-width: 1.5; "
+        "}\n      .graph-heading { font: 700 13px 'Segoe UI', Arial, "
+        "sans-serif; fill: #2b3d46; }\n      .graph-guide { stroke: "
+        "#d8dee2; stroke-width: 1; }\n      .graph-node { fill: "
+        "#f0f7fb; stroke: #aac1cf; stroke-width: 1; }\n      "
+        ".graph-node.special { fill: #fdf2df; stroke: #d6ba84; "
+        "}\n      .graph-node-label { font: 600 11px 'Segoe UI', "
+        "Arial, sans-serif; fill: #20323c; }\n      "
+        ".graph-node-metric { font: 700 11px Consolas, 'Courier "
+        "New', monospace; fill: #455a66; }\n      .edge { fill: none; "
+        "}\n      .edge.ingress { stroke: #4d88c7; marker-end: "
+        "url(#arrow-ingress); }\n      .edge.egress { stroke: "
+        "#d48a2b; marker-end: url(#arrow-egress); }\n      .edge.both "
+        "{ stroke: #4a9b69; marker-end: url(#arrow-both); }\n      "
+        ".edge-count { font: 700 10px Consolas, 'Courier New', "
+        "monospace; fill: #52656f; text-anchor: middle; }\n      "
+        ".namespace-panel { fill: #fbfcfb; stroke: #d9e0e3; "
+        "stroke-width: 1.6; }\n      .section-title { font: 700 "
+        f"{SECTION_TITLE_FONT}"
+        "px 'Segoe UI', Arial, sans-serif; fill: #18303d; }\n      "
+        ".section-subtitle { font: 600 12px 'Segoe UI', Arial, "
+        "sans-serif; fill: #5d6a73; }\n      .policy-title { font: "
+        "700 13px 'Segoe UI', Arial, sans-serif; fill: #12222c; "
+        "}\n      .policy-subtitle { font: 600 11px 'Segoe UI', "
+        "Arial, sans-serif; fill: #4b5f69; }\n      .policy-body { "
+        "font: 500 "
+        f"{MONO_FONT}"
+        "px Consolas, 'Courier New', monospace; fill: #24333b; "
+        "}\n      .policy { stroke-width: 1.1; }\n      "
+        ".policy.ingress { fill: #edf6ff; stroke: #98bde6; }\n      "
+        ".policy.egress { fill: #fff3df; stroke: #d8b574; }\n      "
+        ".policy.mixed { fill: #ebf7ef; stroke: #8dbca0; }\n      "
+        ".policy.deny-both { fill: #fdebea; stroke: #db8e88; }\n      "
+        ".policy.deny-ingress { fill: #f6edff; stroke: #b39bcf; "
+        "}\n      .policy.deny-egress { fill: #fff0ea; stroke: "
+        '#d9a08e; }\n    </style>\n    <marker id="arrow-ingress" '
+        'markerWidth="10" markerHeight="8" refX="9" refY="4" '
+        'orient="auto">\n      <path d="M 0 0 L 10 4 L 0 8 z" '
+        'fill="#4d88c7" />\n    </marker>\n    <marker '
+        'id="arrow-egress" markerWidth="10" markerHeight="8" '
+        'refX="9" refY="4" orient="auto">\n      <path d="M 0 0 L 10 '
+        '4 L 0 8 z" fill="#d48a2b" />\n    </marker>\n    <marker '
+        'id="arrow-both" markerWidth="10" markerHeight="8" refX="9" '
+        'refY="4" orient="auto">\n      <path d="M 0 0 L 10 4 L 0 8 '
+        'z" fill="#4a9b69" />\n    </marker>\n  </defs>\n  <rect '
+        'class="bg" x="0" y="0" width="'
+        f"{SVG_WIDTH}"
+        '" height="'
+        f"{total_height}"
+        '" />\n  '
+        f"{overview_svg}"
+        "\n  "
+        f"{graph_svg}"
+        "\n  "
+        f"{sections_svg}"
+        "\n</svg>\n"
+    )
 
 
 def main():

@@ -20,15 +20,11 @@ class OllamaModelPersistenceTest(unittest.TestCase):
             deployment = load_yaml(path)
             pod_spec = deployment["spec"]["template"]["spec"]
             ollama = next(
-                container
-                for container in pod_spec["containers"]
-                if container["name"] == "ollama"
+                container for container in pod_spec["containers"] if container["name"] == "ollama"
             )
 
             self.assertEqual("nvidia", pod_spec["runtimeClassName"], path)
-            self.assertEqual(
-                {"nvidia.com/gpu.present": "true"}, pod_spec["nodeSelector"], path
-            )
+            self.assertEqual({"nvidia.com/gpu.present": "true"}, pod_spec["nodeSelector"], path)
             self.assertEqual(1, ollama["resources"]["limits"]["nvidia.com/gpu"], path)
 
     def test_model_pullers_reuse_models_from_persistent_storage(self):
@@ -44,9 +40,7 @@ class OllamaModelPersistenceTest(unittest.TestCase):
         for path, claim_name, model in deployments:
             deployment = load_yaml(path)
             pod_spec = deployment["spec"]["template"]["spec"]
-            containers = {
-                container["name"]: container for container in pod_spec["containers"]
-            }
+            containers = {container["name"]: container for container in pod_spec["containers"]}
             puller = containers["model-puller"]
             ollama = containers["ollama"]
             command = puller["command"][2]
@@ -55,9 +49,7 @@ class OllamaModelPersistenceTest(unittest.TestCase):
             self.assertIn(f"ollama pull {model}", command, path)
             self.assertLess(command.index("ollama show"), command.index("ollama pull"))
             data_mount = next(
-                mount
-                for mount in ollama["volumeMounts"]
-                if mount["mountPath"] == "/ollama"
+                mount for mount in ollama["volumeMounts"] if mount["mountPath"] == "/ollama"
             )
             self.assertIn(
                 {

@@ -25,7 +25,9 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
         self.assertTrue(security["runAsNonRoot"], path)
         self.assertEqual(uid, security["runAsUser"], path)
         self.assertEqual(gid, security["runAsGroup"], path)
-        seccomp = security.get("seccompProfile", pod_spec.get("securityContext", {}).get("seccompProfile"))
+        seccomp = security.get(
+            "seccompProfile", pod_spec.get("securityContext", {}).get("seccompProfile")
+        )
         self.assertEqual("RuntimeDefault", seccomp["type"], path)
 
     def test_stateless_workloads_have_explicit_restricted_contexts(self):
@@ -131,9 +133,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
             with self.subTest(path=path, container=container_name):
                 pod_spec = load_yaml(path)["spec"]["template"]["spec"]
                 container = next(
-                    item
-                    for item in pod_spec["containers"]
-                    if item["name"] == container_name
+                    item for item in pod_spec["containers"] if item["name"] == container_name
                 )
                 security = container["securityContext"]
 
@@ -144,6 +144,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                 self.assertTrue(security["runAsNonRoot"])
                 if uid is not None:
                     self.assertEqual(uid, security["runAsUser"])
+
 
 if __name__ == "__main__":
     unittest.main()

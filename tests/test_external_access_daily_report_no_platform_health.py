@@ -28,7 +28,9 @@ class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
     def test_platform_health_app_does_not_grant_external_access_report_rbac(self):
         source = PLATFORM_APP.read_text(encoding="utf-8")
 
-        self.assertNotIn("cluster-role-binding-external-access-daily-report-platform-health.yaml", source)
+        self.assertNotIn(
+            "cluster-role-binding-external-access-daily-report-platform-health.yaml", source
+        )
 
     def test_large_generated_configmap_uses_server_side_apply(self):
         application = yaml.safe_load(ANALYTICS_APP.read_text(encoding="utf-8"))

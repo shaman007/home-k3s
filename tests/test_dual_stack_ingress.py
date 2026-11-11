@@ -34,7 +34,9 @@ class DualStackIngressTest(unittest.TestCase):
         networks = []
         for path in ROOT.glob("talos/dual-stack-node-*.yaml"):
             node = yaml.safe_load(path.read_text())
-            network = ip_network(node["machine"]["nodeAnnotations"]["network.cilium.io/ipv6-pod-cidr"])
+            network = ip_network(
+                node["machine"]["nodeAnnotations"]["network.cilium.io/ipv6-pod-cidr"]
+            )
             self.assertEqual(6, network.version)
             self.assertEqual(64, network.prefixlen)
             self.assertFalse(network.overlaps(ipv6_service))
@@ -44,7 +46,9 @@ class DualStackIngressTest(unittest.TestCase):
 
     def test_native_smtp_uses_existing_backend_and_keeps_outgoing_ipv4(self):
         direct = yaml.safe_load((ROOT / "mail/ingress-route-tcp-postfix-smtp.yaml").read_text())
-        existing = yaml.safe_load((ROOT / "mail/ingress-route-tcp-postfix-submission.yaml").read_text())
+        existing = yaml.safe_load(
+            (ROOT / "mail/ingress-route-tcp-postfix-submission.yaml").read_text()
+        )
         self.assertEqual(["smtp"], direct["spec"]["entryPoints"])
         self.assertEqual(existing["spec"]["routes"], direct["spec"]["routes"])
         config = yaml.safe_load((ROOT / "mail/config-map-main-cf.yaml").read_text())["data"]

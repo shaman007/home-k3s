@@ -106,5 +106,5 @@ in a disposable cluster first, including revision-bump/watch-cache requirements.
 An etcdutl restore test alone is not a reason to bypass that rehearsal before
 network renumbering.
 
-References: https://github.com/siderolabs/talos-backup and
-https://docs.siderolabs.com/talos/v1.14/disaster-recovery/disaster-recovery.
+References: <https://github.com/siderolabs/talos-backup> and
+<https://docs.siderolabs.com/talos/v1.14/disaster-recovery/disaster-recovery>.

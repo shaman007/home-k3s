@@ -136,6 +136,42 @@ alerts. No database, homeserver, cluster resource or persistent data was removed
 - After unused-tool removal, the full local suite passed: 384 tests, 21 skips.
   No changes in this batch were committed or pushed by the agent.
 
+## Further source remediation
+
+- Documented 28 public CI functions with their actual contracts, removed an unused
+  import and moved JSON imports to module scope. The five selected CI modules pass
+  current Pylint checks for missing module/class/function documentation, line
+  length, statement layout, import placement and unused imports/locals. Other
+  rule families, including filename conventions and complexity, remain work.
+- Removed `specs/001-cluster-hardening-backlog/plan.md`: it was an unfilled
+  `[FEATURE]` template with placeholder architecture choices, not an implementation
+  plan. The substantive specification and checklist remain; no repository document
+  links to the removed placeholder.
+- Converted 12 plain documentation URLs to explicit Markdown autolinks without
+  changing their destinations, including historical archive documentation.
+- Prepared explicit snapshot-controller hardening for Opengrep alert 3434:
+  no privilege escalation, read-only root filesystem, drop ALL capabilities and
+  RuntimeDefault seccomp. Read-only inspection found three ready replicas with no
+  restarts, only projected service-account mounts and an upstream image declaring
+  UID 0. The patch preserves that identity rather than inventing an untested UID.
+  All eight built-in application resources pass kubeconform; all three CRDs pass
+  the repository's separate CRD checks. Live rollout is not yet verified.
+
+The standalone `mastodon/tools/list_bookmarked_media_s3.rb` was an unused older
+copy exporting a plain URL list. Removed it rather than maintain a second version.
+The active CronJob mounts `bookmarked-media-sync-scripts` and uses the Ruby script
+embedded in that ConfigMap, which exports JSONL with descriptions and S3 existence
+checks. That canonical workflow is retained. The obsolete file accounts for all
+31 historical RuboCop alerts; their scanner closure remains to be verified.
+
+The next formatting pass covers all 28 retained test files associated with 312
+historical line-length, spacing, indentation and multiple-statement reports.
+Ruff formatting plus explicit literal wrapping preserves every executable AST,
+including the exact fixture strings. All 28 now pass current Pylint C0301/C0321
+checks. The full suite passed with 384 tests and 21 skips. These are source fixes;
+the legacy alert configurations still require matching rescans before closure can
+be claimed. No style alerts were dismissed.
+
 ## Remaining dispositions
 
 Router TLS verification, subprocess audit findings and remaining lint/correctness

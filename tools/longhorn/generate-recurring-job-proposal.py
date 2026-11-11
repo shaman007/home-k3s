@@ -44,8 +44,12 @@ def recurring_job(name, cron, retain, task, concurrency, groups=None, labels=Non
     }
 
 
-jobs = run_json(["kubectl", "get", "recurringjobs.longhorn.io", "-n", NAMESPACE, "-o", "json"])["items"]
-volumes = run_json(["kubectl", "get", "volumes.longhorn.io", "-n", NAMESPACE, "-o", "json"])["items"]
+jobs = run_json(["kubectl", "get", "recurringjobs.longhorn.io", "-n", NAMESPACE, "-o", "json"])[
+    "items"
+]
+volumes = run_json(["kubectl", "get", "volumes.longhorn.io", "-n", NAMESPACE, "-o", "json"])[
+    "items"
+]
 job_by_name = {job["metadata"]["name"]: job for job in jobs}
 
 proposed_jobs = [
@@ -108,7 +112,9 @@ for volume in sorted(
             notes.append("Preserves the only 15-minute filesystem-trim schedule in the cluster.")
         elif any("* * * *" in cron and cron != "*/15 * * * *" for cron in trim_crons):
             proposed_groups.append("trim-hourly")
-            notes.append("Normalizes hourly filesystem-trim volumes onto a shared off-peak hourly schedule.")
+            notes.append(
+                "Normalizes hourly filesystem-trim volumes onto a shared off-peak hourly schedule."
+            )
         else:
             proposed_groups.append(trim_daily_groups[trim_daily_index % len(trim_daily_groups)])
             trim_daily_index += 1
@@ -132,15 +138,16 @@ for volume in sorted(
         notes.append("Carries forward the current snapshot policy for this volume.")
 
     if not current_jobs:
-        notes.append("Current behavior has no recurring jobs; proposal keeps this volume unmanaged.")
+        notes.append(
+            "Current behavior has no recurring jobs; proposal keeps this volume unmanaged."
+        )
 
     if volume.get("spec", {}).get("fromBackup"):
-        notes.append("Volume was created from backup; keep restore semantics in mind before changing labels.")
+        notes.append(
+            "Volume was created from backup; keep restore semantics in mind before changing labels."
+        )
 
-    label_map = {
-        f"recurring-job.longhorn.io/{group}": "enabled"
-        for group in proposed_groups
-    }
+    label_map = {f"recurring-job.longhorn.io/{group}": "enabled" for group in proposed_groups}
 
     for group in proposed_groups:
         policy_group_counts[group] += 1
@@ -158,7 +165,9 @@ for volume in sorted(
                 }
             ),
             "fromBackup": bool(volume.get("spec", {}).get("fromBackup")),
-            "restoreVolumeRecurringJob": volume.get("spec", {}).get("restoreVolumeRecurringJob", "ignored"),
+            "restoreVolumeRecurringJob": volume.get("spec", {}).get(
+                "restoreVolumeRecurringJob", "ignored"
+            ),
             "currentRecurringJobs": current_refs,
             "currentTasks": sorted({job["spec"]["task"] for job in current_jobs}),
             "proposedRecurringJobGroups": proposed_groups,
@@ -179,9 +188,20 @@ mapping_doc = {
     "generatedAt": date.today().isoformat(),
     "sourceNamespace": NAMESPACE,
     "implementationNotes": [
-        "For existing volumes, apply recurring-job.longhorn.io/<job>=enabled on the Longhorn Volume resource.",
-        "For workload manifests, prefer PVC or volumeClaimTemplate labels and also set recurring-job.longhorn.io/source=enabled so Longhorn syncs recurring-job labels from the PVC to the Volume.",
-        "StorageClass recurringJobSelector is useful for new volumes but will not retrofit existing volumes.",
+        (
+            "For existing volumes, apply recurring-job.longhorn.io/<job>"
+            "=enabled on the Longhorn Volume resource."
+        ),
+        (
+            "For workload manifests, prefer PVC or volumeClaimTemplate "
+            "labels and also set "
+            "recurring-job.longhorn.io/source=enabled so Longhorn syncs "
+            "recurring-job labels from the PVC to the Volume."
+        ),
+        (
+            "StorageClass recurringJobSelector is useful for new volumes "
+            "but will not retrofit existing volumes."
+        ),
     ],
     "summary": {
         "liveRecurringJobs": len(jobs),
@@ -193,7 +213,11 @@ mapping_doc = {
 }
 mapping_header = [
     "# Proposed recurring-job group assignments for Longhorn-backed volumes.",
-    "# Use these labels on Longhorn Volume objects or the corresponding PVC/PVC template workflow once you choose an implementation path.",
+    (
+        "# Use these labels on Longhorn Volume objects or the "
+        "corresponding PVC/PVC template workflow once you choose an "
+        "implementation path."
+    ),
 ]
 OUTPUT_MAPPING.write_text(
     "\n".join(mapping_header) + "\n" + to_yaml(mapping_doc) + "\n",

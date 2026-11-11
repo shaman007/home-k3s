@@ -2,9 +2,9 @@
 
 Omni v1.12.4, chart 2.12.4, one replica with embedded etcd and a 10 GiB Longhorn volume.
 
-- UI/API: https://omni.w386.k8s.my.lan
-- Kubernetes proxy: https://omni-k8s.w386.k8s.my.lan
-- SideroLink API: https://omni-siderolink.w386.k8s.my.lan
+- UI/API: <https://omni.w386.k8s.my.lan>
+- Kubernetes proxy: <https://omni-k8s.w386.k8s.my.lan>
+- SideroLink API: <https://omni-siderolink.w386.k8s.my.lan>
 
 All three names resolve internally to Traefik at 192.168.1.210. TLS uses the existing
 `vault-acme` ClusterIssuer. Sign in through Keycloak (`omni-test` client in the

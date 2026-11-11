@@ -32,7 +32,9 @@ def sample(name: str, value: object, labels: dict[str, object] | None = None) ->
         return None
     suffix = ""
     if labels:
-        suffix = "{" + ",".join(f'{key}="{label(item)}"' for key, item in sorted(labels.items())) + "}"
+        suffix = (
+            "{" + ",".join(f'{key}="{label(item)}"' for key, item in sorted(labels.items())) + "}"
+        )
     return f"{name}{suffix} {numeric:g}"
 
 
@@ -42,21 +44,37 @@ def metric(lines: list[str], name: str, help_text: str, metric_type: str = "gaug
 
 def gpu_metrics() -> list[str]:
     fields = [
-        "index", "name", "uuid", "temperature.gpu", "utilization.gpu",
-        "utilization.memory", "memory.total", "memory.used", "memory.free",
-        "power.draw", "power.limit", "fan.speed", "clocks.current.graphics",
+        "index",
+        "name",
+        "uuid",
+        "temperature.gpu",
+        "utilization.gpu",
+        "utilization.memory",
+        "memory.total",
+        "memory.used",
+        "memory.free",
+        "power.draw",
+        "power.limit",
+        "fan.speed",
+        "clocks.current.graphics",
         "clocks.current.memory",
     ]
     completed = subprocess.run(
         ["/usr/bin/nvidia-smi", f"--query-gpu={','.join(fields)}", "--format=csv,noheader,nounits"],
-        check=False, capture_output=True, text=True, timeout=20,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
     )
     lines: list[str] = []
     definitions = {
         "linux_host_gpu_info": ("Static NVIDIA GPU information.", "gauge"),
         "linux_host_gpu_temperature_celsius": ("NVIDIA GPU temperature in Celsius.", "gauge"),
         "linux_host_gpu_utilization_percent": ("NVIDIA GPU utilization percentage.", "gauge"),
-        "linux_host_gpu_memory_utilization_percent": ("NVIDIA memory-controller utilization percentage.", "gauge"),
+        "linux_host_gpu_memory_utilization_percent": (
+            "NVIDIA memory-controller utilization percentage.",
+            "gauge",
+        ),
         "linux_host_gpu_memory_total_bytes": ("NVIDIA GPU memory capacity in bytes.", "gauge"),
         "linux_host_gpu_memory_used_bytes": ("NVIDIA GPU memory used in bytes.", "gauge"),
         "linux_host_gpu_memory_free_bytes": ("NVIDIA GPU memory free in bytes.", "gauge"),
@@ -65,7 +83,10 @@ def gpu_metrics() -> list[str]:
         "linux_host_gpu_fan_percent": ("NVIDIA GPU fan speed percentage.", "gauge"),
         "linux_host_gpu_graphics_clock_hertz": ("NVIDIA GPU graphics clock in hertz.", "gauge"),
         "linux_host_gpu_memory_clock_hertz": ("NVIDIA GPU memory clock in hertz.", "gauge"),
-        "linux_host_gpu_collector_success": ("Whether NVIDIA GPU collection completed successfully.", "gauge"),
+        "linux_host_gpu_collector_success": (
+            "Whether NVIDIA GPU collection completed successfully.",
+            "gauge",
+        ),
     }
     for name, (help_text, kind) in definitions.items():
         metric(lines, name, help_text, kind)
@@ -129,7 +150,9 @@ def smart_metrics() -> list[str]:
         "linux_host_smart_nvme_media_errors_total": "NVMe media and data-integrity errors.",
         "linux_host_smart_nvme_error_log_entries_total": "NVMe error information log entries.",
         "linux_host_smart_nvme_unsafe_shutdowns_total": "NVMe unsafe shutdown count.",
-        "linux_host_smart_collector_success": "Whether SMART collection found at least one readable device.",
+        ("linux_host_smart_collector_success"): (
+            "Whether SMART collection found at least one readable device."
+        ),
     }
     for name, help_text in definitions.items():
         metric(lines, name, help_text)
@@ -144,7 +167,10 @@ def smart_metrics() -> list[str]:
             command.extend(("-a", "-j", str(device)))
             completed = subprocess.run(
                 command,
-                check=False, capture_output=True, text=True, timeout=45,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=45,
             )
             try:
                 data = json.loads(completed.stdout)
@@ -154,7 +180,9 @@ def smart_metrics() -> list[str]:
                 break
             time.sleep(1)
         if not data:
-            lines.append(sample("linux_host_smart_scrape_success", 0, {"device": device.name}) or "")
+            lines.append(
+                sample("linux_host_smart_scrape_success", 0, {"device": device.name}) or ""
+            )
             continue
         model = data.get("model_name") or data.get("model_family") or "unknown"
         serial = data.get("serial_number") or "unknown"
@@ -176,7 +204,10 @@ def smart_metrics() -> list[str]:
             if rendered:
                 lines.append(rendered)
 
-        attributes = {item.get("name"): item.get("raw", {}).get("value") for item in data.get("ata_smart_attributes", {}).get("table", [])}
+        attributes = {
+            item.get("name"): item.get("raw", {}).get("value")
+            for item in data.get("ata_smart_attributes", {}).get("table", [])
+        }
         for attribute, name in (
             ("Reallocated_Sector_Ct", "linux_host_smart_reallocated_sectors"),
             ("Current_Pending_Sector", "linux_host_smart_pending_sectors"),
@@ -204,7 +235,9 @@ def smart_metrics() -> list[str]:
 
 def write_atomic(output: Path, lines: list[str]) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", dir=output.parent, prefix=f".{output.name}.", delete=False) as temporary:
+    with tempfile.NamedTemporaryFile(
+        "w", dir=output.parent, prefix=f".{output.name}.", delete=False
+    ) as temporary:
         temporary.write("\n".join(lines) + "\n")
         temporary_path = Path(temporary.name)
     temporary_path.chmod(0o644)

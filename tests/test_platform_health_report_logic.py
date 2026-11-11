@@ -14,7 +14,10 @@ SCRIPT_CONFIGMAP = ROOT / "metrics" / "config-map-platform-health-report-scripts
 def load_report_functions():
     configmap = yaml.safe_load(SCRIPT_CONFIGMAP.read_text(encoding="utf-8"))
     namespace = {"__name__": "platform_health_report_test"}
-    exec(compile(configmap["data"]["platform-health-report.py"], str(SCRIPT_CONFIGMAP), "exec"), namespace)
+    exec(
+        compile(configmap["data"]["platform-health-report.py"], str(SCRIPT_CONFIGMAP), "exec"),
+        namespace,
+    )
     return namespace
 
 
@@ -24,29 +27,62 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         cls.report = load_report_functions()
 
     def test_restart_metrics_coalesce_recreated_pods_without_changing_checks(self):
-        checks = [{"name": "restarts", "passed": True, "failures": 0, "details": [
-            {"namespace": "test", "item": "recreated/worker", "value_name": "restarts_24h", "value": 2},
-            {"namespace": "test", "item": "recreated/worker", "value_name": "restarts_24h", "value": 3},
-        ]}]
+        checks = [
+            {
+                "name": "restarts",
+                "passed": True,
+                "failures": 0,
+                "details": [
+                    {
+                        "namespace": "test",
+                        "item": "recreated/worker",
+                        "value_name": "restarts_24h",
+                        "value": 2,
+                    },
+                    {
+                        "namespace": "test",
+                        "item": "recreated/worker",
+                        "value_name": "restarts_24h",
+                        "value": 3,
+                    },
+                ],
+            }
+        ]
         before = deepcopy(checks)
         metrics = self.report["render_metrics"](checks)
-        samples = [line for line in metrics.splitlines() if line.startswith("platform_health_detail_value{")]
-        self.assertEqual(samples, ['platform_health_detail_value{check="restarts_24h",namespace="test",item="recreated/worker"} 5.0'])
+        samples = [
+            line
+            for line in metrics.splitlines()
+            if line.startswith("platform_health_detail_value{")
+        ]
+        self.assertEqual(
+            samples,
+            [
+                'platform_health_detail_value{check="restarts_24h",namespace="test",'
+                'item="recreated/worker"} 5.0'
+            ],
+        )
         self.assertEqual(checks, before)
         self.assertIn('platform_health_check_status{scope="cluster",check="restarts"} 1', metrics)
 
     def healthy_application(self, name="example"):
-        return {"metadata": {"namespace": "argocd", "name": name},
-                "spec": {"syncPolicy": {"automated": {"selfHeal": True}}},
-                "status": {"health": {"status": "Healthy"}, "sync": {"status": "Synced"}}}
+        return {
+            "metadata": {"namespace": "argocd", "name": name},
+            "spec": {"syncPolicy": {"automated": {"selfHeal": True}}},
+            "status": {"health": {"status": "Healthy"}, "sync": {"status": "Synced"}},
+        }
 
     def test_argocd_automation_and_lenka_exception(self):
         app = self.healthy_application()
         for enabled in (None, True):
             app["spec"]["syncPolicy"]["automated"]["enabled"] = enabled
             self.assertTrue(self.report["argocd_application_check"]([app])["passed"])
-        for policy in ({}, {"automated": None}, {"automated": {}},
-                       {"automated": {"enabled": False, "selfHeal": True}}):
+        for policy in (
+            {},
+            {"automated": None},
+            {"automated": {}},
+            {"automated": {"enabled": False, "selfHeal": True}},
+        ):
             app["spec"]["syncPolicy"] = policy
             self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
         app = self.healthy_application("lenka")
@@ -74,11 +110,15 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         variants = []
         for phase in ("Running", "Terminating", "Failed", "Error"):
             app = deepcopy(base)
-            app["status"]["operationState"] = {"phase": phase,
-                "startedAt": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()}
+            app["status"]["operationState"] = {
+                "phase": phase,
+                "startedAt": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
+            }
             variants.append(app)
-        for metadata in ({"annotations": {"argocd.argoproj.io/skip-reconcile": "true"}},
-                         {"deletionTimestamp": "2026-11-01T00:00:00Z"}):
+        for metadata in (
+            {"annotations": {"argocd.argoproj.io/skip-reconcile": "true"}},
+            {"deletionTimestamp": "2026-11-01T00:00:00Z"},
+        ):
             app = deepcopy(base)
             app["metadata"].update(metadata)
             variants.append(app)
@@ -103,11 +143,14 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
     def test_argocd_collection_failure_is_reported(self):
         def denied(path):
             raise PermissionError("denied")
+
         self.assertFalse(self.report["collect_argocd_check"](denied)["passed"])
         paths = []
+
         def kube(path):
             paths.append(path)
             return {"items": [self.healthy_application()]}
+
         self.assertTrue(self.report["collect_argocd_check"](kube)["passed"])
         self.assertEqual(paths, ["/apis/argoproj.io/v1alpha1/applications"])
 
@@ -117,18 +160,28 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
             ("traefik-private", "traefik-private.traefik.svc.cluster.local"),
         ]:
             with self.subTest(ingress_class=ingress_class):
-                with patch.dict("os.environ", {}, clear=True), patch(
-                    "socket.create_connection", side_effect=RuntimeError("probe intercepted")
-                ) as connect:
+                with (
+                    patch.dict("os.environ", {}, clear=True),
+                    patch(
+                        "socket.create_connection", side_effect=RuntimeError("probe intercepted")
+                    ) as connect,
+                ):
                     with self.assertRaisesRegex(RuntimeError, "probe intercepted"):
                         self.report["live_tls_cert_days_left"]("test.k8s.my.lan", ingress_class)
                     connect.assert_called_once_with((destination, 443), timeout=10)
 
     def test_internal_public_domain_uses_public_trust(self):
-        for host in ("grafana.int.andreybondarenko.com", "cloud.andreybondarenko.com", "legacy.k8s.my.lan"):
-            with self.subTest(host=host), patch("ssl.create_default_context") as verified, patch(
-                "ssl._create_unverified_context"
-            ) as unverified, patch("socket.create_connection", side_effect=RuntimeError("intercepted")):
+        for host in (
+            "grafana.int.andreybondarenko.com",
+            "cloud.andreybondarenko.com",
+            "legacy.k8s.my.lan",
+        ):
+            with (
+                self.subTest(host=host),
+                patch("ssl.create_default_context") as verified,
+                patch("ssl._create_unverified_context") as unverified,
+                patch("socket.create_connection", side_effect=RuntimeError("intercepted")),
+            ):
                 with self.assertRaisesRegex(RuntimeError, "intercepted"):
                     self.report["live_tls_cert_days_left"](host, "traefik-private")
                 verified.assert_called_once_with()
@@ -143,29 +196,44 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertFalse(internal("cloud.andreybondarenko.com", "traefik"))
 
     def test_certificate_collection_checks_backend_expiry_and_failed_renewals(self):
-        certificate = {"metadata": {"namespace": "openbao", "name": "backend-tls"},
-                       "status": {"conditions": [{"type": "Ready", "status": "True"}],
-                                  "notAfter": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()}}
-        issuer = {"metadata": {"name": "internal-prod"},
-                  "status": {"conditions": [{"type": "Ready", "status": "True"}]}}
+        certificate = {
+            "metadata": {"namespace": "openbao", "name": "backend-tls"},
+            "status": {
+                "conditions": [{"type": "Ready", "status": "True"}],
+                "notAfter": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
+            },
+        }
+        issuer = {
+            "metadata": {"name": "internal-prod"},
+            "status": {"conditions": [{"type": "Ready", "status": "True"}]},
+        }
+
         def kube(path):
             return {"items": [certificate] if path.endswith("/certificates") else [issuer]}
+
         check = self.report["collect_certificate_check"]
         self.assertTrue(check(kube)["passed"])
         certificate["status"]["failedIssuanceAttempts"] = 1
         self.assertFalse(check(kube)["passed"])
         del certificate["status"]["failedIssuanceAttempts"]
-        certificate["status"]["notAfter"] = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        certificate["status"]["notAfter"] = (
+            datetime.now(timezone.utc) + timedelta(days=2)
+        ).isoformat()
         self.assertFalse(check(kube)["passed"])
-        certificate["status"]["notAfter"] = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
+        certificate["status"]["notAfter"] = (
+            datetime.now(timezone.utc) + timedelta(days=60)
+        ).isoformat()
         issuer["status"]["conditions"][0]["status"] = "False"
         self.assertFalse(check(kube)["passed"])
 
     def test_certificate_collection_failure_keeps_email_report_running(self):
         def denied(path):
             raise PermissionError("denied")
+
         self.assertFalse(self.report["collect_certificate_check"](denied)["passed"])
-        self.assertFalse(self.report["collect_certificate_check"](lambda _: {"items": []})["passed"])
+        self.assertFalse(
+            self.report["collect_certificate_check"](lambda _: {"items": []})["passed"]
+        )
 
     def test_token_renewal_uses_cronjob_last_success(self):
         now = datetime.now(timezone.utc)
@@ -192,8 +260,12 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
             "status": {"lastSuccessfulTime": now.isoformat()},
         }
 
-        self.assertFalse(self.report["cronjob_recently_succeeded"](stale, now - timedelta(hours=24))[0])
-        self.assertFalse(self.report["cronjob_recently_succeeded"](suspended, now - timedelta(hours=24))[0])
+        self.assertFalse(
+            self.report["cronjob_recently_succeeded"](stale, now - timedelta(hours=24))[0]
+        )
+        self.assertFalse(
+            self.report["cronjob_recently_succeeded"](suspended, now - timedelta(hours=24))[0]
+        )
 
     def test_certificate_check_only_uses_tls_declared_hosts(self):
         ingress = {

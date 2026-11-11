@@ -5,7 +5,9 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "argocd" / "application-metrics-server.yaml"
 POLICY_APP = ROOT / "argocd" / "application-metrics-server-network-policy.yaml"
-KUBELET_POLICY = ROOT / "kube-system" / "cilium-network-policy-metrics-server-allow-egress-kubelets.yaml"
+KUBELET_POLICY = (
+    ROOT / "kube-system" / "cilium-network-policy-metrics-server-allow-egress-kubelets.yaml"
+)
 
 
 class MetricsServerGitopsTest(unittest.TestCase):

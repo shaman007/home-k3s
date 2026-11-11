@@ -47,6 +47,14 @@ spec:
       containers:
         - name: snapshot-controller
           image: harbor.andreybondarenko.com/k8s/sig-storage/snapshot-controller:v8.7.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           args:
             - "--v=5"
             - "--leader-election=true"

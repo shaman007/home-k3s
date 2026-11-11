@@ -13,37 +13,101 @@ CLUSTER = "https://kubernetes.default.svc"
 REPOSITORY = "https://github.com/shaman007/home-k3s.git"
 
 PROJECT_APPLICATIONS = {
-    "backup-rsync", "bastioncam", "bitwarden", "ca-scanner", "clamav", "collabora",
-    "comfyui", "convertx", "dawarich", "element", "firefox-sync", "harbor",
-    "harbor-custom", "harbor-network-policy", "hister", "homeassistant",
-    "image-builder", "immich", "karakeep", "keycloak", "mail",
-    "mastodon", "mastodon-custom", "mempalace", "minecraft", "nextcloud",
-    "nllb", "ollama", "ollama-small", "ooni", "open-terminal", "open-webui",
-    "plex", "ripe-atlas", "searxng", "stirling-pdf", "talos-backup", "wordpress", "year",
+    "backup-rsync",
+    "bastioncam",
+    "bitwarden",
+    "ca-scanner",
+    "clamav",
+    "collabora",
+    "comfyui",
+    "convertx",
+    "dawarich",
+    "element",
+    "firefox-sync",
+    "harbor",
+    "harbor-custom",
+    "harbor-network-policy",
+    "hister",
+    "homeassistant",
+    "image-builder",
+    "immich",
+    "karakeep",
+    "keycloak",
+    "mail",
+    "mastodon",
+    "mastodon-custom",
+    "mempalace",
+    "minecraft",
+    "nextcloud",
+    "nllb",
+    "ollama",
+    "ollama-small",
+    "ooni",
+    "open-terminal",
+    "open-webui",
+    "plex",
+    "ripe-atlas",
+    "searxng",
+    "stirling-pdf",
+    "talos-backup",
+    "wordpress",
+    "year",
     "your-spotify",
 }
 
 PROJECT_PLATFORM = {
-    "crowdsec", "crowdsec-config",
-    "argocd-deploy", "argocd-install", "cert-manager", "cilium", "coredns-custom",
-    "external-secrets", "external-secrets-network-policy", "gpu-operator",
-    "headlamp", "metallb", "godaddy-webhook",
-    "metallb-config", "metrics-server", "metrics-server-network-policy",
-    "openbao", "openbao-custom", "openbao-network-policy", "reloader", "traefik",
-    "traefik-network-policy", "traefik-private",
+    "crowdsec",
+    "crowdsec-config",
+    "argocd-deploy",
+    "argocd-install",
+    "cert-manager",
+    "cilium",
+    "coredns-custom",
+    "external-secrets",
+    "external-secrets-network-policy",
+    "gpu-operator",
+    "headlamp",
+    "metallb",
+    "godaddy-webhook",
+    "metallb-config",
+    "metrics-server",
+    "metrics-server-network-policy",
+    "openbao",
+    "openbao-custom",
+    "openbao-network-policy",
+    "reloader",
+    "traefik",
+    "traefik-network-policy",
+    "traefik-private",
 }
 
 PROJECT_STORAGE = {
-    "kubernetes-snapshot-controller", "longhorn", "longhorn-custom", "seaweedfs",
+    "kubernetes-snapshot-controller",
+    "longhorn",
+    "longhorn-custom",
+    "seaweedfs",
 }
 
 PROJECT_OBSERVABILITY = {
-    "alloy", "connectivity-exporter-core",
-    "connectivity-exporter-network-policy", "external-access-analytics",
-    "finance-ticker", "grafana", "kube-node-exporter", "kube-state-metrics",
-    "kubernetes-prometheus", "logs-check", "loki", "loki-external-secrets",
-    "loki-network-policy", "monitoring-ingress", "monitoring-network-policy",
-    "opensearch", "platform-health", "thanos", "unifi-exporter",
+    "alloy",
+    "connectivity-exporter-core",
+    "connectivity-exporter-network-policy",
+    "external-access-analytics",
+    "finance-ticker",
+    "grafana",
+    "kube-node-exporter",
+    "kube-state-metrics",
+    "kubernetes-prometheus",
+    "logs-check",
+    "loki",
+    "loki-external-secrets",
+    "loki-network-policy",
+    "monitoring-ingress",
+    "monitoring-network-policy",
+    "opensearch",
+    "platform-health",
+    "thanos",
+    "unifi-exporter",
 }
 
 PROJECT_ACCESS_MANAGEMENT = {"lenka"}
@@ -64,14 +128,35 @@ SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
 MANUAL_SYNC_APPLICATIONS = set()
 
 PRUNE_REQUIRED_APPLICATIONS = {
-    "alloy", "ca-scanner", "clamav", "comfyui", "connectivity-exporter-network-policy",
-    "convertx", "coredns-custom", "external-access-analytics",
-    "external-secrets-network-policy", "finance-ticker", "harbor-network-policy",
-    "headlamp", "hister", "homeassistant", "image-builder", "kube-node-exporter",
-    "kube-state-metrics", "logs-check", "loki-network-policy", "metallb-config",
-    "metrics-server-network-policy", "monitoring-ingress", "monitoring-network-policy",
-    "open-terminal", "openbao-network-policy", "platform-health",
-    "traefik-network-policy", "unifi-exporter", "year",
+    "alloy",
+    "ca-scanner",
+    "clamav",
+    "comfyui",
+    "connectivity-exporter-network-policy",
+    "convertx",
+    "coredns-custom",
+    "external-access-analytics",
+    "external-secrets-network-policy",
+    "finance-ticker",
+    "harbor-network-policy",
+    "headlamp",
+    "hister",
+    "homeassistant",
+    "image-builder",
+    "kube-node-exporter",
+    "kube-state-metrics",
+    "logs-check",
+    "loki-network-policy",
+    "metallb-config",
+    "metrics-server-network-policy",
+    "monitoring-ingress",
+    "monitoring-network-policy",
+    "open-terminal",
+    "openbao-network-policy",
+    "platform-health",
+    "traefik-network-policy",
+    "unifi-exporter",
+    "year",
 }
 
 EXTRA_DESTINATIONS_BY_APPLICATION = {
@@ -83,7 +168,12 @@ PROJECT_SYNC_WAVES = {
 }
 
 EXPECTED_CLUSTER_PERMISSIONS = {
-    "infra-guards": {("admissionregistration.k8s.io", "MutatingAdmissionPolicy"), ("admissionregistration.k8s.io", "MutatingAdmissionPolicyBinding"), ("rbac.authorization.k8s.io", "ClusterRole"), ("rbac.authorization.k8s.io", "ClusterRoleBinding")},
+    "infra-guards": {
+        ("admissionregistration.k8s.io", "MutatingAdmissionPolicy"),
+        ("admissionregistration.k8s.io", "MutatingAdmissionPolicyBinding"),
+        ("rbac.authorization.k8s.io", "ClusterRole"),
+        ("rbac.authorization.k8s.io", "ClusterRoleBinding"),
+    },
     "kyverno": {
         ("", "Namespace"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
@@ -137,7 +227,13 @@ EXPECTED_CLUSTER_PERMISSIONS = {
 }
 
 EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS = {
-    "infra-guards": {("", "ServiceAccount"), ("", "ConfigMap"), ("rbac.authorization.k8s.io", "Role"), ("rbac.authorization.k8s.io", "RoleBinding"), ("batch", "Job")},
+    "infra-guards": {
+        ("", "ServiceAccount"),
+        ("", "ConfigMap"),
+        ("rbac.authorization.k8s.io", "Role"),
+        ("rbac.authorization.k8s.io", "RoleBinding"),
+        ("batch", "Job"),
+    },
     "access-management": {
         ("", "Secret"),
         ("", "ServiceAccount"),
@@ -150,12 +246,24 @@ EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS = {
 }
 
 CLUSTER_SCOPED_KINDS = {
-    "APIService", "CSIDriver", "ClusterRole", "ClusterRoleBinding",
-    "ClusterSecretStore", "CustomResourceDefinition", "IngressClass",
-    "MutatingWebhookConfiguration", "MutatingAdmissionPolicy", "MutatingAdmissionPolicyBinding",
-    "Namespace", "PersistentVolume",
-    "PriorityClass", "RuntimeClass", "StorageClass",
-    "ValidatingWebhookConfiguration", "ValidatingPolicy", "VolumeSnapshotClass",
+    "APIService",
+    "CSIDriver",
+    "ClusterRole",
+    "ClusterRoleBinding",
+    "ClusterSecretStore",
+    "CustomResourceDefinition",
+    "IngressClass",
+    "MutatingWebhookConfiguration",
+    "MutatingAdmissionPolicy",
+    "MutatingAdmissionPolicyBinding",
+    "Namespace",
+    "PersistentVolume",
+    "PriorityClass",
+    "RuntimeClass",
+    "StorageClass",
+    "ValidatingWebhookConfiguration",
+    "ValidatingPolicy",
+    "VolumeSnapshotClass",
 }
 
 
@@ -195,20 +303,22 @@ def repository_documents(application: dict):
         source_path = ROOT / source["path"]
         if (source_path / "Chart.yaml").exists():
             sys.path.insert(0, str(ROOT / "tools/ci"))
-            spec = importlib.util.spec_from_file_location("git_chart_renderer", ROOT / "tools/ci/render-applications.py")
+            spec = importlib.util.spec_from_file_location(
+                "git_chart_renderer", ROOT / "tools/ci/render-applications.py"
+            )
             renderer = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(renderer)
             with tempfile.TemporaryDirectory() as temporary:
-                output = renderer.render_source(application, source, sources, ROOT, Path(temporary), "1.36.0")
+                output = renderer.render_source(
+                    application, source, sources, ROOT, Path(temporary), "1.36.0"
+                )
             for document in yaml.safe_load_all(output):
                 if isinstance(document, dict):
                     yield source_path / "Chart.yaml", document
             continue
         for pattern in ("*.yaml", "*.yml"):
             for manifest in source_path.rglob(pattern):
-                for document in yaml.safe_load_all(
-                    manifest.read_text(encoding="utf-8")
-                ):
+                for document in yaml.safe_load_all(manifest.read_text(encoding="utf-8")):
                     if isinstance(document, dict):
                         yield manifest, document
 
@@ -237,9 +347,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
 
     def test_projects_use_only_required_sources_and_destinations(self):
         for project_name, members in PROJECT_MEMBERS.items():
-            project = load_yaml(
-                ARGOCD / f"application-project-{project_name}.yaml"
-            )
+            project = load_yaml(ARGOCD / f"application-project-{project_name}.yaml")
             self.assertEqual(project["kind"], "AppProject")
             self.assertEqual(project["metadata"]["name"], project_name)
             self.assertEqual(
@@ -257,9 +365,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
                 expected_destinations.add((CLUSTER, namespace))
                 expected_destinations.update(
                     (CLUSTER, extra_namespace)
-                    for extra_namespace in EXTRA_DESTINATIONS_BY_APPLICATION.get(
-                        name, set()
-                    )
+                    for extra_namespace in EXTRA_DESTINATIONS_BY_APPLICATION.get(name, set())
                 )
                 expected_destinations.update(
                     (CLUSTER, document["metadata"]["namespace"])
@@ -278,9 +384,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
 
     def test_cluster_permissions_are_explicit(self):
         for project_name, expected in EXPECTED_CLUSTER_PERMISSIONS.items():
-            project = load_yaml(
-                ARGOCD / f"application-project-{project_name}.yaml"
-            )
+            project = load_yaml(ARGOCD / f"application-project-{project_name}.yaml")
             actual = {
                 (permission["group"], permission["kind"])
                 for permission in project["spec"]["clusterResourceWhitelist"]
@@ -290,9 +394,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
 
     def test_cross_namespace_projects_restrict_namespaced_kinds(self):
         for project_name, expected in EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS.items():
-            project = load_yaml(
-                ARGOCD / f"application-project-{project_name}.yaml"
-            )
+            project = load_yaml(ARGOCD / f"application-project-{project_name}.yaml")
             actual = {
                 (permission["group"], permission["kind"])
                 for permission in project["spec"]["namespaceResourceWhitelist"]
@@ -301,9 +403,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
             self.assertNotIn(("*", "*"), actual)
 
             for name in PROJECT_MEMBERS[project_name]:
-                for manifest, document in repository_documents(
-                    self.applications[name]
-                ):
+                for manifest, document in repository_documents(self.applications[name]):
                     if not (document.get("metadata") or {}).get("namespace"):
                         continue
                     permission = (api_group(document), document.get("kind", ""))
@@ -363,7 +463,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
                 self.assertEqual(
                     source["targetRevision"],
                     "main",
-                    f'{application["metadata"]["name"]} must target main',
+                    f"{application['metadata']['name']} must target main",
                 )
 
     def test_automated_applications_self_heal_live_drift(self):
@@ -396,10 +496,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
                 application = self.applications[name]
                 for manifest, document in repository_documents(application):
                     kind = document.get("kind", "")
-                    if not (
-                        kind.startswith("Cluster")
-                        or kind in CLUSTER_SCOPED_KINDS
-                    ):
+                    if not (kind.startswith("Cluster") or kind in CLUSTER_SCOPED_KINDS):
                         continue
                     permission = (api_group(document), kind)
                     self.assertIn(

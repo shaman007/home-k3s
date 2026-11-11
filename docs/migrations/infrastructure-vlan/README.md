@@ -301,7 +301,7 @@ an HA load balancer; this migration does not add API high availability.
 
 Keep `talosctl` recovery endpoints as direct healthy node IPs. Kubernetes API SANs
 and the Talos management API are separate. See the upstream maintainer explanation:
-https://github.com/siderolabs/talos/discussions/9623.
+<https://github.com/siderolabs/talos/discussions/9623>.
 
 Audit `lan-reference-inventory.json` before the first node move. Add new addresses
 alongside old addresses in API/kubelet/monitoring egress policies first. Inspect

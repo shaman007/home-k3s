@@ -14,15 +14,9 @@ def load_yaml(path: str) -> dict:
 class MailCertificateSyncTest(unittest.TestCase):
     def test_cert_manager_transition_releases_http01_from_traefik(self):
         application = load_yaml("argocd/application-cert-manager.yaml")
-        issuer = load_yaml(
-            "cert-manager/cluster-issuer-letsencrypt-prod.yaml"
-        )
-        staging_issuer = load_yaml(
-            "cert-manager/cluster-issuer-letsencrypt-staging.yaml"
-        )
-        traefik = (ROOT / "argocd/application-traefik.yaml").read_text(
-            encoding="utf-8"
-        )
+        issuer = load_yaml("cert-manager/cluster-issuer-letsencrypt-prod.yaml")
+        staging_issuer = load_yaml("cert-manager/cluster-issuer-letsencrypt-staging.yaml")
+        traefik = (ROOT / "argocd/application-traefik.yaml").read_text(encoding="utf-8")
 
         self.assertIn("sources", application["spec"])
         self.assertEqual(
@@ -32,17 +26,25 @@ class MailCertificateSyncTest(unittest.TestCase):
         self.assertEqual(issuer["kind"], "ClusterIssuer")
         self.assertEqual(staging_issuer["kind"], "ClusterIssuer")
         self.assertIn("acme-staging", staging_issuer["spec"]["acme"]["server"])
-        expected_solvers = [{"http01": {"ingress": {
-            "ingressClassName": "traefik",
-            "podTemplate": {"spec": {"resources": {
-                "requests": {"cpu": "10m", "memory": "128Mi"},
-                "limits": {"memory": "128Mi"},
-            }}},
-        }}}]
+        expected_solvers = [
+            {
+                "http01": {
+                    "ingress": {
+                        "ingressClassName": "traefik",
+                        "podTemplate": {
+                            "spec": {
+                                "resources": {
+                                    "requests": {"cpu": "10m", "memory": "128Mi"},
+                                    "limits": {"memory": "128Mi"},
+                                }
+                            }
+                        },
+                    }
+                }
+            }
+        ]
         self.assertEqual(issuer["spec"]["acme"]["solvers"], expected_solvers)
-        self.assertEqual(
-            staging_issuer["spec"]["acme"]["solvers"], expected_solvers
-        )
+        self.assertEqual(staging_issuer["spec"]["acme"]["solvers"], expected_solvers)
         self.assertNotIn("httpChallenge:", traefik)
         self.assertNotIn("certificatesResolvers:", traefik)
         self.assertNotIn("certificatesResolvers:", (ROOT / "traefik/values.yaml").read_text())
@@ -54,8 +56,10 @@ class MailCertificateSyncTest(unittest.TestCase):
                 volumes = deployment["spec"]["template"]["spec"]["volumes"]
                 certs = next(v for v in volumes if v["name"] == "mail-certs")
                 self.assertEqual(certs["secret"]["secretName"], "mail-tls")
-                self.assertEqual(deployment["metadata"]["annotations"][
-                    "secret.reloader.stakater.com/reload"], "mail-tls")
+                self.assertEqual(
+                    deployment["metadata"]["annotations"]["secret.reloader.stakater.com/reload"],
+                    "mail-tls",
+                )
 
     def test_legacy_exporter_is_retired(self):
         for path in (
@@ -71,11 +75,10 @@ class MailCertificateSyncTest(unittest.TestCase):
         self.assertNotIn("/api/v1/namespaces/mail/secrets/letsencrypt-prod", report)
 
     def test_traefik_no_longer_grants_mail_pod_exec(self):
-        traefik = (ROOT / "argocd/application-traefik.yaml").read_text(
-            encoding="utf-8"
-        )
+        traefik = (ROOT / "argocd/application-traefik.yaml").read_text(encoding="utf-8")
         self.assertNotIn("sync-le-tls-traefik-readexec", traefik)
         self.assertNotIn("pods/exec", traefik)
+
 
 if __name__ == "__main__":
     unittest.main()

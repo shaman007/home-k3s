@@ -65,6 +65,7 @@ def github_chart_fallback(source, scratch):
 
 
 def run(args, cwd=None):
+    """Run a renderer with bounded transient-fetch retries and private diagnostics."""
     for attempt in range(3):
         result = subprocess.run(args, cwd=cwd, text=True, capture_output=True, timeout=300)
         if not result.returncode:
@@ -90,6 +91,7 @@ def run(args, cwd=None):
 
 
 def local_path(root, value):
+    """Resolve an existing path and reject escapes from the application source root."""
     path = (root / value).resolve()
     if not path.is_relative_to(root.resolve()):
         raise ValueError(f"Path escapes source root: {value}")
@@ -99,12 +101,14 @@ def local_path(root, value):
 
 
 def matches(name, pattern):
+    """Match case-sensitive filename globs, including brace-separated alternatives."""
     if pattern.startswith("{") and pattern.endswith("}"):
         return any(matches(name, p) for p in pattern[1:-1].split(","))
     return fnmatch.fnmatchcase(name, pattern)
 
 
 def helm_args(app, source, sources, root, scratch, kubernetes_version):
+    """Translate supported Argo Helm options into an explicit render command."""
     options = source.get("helm", {})
     supported = {
         "releaseName",
@@ -172,6 +176,7 @@ def helm_args(app, source, sources, root, scratch, kubernetes_version):
 
 
 def render_source(app, source, sources, root, scratch, kubernetes_version):
+    """Render one supported Argo source, rejecting options CI cannot reproduce."""
     if source.keys() - {"repoURL", "targetRevision", "chart", "helm", "path", "directory", "ref"}:
         raise ValueError("Unsupported application source options")
     if "chart" in source:
@@ -239,6 +244,7 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
 
 
 def main():
+    """Render selected applications into private files and write their inventory."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(

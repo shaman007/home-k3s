@@ -50,6 +50,7 @@ def is_expected_direct_upstream(relative: Path, image: str) -> bool:
         for repository in EXPECTED_DIRECT_UPSTREAM_IMAGES.get(relative, set())
     )
 
+
 def nested_value(values: dict, path: tuple[str, ...]):
     current = values
     for key in path:
@@ -58,9 +59,7 @@ def nested_value(values: dict, path: tuple[str, ...]):
 
 
 def helm_values(application_name: str) -> dict:
-    application = yaml.safe_load(
-        (ROOT / "argocd" / application_name).read_text(encoding="utf-8")
-    )
+    application = yaml.safe_load((ROOT / "argocd" / application_name).read_text(encoding="utf-8"))
     return yaml.safe_load(application["spec"]["source"]["helm"]["values"])
 
 
@@ -71,7 +70,9 @@ class HarborProxyCacheTest(unittest.TestCase):
 
         for manifest in ROOT.rglob("*.yaml"):
             relative = manifest.relative_to(ROOT)
-            if relative.parts[0] == "DEPRECATED" or str(relative).startswith("tools/godaddy-webhook/chart/templates/"):
+            if relative.parts[0] == "DEPRECATED" or str(relative).startswith(
+                "tools/godaddy-webhook/chart/templates/"
+            ):
                 continue
             for line_number, line in enumerate(
                 manifest.read_text(encoding="utf-8").splitlines(), start=1
@@ -79,9 +80,8 @@ class HarborProxyCacheTest(unittest.TestCase):
                 match = image_pattern.match(line)
                 if not match or match.group(1).startswith(f"{HARBOR}/"):
                     continue
-                if (
-                    relative not in BOOTSTRAP_IMAGE_FILES
-                    and not is_expected_direct_upstream(relative, match.group(1))
+                if relative not in BOOTSTRAP_IMAGE_FILES and not is_expected_direct_upstream(
+                    relative, match.group(1)
                 ):
                     violations.append(f"{relative}:{line_number}: {match.group(1)}")
 
@@ -97,13 +97,9 @@ class HarborProxyCacheTest(unittest.TestCase):
 
     def test_acme_solver_has_no_cpu_limit(self):
         application = yaml.safe_load(
-            (ROOT / "argocd/application-cert-manager.yaml").read_text(
-                encoding="utf-8"
-            )
+            (ROOT / "argocd/application-cert-manager.yaml").read_text(encoding="utf-8")
         )
-        values = yaml.safe_load(
-            application["spec"]["sources"][0]["helm"]["values"]
-        )
+        values = yaml.safe_load(application["spec"]["sources"][0]["helm"]["values"])
 
         self.assertNotIn(
             "--acme-http01-solver-resource-limits-cpu=0",
@@ -117,9 +113,7 @@ class HarborProxyCacheTest(unittest.TestCase):
                 self.assertEqual(nested_value(values, path), image)
 
     def test_proxy_reconciler_covers_all_declared_upstreams(self):
-        reconciler = (ROOT / "harbor" / "reconcile-proxy-caches.sh").read_text(
-            encoding="utf-8"
-        )
+        reconciler = (ROOT / "harbor" / "reconcile-proxy-caches.sh").read_text(encoding="utf-8")
         for definition in (
             "dockerhub dockerhub https://hub.docker.com docker-hub",
             "quay quay https://quay.io quay",

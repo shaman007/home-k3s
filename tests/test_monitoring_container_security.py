@@ -42,7 +42,9 @@ class MonitoringContainerSecurityTest(unittest.TestCase):
 
         for path, expected_containers in workloads:
             pod_spec = load_yaml(path)["spec"]["template"]["spec"]
-            self.assertEqual("RuntimeDefault", pod_spec["securityContext"]["seccompProfile"]["type"])
+            self.assertEqual(
+                "RuntimeDefault", pod_spec["securityContext"]["seccompProfile"]["type"]
+            )
             for name, uid in expected_containers:
                 with self.subTest(path=path, container=name):
                     self.assert_restricted(container_by_name(pod_spec, name), uid)

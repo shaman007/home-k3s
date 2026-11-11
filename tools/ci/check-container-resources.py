@@ -2,11 +2,13 @@
 """Check rendered pod memory budgets and CPU quotas, including admission defaults."""
 
 import argparse
+import json
 from pathlib import Path
 import yaml
 
 
 def pod_specs(document):
+    """Yield pod resource declarations, including operator-managed workloads."""
     kind = document.get("kind")
     if kind == "Pod":
         yield document.get("spec", {})
@@ -37,8 +39,6 @@ def pod_specs(document):
             ]
         }
     elif kind == "ConfigMap" and "default-setting.yaml" in (document.get("data") or {}):
-        import json
-
         settings = yaml.safe_load(document["data"]["default-setting.yaml"]) or {}
         csi = settings.get("system-managed-csi-components-resource-limits")
         if csi:
@@ -51,6 +51,7 @@ def pod_specs(document):
 
 
 def check(documents):
+    """Return the container count and memory or CPU-quota policy violations."""
     defaults = {}
     errors = []
     for namespace, doc in documents:
@@ -97,8 +98,7 @@ def check(documents):
 
 
 def main():
-    import json
-
+    """Load the rendered application inventory and report resource-policy failures."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
     args = parser.parse_args()
