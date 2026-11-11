@@ -30,7 +30,7 @@ jobs:
           persist-credentials: false
       - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
         with:
-          cosign-release: v3.0.6
+          cosign-release: v3.1.4
       - name: Sign and verify every uploaded release file
         env:
           GH_TOKEN: ${{ github.token }}
