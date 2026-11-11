@@ -959,7 +959,8 @@ def main():
     try:
         notes = summarize(assessment, config)
     except Exception as exc:
-        error = f"{type(exc).__name__}: {exc}"
+        # Provider/parser exception text may contain private evidence or credentials.
+        error = type(exc).__name__
     apply_verdict(assessment, notes, error)
     (folder / "assessment.json").write_text(json.dumps(assessment, indent=2))
     (folder / "model-findings.json").write_text(json.dumps(notes, indent=2))

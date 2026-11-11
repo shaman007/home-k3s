@@ -4,6 +4,8 @@ import datetime as dt
 import io
 import json
 import hashlib
+import secrets
+from contextlib import redirect_stdout
 import tempfile
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -451,3 +453,69 @@ class ModelTransportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReportFailurePrivacyTests(unittest.TestCase):
+    """Retain measured reports and failure status without persisting model error payloads."""
+
+    def test_model_failure_stays_incomplete_without_private_exception_text(self):
+        """Both local and mocked delivery paths keep report evidence and a sanitized failure."""
+        for deliver in (False, True):
+            for error_type in (RuntimeError, KeyError):
+                with self.subTest(deliver=deliver, error=error_type.__name__):
+                    marker = secrets.token_urlsafe(18)
+                    assessment = {
+                        "candidates": [],
+                        "issues": [],
+                        "operational": False,
+                        "background_alerts": {},
+                        "changes": "Synthetic observation",
+                        "coverage_hours": 24,
+                        "status": "PENDING",
+                        "assessment": "Pending",
+                    }
+                    evidence = {"event_counts": {"alert": 1}, "client_count": 1}
+                    with tempfile.TemporaryDirectory() as directory:
+                        root = Path(directory)
+                        (root / "config.json").write_text(
+                            json.dumps(
+                                {
+                                    "mail_from": "fixture@example.invalid",
+                                    "mail_to": "recipient@example.invalid",
+                                }
+                            )
+                        )
+                        with (
+                            patch.object(report, "BASE", root),
+                            patch("sys.argv", ["report"] + (["--send"] if deliver else [])),
+                            patch.object(report, "collect", return_value=evidence),
+                            patch.object(report, "assess", return_value=assessment),
+                            patch.object(report, "summarize", side_effect=error_type(marker)),
+                            patch.object(report, "submit_message") as submit,
+                            redirect_stdout(io.StringIO()),
+                        ):
+                            with self.assertRaises(SystemExit) as stopped:
+                                report.main()
+                        self.assertEqual(stopped.exception.code, error_type.__name__)
+                        folder = next((root / "reports").iterdir())
+                        saved = json.loads((folder / "assessment.json").read_text())
+                        self.assertEqual(saved["status"], "ANALYSIS INCOMPLETE")
+                        self.assertEqual(
+                            json.loads((folder / "evidence.json").read_text()), evidence
+                        )
+                        self.assertEqual(
+                            json.loads((folder / "model-findings.json").read_text()), {}
+                        )
+                        self.assertIn("ANALYSIS INCOMPLETE", (folder / "report.txt").read_text())
+                        for artifact in folder.iterdir():
+                            self.assertNotIn(marker, artifact.read_text())
+                        if deliver:
+                            submit.assert_called_once()
+                            self.assertNotIn(marker, submit.call_args.args[1].as_string())
+                            self.assertEqual(
+                                json.loads((folder / "sent.json").read_text())["model_error"],
+                                error_type.__name__,
+                            )
+                        else:
+                            submit.assert_not_called()
+                            self.assertFalse((folder / "sent.json").exists())

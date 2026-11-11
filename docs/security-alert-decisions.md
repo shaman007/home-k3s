@@ -2719,3 +2719,30 @@ The broad-boundary alerts remain open pending publication and separate decision
 review; none were dismissed in this source-change batch. No push was performed.
 
 The full suite ran 536 tests successfully with 16 skips using isolated JSON::PP.
+
+
+### Sanitize network-report model failure diagnostics
+
+The report's model failure boundary retained arbitrary exception text in its
+SystemExit diagnostic and, after successful delivery, sent.json model_error.
+Provider/parser errors may contain private evidence or credentials. The boundary
+now records only the exception class name. Measured evidence, report rendering,
+incomplete-verdict handling, delivery deduplication and the failing exit remain
+unchanged. This matches the benchmark exception-payload privacy fix without
+claiming model success or changing the expected-public-port checks.
+
+A new main-entry regression covers RuntimeError and KeyError on local-only and
+mocked-delivery paths. All four scenarios failed against the original handler.
+They now require unchanged evidence, empty model findings, ANALYSIS INCOMPLETE in
+the saved assessment/report, a nonzero sanitized exit, and no private marker in
+any artifact or constructed message. Delivered sent.json retains only the failure
+type; local-only runs neither submit nor create that marker. All nineteen report
+tests pass. SMTP submission, model requests and telemetry collection are mocked;
+no real message, credential, network service or cluster was accessed.
+
+Ruff passes, full Pylint reports only the existing intentional model-boundary
+warning, and Bandit reports no analysis errors. That finding remains open pending
+publication and a separate decision review; no alert was dismissed and no push
+was performed.
+
+The full suite ran 537 tests successfully with 16 skips using isolated JSON::PP.
