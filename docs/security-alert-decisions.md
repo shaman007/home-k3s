@@ -3049,3 +3049,30 @@ operations or push occurred.
 
 Independent API inventory confirms all 22 absent: 13 open (Pylint two,
 Bandit seven, Opengrep four).
+
+
+### Bind UniFi metrics to an explicit interface instead of a wildcard
+
+The exporter now defaults to IPv4 loopback for standalone invocation. Deployment
+sets UNIFI_METRICS_ADDRESS from the Downward API status.podIP, so Prometheus and
+kubelet probes reach the specific pod interface on the existing 9131 port rather
+than an all-interface listener. Startup rejects unspecified, invalid or IPv6
+addresses before controller credentials, polling threads or HTTP allocation.
+The HTTP server was already IPv4-only; the explicit address contract retains that
+limitation. The generated ConfigMap is synchronized with the reviewed source.
+
+Three new regressions cover default/specific-interface binding, early rejection
+and the deployment's pod-IP/ClusterIP port contract. All nineteen exporter tests
+pass. No actual server or router was started. Parsed-manifest comparison confirms
+only the new Downward API environment entry and embedded exporter source changed.
+No service, NetworkPolicy, route/peer inventory or TLS exception was changed.
+Live pod startup and Prometheus scraping require deployment verification.
+
+The full suite ran 555 tests successfully with 16 skips using isolated JSON::PP.
+After the final equivalent numeric wildcard test-fixture representation, all
+nineteen exporter tests pass again. Ruff and ConfigMap generation checks pass;
+full Pylint reports only existing redirect-callback arity and poll-boundary
+warnings. Bandit has no analysis errors and no B104 findings in source/tests;
+the separate TLS finding remains. No credentials, live cluster/router or external
+service was accessed. No alert was dismissed, source suppression added or push
+performed; genuine published rescanning must reconcile the wildcard-bind alert.

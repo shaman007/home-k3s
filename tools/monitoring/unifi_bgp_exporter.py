@@ -4,6 +4,7 @@
 import http.cookiejar
 import http.server
 import json
+import ipaddress
 import os
 import ssl
 import threading
@@ -178,8 +179,20 @@ class Controller:
         return decode(self.get(base + "bgp/neighbors"), self.get(base + "routes"))
 
 
+def metrics_address():
+    """Bind the IPv4 metrics server to loopback or an explicitly selected interface."""
+    try:
+        address = ipaddress.ip_address(os.environ.get("UNIFI_METRICS_ADDRESS", "127.0.0.1"))
+    except ValueError:
+        raise ValueError("UNIFI_METRICS_ADDRESS must be a specific IPv4 address") from None
+    if address.version != 4 or address.is_unspecified:
+        raise ValueError("UNIFI_METRICS_ADDRESS must be a specific IPv4 address")
+    return str(address)
+
+
 def main():
     """Poll the router in a background thread and serve metrics and liveness responses."""
+    listen_address = metrics_address()
     controller = Controller()
     lock = threading.Lock()
     state = {"body": render([], False, 0)}
@@ -221,7 +234,7 @@ def main():
             pass
 
     threading.Thread(target=poll, daemon=True).start()
-    http.server.ThreadingHTTPServer(("0.0.0.0", 9131), Handler).serve_forever()
+    http.server.ThreadingHTTPServer((listen_address, 9131), Handler).serve_forever()
 
 
 if __name__ == "__main__":

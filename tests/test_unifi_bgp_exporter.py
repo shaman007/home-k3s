@@ -243,3 +243,64 @@ class UniFiBGPExporterTests(unittest.TestCase):
         self.assertIsNone(
             m.NoRedirect().redirect_request(None, None, 302, "", {}, "https://elsewhere.invalid")
         )
+
+
+class UniFiMetricsListenerTests(unittest.TestCase):
+    """Keep metrics exposure on a deliberate interface while preserving pod scraping."""
+
+    def test_metrics_listener_defaults_to_loopback_and_accepts_specific_pod_ip(self):
+        """Select one interface without changing the metrics port or starting real resources."""
+        for environment, expected in (
+            ({}, "127.0.0.1"),
+            ({"UNIFI_METRICS_ADDRESS": "10.42.1.17"}, "10.42.1.17"),
+        ):
+            with (
+                self.subTest(address=expected),
+                patch.dict(m.os.environ, environment, clear=True),
+                patch.object(m, "Controller"),
+                patch.object(m.threading, "Thread"),
+                patch.object(m.http.server, "ThreadingHTTPServer") as server,
+            ):
+                m.main()
+            self.assertEqual(server.call_args.args[0], (expected, 9131))
+            server.return_value.serve_forever.assert_called_once()
+
+    def test_invalid_or_wildcard_metrics_address_stops_before_controller(self):
+        """Reject wildcard, unsupported IPv6 and non-address input before credentials or workers."""
+        for address in (
+            str(m.ipaddress.IPv4Address(0)),
+            "::",
+            "::1",
+            "localhost",
+            "10.42.1.17:9131",
+            "",
+        ):
+            with (
+                self.subTest(address=address),
+                patch.dict(m.os.environ, {"UNIFI_METRICS_ADDRESS": address}),
+                patch.object(m, "Controller") as controller,
+                patch.object(m.threading, "Thread") as thread,
+                patch.object(m.http.server, "ThreadingHTTPServer") as server,
+            ):
+                with self.assertRaisesRegex(ValueError, "specific IPv4"):
+                    m.main()
+            controller.assert_not_called()
+            thread.assert_not_called()
+            server.assert_not_called()
+
+    def test_deployment_selects_pod_ip_without_host_network_or_public_service(self):
+        """The existing ClusterIP service reaches the explicit pod interface and metrics port."""
+        deployment = yaml.safe_load(
+            (ROOT / "unifi/poller/deployment-unifi-poller.yaml").read_text()
+        )
+        pod = deployment["spec"]["template"]["spec"]
+        self.assertFalse(pod.get("hostNetwork", False))
+        exporter = next(c for c in pod["containers"] if c["name"] == "bgp-exporter")
+        address = next(e for e in exporter["env"] if e["name"] == "UNIFI_METRICS_ADDRESS")
+        self.assertEqual(address["valueFrom"]["fieldRef"]["fieldPath"], "status.podIP")
+        self.assertEqual(exporter["ports"], [{"name": "bgp-metrics", "containerPort": 9131}])
+        service = yaml.safe_load((ROOT / "unifi/poller/service-unifi-poller.yaml").read_text())
+        self.assertEqual(service["spec"].get("type", "ClusterIP"), "ClusterIP")
+        self.assertIn(
+            {"name": "bgp", "port": 9131, "targetPort": "bgp-metrics"}, service["spec"]["ports"]
+        )
