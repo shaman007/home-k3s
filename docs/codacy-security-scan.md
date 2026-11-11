@@ -65,3 +65,15 @@ upload if either Pylint variant reports a parser error, preventing an incomplete
 analysis from replacing historical results. Tool availability and successful
 historical reconciliation remain to be verified in Actions; no empty reports or
 bulk dismissals substitute for a scan.
+
+The first manual Remark run
+[43005823657, attempt 1](https://github.com/shaman007/home-k3s/actions/runs/43005823657/attempts/1)
+successfully ran the analyzer but failed preparation: commit `86d41c16` published
+only the workflow, whose new option was unavailable in its older adapter. Publish
+the matching adapter and tests together before retrying on a new commit. No report
+was uploaded by that failed attempt, and historical findings were retained.
+
+Commit `6b30e257` subsequently published the matching adapter and regression tests.
+[Push run 43006083625](https://github.com/shaman007/home-k3s/actions/runs/43006083625)
+passed Bandit, Opengrep and ShellCheck with zero annotations on all three check
+runs, verifying removal of the previously observed 20 fingerprint warnings.

@@ -244,3 +244,17 @@ documentation checks; the common-policy catalog passes its generated-output chec
 Empty and multi-namespace SVG fixtures are byte-identical before and after the
 change with a fixed timestamp, and both parse as XML. Historical alert closure is
 still pending matching genuine lint rescans.
+
+## Genuine historical Markdown rescan
+
+[Remark run 43006242302](https://github.com/shaman007/home-k3s/actions/runs/43006242302)
+on commit `6b30e257` completed successfully and uploaded 16 findings in the original
+category. The open-alert API then showed 16 Remark findings, down from 488 before
+the rescan. This confirms that genuine matching rescans reconcile the historical
+category despite the new matrix environment.
+
+All remaining findings identify `[x]` task markers in the dated specification
+quality checklist as undefined reference links. Converted the completed review to
+ordinary bullets and explicitly retained its historical completion status and
+current-state revalidation caveat. No checklist content or acceptance criterion
+was removed. Closure of those final 16 findings requires a rescan of this edit.
