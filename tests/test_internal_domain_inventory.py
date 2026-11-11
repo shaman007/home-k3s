@@ -78,5 +78,57 @@ class InternalDomainInventoryTest(unittest.TestCase):
             self.assertEqual(json.loads(output.read_text())["counts"]["occurrences"], 3)
 
 
+class DomainInventoryTests(unittest.TestCase):
+    """Verify report privacy and classification precedence using synthetic files."""
+
+    def test_annotation_precedes_ingress_and_source_is_not_copied(self):
+        """Metadata hostnames stay metadata even when an ingress replacement exists."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "repo" / "config.yaml"
+            path.parent.mkdir()
+            path.write_text("private-marker /token-policies host=APP.MY.LAN.\n")
+            entries = scanner.collect_entries(
+                f"{path}:1:APP.MY.LAN.\n", root, {"app.my.lan": "public.example"}
+            )
+        self.assertEqual(
+            entries,
+            [
+                {
+                    "repository": "repo",
+                    "path": "repo/config.yaml",
+                    "line": 1,
+                    "hostname": "app.my.lan",
+                    "category": "metadata_annotation",
+                    "usage": "configuration_or_code",
+                    "replacement": "public.example",
+                }
+            ],
+        )
+        self.assertNotIn("private-marker", str(entries))
+
+    def test_cluster_service_is_not_a_dot_local_candidate(self):
+        """Cluster service names must not be mistaken for migration candidates."""
+        for host in ("backend.svc", "backend.ns.svc.cluster.local"):
+            with self.subTest(host=host):
+                self.assertEqual(scanner.hostname_category(host, {}, False), "cluster_service")
+        self.assertEqual(
+            scanner.hostname_category("printer.local", {}, False),
+            "dot_local_candidate_requires_review",
+        )
+
+    def test_test_paths_take_precedence_over_documentation(self):
+        """Documentation fixtures remain tests while historical artifacts remain distinguishable."""
+        for name, expected in (
+            ("repo/tests/fixture.md", "tests"),
+            ("repo/docs/guide.md", "documentation"),
+            ("repo/docs/snapshot.yaml", "staged_or_historical_artifact"),
+            ("repo/app/config.yaml", "configuration_or_code"),
+        ):
+            path = Path(name)
+            with self.subTest(path=name):
+                self.assertEqual(scanner.path_usage(path, path.parts), expected)
+
+
 if __name__ == "__main__":
     unittest.main()

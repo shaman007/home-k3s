@@ -1827,3 +1827,22 @@ statistics. No hardware commands ran and no host exporter was deployed. The full
 suite ran 494 tests successfully with 21 opt-in skips; Ruff and diff checks passed,
 and Bandit reported no analysis errors. Source fixes await genuine published
 rescanning; no alert was dismissed in this batch.
+
+
+### Separate internal-domain inventory classification from scanning
+
+Extracted hostname category, path usage and matched-entry collection from the
+internal-domain scanner. All three original complexity warnings are gone; the
+scanner and regression module pass full Pylint without suppressions. Across 192
+mocked end-to-end scenarios, reports, scanner argv/options, stdout and sanitized
+failure messages match the original, including annotation precedence, ingress
+replacement, cluster names, historical/test/documentation paths and scanner errors.
+
+Added three regressions for annotation precedence and hostname-only reporting,
+cluster services versus dot-local review candidates, and test/documentation path
+precedence. Retained both existing regex and real ripgrep synthetic-directory
+integration tests, including ignored-directory and output-file exclusion checks.
+The full suite ran 497 tests successfully with 21 opt-in skips; Ruff and diff
+checks passed, and Bandit reported no analysis errors. No actual repository or
+credential tree was scanned by verification. Source fixes await genuine published
+rescanning; no alert was dismissed in this batch.

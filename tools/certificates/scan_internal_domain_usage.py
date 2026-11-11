@@ -24,6 +24,76 @@ EXCLUSIONS = [
 ]
 
 
+def hostname_category(host, replacements, is_annotation):
+    """Classify a hostname, giving token-policy metadata precedence over replacements."""
+    if is_annotation:
+        category = "metadata_annotation"
+    elif host in replacements:
+        category = "ingress_hostname"
+    elif host == "api.k8s.my.lan":
+        category = "kubernetes_api"
+    elif host.endswith((".svc", ".svc.cluster.local")):
+        category = "cluster_service"
+    elif host == "vault.w386.k8s.my.lan":
+        category = "retired_vault_alias_or_annotation"
+    elif host.endswith(".local") and not host.endswith(".cluster.local"):
+        category = "dot_local_candidate_requires_review"
+    else:
+        category = "other_internal_name"
+    return category
+
+
+def path_usage(path, parts):
+    """Classify test, documentation, historical and configuration paths in precedence order."""
+    if (
+        "tests" in parts
+        or path.name.startswith(("test_", "test-"))
+        or path.name.endswith("_test.go")
+    ):
+        usage = "tests"
+    elif path.suffix.lower() in {".md", ".rst"}:
+        usage = "documentation"
+    elif "docs" in parts:
+        usage = "staged_or_historical_artifact"
+    else:
+        usage = "configuration_or_code"
+    return usage
+
+
+def collect_entries(stdout, root, replacements):
+    """Collect matched hostnames without including surrounding source or secret values."""
+    entries = []
+    annotation_lines = {}
+    for line in stdout.splitlines():
+        filename, number, host = line.rsplit(":", 2)
+        path = Path(filename)
+        relative = path.relative_to(root.resolve())
+        host = host.lower().rstrip(".")
+        if filename not in annotation_lines:
+            annotation_lines[filename] = {
+                n
+                for n, text in enumerate(
+                    path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
+                )
+                if "/token-policies" in text
+            }
+        category = hostname_category(host, replacements, int(number) in annotation_lines[filename])
+        parts = relative.parts
+        usage = path_usage(path, parts)
+        entries.append(
+            {
+                "repository": parts[0],
+                "path": str(relative),
+                "line": int(number),
+                "hostname": host,
+                "category": category,
+                "usage": usage,
+                **({"replacement": replacements[host]} if host in replacements else {}),
+            }
+        )
+    return entries
+
+
 def main():
     """Inventory internal hostnames without copying source lines or secret values."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -65,59 +135,7 @@ def main():
         ) from None
     if result.returncode not in (0, 1):
         raise SystemExit("Scan failed; source/error bodies suppressed")
-    entries = []
-    annotation_lines = {}
-    for line in result.stdout.splitlines():
-        filename, number, host = line.rsplit(":", 2)
-        path = Path(filename)
-        relative = path.relative_to(args.root.resolve())
-        host = host.lower().rstrip(".")
-        if filename not in annotation_lines:
-            annotation_lines[filename] = {
-                n
-                for n, text in enumerate(
-                    path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
-                )
-                if "/token-policies" in text
-            }
-        if int(number) in annotation_lines[filename]:
-            category = "metadata_annotation"
-        elif host in replacements:
-            category = "ingress_hostname"
-        elif host == "api.k8s.my.lan":
-            category = "kubernetes_api"
-        elif host.endswith((".svc", ".svc.cluster.local")):
-            category = "cluster_service"
-        elif host == "vault.w386.k8s.my.lan":
-            category = "retired_vault_alias_or_annotation"
-        elif host.endswith(".local") and not host.endswith(".cluster.local"):
-            category = "dot_local_candidate_requires_review"
-        else:
-            category = "other_internal_name"
-        parts = relative.parts
-        if (
-            "tests" in parts
-            or path.name.startswith(("test_", "test-"))
-            or path.name.endswith("_test.go")
-        ):
-            usage = "tests"
-        elif path.suffix.lower() in {".md", ".rst"}:
-            usage = "documentation"
-        elif "docs" in parts:
-            usage = "staged_or_historical_artifact"
-        else:
-            usage = "configuration_or_code"
-        entries.append(
-            {
-                "repository": parts[0],
-                "path": str(relative),
-                "line": int(number),
-                "hostname": host,
-                "category": category,
-                "usage": usage,
-                **({"replacement": replacements[host]} if host in replacements else {}),
-            }
-        )
+    entries = collect_entries(result.stdout, args.root, replacements)
     # Source lines and secret contents are deliberately never written to the report.
     report = {
         "scan_root": str(args.root.resolve()),
