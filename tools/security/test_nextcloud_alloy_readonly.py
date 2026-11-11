@@ -64,8 +64,8 @@ def decode(data):
     return output.raw[: size.value]
 
 
-def main():
-    """Offline Alloy file-tail/push/checkpoint probe using fixture logs and mock Loki."""
+def load_configuration():
+    """Require the reviewed read-only Alloy manifest and substitute only mock Loki."""
     pod = yaml.safe_load((ROOT / "nextcloud/stateful-set-nextcloud-web.yaml").read_text())["spec"][
         "template"
     ]["spec"]
@@ -92,204 +92,243 @@ def main():
     if not config.count(upstream) == 1:
         raise AssertionError
     config = config.replace(upstream, "http://127.0.0.1:3100/loki/api/v1/push")
+    return c, config
+
+
+def prepare_volumes(volumes):
+    """Allocate and initialize writable fixture state while retaining cleanup ownership."""
+    for suffix in ["state", "run"]:
+        volumes.append(
+            run(
+                [
+                    "podman",
+                    "volume",
+                    "create",
+                    "alloy-ro-guard-" + uuid.uuid4().hex + "-" + suffix,
+                ]
+            )
+        )
+    run(
+        [
+            "podman",
+            "run",
+            "--rm",
+            "--network=none",
+            "--cap-drop=ALL",
+            "--cap-add=CHOWN",
+            "--group-add=33",
+            "-v",
+            volumes[0] + ":/data-alloy",
+            "-v",
+            volumes[1] + ":/run/alloy",
+            "--entrypoint",
+            "sh",
+            "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "-ec",
+            "chown 0:33 /data-alloy /run/alloy; chmod 2777 /data-alloy /run/alloy",
+        ]
+    )
+
+
+def prepare_fixtures(directory, config):
+    """Write synthetic Alloy config, source log and mock receiver in a private tree."""
+    d = Path(directory)
+    cfg = d / "config"
+    cfg.mkdir(mode=0o755)
+    (cfg / "config.alloy").write_text(config)
+    logs = d / "nextcloud"
+    logs.mkdir(mode=0o777)
+    logs.chmod(0o777)
+    (logs / "data").mkdir(mode=0o755)
+    marker = "alloyreadonlyhealth" + uuid.uuid4().hex
+    log = logs / "data" / "guard.log"
+    log.write_text(marker + " initial fixture\n")
+    mock = d / "mock.py"
+    mock.write_text(MOCK)
+    mock.chmod(0o644)
+    return cfg, logs, marker, log, mock
+
+
+def start_receiver(mock):
+    """Start the isolated mock Loki receiver without capabilities or writable root."""
+    server = run(
+        [
+            "podman",
+            "run",
+            "-d",
+            "--network=none",
+            "--read-only",
+            "--read-only-tmpfs=false",
+            "--user=33:33",
+            "--cap-drop=ALL",
+            "--security-opt=no-new-privileges",
+            "-v",
+            str(mock) + ":/guard/mock.py:ro,Z",
+            "harbor.andreybondarenko.com/dockerhub/python:3.13-slim",
+            "python3",
+            "-B",
+            "/guard/mock.py",
+        ]
+    )
+    return server
+
+
+def start_alloy(server, cfg, logs, volumes, container):
+    """Start the reviewed Alloy image with immutable config and read-only application logs."""
+    alloy = run(
+        [
+            "podman",
+            "run",
+            "-d",
+            "--network=container:" + server,
+            "--read-only",
+            "--read-only-tmpfs=false",
+            "--user=33:33",
+            "--cap-drop=ALL",
+            "--security-opt=no-new-privileges",
+            "-v",
+            str(cfg) + ":/etc/alloy:ro,Z",
+            "-v",
+            str(logs) + ":/nextcloud:ro,Z",
+            "-v",
+            volumes[0] + ":/data-alloy",
+            "-v",
+            volumes[1] + ":/run/alloy",
+            container["image"],
+            *container["args"],
+        ]
+    )
+    return alloy
+
+
+def received(server, expected):
+    """Require the expected fixture marker inside a decoded Snappy push."""
+    for _ in range(35):
+        r = run_command(
+            [
+                "podman",
+                "exec",
+                server,
+                "python3",
+                "-B",
+                "-c",
+                (
+                    "import urllib.request,sys;sys.stdout.buf"
+                    "fer.write(urllib.request.urlopen('http:/"
+                    "/127.0.0.1:3100/last').read())"
+                ),
+            ],
+            capture_output=True,
+            check=False,
+        )
+        if r.returncode == 0 and r.stdout and expected.encode() in decode(r.stdout):
+            return
+        time.sleep(1)
+    raise RuntimeError("Fixture log was not delivered to mock Loki")
+
+
+def check_delivery(server, log, marker):
+    """Verify initial and appended log delivery and local health endpoints."""
+    received(server, marker)
+    second = marker + "tail"
+    with log.open("a") as out:
+        out.write(second + " appended fixture\n")
+    received(server, second)
+    run(
+        [
+            "podman",
+            "exec",
+            server,
+            "python3",
+            "-B",
+            "-c",
+            (
+                "import urllib.request; assert "
+                "all(urllib.request.urlopen('http://127.0"
+                ".0.1:12345/'+p).status==200 for p in "
+                "['-/ready','-/healthy'])"
+            ),
+        ]
+    )
+
+
+def check_runtime(alloy, volumes):
+    """Verify read-only mounts, blocked writes, process guards and saved checkpoints."""
+    mountinfo = run(["podman", "exec", alloy, "cat", "/proc/1/mountinfo"])
+    for mount in ["/", "/nextcloud"]:
+        if not any(
+            (
+                p[4] == mount and "ro" in p[5].split(",")
+                for p in (s.split() for s in mountinfo.splitlines())
+            )
+        ):
+            raise AssertionError
+    status = run(["podman", "exec", alloy, "cat", "/proc/1/status"])
+    for expected in [
+        "CapEff:\t0000000000000000",
+        "CapBnd:\t0000000000000000",
+        "NoNewPrivs:\t1",
+        "Seccomp:\t2",
+    ]:
+        if expected not in status:
+            raise AssertionError(status)
+    # Fixture directory is otherwise writable; the read-only mount blocks writes.
+    run(
+        [
+            "podman",
+            "exec",
+            alloy,
+            "/bin/sh",
+            "-ec",
+            "if touch /nextcloud/must-not-be-created 2>/dev/null; then exit 1; fi",
+        ]
+    )
+    run(["podman", "stop", "--time", "10", alloy])
+    positions = run(
+        [
+            "podman",
+            "run",
+            "--rm",
+            "--network=none",
+            "--user=33:33",
+            "--cap-drop=ALL",
+            "-v",
+            volumes[0] + ":/state:ro",
+            "--entrypoint",
+            "sh",
+            "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "-ec",
+            "find /state -type f -name '*positions*' -exec cat '{}' ';'",
+        ]
+    )
+    if "/nextcloud/data/guard.log" not in positions:
+        raise AssertionError("Fixture checkpoint was not saved under /data-alloy")
+    print("Nextcloud Alloy: initial/appended logs reached mock Loki; Snappy payloads verified")
+    print(
+        (
+            "Read-only root and Nextcloud mount, "
+            "blocked writes, writable checkpoints, "
+            "zero caps/NNP/seccomp passed"
+        )
+    )
+
+
+def main():
+    """Offline Alloy file-tail/push/checkpoint probe using fixture logs and mock Loki."""
+    c, config = load_configuration()
     volumes = []
     containers = []
     try:
-        for suffix in ["state", "run"]:
-            volumes.append(
-                run(
-                    [
-                        "podman",
-                        "volume",
-                        "create",
-                        "alloy-ro-guard-" + uuid.uuid4().hex + "-" + suffix,
-                    ]
-                )
-            )
-        run(
-            [
-                "podman",
-                "run",
-                "--rm",
-                "--network=none",
-                "--cap-drop=ALL",
-                "--cap-add=CHOWN",
-                "--group-add=33",
-                "-v",
-                volumes[0] + ":/data-alloy",
-                "-v",
-                volumes[1] + ":/run/alloy",
-                "--entrypoint",
-                "sh",
-                "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
-                "-ec",
-                "chown 0:33 /data-alloy /run/alloy; chmod 2777 /data-alloy /run/alloy",
-            ]
-        )
+        prepare_volumes(volumes)
         with tempfile.TemporaryDirectory(prefix="alloy-readonly-") as directory:
-            d = Path(directory)
-            cfg = d / "config"
-            cfg.mkdir(mode=0o755)
-            (cfg / "config.alloy").write_text(config)
-            logs = d / "nextcloud"
-            logs.mkdir(mode=0o777)
-            logs.chmod(0o777)
-            (logs / "data").mkdir(mode=0o755)
-            marker = "alloyreadonlyhealth" + uuid.uuid4().hex
-            log = logs / "data" / "guard.log"
-            log.write_text(marker + " initial fixture\n")
-            mock = d / "mock.py"
-            mock.write_text(MOCK)
-            mock.chmod(0o644)
-            server = run(
-                [
-                    "podman",
-                    "run",
-                    "-d",
-                    "--network=none",
-                    "--read-only",
-                    "--read-only-tmpfs=false",
-                    "--user=33:33",
-                    "--cap-drop=ALL",
-                    "--security-opt=no-new-privileges",
-                    "-v",
-                    str(mock) + ":/guard/mock.py:ro,Z",
-                    "harbor.andreybondarenko.com/dockerhub/python:3.13-slim",
-                    "python3",
-                    "-B",
-                    "/guard/mock.py",
-                ]
-            )
+            cfg, logs, marker, log, mock = prepare_fixtures(directory, config)
+            server = start_receiver(mock)
             containers.append(server)
-            alloy = run(
-                [
-                    "podman",
-                    "run",
-                    "-d",
-                    "--network=container:" + server,
-                    "--read-only",
-                    "--read-only-tmpfs=false",
-                    "--user=33:33",
-                    "--cap-drop=ALL",
-                    "--security-opt=no-new-privileges",
-                    "-v",
-                    str(cfg) + ":/etc/alloy:ro,Z",
-                    "-v",
-                    str(logs) + ":/nextcloud:ro,Z",
-                    "-v",
-                    volumes[0] + ":/data-alloy",
-                    "-v",
-                    volumes[1] + ":/run/alloy",
-                    c["image"],
-                    *c["args"],
-                ]
-            )
+            alloy = start_alloy(server, cfg, logs, volumes, c)
             containers.append(alloy)
 
-            def received(expected):
-                for _ in range(35):
-                    r = run_command(
-                        [
-                            "podman",
-                            "exec",
-                            server,
-                            "python3",
-                            "-B",
-                            "-c",
-                            (
-                                "import urllib.request,sys;sys.stdout.buf"
-                                "fer.write(urllib.request.urlopen('http:/"
-                                "/127.0.0.1:3100/last').read())"
-                            ),
-                        ],
-                        capture_output=True,
-                        check=False,
-                    )
-                    if r.returncode == 0 and r.stdout and expected.encode() in decode(r.stdout):
-                        return
-                    time.sleep(1)
-                raise RuntimeError("Fixture log was not delivered to mock Loki")
-
-            received(marker)
-            second = marker + "tail"
-            with log.open("a") as out:
-                out.write(second + " appended fixture\n")
-            received(second)
-            run(
-                [
-                    "podman",
-                    "exec",
-                    server,
-                    "python3",
-                    "-B",
-                    "-c",
-                    (
-                        "import urllib.request; assert "
-                        "all(urllib.request.urlopen('http://127.0"
-                        ".0.1:12345/'+p).status==200 for p in "
-                        "['-/ready','-/healthy'])"
-                    ),
-                ]
-            )
-            mountinfo = run(["podman", "exec", alloy, "cat", "/proc/1/mountinfo"])
-            for mount in ["/", "/nextcloud"]:
-                if not any(
-                    (
-                        p[4] == mount and "ro" in p[5].split(",")
-                        for p in (s.split() for s in mountinfo.splitlines())
-                    )
-                ):
-                    raise AssertionError
-            status = run(["podman", "exec", alloy, "cat", "/proc/1/status"])
-            for expected in [
-                "CapEff:\t0000000000000000",
-                "CapBnd:\t0000000000000000",
-                "NoNewPrivs:\t1",
-                "Seccomp:\t2",
-            ]:
-                if expected not in status:
-                    raise AssertionError(status)
-            # Fixture directory is otherwise writable; the read-only mount blocks writes.
-            run(
-                [
-                    "podman",
-                    "exec",
-                    alloy,
-                    "/bin/sh",
-                    "-ec",
-                    "if touch /nextcloud/must-not-be-created 2>/dev/null; then exit 1; fi",
-                ]
-            )
-            run(["podman", "stop", "--time", "10", alloy])
-            positions = run(
-                [
-                    "podman",
-                    "run",
-                    "--rm",
-                    "--network=none",
-                    "--user=33:33",
-                    "--cap-drop=ALL",
-                    "-v",
-                    volumes[0] + ":/state:ro",
-                    "--entrypoint",
-                    "sh",
-                    "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
-                    "-ec",
-                    "find /state -type f -name '*positions*' -exec cat '{}' ';'",
-                ]
-            )
-            if "/nextcloud/data/guard.log" not in positions:
-                raise AssertionError("Fixture checkpoint was not saved under /data-alloy")
-            print(
-                "Nextcloud Alloy: initial/appended logs reached mock Loki; Snappy payloads verified"
-            )
-            print(
-                (
-                    "Read-only root and Nextcloud mount, "
-                    "blocked writes, writable checkpoints, "
-                    "zero caps/NNP/seccomp passed"
-                )
-            )
+            check_delivery(server, log, marker)
+            check_runtime(alloy, volumes)
     except Exception:
         for cid in containers:
             r = run_command(

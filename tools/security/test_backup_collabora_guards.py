@@ -18,109 +18,102 @@ def run(args):
     return run_command(args, check=True, capture_output=True, text=True, timeout=120).stdout.strip()
 
 
-def main():
-    """Rootless disposable SSH/rsync and Collabora startup probes; no production data."""
-    backup = yaml.safe_load((ROOT / "backup-rsync/deployment-backup-rsync.yaml").read_text())
-    c = backup["spec"]["template"]["spec"]["containers"][0]
-    caps = c["securityContext"]["capabilities"]
-    if not (caps["drop"] == ["ALL"] and c["securityContext"]["allowPrivilegeEscalation"] is False):
-        raise AssertionError
-    with tempfile.TemporaryDirectory(prefix="ssh-guard-") as directory:
-        d = Path(directory)
-        # Disposable test identity; private key stays in this mode-0700 directory
-        # and is deleted on exit. Never read any production authorized keys.
-        run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(d / "key")])
-        keys = d / "keys"
-        keys.mkdir()
-        (keys / "backup").write_text((d / "key.pub").read_text())
-        hook = yaml.safe_load(
-            (ROOT / "backup-rsync/config-map-authorized-keys-setup.yaml").read_text()
-        )["data"]["copy-backup-key"]
-        (d / "hook").write_text(hook)
-        (d / "hook").chmod(0o755)
-        args = [
-            "podman",
-            "run",
-            "-d",
-            "--cap-drop=ALL",
-            "--security-opt=no-new-privileges",
-            "-p",
-            "127.0.0.1::22",
-            "-v",
-            str(keys) + ":/mnt/authorized-keys:ro,Z",
-            "-v",
-            str(d / "hook") + ":/etc/entrypoint.d/10-copy-backup-key:ro,Z",
-        ]
-        for cap in caps["add"]:
-            args += ["--cap-add=" + cap]
-        for env in c["env"]:
-            args += ["-e", env["name"] + "=" + env["value"]]
-        cid = run(args + [c["image"]])
-        try:
-            port = run(["podman", "port", cid, "22/tcp"]).split(":")[-1]
-            ssh = [
-                "ssh",
-                "-i",
-                str(d / "key"),
-                "-p",
-                port,
-                "-o",
-                "StrictHostKeyChecking=no",
-                "-o",
-                "UserKnownHostsFile=/dev/null",
-                "-o",
-                "BatchMode=yes",
-                "-o",
-                "ConnectTimeout=2",
-            ]
-            src = d / "source"
-            src.mkdir()
-            (src / "sentinel").write_text("guard-test\n")
-            (src / "link").symlink_to("sentinel")
-            command = [
-                "rsync",
-                "-a",
-                "-e",
-                " ".join(ssh),
-                str(src) + "/",
-                "backup@127.0.0.1:guard-test/",
-            ]
-            last = None
-            for _ in range(20):
-                try:
-                    run(command)
-                    break
-                except subprocess.CalledProcessError as error:
-                    last = error
-                    time.sleep(1)
-            else:
-                raise RuntimeError("SSH/rsync startup failed: " + last.stderr[-1000:])
-            out = d / "download"
-            out.mkdir()
-            run(
-                ["rsync", "-a", "-e", " ".join(ssh), "backup@127.0.0.1:guard-test/", str(out) + "/"]
-            )
-            if not (out / "sentinel").read_text() == "guard-test\n":
-                raise AssertionError
-            if not (out / "link").is_symlink():
-                raise AssertionError
-            status = run(["podman", "exec", cid, "cat", "/proc/1/status"])
-            # Linux capability numbers: CHOWN, DAC_OVERRIDE, FOWNER, SETGID,
-            # SETUID, NET_BIND_SERVICE, SYS_CHROOT.
-            for line in [
-                "CapEff:\t00000000000404cb",
-                "CapBnd:\t00000000000404cb",
-                "NoNewPrivs:\t1",
-                "Seccomp:\t2",
-            ]:
-                if line not in status:
-                    raise AssertionError(status)
-            print(
-                "Backup SSH: actual entrypoint/hook, key authentication and rsync round trip passed"
-            )
-        finally:
-            run(["podman", "rm", "-f", cid])
+def start_backup(d, c, caps):
+    """Prepare the disposable SSH identity and start the reviewed backup fixture."""
+    # Disposable test identity; private key stays in this mode-0700 directory
+    # and is deleted on exit. Never read any production authorized keys.
+    run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(d / "key")])
+    keys = d / "keys"
+    keys.mkdir()
+    (keys / "backup").write_text((d / "key.pub").read_text())
+    hook = yaml.safe_load(
+        (ROOT / "backup-rsync/config-map-authorized-keys-setup.yaml").read_text()
+    )["data"]["copy-backup-key"]
+    (d / "hook").write_text(hook)
+    (d / "hook").chmod(0o755)
+    args = [
+        "podman",
+        "run",
+        "-d",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "-p",
+        "127.0.0.1::22",
+        "-v",
+        str(keys) + ":/mnt/authorized-keys:ro,Z",
+        "-v",
+        str(d / "hook") + ":/etc/entrypoint.d/10-copy-backup-key:ro,Z",
+    ]
+    for cap in caps["add"]:
+        args += ["--cap-add=" + cap]
+    for env in c["env"]:
+        args += ["-e", env["name"] + "=" + env["value"]]
+    return run(args + [c["image"]])
 
+
+def check_backup_roundtrip(d, cid):
+    """Verify actual SSH/rsync behavior, symlinks and the exact process guards."""
+    port = run(["podman", "port", cid, "22/tcp"]).split(":")[-1]
+    ssh = [
+        "ssh",
+        "-i",
+        str(d / "key"),
+        "-p",
+        port,
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=2",
+    ]
+    src = d / "source"
+    src.mkdir()
+    (src / "sentinel").write_text("guard-test\n")
+    (src / "link").symlink_to("sentinel")
+    command = [
+        "rsync",
+        "-a",
+        "-e",
+        " ".join(ssh),
+        str(src) + "/",
+        "backup@127.0.0.1:guard-test/",
+    ]
+    last = None
+    for _ in range(20):
+        try:
+            run(command)
+            break
+        except subprocess.CalledProcessError as error:
+            last = error
+            time.sleep(1)
+    else:
+        raise RuntimeError("SSH/rsync startup failed: " + last.stderr[-1000:])
+    out = d / "download"
+    out.mkdir()
+    run(["rsync", "-a", "-e", " ".join(ssh), "backup@127.0.0.1:guard-test/", str(out) + "/"])
+    if not (out / "sentinel").read_text() == "guard-test\n":
+        raise AssertionError
+    if not (out / "link").is_symlink():
+        raise AssertionError
+    status = run(["podman", "exec", cid, "cat", "/proc/1/status"])
+    # Linux capability numbers: CHOWN, DAC_OVERRIDE, FOWNER, SETGID,
+    # SETUID, NET_BIND_SERVICE, SYS_CHROOT.
+    for line in [
+        "CapEff:\t00000000000404cb",
+        "CapBnd:\t00000000000404cb",
+        "NoNewPrivs:\t1",
+        "Seccomp:\t2",
+    ]:
+        if line not in status:
+            raise AssertionError(status)
+    print("Backup SSH: actual entrypoint/hook, key authentication and rsync round trip passed")
+
+
+def check_collabora():
+    """Verify the isolated document server startup, discovery and jail child."""
     app = yaml.safe_load((ROOT / "argocd/application-collabora.yaml").read_text())
     values = yaml.safe_load(app["spec"]["source"]["helm"]["values"])
     sc = values["securityContext"]
@@ -163,6 +156,28 @@ def main():
         print("Collabora: UID/GID 1001 startup, WOPI discovery and document-jail child passed")
     finally:
         run(["podman", "rm", "-f", cid])
+
+
+def check_backup():
+    """Rootless disposable SSH/rsync and Collabora startup probes; no production data."""
+    backup = yaml.safe_load((ROOT / "backup-rsync/deployment-backup-rsync.yaml").read_text())
+    c = backup["spec"]["template"]["spec"]["containers"][0]
+    caps = c["securityContext"]["capabilities"]
+    if not (caps["drop"] == ["ALL"] and c["securityContext"]["allowPrivilegeEscalation"] is False):
+        raise AssertionError
+    with tempfile.TemporaryDirectory(prefix="ssh-guard-") as directory:
+        d = Path(directory)
+        cid = start_backup(d, c, caps)
+        try:
+            check_backup_roundtrip(d, cid)
+        finally:
+            run(["podman", "rm", "-f", cid])
+
+
+def main():
+    """Run both disposable startup probes without production data."""
+    check_backup()
+    check_collabora()
 
 
 if __name__ == "__main__":

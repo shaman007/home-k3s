@@ -260,3 +260,60 @@ class NginxContentProbeTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 probe.check_responses("nextcloud", "backend")
         self.assertEqual(request.call_args.args, ("backend", "POST", "/index.php", 2 * 1024 * 1024))
+
+
+class SplitRuntimeProbeTests(unittest.TestCase):
+    """Retain cleanup and runtime rejection behavior in the split startup probes."""
+
+    def test_backup_roundtrip_failure_removes_container(self):
+        """An SSH/rsync verification failure cannot strand the backup fixture."""
+        probe = load_probe("test_backup_collabora_guards.py")
+        with (
+            patch.object(probe, "start_backup", return_value="backup-fixture"),
+            patch.object(probe, "check_backup_roundtrip", side_effect=AssertionError("roundtrip")),
+            patch.object(probe, "run") as run,
+        ):
+            with self.assertRaisesRegex(AssertionError, "roundtrip"):
+                probe.check_backup()
+        run.assert_called_once_with(["podman", "rm", "-f", "backup-fixture"])
+
+    def test_collabora_discovery_failure_removes_container(self):
+        """Failed readiness still removes the document-server fixture."""
+        probe = load_probe("test_backup_collabora_guards.py")
+        with (
+            patch.object(
+                probe, "run", side_effect=["collabora-fixture", "127.0.0.1:12345", "logs", ""]
+            ) as run,
+            patch.object(probe.urllib.request, "urlopen", side_effect=OSError("not ready")),
+            patch.object(probe.time, "sleep"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Collabora discovery failed"):
+                probe.check_collabora()
+        self.assertEqual(run.call_args.args[0], ["podman", "rm", "-f", "collabora-fixture"])
+
+    def test_alloy_partial_volume_setup_removes_allocated_volumes(self):
+        """Preparation failures retain cleanup ownership for every created state volume."""
+        probe = load_probe("test_nextcloud_alloy_readonly.py")
+
+        def prepare(volumes):
+            volumes.extend(["state-fixture", "run-fixture"])
+            raise RuntimeError("synthetic volume setup failure")
+
+        with (
+            patch.object(probe, "prepare_volumes", side_effect=prepare),
+            patch.object(probe, "run") as run,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "volume setup failure"):
+                probe.main()
+        self.assertEqual(
+            [call.args[0] for call in run.call_args_list],
+            [["podman", "volume", "rm", name] for name in ("state-fixture", "run-fixture")],
+        )
+
+    def test_alloy_rejects_writable_root_before_checkpoint_checks(self):
+        """A writable root filesystem must fail even when the content mount is read-only."""
+        probe = load_probe("test_nextcloud_alloy_readonly.py")
+        with patch.object(probe, "run", return_value="1 2 3 4 / rw\n1 2 3 4 /nextcloud ro") as run:
+            with self.assertRaises(AssertionError):
+                probe.check_runtime("alloy-fixture", ["state-fixture", "run-fixture"])
+        run.assert_called_once_with(["podman", "exec", "alloy-fixture", "cat", "/proc/1/mountinfo"])

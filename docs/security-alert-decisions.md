@@ -1496,3 +1496,28 @@ modern Pylint 103, Prospector 56 and Opengrep 25. No possible-hardcoded-password
 or E5110 findings remain open. The preceding table snapshot was 365; the net
 change combines genuine scanner reconciliation and exact reviewed decisions.
 No code, scanner rule, cluster or live application was changed in this batch.
+
+
+### Split backup/Collabora and Alloy runtime probe responsibilities
+
+Separated disposable backup identity/container startup, SSH/rsync round-trip
+verification and Collabora discovery/jail checks. Separated Alloy manifest/config
+validation, volume allocation, synthetic fixture creation, receiver/Alloy startup,
+Snappy delivery and runtime/checkpoint checks. Cleanup ownership stays in the
+original outer try/finally scopes, including partially allocated resources.
+Both probes now pass full Pylint; their six original complexity warnings are gone.
+
+Compared both preceding implementations with eighty probe/failure scenarios.
+Ordered command arguments/options, fixture bytes, outputs and exceptions matched,
+including cleanup after injected command failures. Four permanent offline tests
+cover backup removal after failed round-trip checks, Collabora removal after
+failed discovery, Alloy volume removal after partial setup, and immediate
+rejection of a writable root before checkpoint verification. Existing process
+wrapper regressions still pass. No actual SSH, container, receiver, live workload
+or external endpoint was used in these mocked comparisons or new regressions.
+
+The full suite ran 470 tests successfully with 21 opt-in skips. Both probes and
+the updated regression module pass full Pylint; Ruff and diff checks passed, and
+Bandit reported no analysis errors. Publication and genuine scanner refresh are
+still required for source-based alert closure. No scanner rule or guard was
+removed, and the actual opt-in runtime probes were not executed.
