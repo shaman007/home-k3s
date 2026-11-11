@@ -3148,3 +3148,48 @@ change, external service access or push occurred in this decision batch.
 
 Independent API inventory confirms all seven absent: four open, comprising
 two Pylint duplicate-code diagnostics and two UniFi TLS verification findings.
+
+
+### Retire unattributable duplicate headers and define the remaining TLS decision
+
+Classified exact R0801 alerts 7990 and 8108 as won't fix for unusable reporter
+output, not as proof that the repository has no duplication. Original uploaded
+SARIF analysis 2146682259 contains only "Similar lines in 2 files" at line one
+of test_logs_check_logic.py or test_common_networkpolicies.py, without file pairs,
+snippets, related locations or supplementary duplicate references. The original
+SARIF was inspected before classification. Both flagged source files match their
+analyzed revisions. Local full-repository Pylint 4.1.3 reports 67 contextual
+duplicate blocks, none referencing either flagged module; this local version/
+configuration is supporting evidence, not asserted identical to Codacy's runtime.
+The upstream adapter's parseResult drops multiline continuation context:
+https://github.com/codacy/codacy-pylint-python3/blob/3ea0e20326b35a8c4afedb550ecdec157f9bb2fa/src/codacy_pylint.py.
+Reopen these diagnostics when the tool supplies identifiable paired source blocks.
+No real block was removed, test coverage reduced or global similarity rule disabled.
+Independent API reads verify both decisions as won't fix.
+
+Only 7615 (Opengrep unverified SSL context) and 7524 (Bandit B323) remain open.
+They describe the same actual TLS verification exception, not false positives.
+The deployment explicitly disables verification for https://192.168.1.1. A fresh
+unauthenticated TLS handshake on 2026-11-11 fails normal verification with a
+self-signed certificate (OpenSSL error 18). Public certificate inspection shows
+subject/issuer CN=unifi.local, valid May 12, 2026 through August 14, 2028. Its SANs
+cover unifi.local, localhost and loopback/link-local addresses, not 192.168.1.1.
+Enabling verification against the existing endpoint/certificate would break
+collection. Merely trusting the observed certificate would not fix the IP-name
+mismatch and would not establish an authenticated trust source. No credentials
+or HTTP request were sent, and the observed leaf was not installed as trusted.
+
+Proposed remediation is to provision a router certificate valid for its stable
+access hostname/IP through an independently trusted issuer, configure the client
+address/trust consistently, enable verification and validate authenticated BGP
+collection. Router certificate/identity changes affect other consumers and extend
+beyond the repository-only changes made here; that scope needs an owner decision.
+The alternative is to retain this explicitly configured local-controller exception
+as won't fix, acknowledging credential/session interception risk and reopening
+when independently trusted router identity becomes available. Until that decision,
+both actual TLS findings remain open and existing connectivity is preserved.
+
+No source or deployment changed in this review. Last full-suite result remains
+555 tests with 16 skips. Local duplicate analysis completed successfully with
+contextual R0801 diagnostics; no new runtime test was necessary for documentation.
+No credentials, configuration writes, router authentication or push occurred.
