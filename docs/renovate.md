@@ -20,14 +20,22 @@ Under repository Settings -> Secrets and variables -> Actions, add:
 
 | Type | Name | Value |
 | --- | --- | --- |
-| Variable | `RENOVATE_APP_ID` | The App's numeric ID |
+| Variable | `RENOVATE_CLIENT_ID` | The App's Client ID |
 | Secret | `RENOVATE_APP_PRIVATE_KEY` | The App's complete PEM private key |
+
+The workflow uses the token action's `client-id` input. Existing installations
+can continue using the numeric `RENOVATE_APP_ID` variable as a fallback; set
+`RENOVATE_CLIENT_ID` to migrate without interrupting scheduled runs.
 
 Enter the private key directly into the GitHub secret; never commit it or paste it
 into a chat. The old `RENOVATE_TOKEN` secret is no longer used by this workflow.
 Without App credentials the workflow fails before running Renovate.
 
 ## Verification and existing PRs
+
+Renovate runs with `LOG_LEVEL=debug` so failures such as `Error updating branch:
+update failure` include the affected dependency/file and underlying error. A
+successful workflow exit alone does not establish that every branch was updated.
 
 After the configuration is published to `main` and the App credentials exist,
 dispatch the Renovate workflow. Request rebase/retry on an existing Renovate PR

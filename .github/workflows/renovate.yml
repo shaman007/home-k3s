@@ -19,18 +19,18 @@ jobs:
     steps:
       - name: Check GitHub App configuration
         env:
-          APP_ID: ${{ vars.RENOVATE_APP_ID }}
+          APP_ID: ${{ vars.RENOVATE_CLIENT_ID || vars.RENOVATE_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
         run: |
           if [ -z "$APP_ID" ] || [ -z "$APP_PRIVATE_KEY" ]; then
-            echo "::error::Configure RENOVATE_APP_ID and RENOVATE_APP_PRIVATE_KEY as described in docs/renovate.md."
+            echo "::error::Configure RENOVATE_CLIENT_ID (or RENOVATE_APP_ID) and RENOVATE_APP_PRIVATE_KEY as described in docs/renovate.md."
             exit 1
           fi
       - name: Create Renovate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.RENOVATE_APP_ID }}
+          client-id: ${{ vars.RENOVATE_CLIENT_ID || vars.RENOVATE_APP_ID }}
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
           # With no owner/repositories override, scope the token to this repository.
       - name: Checkout repository
@@ -42,6 +42,8 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
         env:
+          # File-update failures only include their underlying cause at debug level.
+          LOG_LEVEL: debug
           RENOVATE_PLATFORM_COMMIT: "enabled"
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           # One-off migration from the old PAT account; disabled for scheduled runs.
