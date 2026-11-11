@@ -6,6 +6,32 @@ import json
 from pathlib import Path
 
 
+def reject_incomplete_scan(runs):
+    """Reject failed invocations and Python parse failures without echoing source."""
+    parser_rules = {"PyLint_E0001", "PyLintPython3_E0001"}
+    for run in runs:
+        for invocation in run.get("invocations", []):
+            if invocation.get("executionSuccessful") is False:
+                raise ValueError("Scanner execution failed; refusing an incomplete scan.")
+        rules = run["tool"]["driver"].get("rules", [])
+        for result in run.get("results", []):
+            rule_id = result.get("ruleId")
+            if rule_id is None and "ruleIndex" in result:
+                rule_id = rules[result["ruleIndex"]]["id"]
+            # Prospector groups all Pylint diagnostics under one SARIF rule.
+            # Match the diagnostic code suffix, not arbitrary source text.
+            message = result.get("message", {})
+            text = message.get("text", message.get("markdown", ""))
+            prospector_parser_error = (
+                rule_id == "Prospector_pylint" and text.rstrip().endswith("(syntax-error)")
+            )
+            if rule_id in parser_rules or prospector_parser_error:
+                raise ValueError(
+                    "Python linter reported parser errors; "
+                    "refusing to replace historical results with an incomplete scan."
+                )
+
+
 def prepare(report, reject_parser_errors=False):
     """Merge Codacy batches while preserving findings and remapping local references."""
     report = copy.deepcopy(report)
@@ -84,19 +110,13 @@ def prepare(report, reject_parser_errors=False):
         merged["artifacts"].extend(artifacts)
         merged["invocations"].extend(run.get("invocations", []))
     report["runs"] = list(groups.values())
+    # An explicit scanner execution failure is unsafe for every tool, even if
+    # parser-error rejection was not requested for this analysis.
+    for run in report["runs"]:
+        if any(i.get("executionSuccessful") is False for i in run["invocations"]):
+            raise ValueError("Scanner execution failed; refusing an incomplete scan.")
     if reject_parser_errors:
-        parser_rules = {"PyLint_E0001", "PyLintPython3_E0001"}
-        for run in report["runs"]:
-            rules = run["tool"]["driver"]["rules"]
-            for result in run["results"]:
-                rule_id = result.get("ruleId")
-                if rule_id is None and "ruleIndex" in result:
-                    rule_id = rules[result["ruleIndex"]]["id"]
-                if rule_id in parser_rules:
-                    raise ValueError(
-                        "Python linter reported parser errors; "
-                        "refusing to replace historical results with an incomplete scan."
-                    )
+        reject_incomplete_scan(report["runs"])
     return report
 
 

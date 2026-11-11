@@ -857,7 +857,8 @@ checklist uses plain bullets and retains the original historical-review meaning.
 
 ### Approved stale dispositions completed (2026-11-11)
 
-The user explicitly approved the exact 1,440 IDs in security-stale-alerts.json,
+The user explicitly approved the exact 1,440 IDs in the
+[historical review snapshot](https://github.com/shaman007/home-k3s/blob/16e7083d90253082880085ffc93a48352dce5164/docs/security-stale-alerts.json),
 superseding the earlier request to keep legacy findings open. Completed 1,396
 retired Pylint, 31 retired Ruby, six retired SQL and seven deleted-source
 historical dispositions as won't fix. Every API response was checked for the
@@ -869,9 +870,9 @@ no alternate route was used to bypass the review.
 
 GitHub open findings fell from 2,056 to 599 after these dispositions, the sixteen
 Markdown fixes verified by rescan, and the separately reviewed CodeQL false
-positive. The remaining list, ranked by rule frequency, is saved in
-security-findings-priority.json. After the Django-plugin review below, the
-independently verified final open count is 586. This does not establish that all remaining findings are resolved.
+positive. The remaining list was ranked by rule frequency for the review.
+After the Django-plugin review below, the independently verified final open count
+is 586. This does not establish that all remaining findings are resolved.
 
 The thirteen current PyLintPython3_E5110 findings were individually re-reviewed:
 all report forced pylint-django configuration on a repository with no Django
@@ -891,9 +892,12 @@ regression tests and decision records remain uncommitted and unpushed.
 GitHub now reports **586 open findings**, down from 2,056 at the
 start of this batch: 1,440 approved stale dispositions, sixteen fixes verified
 by Markdown rescan, and fourteen individually supported false-positive decisions.
-The full current list is in [security-findings-priority.json](security-findings-priority.json),
-sorted by descending rule frequency and including current local counterparts
-for historical renamed-file paths.
+The table below records the highest-frequency rules from that API snapshot.
+The generated findings export and completed dismissal JSON were removed from the
+current tree at the user's request as one-off artifacts. Regenerate live inventories
+from GitHub when continuing remediation; snapshots do not prove current state.
+The approved IDs and comments remain available in the historical review snapshot
+linked above, and GitHub retains the individual alert histories.
 
 | Count | Scanner | Rule |
 | ---: | --- | --- |
@@ -906,7 +910,7 @@ for historical renamed-file paths.
 | 32 | Pylintpython3 | `PyLintPython3_R0912` |
 | 26 | Pylintpython3 | `PyLintPython3_R0915` |
 
-The uncommitted probe hardening reduces local Bandit findings from 215 to 161;
+The probe hardening reduces local Bandit findings from 215 to 161;
 that source reduction is not yet reflected in these GitHub counts. All 131
 Python modules pass the current naming, unused-variable/argument/import,
 missing-docstring, line-length and statement checks, and Ruff E2 spacing is

@@ -4,8 +4,10 @@ Updated user decision (2026-11-11): mark confirmed stale findings as **won't fix
 This supersedes the earlier decision to retain the entire historical inventory.
 Current-source findings still require fixes or individually supported decisions.
 
-The exact reviewed batch of **1440 alerts** and the explanatory comment for
-each group are recorded in [security-stale-alerts.json](security-stale-alerts.json):
+The exact reviewed batch of **1,440 alerts** and its group comments are preserved
+in the [approved historical snapshot](https://github.com/shaman007/home-k3s/blob/16e7083d90253082880085ffc93a48352dce5164/docs/security-stale-alerts.json).
+The completed one-off JSON has been removed from the current tree at the user's
+request; GitHub retains each alert's disposition and explanatory comment:
 
 | Confirmed stale group | Alerts | Evidence |
 | --- | ---: | --- |
@@ -20,7 +22,9 @@ are excluded. No analysis history or scanner configuration is deleted.
 
 Execution is complete: all 1,440 selected alerts were confirmed dismissed with
 the approved reason and comment, and none remains in the open-alert set. The
-per-group execution summary is recorded in the JSON review file.
+per-group totals and evidence are retained in the table above and the historical
+snapshot. On 2026-11-11, an independent API refresh again confirmed that zero
+approved IDs remain open; the repository has 586 open findings overall.
 
 The most recent completed local scan verifies zero missing-docstring, long-line,
 naming, or unused-variable/import findings across 129 modules. A separate Ruff
