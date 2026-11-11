@@ -312,6 +312,11 @@ def graph_node_from_peer(peer, current_namespace):
             return make_graph_node("special:internet", "Internet", True)
         return make_graph_node(f"special:cidr:{cidr}", f"CIDR {cidr}", True)
 
+    return graph_node_from_selectors(peer, current_namespace)
+
+
+def graph_node_from_selectors(peer, current_namespace):
+    """Map namespace and pod selectors after empty and IP-block peers are handled."""
     namespace_selector = peer.get("namespaceSelector")
     pod_selector = peer.get("podSelector")
     exact_name = exact_namespace_name(namespace_selector)
@@ -381,9 +386,8 @@ def optimize_bipartite_order(left_nodes, right_nodes, edges):
     return left_order, right_order
 
 
-def build_connection_graph(payload, namespace_sections):
-    """Aggregate peer references into directed edges, hiding same-node links."""
-    namespace_names = sorted(section["namespace"] for section in namespace_sections)
+def collect_graph_edges(payload):
+    """Aggregate peer directions while counting hidden self-links."""
     edge_map = {}
     source_specials = {}
     target_specials = {}
@@ -437,17 +441,11 @@ def build_connection_graph(payload, namespace_sections):
                     "ingress",
                 )
 
-    edges = sorted(
-        edge_map.values(),
-        key=lambda edge: (edge["count"], edge["source_label"], edge["target_label"]),
-    )
+    return edge_map, source_specials, target_specials, hidden_self_edges
 
-    out_counts = collections.Counter()
-    in_counts = collections.Counter()
-    for edge in edges:
-        out_counts[edge["source"]] += edge["count"]
-        in_counts[edge["target"]] += edge["count"]
 
+def ordered_graph_nodes(namespace_names, edges, source_specials, target_specials):
+    """Include referenced namespaces and preserve weighted bipartite node ordering."""
     referenced_namespaces = {edge["source"] for edge in edges if not edge["source_special"]} | {
         edge["target"] for edge in edges if not edge["target_special"]
     }
@@ -464,11 +462,33 @@ def build_connection_graph(payload, namespace_sections):
     left_lookup = {node["key"]: node for node in left_nodes}
     right_lookup = {node["key"]: node for node in right_nodes}
 
+    return [left_lookup[key] for key in left_order], [right_lookup[key] for key in right_order]
+
+
+def build_connection_graph(payload, namespace_sections):
+    """Aggregate peer references into directed edges, hiding same-node links."""
+    namespace_names = sorted(section["namespace"] for section in namespace_sections)
+    edge_map, source_specials, target_specials, hidden_self_edges = collect_graph_edges(payload)
+    edges = sorted(
+        edge_map.values(),
+        key=lambda edge: (edge["count"], edge["source_label"], edge["target_label"]),
+    )
+
+    out_counts = collections.Counter()
+    in_counts = collections.Counter()
+    for edge in edges:
+        out_counts[edge["source"]] += edge["count"]
+        in_counts[edge["target"]] += edge["count"]
+
+    left_nodes, right_nodes = ordered_graph_nodes(
+        namespace_names, edges, source_specials, target_specials
+    )
+
     return {
         "edges": edges,
         "hidden_self_edges": hidden_self_edges,
-        "left_nodes": [left_lookup[key] for key in left_order],
-        "right_nodes": [right_lookup[key] for key in right_order],
+        "left_nodes": left_nodes,
+        "right_nodes": right_nodes,
         "out_counts": out_counts,
         "in_counts": in_counts,
         "visible_edge_count": len(edges),
@@ -483,6 +503,32 @@ def render_text(x, y, lines, class_name):
             f'<text x="{x}" y="{y + index * LINE_HEIGHT}" class="{class_name}">{xml(line)}</text>'
         )
     return "\n".join(fragments)
+
+
+def render_inventory_legend():
+    """Draw the inventory category legend in its original order."""
+    parts = []
+    legend_y = 134
+    legend_items = [
+        ("policy ingress", "Ingress policy"),
+        ("policy egress", "Egress policy"),
+        ("policy mixed", "Ingress + Egress"),
+        ("policy deny-both", "Default deny / empty rule set"),
+    ]
+    legend_x = PAGE_MARGIN + 20
+    for class_name, label in legend_items:
+        parts.append(
+            (
+                f'<rect x="{legend_x}" y="{legend_y - 16}'
+                f'" width="18" height="18" rx="4" class="{class_name}" />'
+            )
+        )
+        parts.append(
+            f'<text x="{legend_x + 28}" y="{legend_y - 2}" class="legend">{xml(label)}</text>'
+        )
+        legend_x += 250
+
+    return parts
 
 
 def render_overview(namespace_sections, context_label, updated_at):
@@ -507,25 +553,7 @@ def render_overview(namespace_sections, context_label, updated_at):
             f'" height="82" rx="18" class="overview-panel" />'
         )
     )
-    legend_y = 134
-    legend_items = [
-        ("policy ingress", "Ingress policy"),
-        ("policy egress", "Egress policy"),
-        ("policy mixed", "Ingress + Egress"),
-        ("policy deny-both", "Default deny / empty rule set"),
-    ]
-    legend_x = PAGE_MARGIN + 20
-    for class_name, label in legend_items:
-        lines.append(
-            (
-                f'<rect x="{legend_x}" y="{legend_y - 16}'
-                f'" width="18" height="18" rx="4" class="{class_name}" />'
-            )
-        )
-        lines.append(
-            f'<text x="{legend_x + 28}" y="{legend_y - 2}" class="legend">{xml(label)}</text>'
-        )
-        legend_x += 250
+    lines.extend(render_inventory_legend())
 
     grid_top = 218
     for index, section in enumerate(sorted(namespace_sections, key=lambda item: item["namespace"])):
@@ -564,55 +592,9 @@ def edge_class(edge):
     return "both"
 
 
-def render_connection_graph(graph_data, start_y):
-    """Render the two-column peer graph and return its lower page offset."""
-    row_count = max(len(graph_data["left_nodes"]), len(graph_data["right_nodes"]))
-    graph_height = 158 + row_count * GRAPH_ROW_GAP
-    panel_x = PAGE_MARGIN
-    panel_y = start_y
-    panel_width = SVG_WIDTH - PAGE_MARGIN * 2
-    panel_height = graph_height
-
-    left_x = panel_x + 26
-    right_x = panel_x + panel_width - 26 - GRAPH_NODE_WIDTH
-    row_top = panel_y + 128
-
-    left_positions = {
-        node["key"]: row_top + index * GRAPH_ROW_GAP + GRAPH_NODE_HEIGHT / 2
-        for index, node in enumerate(graph_data["left_nodes"])
-    }
-    right_positions = {
-        node["key"]: row_top + index * GRAPH_ROW_GAP + GRAPH_NODE_HEIGHT / 2
-        for index, node in enumerate(graph_data["right_nodes"])
-    }
-
+def render_graph_legend(panel_x, panel_y):
+    """Draw ingress, egress and shared-flow legend samples."""
     parts = []
-    parts.append(
-        (
-            f'<rect x="{panel_x}" y="{panel_y}" width="{panel_width}" height="'
-            f'{panel_height}" rx="22" class="graph-panel" />'
-        )
-    )
-    parts.append(
-        f'<text x="{panel_x + 20}" y="{panel_y + 34}" class="section-title">Connection Graph</text>'
-    )
-    parts.append(
-        (
-            f'<text x="{panel_x + 20}" y="{panel_y + 56}'
-            f'" class="section-subtitle">Namespace-level directed flows '
-            f"aggregated from policy peers. Sources are on the left, "
-            f"targets are on the right.</text>"
-        )
-    )
-    parts.append(
-        (
-            f'<text x="{panel_x + 20}" y="{panel_y + 76}'
-            f'" class="section-subtitle">Visible cross-namespace or special-target links: '
-            f"{graph_data['visible_edge_count']} | Hidden same-namespace links: "
-            f"{graph_data['hidden_self_edges']}</text>"
-        )
-    )
-
     legend_y = panel_y + 98
     legend_items = [
         ("edge ingress", "Allowed because of ingress rule"),
@@ -632,92 +614,143 @@ def render_connection_graph(graph_data, start_y):
         )
         legend_x += 310
 
-    parts.append(f'<text x="{left_x}" y="{panel_y + 118}" class="graph-heading">Sources</text>')
-    parts.append(f'<text x="{right_x}" y="{panel_y + 118}" class="graph-heading">Targets</text>')
+    return parts
+
+
+def render_graph_edges(graph_data, left_positions, right_positions, left_x, right_x):
+    """Draw weighted directed curves and labels without changing edge order."""
+    parts = []
+    for edge in graph_data["edges"]:
+        y1 = left_positions[edge["source"]]
+        y2 = right_positions[edge["target"]]
+        x1 = left_x + GRAPH_NODE_WIDTH
+        stroke_width = 0.9 + min(4.8, edge["count"] * 0.75)
+        opacity = min(0.72, 0.24 + edge["count"] * 0.09)
+        klass = edge_class(edge)
+        parts.append(
+            (
+                f'<path d="M {x1} {y1} C {x1 + GRAPH_CURVE} {y1}, '
+                f"{right_x - GRAPH_CURVE} {y2}, {right_x}"
+                f' {y2}" class="edge {klass}" style="stroke-width:{stroke_width};opacity:'
+                f'{opacity}" />'
+            )
+        )
+        if edge["count"] >= 3:
+            label_x = (x1 + right_x) / 2
+            label_y = (y1 + y2) / 2 - 4
+            parts.append(
+                f'<text x="{label_x}" y="{label_y}" class="edge-count">{edge["count"]}</text>'
+            )
+
+    return parts
+
+
+def render_graph_nodes(nodes, counts, x, row_top):
+    """Draw one node column with escaped labels and its direction-specific counts."""
+    parts = []
+    for index, node in enumerate(nodes):
+        y = row_top + index * GRAPH_ROW_GAP
+        node_class = "graph-node special" if node["is_special"] else "graph-node"
+        value = counts.get(node["key"], 0)
+        parts.append(
+            (
+                f'<rect x="{x}" y="{y}" width="{GRAPH_NODE_WIDTH}" height="'
+                f'{GRAPH_NODE_HEIGHT}" rx="10" class="{node_class}" />'
+            )
+        )
+        parts.append(
+            (
+                f'<text x="{x + 12}" y="{y + 14}" class="graph-node-label">'
+                f"{xml(node['label'])}</text>"
+            )
+        )
+        parts.append(
+            (
+                f'<text x="{x + GRAPH_NODE_WIDTH - 10}" y="{y + 14}'
+                f'" text-anchor="end" class="graph-node-metric">{value}</text>'
+            )
+        )
+
+    return parts
+
+
+def render_connection_graph(graph_data, start_y):
+    """Render the two-column peer graph and return its lower page offset."""
+    panel_x = PAGE_MARGIN
+    panel_width = SVG_WIDTH - PAGE_MARGIN * 2
+    panel_height = (
+        158 + max(len(graph_data["left_nodes"]), len(graph_data["right_nodes"])) * GRAPH_ROW_GAP
+    )
+
+    left_x = panel_x + 26
+    right_x = panel_x + panel_width - 26 - GRAPH_NODE_WIDTH
+    row_top = start_y + 128
+
+    left_positions = {
+        node["key"]: row_top + index * GRAPH_ROW_GAP + GRAPH_NODE_HEIGHT / 2
+        for index, node in enumerate(graph_data["left_nodes"])
+    }
+    right_positions = {
+        node["key"]: row_top + index * GRAPH_ROW_GAP + GRAPH_NODE_HEIGHT / 2
+        for index, node in enumerate(graph_data["right_nodes"])
+    }
+
+    parts = []
+    parts.append(
+        (
+            f'<rect x="{panel_x}" y="{start_y}" width="{panel_width}" height="'
+            f'{panel_height}" rx="22" class="graph-panel" />'
+        )
+    )
+    parts.append(
+        f'<text x="{panel_x + 20}" y="{start_y + 34}" class="section-title">Connection Graph</text>'
+    )
+    parts.append(
+        (
+            f'<text x="{panel_x + 20}" y="{start_y + 56}'
+            f'" class="section-subtitle">Namespace-level directed flows '
+            f"aggregated from policy peers. Sources are on the left, "
+            f"targets are on the right.</text>"
+        )
+    )
+    parts.append(
+        (
+            f'<text x="{panel_x + 20}" y="{start_y + 76}'
+            f'" class="section-subtitle">Visible cross-namespace or special-target links: '
+            f"{graph_data['visible_edge_count']} | Hidden same-namespace links: "
+            f"{graph_data['hidden_self_edges']}</text>"
+        )
+    )
+
+    parts.extend(render_graph_legend(panel_x, start_y))
+
+    parts.append(f'<text x="{left_x}" y="{start_y + 118}" class="graph-heading">Sources</text>')
+    parts.append(f'<text x="{right_x}" y="{start_y + 118}" class="graph-heading">Targets</text>')
 
     parts.append(
         (
             f'<line x1="{left_x + GRAPH_NODE_WIDTH + 8}" y1="{row_top - 16}" x2="'
-            f'{left_x + GRAPH_NODE_WIDTH + 8}" y2="{panel_y + panel_height - 20}'
+            f'{left_x + GRAPH_NODE_WIDTH + 8}" y2="{start_y + panel_height - 20}'
             f'" class="graph-guide" />'
         )
     )
     parts.append(
         (
             f'<line x1="{right_x - 8}" y1="{row_top - 16}" x2="{right_x - 8}" y2="'
-            f'{panel_y + panel_height - 20}" class="graph-guide" />'
+            f'{start_y + panel_height - 20}" class="graph-guide" />'
         )
     )
 
-    for edge in graph_data["edges"]:
-        y1 = left_positions[edge["source"]]
-        y2 = right_positions[edge["target"]]
-        x1 = left_x + GRAPH_NODE_WIDTH
-        x2 = right_x
-        stroke_width = 0.9 + min(4.8, edge["count"] * 0.75)
-        opacity = min(0.72, 0.24 + edge["count"] * 0.09)
-        klass = edge_class(edge)
-        parts.append(
-            (
-                f'<path d="M {x1} {y1} C {x1 + GRAPH_CURVE} {y1}, {x2 - GRAPH_CURVE} {y2}, {x2}'
-                f' {y2}" class="edge {klass}" style="stroke-width:{stroke_width};opacity:'
-                f'{opacity}" />'
-            )
-        )
-        if edge["count"] >= 3:
-            label_x = (x1 + x2) / 2
-            label_y = (y1 + y2) / 2 - 4
-            parts.append(
-                f'<text x="{label_x}" y="{label_y}" class="edge-count">{edge["count"]}</text>'
-            )
+    parts.extend(render_graph_edges(graph_data, left_positions, right_positions, left_x, right_x))
 
-    for index, node in enumerate(graph_data["left_nodes"]):
-        y = row_top + index * GRAPH_ROW_GAP
-        node_class = "graph-node special" if node["is_special"] else "graph-node"
-        out_value = graph_data["out_counts"].get(node["key"], 0)
-        parts.append(
-            (
-                f'<rect x="{left_x}" y="{y}" width="{GRAPH_NODE_WIDTH}" height="'
-                f'{GRAPH_NODE_HEIGHT}" rx="10" class="{node_class}" />'
-            )
-        )
-        parts.append(
-            (
-                f'<text x="{left_x + 12}" y="{y + 14}" class="graph-node-label">'
-                f"{xml(node['label'])}</text>"
-            )
-        )
-        parts.append(
-            (
-                f'<text x="{left_x + GRAPH_NODE_WIDTH - 10}" y="{y + 14}'
-                f'" text-anchor="end" class="graph-node-metric">{out_value}</text>'
-            )
-        )
+    parts.extend(
+        render_graph_nodes(graph_data["left_nodes"], graph_data["out_counts"], left_x, row_top)
+    )
+    parts.extend(
+        render_graph_nodes(graph_data["right_nodes"], graph_data["in_counts"], right_x, row_top)
+    )
 
-    for index, node in enumerate(graph_data["right_nodes"]):
-        y = row_top + index * GRAPH_ROW_GAP
-        node_class = "graph-node special" if node["is_special"] else "graph-node"
-        in_value = graph_data["in_counts"].get(node["key"], 0)
-        parts.append(
-            (
-                f'<rect x="{right_x}" y="{y}" width="{GRAPH_NODE_WIDTH}" height="'
-                f'{GRAPH_NODE_HEIGHT}" rx="10" class="{node_class}" />'
-            )
-        )
-        parts.append(
-            (
-                f'<text x="{right_x + 12}" y="{y + 14}" class="graph-node-label">'
-                f"{xml(node['label'])}</text>"
-            )
-        )
-        parts.append(
-            (
-                f'<text x="{right_x + GRAPH_NODE_WIDTH - 10}" y="{y + 14}'
-                f'" text-anchor="end" class="graph-node-metric">{in_value}</text>'
-            )
-        )
-
-    return "\n".join(parts), panel_y + panel_height + 26
+    return "\n".join(parts), start_y + panel_height + 26
 
 
 def render_namespace_section(section):

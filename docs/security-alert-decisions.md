@@ -1312,3 +1312,27 @@ The full suite ran 453 tests successfully with 21 opt-in skips. The test module
 passes full Pylint; Ruff and diff checks passed, and Bandit reported no analysis
 errors. Source fixes await publication and genuine scanner refresh; no scanner
 rule or validation gate was disabled.
+
+
+### Separate NetworkPolicy graph aggregation and SVG drawing
+
+Extracted peer-edge collection, referenced-node ordering, selector-node mapping,
+inventory/graph legends, weighted curves and node-column rendering into focused
+helpers. Shared node drawing retains direction-specific counters and fragment
+ordering. Local Pylint no longer reports the five excessive-return/local/statement
+warnings in the renderer; its existing context-detection broad-exception warning
+remains open. No policy interpretation or graph ordering algorithm was changed.
+
+Compared the preceding implementation with the refactor across 120 deterministic
+snapshots spanning empty inventories, ingress/egress combinations, repeated peers,
+self-links, namespace/pod selectors, Internet/CIDR peers, ports and XML-sensitive
+labels. Sections, edge counts/directions, node ordering and complete SVG bytes
+match exactly with the timestamp fixed. Three permanent offline tests cover
+shared-direction aggregation and hidden self-links, special/referenced nodes,
+well-formed escaped XML, weighted edge labels and empty inventory rendering.
+No kubectl command or live cluster query was executed.
+
+The full suite ran 456 tests successfully with 21 opt-in skips. The new regression
+module passes full Pylint; Ruff and diff checks passed, and Bandit reported no
+analysis errors. Publication and genuine scanner refresh remain necessary for
+source-based alert closure. No scanner rule was disabled.
