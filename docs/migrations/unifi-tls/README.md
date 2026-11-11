@@ -1,7 +1,12 @@
 # UniFi console trusted-TLS migration
 
-Status: preparation only. The existing live clients are unchanged. Both TLS alerts
-remain open until verified router activation, client cutover and genuine rescanning.
+Status: certificate issued after owner publication of 193b51f2. Argo reconciled
+that revision and Certificate unifi-console-tls is Ready. The issued certificate
+has SAN unifi.int.andreybondarenko.com, issuer Let's Encrypt YR2 and expiry
+2027-02-09 18:44:42 UTC. Its public chain/hostname passes workstation system-trust
+verification. No private-key field was extracted. Router activation and client
+cutover are pending; both TLS alerts remain open until actual verified collection
+and genuine rescanning.
 
 ## Identity and certificate
 
@@ -11,8 +16,8 @@ A record, Ingress, Service or new router port is needed. DNS-01 uses the existin
 production `letsencrypt-internal-prod` issuer. On 2026-11-11 its Ready condition
 was true, its ACME directory was production Let's Encrypt and its selector covered
 `int.andreybondarenko.com`. The active Certificate manifest requests a separate
-RSA-2048 key, a 90-day certificate and renewal 30 days before expiry. Only publishing
-and Argo reconciliation can issue it; no certificate or key has been retrieved here.
+RSA-2048 key, a 90-day certificate and renewal 30 days before expiry. Owner publication and normal Argo reconciliation issued it; the public certificate
+was inspected after issuance. No private key was retrieved.
 
 The current console's public self-signed certificate has CN `unifi.local` and does
 not cover `192.168.1.1`. Do not trust that observed leaf as a bootstrap authority.
@@ -103,7 +108,9 @@ material until trusted clients and renewal handling have been verified.
 - [UnPoller controller verification configuration](https://unpoller.com/docs/install/configuration/)
 
 The public-certificate handshake and issuer readiness were checked read-only.
-No router authentication, certificate/key extraction, DNS change, issuance, console
-activation, OpenTofu apply, client cutover or push was performed during preparation.
+Initial preparation performed no issuance or live changes. After owner publication,
+normal Argo/cert-manager reconciliation issued the certificate and its public chain
+was validated read-only. No router authentication, private-key extraction, DNS
+change, console activation, OpenTofu apply, client cutover or agent push occurred.
 The prepared verified-only exporter passes 20 offline tests. Its actual router TLS
 and authenticated collection remain deployment gates, not established by mocks.

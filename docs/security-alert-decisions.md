@@ -3230,3 +3230,22 @@ The manifest aggregation gate failed because its audit matrix result was cancell
 completed audit jobs succeeded. This is not reported as a green full CI run.
 Last full active-source unit result remains 555 tests with 16 skips; no new active
 Python implementation was introduced in this preparation commit.
+
+
+### Confirm router certificate issuance after owner publication
+
+Owner publication advanced GitHub main to 193b51f2. Normal Argo reconciliation
+synced unifi-exporter at that revision and cert-manager issued unifi-console-tls
+in namespace unifi (Ready=True). Public certificate inspection confirms the exact
+SAN unifi.int.andreybondarenko.com, issuer Let's Encrypt YR2 and expiry
+2027-02-09T18:44:42Z. OpenSSL system-trust chain and hostname verification pass.
+Only the public tls.crt field was inspected; no private-key field was output or
+extracted. Temporary public-chain files were removed. No router authentication or
+certificate activation occurred, and DNS/client/provider changes remain staged.
+
+The remaining operational gate changes the shared console HTTPS identity and
+requires supported activation/recovery plus the explicit renewal handoff in the
+runbook. Existing clients remain on the current endpoint until the router serves
+the trusted certificate and validation succeeds. Alerts 7615 and 7524 remain open.
+No source behavior, cluster object or router setting was mutated by this verification.
+No agent push occurred.
