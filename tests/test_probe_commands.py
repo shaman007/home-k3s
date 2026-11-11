@@ -489,3 +489,50 @@ class PermissionAndPlexProbeTests(unittest.TestCase):
             [call.args[0] for call in run.call_args_list],
             [["podman", "volume", "create"], ["podman", "volume", "rm", "plex-volume"]],
         )
+
+
+class FrrProbeSafetyTests(unittest.TestCase):
+    """Preserve FRR fixture cleanup, exporter identity and authenticated API checks."""
+
+    def test_failed_helper_copy_removes_created_image_container(self):
+        """A copy failure must retain the temporary image container in cleanup ownership."""
+        probe = load_probe("test_frr_helper_guards.py")
+        with (
+            patch.object(probe, "prepare_fixture", return_value=Path("synthetic-config")),
+            patch.object(
+                probe, "run", side_effect=["helper-image", OSError("copy failed"), ""]
+            ) as run,
+        ):
+            with self.assertRaisesRegex(OSError, "copy failed"):
+                probe.main()
+        self.assertEqual(run.call_args.args, ("rm", "-f", "helper-image"))
+
+    def test_exporter_guards_reject_wrong_uid_or_capabilities(self):
+        """Exporter readiness cannot override UID, capability and no-new-privileges requirements."""
+        probe = load_probe("test_frr_helper_guards.py")
+        good = (
+            "CapEff:\t0000000000000000\nCapBnd:\t0000000000000000\n"
+            "NoNewPrivs:\t1\nSeccomp:\t2\nUid:\t100 100 100 100"
+        )
+        for output in (
+            good.replace("Uid:\t100 100 100 100", "Uid:\t0 0 0 0"),
+            good.replace("CapEff:\t0000000000000000", "CapEff:\t0000000000000002"),
+            good.replace("NoNewPrivs:\t1", "NoNewPrivs:\t0"),
+        ):
+            with self.subTest(output=output), patch.object(probe, "run", return_value=output):
+                with self.assertRaises(AssertionError):
+                    probe.check_exporter_guards(["exporter-fixture"])
+
+    def test_status_cache_requires_token_and_access_reviews(self):
+        """Successful resource reads alone cannot satisfy authenticated status-cache checks."""
+        probe = load_probe("test_frr_helper_guards.py")
+        with (
+            patch.object(
+                probe,
+                "run",
+                side_effect=["pod-read resource-read", "true", "pod-read resource-read"],
+            ),
+            patch.object(probe.time, "sleep"),
+        ):
+            with self.assertRaises(AssertionError):
+                probe.check_status_exporter("status-fixture", "api-fixture")

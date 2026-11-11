@@ -1765,3 +1765,25 @@ now reports 216 open alerts: Bandit 94, modern Pylint 59, Prospector 56 and
 Opengrep 7. The owner reaffirmed the standing won't-fix decision for reviewed
 hardcoded-password values/usages; no possible-hardcoded-password findings are
 currently open, and existing dismissals remain in place.
+
+
+### Separate FRR daemon, reload and authenticated exporter checks
+
+Split the FRR runtime probe into fixture preparation, helper extraction, daemon
+startup/readiness, direct reload, persistent reloader, authenticated metrics,
+status-cache and exporter process-guard checks. The outer orchestration retains
+reverse-order cleanup ownership. All three original complexity warnings are gone;
+the probe and regression module pass full Pylint without suppressions.
+
+Expanding the extracted helpers reproduces the entire original module AST.
+Seventy mocked success/failure scenarios match ordered command argv/options,
+fixture bytes, output, exceptions and cleanup. Three permanent regressions verify
+helper-copy failure removes the allocated image container, wrong exporter UID or
+process guards fail, and resource reads cannot replace token/access reviews.
+These checks did not launch containers or access live Kubernetes resources.
+
+The full suite ran 488 tests successfully with 21 opt-in skips. Full Pylint,
+Ruff at the existing 100-column width and diff checks passed; Bandit reported no
+analysis errors. Source fixes still require publication and genuine rescanning.
+The separately refreshed inventory reports 212 open alerts: Bandit 95, modern
+Pylint 54, Prospector 56 and Opengrep 7. No alerts were dismissed in this batch.
