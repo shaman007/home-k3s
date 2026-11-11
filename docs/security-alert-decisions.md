@@ -1140,3 +1140,51 @@ scanner, source path and current instance revision was checked before PATCH,
 and each response confirmed the precise false-positive reason and comment.
 Analysis history and all source checks remain enabled. These decisions do not
 classify other subprocess, TLS or Kubernetes-context findings as false positives.
+
+
+### Published-source reconciliation and bounded import/path reviews (2026-11-11)
+
+Confirmed published main was c4dde04d and manually dispatched the guarded
+Prospector scanner against it. Run
+[43047060854](https://github.com/shaman007/home-k3s/actions/runs/43047060854)
+completed successfully, including preparation and upload. Its open total fell
+from 142 to 80; every remaining Prospector instance now references c4dde04d.
+All 34 historical E713 membership findings are absent after the genuine rescan.
+The normal four-tool run 43046926219 also passed every job and reconciled the
+preceding policy complexity fixes. No fake or incomplete analysis was uploaded.
+
+Reviewed four B404 imports whose complete AST references to subprocess are only
+CalledProcessError, CompletedProcess or TimeoutExpired data types. No process
+launch function is referenced through those imports. These exact warnings were
+dismissed with type-specific comments and a requirement to reopen if a launch
+API is introduced; separate process-launch audits remain open.
+Reviewed IDs: 7791, 7776, 7775, 4340.
+
+Individually reviewed eleven B108 temporary-path reports in their exact published
+revision and AST context. Four literals are search strings rewritten into unique
+private test directories, one is an absolute executable test input under a
+mocked subprocess.run, one is the parent of a secure TemporaryDirectory allocator,
+two are mode-1777 tmpfs mounts inside disposable network-isolated containers,
+two refer to generated transcode output accessed through podman exec, and one
+only stats /tmp inside a disposable Dovecot fixture. None creates a predictable
+host temporary file. Local allocator verification confirmed mode 0700; container
+mount and exec argument boundaries were inspected directly. No container runtime
+probe or production data was used for this review.
+Reviewed IDs: 7585, 7584, 7574, 7573, 7508, 7476, 4346, 4345, 4341, 4296, 4211.
+
+All fifteen exact dispositions were confirmed with explanatory comments, scanner
+and instance-revision checks, and an independent final open-alert inventory.
+The three unclassified temporary-path findings (#7478, #6890 and #4315) remain
+open for separate review; no blanket temporary-path or subprocess rule was disabled.
+
+Removed the ET acronym alias from the Plex probe's defusedxml ElementTree import,
+addressing the remaining N817 naming report. Canonical AST comparison confirms
+only the import binding and its references change. The three real XML-parser
+regressions pass, including size, malformed-input and forbidden-declaration
+checks; selected Pylint and Ruff checks pass. No live Plex/container probe ran.
+The import source fix still needs publication and subsequent scanner refresh.
+
+Independent API and UI checks now confirm **387 open alerts**: Bandit 146,
+modern Pylint 136, Prospector 80 and Opengrep 25, down from the preceding 473
+snapshot. This combines genuine scan reconciliation with fifteen individually
+supported false-positive decisions. The broader remediation goal remains active.

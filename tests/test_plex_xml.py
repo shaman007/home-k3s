@@ -48,7 +48,7 @@ class PlexXmlTests(unittest.TestCase):
 
     def test_oversized_documents_are_rejected_before_parsing(self):
         """Bound parser input even when the document contains no entity declarations."""
-        with patch.object(probe.ET, "fromstring") as parse:
+        with patch.object(probe.ElementTree, "fromstring") as parse:
             with self.assertRaisesRegex(RuntimeError, "response limit"):
                 probe.parse_xml("x" * (1024 * 1024 + 1))
             parse.assert_not_called()

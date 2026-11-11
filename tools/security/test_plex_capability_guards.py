@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 import time
 
-from defusedxml import ElementTree as ET
+from defusedxml import ElementTree
 from defusedxml.common import DefusedXmlException
 import yaml
 
@@ -23,8 +23,10 @@ def parse_xml(document):
     if len(document) > 1024 * 1024:
         raise RuntimeError("Plex XML exceeds the probe response limit")
     try:
-        return ET.fromstring(document, forbid_dtd=True, forbid_entities=True, forbid_external=True)
-    except (DefusedXmlException, ET.ParseError):
+        return ElementTree.fromstring(
+            document, forbid_dtd=True, forbid_entities=True, forbid_external=True
+        )
+    except (DefusedXmlException, ElementTree.ParseError):
         raise RuntimeError("Plex XML is invalid or contains forbidden declarations") from None
 
 
