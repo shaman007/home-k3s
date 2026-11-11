@@ -3,6 +3,10 @@
 import copy
 import importlib.util
 import re
+import io
+from types import SimpleNamespace
+from unittest.mock import Mock
+import urllib.error
 from pathlib import Path
 import unittest
 import yaml
@@ -136,6 +140,20 @@ class UniFiBGPExporterTests(unittest.TestCase):
         self.assertIn("unifi_bgp_scrape_success 0", text)
         self.assertIn("unifi_bgp_last_success_timestamp_seconds 123", text)
         self.assertNotIn("unifi_bgp_route_active_next_hops{", text)
+
+    def test_http_error_bodies_close_before_propagation(self):
+        """Authentication and server failures cannot retain HTTP response resources."""
+        client = object.__new__(m.Controller)
+        client.base = "https://router.invalid"
+        client.csrf = ""
+        for status in (401, 403, 500):
+            body = io.BytesIO(b"synthetic-error")
+            error = urllib.error.HTTPError(client.base, status, "fixture", {}, body)
+            client.opener = SimpleNamespace(open=Mock(side_effect=error))
+            with self.subTest(status=status), self.assertRaises(urllib.error.HTTPError) as caught:
+                client.request("/fixture")
+            self.assertIs(caught.exception, error)
+            self.assertTrue(body.closed)
 
     def test_only_read_endpoints_used_by_collection(self):
         """Restrict collection to the reviewed read-only router endpoints."""

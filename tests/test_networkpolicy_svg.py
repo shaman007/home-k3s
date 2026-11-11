@@ -3,6 +3,8 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import subprocess
+from unittest.mock import patch
 
 from defusedxml import ElementTree
 
@@ -28,6 +30,25 @@ def policy(namespace, ingress=None, egress=None):
 
 class NetworkPolicySvgTests(unittest.TestCase):
     """Verify graph aggregation and valid escaped SVG without accessing Kubernetes."""
+
+    def test_context_lookup_handles_command_failures_but_exposes_programming_errors(self):
+        """Unavailable context is cosmetic, while unexpected renderer bugs must propagate."""
+        for error in (
+            FileNotFoundError(),
+            subprocess.CalledProcessError(1, "kubectl"),
+            UnicodeError("invalid output"),
+        ):
+            with (
+                self.subTest(error=type(error).__name__),
+                patch.object(renderer, "run_command", side_effect=error),
+            ):
+                self.assertEqual(renderer.detect_context(None), "unknown")
+        with patch.object(renderer, "run_command", side_effect=TypeError("bug")):
+            with self.assertRaisesRegex(TypeError, "bug"):
+                renderer.detect_context(None)
+        with patch.object(renderer, "run_command") as run:
+            self.assertEqual(renderer.detect_context("explicit"), "explicit")
+            run.assert_not_called()
 
     def test_shared_edges_and_hidden_self_links(self):
         """Ingress and egress observations aggregate while same-namespace peers stay hidden."""

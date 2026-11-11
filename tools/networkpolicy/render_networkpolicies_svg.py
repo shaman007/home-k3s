@@ -80,7 +80,7 @@ def detect_context(cli_context):
         return cli_context
     try:
         return run_command(["kubectl", "config", "current-context"])
-    except Exception:
+    except (OSError, subprocess.SubprocessError, UnicodeError):
         return "unknown"
 
 

@@ -2117,3 +2117,28 @@ No runtime subprocess or server was launched by the new teardown regression.
 Current GitHub total is 173: Bandit 83, modern Pylint 27, Prospector 56 and
 Opengrep 7. The reduction from 181 includes six reviewed decisions and two
 concurrent source-reconciliation closures. Nothing was pushed by this batch.
+
+
+### Narrow context-label fallback and close UniFi HTTP error responses
+
+Narrowed the NetworkPolicy SVG context-label fallback to operating-system,
+subprocess and Unicode decoding failures. Missing kubectl, failed context queries
+and undecodable output still produce unknown; unexpected programming exceptions
+now propagate. A new regression covers those expected failures, unexpected TypeError
+and explicit-context bypass. This fixes the broad-exception finding in detect_context.
+
+Closed UniFi HTTPError response resources at the common request boundary before
+re-raising the same error. Removed the now-redundant authentication-only close.
+This covers non-authentication failures and errors from reauthentication/retry as
+well as initial 401/403 responses. New in-memory tests verify body closure and
+exception identity for 401, 403 and 500. The poller's intentional fail-closed metric
+boundary remains unchanged and open for separate review. Existing inherited
+redirect callback signature warnings also remain unchanged.
+
+Synchronized the exporter ConfigMap using its existing YAML formatting convention;
+parsed comparison proves only exporter.py changes, and its bytes match source.
+The full suite ran 513 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed; Bandit reported no analysis errors. Pylint reports only the three
+existing UniFi boundary/framework warnings across the four changed Python modules.
+No router request, credential read, TLS setting change or deployment occurred.
+Source fixes await genuine published rescanning; no alert was dismissed in this batch.

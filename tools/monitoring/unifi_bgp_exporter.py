@@ -143,9 +143,13 @@ class Controller:
             data=json.dumps(data).encode() if data is not None else None,
             headers=headers,
         )
-        with self.opener.open(req, timeout=15) as response:
-            self.csrf = response.headers.get("X-CSRF-Token", self.csrf)
-            return json.load(response)
+        try:
+            with self.opener.open(req, timeout=15) as response:
+                self.csrf = response.headers.get("X-CSRF-Token", self.csrf)
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            error.close()
+            raise
 
     def login(self):
         """Authenticate using environment-provided credentials and the in-memory cookie jar."""
@@ -164,7 +168,6 @@ class Controller:
         except urllib.error.HTTPError as error:
             if error.code not in (401, 403):
                 raise
-            error.close()
             self.logged_in = False
             self.login()
             return self.request(path)
