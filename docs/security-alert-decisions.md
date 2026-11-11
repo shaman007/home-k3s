@@ -2624,3 +2624,28 @@ command provenance, fixture isolation or runner behavior. Independent API invent
 confirms all five absent: 67 alerts remain (Bandit 46, Pylint 15, Opengrep six).
 The increased Pylint count includes newly published forced-plugin diagnostics;
 those require a separate current-source review. No source suppression was added.
+
+
+### Recheck published Django-plugin diagnostics and credential test import
+
+Reviewed exact E5110 findings 8080, 8079, 8078, 8077, 8075, 8074, 8073,
+8072, 8071 and 7242 against their analyzed ce5f02cb revision. AST inspection of
+all 142 Python modules at that revision and the current worktree finds no Django
+imports; no Python source selects DJANGO_SETTINGS_MODULE. Each flagged module
+exactly matches its analyzed bytes. The pinned Codacy Python 3 adapter still
+unconditionally loads pylint_django and pylint_flask before each ten-file batch:
+https://github.com/codacy/codacy-pylint-python3/blob/3ea0e20326b35a8c4afedb550ecdec157f9bb2fa/src/codacy_pylint.py#L211-L238.
+These ten framework-configuration diagnostics are false positives for the retained
+utilities. Reopen if Django code/settings are introduced or the diagnostic cause
+changes. No dummy settings, global rule exclusions or SARIF filtering were added.
+
+Reviewed exact B404 finding 8067 in tests/test_benchmark_credentials.py. Its direct
+subprocess references only construct/assert TimeoutExpired; all credential-process
+calls are mocked. All four tests execute successfully without kubectl, credentials
+or network access. Reopen if direct execution or fixture isolation changes.
+Runtime benchmark-helper B404/B603/B607 findings remain open for separate review.
+
+All eleven decisions use exact current identity and analyzed-source guards before
+mutation, with evidence and reopening conditions on GitHub. This batch changes
+only the decision record; the last full-suite result remains 528 tests with 16
+skips. No containers or live cluster were accessed and no push was performed.
