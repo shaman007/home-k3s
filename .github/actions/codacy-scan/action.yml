@@ -1,0 +1,70 @@
+name: Codacy scan with bounded retries
+description: Retry failed Codacy invocations without accepting incomplete results
+inputs:
+  tool:
+    description: Fixed scanner selected by the workflow matrix
+    required: true
+  output:
+    description: Scanner SARIF basename in the checkout
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Codacy attempt 1
+      id: attempt_1
+      continue-on-error: true
+      uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
+      with:
+        tool: ${{ inputs.tool }}
+        fail-if-incomplete: true
+        output: ${{ inputs.output }}
+        format: sarif
+        gh-code-scanning-compat: true
+        max-allowed-issues: 2147483647
+
+    - name: Prepare retry 2
+      if: steps.attempt_1.outcome == 'failure'
+      shell: bash
+      env:
+        SCAN_OUTPUT: ${{ inputs.output }}
+      run: |
+        # Only remove this scanner's incomplete report, never arbitrary paths.
+        [[ "$SCAN_OUTPUT" == results-*.sarif && "$SCAN_OUTPUT" != */* ]]
+        rm -f -- "$SCAN_OUTPUT"
+        sleep 10
+
+    - name: Codacy attempt 2
+      id: attempt_2
+      if: steps.attempt_1.outcome == 'failure'
+      continue-on-error: true
+      uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
+      with:
+        tool: ${{ inputs.tool }}
+        fail-if-incomplete: true
+        output: ${{ inputs.output }}
+        format: sarif
+        gh-code-scanning-compat: true
+        max-allowed-issues: 2147483647
+
+    - name: Prepare retry 3
+      if: steps.attempt_2.outcome == 'failure'
+      shell: bash
+      env:
+        SCAN_OUTPUT: ${{ inputs.output }}
+      run: |
+        # Only remove this scanner's incomplete report, never arbitrary paths.
+        [[ "$SCAN_OUTPUT" == results-*.sarif && "$SCAN_OUTPUT" != */* ]]
+        rm -f -- "$SCAN_OUTPUT"
+        sleep 30
+
+    - name: Codacy attempt 3
+      id: attempt_3
+      if: steps.attempt_2.outcome == 'failure'
+      uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
+      with:
+        tool: ${{ inputs.tool }}
+        fail-if-incomplete: true
+        output: ${{ inputs.output }}
+        format: sarif
+        gh-code-scanning-compat: true
+        max-allowed-issues: 2147483647

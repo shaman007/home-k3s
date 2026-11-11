@@ -2482,3 +2482,30 @@ and intentional poll-boundary warnings; no rules were suppressed. No live router
 request, credential read or deployment occurred. Source publication/rescanning and
 the final boundary classification remain pending; no alert was dismissed in this
 batch and no push was performed.
+
+
+### Recover transient Codacy failures and preserve CI ripgrep lookup
+
+The reported Codacy failure was HTTP 502 from its pattern API before analysis,
+ending CLI 7.9.25 with exit 100. Added a local composite wrapper around the same
+pinned upstream action: at most three identical scan invocations, 10/30-second
+backoff, only failed attempts retried, validated stale-SARIF cleanup before retries,
+and a fatal final attempt. The upstream action exposes no structured failure
+reason, so retries apply to any failed invocation; persistent analyzer failures
+still prevent preparation/upload. All original scan and incomplete-report gates
+remain in place. No empty or synthetic success report is generated.
+
+The reported hostname test failure exposed an overly narrow executable path:
+CI already installs checksum-verified rg into /usr/local/bin. The scanner now
+resolves rg only from /usr/local/bin:/usr/bin:/bin, ignoring environment PATH.
+Added a regression for that CI installation path and unchanged empty-match report
+semantics. No installer or system dependency was changed.
+
+Three retry regressions verify identical scan options, a fatal final failure,
+actual read-only stale-report removal with unrelated-file preservation, and
+rejection of arbitrary output paths. Actionlint passes for both affected workflows;
+the composite shell fragments pass ShellCheck. Full Pylint and Ruff checks pass
+for changed Python modules, and Bandit reports no analysis errors. The full suite
+with isolated JSON::PP ran 523 tests successfully with 16 skips. No Codacy image
+or real container was launched locally. Remote CI verification requires publication;
+no push or alert dismissal was performed in this batch.

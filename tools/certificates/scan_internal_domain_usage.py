@@ -6,6 +6,7 @@ import collections
 import json
 from pathlib import Path
 import subprocess
+import shutil
 
 ROOT = Path(__file__).resolve().parents[2]
 PATTERN = (
@@ -109,8 +110,11 @@ def main():
         if not c["canary"]
         for old, new in zip(c["old_names"], c["new_names"])
     }
+    executable = shutil.which("rg", path="/usr/local/bin:/usr/bin:/bin")
+    if executable is None:
+        raise SystemExit("Hostname inventory requires ripgrep (rg); install it before scanning")
     command = [
-        "/usr/bin/rg",
+        executable,
         "--pcre2",
         "--hidden",
         "--no-heading",

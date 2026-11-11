@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / "tools/certificates/scan_internal_domain_usage.py"
@@ -18,6 +19,26 @@ spec.loader.exec_module(scanner)
 
 class InternalDomainInventoryTest(unittest.TestCase):
     """Find complete internal hostnames without exporting surrounding source secrets."""
+
+    def test_scan_resolves_ci_system_path_independently_of_environment(self):
+        """CI installs rg in /usr/local/bin; lookup must ignore an injected PATH."""
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            with (
+                patch("sys.argv", ["scan", "--root", directory, "--output", str(output)]),
+                patch.dict("os.environ", {"PATH": "/untrusted/fixture"}),
+                patch.object(scanner.shutil, "which", return_value="/usr/local/bin/rg") as resolve,
+                patch.object(
+                    scanner.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess([], 1, "", ""),
+                ) as run,
+                patch("builtins.print"),
+            ):
+                scanner.main()
+            self.assertEqual(json.loads(output.read_text())["counts"]["occurrences"], 0)
+        resolve.assert_called_once_with("rg", path="/usr/local/bin:/usr/bin:/bin")
+        self.assertEqual(run.call_args.args[0][0], "/usr/local/bin/rg")
 
     def test_complete_hostnames_and_fqdn_are_recognized(self):
         """Verify complete hostnames and fqdn are recognized."""

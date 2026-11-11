@@ -105,3 +105,14 @@ dismiss any legacy alerts; their remaining source findings and overlap with the
 current analyzer still need review. Parser-error rejection remains active, and
 expected preparation failures now print a concise CLI error instead of a Python
 traceback. Rerunning the old commit will still run its old workflow definition.
+
+
+The local `.github/actions/codacy-scan` wrapper invokes the same pinned Codacy
+action up to three times. Failed attempts retry after 10 and 30 seconds; success
+skips later attempts. This covers transient Codacy pattern-API failures such as
+HTTP 502/CLI exit 100. The upstream action does not expose a structured failure
+reason, so any failed invocation receives the same bounded retry budget. Persistent
+infrastructure or analyzer failures remain fatal on the third attempt and prevent
+SARIF preparation/upload. Every attempt retains `fail-if-incomplete: true` and
+identical tool/rule/output settings. Before retries, only the validated scanner
+SARIF basename is removed so a partial earlier report cannot be reused.
