@@ -36,14 +36,17 @@ hostname mapping preserves direct routing to the router. Existing egress remains
 scoped to the router IP. The original staged patches are retired after application;
 they remain available in Git history.
 
-These client and monitoring changes still require owner publication and normal
-GitOps reconciliation. The actual local verified client also authenticated, collected three established
-peers and three usable routes with zero policy violations, and logged out.
-This verifies the prepared implementation, not the deployed collector revision.
-After publication, verify both containers are ready, BGP scrape success is 1,
-last-success advances, all three reviewed peers/routes are present, and UnPoller
-returns fresh authenticated metrics with SSL verification enabled. Then require
-successful CI and genuine scanner results to close alerts **7615** and **7524**.
+The owner published `08aa3472`. Both `unifi-exporter` and
+`kubernetes-prometheus` reconciled that revision and are Healthy. The deployed
+BGP client authenticates with system trust; background scrape success is 1,
+last-success advances, all three reviewed peers/routes are present, and policy
+violations are zero. The served-certificate expiry metric is scraped by
+Prometheus. UnPoller explicitly enables SSL verification and returns fresh
+controller-derived client metrics. Prometheus loaded
+`UDMConsoleCertificateExpiring` with health `ok` and state `inactive`.
+
+Successful CI and genuine scanner closure of alerts **7615** and **7524** are
+still pending: the workflows were queued at the post-rollout verification.
 Neither alert is dismissed as an exception.
 
 In `/home/shaman007/git/unifi-infra`, the provider now uses the trusted hostname
@@ -70,7 +73,7 @@ fresh verified handshake to the actual router. `UDMConsoleCertificateExpiring`
 warns when that live certificate has under 21 days left for 30 minutes, gated on
 successful collection. A renewed Secret alone cannot clear this warning.
 Failed collection is covered separately by `UDMBGPCollectionUnavailable`.
-Both rules require publication and reconciliation before they are operational.
+Both rules are loaded by the reconciled Prometheus deployment.
 
 Before client rollout, the supported certificate selection can restore the prior
 built-in identity through independent recovery access. After verified clients

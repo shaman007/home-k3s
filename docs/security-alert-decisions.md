@@ -3288,3 +3288,23 @@ updates outside the targeted console DNS resource. Its full-plan verification is
 incomplete; these unrelated changes were not applied. The targeted imported
 console DNS plan remains the scoped zero-change verification. Do not treat the
 full infrastructure configuration as ready for a broad apply.
+
+
+### Verify published trusted-client rollout
+
+The owner published 08aa3472. Both unifi-exporter and kubernetes-prometheus
+reconciled that revision and are Healthy. The actual BGP container authenticated
+and collected router data over verified TLS; background success is 1, last-success
+advances, all three peers are established, all three reviewed prefixes have active
+next hops, and all policy-violation counts are zero. Its live certificate expiry
+is exported and successfully scraped by Prometheus. UnPoller has explicit SSL
+verification enabled and returns controller-derived client metrics.
+
+The deployed UDMConsoleCertificateExpiring rule reports health ok and inactive;
+its live expiry sample corresponds to the activated certificate. A diagnostic
+query from the UniFi namespace timed out, so actual rule/metric verification used
+Prometheus loopback without changing network policy. No credentials were output.
+
+CodeQL, Codacy, pre-commit and Validate Kubernetes workflows for 08aa3472 remain
+queued at this verification. Final scanner closure of 7615/7524 is not established.
+No agent push or additional live configuration mutation occurred.
