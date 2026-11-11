@@ -84,7 +84,7 @@ spec:
                 limits:
                   memory: 128Mi
             - name: copy-cosign
-              image: harbor.andreybondarenko.com/github/sigstore/cosign/cosign:v3.0.6
+              image: harbor.andreybondarenko.com/github/sigstore/cosign/cosign:v3.1.4
               command:
               - /tools/busybox
               - cp
