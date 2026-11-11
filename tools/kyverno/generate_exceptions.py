@@ -246,6 +246,53 @@ def image_expression(image):
     return f"c.image.matches({literal(pattern)})"
 
 
+def add_capability_fields(fields, rule):
+    """Validate exact capability declarations and append their guarded CEL terms."""
+    if set(rule) not in (
+        {"image", "capabilities"},
+        {"image", "capabilities", "runAsUser", "allowPrivilegeEscalation"},
+    ):
+        raise AssertionError
+    caps = rule["capabilities"]
+    if not isinstance(caps, list):
+        raise AssertionError
+    if not (caps and len(caps) == len(set(caps))):
+        raise AssertionError
+    if "runAsUser" not in rule:
+        if not set(caps) <= {"CHOWN", "DAC_OVERRIDE", "DAC_READ_SEARCH", "FOWNER"}:
+            raise AssertionError
+    actual = "c.?securityContext.?capabilities.?add.orValue([])"
+    fields.extend(
+        [
+            "c.?securityContext.?privileged.orValue(false) == false",
+            (
+                (
+                    f"has(c.securityContext) && "
+                    f"has(c.securityContext.allowPrivilegeEsca"
+                    f"lation) && "
+                    f"c.securityContext.allowPrivilegeEscalati"
+                    f"on == "
+                    f"{literal(rule['allowPrivilegeEscalation'])}"
+                )
+                if "runAsUser" in rule
+                else "c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false"
+            ),
+            (
+                f"c.?securityContext.?runAsUser.orValue(p."
+                f"spec.?securityContext.?runAsUser.orValue"
+                f"("
+                f"{(0 if 'runAsUser' in rule else -1)}"
+                f")) == "
+                f"{rule.get('runAsUser', 0)}"
+            ),
+            'c.?securityContext.?capabilities.?drop.orValue([]) == ["ALL"]',
+            f"{actual}.size() == {len(caps)}",
+            f"{actual}.all(cap, cap in {literal(caps)})",
+            f"{literal(caps)}.all(cap, cap in {actual})",
+        ]
+    )
+
+
 def approved(policy, allowed):
     """Build guarded CEL alternatives for explicitly reviewed container exceptions."""
     clauses = []
@@ -262,49 +309,7 @@ def approved(policy, allowed):
                 )
             )
         if policy == "require-drop-all-capabilities" and not rule.get("requirePrivileged"):
-            if set(rule) not in (
-                {"image", "capabilities"},
-                {"image", "capabilities", "runAsUser", "allowPrivilegeEscalation"},
-            ):
-                raise AssertionError
-            caps = rule["capabilities"]
-            if not isinstance(caps, list):
-                raise AssertionError
-            if not (caps and len(caps) == len(set(caps))):
-                raise AssertionError
-            if "runAsUser" not in rule:
-                if not set(caps) <= {"CHOWN", "DAC_OVERRIDE", "DAC_READ_SEARCH", "FOWNER"}:
-                    raise AssertionError
-            actual = "c.?securityContext.?capabilities.?add.orValue([])"
-            fields.extend(
-                [
-                    "c.?securityContext.?privileged.orValue(false) == false",
-                    (
-                        (
-                            f"has(c.securityContext) && "
-                            f"has(c.securityContext.allowPrivilegeEsca"
-                            f"lation) && "
-                            f"c.securityContext.allowPrivilegeEscalati"
-                            f"on == "
-                            f"{literal(rule['allowPrivilegeEscalation'])}"
-                        )
-                        if "runAsUser" in rule
-                        else "c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false"
-                    ),
-                    (
-                        f"c.?securityContext.?runAsUser.orValue(p."
-                        f"spec.?securityContext.?runAsUser.orValue"
-                        f"("
-                        f"{(0 if 'runAsUser' in rule else -1)}"
-                        f")) == "
-                        f"{rule.get('runAsUser', 0)}"
-                    ),
-                    'c.?securityContext.?capabilities.?drop.orValue([]) == ["ALL"]',
-                    f"{actual}.size() == {len(caps)}",
-                    f"{actual}.all(cap, cap in {literal(caps)})",
-                    f"{literal(caps)}.all(cap, cap in {actual})",
-                ]
-            )
+            add_capability_fields(fields, rule)
         if policy in ("require-drop-all-capabilities", "restrict-seccomp-strict") and rule.get(
             "requirePrivileged"
         ):
@@ -393,112 +398,115 @@ def guard_terms(variable, expected):
     return terms
 
 
-def expression(entry, policy):
-    """Combine workload identity, compliance, and reviewed exception constraints in CEL."""
-    config = entry["policies"][policy]
-    if is_speaker(entry):
-        if not set(entry["policies"]) == {
-            "require-run-as-nonroot",
-            "require-drop-all-capabilities",
-        }:
+def validate_speaker(entry):
+    """Pin the reviewed speaker identity, roles, image repository and guards."""
+    if not set(entry["policies"]) == {
+        "require-run-as-nonroot",
+        "require-drop-all-capabilities",
+    }:
+        raise AssertionError
+    if not entry["serviceAccount"] == "metallb-speaker":
+        raise AssertionError
+    if not entry["requiredGuards"] == {"containers": {"speaker": SPEAKER_GUARDS}}:
+        raise AssertionError
+    for reviewed in entry["policies"].values():
+        if not set(reviewed.get("containers", {})) == {"speaker"}:
             raise AssertionError
-        if not entry["serviceAccount"] == "metallb-speaker":
+        if not (not reviewed.get("initContainers") and (not reviewed.get("ephemeralContainers"))):
             raise AssertionError
-        if not entry["requiredGuards"] == {"containers": {"speaker": SPEAKER_GUARDS}}:
+        if (
+            not image_repository(reviewed["containers"]["speaker"]["image"])
+            == "quay.io/metallb/speaker"
+        ):
             raise AssertionError
-        for reviewed in entry["policies"].values():
-            if not set(reviewed.get("containers", {})) == {"speaker"}:
-                raise AssertionError
-            if not (
-                not reviewed.get("initContainers") and (not reviewed.get("ephemeralContainers"))
-            ):
-                raise AssertionError
-            if (
-                not image_repository(reviewed["containers"]["speaker"]["image"])
-                == "quay.io/metallb/speaker"
-            ):
-                raise AssertionError
-    if policy in ("require-drop-all-capabilities", "restrict-seccomp-strict"):
-        for section, rules in config.items():
-            for name, rule in rules.items():
-                if not rule.get("requirePrivileged"):
-                    if not policy != "restrict-seccomp-strict":
-                        raise AssertionError
-                    continue
-                if "disallow-privileged-containers" not in entry["policies"]:
-                    raise AssertionError
-                reviewed = entry["policies"]["disallow-privileged-containers"].get(section, {})
-                if not (name in reviewed and reviewed[name]["image"] == rule["image"]):
-                    raise AssertionError
-                snapshot = next(c for c in entry["snapshot"][section] if c["name"] == name)
-                sc = snapshot["securityContext"]
-                if not (sc["privileged"] is True and snapshot["image"] == rule["image"]):
-                    raise AssertionError
-                if not rule["capabilityDeclaration"] == sc.get("capabilities", {}):
-                    raise AssertionError
-                if not rule["seccompDeclaration"] == sc.get("seccompProfile", {}):
-                    raise AssertionError
-    if policy == "require-drop-all-capabilities":
-        if config.get("ephemeralContainers"):
-            raise AssertionError
-        if not (config.get("initContainers") or config.get("containers")):
-            raise AssertionError
-        for name, rule in config.get("initContainers", {}).items():
-            if rule.get("requirePrivileged"):
-                continue
-            root_roles = entry["policies"]["require-run-as-nonroot"].get("initContainers", {})
-            if not (name in root_roles and root_roles[name]["image"] == rule["image"]):
-                raise AssertionError
-            if not set(rule) == {"image", "capabilities"}:
-                raise AssertionError
-        for name, rule in config.get("containers", {}).items():
-            if rule.get("requirePrivileged"):
-                continue
-            if is_speaker(entry):
-                if not name == "speaker":
-                    raise AssertionError
-                if not set(rule) == {
-                    "image",
-                    "capabilities",
-                    "runAsUser",
-                    "allowPrivilegeEscalation",
-                }:
-                    raise AssertionError
-                if not (rule["capabilities"] == ["NET_RAW"] and rule["runAsUser"] == 0):
-                    raise AssertionError
-                if rule["allowPrivilegeEscalation"] is not False:
+
+
+def validate_privileged_rules(entry, policy, config):
+    """Require matching privileged approval, snapshots and declaration contracts."""
+    for section, rules in config.items():
+        for name, rule in rules.items():
+            if not rule.get("requirePrivileged"):
+                if not policy != "restrict-seccomp-strict":
                     raise AssertionError
                 continue
-            if not entry["kind"] == "Deployment":
+            if "disallow-privileged-containers" not in entry["policies"]:
                 raise AssertionError
-            key = (entry["namespace"], entry["name"], name)
-            if key not in APPLICATION_CAPABILITIES:
-                raise AssertionError
-            caps, uid, escalation = APPLICATION_CAPABILITIES[key]
-            if not set(rule) == {"image", "capabilities", "runAsUser", "allowPrivilegeEscalation"}:
-                raise AssertionError
-            if not set(rule["capabilities"]) == caps:
-                raise AssertionError
-            if not (rule["runAsUser"] == uid and rule["allowPrivilegeEscalation"] is escalation):
-                raise AssertionError
-            review_policy = (
-                "disallow-privilege-escalation" if escalation else "require-run-as-nonroot"
-            )
-            reviewed = entry["policies"][review_policy]["containers"]
+            reviewed = entry["policies"]["disallow-privileged-containers"].get(section, {})
             if not (name in reviewed and reviewed[name]["image"] == rule["image"]):
                 raise AssertionError
-    ok = compliant(policy)
-    terms = []
-    actual = []
-    for section in ["containers", "initContainers", "ephemeralContainers"]:
-        allow = approved(policy, config.get(section, {}))
-        collection = f"p.spec.?{section}.orValue([])"
-        terms.append(f"{collection}.all(c, ({ok}) || {allow})")
-        if allow != "false":
-            actual.append(f"{collection}.exists(c, !({ok}) && {allow})")
-    if not actual:
+            snapshot = next(c for c in entry["snapshot"][section] if c["name"] == name)
+            sc = snapshot["securityContext"]
+            if not (sc["privileged"] is True and snapshot["image"] == rule["image"]):
+                raise AssertionError
+            if not rule["capabilityDeclaration"] == sc.get("capabilities", {}):
+                raise AssertionError
+            if not rule["seccompDeclaration"] == sc.get("seccompProfile", {}):
+                raise AssertionError
+
+
+def validate_init_capability_rule(entry, name, rule):
+    """Require permission-init capability approval to match the reviewed root role."""
+    root_roles = entry["policies"]["require-run-as-nonroot"].get("initContainers", {})
+    if not (name in root_roles and root_roles[name]["image"] == rule["image"]):
         raise AssertionError
-    terms.append("(" + " || ".join(actual) + ")")
+    if not set(rule) == {"image", "capabilities"}:
+        raise AssertionError
+
+
+def validate_main_capability_rule(entry, name, rule):
+    """Require the exact reviewed speaker or application capability contract."""
+    if is_speaker(entry):
+        if not name == "speaker":
+            raise AssertionError
+        if not set(rule) == {
+            "image",
+            "capabilities",
+            "runAsUser",
+            "allowPrivilegeEscalation",
+        }:
+            raise AssertionError
+        if not (rule["capabilities"] == ["NET_RAW"] and rule["runAsUser"] == 0):
+            raise AssertionError
+        if rule["allowPrivilegeEscalation"] is not False:
+            raise AssertionError
+        return
+    if not entry["kind"] == "Deployment":
+        raise AssertionError
+    key = (entry["namespace"], entry["name"], name)
+    if key not in APPLICATION_CAPABILITIES:
+        raise AssertionError
+    caps, uid, escalation = APPLICATION_CAPABILITIES[key]
+    if not set(rule) == {"image", "capabilities", "runAsUser", "allowPrivilegeEscalation"}:
+        raise AssertionError
+    if not set(rule["capabilities"]) == caps:
+        raise AssertionError
+    if not (rule["runAsUser"] == uid and rule["allowPrivilegeEscalation"] is escalation):
+        raise AssertionError
+    review_policy = "disallow-privilege-escalation" if escalation else "require-run-as-nonroot"
+    reviewed = entry["policies"][review_policy]["containers"]
+    if not (name in reviewed and reviewed[name]["image"] == rule["image"]):
+        raise AssertionError
+
+
+def validate_capability_rules(entry, config):
+    """Validate each permitted capability role without widening exception scope."""
+    if config.get("ephemeralContainers"):
+        raise AssertionError
+    if not (config.get("initContainers") or config.get("containers")):
+        raise AssertionError
+    for name, rule in config.get("initContainers", {}).items():
+        if rule.get("requirePrivileged"):
+            continue
+        validate_init_capability_rule(entry, name, rule)
+    for name, rule in config.get("containers", {}).items():
+        if rule.get("requirePrivileged"):
+            continue
+        validate_main_capability_rule(entry, name, rule)
+
+
+def required_guard_terms(entry):
+    """Constrain reviewed guards and compliant companions without granting new roles."""
+    terms = []
     for section, roles in entry.get("requiredGuards", {}).items():
         if section not in ("containers", "initContainers"):
             raise AssertionError
@@ -526,6 +534,31 @@ def expression(entry, policy):
                 + " && ".join(conditions)
                 + ")"
             )
+    return terms
+
+
+def expression(entry, policy):
+    """Combine workload identity, compliance, and reviewed exception constraints in CEL."""
+    config = entry["policies"][policy]
+    if is_speaker(entry):
+        validate_speaker(entry)
+    if policy in ("require-drop-all-capabilities", "restrict-seccomp-strict"):
+        validate_privileged_rules(entry, policy, config)
+    if policy == "require-drop-all-capabilities":
+        validate_capability_rules(entry, config)
+    ok = compliant(policy)
+    terms = []
+    actual = []
+    for section in ["containers", "initContainers", "ephemeralContainers"]:
+        allow = approved(policy, config.get(section, {}))
+        collection = f"p.spec.?{section}.orValue([])"
+        terms.append(f"{collection}.all(c, ({ok}) || {allow})")
+        if allow != "false":
+            actual.append(f"{collection}.exists(c, !({ok}) && {allow})")
+    if not actual:
+        raise AssertionError
+    terms.append("(" + " || ".join(actual) + ")")
+    terms.extend(required_guard_terms(entry))
     terms.extend(guard_terms("p.spec", entry.get("requiredPodGuards", {})))
     account = entry["serviceAccount"]
     terms.insert(0, f'p.spec.?serviceAccountName.orValue("default") == {literal(account)}')

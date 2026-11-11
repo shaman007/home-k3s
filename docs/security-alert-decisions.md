@@ -1336,3 +1336,26 @@ The full suite ran 456 tests successfully with 21 opt-in skips. The new regressi
 module passes full Pylint; Ruff and diff checks passed, and Bandit reported no
 analysis errors. Publication and genuine scanner refresh remain necessary for
 source-based alert closure. No scanner rule was disabled.
+
+
+### Separate reviewed Kyverno exception contract validation
+
+Split capability declaration validation, speaker identity/guard checks,
+privileged-role cross-approval, init/application capability contracts and
+companion guard constraints from CEL expression assembly. Validation order,
+explicit failure checks and CEL term order remain intact. All four local Pylint
+complexity warnings are gone; the generator now passes full Pylint checks.
+
+The generator's --check confirms the checked-in exception YAML is byte-for-byte
+current without regeneration. Comparing with the preceding implementation also
+confirmed identical complete-catalog results and identical generated CEL or
+failure type/message for 1,200 deterministic mutations of catalog scalar fields.
+All seventeen existing scope tests passed, covering permission-init and six
+application capability contracts, privileged runtimes, companion constraints,
+image repository boundaries and the reviewed speaker identity. No exception
+scope, generated manifest or live policy was changed; no Kubernetes call ran.
+
+The full suite ran 456 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed. Because the generated policies are unchanged, this source-only
+refactor does not establish any new admission or deployment behavior. Publication
+and genuine scanner refresh remain necessary for remote alert closure.
