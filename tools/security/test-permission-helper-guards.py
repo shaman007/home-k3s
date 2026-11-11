@@ -87,16 +87,15 @@ chown -R 999:999 /data
 test "$(stat -c '%u:%g:%a' /data/closed/nested/file)" = 65532:65532:600
 test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
 """
-    for path in ["hister/deployment-hister.yaml", "hister/tools/job-hister-reindex.yaml"]:
-        helper(
-            path,
-            "fix-data-permissions",
-            ["CHOWN", "DAC_OVERRIDE"],
-            "/data",
-            setup,
-            checks,
-            "0000000000000003",
-        )
+    helper(
+        "hister/deployment-hister.yaml",
+        "fix-data-permissions",
+        ["CHOWN", "DAC_OVERRIDE"],
+        "/data",
+        setup,
+        checks,
+        "0000000000000003",
+    )
     helper(
         "mail/deployment-postfix.yaml",
         "init-postfix-queue-perms",

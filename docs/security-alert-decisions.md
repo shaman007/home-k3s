@@ -594,3 +594,41 @@ checks pass. One full unittest run passed (386 tests, 21 skipped), as did
 `git diff --check`. Runtime probes requiring live services or containers were
 not executed for this documentation-only change. GitHub counts still require
 a published-source rescan; this batch remains unstaged and uncommitted.
+
+### Retire app-local one-off migration and recovery artifacts (2026-11-11)
+
+Following the requested preference for cleanup over repairing unused one-off
+jobs, removed 16 artifacts:
+
+- The Bitwarden, Dawarich, Keycloak, and Mastodon PostgreSQL migration Jobs.
+  Their active application manifests already select their app-local PostgreSQL
+  services rather than the Jobs' former shared source database.
+- The old MySQL migration helper and Nextcloud/WordPress wrappers, plus the
+  manually deployed MySQL and PostgreSQL CLI bundles. No current GitOps source
+  selects these tools.
+- The obsolete Mastodon environment patch and the applied connectivity-exporter
+  non-root review patch.
+- The Vault-specific snapshot rehearsal helper for the completed OpenBao cutover.
+  The migration document now identifies the procedure as historical and links
+  to the retained helper revision in Git history.
+- The manual Hister reindex Job and three archived one-off artifacts: Mastodon
+  migration Pod, Firefox-to-Hister import Job, and Immich tag-today Job.
+
+Retained the Hister disposable startup/import/search/reindex/restart probe.
+Its isolated reindex client now uses the active server's image and reviewed
+security settings with the same reindex command as before; those image,
+identity, guard, and command equivalences were checked before removing the Job.
+The permission-helper probe still checks the active Hister deployment's init
+container. Removed only the duplicate check of the retired Job. Active backups,
+CronJobs, database workloads, PVC manifests, reusable maintenance tools, and CI
+security probes remain in place.
+
+Validation: checked all 76 local GitOps sources using the renderer's directory
+matching rules; none select any removed artifact. Surviving source references
+were checked, preserving historical changelog/inventory evidence. Both modified
+probes parse and pass targeted Pylint error/documentation/format checks. One full
+unittest run passed (386 tests, 21 skipped), and `git diff --check` passed.
+Live workload inspection was unavailable, and container runtime probes were not
+executed. No live resources or data were changed; no alerts were dismissed.
+GitHub alert reductions require publication and rescan. Changes remain unstaged
+and uncommitted.

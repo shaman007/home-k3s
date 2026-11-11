@@ -24,22 +24,15 @@ def main():
     server = yaml.safe_load((ROOT / "hister/deployment-hister.yaml").read_text())["spec"][
         "template"
     ]["spec"]["containers"][0]
-    job = yaml.safe_load((ROOT / "hister/tools/job-hister-reindex.yaml").read_text())
-    client = job["spec"]["template"]["spec"]["containers"][0]
-    if not job["metadata"]["annotations"]["argocd.argoproj.io/hook"] == "Skip":
+    sc = server["securityContext"]
+    if not (sc["readOnlyRootFilesystem"] and sc["runAsNonRoot"]):
         raise AssertionError
-    if not job["spec"]["template"]["spec"]["automountServiceAccountToken"] is False:
+    if not sc["runAsUser"] == sc["runAsGroup"] == 65532:
         raise AssertionError
-    for c in [server, client]:
-        sc = c["securityContext"]
-        if not (sc["readOnlyRootFilesystem"] and sc["runAsNonRoot"]):
-            raise AssertionError
-        if not sc["runAsUser"] == sc["runAsGroup"] == 65532:
-            raise AssertionError
-        if not sc["allowPrivilegeEscalation"] is False:
-            raise AssertionError
-        if not sc["capabilities"] == {"drop": ["ALL"]}:
-            raise AssertionError
+    if not sc["allowPrivilegeEscalation"] is False:
+        raise AssertionError
+    if not sc["capabilities"] == {"drop": ["ALL"]}:
+        raise AssertionError
     volume = run(["podman", "volume", "create", "hister-ro-guard-" + uuid.uuid4().hex])
     cid = None
     try:
@@ -168,8 +161,12 @@ def main():
             search()
             search("histerguardpdfunique", "fixture.pdf")
             command = [
-                part.replace("http://hister:8080", "http://127.0.0.1:8080")
-                for part in client["command"]
+                "/hister/hister",
+                "reindex",
+                "--server-url",
+                "http://127.0.0.1:8080",
+                "--client-timeout",
+                "0",
             ]
             run(
                 [
@@ -186,7 +183,7 @@ def main():
                     "HISTER_DATA_DIR=/data",
                     "--entrypoint",
                     command[0],
-                    client["image"],
+                    server["image"],
                     *command[1:],
                 ],
                 timeout=120,
@@ -224,7 +221,7 @@ def main():
             print(
                 (
                     "Hister: read-only root startup, text/PDF "
-                    "import/search, manual reindex role and "
+                    "import/search, isolated reindex client and "
                     "persistent restart passed"
                 )
             )

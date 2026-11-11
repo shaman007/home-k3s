@@ -46,9 +46,8 @@ publication blocker. The Deployment now declares UID/GID 65534 and
 `runAsNonRoot: true`, preserving its no-escalation, capability-drop, seccomp and
 read-only-root settings. An isolated probe verified code/config readability.
 
-The exporter folder's `tools/nonroot-security-context.patch.json` remains review
-material excluded from the Application's non-recursive source; the Deployment
-is authoritative. Verify all configured checks and metrics after rollout before
+The applied non-root review patch has been retired; the Deployment is
+authoritative. Verify all configured checks and metrics after rollout before
 separately enabling Restricted enforcement for this namespace. See
 [the remaining non-root audit](non-root-audit.md) for scope and exceptions.
 

@@ -6,7 +6,7 @@ and the PKI renewal job all use OpenBao. The retired Vault Helm application
 and external runtime resources are removed. The final snapshots were copied to
 offline storage before the Vault namespace and its PVCs were deleted.
 
-## Compatibility gate
+## Historical compatibility gate
 
 The upstream in-place migration guide does not support Vault 1.15 or newer.
 This cluster therefore uses a forced Raft snapshot restore into an isolated
@@ -21,16 +21,11 @@ Before publishing the parallel deployment:
 3. Confirm both Vault PVCs have current Longhorn backups.
 4. Take and checksum an encrypted Raft snapshot outside the cluster.
 
-Because Vault redirects snapshot requests to its cluster-only active address,
-run the helper with the current leader pod, for example:
-
-```sh
-VAULT_ADDR=https://vault.w386.k8s.my.lan \
-VAULT_TOKEN=... \
-SNAPSHOT_POD=vault-0 \
-SNAPSHOT_DIR=/encrypted/path \
-openbao/tools/snapshot-rehearsal.sh
-```
+The migration used a leader-pod snapshot helper because Vault redirected
+snapshot requests to its cluster-only active address. That Vault-specific
+helper was retired after the cutover; its historical source is available
+[in Git history](https://github.com/shaman007/home-k3s/blob/546765e20e033cd6c32352b40d59efecbc50507e/openbao/tools/snapshot-rehearsal.sh).
+Use the current OpenBao backup and recovery procedures for ongoing operations.
 
 The Vault Enterprise-only `agent-registry/` engine is currently empty, but
 Vault marks it as a protected built-in mount and refuses to disable it. The
@@ -80,5 +75,6 @@ OpenBao snapshot. Restarting the retained Vault PVCs alone would lose all
 post-cutover writes. Stop writers first, snapshot OpenBao, then either repair
 OpenBao or deliberately restore that snapshot to the rollback target.
 
-Retain the Vault PVCs for at least seven days and until an OpenBao Raft snapshot
-restore and Longhorn restore have both been tested.
+The historical retirement gate required at least seven days of Vault PVC
+retention and successful OpenBao Raft snapshot and Longhorn restore tests. The
+Vault namespace and PVCs have since been retired, as recorded above.
