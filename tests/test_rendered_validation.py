@@ -37,7 +37,9 @@ class RenderValidationTest(unittest.TestCase):
     def test_rendered_secret_output_is_owner_only(self):
         """Verify rendered secret output is owner only."""
         (self.root / "tools/ci").mkdir(parents=True)
-        (self.root / "tools/ci/validation-config.yaml").write_text("kubernetesVersion: 1.37.2\n")
+        (self.root / "tools/ci/validation-config.yaml").write_text(
+            "kubernetesVersion: 1.37.2\n", encoding="utf-8"
+        )
         applications = self.root / "argocd"
         applications.mkdir()
         (applications / "application-test.yaml").write_text(
@@ -47,7 +49,8 @@ class RenderValidationTest(unittest.TestCase):
                     "metadata": {"name": "test"},
                     "spec": {"source": {"path": "fixture"}},
                 }
-            )
+            ),
+            encoding="utf-8",
         )
         output = self.root / "rendered"
         output.mkdir(mode=0o755)
@@ -67,7 +70,9 @@ class RenderValidationTest(unittest.TestCase):
         """Verify git hosted chart uses checkout and Helm values without remote version."""
         chart = self.root / "chart"
         chart.mkdir()
-        (chart / "Chart.yaml").write_text("apiVersion: v2\nname: test\nversion: 0.1.0\n")
+        (chart / "Chart.yaml").write_text(
+            "apiVersion: v2\nname: test\nversion: 0.1.0\n", encoding="utf-8"
+        )
         source = {
             "repoURL": render.REPO,
             "path": "chart",
@@ -85,7 +90,9 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual(args[2:4], ["solver", str(chart)])
         self.assertNotIn("--version", args)
         self.assertIn("--values", args)
-        self.assertEqual("productionEnabled: true\n", (self.root / "values.yaml").read_text())
+        self.assertEqual(
+            "productionEnabled: true\n", (self.root / "values.yaml").read_text(encoding="utf-8")
+        )
 
     def test_remote_kustomize_fetch_retries_without_printing_diagnostics(self):
         """Verify remote Kustomize fetch retries without printing diagnostics."""
@@ -282,7 +289,7 @@ class RenderValidationTest(unittest.TestCase):
 
     def test_values_reference_inline_and_parameters_follow_argo_precedence(self):
         """Verify values reference inline and parameters follow argo precedence."""
-        (self.root / "values.yaml").write_text("replicas: 1\n")
+        (self.root / "values.yaml").write_text("replicas: 1\n", encoding="utf-8")
         source = {
             "repoURL": "https://example.invalid/charts",
             "chart": "test",
@@ -309,7 +316,9 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual("1.36.4", args[args.index("--kube-version") + 1])
         values = [args[i + 1] for i, a in enumerate(args) if a == "--values"]
         self.assertEqual([str(self.root / "values.yaml"), str(scratch / "values.yaml")], values)
-        self.assertEqual({"replicas": 3}, yaml.safe_load((scratch / "values.yaml").read_text()))
+        self.assertEqual(
+            {"replicas": 3}, yaml.safe_load((scratch / "values.yaml").read_text(encoding="utf-8"))
+        )
         self.assertEqual(["--set", "replicas=4", "--set-string", "code=001"], args[-4:])
 
     def test_oci_chart_uses_registry_path(self):
@@ -380,7 +389,8 @@ class RenderValidationTest(unittest.TestCase):
         (appdir / "nested").mkdir()
         for name in ["keep.yaml", "drop.yaml", "nested/nested.yaml"]:
             (appdir / name).write_text(
-                "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: " + Path(name).stem + "\n"
+                "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: " + Path(name).stem + "\n",
+                encoding="utf-8",
             )
         source = {
             "repoURL": render.REPO,
@@ -396,7 +406,7 @@ class RenderValidationTest(unittest.TestCase):
         """Verify Kustomize source is built."""
         appdir = self.root / "app"
         appdir.mkdir()
-        (appdir / "kustomization.yaml").write_text("resources: []")
+        (appdir / "kustomization.yaml").write_text("resources: []", encoding="utf-8")
         source = {"repoURL": render.REPO, "path": "app"}
         with patch.object(render, "run", return_value="rendered") as run:
             self.assertEqual(
@@ -547,7 +557,9 @@ class RenderValidationTest(unittest.TestCase):
         self.assertNotIn("tools/godaddy-webhook/chart/templates/solver.yaml", paths)
         self.assertIn("argocd/application-godaddy-webhook.yaml", paths)
         # The chart is still part of the required application render inventory.
-        app = yaml.safe_load((ROOT / "argocd/application-godaddy-webhook.yaml").read_text())
+        app = yaml.safe_load(
+            (ROOT / "argocd/application-godaddy-webhook.yaml").read_text(encoding="utf-8")
+        )
         self.assertEqual("tools/godaddy-webhook/chart", app["spec"]["source"]["path"])
 
     def test_discovery_excludes_talos_machine_configurations(self):
@@ -573,21 +585,24 @@ class ManifestValidationPipelineTest(unittest.TestCase):
             root = Path(directory)
             applications = root / "argocd"
             applications.mkdir()
-            (applications / "test.yaml").write_text("kind: Application\nmetadata:\n  name: test\n")
+            (applications / "test.yaml").write_text(
+                "kind: Application\nmetadata:\n  name: test\n", encoding="utf-8"
+            )
             rendered = root / "rendered"
             rendered.mkdir()
-            (rendered / "inventory.json").write_text("{}")
+            (rendered / "inventory.json").write_text("{}", encoding="utf-8")
             with patch.object(validate, "ROOT", root):
                 with self.assertRaisesRegex(ValueError, "Full application render required"):
                     validate.collect_inputs(rendered)
-            (rendered / "inventory.json").write_text('{"test": {}}')
+            (rendered / "inventory.json").write_text('{"test": {}}', encoding="utf-8")
             (rendered / "test.yaml").write_text(
-                "kind: List\nitems:\n- apiVersion: v1\n  kind: ConfigMap\n"
+                "kind: List\nitems:\n- apiVersion: v1\n  kind: ConfigMap\n", encoding="utf-8"
             )
             raw = root / "raw.yaml"
             raw.write_text(
                 "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n"
-                "---\napiVersion: v1\nkind: Secret\n"
+                "---\napiVersion: v1\nkind: Secret\n",
+                encoding="utf-8",
             )
             discovery = SimpleNamespace(
                 tracked_yaml_files=lambda _root: [raw],
@@ -611,7 +626,9 @@ class ManifestValidationPipelineTest(unittest.TestCase):
             root = Path(directory)
             config_dir = root / "tools/ci"
             config_dir.mkdir(parents=True)
-            (config_dir / "validation-config.yaml").write_text("kubernetesVersion: 1.37.1\n")
+            (config_dir / "validation-config.yaml").write_text(
+                "kubernetesVersion: 1.37.1\n", encoding="utf-8"
+            )
             marker = secrets.token_hex(16)
             secret = {
                 "apiVersion": "v1",
@@ -627,7 +644,9 @@ class ManifestValidationPipelineTest(unittest.TestCase):
                 def kubeconform(argv, status=builtin_status, **options):
                     """Inspect the real serialized input before its private directory is removed."""
                     path = Path(argv[-1])
-                    self.assertEqual([secret], list(yaml.safe_load_all(path.read_text())))
+                    self.assertEqual(
+                        [secret], list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
+                    )
                     self.assertEqual(0o600, stat.S_IMODE(path.stat().st_mode))
                     self.assertEqual(0o700, stat.S_IMODE(path.parent.stat().st_mode))
                     self.assertIn("-strict", argv)

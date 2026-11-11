@@ -2250,3 +2250,34 @@ Independent inventory verifies all thirteen reviewed IDs absent and reports
 This combines actual rescan closures and scoped decisions; no global scanner
 rule was disabled. No code changed, no cluster resource was changed and no push
 was performed by this batch.
+
+
+### Make test text encoding explicit and preserve conditional framework contracts
+
+Added explicit UTF-8 to all nineteen text reads/writes in webhook manifest and
+rendered-validation tests, covering the three published encoding warnings and
+keeping related fixture operations consistent. Normalizing only encoding keywords
+reproduces both complete original module ASTs; no assertion or fixture content
+changed. These source fixes await genuine scanner reconciliation.
+
+Reviewed exact duplicate import-style findings #7847 and #7129. The generated
+infrastructure ConfigMap supplies storage_guard.py beside backfill.py; its deferred
+import is reached only for Longhorn targets. It preserves independent non-storage
+and source-only use while retaining fail-closed storage checks before writes.
+Existing regressions verify unhealthy storage results only in GET requests.
+Dismissed both as false positives with dependency/lifetime reopening conditions.
+
+Reviewed #6659 against PyYAML SafeDumper.ignore_aliases(self, data). The override
+intentionally returns True independently of the value to keep generated policies
+free of anchors/aliases. Retaining the callback parameter preserves framework
+compatibility. Dismissed only this exact unused-argument heuristic with a reopening
+condition if the callback contract changes. Source bytes, exact rules/states and
+analyzed revisions were checked; independent inventory verifies all three absent.
+
+The full suite ran 515 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed; Bandit reported no analysis errors. Pylint retains only the two
+previously reviewed test-resource/class-size heuristics in the changed modules;
+no rule was suppressed. No live hook, cluster or credentials were used.
+Current open inventory is 90: Bandit 71, modern Pylint 12 and Opengrep seven.
+Prospector has zero open findings after genuine rescanning and scoped review.
+No push was performed by this batch.

@@ -21,6 +21,7 @@ class WebhookBuildManifestTest(unittest.TestCase):
         """Keep existing review files intact and allocate each output exclusively at 0600."""
         allocate = tempfile.mkstemp
         with tempfile.TemporaryDirectory() as directory:
+
             def temporary_manifest(**options):
                 """Allocate real exclusive files inside the disposable test directory."""
                 return allocate(dir=directory, **options)
@@ -32,18 +33,16 @@ class WebhookBuildManifestTest(unittest.TestCase):
                     patch.object(tempfile, "mkstemp", side_effect=temporary_manifest),
                     patch("builtins.print"),
                 ):
-                    namespace = runpy.run_path(
-                        str(ROOT / "tools/godaddy-webhook/prepare_build.py")
-                    )
+                    namespace = runpy.run_path(str(ROOT / "tools/godaddy-webhook/prepare_build.py"))
                 output = Path(namespace["output"])
                 self.assertEqual(output.parent, Path(directory))
                 self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o600)
                 outputs.append(output)
-                documents.append(list(yaml.safe_load_all(output.read_text())))
+                documents.append(list(yaml.safe_load_all(output.read_text(encoding="utf-8"))))
                 if len(outputs) == 1:
-                    output.write_text("reviewed-first-output")
+                    output.write_text("reviewed-first-output", encoding="utf-8")
             self.assertNotEqual(outputs[0], outputs[1])
-            self.assertEqual(outputs[0].read_text(), "reviewed-first-output")
+            self.assertEqual(outputs[0].read_text(encoding="utf-8"), "reviewed-first-output")
             self.assertEqual(documents[0], documents[1])
             config, job = documents[0]
             source = base64.b64decode(config["binaryData"]["source.tar.gz"])
