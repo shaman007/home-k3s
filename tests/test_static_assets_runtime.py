@@ -1,6 +1,6 @@
 """Exercise the real WordPress/Nextcloud NGINX configurations with fake PHP.
 
-STATIC_NGINX_BINARY=/path/to/nginx python3 -m unittest tests.test_static_assets_runtime
+Set STATIC_NGINX_BINARY and STATIC_NGINX_SOURCE explicitly before running this suite.
 Requires gzip and add_header_inherit (NGINX >= 1.29.3). All files and servers are
 isolated under a temporary directory; no real application data is used.
 """
@@ -23,9 +23,24 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = os.environ.get("STATIC_NGINX_BINARY")
-SOURCE = Path(os.environ.get("STATIC_NGINX_SOURCE", "/tmp/nginx-1.31.8"))
+SOURCE = os.environ.get("STATIC_NGINX_SOURCE")
 CSS = b"body { color: #123456; background: white; }\n" * 300
 JS = b'const example = "public application asset";\n' * 300
+
+
+def fixture_source():
+    """Require an explicitly selected Nginx tree with contained regular fixture configs."""
+    if not SOURCE:
+        raise RuntimeError("Set STATIC_NGINX_SOURCE to the trusted matching Nginx source tree")
+    try:
+        source = Path(SOURCE).resolve(strict=True)
+        for name in ("fastcgi_params", "mime.types"):
+            config = (source / "conf" / name).resolve(strict=True)
+            if not config.is_file() or not config.is_relative_to(source):
+                raise ValueError
+    except (OSError, ValueError):
+        raise RuntimeError("Nginx source must contain its regular conf fixture files") from None
+    return source
 
 
 def receive(stream, length):
@@ -41,6 +56,7 @@ def receive(stream, length):
 
 class PHP(socketserver.BaseRequestHandler):
     """Return a synthetic private FastCGI response for static-asset cache tests."""
+
     def handle(self):
         while True:
             _version, kind, request_id, length, padding, _ = struct.unpack(
@@ -62,6 +78,7 @@ class PHP(socketserver.BaseRequestHandler):
 
 class PHPServer(socketserver.ThreadingTCPServer):
     """Serve concurrent local FastCGI fixture requests without retaining worker threads."""
+
     allow_reuse_address = True
     daemon_threads = True
 
@@ -69,8 +86,10 @@ class PHPServer(socketserver.ThreadingTCPServer):
 @unittest.skipUnless(BINARY, "Set STATIC_NGINX_BINARY to exercise real static asset behavior")
 class StaticAssetsRuntimeTest(unittest.TestCase):
     """Exercise real Nginx static caching while keeping private PHP responses private."""
+
     @classmethod
     def setUpClass(cls):
+        source = fixture_source()
         cls.temp = tempfile.TemporaryDirectory(prefix="static-assets-")
         cls.base = Path(cls.temp.name)
         cls.php = PHPServer(("127.0.0.1", 0), PHP)
@@ -107,7 +126,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                     target = public / path
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_bytes(body)
-                shutil.copy(SOURCE / "conf/fastcgi_params", directory / "fastcgi_params")
+                shutil.copy(source / "conf/fastcgi_params", directory / "fastcgi_params")
                 with socket.socket() as sock:
                     sock.bind(("127.0.0.1", 0))
                     port = sock.getsockname()[1]
@@ -119,7 +138,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 config = (
                     "worker_processes 1;\npid " + str(directory / "nginx.pid") + ";\n"
                     "events {}\nhttp {\ninclude "
-                    + str(SOURCE / "conf/mime.types")
+                    + str(source / "conf/mime.types")
                     + ";\n"
                     + text
                     + "\n}\n"

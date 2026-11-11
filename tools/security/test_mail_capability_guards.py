@@ -114,7 +114,7 @@ def main():
                 "--tmpfs",
                 "/var/lib/dovecot:rw,mode=0755",
                 "--tmpfs",
-                "/tmp:rw,mode=0777,size=256m",
+                "/tmp:rw,mode=1777,size=256m",
             ]
             mapping = {
                 "config": "dovecot.conf",

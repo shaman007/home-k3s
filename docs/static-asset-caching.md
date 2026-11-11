@@ -52,7 +52,9 @@ STATIC_NGINX_SOURCE=/path/to/matching/nginx-source \
   python3 -m unittest tests.test_static_assets_runtime
 ```
 
-The source directory supplies `conf/mime.types` and `conf/fastcgi_params`.
+Select the trusted source tree matching the chosen NGINX binary explicitly; the test
+does not guess a source location. The source directory must contain
+`conf/mime.types` and `conf/fastcgi_params`; links escaping that tree are rejected.
 Seven tests verify lifetimes, security-header inheritance, negotiated gzip and
 identical decoded content, ETag/304 revalidation, modern asset types, PHP
 fallback privacy and denial of physical Nextcloud private files. They passed

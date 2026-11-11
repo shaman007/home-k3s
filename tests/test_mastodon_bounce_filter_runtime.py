@@ -1,10 +1,10 @@
 """Opt-in Sieve integration checks with synthetic messages containing no tokens."""
 
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import subprocess
 import unittest
-import uuid
+import re
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,21 +13,36 @@ ROOT = Path(__file__).resolve().parents[1]
 @unittest.skipUnless(os.environ.get("RUN_CLUSTER_TESTS") == "1", "requires live Dovecot")
 class MastodonBounceFilterRuntimeTest(unittest.TestCase):
     """Exercise the Mastodon bounce filter with isolated runtime fixtures."""
+
     @classmethod
     def setUpClass(cls):
         cls.script = yaml.safe_load((ROOT / "mail/config-map-dovecot-cf.yaml").read_text())["data"][
             "mastodon-registration-bounces.sieve"
         ]
-        cls.path = "/tmp/mastodon-bounce-test-" + uuid.uuid4().hex
         deployed = os.environ.get(
             "SIEVE_TEST_SCRIPT", "/etc/dovecot/sieve-before/mastodon-registration-bounces.sieve"
         )
         actual = cls.run_pod(["cat", deployed]).stdout.decode()
         if actual != cls.script:
             raise AssertionError("Deployed Sieve rule differs from repository")
-        cls.run_pod(
-            ["sh", "-c", f"cat > {cls.path}.sieve; sievec {cls.path}.sieve"], cls.script.encode()
+        directory = (
+            cls.run_pod(["mktemp", "-d", "-t", "mastodon-bounce-test.XXXXXXXXXX"])
+            .stdout.decode()
+            .strip()
         )
+        allocated = PurePosixPath(directory)
+        if (
+            len(allocated.parts) != 3
+            or allocated.parts[:2] != ("/", "tmp")
+            or not re.fullmatch(r"mastodon-bounce-test\.[A-Za-z0-9_]{6,32}", allocated.name)
+        ):
+            raise RuntimeError("Unexpected private Sieve fixture directory")
+        cls.addClassCleanup(cls.run_pod, ["rm", "-rf", "--", directory])
+        cls.run_pod(["chown", "1000:1000", directory])
+        cls.path = directory + "/fixture"
+        cls.write_fixture(cls.path + ".sieve", cls.script.encode())
+        cls.run_pod(["sievec", cls.path + ".sieve"])
+        cls.run_pod(["chown", "1000:1000", cls.path + ".svbin"])
 
     @classmethod
     def run_pod(cls, args, payload=None):
@@ -37,11 +52,16 @@ class MastodonBounceFilterRuntimeTest(unittest.TestCase):
             input=payload,
             capture_output=True,
             check=True,
+            timeout=60,
         )
 
     @classmethod
-    def tearDownClass(cls):
-        cls.run_pod(["rm", "-f", cls.path + ".sieve", cls.path + ".svbin", cls.path + ".eml"])
+    def write_fixture(cls, path, payload):
+        """Write private synthetic data with a positional path, never shell interpolation."""
+        cls.run_pod(
+            ["sh", "-ec", 'umask 077; cat > "$1"; chown 1000:1000 "$1"', "fixture", path],
+            payload,
+        )
 
     def test_registration_bounces_only(self):
         """Filter registration bounces while preserving unrelated mail."""
@@ -111,10 +131,7 @@ Synthetic content; no confirmation link.
         ]
         for name, message, user, folder in cases:
             with self.subTest(name=name):
-                self.run_pod(
-                    ["sh", "-c", f"cat > {self.path}.eml; chmod 644 {self.path}.eml"],
-                    message.encode(),
-                )
+                self.write_fixture(self.path + ".eml", message.encode())
                 result = self.run_pod(
                     [
                         "sieve-test",

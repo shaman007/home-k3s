@@ -1188,3 +1188,30 @@ Independent API and UI checks now confirm **387 open alerts**: Bandit 146,
 modern Pylint 136, Prospector 80 and Opengrep 25, down from the preceding 473
 snapshot. This combines genuine scan reconciliation with fifteen individually
 supported false-positive decisions. The broader remediation goal remains active.
+
+
+### Private runtime fixtures and explicit NGINX source selection
+
+Addressed the source causes behind temporary-path alerts #6890 and #4315.
+The opt-in Sieve test now allocates a private directory with mktemp, validates
+its returned path, registers class cleanup before compilation, and gives the
+fixture directory and mode-0600 files to the synthetic mail UID. Paths are
+passed as shell positional arguments rather than interpolated into commands.
+Pod commands have a 60-second deadline. The deployed-rule equality check and
+all seven message behavior cases remain intact.
+
+The NGINX runtime suite requires an explicitly selected matching source tree.
+Both fixture configs must resolve to regular files within that tree. Invalid
+or missing sources fail before temporary directories, servers or processes
+are created; requesting the binary without its source does not silently skip.
+The Dovecot probe now mounts its isolated /tmp tmpfs with mode 1777 initially,
+matching its existing sticky-bit assertion. Alert #7478 remains open pending
+publication and a separate disposition of the container mount context.
+
+Seven local regressions exercise compiler-failure cleanup, divergent deployed
+rules, invalid allocation responses, positional shell arguments, command
+deadlines, missing source setup and config symlink containment. The full suite
+ran 443 tests successfully with 21 opt-in skips. Selected Pylint and Ruff checks
+passed; Bandit reported no analysis errors. No live pod, NGINX server, container
+probe or application deployment was executed. Source-based alert closures still
+require publication and genuine scanner refresh; no scanner rule was disabled.
