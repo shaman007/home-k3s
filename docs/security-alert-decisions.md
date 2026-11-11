@@ -328,3 +328,24 @@ The targeted encoding and exception-chaining lint checks pass.
 Full suite: 394 tests passed, 21 skipped. No live workload or database changes and
 no container smoke probes were performed. Alert closure awaits a matching rescan
 of the published source changes.
+
+## Monitoring tool formatting and log-test documentation
+
+Formatted the dashboard generator, UniFi BGP exporter, and log-analysis regression
+suite, including splitting long string literals while preserving their values.
+These files carried 151 long-line findings in the refreshed Python inventory.
+Current Pylint reports no long-line or multiple-statement findings in the three
+files with a 100-column limit. Executable ASTs and literal values were compared
+before and after formatting and match exactly.
+
+Executed both dashboard-generator versions in separate temporary output trees:
+all 14 emitted dashboard ConfigMaps are byte-identical, including PromQL queries.
+Regenerated the UniFi exporter ConfigMap; parsed manifest fields and the embedded
+executable AST match the previous version. No dashboard or cluster was deployed.
+
+Added descriptive documentation to the log-analysis test module, class and 38
+methods while preserving the executable AST. Missing-docstring checks pass.
+The 34 log-analysis tests and 13 UniFi exporter tests pass. Full-suite verification
+is recorded below; matching GitHub lint reconciliation remains pending publication
+and rescan.
+Full suite passed: 394 tests, 21 skipped. The full container smoke probes were not run.

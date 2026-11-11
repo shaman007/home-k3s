@@ -5,59 +5,66 @@ metadata:
   namespace: unifi
 data:
   exporter.py: "#!/usr/bin/env python3\n\"\"\"Read-only UniFi BGP telemetry. Credentials/cookies stay in process memory.\"\
-    \"\"\nimport http.cookiejar\nimport http.server\nimport json\nimport os\nimport ssl\nimport threading\nimport time\nimport\
-    \ urllib.error\nimport urllib.request\n\nPEERS = ('192.168.30.100', '192.168.30.209', '192.168.30.242')\nPREFIXES = ('192.168.30.210/32',\
-    \ '192.168.30.211/32', '192.168.30.213/32')\n\n\ndef decode(neighbors, routes):\n    \"\"\"Produce explicit zeroes for\
-    \ missing expected peers/routes, not stale data.\"\"\"\n    if not isinstance(neighbors, list) or not isinstance(routes,\
-    \ dict) or not isinstance(routes.get('items'), list):\n        raise ValueError('Invalid controller response')\n    peers\
-    \ = {}\n    for router in neighbors:\n        if router.get('vrf') == 'default':\n            for peer in router['neighbors']:\n\
-    \                if peer['peer'] in peers:\n                    raise ValueError('Duplicate neighbor')\n             \
-    \   peers[peer['peer']] = peer\n    bgp = [r for r in routes['items'] if r.get('origin') == 'BGP']\n    violations = {\n\
-    \        'unexpected_peer': len(set(peers) - set(PEERS)),\n        'unexpected_prefix': sum(r['destination'] not in PREFIXES\
-    \ for r in bgp),\n        'unexpected_next_hop': sum(n.get('gateway') not in PEERS for r in bgp if r['destination'] in\
-    \ PREFIXES for n in r['nexthops'] if n.get('in_use')),\n        'unexpected_remote_as': sum(p['remote_as'] != 65040 for\
-    \ p in peers.values()),\n    }\n    metrics = []\n    for ip in PEERS:\n        peer = peers.get(ip)\n        metrics.append(('unifi_bgp_peer_established',\
-    \ {'peer': ip}, int(bool(peer and peer['state'] == 'Established' and peer['remote_as'] == 65040))))\n        if peer:\n\
-    \            metrics.append(('unifi_bgp_exported_routes', {'peer': ip}, int(peer['advertised_routes_count'])))\n    for\
-    \ prefix in PREFIXES:\n        active = {n['gateway'] for r in bgp if r['destination'] == prefix for n in r['nexthops']\
-    \ if n.get('in_use') and n.get('gateway') in PEERS}\n        metrics.append(('unifi_bgp_route_active_next_hops', {'prefix':\
-    \ prefix}, len(active)))\n    metrics.extend(('unifi_bgp_policy_violations', {'reason': reason}, value) for reason, value\
-    \ in violations.items())\n    return metrics\n\n\ndef render(metrics, success, last_success):\n    help_text = {\n   \
-    \     'unifi_bgp_scrape_success': 'Whether both authenticated router API reads succeeded.',\n        'unifi_bgp_last_success_timestamp_seconds':\
-    \ 'Unix timestamp of the last complete successful collection.',\n        'unifi_bgp_peer_established': 'Whether the expected\
-    \ router neighbor is established with the reviewed ASN.',\n        'unifi_bgp_exported_routes': 'Routes advertised by\
-    \ the UDM to this Kubernetes neighbor.',\n        'unifi_bgp_route_active_next_hops': 'Active reviewed Kubernetes next\
-    \ hops installed for the expected prefix.',\n        'unifi_bgp_policy_violations': 'Current deviations from the reviewed\
-    \ BGP peers and forwarding policy.',\n    }\n    lines = []\n    for name, text in help_text.items():\n        lines.extend([f'#\
-    \ HELP {name} {text}', f'# TYPE {name} gauge'])\n    lines += [f'unifi_bgp_scrape_success {int(success)}', f'unifi_bgp_last_success_timestamp_seconds\
-    \ {last_success}']\n    for name, labels, value in metrics:\n        tags = ','.join(k + '=' + json.dumps(v) for k, v\
-    \ in sorted(labels.items()))\n        lines.append(f'{name}{{{tags}}} {value}')\n    return '\\n'.join(lines) + '\\n'\n\
-    \n\nclass NoRedirect(urllib.request.HTTPRedirectHandler):\n    def redirect_request(self, req, fp, code, msg, headers,\
-    \ newurl):\n        return None\n\n\nclass Controller:\n    def __init__(self):\n        self.base = os.environ['UNIFI_URL'].rstrip('/')\n\
-    \        context = ssl.create_default_context()\n        # Same explicitly configured local-controller TLS exception as\
-    \ UniFi IaC.\n        if os.environ.get('UNIFI_VERIFY_TLS', 'true').lower() == 'false':\n            context = ssl._create_unverified_context()\n\
-    \        self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect(), urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),\
-    \ urllib.request.HTTPSHandler(context=context))\n        self.logged_in = False\n        self.csrf = ''\n\n    def request(self,\
-    \ path, data=None):\n        headers = {'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent':\
-    \ 'home-k3s-unifi-bgp-exporter/1.0'}\n        if self.csrf:\n            headers['X-CSRF-Token'] = self.csrf\n       \
-    \ req = urllib.request.Request(self.base + path, data=json.dumps(data).encode() if data is not None else None, headers=headers)\n\
-    \        with self.opener.open(req, timeout=15) as response:\n            self.csrf = response.headers.get('X-CSRF-Token',\
-    \ self.csrf)\n            return json.load(response)\n\n    def login(self):\n        self.request('/api/auth/login',\
-    \ {'username': os.environ['UNIFI_USERNAME'], 'password': os.environ['UNIFI_PASSWORD']})\n        self.logged_in = True\n\
-    \n    def get(self, path):\n        if not self.logged_in:\n            self.login()\n        try:\n            return\
-    \ self.request(path)\n        except urllib.error.HTTPError as error:\n            if error.code not in (401, 403):\n\
-    \                raise\n            error.close()\n            self.logged_in = False\n            self.login()\n    \
-    \        return self.request(path)\n\n    def collect(self):\n        base = '/proxy/network/v2/api/site/default/'\n \
-    \       return decode(self.get(base + 'bgp/neighbors'), self.get(base + 'routes'))\n\n\ndef main():\n    controller =\
-    \ Controller()\n    lock = threading.Lock()\n    state = {'body': render([], False, 0)}\n\n    def poll():\n        last_success\
-    \ = 0\n        while True:\n            try:\n                metrics = controller.collect()\n                last_success\
-    \ = time.time()\n                body = render(metrics, True, last_success)\n            except Exception:\n         \
-    \       # Never log requests, response bodies, passwords or session cookies.\n                body = render([], False,\
-    \ last_success)\n            with lock:\n                state['body'] = body\n            time.sleep(45)\n\n    class\
-    \ Handler(http.server.BaseHTTPRequestHandler):\n        def do_GET(self):\n            if self.path not in ('/metrics',\
-    \ '/healthz'):\n                self.send_error(404)\n                return\n            with lock:\n               \
-    \ body = (state['body'] if self.path == '/metrics' else 'ok\\n').encode()\n            self.send_response(200)\n     \
-    \       self.send_header('Content-Type', 'text/plain; version=0.0.4')\n            self.send_header('Content-Length',\
-    \ str(len(body)))\n            self.end_headers()\n            self.wfile.write(body)\n\n        def log_message(self,\
-    \ *_):\n            pass\n\n    threading.Thread(target=poll, daemon=True).start()\n    http.server.ThreadingHTTPServer(('0.0.0.0',\
-    \ 9131), Handler).serve_forever()\n\n\nif __name__ == '__main__':\n    main()\n"
+    \"\"\n\nimport http.cookiejar\nimport http.server\nimport json\nimport os\nimport ssl\nimport threading\nimport time\n\
+    import urllib.error\nimport urllib.request\n\nPEERS = (\"192.168.30.100\", \"192.168.30.209\", \"192.168.30.242\")\nPREFIXES\
+    \ = (\"192.168.30.210/32\", \"192.168.30.211/32\", \"192.168.30.213/32\")\n\n\ndef decode(neighbors, routes):\n    \"\"\
+    \"Produce explicit zeroes for missing expected peers/routes, not stale data.\"\"\"\n    if (\n        not isinstance(neighbors,\
+    \ list)\n        or not isinstance(routes, dict)\n        or not isinstance(routes.get(\"items\"), list)\n    ):\n   \
+    \     raise ValueError(\"Invalid controller response\")\n    peers = {}\n    for router in neighbors:\n        if router.get(\"\
+    vrf\") == \"default\":\n            for peer in router[\"neighbors\"]:\n                if peer[\"peer\"] in peers:\n\
+    \                    raise ValueError(\"Duplicate neighbor\")\n                peers[peer[\"peer\"]] = peer\n    bgp =\
+    \ [r for r in routes[\"items\"] if r.get(\"origin\") == \"BGP\"]\n    violations = {\n        \"unexpected_peer\": len(set(peers)\
+    \ - set(PEERS)),\n        \"unexpected_prefix\": sum(r[\"destination\"] not in PREFIXES for r in bgp),\n        \"unexpected_next_hop\"\
+    : sum(\n            n.get(\"gateway\") not in PEERS\n            for r in bgp\n            if r[\"destination\"] in PREFIXES\n\
+    \            for n in r[\"nexthops\"]\n            if n.get(\"in_use\")\n        ),\n        \"unexpected_remote_as\"\
+    : sum(p[\"remote_as\"] != 65040 for p in peers.values()),\n    }\n    metrics = []\n    for ip in PEERS:\n        peer\
+    \ = peers.get(ip)\n        metrics.append(\n            (\n                \"unifi_bgp_peer_established\",\n         \
+    \       {\"peer\": ip},\n                int(bool(peer and peer[\"state\"] == \"Established\" and peer[\"remote_as\"]\
+    \ == 65040)),\n            )\n        )\n        if peer:\n            metrics.append(\n                (\"unifi_bgp_exported_routes\"\
+    , {\"peer\": ip}, int(peer[\"advertised_routes_count\"]))\n            )\n    for prefix in PREFIXES:\n        active\
+    \ = {\n            n[\"gateway\"]\n            for r in bgp\n            if r[\"destination\"] == prefix\n           \
+    \ for n in r[\"nexthops\"]\n            if n.get(\"in_use\") and n.get(\"gateway\") in PEERS\n        }\n        metrics.append((\"\
+    unifi_bgp_route_active_next_hops\", {\"prefix\": prefix}, len(active)))\n    metrics.extend(\n        (\"unifi_bgp_policy_violations\"\
+    , {\"reason\": reason}, value)\n        for reason, value in violations.items()\n    )\n    return metrics\n\n\ndef render(metrics,\
+    \ success, last_success):\n    help_text = {\n        \"unifi_bgp_scrape_success\": \"Whether both authenticated router\
+    \ API reads succeeded.\",\n        \"unifi_bgp_last_success_timestamp_seconds\": (\n            \"Unix timestamp of the\
+    \ last complete successful collection.\"\n        ),\n        \"unifi_bgp_peer_established\": (\n            \"Whether\
+    \ the expected router neighbor is established with the reviewed ASN.\"\n        ),\n        \"unifi_bgp_exported_routes\"\
+    : \"Routes advertised by the UDM to this Kubernetes neighbor.\",\n        \"unifi_bgp_route_active_next_hops\": (\n  \
+    \          \"Active reviewed Kubernetes next hops installed for the expected prefix.\"\n        ),\n        \"unifi_bgp_policy_violations\"\
+    : (\n            \"Current deviations from the reviewed BGP peers and forwarding policy.\"\n        ),\n    }\n    lines\
+    \ = []\n    for name, text in help_text.items():\n        lines.extend([f\"# HELP {name} {text}\", f\"# TYPE {name} gauge\"\
+    ])\n    lines += [\n        f\"unifi_bgp_scrape_success {int(success)}\",\n        f\"unifi_bgp_last_success_timestamp_seconds\
+    \ {last_success}\",\n    ]\n    for name, labels, value in metrics:\n        tags = \",\".join(k + \"=\" + json.dumps(v)\
+    \ for k, v in sorted(labels.items()))\n        lines.append(f\"{name}{{{tags}}} {value}\")\n    return \"\\n\".join(lines)\
+    \ + \"\\n\"\n\n\nclass NoRedirect(urllib.request.HTTPRedirectHandler):\n    def redirect_request(self, req, fp, code,\
+    \ msg, headers, newurl):\n        return None\n\n\nclass Controller:\n    def __init__(self):\n        self.base = os.environ[\"\
+    UNIFI_URL\"].rstrip(\"/\")\n        context = ssl.create_default_context()\n        # Same explicitly configured local-controller\
+    \ TLS exception as UniFi IaC.\n        if os.environ.get(\"UNIFI_VERIFY_TLS\", \"true\").lower() == \"false\":\n     \
+    \       context = ssl._create_unverified_context()\n        self.opener = urllib.request.build_opener(\n            urllib.request.ProxyHandler({}),\n\
+    \            NoRedirect(),\n            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),\n            urllib.request.HTTPSHandler(context=context),\n\
+    \        )\n        self.logged_in = False\n        self.csrf = \"\"\n\n    def request(self, path, data=None):\n    \
+    \    headers = {\n            \"Content-Type\": \"application/json\",\n            \"Accept\": \"application/json\",\n\
+    \            \"User-Agent\": \"home-k3s-unifi-bgp-exporter/1.0\",\n        }\n        if self.csrf:\n            headers[\"\
+    X-CSRF-Token\"] = self.csrf\n        req = urllib.request.Request(\n            self.base + path,\n            data=json.dumps(data).encode()\
+    \ if data is not None else None,\n            headers=headers,\n        )\n        with self.opener.open(req, timeout=15)\
+    \ as response:\n            self.csrf = response.headers.get(\"X-CSRF-Token\", self.csrf)\n            return json.load(response)\n\
+    \n    def login(self):\n        self.request(\n            \"/api/auth/login\",\n            {\"username\": os.environ[\"\
+    UNIFI_USERNAME\"], \"password\": os.environ[\"UNIFI_PASSWORD\"]},\n        )\n        self.logged_in = True\n\n    def\
+    \ get(self, path):\n        if not self.logged_in:\n            self.login()\n        try:\n            return self.request(path)\n\
+    \        except urllib.error.HTTPError as error:\n            if error.code not in (401, 403):\n                raise\n\
+    \            error.close()\n            self.logged_in = False\n            self.login()\n            return self.request(path)\n\
+    \n    def collect(self):\n        base = \"/proxy/network/v2/api/site/default/\"\n        return decode(self.get(base\
+    \ + \"bgp/neighbors\"), self.get(base + \"routes\"))\n\n\ndef main():\n    controller = Controller()\n    lock = threading.Lock()\n\
+    \    state = {\"body\": render([], False, 0)}\n\n    def poll():\n        last_success = 0\n        while True:\n    \
+    \        try:\n                metrics = controller.collect()\n                last_success = time.time()\n          \
+    \      body = render(metrics, True, last_success)\n            except Exception:\n                # Never log requests,\
+    \ response bodies, passwords or session cookies.\n                body = render([], False, last_success)\n           \
+    \ with lock:\n                state[\"body\"] = body\n            time.sleep(45)\n\n    class Handler(http.server.BaseHTTPRequestHandler):\n\
+    \        def do_GET(self):\n            if self.path not in (\"/metrics\", \"/healthz\"):\n                self.send_error(404)\n\
+    \                return\n            with lock:\n                body = (state[\"body\"] if self.path == \"/metrics\"\
+    \ else \"ok\\n\").encode()\n            self.send_response(200)\n            self.send_header(\"Content-Type\", \"text/plain;\
+    \ version=0.0.4\")\n            self.send_header(\"Content-Length\", str(len(body)))\n            self.end_headers()\n\
+    \            self.wfile.write(body)\n\n        def log_message(self, *_):\n            pass\n\n    threading.Thread(target=poll,\
+    \ daemon=True).start()\n    http.server.ThreadingHTTPServer((\"0.0.0.0\", 9131), Handler).serve_forever()\n\n\nif __name__\
+    \ == \"__main__\":\n    main()\n"
