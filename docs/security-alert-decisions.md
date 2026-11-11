@@ -664,3 +664,41 @@ exercise this module via the same source under that name. This is a local
 analysis packaging limitation; the finding remains unsuppressed and has not
 been dismissed. Remote alert counts require publication and rescan. Changes
 remain unstaged and uncommitted.
+
+
+### Remove verified retired database and archived stacks (2026-11-11)
+
+Current GitHub inventory contained 2,208 open alerts before the individual
+false-positive decision below: 306 modern Pylint, 1,396 legacy Pylint, 226
+Bandit, 47 Opengrep, and 233 from other historical analyzers. This snapshot
+is evidence of progress, not a claim that the overall goal is complete.
+
+Removed 94 files (3,828 lines) from the retired shared `postgres/` deployment
+and nine unused archived stacks: `DEPRECATED/wazuh`, `camera`, `rsyslog`,
+`rancher`, `unifi`, `cron`, `mysql`, `minio-single`, and `promtail`.
+The sources remain available in [Git history](https://github.com/shaman007/home-k3s/tree/1ca52307dc0f55ef58aad73d30629595ae8a872f).
+Historical changelog and migration inventories were retained.
+
+Evidence: read-only live inspection found no matching Deployment, StatefulSet,
+DaemonSet, CronJob, or Job for any of the 23 archived workload identities.
+The `db` namespace has no Deployment or StatefulSet, no live Argo application
+selects `postgres/` or `mysql/`, and the Bitwarden, Dawarich, Keycloak, and
+Mastodon application-local PostgreSQL StatefulSets each have a ready replica.
+Checking all 76 repository-local GitOps sources with the renderer's selection
+rules found no selected files in this deletion batch. No nonhistorical exact
+source-path references remain. This cleanup changes repository files only;
+it does not delete live PVCs, snapshots, secrets, or any other cluster resource.
+
+The removed paths contain 19 currently open alerts (4391, 4390, 4389, 4388, 4387, 4385, 4383, 4380, 4379, 4377, 4375, 4374, 4373, 4370, 4369, 4366, 4363, 4361, 4360).
+These alerts were not dismissed; a scan of the published deletion must close
+them normally. One full unittest run passed (386 tests, 21 skipped), and
+`git diff --check` passed. Changes remain unstaged and uncommitted.
+
+Individually dismissed Opengrep alert #4378 as a verified false positive.
+At its exact [scanned revision](https://github.com/shaman007/home-k3s/blob/e17d946c5e5838b3b8e203a4fbd164baec33dd84/wordpress/stateful-set-valkey.yaml),
+`redis-exporter` inherits `&securityContext` through `<<: *securityContext`.
+Parsing that source resolves `allowPrivilegeEscalation: false` for both Valkey
+and the exporter; the finding incorrectly flags the merge site. The GitHub
+API confirmed state `dismissed`, reason `false positive`, with a comment
+recording the scanned commit and requiring reopening if the anchor or merge
+changes. No blanket YAML-rule suppression was added.
