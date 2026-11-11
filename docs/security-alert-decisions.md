@@ -1708,3 +1708,33 @@ successfully with 21 opt-in skips. Selected Pylint checks, Ruff and diff checks
 passed; Bandit reported no analysis errors. Existing small mock-opener method-
 count warnings remain unchanged. Publication and genuine scanner refresh remain
 necessary for remote alert closure; no safety gate or scanner rule was disabled.
+
+
+### Simplify stateless test openers and retain framework callback interfaces
+
+Replaced eight one-method stateless mock Opener classes across the component,
+infrastructure and recurring-job backfill tests with named functions exposed
+through SimpleNamespace.open. Their method bodies, request traces and mock
+response behavior are unchanged. Reversing the adaptation reproduces each
+previous test-module AST; one additional test-local patch variable rename is
+normalized separately. Added the missing duplicate-key mapping-method docstring
+in ci_yaml.py; AST comparison confirms no loader behavior change.
+
+Separately reviewed seven exact framework-interface warnings. Both NoRedirect
+redirect_request methods match HTTPRedirectHandler's complete standard-library
+signature, so reducing their parameters would break the callback contract.
+The three YAML extension classes directly inherit SafeLoader/SafeDumper APIs
+and intentionally customize only mapping construction, alias handling or scoped
+representation. Their inherited API is not reflected by the small-class rule.
+Dismissed only #7735, #7734, #7670, #7669, #7653, #7249 and #6658 as false
+positives with framework-specific comments and reopening conditions. Exact
+revision/rule/path/state guards and independent inventory checks confirmed them.
+The eight test-class warnings await real source rescanning rather than dismissal.
+
+The full suite ran 481 tests successfully with 21 opt-in skips. Selected Pylint
+checks, Ruff and diff checks passed; Bandit reported no analysis errors. Existing
+YAML inheritance-depth and cross-module duplication heuristics were not disabled.
+No live cluster, credential file or external API was used by the changed tests.
+The independently verified current open total is 226: Bandit 94, modern Pylint
+69, Prospector 56 and Opengrep 7. This combines ongoing source reconciliation
+and the seven exact decisions; source fixes in this commit still need publication.

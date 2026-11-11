@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -163,13 +164,10 @@ class InfrastructureGuardTests(unittest.TestCase):
                 """Encode the simulated API response as JSON bytes."""
                 return json.dumps(outer.healthy(e)).encode()
 
-        class Opener:
-            """Supply mocked HTTP responses for guarded backfill safety tests."""
-
-            def open(self, req, **_kwargs):
-                """Record the request and return the simulated API response."""
-                calls.append((req.get_method(), req.full_url))
-                return Response()
+        def open_request(req, **_kwargs):
+            """Record the request and return the simulated API response."""
+            calls.append((req.get_method(), req.full_url))
+            return Response()
 
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory)
@@ -177,7 +175,11 @@ class InfrastructureGuardTests(unittest.TestCase):
             (p / "token").write_text("synthetic-test-only")
             with (
                 patch.object(b.ssl, "create_default_context"),
-                patch.object(b.urllib.request, "build_opener", return_value=Opener()),
+                patch.object(
+                    b.urllib.request,
+                    "build_opener",
+                    return_value=SimpleNamespace(open=open_request),
+                ),
                 patch.dict(
                     b.os.environ,
                     {"KUBERNETES_SERVICE_HOST": "mock.invalid", "KUBERNETES_SERVICE_PORT": "443"},
@@ -210,21 +212,18 @@ class InfrastructureGuardTests(unittest.TestCase):
                 """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
-        class Opener:
-            """Supply mocked HTTP responses for guarded backfill safety tests."""
-
-            def open(self, req, **_kwargs):
-                """Record the request and return the simulated API response."""
-                e = next(e for e in entries if req.full_url.split("?")[0].endswith("/" + e["name"]))
-                doc = outer.healthy(e)
-                if req.get_method() == "PATCH":
-                    doc["spec"] = b.expected_spec(doc, e)
-                    if "dryRun=All" not in req.full_url:
-                        written.append(e["name"])
-                if e["name"] in written:
-                    doc["spec"] = b.expected_spec(doc, e)
-                    doc["metadata"]["generation"] = 2
-                return Response(doc)
+        def open_request(req, **_kwargs):
+            """Record the request and return the simulated API response."""
+            e = next((e for e in entries if req.full_url.split("?")[0].endswith("/" + e["name"])))
+            doc = outer.healthy(e)
+            if req.get_method() == "PATCH":
+                doc["spec"] = b.expected_spec(doc, e)
+                if "dryRun=All" not in req.full_url:
+                    written.append(e["name"])
+            if e["name"] in written:
+                doc["spec"] = b.expected_spec(doc, e)
+                doc["metadata"]["generation"] = 2
+            return Response(doc)
 
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory)
@@ -232,7 +231,11 @@ class InfrastructureGuardTests(unittest.TestCase):
             (p / "token").write_text("synthetic-test-only")
             with (
                 patch.object(b.ssl, "create_default_context"),
-                patch.object(b.urllib.request, "build_opener", return_value=Opener()),
+                patch.object(
+                    b.urllib.request,
+                    "build_opener",
+                    return_value=SimpleNamespace(open=open_request),
+                ),
                 patch.dict(
                     b.os.environ,
                     {"KUBERNETES_SERVICE_HOST": "mock.invalid", "KUBERNETES_SERVICE_PORT": "443"},
@@ -270,27 +273,24 @@ class InfrastructureGuardTests(unittest.TestCase):
                 """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
-        class Opener:
-            """Supply mocked HTTP responses for guarded backfill safety tests."""
-
-            def open(self, req, **_kwargs):
-                """Record the request and return the simulated API response."""
-                calls.append(req.get_method())
-                if req.full_url.endswith("/volumes"):
-                    return Response(
-                        {
-                            "items": [
-                                {
-                                    "status": {
-                                        "state": "attached",
-                                        "robustness": "degraded",
-                                        "restoreRequired": False,
-                                    }
+        def open_request(req, **_kwargs):
+            """Record the request and return the simulated API response."""
+            calls.append(req.get_method())
+            if req.full_url.endswith("/volumes"):
+                return Response(
+                    {
+                        "items": [
+                            {
+                                "status": {
+                                    "state": "attached",
+                                    "robustness": "degraded",
+                                    "restoreRequired": False,
                                 }
-                            ]
-                        }
-                    )
-                return Response({"items": [{"status": {}}]})
+                            }
+                        ]
+                    }
+                )
+            return Response({"items": [{"status": {}}]})
 
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory)
@@ -298,7 +298,11 @@ class InfrastructureGuardTests(unittest.TestCase):
             (p / "token").write_text("synthetic-test-only")
             with (
                 patch.object(b.ssl, "create_default_context"),
-                patch.object(b.urllib.request, "build_opener", return_value=Opener()),
+                patch.object(
+                    b.urllib.request,
+                    "build_opener",
+                    return_value=SimpleNamespace(open=open_request),
+                ),
                 patch.dict(
                     b.os.environ,
                     {"KUBERNETES_SERVICE_HOST": "mock.invalid", "KUBERNETES_SERVICE_PORT": "443"},
@@ -396,13 +400,10 @@ class InfrastructureGuardTests(unittest.TestCase):
                     }
                 ).encode()
 
-        class Opener:
-            """Supply mocked HTTP responses for guarded backfill safety tests."""
-
-            def open(self, req, **_kwargs):
-                """Record the request and return the simulated API response."""
-                calls.append(req.get_method())
-                return Response()
+        def open_request(req, **_kwargs):
+            """Record the request and return the simulated API response."""
+            calls.append(req.get_method())
+            return Response()
 
         with tempfile.TemporaryDirectory() as directory:
             p = Path(directory)
@@ -412,7 +413,11 @@ class InfrastructureGuardTests(unittest.TestCase):
             (p / "token").write_text("synthetic-test-only")
             with (
                 patch.object(b.ssl, "create_default_context"),
-                patch.object(b.urllib.request, "build_opener", return_value=Opener()),
+                patch.object(
+                    b.urllib.request,
+                    "build_opener",
+                    return_value=SimpleNamespace(open=open_request),
+                ),
                 patch.dict(
                     b.os.environ,
                     {"KUBERNETES_SERVICE_HOST": "mock.invalid", "KUBERNETES_SERVICE_PORT": "443"},

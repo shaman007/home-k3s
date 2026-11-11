@@ -5,6 +5,7 @@ import yaml
 class UniqueKeyLoader(yaml.SafeLoader):
     """Reject duplicate YAML mapping keys instead of silently replacing earlier values."""
     def construct_mapping(self, node, deep=False):
+        """Reject duplicate explicit keys before SafeLoader constructs the mapping."""
         seen = set()
         for key_node, _ in node.value:
             if key_node.tag == 'tag:yaml.org,2002:merge':

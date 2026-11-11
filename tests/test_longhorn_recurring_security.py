@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import yaml
@@ -78,12 +79,12 @@ class RecurringSecurityTests(unittest.TestCase):
         """Verify backfill only sends guarded annotation patch."""
         doc = f.fixture(self.names[0])
         doc["metadata"]["resourceVersion"] = "123"
-        patch = b.annotation_patch(doc)
+        changes = b.annotation_patch(doc)
         self.assertEqual(
-            patch[0], {"op": "test", "path": "/metadata/resourceVersion", "value": "123"}
+            changes[0], {"op": "test", "path": "/metadata/resourceVersion", "value": "123"}
         )
-        self.assertTrue(all(p["path"].startswith("/metadata/") for p in patch))
-        self.assertEqual(patch[-1]["value"], "v1")
+        self.assertTrue(all(p["path"].startswith("/metadata/") for p in changes))
+        self.assertEqual(changes[-1]["value"], "v1")
 
     def test_no_live_write_when_any_preflight_has_no_mutation(self):
         """Prevent live writes when any admission preview omits its required mutation."""
@@ -106,18 +107,15 @@ class RecurringSecurityTests(unittest.TestCase):
                 """Encode the simulated API response document as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
-        class Opener:
-            """Supply mocked HTTP responses for guarded backfill safety tests."""
-
-            def open(self, req, **_kwargs):
-                """Record the request and return simulated CronJob state for the preflight."""
-                calls.append((req.method, req.full_url))
-                name = req.full_url.split("/cronjobs/")[1].split("?")[0]
-                doc = f.fixture(name)
-                doc["metadata"]["resourceVersion"] = "123"
-                if req.method == "PATCH" and name == names[0]:
-                    doc["spec"] = b.expected_spec(doc)
-                return Response(doc)
+        def open_request(req, **_kwargs):
+            """Record the request and return simulated CronJob state for the preflight."""
+            calls.append((req.method, req.full_url))
+            name = req.full_url.split("/cronjobs/")[1].split("?")[0]
+            doc = f.fixture(name)
+            doc["metadata"]["resourceVersion"] = "123"
+            if req.method == "PATCH" and name == names[0]:
+                doc["spec"] = b.expected_spec(doc)
+            return Response(doc)
 
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -125,7 +123,11 @@ class RecurringSecurityTests(unittest.TestCase):
             (root / "token").write_text("synthetic-test-only")
             with (
                 patch.object(b.ssl, "create_default_context"),
-                patch.object(b.urllib.request, "build_opener", return_value=Opener()),
+                patch.object(
+                    b.urllib.request,
+                    "build_opener",
+                    return_value=SimpleNamespace(open=open_request),
+                ),
                 patch.dict(
                     b.os.environ,
                     {"KUBERNETES_SERVICE_HOST": "mock.invalid", "KUBERNETES_SERVICE_PORT": "443"},
