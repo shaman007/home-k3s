@@ -165,3 +165,63 @@ class AdministrativeHttpTests(unittest.TestCase):
         form = urllib.parse.parse_qs(req.data.decode())
         self.assertEqual(form["password"], [self.marker])
         self.assertEqual(form["username"], ["fixture-user"])
+
+
+class AdministrativeReconciliationTests(unittest.TestCase):
+    """Keep provisioning conservative when refactoring administrative workflows."""
+
+    def test_existing_client_retains_unrelated_fields_and_mappers(self):
+        """A contract update preserves unrelated client data and custom mapper settings."""
+        desired = {
+            "clientId": "traefik-admin",
+            "protocolMappers": [{"name": "contract", "config": {"required": "true"}}],
+        }
+        existing = {
+            "clientId": "traefik-admin",
+            "id": "fixture",
+            "unrelated": "retain",
+            "protocolMappers": [
+                {"name": "contract", "custom": "retain"},
+                {"name": "unrelated", "config": {}},
+            ],
+        }
+        responses = [None, [existing], existing, None, [existing], {"value": "synthetic"}]
+        with patch.object(client, "request", side_effect=responses) as request:
+            clients, value = client.reconcile_client("origin", {}, desired, True)
+        update = request.call_args_list[3].kwargs
+        self.assertEqual(update["method"], "PUT")
+        self.assertEqual(update["data"]["unrelated"], "retain")
+        mappers = {item["name"]: item for item in update["data"]["protocolMappers"]}
+        self.assertEqual(mappers["contract"]["custom"], "retain")
+        self.assertIn("unrelated", mappers)
+        self.assertEqual(clients[0]["id"], "fixture")
+        self.assertEqual(value, "synthetic")
+
+    def test_kv_write_preserves_version_and_session(self):
+        """CAS uses the existing version without rotating an established session key."""
+        session = secrets.token_hex(16)
+        current = {"data": {"data": {"sessionSecret": session}, "metadata": {"version": 7}}}
+        with patch.object(client, "request", side_effect=[current, None, None, None]) as request:
+            client.write_prerequisite("traefik-oidc", "traefik", "oidc-vault-auth", {}, "synthetic")
+        update = request.call_args_list[1].kwargs["data"]
+        self.assertEqual(update["options"], {"cas": 7})
+        self.assertEqual(update["data"]["sessionSecret"], session)
+        self.assertEqual(update["data"]["clientSecret"], "synthetic")
+
+    def test_invalid_existing_session_prevents_all_writes(self):
+        """Refuse a malformed session rather than silently replacing it."""
+        current = {"data": {"data": {"sessionSecret": "invalid"}, "metadata": {"version": 7}}}
+        with patch.object(client, "request", return_value=current) as request:
+            with self.assertRaisesRegex(RuntimeError, "refusing to rotate"):
+                client.write_prerequisite(
+                    "traefik-oidc", "traefik", "oidc-vault-auth", {}, "synthetic"
+                )
+        self.assertEqual(request.call_count, 1)
+
+    def test_duplicate_clients_prevent_update(self):
+        """Ambiguous client identifiers cannot lead to an arbitrary update."""
+        duplicate = [{"clientId": "traefik-admin", "id": value} for value in ("one", "two")]
+        with patch.object(client, "request", side_effect=[None, duplicate]) as request:
+            with self.assertRaisesRegex(RuntimeError, "Duplicate"):
+                client.reconcile_client("origin", {}, {}, True)
+        self.assertEqual(request.call_count, 2)

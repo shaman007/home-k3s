@@ -1215,3 +1215,27 @@ ran 443 tests successfully with 21 opt-in skips. Selected Pylint and Ruff checks
 passed; Bandit reported no analysis errors. No live pod, NGINX server, container
 probe or application deployment was executed. Source-based alert closures still
 require publication and genuine scanner refresh; no scanner rule was disabled.
+
+
+### Separate Traefik administrative reconciliation from verification
+
+Split the provisioning tool's large main function into credential loading,
+client reconciliation and contract verification, KV reads and CAS writes, and
+OpenBao prerequisite verification. Check-only mode retains its preliminary KV
+reads and performs no writes. Client updates retain unrelated fields and mappers;
+existing session secrets are preserved and malformed sessions still block writes.
+The HTTPS origin, header scoping and redirect rejection checks are unchanged.
+
+A transient comparison against the preceding committed implementation exercised
+648 combinations of check/write mode, missing or duplicate clients, configuration
+drift, invalid sessions, missing keys, unavailable prerequisites and injected
+request failures. Ordered requests, headers, payloads, output and exceptions
+matched exactly. Four permanent mocked regressions cover preservation of client
+fields/mappers, CAS versions and session secrets, invalid-session refusal, and
+duplicate-client refusal. No credential file or administrative service was used.
+
+The full suite ran 447 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed, and Bandit reported no analysis errors. Full Pylint no longer
+reports main's excessive locals, branches or statements; its three existing
+HTTP callback signature/origin-expression warnings remain open for review.
+Publication and genuine scanner refresh are still required for alert closure.
