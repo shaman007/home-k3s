@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   validate-inputs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       audit-shards: ${{ steps.audit-cases.outputs.shards }}
 
@@ -142,7 +142,7 @@ jobs:
   audit-cel:
     name: Audit CEL (${{ matrix.shard }})
     needs: validate-inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -170,7 +170,7 @@ jobs:
   validate-manifests:
     if: always()
     needs: [validate-inputs, audit-cel]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Require every validation job to succeed
         env:
