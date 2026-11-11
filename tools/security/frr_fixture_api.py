@@ -39,10 +39,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 
-    def do_get(self):
-        """Serve mock discovery, Pod identity, resource reads, and watch bookmarks."""
-        path = urlparse(self.path).path
-        query = parse_qs(urlparse(self.path).query)
+    def discovery_response(self, path):
+        """Serve the five supported Kubernetes API discovery documents."""
         if path == "/version":
             return self.respond({"major": "1", "minor": "37", "gitVersion": "v1.37.1"})
         if path == "/api":
@@ -111,6 +109,14 @@ class Handler(BaseHTTPRequestHandler):
                     "resources": resources,
                 }
             )
+        raise ValueError("Unsupported discovery path")
+
+    def do_get(self):
+        """Serve mock discovery, Pod identity, resource reads, and watch bookmarks."""
+        path = urlparse(self.path).path
+        query = parse_qs(urlparse(self.path).query)
+        if path in {"/version", "/api", "/apis", "/api/v1", "/apis/" + VERSION}:
+            return self.discovery_response(path)
         if path.endswith("/pods/guard-pod"):
             print("pod-read", flush=True)
             return self.respond(POD)

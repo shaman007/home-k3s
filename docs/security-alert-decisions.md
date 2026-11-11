@@ -1886,3 +1886,28 @@ ran 501 tests successfully with 21 opt-in skips; Ruff and diff checks passed,
 and Bandit reported no analysis errors. Verification did not start a port-forward,
 contact a cache replica or read/write production objects. Source fixes await
 genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Separate FRR fixture discovery and simplify administrative origin checks
+
+Extracted the five FRR mock Kubernetes discovery documents from resource-read
+handling, removing the excessive-return warning. Fifty-four mocked scenarios
+produce identical response bytes, HTTP status/headers, log markers and watch
+sleep calls across discovery, Pod reads, empty/populated resource lists, present/
+absent objects and watch queries. Two permanent regressions protect cluster versus
+namespace resource scope, status verbs and NotFound responses. No socket was opened.
+
+Split the administrative endpoint rejection condition into sequential origin and
+URL-credential/fragment checks with identical failure bodies. Merging the checks
+reproduces the complete original module AST. The existing hostile-origin,
+credential-scoping and real in-memory redirect-dispatch tests remain green.
+The excessive-boolean-expression warning is gone. FRR and its tests pass full
+Pylint; the admin client has only its previously reviewed HTTPRedirectHandler
+callback-signature argument warnings, which were not changed or suppressed in
+source. The combined check passes with those two framework rules excluded.
+
+The full suite ran 503 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed; Bandit reported no analysis errors. No administrative credentials,
+live API, container or cluster was used by verification. A refreshed GitHub
+inventory still reports 212 open findings; these source fixes await genuine
+published rescanning and no alert was dismissed in this batch.

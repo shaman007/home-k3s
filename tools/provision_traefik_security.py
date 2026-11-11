@@ -44,10 +44,9 @@ def open_request(req):
         endpoint.scheme != "https"
         or endpoint.hostname not in {sso_host, bao_host}
         or port not in (None, 443)
-        or endpoint.username is not None
-        or endpoint.password is not None
-        or endpoint.fragment
     ):
+        raise RuntimeError("Administrative requests require a reviewed HTTPS origin")
+    if endpoint.username is not None or endpoint.password is not None or endpoint.fragment:
         raise RuntimeError("Administrative requests require a reviewed HTTPS origin")
     for name, _ in req.header_items():
         name = name.lower()
