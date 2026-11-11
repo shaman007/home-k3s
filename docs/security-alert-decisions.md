@@ -3076,3 +3076,41 @@ warnings. Bandit has no analysis errors and no B104 findings in source/tests;
 the separate TLS finding remains. No credentials, live cluster/router or external
 service was accessed. No alert was dismissed, source suppression added or push
 performed; genuine published rescanning must reconcile the wildcard-bind alert.
+
+
+### Record existing workload privilege exceptions as retained risks
+
+Classified exact findings 4382/4381 (privileged Podman builder and implied
+escalation) and 4365 (RIPE Atlas escalation) as won't fix for the existing
+workload designs, not false positives. This applies the repository's documented
+retention decisions in image-builder/README.md, ripe-atlas/README.md and
+docs/security-exception-follow-up.md. Source bytes match the analyzed revisions
+and matching Argo application paths were inspected. No workload or privilege
+setting was changed. These decisions do not establish that a rootless redesign
+is impossible; they retain the operational exception until a replacement is
+validated.
+
+The builder runs nested privileged Podman/overlay against ephemeral workspace and
+container storage. It has no API token or host-data mounts, but privileged mode
+still permits host compromise and exposes mounted registry/signing credentials
+to trusted build execution. Existing documentation also records the lack of an
+isolated builder node and the need for scoped Harbor robot credentials. Reopen
+when a rootless end-to-end build works on Talos, an isolated builder-node design
+is ready, or execution/source/credential trust assumptions change. No assumption
+that network policy removes privileged-container risk is made.
+
+RIPE Atlas retains the documented setuid measurement-helper transition; prior
+compatibility evidence records setresuid failure with no-new-privileges. The
+current manifest retains drop ALL plus nine reviewed capabilities, read-only root,
+RuntimeDefault seccomp and no API token. Host networking, raw sockets and allowed
+identity transitions remain actual risks. Reopen when a replacement helper/image
+works without escalation or capability/mount/identity scope changes. Historical
+helper compatibility evidence was reviewed, not rerun against production here.
+
+All six builder-security and seventeen capability-exception tests pass. They
+verify repository guard contracts; no image build, container, registration,
+measurement, credential access or cluster change occurred. Exact identity/source
+guards preceded each decision, and independent API reads verify all three have
+dismissed_reason=won't fix. Fresh inventory reports eleven open (Pylint four,
+Bandit six, Opengrep one); concurrent rescanning changed other findings during
+review. Last full-suite result remains 555 tests with 16 skips. No push occurred.
