@@ -1,3 +1,5 @@
+"""Exercise Longhorn PVC trim-coverage reconciliation and its failure handling."""
+
 from pathlib import Path
 import fnmatch
 import unittest

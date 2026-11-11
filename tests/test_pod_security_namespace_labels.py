@@ -1,3 +1,5 @@
+"""Verify namespace Pod Security Admission labels and their recorded exceptions."""
+
 from pathlib import Path
 import unittest
 

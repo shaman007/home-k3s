@@ -1,3 +1,5 @@
+"""Check workload identity, image scope, and guards for reviewed capability exceptions."""
+
 import copy
 import importlib.util
 import json

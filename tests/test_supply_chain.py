@@ -1,3 +1,5 @@
+"""Verify image signature trust and release-signing configuration."""
+
 import importlib.util
 import json
 import os

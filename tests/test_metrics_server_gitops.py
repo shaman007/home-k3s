@@ -1,3 +1,5 @@
+"""Check metrics-server manifests and their Argo CD integration."""
+
 from pathlib import Path
 import unittest
 

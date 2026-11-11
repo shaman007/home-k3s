@@ -1,3 +1,5 @@
+"""Verify Codacy SARIF batch merging, reference integrity, and safe upload preparation."""
+
 import copy
 import importlib.util
 import json

@@ -1,3 +1,5 @@
+"""Verify image-builder execution privileges, credentials, and storage boundaries."""
+
 from pathlib import Path
 import unittest
 

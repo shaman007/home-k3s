@@ -1,3 +1,5 @@
+"""Check reviewed security contexts and writable storage for monitoring containers."""
+
 from pathlib import Path
 import unittest
 

@@ -1,3 +1,5 @@
+"""Exercise the deployed Longhorn reporting logic and its supporting access contract."""
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest

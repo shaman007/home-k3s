@@ -1,3 +1,5 @@
+"""Verify SeaweedFS container security contexts and required writable paths."""
+
 from pathlib import Path
 import unittest
 

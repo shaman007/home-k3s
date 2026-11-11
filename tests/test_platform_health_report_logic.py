@@ -1,3 +1,5 @@
+"""Exercise deployed platform-health report collection and assessment logic."""
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest

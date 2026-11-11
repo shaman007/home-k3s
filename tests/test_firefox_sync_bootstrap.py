@@ -1,3 +1,5 @@
+"""Exercise Firefox Sync secret bootstrap and scoped authentication prerequisites."""
+
 import importlib.util
 import io
 import json

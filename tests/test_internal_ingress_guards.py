@@ -1,3 +1,5 @@
+"""Check network restrictions and middleware for internal ingress routes."""
+
 from pathlib import Path
 import unittest
 

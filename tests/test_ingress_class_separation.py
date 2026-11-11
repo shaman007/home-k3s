@@ -1,3 +1,5 @@
+"""Verify separation of public and private Traefik ingress classes."""
+
 from pathlib import Path
 import unittest
 

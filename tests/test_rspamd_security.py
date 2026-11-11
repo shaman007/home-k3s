@@ -1,3 +1,5 @@
+"""Check the Rspamd deployment security contract and supporting configuration."""
+
 from pathlib import Path
 import unittest
 

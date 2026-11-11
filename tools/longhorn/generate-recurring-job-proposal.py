@@ -1,3 +1,5 @@
+"""Generate proposed Longhorn recurring jobs and volume mappings from cluster inventory."""
+
 import json
 import subprocess
 from collections import Counter

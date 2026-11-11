@@ -1,3 +1,5 @@
+"""Verify certificate migration manifests and the retained cert-manager integration."""
+
 from pathlib import Path
 import unittest
 

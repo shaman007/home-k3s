@@ -1,3 +1,5 @@
+"""Verify Kubernetes API egress coverage in managed NetworkPolicies."""
+
 from pathlib import Path
 import re
 import unittest

@@ -1,3 +1,5 @@
+"""Verify the log checker can access its reviewed Grafana integration."""
+
 from pathlib import Path
 import unittest
 

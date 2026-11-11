@@ -1,3 +1,5 @@
+"""Keep external-access reporting independent of platform-health report content."""
+
 from pathlib import Path
 import unittest
 

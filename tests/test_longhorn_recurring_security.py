@@ -1,3 +1,5 @@
+"""Verify recurring-job security mutations and metadata-only backfill guards."""
+
 import importlib.util
 import json
 from pathlib import Path

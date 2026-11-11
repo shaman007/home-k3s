@@ -1,3 +1,5 @@
+"""Check Linux host monitoring configuration and its collection boundaries."""
+
 import json
 from pathlib import Path
 import unittest

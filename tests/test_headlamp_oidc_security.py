@@ -1,3 +1,5 @@
+"""Verify Headlamp OIDC authentication and the scope of its Kubernetes access."""
+
 from pathlib import Path
 import unittest
 

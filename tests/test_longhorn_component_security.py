@@ -1,3 +1,5 @@
+"""Verify Longhorn component mutation scope, storage health gates, and rollout safety."""
+
 import copy
 import importlib.util
 import json

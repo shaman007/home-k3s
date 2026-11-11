@@ -1,3 +1,5 @@
+"""Verify Renovate handling of the private Traefik image and its source version."""
+
 import json
 from pathlib import Path
 import re

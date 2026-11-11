@@ -1,3 +1,5 @@
+"""Verify sanitized Harbor and Keycloak configuration snapshots and their expected coverage."""
+
 import json
 import unittest
 from pathlib import Path

@@ -1,3 +1,5 @@
+"""Verify infrastructure guard identity checks, preflight rejection, and guarded backfill."""
+
 import copy
 import importlib.util
 import json

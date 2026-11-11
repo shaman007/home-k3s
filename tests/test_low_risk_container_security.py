@@ -1,3 +1,5 @@
+"""Check restricted security contexts for the reviewed stateless workload set."""
+
 from pathlib import Path
 import unittest
 

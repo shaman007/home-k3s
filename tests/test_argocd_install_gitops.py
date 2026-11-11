@@ -1,3 +1,5 @@
+"""Check that Argo CD installation resources remain managed through GitOps."""
+
 import json
 from pathlib import Path
 import unittest

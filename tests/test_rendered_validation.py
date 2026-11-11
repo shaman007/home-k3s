@@ -1,3 +1,5 @@
+"""Exercise rendered-resource schema validation and custom-resource handling."""
+
 import importlib.util
 from pathlib import Path
 import tempfile

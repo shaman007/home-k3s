@@ -1,3 +1,5 @@
+"""Check Traefik high-availability configuration and its supporting resources."""
+
 from pathlib import Path
 import unittest
 import yaml

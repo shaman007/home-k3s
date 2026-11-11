@@ -1,3 +1,5 @@
+"""Archived checks for Hypermind crawler access, request logging, and streaming behavior."""
+
 from pathlib import Path
 import unittest
 

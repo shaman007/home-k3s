@@ -1,3 +1,5 @@
+"""Verify mail certificate synchronization and the workload configuration it requires."""
+
 from pathlib import Path
 import unittest
 

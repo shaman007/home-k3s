@@ -1,3 +1,5 @@
+"""Check retained runtime and rendering contracts after deprecated resources are removed."""
+
 import importlib.util
 from ipaddress import ip_address, ip_network
 from pathlib import Path

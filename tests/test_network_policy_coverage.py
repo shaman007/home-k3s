@@ -1,3 +1,5 @@
+"""Check NetworkPolicy coverage for managed applications and infrastructure."""
+
 from pathlib import Path
 import unittest
 

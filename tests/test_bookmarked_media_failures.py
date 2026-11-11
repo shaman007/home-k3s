@@ -1,3 +1,5 @@
+"""Check bookmarked-media failure handling without hiding incomplete processing."""
+
 import json
 import os
 from pathlib import Path

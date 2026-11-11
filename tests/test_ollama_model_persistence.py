@@ -1,3 +1,5 @@
+"""Verify persistent model storage and related Ollama deployment configuration."""
+
 from pathlib import Path
 import unittest
 

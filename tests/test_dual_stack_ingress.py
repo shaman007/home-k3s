@@ -1,3 +1,5 @@
+"""Check IPv4 and IPv6 configuration across the ingress manifests."""
+
 from ipaddress import ip_address, ip_network
 from pathlib import Path
 import unittest

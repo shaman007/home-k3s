@@ -1,3 +1,5 @@
+"""Verify OpenBao migration manifests and dependent secret-store configuration."""
+
 from pathlib import Path
 import unittest
 

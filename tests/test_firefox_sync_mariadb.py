@@ -1,3 +1,5 @@
+"""Verify guarded Firefox Sync database migration and data-comparison behavior."""
+
 import importlib.util
 from pathlib import Path
 import unittest

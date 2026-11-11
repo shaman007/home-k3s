@@ -1,3 +1,5 @@
+"""Check OpenSearch migration manifests and their dependent workload configuration."""
+
 from pathlib import Path
 import unittest
 
