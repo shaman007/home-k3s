@@ -2509,3 +2509,36 @@ for changed Python modules, and Bandit reports no analysis errors. The full suit
 with isolated JSON::PP ran 523 tests successfully with 16 skips. No Codacy image
 or real container was launched locally. Remote CI verification requires publication;
 no push or alert dismissal was performed in this batch.
+
+
+### Verify read-only scanner and NetworkPolicy inventory argument provenance
+
+Added a real ripgrep integration regression whose selected root includes spaces,
+a semicolon and shell-substitution syntax. It remains one literal directory and
+produces the expected hostname-only report. Trusted system lookup, constant regex/
+flags, absolute resolved root and a single exclusion-glob argument keep user input
+out of executable or shell syntax. Reviewed and dismissed exact scanner findings
+#8056, #7612 and #7528 as false positives, including the duplicate Opengrep audit.
+The older scanner import finding had already closed and was replaced by #8056;
+only the current exact finding was dismissed.
+
+Reviewed every subprocess reference in the SVG inventory: one check_output helper,
+its subprocess exception type, and only two fixed call sites (get NetworkPolicies
+and config current-context). Operator PATH remains supported for custom kubectl
+installations; context labels and JSON content never become executable arguments.
+Dismissed exact #7277 and #4243 with conditions to reopen for expanded command/input
+scope. No runtime command or argument-validation protection was removed.
+
+Concurrent scans changed analyzed revisions and locations during review; guards
+stopped before mutation until actual analyzed source was revalidated. Full-module
+AST comparison normalizes only the separately reviewed rg executable-selection
+change; all other scanner behavior is identical. The SVG module matches exactly.
+Every current rule/tool/path/message and analyzed source was checked, and independent
+inventory confirms all five decisions absent.
+
+The full suite with isolated JSON::PP ran 524 tests successfully with 16 skips.
+Full Pylint, Ruff and diff checks pass for the changed regression module; Bandit
+reported no analysis errors. No production directory or Kubernetes endpoint was
+accessed. Current inventory is 72: Bandit 53, modern Pylint 13 and Opengrep six.
+New concurrent findings mean this total is not simply the prior count minus five;
+those new findings remain in scope. No push was performed.

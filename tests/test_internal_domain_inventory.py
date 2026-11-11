@@ -40,6 +40,23 @@ class InternalDomainInventoryTest(unittest.TestCase):
         resolve.assert_called_once_with("rg", path="/usr/local/bin:/usr/bin:/bin")
         self.assertEqual(run.call_args.args[0][0], "/usr/local/bin/rg")
 
+    def test_root_with_shell_metacharacters_is_a_literal_directory(self):
+        """A selected scan directory cannot become shell syntax or extra command arguments."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "scan; $(false) space"
+            (root / "demo").mkdir(parents=True)
+            (root / "demo/config.txt").write_text("api.k8s.my.lan\n", encoding="utf-8")
+            output = root / "report.json"
+            with (
+                patch("sys.argv", ["scan", "--root", str(root), "--output", str(output)]),
+                patch("builtins.print"),
+            ):
+                scanner.main()
+            report = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(report["scan_root"], str(root))
+        self.assertEqual(report["counts"]["occurrences"], 1)
+        self.assertEqual(report["occurrences"][0]["hostname"], "api.k8s.my.lan")
+
     def test_complete_hostnames_and_fqdn_are_recognized(self):
         """Verify complete hostnames and fqdn are recognized."""
         pattern = re.compile(scanner.PATTERN)
