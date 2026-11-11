@@ -2216,3 +2216,37 @@ service probe and no analysis errors. Its existing container temporary-path
 heuristics remain for separate review. No container, OpenBao account, production
 secret or Kubernetes API was used. Source findings await genuine published
 rescanning; no alert was dismissed in this batch.
+
+
+### Refresh Prospector and review fixed Python regression launches
+
+Dispatched Prospector on published main commit 429ea962 using workflow run
+43071277902, job 130699516660. Analysis, SARIF preparation, upload and completion
+all succeeded. Genuine source reconciliation reduced Prospector from 56 to five
+findings, confirming 51 prior fixes without dismissing those source warnings.
+The browser run summary independently shows success and the selected commit.
+
+Reviewed six subprocess launches across the SARIF, internal-domain inventory and
+optimized-security test modules. All select sys.executable and fixed checked-in
+scripts or unittest patterns, use argv sequences without a shell, and operate on
+private synthetic fixtures. Audited every subprocess reference in those modules;
+there are no alternate launch methods or hidden aliases. Dismissed exact B603/B404
+IDs #7777, #7520, #6805, #6804, #6803, #6802, #4235, #4232 and #4192 with source-
+and argument-trust evidence plus reopening conditions. All 23 relevant tests passed:
+SARIF 16, domain inventory five and optimized guards two. No production script
+entry point or external command source was introduced.
+
+Four refreshed Prospector results duplicate the previously reviewed required
+HTTPRedirectHandler.redirect_request signature: #7945, #7944, #7866 and #7863.
+Verified exact current source bytes against analyzed revisions and parameter names
+against the standard-library signature. The admin override raises HTTPError;
+the UniFi override returns None, which refuses redirect construction through the
+framework. Dismissed only those exact callback warnings with reopening conditions;
+no parameters or redirect protections were removed. The remaining Prospector
+finding is the deliberately lazy storage_guard import, pending separate review.
+
+Independent inventory verifies all thirteen reviewed IDs absent and reports
+93 open findings: Bandit 71, modern Pylint 14, Prospector one and Opengrep seven.
+This combines actual rescan closures and scoped decisions; no global scanner
+rule was disabled. No code changed, no cluster resource was changed and no push
+was performed by this batch.
