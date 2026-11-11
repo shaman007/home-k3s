@@ -450,3 +450,34 @@ Firefox Sync migration helper. After removing function-docstring nodes, executab
 ASTs and prior literal values match. Regenerated the embedded UniFi source.
 Targeted function documentation checks pass; full suite passed with 394 tests and
 21 skips. No live router, database or cluster changes were made.
+
+## SQL fingerprint boundary and escaping-only XML import
+
+A fresh Bandit 1.9.4 scan of `tools/` and `tests/` reported 245 findings. Strengthened
+`fingerprint()` in the Firefox Sync migration helper so direct callers, as well
+as `verify()`, must use an allowlisted application schema and a nonempty ASCII
+alphanumeric/underscore table identifier before any SQL metadata lookup or process.
+This closes the gap between the existing caller guard and the SQL-building boundary.
+
+New regressions reject foreign schemas, injected names, empty names, non-ASCII
+homoglyphs and nonstring table names before any database call. Positive cases keep
+both reviewed schemas and existing table naming conventions supported. A mocked
+successful fingerprint also verifies metadata scoping and backtick escaping for
+column identifiers. No live database or cluster commands were executed.
+
+The two B608 interpolation reports are now explicitly annotated at their exact
+source sites: metadata literals are constrained by `validate_table`, and row-hash
+expressions contain fixed SQL plus `quote()`-escaped identifiers. No global Bandit
+rule was disabled. These scoped exceptions rely on the executable boundary guards
+and regression tests; they must be revisited if query construction changes.
+
+Replaced SAX text escaping in the NetworkPolicy SVG renderer with `html.escape`
+using matching quote behavior. The module never parsed XML. Output matches the
+previous implementation for special characters, a range of Unicode characters,
+pre-escaped text and nonstring values, removing B406 without changing SVG output.
+
+The full Bandit scan now reports 242 findings, zero B608/B406 findings and no
+analysis errors. Other subprocess and security audit findings remain open for
+individual review. Full suite passed: 397 tests, 21 skips. Targeted lint checks
+pass; documented the remaining 12 migration test methods without executable changes.
+Matching GitHub closure remains pending publication and the normal scan.

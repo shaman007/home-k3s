@@ -17,7 +17,58 @@ SPEC.loader.exec_module(migration)
 
 class MigrationTests(unittest.TestCase):
     """Require frozen data, empty candidates, and matching values for database migration."""
+
+    def test_invalid_metadata_is_rejected_before_database_commands(self):
+        """Reject injected, empty, foreign, or non-ASCII names at the SQL boundary."""
+        cases = [
+            ("mysql", "bso"),
+            ("syncstorage' OR 1=1 --", "bso"),
+            ("syncstorage", "bso' OR 1=1 --"),
+            ("syncstorage", "bso; DROP TABLE bso"),
+            ("syncstorage", ""),
+            ("syncstorage", "bѕo"),
+            ("syncstorage", None),
+        ]
+        for schema, table in cases:
+            with (
+                self.subTest(schema=schema, table=table),
+                patch.object(migration, "query") as query,
+                patch.object(migration.subprocess, "Popen") as process,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Unexpected"):
+                    migration.fingerprint(False, schema, table)
+                query.assert_not_called()
+                process.assert_not_called()
+
+    def test_reviewed_schema_and_ascii_table_names_are_accepted(self):
+        """Keep both application schemas and underscore/digit table names supported."""
+        for schema in migration.SCHEMAS:
+            for table in ("bso", "__diesel_schema_migrations", "batch_upload_items2"):
+                with self.subTest(schema=schema, table=table):
+                    migration.validate_table(schema, table)
+
+    def test_valid_fingerprint_uses_scoped_metadata_and_quoted_columns(self):
+        """Keep valid fingerprint queries working and unusual column names quoted."""
+        process = MagicMock()
+        process.__enter__.return_value = process
+        process.stdout = [b"a" * 64 + b"\n"]
+        process.wait.return_value = 0
+        with (
+            patch.object(migration, "query", return_value=["value`column"]) as query,
+            patch.object(migration.subprocess, "Popen", return_value=process) as execute,
+        ):
+            columns, count, digest = migration.fingerprint(False, "syncstorage", "bso")
+        self.assertEqual(columns, ["value`column"])
+        self.assertEqual(count, 1)
+        self.assertEqual(len(digest), 64)
+        metadata_query = query.call_args.args[1]
+        self.assertIn("TABLE_SCHEMA='syncstorage' AND TABLE_NAME='bso'", metadata_query)
+        sql = execute.call_args.args[0][-1]
+        self.assertIn("`value``column`", sql)
+        self.assertIn("FROM `syncstorage`.`bso`", sql)
+
     def test_metadata_order_is_independent_of_database_collation(self):
+        """Compare table metadata in a stable order across database collations."""
         with patch.object(
             migration,
             "query",
@@ -37,11 +88,13 @@ class MigrationTests(unittest.TestCase):
             self.assertEqual(migration.tables(False), migration.tables(True))
 
     def test_default_plan_does_not_access_cluster(self):
+        """Keep the default invocation free of cluster access."""
         with patch("sys.argv", ["migrate"]), patch.object(migration, "check_frozen") as check:
             migration.main()
         check.assert_not_called()
 
     def test_populated_candidate_is_never_overwritten(self):
+        """Reject a populated candidate before starting any import process."""
         with (
             patch.object(migration, "tables", return_value=[("syncstorage", "bso")]),
             patch.object(migration.subprocess, "Popen") as process,
@@ -51,6 +104,7 @@ class MigrationTests(unittest.TestCase):
         process.assert_not_called()
 
     def test_either_pipeline_failure_blocks_acceptance(self):
+        """Reject an import when either the source or target process fails."""
         for source_status, target_status in [(1, 0), (0, 1)]:
             with self.subTest(source=source_status, target=target_status):
                 source, target = MagicMock(), MagicMock()
@@ -70,6 +124,7 @@ class MigrationTests(unittest.TestCase):
                         migration.import_data()
 
     def test_import_dump_is_limited_to_app_databases(self):
+        """Limit dump arguments to application schemas and preserve source safety flags."""
         source, target = MagicMock(), MagicMock()
         source.__enter__.return_value = source
         target.__enter__.return_value = target
@@ -89,12 +144,14 @@ class MigrationTests(unittest.TestCase):
         self.assertIn("--no-tablespaces", command)
 
     def test_active_gitops_blocks_import(self):
+        """Reject migration work while automatic GitOps synchronization is enabled."""
         app = {"spec": {"syncPolicy": {"automated": {}}}}
         with patch.object(migration, "resource", return_value=app):
             with self.assertRaisesRegex(RuntimeError, "Pause Argo"):
                 migration.check_frozen()
 
     def test_running_sync_blocks_import(self):
+        """Require the Sync deployment to be stopped before migration work."""
         with patch.object(
             migration, "resource", side_effect=[{"spec": {}}, {"spec": {"replicas": 1}}]
         ):
@@ -102,6 +159,7 @@ class MigrationTests(unittest.TestCase):
                 migration.check_frozen()
 
     def test_terminating_pods_block_import(self):
+        """Wait for terminating Sync pods to disappear before accepting a frozen state."""
         with (
             patch.object(
                 migration, "resource", side_effect=[{"spec": {}}, {"spec": {"replicas": 0}}]
@@ -116,6 +174,7 @@ class MigrationTests(unittest.TestCase):
                 migration.check_frozen()
 
     def test_value_mismatch_blocks_acceptance(self):
+        """Reject differing row fingerprints instead of accepting a partial migration."""
         with (
             patch.object(migration, "tables", return_value=[("syncstorage", "bso")]),
             patch.object(
@@ -126,6 +185,7 @@ class MigrationTests(unittest.TestCase):
                 migration.verify()
 
     def test_different_table_inventory_blocks_acceptance(self):
+        """Reject differing source and candidate table inventories."""
         with patch.object(
             migration, "tables", side_effect=[[("syncstorage", "bso")], [("tokenserver", "nodes")]]
         ):
@@ -133,6 +193,7 @@ class MigrationTests(unittest.TestCase):
                 migration.verify()
 
     def test_credentials_expand_only_inside_container(self):
+        """Keep database password expansion inside the selected database container."""
         cmd = migration.db_command(True, "-NB", "-e", "SELECT 1")
         self.assertIn(
             'MYSQL_PWD="$MARIADB_ROOT_PASSWORD"', cmd[cmd.index("-c", cmd.index("--")) + 1]
@@ -141,6 +202,7 @@ class MigrationTests(unittest.TestCase):
         self.assertIn("--socket=/tmp/mysql.sock", " ".join(cmd))
 
     def test_candidate_never_mounts_source_volume_or_matches_production_service(self):
+        """Keep candidate storage and service identity separate from production."""
         base = ROOT / "docs/migrations/firefox-sync-mariadb"
         pvc, deployment = list(yaml.safe_load_all((base / "candidate.yaml").read_text()))
         self.assertEqual(pvc["metadata"]["name"], "mariadb-data")

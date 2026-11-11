@@ -172,19 +172,36 @@ def import_data():
         )
 
 
+def validate_table(schema, table):
+    """Limit metadata lookups to reviewed schemas and nonempty ASCII table identifiers."""
+    if schema not in SCHEMAS:
+        raise RuntimeError("Unexpected database schema")
+    if (
+        not isinstance(table, str)
+        or not table
+        or not all(c.isascii() and (c.isalnum() or c == "_") for c in table)
+    ):
+        raise RuntimeError("Unexpected table identifier")
+
+
 def fingerprint(target, schema, table):
     # Hash values on the database side; transfer only row hashes, never payloads.
     """Return column names, row count, and an aggregate digest of server-side row hashes."""
+    validate_table(schema, table)
+    # B608: the schema is allowlisted and the table is a validated ASCII identifier.
     columns = query(
         target,
         "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
-        f"WHERE TABLE_SCHEMA='{schema}' AND TABLE_NAME='{table}' ORDER BY ORDINAL_POSITION",
+        f"WHERE TABLE_SCHEMA='{schema}' AND TABLE_NAME='{table}' "  # nosec B608
+        "ORDER BY ORDINAL_POSITION",
     )
     fields = ",".join(
         f"IF({quote(c)} IS NULL,'N',CONCAT('V',HEX(CAST({quote(c)} AS BINARY))))" for c in columns
     )
+    # B608: fields use fixed expressions and quote() escapes every column identifier.
     sql = (
-        f"SET time_zone='+00:00'; SELECT SHA2(CONCAT_WS(':',{fields}),256) AS row_hash "
+        "SET time_zone='+00:00'; "
+        f"SELECT SHA2(CONCAT_WS(':',{fields}),256) AS row_hash "  # nosec B608
         f"FROM {quote(schema)}.{quote(table)} ORDER BY BINARY row_hash"
     )
     digest = hashlib.sha256()
@@ -208,9 +225,7 @@ def verify():
     if not source_tables or source_tables != target_tables:
         raise RuntimeError("Source/candidate table inventories differ")
     for schema, table in source_tables:
-        # Names come from metadata; reject unexpected identifiers before SQL literals.
-        if not all(c.isascii() and (c.isalnum() or c == "_") for c in table):
-            raise RuntimeError("Unexpected table identifier")
+        validate_table(schema, table)
         source = fingerprint(False, schema, table)
         if source != fingerprint(True, schema, table):
             raise RuntimeError(f"Data mismatch: {schema}.{table}; keep Sync stopped")

@@ -4,12 +4,12 @@
 import argparse
 import collections
 import datetime as dt
+import html
 import json
 import math
 import pathlib
 import subprocess
 import textwrap
-import xml.sax.saxutils as saxutils
 
 
 SVG_WIDTH = 1960
@@ -86,7 +86,7 @@ def detect_context(cli_context):
 
 def xml(text):
     """Escape text and double quotes for inclusion in SVG markup."""
-    return saxutils.escape(str(text), {'"': "&quot;"})
+    return html.escape(str(text), quote=False).replace('"', "&quot;")
 
 
 def stable_labels(labels):
