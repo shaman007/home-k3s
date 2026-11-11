@@ -2915,3 +2915,42 @@ No push was performed.
 
 Independent live inventory confirms all seven absent: 36 open (Bandit 28,
 Pylint three, Opengrep five).
+
+
+### Review published release-signing and Nginx fixture subprocess boundaries
+
+Dismissed exact signing findings 8096 (Opengrep), 8095 and 8094 (Bandit) after
+verifying analyzed/current source equality and the module's sole subprocess
+reference plus every caller. Commands are fixed gh/cosign argv with shell=False
+and 600-second deadlines. Workflow identity/repository and execution environment
+are trusted GitHub/operator configuration. Tags follow an explicit -- separator;
+API lookup tags are URL encoded; all asset filenames are validated before download.
+Downloaded bytes are passed as data to signing/verification, never executed.
+Exact workflow identity and issuer verification precede uploads, with a final
+asset-inventory consistency check. All eleven mocked supply-chain tests pass,
+including literal-tag/deadline, signer timeout, failed verification and changed
+inventory gates. Reopen for untrusted execution configuration, new executable
+provenance or broader signing/upload scope. No release operation ran.
+
+Dismissed exact Nginx fixture findings 8089/8088/8087 and 8086/8085/4343 after
+inspecting every subprocess reference in both modules: one configuration check,
+one worker launch and TimeoutExpired handling each. The binary is an explicitly
+selected absolute regular executable, resolved before resource allocation. Paths
+are individual argv elements without shell interpretation. Configuration and data
+are private synthetic fixtures; services bind loopback. Configuration checks have
+a 15-second limit; workers span test methods with termination/wait/kill cleanup.
+Eighteen mocked safety tests pass, including binary selection, early rejection,
+setup-failure release, configuration-check timeout and class teardown. These
+decisions rely on trusted operator-selected binaries and checked-in configuration;
+reopen for untrusted binary/config provenance or changed isolation/lifecycle.
+Real opt-in Nginx behavior remains unverified; these decisions do not claim it ran.
+
+Exact alert identity and analyzed-source guards preceded all nine decisions.
+All 29 relevant tests pass. The last full-suite result remains 545 tests with
+16 skips. Unrescanned Longhorn/PostgreSQL findings and actual TLS/container
+privilege findings remain open. No source suppression or code change was required
+in this decision batch; no containers, credentials or live services were accessed
+and no push was performed.
+
+Independent API inventory confirms all nine absent: 27 open (Bandit 20,
+Pylint three, Opengrep four).
