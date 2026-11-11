@@ -44,6 +44,8 @@ jobs:
         env:
           # File-update failures only include their underlying cause at debug level.
           LOG_LEVEL: debug
+          # Immich's release tags are beyond GHCR's first 20 pages.
+          RENOVATE_DOCKER_MAX_PAGES: "100"
           RENOVATE_PLATFORM_COMMIT: "enabled"
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           # One-off migration from the old PAT account; disabled for scheduled runs.

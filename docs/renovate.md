@@ -37,6 +37,12 @@ Renovate runs with `LOG_LEVEL=debug` so failures such as `Error updating branch:
 update failure` include the affected dependency/file and underlying error. A
 successful workflow exit alone does not establish that every branch was updated.
 
+The workflow sets `RENOVATE_DOCKER_MAX_PAGES=100`. GHCR caps Immich tag-list
+responses at 1,000 entries per page even when Renovate requests 10,000. On
+2026-11-11, the server's `v3.3.6` tag appeared on page 33 and `v3.4.0` on the
+final page 34; Renovate's default 20-page limit missed both. This global setting
+belongs in the workflow environment, rather than repository `renovate.json`.
+
 After the configuration is published to `main` and the App credentials exist,
 dispatch the Renovate workflow. Request rebase/retry on an existing Renovate PR
 to regenerate its unsigned commit. Inspect the new commit on GitHub and confirm
