@@ -5,7 +5,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import time
-import urllib.request
+import http.client
+from contextlib import closing
 import yaml
 
 from probe_commands import run_command
@@ -134,11 +135,13 @@ def check_collabora():
         port = run(["podman", "port", cid, "9980/tcp"]).split(":")[-1]
         for _ in range(60):
             try:
-                with urllib.request.urlopen(
-                    "http://127.0.0.1:" + port + "/hosting/discovery", timeout=2
-                ) as response:
-                    if b"wopi-discovery" not in response.read():
-                        raise AssertionError
+                with closing(
+                    http.client.HTTPConnection("127.0.0.1", int(port), timeout=2)
+                ) as connection:
+                    connection.request("GET", "/hosting/discovery")
+                    with connection.getresponse() as response:
+                        if response.status != 200 or b"wopi-discovery" not in response.read():
+                            raise AssertionError
                 break
             except (OSError, AssertionError):
                 time.sleep(1)

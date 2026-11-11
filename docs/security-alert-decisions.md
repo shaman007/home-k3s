@@ -2142,3 +2142,26 @@ checks passed; Bandit reported no analysis errors. Pylint reports only the three
 existing UniFi boundary/framework warnings across the four changed Python modules.
 No router request, credential read, TLS setting change or deployment occurred.
 Source fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Restrict disposable HTTP health probes to fixed loopback connections
+
+Replaced general urllib URL opening in Collabora discovery and Longhorn global
+manager health checks with HTTPConnection to literal 127.0.0.1. Paths remain the
+fixed /hosting/discovery and /v1/healthz endpoints; the Collabora port is parsed
+as an integer from the disposable container's published-port output. The client
+cannot follow redirects or select arbitrary URL schemes. Connections close via
+closing and responses close via their context managers. Both probes require HTTP
+200, and Collabora additionally retains its discovery-body check and retry budget.
+This fixes both remaining B310 findings at these sites rather than dismissing them.
+
+Updated the prior readiness-failure cleanup test for the narrower transport and
+added a redirect regression. Sixty synthetic 302 responses with plausible discovery
+content remain rejected at the same host/port/path; every connection/response
+closes, the redirect body is not read and final fixture cleanup is preserved.
+The full suite ran 514 tests successfully with 21 opt-in skips. All three changed
+Python modules pass full Pylint, Ruff and diff checks; Bandit reports no B310 findings
+in them and no analysis errors. No container or network server was started. Source
+fixes await genuine published rescanning; no alert was dismissed in this batch.
+The separately refreshed pre-change GitHub inventory reported 174 open findings;
+this batch does not claim those source fixes are already reconciled remotely.

@@ -7,6 +7,8 @@ It tests startup/leadership, not real PV/Pod reconciliation or production RBAC.
 """
 
 import datetime
+from contextlib import closing
+import http.client
 import http.server
 import json
 from pathlib import Path
@@ -15,7 +17,6 @@ import tempfile
 import threading
 import time
 import urllib.parse
-import urllib.request
 
 IMAGE = "docker.io/longhornio/longhorn-manager:v1.13.0"
 RESOURCE_KINDS = {
@@ -206,11 +207,13 @@ def main():
                         ["/usr/bin/podman", "logs", container], text=True, stderr=subprocess.STDOUT
                     )
                     if "Global controllers started; serving as leader" in logs:
-                        with urllib.request.urlopen(
-                            "http://127.0.0.1:9505/v1/healthz", timeout=2
-                        ) as response:
-                            if not response.status == 200:
-                                raise AssertionError
+                        with closing(
+                            http.client.HTTPConnection("127.0.0.1", 9505, timeout=2)
+                        ) as connection:
+                            connection.request("GET", "/v1/healthz")
+                            with connection.getresponse() as response:
+                                if response.status != 200:
+                                    raise AssertionError
                         state = subprocess.check_output(
                             [
                                 "/usr/bin/podman",

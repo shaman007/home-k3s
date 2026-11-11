@@ -285,12 +285,38 @@ class SplitRuntimeProbeTests(unittest.TestCase):
             patch.object(
                 probe, "run", side_effect=["collabora-fixture", "127.0.0.1:12345", "logs", ""]
             ) as run,
-            patch.object(probe.urllib.request, "urlopen", side_effect=OSError("not ready")),
+            patch.object(probe.http.client, "HTTPConnection", side_effect=OSError("not ready")),
             patch.object(probe.time, "sleep"),
         ):
             with self.assertRaisesRegex(RuntimeError, "Collabora discovery failed"):
                 probe.check_collabora()
         self.assertEqual(run.call_args.args[0], ["podman", "rm", "-f", "collabora-fixture"])
+
+    def test_collabora_redirect_is_rejected_without_following_or_leaking(self):
+        """A redirect cannot satisfy discovery even with a plausible body."""
+        probe = load_probe("test_backup_collabora_guards.py")
+        connection = MagicMock()
+        response = connection.getresponse.return_value.__enter__.return_value
+        response.status = 302
+        response.read.return_value = b"wopi-discovery"
+        with (
+            patch.object(probe, "run", side_effect=["fixture", "127.0.0.1:12345", "logs", ""]),
+            patch.object(probe.http.client, "HTTPConnection", return_value=connection) as connect,
+            patch.object(probe.time, "sleep"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Collabora discovery failed"):
+                probe.check_collabora()
+        self.assertEqual(connect.call_count, 60)
+        self.assertTrue(all(call.args == ("127.0.0.1", 12345) for call in connect.call_args_list))
+        self.assertEqual(connection.close.call_count, 60)
+        self.assertEqual(connection.getresponse.return_value.__exit__.call_count, 60)
+        response.read.assert_not_called()
+        self.assertTrue(
+            all(
+                call.args == ("GET", "/hosting/discovery")
+                for call in connection.request.call_args_list
+            )
+        )
 
     def test_alloy_partial_volume_setup_removes_allocated_volumes(self):
         """Preparation failures retain cleanup ownership for every created state volume."""
