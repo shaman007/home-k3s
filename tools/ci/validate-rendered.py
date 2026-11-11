@@ -246,8 +246,10 @@ def main():
             custom_count += 1
             for error in custom_errors(doc, schemas):
                 errors.append(
-                    f"{origin}: {doc['kind']}/"
-                    f"{doc.get('metadata', {}).get('name', '<unnamed>')}: {error}"
+                    (
+                        f"{origin}: {doc['kind']}/"
+                        f"{doc.get('metadata', {}).get('name', '<unnamed>')}: {error}"
+                    )
                 )
     for error in errors:
         print(error)
@@ -284,8 +286,10 @@ def main():
                     resource.get("status"),
                 )
     print(
-        f"Custom resources: {custom_count} checked against {len(schemas)} served CRD schemas; "
-        f"{len(errors)} errors"
+        (
+            f"Custom resources: {custom_count} checked against {len(schemas)}"
+            f" served CRD schemas; {len(errors)} errors"
+        )
     )
     return int(bool(errors) or result.returncode != 0)
 

@@ -85,8 +85,10 @@ def run(args, cwd=None):
         )
         error = HelmDownloadError if transient_helm_download else RuntimeError
         raise error(
-            f"{args[0]} {args[1]} failed (exit {result.returncode}); "
-            "run this source locally to inspect its diagnostic output"
+            (
+                f"{args[0]} {args[1]} failed (exit {result.returncode}"
+                f"); run this source locally to inspect its diagnostic output"
+            )
         )
 
 

@@ -227,10 +227,8 @@ def main():
             raise RuntimeError("OpenBao required secret key missing: " + name)
         print(
             (
-                "OpenBao "
-                f"{name}"
-                ": secret keys, read-only policy, namespace and "
-                "service-account bindings verified"
+                f"OpenBao {name}: secret keys, read-only policy, namespace and "
+                f"service-account bindings verified"
             )
         )
     if not args.write:

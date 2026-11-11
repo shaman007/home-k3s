@@ -13,6 +13,9 @@ def prepare(public_key):
                    text=True, check=True, capture_output=True)
     cron = yaml.safe_load((ROOT / "image-builder/cron-job-podman-builder.yaml").read_text())
     pod = cron["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+    # Keep dependency updates from the manifest when rebuilding signing helpers.
+    helper_images = {x["name"]: x["image"] for x in pod["initContainers"]
+                     if x["name"] in {"copy-busybox", "copy-cosign"}}
     # Re-rendering an already integrated template must not duplicate env/mounts.
     pod["initContainers"] = [x for x in pod["initContainers"] if x["name"] not in {"copy-busybox", "copy-cosign"}]
     pod["volumes"] = [x for x in pod["volumes"] if x["name"] not in {"signing-tools", "signing-key", "signing-public"}]
@@ -22,10 +25,10 @@ def prepare(public_key):
     build["volumeMounts"] = [x for x in build["volumeMounts"] if x["name"] not in {"signing-tools", "signing-key", "signing-public"}]
     tools_mount = {"name": "signing-tools", "mountPath": "/tools"}
     pod["initContainers"] += [
-        {"name": "copy-busybox", "image": "harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0-musl",
+        {"name": "copy-busybox", "image": helper_images.get("copy-busybox", "harbor.andreybondarenko.com/dockerhub/library/busybox:1.38.0-musl"),
          "command": ["/bin/cp", "/bin/busybox", "/tools/busybox"],
          "volumeMounts": [tools_mount]},
-        {"name": "copy-cosign", "image": "harbor.andreybondarenko.com/github/sigstore/cosign/cosign:v3.0.6",
+        {"name": "copy-cosign", "image": helper_images.get("copy-cosign", "harbor.andreybondarenko.com/github/sigstore/cosign/cosign:v3.0.6"),
          "command": ["/tools/busybox", "cp", "/ko-app/cosign", "/tools/cosign"],
          "volumeMounts": [tools_mount]},
     ]

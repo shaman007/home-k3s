@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
-import subprocess, shutil, re
-import argparse, collections, datetime as dt, email.message, glob, gzip, hashlib, html, http.client, ipaddress, json, os, pathlib, smtplib, ssl
+"""Build a daily network assessment from local telemetry and optional model review."""
+
+import argparse
+import collections
+import datetime as dt
+import email.message
+import glob
+import gzip
+import hashlib
+import html
+import http.client
+import ipaddress
+import json
+import os
+import pathlib
+import re
+import shutil
+import smtplib
+import ssl
+import subprocess
 from zoneinfo import ZoneInfo
 
 BASE = pathlib.Path("/var/lib/network-daily-report")
@@ -125,7 +143,8 @@ def collect(now):
         for e in alert_records
         if e.get("flow_id") is not None
     }
-    # Correlate alerts with final flow state, rather than assuming a single packet proves a connection.
+    # Correlate alerts with final flow state; a single packet does not prove
+    # that a connection was established.
     for filename in sorted(glob.glob("/var/log/suricata/eve.json*")):
         opener = gzip.open if filename.endswith(".gz") else open
         with opener(filename, "rt", errors="replace") as f:
@@ -755,13 +774,10 @@ def render_report(assessment, evidence, now, notes, error=None):
         )
         info = assessment["background_alerts"].get("informational_or_sensor_noise", 0)
         explanation = (
-            f"{probes}"
-            " reputation-list alerts were incoming probes without an "
-            "established session in the capture; "
-            f"{info}"
-            " informational or sensor-noise alerts were excluded. "
-            "Remaining incident evidence was assessed against related "
-            "connection records."
+            f"{probes} reputation-list alerts were incoming probes without an "
+            f"established session in the capture; {info}"
+            f" informational or sensor-noise alerts were excluded. "
+            f"Remaining incident evidence was assessed against related connection records."
         )
         lines.extend([explanation, ""])
         cards.append("<p>" + html.escape(explanation) + "</p>")
@@ -771,12 +787,10 @@ def render_report(assessment, evidence, now, notes, error=None):
         "",
         "Coverage",
         (
-            "This brief covers "
-            f"{assessment['coverage_hours']:g}"
-            " hours of retained observations. Verdict applies to "
-            "observed network traffic. NAT obscures individual IPv4 "
-            "clients; encrypted content and unobserved devices are "
-            "outside this verdict."
+            f"This brief covers {assessment['coverage_hours']:g}"
+            f" hours of retained observations. Verdict applies to "
+            f"observed network traffic. NAT obscures individual IPv4 "
+            f"clients; encrypted content and unobserved devices are outside this verdict."
         ),
         (
             "Technical evidence is attached. Routine traffic and "
@@ -839,11 +853,8 @@ def main():
     (folder / "evidence.json").write_text(evidence_json)
     print(
         (
-            "Collected "
-            f"{sum(evidence['event_counts'].values())}"
-            " events for "
-            f"{evidence['client_count']}"
-            " client IPs"
+            f"Collected {sum(evidence['event_counts'].values())} events for "
+            f"{evidence['client_count']} client IPs"
         )
     )
     if args.collect_only:

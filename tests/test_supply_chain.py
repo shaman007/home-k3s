@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -73,6 +74,30 @@ class SignatureTrustTests(unittest.TestCase):
         self.assertNotIn('PRIVATE KEY', yaml.safe_dump(documents))
         policy = documents['policy-verify-own-harbor.yaml']
         self.assertEqual(policy['spec']['attestors'][0]['cosign']['key']['data'], public)
+
+    def test_harbor_renderer_preserves_updated_helper_images(self):
+        module = load('prepare-harbor-signing')
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in ('image-builder/cron-job-podman-builder.yaml',
+                             'kyverno/policy-verify-own-ghcr.yaml'):
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text((ROOT / relative).read_text())
+            path = root / 'image-builder/cron-job-podman-builder.yaml'
+            cron = yaml.safe_load(path.read_text())
+            helpers = cron['spec']['jobTemplate']['spec']['template']['spec']['initContainers']
+            expected = {}
+            for helper in helpers:
+                if helper['name'] in {'copy-busybox', 'copy-cosign'}:
+                    helper['image'] = helper['image'].rsplit(':', 1)[0] + ':future-version'
+                    expected[helper['name']] = helper['image']
+            self.assertEqual(len(expected), 2)
+            path.write_text(yaml.safe_dump(cron))
+            with patch.object(module, 'ROOT', root):
+                rendered = module.prepare((ROOT / 'docs/supply-chain/cosign.pub').read_text())
+            actual = rendered['cron-job-podman-builder.yaml']
+            self.assertEqual(actual, cron)
 
 
 class ReleaseSigningTests(unittest.TestCase):

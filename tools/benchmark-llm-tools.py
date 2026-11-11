@@ -183,8 +183,10 @@ def main():
         report["runs"].append(row)
         args.out.write_text(json.dumps(report, indent=2) + "\n")
         print(
-            f"Run {repeat + 1}: valid tool call={row.get('valid_tool_call', False)} "
-            f"error={row.get('error', 'none')}",
+            (
+                f"Run {repeat + 1}: valid tool call={row.get('valid_tool_call', False)} error="
+                f"{row.get('error', 'none')}"
+            ),
             flush=True,
         )
 
