@@ -1,8 +1,12 @@
 """Exercise Restricted pod-context validation across supported workload forms."""
 
 import importlib.util
+import json
+import tempfile
 from pathlib import Path
 import unittest
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
@@ -29,6 +33,42 @@ class RestrictedContextTests(unittest.TestCase):
                 }
             ],
         }
+
+    def test_scope_combines_argo_and_rendered_namespace_enforcement(self):
+        """Both namespace-enforcement sources cover workloads with inherited destinations."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "argocd").mkdir()
+            rendered = root / "rendered"
+            rendered.mkdir()
+            app = {
+                "kind": "Application",
+                "metadata": {"name": "fixture"},
+                "spec": {
+                    "destination": {"namespace": "argo-enforced"},
+                    "syncPolicy": {
+                        "managedNamespaceMetadata": {
+                            "labels": {"pod-security.kubernetes.io/enforce": "restricted"}
+                        }
+                    },
+                },
+            }
+            (root / "argocd/fixture.yaml").write_text(yaml.safe_dump(app))
+            (rendered / "inventory.json").write_text(json.dumps(["fixture"]))
+            documents = [
+                {
+                    "kind": "Namespace",
+                    "metadata": {
+                        "name": "rendered-enforced",
+                        "labels": {"pod-security.kubernetes.io/enforce": "restricted"},
+                    },
+                },
+                {"kind": "Pod", "metadata": {"name": "fixture"}, "spec": self.pod()},
+            ]
+            (rendered / "fixture.yaml").write_text(yaml.safe_dump_all(documents))
+            loaded, enforced = policy.load_scope(root, rendered)
+        self.assertEqual(enforced, {"argo-enforced", "rendered-enforced"})
+        self.assertEqual(loaded, [("argo-enforced", doc) for doc in documents])
 
     def test_valid_pod_context_inheritance(self):
         """Accept containers inheriting the restricted pod security context."""

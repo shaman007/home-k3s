@@ -63,12 +63,8 @@ def templates(doc):
         yield doc["spec"]["template"]["spec"]
 
 
-def main():
-    """Check rendered pod templates only in namespaces enforcing Restricted."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rendered", type=Path, required=True)
-    args = parser.parse_args()
-    root = Path(__file__).resolve().parents[2]
+def load_scope(root, rendered):
+    """Load rendered documents and namespaces enforcing Restricted from both sources."""
     applications = {}
     enforced = set()
     for path in (root / "argocd").glob("*.yaml"):
@@ -86,9 +82,9 @@ def main():
         ):
             enforced.add(app["spec"]["destination"]["namespace"])
     documents = []
-    for name in json.loads((args.rendered / "inventory.json").read_text()):
+    for name in json.loads((rendered / "inventory.json").read_text()):
         ns = applications[name]["spec"]["destination"]["namespace"]
-        for doc in yaml.safe_load_all((args.rendered / (name + ".yaml")).read_text()):
+        for doc in yaml.safe_load_all((rendered / (name + ".yaml")).read_text()):
             if not isinstance(doc, dict):
                 continue
             documents.append((ns, doc))
@@ -100,6 +96,16 @@ def main():
                 == "restricted"
             ):
                 enforced.add(doc["metadata"]["name"])
+    return documents, enforced
+
+
+def main():
+    """Check rendered pod templates only in namespaces enforcing Restricted."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rendered", type=Path, required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[2]
+    documents, enforced = load_scope(root, args.rendered)
     errors = []
     count = 0
     for namespace, doc in documents:

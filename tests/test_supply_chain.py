@@ -128,6 +128,7 @@ class ReleaseSigningTests(unittest.TestCase):
     """Exercise release signing, exact-workflow verification, and upload ordering."""
 
     def setUp(self):
+        self.last_calls = []
         self.module = load("sign_release_assets")
         self.asset = {"id": 123, "name": "app.tar.gz", "updated_at": "2026-11-10"}
         self.env = patch.dict(

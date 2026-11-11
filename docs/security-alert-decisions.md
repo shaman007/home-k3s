@@ -1846,3 +1846,24 @@ The full suite ran 497 tests successfully with 21 opt-in skips; Ruff and diff
 checks passed, and Bandit reported no analysis errors. No actual repository or
 credential tree was scanned by verification. Source fixes await genuine published
 rescanning; no alert was dismissed in this batch.
+
+
+### Separate Restricted namespace scope discovery and initialize captured calls
+
+Extracted Argo application and rendered-namespace enforcement discovery from the
+Restricted-context checker. Expanding the helper reproduces the entire original
+module AST, including effective namespace precedence, checks and failure status.
+A new regression confirms both Argo managed-namespace labels and rendered
+Namespace labels contribute enforcement scope, while workload destination
+inheritance and document ordering remain intact. Initialized release-signing
+captured command state in setUp, retaining failure-path inspection and all command
+ordering checks. Both outstanding warnings are gone; all three changed Python
+modules pass full Pylint without suppressions.
+
+The earlier explicit-encoding warnings do not reproduce on the current source;
+no gratuitous encoding edits or dismissals were made. The existing rendered
+validation fixture already registers temporary-directory cleanup immediately;
+its remaining context-manager heuristic was left unchanged for separate review.
+The full suite ran 498 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed; Bandit reported no analysis errors. No real cluster, release upload
+or signing command ran. Source fixes await genuine published rescanning.
