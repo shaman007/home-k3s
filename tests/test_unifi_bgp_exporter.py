@@ -5,7 +5,7 @@ import importlib.util
 import re
 import io
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 import urllib.error
 from pathlib import Path
 import unittest
@@ -140,6 +140,57 @@ class UniFiBGPExporterTests(unittest.TestCase):
         self.assertIn("unifi_bgp_scrape_success 0", text)
         self.assertIn("unifi_bgp_last_success_timestamp_seconds 123", text)
         self.assertNotIn("unifi_bgp_route_active_next_hops{", text)
+
+    def poll_snapshot(self, outcomes, fail_render=False):
+        """Run bounded poll iterations and read the actual handler's in-memory metrics."""
+        original_render = m.render
+
+        def render(metrics, success, timestamp):
+            if fail_render and success:
+                raise ValueError("private-render-marker")
+            return original_render(metrics, success, timestamp)
+
+        with (
+            patch.object(
+                m, "Controller", return_value=SimpleNamespace(collect=Mock(side_effect=outcomes))
+            ),
+            patch.object(m.threading, "Thread") as thread,
+            patch.object(m.http.server, "ThreadingHTTPServer") as server,
+            patch.object(m.time, "time", return_value=123),
+            patch.object(
+                m.time, "sleep", side_effect=[None] * (len(outcomes) - 1) + [StopIteration]
+            ),
+            patch.object(m, "render", side_effect=render),
+        ):
+            m.main()
+            with self.assertRaises(StopIteration):
+                thread.call_args.kwargs["target"]()
+            handler = server.call_args.args[1].__new__(server.call_args.args[1])
+            handler.path = "/metrics"
+            handler.wfile = io.BytesIO()
+            with (
+                patch.object(handler, "send_response"),
+                patch.object(handler, "send_header"),
+                patch.object(handler, "end_headers"),
+            ):
+                handler.do_get()
+            return handler.wfile.getvalue().decode()
+
+    def test_collection_failure_replaces_stale_samples_and_preserves_last_success(self):
+        """An unexpected collection error cannot retain healthy metrics or expose diagnostics."""
+        metrics = [("unifi_bgp_peer_established", {"peer": "fixture"}, 1)]
+        body = self.poll_snapshot([metrics, RuntimeError("private-collection-marker")])
+        self.assertIn("unifi_bgp_scrape_success 0\n", body)
+        self.assertIn("unifi_bgp_last_success_timestamp_seconds 123\n", body)
+        self.assertNotIn('peer="fixture"', body)
+        self.assertNotIn("private-collection-marker", body)
+
+    def test_render_failure_does_not_advance_last_success(self):
+        """A snapshot that failed formatting must not become the last successful scrape."""
+        body = self.poll_snapshot([[]], fail_render=True)
+        self.assertIn("unifi_bgp_scrape_success 0\n", body)
+        self.assertIn("unifi_bgp_last_success_timestamp_seconds 0\n", body)
+        self.assertNotIn("private-render-marker", body)
 
     def test_http_error_bodies_close_before_propagation(self):
         """Authentication and server failures cannot retain HTTP response resources."""

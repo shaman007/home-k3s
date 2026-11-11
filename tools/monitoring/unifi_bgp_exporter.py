@@ -189,8 +189,9 @@ def main():
         while True:
             try:
                 metrics = controller.collect()
-                last_success = time.time()
-                body = render(metrics, True, last_success)
+                collected_at = time.time()
+                body = render(metrics, True, collected_at)
+                last_success = collected_at
             except Exception:
                 # Never log requests, response bodies, passwords or session cookies.
                 body = render([], False, last_success)

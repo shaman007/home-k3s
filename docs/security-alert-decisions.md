@@ -2455,3 +2455,30 @@ suite with isolated JSON::PP ran 517 tests successfully with 16 skips. No produc
 command, credential, network endpoint or cluster was used by the boundary tests.
 No source, scanner exclusion or runtime configuration changed. Current GitHub
 total is 67: Bandit 53, modern Pylint seven and Opengrep seven. No push was performed.
+
+
+### Preserve the last published successful UniFi scrape on formatting failure
+
+Review of the poller's broad failure boundary found a real timestamp bug: it
+advanced last_success before rendering the successful snapshot. A render error
+then published scrape_success=0 together with a timestamp for a snapshot that
+never completed. The poller now records a candidate collection time, renders the
+snapshot, and commits last_success only after rendering succeeds. Its intentional
+outer failure boundary and secret-free diagnostics remain unchanged.
+
+Added two offline regressions that drive the actual polling closure and HTTP
+handler without starting a thread/server or constructing an authenticated client.
+A successful iteration followed by collection failure publishes explicit failure,
+removes stale route samples, preserves the prior success timestamp and omits
+private exception markers. A rendering failure preserves the initial timestamp
+instead of advancing it. The latter regression demonstrably fails against the
+original source, confirming coverage of the actual bug.
+
+Synchronized the ConfigMap exporter; parsed comparison proves only exporter.py
+changes and its bytes match source. The full suite with isolated JSON::PP ran
+519 tests successfully with 16 skips. Ruff and diff checks passed; Bandit reported
+no analysis errors. Pylint retains only the previously reviewed callback-signature
+and intentional poll-boundary warnings; no rules were suppressed. No live router
+request, credential read or deployment occurred. Source publication/rescanning and
+the final boundary classification remain pending; no alert was dismissed in this
+batch and no push was performed.
