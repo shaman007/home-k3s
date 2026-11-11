@@ -1617,3 +1617,36 @@ Selected Pylint style/correctness checks, Ruff and diff checks passed; Bandit
 reported no analysis errors. Existing tiny mock-opener method-count warnings
 were left unchanged. Publication and genuine scanner refresh remain necessary
 for remote alert closure; no runtime guard or scanner rule was disabled.
+
+
+### Review explicit system-command and isolated OpenBao subprocess findings
+
+Individually reviewed fourteen exact alerts at scanned revision 4801d366. Seven
+Bandit B603 sites use explicit system paths: four fixed read-only Git inventory
+commands, one systemctl is-active query over the fixed suricata/ntopng/evebox
+names, and two OpenSSL calls for public-key stdin validation or disposable
+certificate generation. They use separate argv items without shell or PATH
+lookup. The two real hostile-PATH regressions passed again, including refusal
+of an invalid signing key despite a fake successful OpenSSL earlier in PATH.
+
+The remaining launch is an explicitly operator-selected OpenBao fixture binary
+with a fixed server/config argv, generated private in-memory storage and
+loopback-only TLS listeners. It does not initialize or unseal production storage;
+VAULT_/BAO_ environment variables are stripped. Its Bandit call warning and
+Opengrep duplicate were reviewed together. Every subprocess reference in all
+five modules was inspected before classifying their five B404 imports: no
+additional launch functions, aliases or implicit shells were accepted.
+
+Dismissed only these fourteen findings as scoped false positives with comments
+and reopening conditions for executable/argument trust or added launch sites:
+8017, 8016, 8015, 8014, 8013, 8012, 8011, 8005, 7611, 7545, 7517, 7509, 7502,
+7499. Revision guards stopped an initial attempt when scanning advanced, and
+the current revision was audited before applying decisions. Returned comments/
+reasons and an independent inventory confirm all fourteen are absent from open.
+No scanner rule or source file was changed, and the actual OpenBao fixture was
+not executed. The full unit suite was not repeated for this decision-only batch.
+
+The current independently verified total is 244 open alerts: Bandit 94, modern
+Pylint 87, Prospector 56 and Opengrep 7. This includes ongoing source-scan
+reconciliation as well as the fourteen exact decisions; unreviewed launches,
+imports and other actionable findings remain open.
