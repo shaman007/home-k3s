@@ -1462,3 +1462,37 @@ regression module passes full Pylint; Ruff and diff checks passed. Source-based
 alert closure requires publication and genuine scanner refresh. A separate
 fresh GitHub inventory now reports 365 open alerts; this local refactor has not
 yet been credited as remote closure.
+
+
+### Refresh Prospector and retain owner-reviewed password decisions
+
+Dispatched the genuine Prospector-only workflow against published main c3e54059.
+Run [43055665617](https://github.com/shaman007/home-k3s/actions/runs/43055665617)
+completed successfully through analysis, guarded SARIF preparation and upload.
+Its open count fell from 80 to 56; every remaining Prospector instance references
+c3e54059. This reconciles the preceding refactors rather than replacing history
+with an empty or incomplete report.
+
+Re-reviewed thirteen recurring PyLintPython3_E5110 findings against their updated
+c3e54059 instances. AST inspection of all 135 Python modules at that revision
+found no Django imports. Individually dismissed these forced-plugin configuration
+warnings as false positives with explanatory comments and reopening conditions:
+8018, 8004, 8002, 8001, 8000, 7999, 7998, 7997, 7996, 7995, 7994, 7987, 7984.
+An initial revision guard refused mutation when concurrent analysis advanced the
+instances from 9f642572; the new revision was audited before applying decisions.
+
+The repository owner explicitly reviewed all possible-hardcoded-password findings
+and requested they be retained as won't fix. Applied that decision to all five
+currently open instances: 7979, 7978, 7453, 7430 and 7429. Each comment records
+owner acceptance and retains the decision for unchanged usage; reopen only if
+the value becomes a live credential or its security context changes. This is a
+standing decision for these reviewed values/usages, not a global suppression of
+future hardcoded credentials. Earlier closed findings were left closed.
+
+PATCH operations checked exact rule, path, revision and open state; returned
+reasons/comments and independent inventories confirmed all eighteen dispositions.
+The final API and code-scanning UI both report 314 open alerts: Bandit 130,
+modern Pylint 103, Prospector 56 and Opengrep 25. No possible-hardcoded-password
+or E5110 findings remain open. The preceding table snapshot was 365; the net
+change combines genuine scanner reconciliation and exact reviewed decisions.
+No code, scanner rule, cluster or live application was changed in this batch.
