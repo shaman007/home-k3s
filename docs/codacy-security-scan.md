@@ -47,3 +47,21 @@ The adapter reads the container-created report and writes a separate runner-owne
 file in the checkout, which is the file passed to `upload-sarif`. The scanner
 report can be read-only; preparation never overwrites it. The command-line
 regression test covers this file-permission boundary as well as batch merging.
+
+Codacy's `primaryLocationLineHash` is an issue hash, which conflicts with the
+source-line hash calculated by GitHub's pinned uploader. Preparation moves the
+original value to `result.properties["codacy.primaryLocationLineHash"]` and lets
+the uploader calculate the matching fingerprint from the checked-out source.
+Other fingerprint keys and every finding are preserved, including different rules
+at the same location. Conflicting provenance fails preparation. This removes the
+cause of the inconsistent-fingerprint annotations; GitHub alert reconciliation
+must still be verified after a new upload. The uploader's behavior is defined in
+[its pinned fingerprint implementation](https://github.com/github/codeql-action/blob/33d7b85da1a04171e211befe2c739303b9a4c066/src/fingerprints.ts#L159-L175).
+
+Manual dispatch can select one historical linter with `legacy_tool`; `none`
+retains the normal three security scanners. Historical reports use their original
+category so genuine rescans can supersede stale findings. These scans fail before
+upload if either Pylint variant reports a parser error, preventing an incomplete
+analysis from replacing historical results. Tool availability and successful
+historical reconciliation remain to be verified in Actions; no empty reports or
+bulk dismissals substitute for a scan.

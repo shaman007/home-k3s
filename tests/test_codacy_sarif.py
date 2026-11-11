@@ -25,6 +25,63 @@ def batch(rule, filename):
 
 
 class CodacySarifTest(unittest.TestCase):
+    def test_codacy_hash_becomes_metadata_without_losing_colocated_findings(self):
+        runs = [batch(rule, "same.py") for rule in ("first", "second")]
+        for index, run in enumerate(runs):
+            result = run["results"][0]
+            result["partialFingerprints"]["primaryLocationLineHash"] = str(index) * 32
+            result["properties"] = {"existing": "retained"}
+            result["fingerprints"] = {"other": "retained"}
+        report = {"runs": runs}
+        original = copy.deepcopy(report)
+        output = sarif.prepare(report)
+        self.assertEqual(report, original)
+        self.assertEqual(len(output["runs"][0]["results"]), 2)
+        for index, result in enumerate(output["runs"][0]["results"]):
+            expected = copy.deepcopy(original["runs"][index]["results"][0])
+            expected["ruleIndex"] = index
+            expected["locations"][0]["physicalLocation"]["artifactLocation"]["index"] = index
+            expected["properties"]["codacy.primaryLocationLineHash"] = expected[
+                "partialFingerprints"
+            ].pop("primaryLocationLineHash")
+            self.assertEqual(result, expected)
+        self.assertEqual(sarif.prepare(output), output)
+
+    def test_conflicting_fingerprint_provenance_fails(self):
+        run = batch("a", "a.py")
+        run["results"][0]["partialFingerprints"]["primaryLocationLineHash"] = "first"
+        run["results"][0]["properties"] = {"codacy.primaryLocationLineHash": "second"}
+        with self.assertRaisesRegex(ValueError, "fingerprint provenance"):
+            sarif.prepare({"runs": [run]})
+
+    def test_legacy_parser_errors_cannot_replace_historical_results(self):
+        for rule in ("PyLint_E0001", "PyLintPython3_E0001"):
+            for indexed in (False, True):
+                run = batch(rule, "a.py")
+                if indexed:
+                    del run["results"][0]["ruleId"]
+                with self.assertRaisesRegex(ValueError, "incomplete scan"):
+                    sarif.prepare({"runs": [run]}, reject_parser_errors=True)
+        report = {"runs": [batch("PyLint_C0301", "a.py")]}
+        self.assertEqual(sarif.prepare(report, reject_parser_errors=True), report)
+
+    def test_cli_parser_failure_does_not_create_upload_or_echo_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "input.sarif"
+            output = Path(directory) / "prepared.sarif"
+            run = batch("PyLintPython3_E0001", "a.py")
+            run["results"][0]["message"]["text"] = "sensitive-source-sentinel"
+            source.write_text(json.dumps({"runs": [run]}))
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools/ci/prepare-codacy-sarif.py"),
+                 str(source), str(output), "--reject-parser-errors"],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(output.exists())
+            self.assertIn("incomplete scan", result.stderr)
+            self.assertNotIn("sensitive-source-sentinel", result.stdout + result.stderr)
+
     def test_five_batches_preserve_findings_and_remap_local_indices(self):
         report = {"version": "2.1.0", "runs": [batch(str(i % 2), f"{i}.py") for i in range(5)]}
         original = copy.deepcopy(report)

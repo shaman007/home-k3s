@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 
-def prepare(report):
+def prepare(report, reject_parser_errors=False):
     report = copy.deepcopy(report)
     runs = report.get("runs")
     if not isinstance(runs, list) or not runs:
@@ -45,6 +45,18 @@ def prepare(report):
         artifacts = run.get("artifacts", [])
         offset = len(merged["artifacts"])
         for result in run.get("results", []):
+            # Codacy puts its issue hash in GitHub's source-line hash field.
+            # Let upload-sarif calculate that field from the checkout instead;
+            # retain the scanner's value as provenance, not a matching key.
+            partial = result.get("partialFingerprints", {})
+            if "primaryLocationLineHash" in partial:
+                original_hash = partial["primaryLocationLineHash"]
+                properties = result.setdefault("properties", {})
+                provenance_key = "codacy.primaryLocationLineHash"
+                if provenance_key in properties and properties[provenance_key] != original_hash:
+                    raise ValueError("Conflicting Codacy fingerprint provenance")
+                properties[provenance_key] = original_hash
+                del partial["primaryLocationLineHash"]
             # Codacy may emit -1 when a pattern has no description, and
             # non-security results can use indices relative to their own list.
             # The explicit ruleId is authoritative in both cases.
@@ -69,6 +81,19 @@ def prepare(report):
         merged["artifacts"].extend(artifacts)
         merged["invocations"].extend(run.get("invocations", []))
     report["runs"] = list(groups.values())
+    if reject_parser_errors:
+        parser_rules = {"PyLint_E0001", "PyLintPython3_E0001"}
+        for run in report["runs"]:
+            rules = run["tool"]["driver"]["rules"]
+            for result in run["results"]:
+                rule_id = result.get("ruleId")
+                if rule_id is None and "ruleIndex" in result:
+                    rule_id = rules[result["ruleIndex"]]["id"]
+                if rule_id in parser_rules:
+                    raise ValueError(
+                        "Legacy linter could not parse source files; "
+                        "refusing to replace historical results with an incomplete scan."
+                    )
     return report
 
 
@@ -76,10 +101,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--reject-parser-errors", action="store_true")
     args = parser.parse_args()
     if args.input.resolve() == args.output.resolve():
         parser.error("Input and output must be different files")
-    report = prepare(json.loads(args.input.read_text()))
+    report = prepare(
+        json.loads(args.input.read_text()), reject_parser_errors=args.reject_parser_errors
+    )
     # Codacy's container may own the input. Create runner-owned output instead
     # of reopening the scanner's report for writing.
     with args.output.open("x") as stream:

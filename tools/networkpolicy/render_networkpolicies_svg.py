@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Render a NetworkPolicy snapshot as an SVG inventory and namespace peer graph."""
 
 import argparse
 import collections
@@ -36,6 +37,7 @@ INTERNET_CIDRS = {"0.0.0.0/0", "::/0"}
 
 
 def parse_args():
+    """Parse the input snapshot, output path, and optional context label."""
     parser = argparse.ArgumentParser(
         description="Render all Kubernetes NetworkPolicies into an SVG inventory."
     )
@@ -60,10 +62,12 @@ def parse_args():
 
 
 def run_command(args):
+    """Return stripped standard output from a successful external command."""
     return subprocess.check_output(args, text=True).strip()
 
 
 def load_payload(input_path):
+    """Read a supplied JSON snapshot or fetch NetworkPolicies with kubectl."""
     if input_path:
         return json.loads(input_path.read_text(encoding="utf-8"))
     raw = run_command(["kubectl", "get", "networkpolicies", "--all-namespaces", "-o", "json"])
@@ -71,6 +75,7 @@ def load_payload(input_path):
 
 
 def detect_context(cli_context):
+    """Use the supplied context label or try kubectl, falling back to unknown."""
     if cli_context:
         return cli_context
     try:
@@ -80,15 +85,18 @@ def detect_context(cli_context):
 
 
 def xml(text):
+    """Escape text and double quotes for inclusion in SVG markup."""
     return saxutils.escape(str(text), {'"': "&quot;"})
 
 
 def stable_labels(labels):
+    """Format label pairs in key order for reproducible selector summaries."""
     pairs = sorted(labels.items())
     return ", ".join(f"{key}={value}" for key, value in pairs)
 
 
 def format_selector(selector):
+    """Summarize matchLabels, using all pods when no labels are present."""
     labels = (selector or {}).get("matchLabels", {})
     if not labels:
         return "all pods"
@@ -96,6 +104,7 @@ def format_selector(selector):
 
 
 def exact_namespace_name(selector):
+    """Extract a namespace name from a lone metadata-name match label."""
     if not selector:
         return None
     labels = selector.get("matchLabels", {})
@@ -105,6 +114,7 @@ def exact_namespace_name(selector):
 
 
 def format_namespace_selector(selector):
+    """Summarize namespace match labels for policy and graph captions."""
     labels = selector.get("matchLabels", {})
     exact_name = exact_namespace_name(selector)
     if exact_name:
@@ -115,6 +125,7 @@ def format_namespace_selector(selector):
 
 
 def format_peer(peer):
+    """Combine namespace, pod, and IP-block descriptions for a policy peer."""
     parts = []
     if "namespaceSelector" in peer:
         parts.append(format_namespace_selector(peer["namespaceSelector"]))
@@ -133,6 +144,7 @@ def format_peer(peer):
 
 
 def format_ports(ports):
+    """List protocol and port pairs, defaulting omitted protocols to TCP."""
     if not ports:
         return "all ports"
     chunks = []
@@ -144,6 +156,7 @@ def format_ports(ports):
 
 
 def summarize_rule(direction, rule):
+    """Describe one ingress or egress rule with its peers and ports."""
     peers_key = "from" if direction == "IN" else "to"
     peers = rule.get(peers_key)
     ports = format_ports(rule.get("ports"))
@@ -153,10 +166,12 @@ def summarize_rule(direction, rule):
 
 
 def wrap_text(text, width):
+    """Wrap a caption without splitting long words or hyphenated names."""
     return textwrap.wrap(text, width=width, break_long_words=False, break_on_hyphens=False) or [""]
 
 
 def policy_kind(policy):
+    """Choose a display category from declared policy types and rule presence."""
     spec = policy["spec"]
     policy_types = spec.get("policyTypes") or []
     ingress = "Ingress" in policy_types
@@ -176,6 +191,7 @@ def policy_kind(policy):
 
 
 def summarize_policy(policy):
+    """Build the display record and rule captions for a NetworkPolicy."""
     metadata = policy["metadata"]
     spec = policy["spec"]
     policy_types = spec.get("policyTypes") or []
@@ -208,6 +224,7 @@ def summarize_policy(policy):
 
 
 def count_namespace_stats(policies):
+    """Count policies, declared traffic directions, and empty-rule deny policies."""
     counts = collections.Counter()
     deny_defaults = 0
     ingress = 0
@@ -228,6 +245,7 @@ def count_namespace_stats(policies):
 
 
 def estimate_policy_height(policy):
+    """Estimate a policy card height from its wrapped caption lines."""
     line_count = 1
     for line in policy["lines"]:
         line_count += len(wrap_text(line, 66))
@@ -235,6 +253,7 @@ def estimate_policy_height(policy):
 
 
 def layout_namespaces(namespace_sections, start_y):
+    """Assign sections to the shortest of three columns and return page height."""
     column_x = [PAGE_MARGIN + i * (SECTION_WIDTH + GAP) for i in range(3)]
     column_y = [start_y, start_y, start_y]
     positioned = []
@@ -252,6 +271,7 @@ def layout_namespaces(namespace_sections, start_y):
 
 
 def build_namespace_sections(payload):
+    """Group and size policy cards by namespace, placing taller sections first."""
     grouped = collections.defaultdict(list)
     for item in payload["items"]:
         grouped[item["metadata"]["namespace"]].append(summarize_policy(item))
@@ -277,10 +297,12 @@ def build_namespace_sections(payload):
 
 
 def make_graph_node(key, label, is_special):
+    """Create the shared graph-node record for a namespace or special peer."""
     return {"key": key, "label": label, "is_special": is_special}
 
 
 def graph_node_from_peer(peer, current_namespace):
+    """Map a policy peer to a namespace node or a descriptive special node."""
     if not peer:
         return make_graph_node("special:all-peers", "All peers", True)
 
@@ -315,6 +337,7 @@ def graph_node_from_peer(peer, current_namespace):
 
 
 def barycenter_for(node_key, neighbor_positions, neighbors):
+    """Return the weighted neighboring position, or infinity for isolated nodes."""
     weighted = []
     for neighbor_key, weight in neighbors.get(node_key, []):
         if neighbor_key in neighbor_positions:
@@ -325,6 +348,7 @@ def barycenter_for(node_key, neighbor_positions, neighbors):
 
 
 def optimize_bipartite_order(left_nodes, right_nodes, edges):
+    """Order both node columns with six weighted-barycenter passes."""
     left_order = [node["key"] for node in left_nodes]
     right_order = [node["key"] for node in right_nodes]
     left_lookup = {node["key"]: node for node in left_nodes}
@@ -358,6 +382,7 @@ def optimize_bipartite_order(left_nodes, right_nodes, edges):
 
 
 def build_connection_graph(payload, namespace_sections):
+    """Aggregate peer references into directed edges, hiding same-node links."""
     namespace_names = sorted(section["namespace"] for section in namespace_sections)
     edge_map = {}
     source_specials = {}
@@ -365,6 +390,7 @@ def build_connection_graph(payload, namespace_sections):
     hidden_self_edges = 0
 
     def add_edge(source_node, target_node, via):
+        """Count a peer reference and track its rule direction, unless it is a self-link."""
         nonlocal hidden_self_edges
         if source_node["key"] == target_node["key"]:
             hidden_self_edges += 1
@@ -450,6 +476,7 @@ def build_connection_graph(payload, namespace_sections):
 
 
 def render_text(x, y, lines, class_name):
+    """Render escaped caption lines at successive SVG text baselines."""
     fragments = []
     for index, line in enumerate(lines):
         fragments.append(
@@ -459,6 +486,7 @@ def render_text(x, y, lines, class_name):
 
 
 def render_overview(namespace_sections, context_label, updated_at):
+    """Render the inventory header and namespace chips, returning the next offset."""
     total_policies = sum(section["stats"]["total"] for section in namespace_sections)
     total_namespaces = len(namespace_sections)
     lines = []
@@ -528,6 +556,7 @@ def render_overview(namespace_sections, context_label, updated_at):
 
 
 def edge_class(edge):
+    """Choose the SVG style for ingress, egress, or jointly observed edges."""
     if edge["via"] == {"ingress"}:
         return "ingress"
     if edge["via"] == {"egress"}:
@@ -536,6 +565,7 @@ def edge_class(edge):
 
 
 def render_connection_graph(graph_data, start_y):
+    """Render the two-column peer graph and return its lower page offset."""
     row_count = max(len(graph_data["left_nodes"]), len(graph_data["right_nodes"]))
     graph_height = 158 + row_count * GRAPH_ROW_GAP
     panel_x = PAGE_MARGIN
@@ -691,6 +721,7 @@ def render_connection_graph(graph_data, start_y):
 
 
 def render_namespace_section(section):
+    """Render a positioned namespace panel and its policy cards."""
     x = section["x"]
     y = section["y"]
     stats = section["stats"]
@@ -744,6 +775,7 @@ def render_namespace_section(section):
 
 
 def render_svg(namespace_sections, graph_data, context_label):
+    """Assemble the overview, peer graph, and policy sections into an SVG document."""
     updated_at = dt.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
     overview_svg, start_y = render_overview(namespace_sections, context_label, updated_at)
     graph_svg, graph_end_y = render_connection_graph(graph_data, start_y)
@@ -818,6 +850,7 @@ def render_svg(namespace_sections, graph_data, context_label):
 
 
 def main():
+    """Load NetworkPolicies, render their inventory, and write the requested SVG."""
     args = parse_args()
     payload = load_payload(args.input)
     context_label = detect_context(args.context)

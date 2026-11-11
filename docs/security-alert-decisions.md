@@ -233,3 +233,14 @@ subprocess call using `shell=False` is not automatically safe: validate the
 executable and whether untrusted values can become command options or executable
 code. Each retained exception must identify its scope, evidence, rationale and
 condition for revisiting it.
+
+## NetworkPolicy tool documentation
+
+Added descriptive docstrings to 43 functions, one class, and the renderer module in
+`tools/networkpolicy/`. These address the missing-documentation lint rules without
+suppression. Removing docstrings from the before/after ASTs gives identical
+executable trees. Both modules pass current Pylint's module/class/function
+documentation checks; the common-policy catalog passes its generated-output check.
+Empty and multi-namespace SVG fixtures are byte-identical before and after the
+change with a fixed timestamp, and both parse as XML. Historical alert closure is
+still pending matching genuine lint rescans.

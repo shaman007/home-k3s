@@ -39,11 +39,14 @@ KUBERNETES_API_CONTROL_PLANES = ("192.168.1.0/24", "192.168.30.0/24")
 
 
 class NoAliasDumper(yaml.SafeDumper):
+    """Emit safe YAML without anchors so generated policies remain self-contained."""
     def ignore_aliases(self, data: Any) -> bool:
+        """Disable YAML aliases for every serialized value."""
         return True
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse the catalog path and optional generated-output consistency check."""
     parser = argparse.ArgumentParser(
         description="Generate common NetworkPolicy YAML from a compact catalog."
     )
@@ -64,6 +67,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def catalog_paths(path: Path) -> list[Path]:
+    """Return one catalog or sorted YAML files directly inside a directory."""
     if path.is_dir():
         return sorted(
             child
@@ -75,6 +79,7 @@ def catalog_paths(path: Path) -> list[Path]:
 
 
 def namespace_peer(namespace: str) -> dict[str, Any]:
+    """Select a namespace by its standard metadata-name label."""
     return {
         "namespaceSelector": {
             "matchLabels": {
@@ -85,10 +90,12 @@ def namespace_peer(namespace: str) -> dict[str, Any]:
 
 
 def ip_block_peer(cidr: str) -> dict[str, Any]:
+    """Build a NetworkPolicy peer for the supplied CIDR."""
     return {"ipBlock": {"cidr": cidr}}
 
 
 def base_policy(spec: dict[str, Any], name: str, policy_types: list[str]) -> dict[str, Any]:
+    """Create shared metadata, workload selection, and policy direction fields."""
     return {
         "apiVersion": "networking.k8s.io/v1",
         "kind": "NetworkPolicy",
@@ -106,6 +113,7 @@ def base_policy(spec: dict[str, Any], name: str, policy_types: list[str]) -> dic
 
 
 def normalize_ports(policy_spec: dict[str, Any]) -> list[dict[str, Any]] | None:
+    """Use an explicit port list or expand the optional single-port shorthand."""
     ports = policy_spec.get("ports")
     if ports is None:
         port = policy_spec.get("port")
@@ -116,6 +124,7 @@ def normalize_ports(policy_spec: dict[str, Any]) -> list[dict[str, Any]] | None:
 
 
 def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str, Any]:
+    """Expand a supported catalog policy, rejecting unknown policy types."""
     policy_type = policy_spec["type"]
 
     if policy_type == "default-deny":
@@ -208,6 +217,7 @@ def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str,
 
 
 def render_bundle(spec: dict[str, Any]) -> str:
+    """Serialize expanded policies with a generated-file header and no aliases."""
     documents = [build_policy(spec, policy_spec) for policy_spec in spec["policies"]]
     rendered = yaml.dump_all(
         documents,
@@ -224,6 +234,7 @@ def render_bundle(spec: dict[str, Any]) -> str:
 
 
 def process_catalog(path: Path, check: bool) -> int:
+    """Check or write a catalog output, retaining existing CRLF on writes."""
     spec = yaml.safe_load(path.read_text(encoding="utf-8"))
     output_path = Path(spec["output"])
     rendered = render_bundle(spec)
@@ -247,6 +258,7 @@ def process_catalog(path: Path, check: bool) -> int:
 
 
 def main() -> int:
+    """Process every selected catalog and return the highest failure status."""
     args = parse_args()
     exit_code = 0
     for path in catalog_paths(args.catalog):
