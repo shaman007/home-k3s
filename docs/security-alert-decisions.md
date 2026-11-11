@@ -2089,3 +2089,31 @@ inventory confirms all twelve exact IDs are absent. Current total is 181: Bandit
 212 snapshot also includes concurrent scanner reconciliation of published source
 fixes; it is not attributed solely to these twelve decisions. No code changed in
 this batch and no push was performed.
+
+
+### Verify unittest fixture resource ownership and teardown
+
+Reviewed and dismissed six exact context-manager heuristics as false positives:
+#8010, #8008, #6759, #6111, #6098 and #5624. The static/media runtime suites use
+enterClassContext for temporary directories and servers plus registered shutdown;
+existing offline regressions cover server-bind and configuration failures. Their
+Popen instances are owned by class teardown, also called on setup exceptions:
+terminate, bounded wait, timeout kill/reap, then log closure. The rendered-validation
+and bookmarked-media suites register TemporaryDirectory.cleanup immediately with
+unittest.addCleanup. That lifecycle intentionally spans individual setup/test calls.
+No operational resource cleanup was removed or globally excluded from scanning.
+
+Added a permanent offline regression exercising both runtime-suite teardowns with
+normal exit and timeout fallback, checking termination, bounded wait, kill/reap
+and log closure. Source-module ASTs were checked against analyzed alert revisions;
+the only normalization needed was the separately verified static-fixture helper
+extraction. Exact rule/path/state/revision guards preceded mutation. Each dismissal
+has resource-specific evidence and reopening conditions for changed ownership or
+removed failure cleanup. Independent inventory confirms all six IDs are absent.
+
+The full suite ran 511 tests successfully with 21 opt-in skips. The changed test
+module passes full Pylint, Ruff and diff checks; Bandit reported no analysis errors.
+No runtime subprocess or server was launched by the new teardown regression.
+Current GitHub total is 173: Bandit 83, modern Pylint 27, Prospector 56 and
+Opengrep 7. The reduction from 181 includes six reviewed decisions and two
+concurrent source-reconciliation closures. Nothing was pushed by this batch.

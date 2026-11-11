@@ -4,6 +4,8 @@ from contextlib import contextmanager
 from functools import partial
 import importlib.util
 import json
+import io
+import subprocess
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -147,6 +149,30 @@ class NginxFixtureSafetyTest(unittest.TestCase):
 
 class RuntimeResourceCleanupTests(unittest.TestCase):
     """Clean partial setup without launching servers, subprocesses or cluster commands."""
+
+    def test_runtime_teardown_reaps_processes_and_closes_logs(self):
+        """Both runtime suites close logs after normal exit or the bounded kill fallback."""
+        for parent in (assets.StaticAssetsRuntimeTest, media.MediaCacheRuntimeTest):
+            for times_out in (False, True):
+                with self.subTest(suite=parent.__name__, timeout=times_out):
+                    runtime = type("DisposableTeardown", (parent,), {})
+                    process = MagicMock()
+                    if times_out:
+                        process.wait.side_effect = [subprocess.TimeoutExpired("fixture", 5), None]
+                    log = io.StringIO()
+                    runtime.processes = [process]
+                    runtime.logs = [log]
+                    runtime.tearDownClass()
+                    process.terminate.assert_called_once()
+                    self.assertEqual(process.wait.call_args_list[0].kwargs, {"timeout": 5})
+                    self.assertTrue(log.closed)
+                    if times_out:
+                        process.kill.assert_called_once()
+                        self.assertEqual(process.wait.call_count, 2)
+                        self.assertEqual(process.wait.call_args.args, ())
+                    else:
+                        process.kill.assert_not_called()
+                        self.assertEqual(process.wait.call_count, 1)
 
     def test_bind_failure_releases_private_directory(self):
         """Server construction failures cannot leak either runtime suite's temporary tree."""
