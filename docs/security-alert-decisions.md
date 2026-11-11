@@ -1437,3 +1437,28 @@ The full suite ran 463 tests successfully with 21 opt-in skips. The regression
 module passes full Pylint; Ruff and diff checks passed, and Bandit reported no
 analysis errors. These source fixes still require publication and genuine
 scanner refresh; no scanner rule or deadline behavior was weakened.
+
+
+### Separate synthetic Sync storage authentication and lifecycle checks
+
+Extracted tokenlib derivation/client creation, Hawk authorization, staged batch
+validation and synthetic-user lifecycle checks from the Firefox Sync storage
+probe. All four local complexity warnings are gone; the probe passes full Pylint.
+The first collections read still refuses existing data before any write/delete.
+The write-attempt flag remains set before PUT so ambiguous responses trigger
+cleanup, and deletion is still followed by an empty-collections verification.
+
+Compared the previous implementation with 119 mocked storage scenarios including
+existing data, wrong reads, early batch visibility, failed commit, missing
+collection timestamps, failed cleanup and injected transport failures at each
+request. Hawk headers, exact requests/body bytes, storage state, output, failure
+messages and response closure match. Three permanent offline regressions cover
+existing-data refusal, ambiguous-write cleanup and unverified-cleanup failure.
+Existing origin, redirect and sanitized-error tests also pass. No Kubernetes
+secret, live storage user, external endpoint or production data was accessed.
+
+The full suite ran 466 tests successfully with 21 opt-in skips. The updated
+regression module passes full Pylint; Ruff and diff checks passed. Source-based
+alert closure requires publication and genuine scanner refresh. A separate
+fresh GitHub inventory now reports 365 open alerts; this local refactor has not
+yet been credited as remote closure.

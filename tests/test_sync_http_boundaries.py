@@ -176,3 +176,47 @@ class SyncHttpBoundaryTests(unittest.TestCase):
         request.assert_called_once()
         self.assertNotIn("elsewhere.invalid", str(caught.exception))
         self.assertTrue(body.closed)
+
+
+class SyncStorageCleanupTests(unittest.TestCase):
+    """Keep synthetic storage probes conservative around writes and cleanup."""
+
+    def test_existing_user_data_prevents_writes_and_deletes(self):
+        """Never touch a synthetic identity that unexpectedly already has data."""
+        with patch.object(probe, "check_batch") as batch:
+            request = MagicMock(return_value=(200, b'{"bookmarks":1}'))
+            with self.assertRaisesRegex(RuntimeError, "refusing to write or delete"):
+                probe.check_storage(request, "/1.5/fixture")
+        request.assert_called_once_with("GET", "/1.5/fixture/info/collections")
+        batch.assert_not_called()
+
+    def test_ambiguous_write_still_attempts_and_verifies_cleanup(self):
+        """A write transport failure cannot skip deletion of potentially stored fixture data."""
+        request = MagicMock(
+            side_effect=[
+                (200, b"{}"),
+                RuntimeError("synthetic write failure"),
+                (200, b""),
+                (200, b"{}"),
+            ]
+        )
+        with patch("builtins.print"):
+            with self.assertRaisesRegex(RuntimeError, "synthetic write failure"):
+                probe.check_storage(request, "/1.5/fixture")
+        methods = [call.args[0] for call in request.call_args_list]
+        self.assertEqual(methods, ["GET", "PUT", "DELETE", "GET"])
+        self.assertEqual(request.call_args_list[-2].args, ("DELETE", "/1.5/fixture/storage"))
+        self.assertEqual(request.call_args_list[-1].args, ("GET", "/1.5/fixture/info/collections"))
+
+    def test_unverified_cleanup_remains_a_failure(self):
+        """A failed write followed by remaining data must report cleanup failure."""
+        request = MagicMock(
+            side_effect=[
+                (200, b"{}"),
+                RuntimeError("synthetic write failure"),
+                (200, b""),
+                (200, b'{"bookmarks":1}'),
+            ]
+        )
+        with self.assertRaisesRegex(RuntimeError, "cleanup could not be verified"):
+            probe.check_storage(request, "/1.5/fixture")
