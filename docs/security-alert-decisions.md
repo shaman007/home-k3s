@@ -2746,3 +2746,42 @@ publication and a separate decision review; no alert was dismissed and no push
 was performed.
 
 The full suite ran 537 tests successfully with 16 skips using isolated JSON::PP.
+
+
+### Review renderer commands, trial boundaries and class-lived fixtures
+
+Dismissed exact renderer findings 7622 (Opengrep), 7522 and 7521 (Bandit)
+after auditing its sole subprocess.run reference and every caller. Commands are
+limited to Helm template rendering and kubectl kustomize from checked-in Argo
+configuration. HELM intentionally permits an operator-selected local executable;
+this is trusted execution configuration rather than remote data becoming shell
+code. Commands use argv without shell execution, a 300-second process limit,
+bounded transient-fetch retries and private failure diagnostics. Repository/value
+path boundaries, supported source forms and digest-verified fallback remain
+enforced. All 33 rendering/validation tests pass. Reopen if execution modes or
+input trust boundaries expand. Release-signing findings stay open for separate
+review of their environment-derived upload arguments.
+
+Published c3d17496 diagnostics 8093 and 8092 cover deliberate benchmark trial
+boundaries after the exception-payload privacy fix. Errors remain explicit failed
+measurements, with type-only diagnostics, synthesis stage, retained prior response
+and later-trial continuation verified by all fourteen benchmark HTTP tests. These
+are false positives for the required measurement boundary. Reopen for hidden
+failures, private diagnostics or changed trial semantics.
+
+Published findings 8091 and 8090 suggest a with block around Nginx fixture Popen.
+These workers intentionally span multiple test methods. Setup failures invoke
+teardown; class teardown terminates and waits, kills on timeout and closes logs.
+Eighteen safety tests pass, including both suites' timeout/setup cleanup and
+normal/kill teardown paths with mocked processes. The class-lifetime warnings are
+false positives for this explicit cleanup contract. Real opt-in Nginx behavior
+remains unverified by these mocked cleanup checks. Reopen if lifecycle or cleanup
+changes.
+
+Exact alert identity and analyzed-source byte guards preceded all seven decisions.
+Independent fresh inventory confirms all seven absent and reports 52 open:
+Bandit 43, Pylint four and Opengrep five. Concurrent scanning created new findings
+during this batch, so counts are not a subtraction from the prior snapshot.
+No source suppressions, external process launches, messages, credentials or cluster
+changes occurred. The full-suite result remains 537 tests with 16 skips; the 65
+relevant tests were rerun successfully here. No push was performed.
