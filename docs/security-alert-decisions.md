@@ -302,3 +302,29 @@ Full suite passed: 392 tests, 21 skips. Longhorn preflight still rejects unhealt
 storage before any PATCH; optimized checks still reject unsafe contexts. Container
 smoke probes and live deployment were not performed. GitHub reconciliation of this
 batch remains pending a matching rescan after publication.
+
+## Guard parentheses, loop bindings, and migration diagnostics
+
+Simplified negated guard syntax across 31 files carrying 230 current superfluous-
+parenthesis findings. Exact executable ASTs and literal values were compared before
+and after editing/formatting; all match. Current Pylint reports no remaining
+superfluous parentheses in that complete file set. Embedded infrastructure and
+Longhorn copies are synchronized; parsed manifest fields and embedded executable
+ASTs remain unchanged, and generator consistency checks pass.
+
+Bound loop callback values explicitly in the NetworkPolicy graph ordering,
+Restricted-context diagnostics, and Kyverno fixture generation. Current Pylint's
+loop-capture and mutable-default checks pass. Graph ordering matches HEAD across
+100 deterministic fixtures; diagnostics retain each container's own name. Existing
+Kyverno sharding and exception-scope tests remain in the full suite.
+
+Three flagged reads now declare UTF-8 explicitly. Four migration CLI exception
+translations explicitly suppress their underlying exception chains. Regression
+tests compile the actual entry-point handlers with a failing main substitute,
+perform no migration/API operations, and verify that generic formatted diagnostics
+exclude sensitive command/response sentinels while retaining operational guidance.
+The targeted encoding and exception-chaining lint checks pass.
+
+Full suite: 394 tests passed, 21 skipped. No live workload or database changes and
+no container smoke probes were performed. Alert closure awaits a matching rescan
+of the published source changes.
