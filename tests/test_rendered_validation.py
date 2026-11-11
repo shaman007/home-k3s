@@ -4,6 +4,7 @@ import tempfile
 import sys
 import unittest
 import subprocess
+import stat
 from unittest.mock import patch
 import yaml
 
@@ -23,6 +24,26 @@ validate = module('validate', 'validate-rendered.py')
 
 
 class RenderValidationTest(unittest.TestCase):
+    def test_rendered_secret_output_is_owner_only(self):
+        (self.root / 'tools/ci').mkdir(parents=True)
+        (self.root / 'tools/ci/validation-config.yaml').write_text('kubernetesVersion: 1.37.2\n')
+        applications = self.root / 'argocd'
+        applications.mkdir()
+        (applications / 'application-test.yaml').write_text(yaml.safe_dump({
+            'kind': 'Application', 'metadata': {'name': 'test'},
+            'spec': {'source': {'path': 'fixture'}},
+        }))
+        output = self.root / 'rendered'
+        output.mkdir(mode=0o755)
+        output.chmod(0o755)
+        manifest = 'apiVersion: v1\nkind: Secret\nmetadata:\n  name: synthetic\n'
+        with patch.object(render, 'ROOT', self.root), patch.object(
+            render, 'render_source', return_value=manifest
+        ), patch.object(sys, 'argv', ['render', '--output', str(output)]), patch('builtins.print'):
+            render.main()
+        self.assertEqual(0o700, stat.S_IMODE(output.stat().st_mode))
+        self.assertEqual(0o600, stat.S_IMODE((output / 'test.yaml').stat().st_mode))
+
     def test_git_hosted_chart_uses_checkout_and_helm_values_without_remote_version(self):
         chart = self.root / 'chart'
         chart.mkdir()
@@ -241,6 +262,14 @@ class RenderValidationTest(unittest.TestCase):
     def test_duplicate_yaml_keys_fail_before_normalization(self):
         with self.assertRaises(ValueError):
             list(validate.documents('apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: first\n  name: second\n'))
+
+    def test_custom_yaml_loader_rejects_python_object_constructors(self):
+        from ci_yaml import load, load_all
+
+        payload = '!!python/object/apply:builtins.str ["synthetic-payload"]'
+        for parse in (load, lambda text: list(load_all(text))):
+            with self.subTest(parse=parse), self.assertRaises(yaml.constructor.ConstructorError):
+                parse(payload)
 
     def test_crd_checks_reject_missing_storage_version(self):
         self.assertTrue(validate.crd_errors({'apiVersion': 'apiextensions.k8s.io/v1', 'kind': 'CustomResourceDefinition', 'spec': {}}))

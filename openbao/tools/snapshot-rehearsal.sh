@@ -14,6 +14,8 @@ inventory="$SNAPSHOT_DIR/vault-raft-$timestamp.inventory.json"
 
 if [ -n "${SNAPSHOT_POD:-}" ]; then
   pod_snapshot="/tmp/vault-raft-$timestamp.snap"
+  # Variables in the single-quoted program belong to the remote shell.
+  # shellcheck disable=SC2016
   printf '%s\n' "$VAULT_TOKEN" | kubectl exec -i -n vault "$SNAPSHOT_POD" -- \
     sh -ec '
       IFS= read -r VAULT_TOKEN

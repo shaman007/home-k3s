@@ -59,7 +59,8 @@ def main():
         d = Path(directory)
         try:
             run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
-                 '-subj', '/CN=guard.invalid', '-keyout', str(d / 'tls.key'), '-out', str(d / 'tls.crt')])
+                 '-subj', '/CN=guard.invalid', '-addext', 'subjectAltName=IP:127.0.0.1',
+                 '-keyout', str(d / 'tls.key'), '-out', str(d / 'tls.crt')])
             config = yaml.safe_load((ROOT / 'mail/config-map-dovecot-cf.yaml').read_text())['data']
             args, container = command('dovecot')
             args += ['-p', '127.0.0.1::993', '-p', '127.0.0.1::587',
@@ -81,7 +82,7 @@ def main():
             dovecot = run(args + [container['image']] + entrypoint[1:] + container['args'])
             containers.append(dovecot)
             assert run(['podman', 'exec', dovecot, 'stat', '-c', '%a', '/tmp']) == '1777'
-            context = ssl._create_unverified_context()  # Only the disposable self-signed certificate.
+            context = ssl.create_default_context(cafile=str(d / 'tls.crt'))
             def imap():
                 client = imaplib.IMAP4_SSL('127.0.0.1', port(dovecot, 993), ssl_context=context, timeout=3)
                 try:

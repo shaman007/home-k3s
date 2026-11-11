@@ -4,6 +4,7 @@
 Support the source forms used here; reject unsupported options instead of silently
 validating a different deployment. Outputs may contain generated chart Secrets.
 """
+
 import argparse
 import fnmatch
 import hashlib
@@ -30,6 +31,7 @@ class HelmDownloadError(RuntimeError):
 
 def github_chart_fallback(source, scratch):
     """Fetch the exact indexed chart through GitHub's release-asset API."""
+
     def fetch(url, accept="application/json"):
         request = urllib.request.Request(url, headers={"Accept": accept})
         with urllib.request.urlopen(request, timeout=60) as response:
@@ -74,11 +76,17 @@ def run(args, cwd=None):
             print(f"Remote Kustomize fetch failed; retrying ({attempt + 2}/3)", flush=True)
             time.sleep(2 ** (attempt + 1))
             continue
-        transient_helm_download = (Path(args[0]).name == "helm" and args[1] == "template"
-                                   and "failed to fetch https://github.com/" in result.stderr
-                                   and re.search(r"\b(?:429|500|502|503|504)\b", result.stderr))
+        transient_helm_download = (
+            Path(args[0]).name == "helm"
+            and args[1] == "template"
+            and "failed to fetch https://github.com/" in result.stderr
+            and re.search(r"\b(?:429|500|502|503|504)\b", result.stderr)
+        )
         error = HelmDownloadError if transient_helm_download else RuntimeError
-        raise error(f"{args[0]} {args[1]} failed (exit {result.returncode}); run this source locally to inspect its diagnostic output")
+        raise error(
+            f"{args[0]} {args[1]} failed (exit {result.returncode}); "
+            "run this source locally to inspect its diagnostic output"
+        )
 
 
 def local_path(root, value):
@@ -98,7 +106,17 @@ def matches(name, pattern):
 
 def helm_args(app, source, sources, root, scratch, kubernetes_version):
     options = source.get("helm", {})
-    supported = {"releaseName", "valueFiles", "values", "valuesObject", "parameters", "skipCrds", "skipTests", "kubeVersion", "apiVersions"}
+    supported = {
+        "releaseName",
+        "valueFiles",
+        "values",
+        "valuesObject",
+        "parameters",
+        "skipCrds",
+        "skipTests",
+        "kubeVersion",
+        "apiVersions",
+    }
     if options.keys() - supported:
         raise ValueError(f"Unsupported Helm options: {sorted(options.keys() - supported)}")
     repo = source["repoURL"]
@@ -114,10 +132,16 @@ def helm_args(app, source, sources, root, scratch, kubernetes_version):
             chart_args = [repo if repo.startswith("oci://") else "oci://" + repo]
             chart_args[0] = chart_args[0].rstrip("/") + "/" + chart
         chart_args.extend(["--version", source["targetRevision"]])
-    args = [os.environ.get("HELM", "helm"), "template", options.get("releaseName", app["metadata"]["name"]),
-            *chart_args,
-            "--namespace", app["spec"]["destination"]["namespace"],
-            "--kube-version", options.get("kubeVersion", kubernetes_version)]
+    args = [
+        os.environ.get("HELM", "helm"),
+        "template",
+        options.get("releaseName", app["metadata"]["name"]),
+        *chart_args,
+        "--namespace",
+        app["spec"]["destination"]["namespace"],
+        "--kube-version",
+        options.get("kubeVersion", kubernetes_version),
+    ]
     if not options.get("skipCrds", False):
         args.append("--include-crds")
     if options.get("skipTests", False):
@@ -135,7 +159,11 @@ def helm_args(app, source, sources, root, scratch, kubernetes_version):
     # Argo precedence: parameters > valuesObject > values > valueFiles.
     if "valuesObject" in options or "values" in options:
         values_file = scratch / "values.yaml"
-        values_file.write_text(yaml.safe_dump(options["valuesObject"]) if "valuesObject" in options else options["values"])
+        values_file.write_text(
+            yaml.safe_dump(options["valuesObject"])
+            if "valuesObject" in options
+            else options["values"]
+        )
         args.extend(["--values", str(values_file)])
     for parameter in options.get("parameters", []):
         flag = "--set-string" if parameter.get("forceString", False) else "--set"
@@ -151,7 +179,9 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
         try:
             output = run(args, cwd=scratch)
         except HelmDownloadError:
-            print("GitHub chart download unavailable; trying digest-verified release API", flush=True)
+            print(
+                "GitHub chart download unavailable; trying digest-verified release API", flush=True
+            )
             try:
                 archive = github_chart_fallback(source, scratch)
             except Exception:
@@ -162,13 +192,14 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
             for flag in ("--repo", "--version"):
                 if flag in fallback_args:
                     position = fallback_args.index(flag)
-                    del fallback_args[position:position + 2]
+                    del fallback_args[position : position + 2]
             output = run(fallback_args, cwd=scratch)
         if args[3].startswith("oci://"):
             # Helm 4 writes OCI pull metadata to stdout before the YAML stream.
             # Remove only its known preamble, never arbitrary non-manifest YAML.
-            output = re.sub(r"\APulled: [^\r\n]+\r?\nDigest: sha256:[0-9a-f]{64}\r?\n",
-                            "", output, count=1)
+            output = re.sub(
+                r"\APulled: [^\r\n]+\r?\nDigest: sha256:[0-9a-f]{64}\r?\n", "", output, count=1
+            )
         return output
     if source["repoURL"] != REPO:
         raise ValueError("External Git sources need explicit support before use")
@@ -189,12 +220,20 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
         if not file.is_file() or file.suffix not in {".yaml", ".yml", ".json"}:
             continue
         name = file.relative_to(path).as_posix()
-        if not matches(name, options.get("include", "*")) or matches(name, options.get("exclude", "")):
+        if not matches(name, options.get("include", "*")) or matches(
+            name, options.get("exclude", "")
+        ):
             continue
         for document in load_all(file.read_text()):
             if document is not None:
-                if not isinstance(document, dict) or not document.get("apiVersion") or not document.get("kind"):
-                    raise ValueError(f"Non-manifest in application source: {file.relative_to(root)}")
+                if (
+                    not isinstance(document, dict)
+                    or not document.get("apiVersion")
+                    or not document.get("kind")
+                ):
+                    raise ValueError(
+                        f"Non-manifest in application source: {file.relative_to(root)}"
+                    )
                 docs.append(document)
     return yaml.safe_dump_all(docs, sort_keys=False)
 
@@ -202,7 +241,11 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--application", action="append", help="Render only these application names (local diagnosis)")
+    parser.add_argument(
+        "--application",
+        action="append",
+        help="Render only these application names (local diagnosis)",
+    )
     args = parser.parse_args()
     config = load((ROOT / "tools/ci/validation-config.yaml").read_text())
     args.output.mkdir(parents=True, exist_ok=True)
@@ -225,7 +268,11 @@ def main():
         rendered = []
         for source in sources:
             with tempfile.TemporaryDirectory() as tmp:
-                rendered.append(render_source(app, source, sources, ROOT, Path(tmp), config["kubernetesVersion"]))
+                rendered.append(
+                    render_source(
+                        app, source, sources, ROOT, Path(tmp), config["kubernetesVersion"]
+                    )
+                )
         output = args.output / (name + ".yaml")
         output.write_text("\n---\n".join(s for s in rendered if s.strip()))
         os.chmod(output, 0o600)

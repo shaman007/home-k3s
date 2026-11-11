@@ -10,6 +10,16 @@ GitHub's main-branch code-scanning UI reported 3,850 open alerts after the TLS
 and workflow-action pinning changes. The authenticated CLI could not read the
 alert API (HTTP 403), so this is a UI inventory, not an exhaustive API export.
 
+After the user updated the CLI token, the complete API inventory confirmed that
+baseline. A later API refresh reported **3,635 open alerts**. Reviewed dispositions
+were recorded on 84 specific false positives: CodeQL 2 and 3, 80 obsolete-Python
+analyzer reports, Bandit 1395 and Opengrep 3402. The rest of the reduction is from
+scanner updates, including the earlier operational-assertion fixes.
+
+The user explicitly chose to keep and fix the 2,319 legacy Pylint convention and
+refactoring findings. No bulk style dismissal was applied. Their rule inventory
+is in [security-legacy-lint-review.md](security-legacy-lint-review.md).
+
 | Scanner | Open findings | Decision/status |
 | --- | ---: | --- |
 | CodeQL | 2 | Review the reported source-to-sink paths individually. |
@@ -56,7 +66,7 @@ surrounding statements are preserved. Updated the embedded programs in
 changed-workload, unhealthy-storage and missing-admission-mutation regression
 suites with optimization enabled. The generated-file checks must also pass.
 
-Status: fixed in the worktree; deployment and GitHub rescan pending. Assertions
+Status: recorded in commit `601c8982`; deployment remains unverified. Assertions
 in other scripts and tests still require review; this decision does not blanket
 suppress B101.
 
@@ -72,18 +82,64 @@ Secret data, target names, tokens or credentials.
 Decision: retain useful validation diagnostics; this specific data-flow report
 is a false positive. `tests/test_runtime_contract_diagnostics.py` verifies that
 credential-like values in ExternalSecret, SecretStore, ClusterSecretStore and
-Secret documents are not included in the relevant diagnostics. GitHub dismissal
-is pending authenticated API access.
+Secret documents are not included in the relevant diagnostics. GitHub now records
+the false-positive dismissal with an explanatory comment.
 
 The separate YAML parse-error path had a real disclosure risk: parser exceptions
 can quote source snippets. It now reports only path, line and column and suppresses
 the original exception chain. A regression checks the complete formatted traceback
 for a malformed synthetic Secret, including the absence of its credential value.
 
+## Further verified false positives
+
+- CodeQL 3 checks exact membership in a ClusterRole `apiGroups` list. There is no
+  URL or hostname sanitization in that unit test. Retain the RBAC regression.
+- All 74 legacy Pylint E1136 locations were checked in their original reported
+  commits: each is a built-in generic type annotation supported by Python 3.9+.
+  Three E0611 reports concern postponed annotations, one E1123 concerns the
+  supported subprocess `text=` keyword, one E0001 concerns valid modern function
+  annotations, and one E1101 concerns `str.removeprefix`. Current Pylint 4.1.3 on
+  Python 3.15 reproduces none of these 80 errors. Each alert has a specific comment;
+  valid modern Python code is retained instead of rewritten for an obsolete engine.
+- Bandit 1395 uses a custom subclass of `yaml.SafeLoader`, not an unsafe loader.
+  Regression tests verify both parser entry points reject Python-object
+  constructors and retain duplicate-key detection.
+- Opengrep 3402 calls `chmod(0o700)` on the private render directory. That grants
+  access only to its owner. A regression verifies a pre-existing 0755 directory is
+  restricted to 0700 and rendered Secret files are 0600.
+
+## Removed unused tooling
+
+The user authorized removal of unused `.specify` scaffolding and `synapse/tools`.
+No CI, runtime or application references use these trees. The ten repository-local
+Spec Kit skills were removed with their `.specify` dependency. The substantive
+hardening specification and checklist under `specs/` are preserved because
+`docs/non-root-audit.md` links to the specification.
+
+The removed trees account for 514 open findings in the later API snapshot.
+Removal is a source change, not a claim that a retired scanner has closed those
+alerts. No database, homeserver, cluster resource or persistent data was removed.
+
+## Current source fixes and validation
+
+- Five CI modules were reformatted at a 100-character line length. Formatting
+  was verified to preserve their AST; long diagnostic strings were then wrapped
+  without changing their text. Style findings remain remediation work, not
+  accepted debt.
+- The remaining reviewed shell scripts use ASCII quoting in the retired PKI
+  entry point and document the intentionally remote variable expansion in the
+  snapshot rehearsal. Both pass ShellCheck.
+- The disposable mail TLS fixture now trusts its own temporary certificate and
+  verifies the loopback IP against a certificate SAN instead of disabling TLS
+  verification. Certificate trust/hostname configuration was checked locally;
+  the full container smoke test has not been rerun.
+- After unused-tool removal, the full local suite passed: 384 tests, 21 skips.
+  No changes in this batch were committed or pushed by the agent.
+
 ## Remaining dispositions
 
-CodeQL alert 3, shell findings, unverified TLS contexts, subprocess audit
-findings and legacy correctness findings remain open for source-level review.
+Router TLS verification, subprocess audit findings and remaining lint/correctness
+findings still need source-level review and fixes.
 An unverified TLS exception is an accepted risk, not a false positive. A
 subprocess call using `shell=False` is not automatically safe: validate the
 executable and whether untrusted values can become command options or executable

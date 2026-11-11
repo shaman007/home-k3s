@@ -11,9 +11,18 @@ import yaml
 
 
 SUSPICIOUS_HTTP_PROBE_PATHS = {
-    "/": "root routes are brittle health checks; prefer a dedicated health endpoint or tcpSocket when you only need to verify the listener is up",
-    "/metrics": "use tcpSocket for metrics-only endpoints unless the application documents /metrics as a supported health check",
-    "/wp-json/wp-site-health/v1": "prefer a lightweight dedicated health endpoint instead of a heavyweight application diagnostic route",
+    "/": (
+        "root routes are brittle health checks; prefer a dedicated health endpoint or "
+        "tcpSocket when you only need to verify the listener is up"
+    ),
+    "/metrics": (
+        "use tcpSocket for metrics-only endpoints unless the application documents "
+        "/metrics as a supported health check"
+    ),
+    "/wp-json/wp-site-health/v1": (
+        "prefer a lightweight dedicated health endpoint instead of a heavyweight "
+        "application diagnostic route"
+    ),
 }
 
 DEPRECATED_ARGS = {
@@ -56,7 +65,9 @@ def tracked_yaml_files(root: Path) -> list[Path]:
     for entry in result.stdout.decode("utf-8").split("\0"):
         if not entry:
             continue
-        if entry.startswith(("DEPRECATED/", "mastodon/chart/", "tools/godaddy-webhook/chart/templates/")):
+        if entry.startswith(
+            ("DEPRECATED/", "mastodon/chart/", "tools/godaddy-webhook/chart/templates/")
+        ):
             continue
         path = root / entry
         if not path.exists():
@@ -111,7 +122,8 @@ def check_http_probe_paths(path: Path, document_index: int, document: dict) -> l
             message = SUSPICIOUS_HTTP_PROBE_PATHS.get(probe_path)
             if message:
                 errors.append(
-                    f"{path}: document {document_index}, container {container_name}, {probe_name} path {probe_path!r} is suspicious: {message}."
+                    f"{path}: document {document_index}, container {container_name}, "
+                    f"{probe_name} path {probe_path!r} is suspicious: {message}."
                 )
     return errors
 
@@ -127,7 +139,8 @@ def check_deprecated_args(path: Path, document_index: int, document: dict) -> li
             for deprecated, replacement in DEPRECATED_ARGS.items():
                 if isinstance(arg, str) and arg.startswith(deprecated):
                     errors.append(
-                        f"{path}: document {document_index}, container {container_name} uses deprecated arg {deprecated!r}: {replacement}."
+                        f"{path}: document {document_index}, container {container_name} "
+                        f"uses deprecated arg {deprecated!r}: {replacement}."
                     )
     return errors
 
@@ -155,7 +168,8 @@ def check_external_secret_targets(path: Path, document_index: int, document: dic
     target = spec.get("target")
     if not isinstance(target, dict):
         errors.append(
-            f"{path}: document {document_index}, ExternalSecret is missing spec.target; declare an explicit target secret."
+            f"{path}: document {document_index}, ExternalSecret is missing spec.target; "
+            "declare an explicit target secret."
         )
         return errors
 
@@ -165,7 +179,8 @@ def check_external_secret_targets(path: Path, document_index: int, document: dic
         )
     if not target.get("creationPolicy"):
         errors.append(
-            f"{path}: document {document_index}, ExternalSecret is missing spec.target.creationPolicy."
+            f"{path}: document {document_index}, ExternalSecret is missing "
+            "spec.target.creationPolicy."
         )
     return errors
 
@@ -179,7 +194,9 @@ def check_secret_refresh_intervals(path: Path, document_index: int, document: di
     if kind == "ExternalSecret":
         if refresh_interval != EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL:
             errors.append(
-                f"{path}: document {document_index}, ExternalSecret should set spec.refreshInterval to {EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL!r} instead of the debug cadence."
+                f"{path}: document {document_index}, ExternalSecret should set "
+                "spec.refreshInterval "
+                f"to {EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL!r} instead of the debug cadence."
             )
         return errors
 
@@ -189,7 +206,8 @@ def check_secret_refresh_intervals(path: Path, document_index: int, document: di
             str(EXPECTED_SECRET_STORE_REFRESH_INTERVAL),
         }:
             errors.append(
-                f"{path}: document {document_index}, {kind} should set spec.refreshInterval to {EXPECTED_SECRET_STORE_REFRESH_INTERVAL} seconds (15 minutes)."
+                f"{path}: document {document_index}, {kind} should set spec.refreshInterval "
+                f"to {EXPECTED_SECRET_STORE_REFRESH_INTERVAL} seconds (15 minutes)."
             )
 
     return errors
@@ -203,7 +221,9 @@ def main() -> int:
         for document_index, document in load_documents(path):
             errors.extend(check_http_probe_paths(path.relative_to(root), document_index, document))
             errors.extend(check_deprecated_args(path.relative_to(root), document_index, document))
-            errors.extend(check_deprecated_service_fields(path.relative_to(root), document_index, document))
+            errors.extend(
+                check_deprecated_service_fields(path.relative_to(root), document_index, document)
+            )
             errors.extend(
                 check_external_secret_targets(path.relative_to(root), document_index, document)
             )
