@@ -65,13 +65,14 @@ cause of the inconsistent-fingerprint annotations; GitHub alert reconciliation
 must still be verified after a new upload. The uploader's behavior is defined in
 [its pinned fingerprint implementation](https://github.com/github/codeql-action/blob/33d7b85da1a04171e211befe2c739303b9a4c066/src/fingerprints.ts#L159-L175).
 
-Manual dispatch can select one historical linter with `legacy_tool`; `none`
-retains the three security scanners plus Python 3 Pylint. Historical reports use their original
+Manual dispatch can select one supported historical linter with `legacy_tool`;
+`none` retains the three security scanners plus Python 3 Pylint. Reports use their original
 category so genuine rescans can supersede stale findings. These scans fail before
 upload if either Pylint variant reports a parser error, preventing an incomplete
-analysis from replacing historical results. Tool availability and successful
-historical reconciliation remain to be verified in Actions; no empty reports or
-bulk dismissals substitute for a scan.
+analysis from replacing historical results. Python 3 Pylint and Remark have
+completed genuine uploads and reconciled historical findings. Other targeted
+linters still need verification; no empty reports or bulk dismissals substitute
+for a scan.
 
 The first manual Remark run
 [43005823657, attempt 1](https://github.com/shaman007/home-k3s/actions/runs/43005823657/attempts/1)
@@ -84,3 +85,18 @@ Commit `6b30e257` subsequently published the matching adapter and regression tes
 [Push run 43006083625](https://github.com/shaman007/home-k3s/actions/runs/43006083625)
 passed Bandit, Opengrep and ShellCheck with zero annotations on all three check
 runs, verifying removal of the previously observed 20 fingerprint warnings.
+
+The genuine legacy `pylint` diagnostic run
+[43011027851](https://github.com/shaman007/home-k3s/actions/runs/43011027851)
+on `f381f0a3` produced parser errors. The preparation safeguard rejected its report
+and skipped upload, preserving all historical findings. All 127 current Python
+files compile with the current interpreter, and the normal Python 3 lint run
+[43010923234](https://github.com/shaman007/home-k3s/actions/runs/43010923234)
+passed alongside Bandit, Opengrep and ShellCheck on that same revision.
+
+The incompatible legacy `pylint` choice has therefore been removed from manual
+dispatch. Use `pylintpython3` for supported Python linting. This does not delete or
+dismiss any legacy alerts; their remaining source findings and overlap with the
+current analyzer still need review. Parser-error rejection remains active, and
+expected preparation failures now print a concise CLI error instead of a Python
+traceback. Rerunning the old commit will still run its old workflow definition.

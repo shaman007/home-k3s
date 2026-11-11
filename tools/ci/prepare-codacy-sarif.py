@@ -91,7 +91,7 @@ def prepare(report, reject_parser_errors=False):
                     rule_id = rules[result["ruleIndex"]]["id"]
                 if rule_id in parser_rules:
                     raise ValueError(
-                        "Legacy linter could not parse source files; "
+                        "Python linter reported parser errors; "
                         "refusing to replace historical results with an incomplete scan."
                     )
     return report
@@ -105,9 +105,12 @@ def main():
     args = parser.parse_args()
     if args.input.resolve() == args.output.resolve():
         parser.error("Input and output must be different files")
-    report = prepare(
-        json.loads(args.input.read_text()), reject_parser_errors=args.reject_parser_errors
-    )
+    try:
+        report = prepare(
+            json.loads(args.input.read_text()), reject_parser_errors=args.reject_parser_errors
+        )
+    except ValueError as error:
+        parser.error(str(error))
     # Codacy's container may own the input. Create runner-owned output instead
     # of reopening the scanner's report for writing.
     with args.output.open("x") as stream:

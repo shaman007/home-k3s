@@ -425,3 +425,28 @@ count showed 2,955 total open findings and 1,020 Python 3 Pylint findings, compa
 with 2,357 in the first genuine refreshed Python 3 analysis. Those remote counts
 precede this class-documentation batch; its alert closure awaits publication and
 rescan. Legacy Pylint and other remaining findings still require further work.
+
+## Legacy parser diagnosis and operational function contracts
+
+The genuine manual legacy Pylint run
+[43011027851](https://github.com/shaman007/home-k3s/actions/runs/43011027851)
+on `f381f0a3` completed analysis but failed the parser safeguard before upload.
+The exact preparation error says the linter could not parse source files and
+refuses to replace historical results with an incomplete scan. All 127 current
+Python sources compile under the current interpreter. The normal Python 3 lint
+[run 43010923234](https://github.com/shaman007/home-k3s/actions/runs/43010923234)
+passed on the same revision, along with the other three scanners.
+
+Removed the incompatible `pylint` manual-dispatch choice and kept `pylintpython3`
+and the parser safeguard. Existing legacy findings remain open; this decision
+neither dismisses them nor substitutes an empty analysis. Their remaining source
+issues and overlap with modern findings still need review. Expected preparation
+ValueErrors now become concise CLI errors rather than tracebacks. The parser-error
+CLI regression verifies nonzero failure, no output report, no source sentinel and
+no traceback. Actionlint/ShellCheck and all 14 adapter tests pass.
+
+Documented 24 functions in the UniFi BGP exporter, synthetic FRR API and guarded
+Firefox Sync migration helper. After removing function-docstring nodes, executable
+ASTs and prior literal values match. Regenerated the embedded UniFi source.
+Targeted function documentation checks pass; full suite passed with 394 tests and
+21 skips. No live router, database or cluster changes were made.

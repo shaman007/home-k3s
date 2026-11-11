@@ -74,6 +74,7 @@ def decode(neighbors, routes):
 
 
 def render(metrics, success, last_success):
+    """Format collection status and supplied BGP measurements as Prometheus text."""
     help_text = {
         "unifi_bgp_scrape_success": "Whether both authenticated router API reads succeeded.",
         "unifi_bgp_last_success_timestamp_seconds": (
@@ -127,6 +128,7 @@ class Controller:
         self.csrf = ""
 
     def request(self, path, data=None):
+        """Send a JSON router request and retain an updated CSRF token in memory."""
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -144,6 +146,7 @@ class Controller:
             return json.load(response)
 
     def login(self):
+        """Authenticate using environment-provided credentials and the in-memory cookie jar."""
         self.request(
             "/api/auth/login",
             {"username": os.environ["UNIFI_USERNAME"], "password": os.environ["UNIFI_PASSWORD"]},
@@ -151,6 +154,7 @@ class Controller:
         self.logged_in = True
 
     def get(self, path):
+        """Read a router endpoint, renewing authentication once after a 401 or 403 response."""
         if not self.logged_in:
             self.login()
         try:
@@ -164,11 +168,13 @@ class Controller:
             return self.request(path)
 
     def collect(self):
+        """Read neighbor and route endpoints and decode their current BGP measurements."""
         base = "/proxy/network/v2/api/site/default/"
         return decode(self.get(base + "bgp/neighbors"), self.get(base + "routes"))
 
 
 def main():
+    """Poll the router in a background thread and serve metrics and liveness responses."""
     controller = Controller()
     lock = threading.Lock()
     state = {"body": render([], False, 0)}
@@ -190,6 +196,7 @@ def main():
     class Handler(http.server.BaseHTTPRequestHandler):
         """Expose current BGP collection metrics over HTTP."""
         def do_GET(self):
+            """Serve the current metrics snapshot or liveness response, rejecting other paths."""
             if self.path not in ("/metrics", "/healthz"):
                 self.send_error(404)
                 return

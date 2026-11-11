@@ -29,7 +29,6 @@ on:
         default: none
         options:
           - none
-          - pylint
           - pylintpython3
           - prospector
           - remark-lint
@@ -53,7 +52,6 @@ jobs:
         # Map choices to fixed arrays; never interpolate an input into a shell command.
         tool: >-
           ${{ fromJSON(
-            inputs.legacy_tool == 'pylint' && '["pylint"]' ||
             inputs.legacy_tool == 'pylintpython3' && '["pylintpython3"]' ||
             inputs.legacy_tool == 'prospector' && '["prospector"]' ||
             inputs.legacy_tool == 'remark-lint' && '["remark-lint"]' ||

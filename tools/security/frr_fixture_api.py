@@ -32,12 +32,14 @@ POD = {
 class Handler(BaseHTTPRequestHandler):
     """Serve synthetic API operations for isolated FRR security-guard probes."""
     def respond(self, data, code=200):
+        """Write a JSON fixture response with the requested HTTP status."""
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 
     def do_GET(self):
+        """Serve mock discovery, Pod identity, resource reads, and watch bookmarks."""
         path = urlparse(self.path).path
         query = parse_qs(urlparse(self.path).query)
         if path == "/version":
@@ -163,15 +165,19 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def do_POST(self):
+        """Dispatch a synthetic create or authentication-review request."""
         self.write_request()
 
     def do_PUT(self):
+        """Dispatch a synthetic resource replacement request."""
         self.write_request()
 
     def do_PATCH(self):
+        """Dispatch a synthetic resource patch request."""
         self.write_request()
 
     def write_request(self):
+        """Answer synthetic auth reviews or store submitted mock resource state."""
         path = urlparse(self.path).path
         data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))) or "{}")
         if path.endswith("/tokenreviews"):

@@ -104,6 +104,7 @@ class CodacySarifTest(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertFalse(output.exists())
             self.assertIn("incomplete scan", result.stderr)
+            self.assertNotIn("Traceback", result.stderr)
             self.assertNotIn("sensitive-source-sentinel", result.stdout + result.stderr)
 
     def test_five_batches_preserve_findings_and_remap_local_indices(self):

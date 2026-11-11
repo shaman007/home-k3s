@@ -16,10 +16,12 @@ SCHEMAS = ("syncstorage", "tokenserver")
 
 
 def kubectl(*args):
+    """Build a kubectl argument vector without executing it."""
     return ["kubectl", *args]
 
 
 def resource(kind, name, namespace=NS):
+    """Fetch one namespaced resource as JSON without exposing command diagnostics."""
     return json.loads(
         subprocess.check_output(
             kubectl("get", kind, name, "-n", namespace, "-o", "json"), stderr=subprocess.DEVNULL
@@ -28,6 +30,7 @@ def resource(kind, name, namespace=NS):
 
 
 def db_command(target, *args, dump=False):
+    """Build an in-container database command that expands credentials only there."""
     deployment = "mariadb" if target else "mysql"
     container = deployment
     client = "mariadb" if target else "mysql"
@@ -54,6 +57,7 @@ def db_command(target, *args, dump=False):
 
 
 def query(target, sql):
+    """Execute SQL through the selected database client and return output lines."""
     return (
         subprocess.check_output(
             db_command(target, "-NB", "-e", "SET time_zone='+00:00'; " + sql),
@@ -65,10 +69,12 @@ def query(target, sql):
 
 
 def quote(name):
+    """Quote a SQL identifier by escaping embedded backticks."""
     return "`" + name.replace("`", "``") + "`"
 
 
 def tables(target):
+    """Return a consistently sorted inventory of base tables in the reviewed schemas."""
     rows = query(
         target,
         "SELECT TABLE_SCHEMA,TABLE_NAME FROM information_schema.TABLES "
@@ -81,6 +87,7 @@ def tables(target):
 
 
 def check_frozen():
+    """Reject active Sync or GitOps, unexpected storage, and unreviewed database versions."""
     app = resource("application", "firefox-sync", "argocd")
     automated = app["spec"].get("syncPolicy", {}).get("automated")
     if automated is not None and automated.get("enabled", True):
@@ -125,6 +132,7 @@ def check_frozen():
 
 
 def import_data():
+    """Stream the reviewed schemas into an empty candidate without local dump files."""
     if tables(True):
         raise RuntimeError("Candidate already contains tables; refusing overwrite or partial retry")
     expected = tables(False)
@@ -166,6 +174,7 @@ def import_data():
 
 def fingerprint(target, schema, table):
     # Hash values on the database side; transfer only row hashes, never payloads.
+    """Return column names, row count, and an aggregate digest of server-side row hashes."""
     columns = query(
         target,
         "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
@@ -194,6 +203,7 @@ def fingerprint(target, schema, table):
 
 
 def verify():
+    """Compare both databases and reject differing table inventories or value fingerprints."""
     source_tables, target_tables = tables(False), tables(True)
     if not source_tables or source_tables != target_tables:
         raise RuntimeError("Source/candidate table inventories differ")
@@ -208,6 +218,7 @@ def verify():
 
 
 def main():
+    """Print a no-operation plan or execute the selected guarded migration phase."""
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
