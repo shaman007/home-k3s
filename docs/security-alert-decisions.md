@@ -2954,3 +2954,30 @@ and no push was performed.
 
 Independent API inventory confirms all nine absent: 27 open (Bandit 20,
 Pylint three, Opengrep four).
+
+
+### Make provider-cache fixture generation import-safe and bound snapshot reads
+
+Moved the fixture helper's API/filesystem work behind an explicit argparse main
+entry point. Importing it no longer consumes CLI arguments, creates directories
+or reads Kubernetes. Both fixed kubectl get commands explicitly disable shells,
+set --request-timeout=15s and have 30-second process deadlines. The existing
+positional output-directory CLI remains supported.
+
+Both API snapshots and the reviewed catalog resource variants are collected before
+creating output or replacing any fixture file. A failed second API read therefore
+cannot mix a newly written policy snapshot with stale exception/resource files.
+Status stripping, reviewed workload/derived-Pod cases and deliberate privileged
+variants remain unchanged. Running original and updated generators with identical
+synthetic API snapshots and the real checked-in catalog produces all three output
+files byte-for-byte identically.
+
+Three regressions pass: side-effect-free import, exact bounded snapshot commands
+and complete output/case coverage, and second-read timeout behavior for both new
+and existing output directories. Existing fixture bytes survive the latter.
+Full Pylint rates both changed modules 10/10; Ruff passes and Bandit has no analysis
+errors. Kubernetes commands are mocked; no cluster, credentials or live service
+was accessed. Scanner findings remain open pending published rescanning/review.
+No alert was dismissed, no suppression was added and no push was performed.
+
+The full suite ran 548 tests successfully with 16 skips using isolated JSON::PP.
