@@ -84,7 +84,7 @@ test "$(stat -c '%u:%g' /var/run/postgresql)" = 999:999
 grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/self/status
 """
         command = [
-            "podman",
+            "/usr/bin/podman",
             "run",
             "--rm",
             "--network=none",

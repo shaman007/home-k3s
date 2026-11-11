@@ -2319,3 +2319,22 @@ in these modules; no rule was disabled. The class-level log compilation now runs
 once per focused subclass, while each test retains a fresh execution namespace.
 No production entry point, server or external data source was invoked. Source
 fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Pin PostgreSQL probe and local interpreter test executables
+
+Pinned the PostgreSQL permission-init probe's Podman command to /usr/bin/podman,
+and the Mastodon spam-list Ruby harness plus availability check to /usr/bin/ruby.
+Restricted Postfix queue test Perl resolution to /usr/bin:/bin. Command arguments,
+fixture scripts, capability checks, timeouts and optional-dependency skip behavior
+are otherwise unchanged. This fixes the reported Ruby partial-path warning and
+hardens related computed-command lookup sites without changing custom kubectl use.
+
+Ran both interpreter test suites with fake perl/ruby executables first on PATH.
+Both suites passed and neither fake executable ran. The full suite ran 515 tests
+successfully with the same 21 opt-in skips. All three changed modules pass full
+Pylint, Ruff and diff checks. Bandit reports no B607 findings in those modules and
+no analysis errors; their broader subprocess/import warnings remain for individual
+review. No PostgreSQL container, database, host volume, production credential or
+cluster resource was used. Source fixes await genuine published rescanning;
+no alert was dismissed in this batch and no push was performed.

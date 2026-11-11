@@ -69,7 +69,7 @@ def run_import(**env):
     """Execute the spam-list importer against its isolated Ruby test harness."""
 
     return subprocess.run(
-        ["ruby", "-e", HARNESS + SCRIPT],
+        ["/usr/bin/ruby", "-e", HARNESS + SCRIPT],
         env={**os.environ, **env},
         text=True,
         capture_output=True,
@@ -77,7 +77,7 @@ def run_import(**env):
     )
 
 
-@unittest.skipUnless(shutil.which("ruby"), "Ruby required")
+@unittest.skipUnless(shutil.which("/usr/bin/ruby"), "Ruby required")
 class SpamListSyncTest(unittest.TestCase):
     """Preserve manual moderation rules and reject bad sources before applying changes."""
     def test_preview_and_apply_preserve_manual_rules(self):

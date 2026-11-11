@@ -7,7 +7,7 @@ import subprocess
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1] / "tools/monitoring/postfix-queue-exporter.pl"
-PERL = shutil.which("perl")
+PERL = shutil.which("perl", path="/usr/bin:/bin")
 AVAILABLE = (
     PERL
     and subprocess.run(
