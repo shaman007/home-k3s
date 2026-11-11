@@ -1560,3 +1560,33 @@ The independently verified open count is now 267: Bandit 106, modern Pylint 97,
 Prospector 56 and Opengrep 8. The change from 314 combines these forty-one exact
 decisions with six newly reconciled Pylint source fixes from the paired probe
 refactor. Further actionable findings and unresolved reviews remain.
+
+
+### Split GPU/mail probe checks and close SMTP buffered streams
+
+Separated GPU fixture creation, one-shot/default/fallback permission boundaries
+and actual node-watch checks. Separated disposable mail certificate generation,
+Dovecot/Postfix startup, IMAP/SMTP protocol checks and process-guard/reload checks.
+Outer cleanup ownership still covers partially allocated containers and volumes.
+Both probes pass full Pylint; their six original complexity warnings are gone.
+
+Fixed a buffered-stream cleanup gap in the SMTP probe: ExitStack now closes each
+socket and makefile wrapper even if greeting, STARTTLS or authentication fails.
+The plaintext stream is still closed before TLS wrapping. The probe sends only
+PROXY/EHLO/STARTTLS/AUTH/NOOP/QUIT, with no mail submission commands.
+
+Ninety mocked old/new probe scenarios produced identical ordered commands,
+fixture bytes, protocol sends, output and exceptions; resource closure is the
+intentional improvement. Four permanent offline tests cover GPU permission and
+missing-guard rejection with fixture removal, the successful no-mail SMTP
+transcript, closure after greeting/authentication failures, and cleanup after
+partial Postfix volume setup. The capability masks, sticky-bit check, read-only
+INBOX selection, TLS verification, reloads and post-reload protocol checks remain.
+No actual device, container, mail server, production secret or external endpoint
+was used in these comparisons or regressions.
+
+The full suite ran 474 tests successfully with 21 opt-in skips. Both source
+modules and the updated regression module pass full Pylint; Ruff and diff checks
+passed, and Bandit reported no analysis errors. The actual opt-in runtime probes
+were not executed. Publication and genuine scanner refresh remain necessary for
+source-based alert closure; no scanner rule or runtime guard was disabled.

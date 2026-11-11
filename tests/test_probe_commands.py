@@ -1,12 +1,13 @@
 """Probe process execution must ignore hostile PATH entries and preserve command contracts."""
 
 import importlib.util
+import io
 import os
 from pathlib import Path
 import subprocess
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools/security"))
@@ -317,3 +318,117 @@ class SplitRuntimeProbeTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 probe.check_runtime("alloy-fixture", ["state-fixture", "run-fixture"])
         run.assert_called_once_with(["podman", "exec", "alloy-fixture", "cat", "/proc/1/mountinfo"])
+
+
+class GpuAndMailProbeTests(unittest.TestCase):
+    """Keep GPU security boundaries and disposable mail protocol cleanup intact."""
+
+    def test_gpu_rejections_always_remove_mock(self):
+        """Incorrect permissions or missing process guards still remove the node fixture."""
+        probe = load_probe("test_gpu_config_init_guards.py")
+        for expected, output in (
+            (None, "unexpected success"),
+            ("/available-configs/default", "/available-configs/default"),
+        ):
+            with self.subTest(expected=expected):
+                result = subprocess.CompletedProcess([], 0, output, "")
+                with (
+                    patch.object(probe, "run", side_effect=["mock-fixture", result, ""]) as run,
+                    patch.object(probe.time, "sleep"),
+                ):
+                    with self.assertRaises(AssertionError):
+                        probe.check_oneshot(
+                            Path("fixture"),
+                            Path("fixture/source"),
+                            ("default", expected, "1000:1000", "default", "0777"),
+                        )
+                self.assertEqual(run.call_args.args, ("rm", "-f", "mock-fixture"))
+
+    def test_smtp_transcript_never_submits_mail(self):
+        """Keep STARTTLS before AUTH and restrict the transcript to handshake/probe commands."""
+        probe = load_probe("test_mail_capability_guards.py")
+        plain, tls, context = MagicMock(), MagicMock(), MagicMock()
+        before = io.BytesIO(b"220 hello\r\n250 hello\r\n220 upgrade\r\n")
+        after = io.BytesIO(b"250 hello\r\n235 authenticated\r\n250 okay\r\n221 bye\r\n")
+        plain.makefile.return_value = before
+        tls.makefile.return_value = after
+        context.wrap_socket.return_value = tls
+        with (
+            patch.object(probe.socket, "create_connection", return_value=plain),
+            patch.object(probe, "port", return_value=12345),
+        ):
+            probe.check_smtp("dovecot-fixture", context)
+        self.assertEqual(
+            [call.args[0].split(b" ", 1)[0] for call in plain.sendall.call_args_list],
+            [b"PROXY", b"EHLO", b"STARTTLS\r\n"],
+        )
+        self.assertEqual(
+            [call.args[0].split(b" ", 1)[0] for call in tls.sendall.call_args_list],
+            [b"EHLO", b"AUTH", b"NOOP\r\n", b"QUIT\r\n"],
+        )
+        context.wrap_socket.assert_called_once_with(plain, server_hostname="guard.invalid")
+        self.assertTrue(before.closed)
+        self.assertTrue(after.closed)
+        plain.close.assert_called_once()
+        tls.close.assert_called_once()
+
+    def test_smtp_failure_closes_buffered_streams(self):
+        """Reject bad greetings or authentication and close both file wrappers on failure."""
+        probe = load_probe("test_mail_capability_guards.py")
+        for phase in ("greeting", "authentication"):
+            with self.subTest(phase=phase):
+                plain, tls, context = MagicMock(), MagicMock(), MagicMock()
+                before = io.BytesIO(
+                    b"500 denied\r\n"
+                    if phase == "greeting"
+                    else b"220 hello\r\n250 hello\r\n220 upgrade\r\n"
+                )
+                after = io.BytesIO(b"250 hello\r\n535 rejected\r\n")
+                plain.makefile.return_value = before
+                tls.makefile.return_value = after
+                context.wrap_socket.return_value = tls
+                with (
+                    patch.object(probe.socket, "create_connection", return_value=plain),
+                    patch.object(probe, "port", return_value=12345),
+                ):
+                    with self.assertRaises(AssertionError):
+                        probe.check_smtp("dovecot-fixture", context)
+                self.assertTrue(before.closed)
+                plain.close.assert_called_once()
+                if phase == "greeting":
+                    context.wrap_socket.assert_not_called()
+                    self.assertFalse(after.closed)
+                    after.close()
+                else:
+                    self.assertTrue(after.closed)
+                    tls.close.assert_called_once()
+
+    def test_partial_postfix_setup_cleans_dovecot_and_volume(self):
+        """A failed Postfix setup cannot leave its allocated volume or the first daemon."""
+        probe = load_probe("test_mail_capability_guards.py")
+
+        def fail_postfix(_directory, _dovecot, volumes):
+            volumes.append("postfix-state-fixture")
+            raise RuntimeError("synthetic postfix failure")
+
+        with (
+            patch.object(probe, "create_certificate"),
+            patch.object(probe, "start_dovecot", return_value="dovecot-fixture"),
+            patch.object(probe.ssl, "create_default_context"),
+            patch.object(probe, "check_imap"),
+            patch.object(probe, "start_postfix", side_effect=fail_postfix),
+            patch.object(probe, "run", side_effect=["1777", "", ""]) as run,
+            patch.object(
+                probe, "run_command", return_value=subprocess.CompletedProcess([], 0, "", "")
+            ),
+            patch("builtins.print"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "postfix failure"):
+                probe.main()
+        self.assertEqual(
+            [call.args[0] for call in run.call_args_list][-2:],
+            [
+                ["podman", "rm", "-f", "dovecot-fixture"],
+                ["podman", "volume", "rm", "postfix-state-fixture"],
+            ],
+        )
