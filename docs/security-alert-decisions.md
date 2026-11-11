@@ -2058,3 +2058,34 @@ The full suite ran 510 tests successfully with 21 opt-in skips. Ruff and diff
 checks passed. Joint Pylint retains only the existing shared container-flag
 fragment duplication heuristic. No scanner rule was suppressed. These six source
 fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Review fixed-source test execution findings
+
+Reviewed six explicit exec call sites across five test modules and dismissed their
+twelve duplicate Bandit/Pylint findings as false positives: #7779, #7778, #6906,
+#6905, #6904, #6868, #6792, #6791, #4435, #4434, #4175 and #4159. Each source
+comes exclusively from a fixed checked-in ConfigMap data key or the checked-in
+mail probe. None is derived from a network response, credential, environment
+value, test input or caller-supplied path. The namespaces use explicit non-main
+names, so guarded operational entry points do not execute during loading. AST
+review of embedded module top levels found only imports, definitions, constants
+and main guards; no live API or secret read runs at import. The optimized-mode
+case deliberately compiles at levels 0 and 2 to prove security assertions remain
+explicit runtime checks. Changing loader APIs would retain dynamic execution and
+would not improve that trust boundary.
+
+Validated exact alert rules, paths, states, analyzed revisions and unchanged test
+file bytes. An initial guard stopped before mutation because detail responses add
+a redundant markdown message field; refreshed concurrent scan revisions, rechecked
+source identity, then compared stable fields plus message text. Every dismissal
+has a comment requiring review if executable source becomes external or loading
+runs live operations. No global exec exclusion or test assertion change was made.
+
+All 83 relevant tests passed: report logic 30, logs logic 34, trim coverage 17 and
+optimized guards 2. No production entry point was invoked. Independent open-alert
+inventory confirms all twelve exact IDs are absent. Current total is 181: Bandit
+83, modern Pylint 35, Prospector 56 and Opengrep 7. The reduction from the earlier
+212 snapshot also includes concurrent scanner reconciliation of published source
+fixes; it is not attributed solely to these twelve decisions. No code changed in
+this batch and no push was performed.
