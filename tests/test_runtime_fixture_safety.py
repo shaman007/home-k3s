@@ -12,6 +12,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import MagicMock, patch
 
+from nginx_fixture import fixture_binary
+
 import test_mastodon_bounce_filter_runtime as bounce
 import test_static_assets_runtime as assets
 import test_media_cache_runtime as media
@@ -112,6 +114,48 @@ class SieveFixtureSafetyTest(unittest.TestCase):
 class NginxFixtureSafetyTest(unittest.TestCase):
     """Require deliberate source selection before creating servers or processes."""
 
+    def test_binary_selection_never_uses_path_or_nonexecutable_files(self):
+        """Require a deliberate executable file while preserving paths with spaces."""
+        with tempfile.TemporaryDirectory(prefix="nginx-binary-check-") as directory:
+            root = Path(directory)
+            binary = root / "selected nginx"
+            binary.write_text("#!/bin/sh\nexit 0\n")
+            for selected in (
+                None,
+                "nginx",
+                "./nginx",
+                str(root),
+                str(root / "missing"),
+                str(binary),
+            ):
+                with self.subTest(selected=selected):
+                    with self.assertRaisesRegex(RuntimeError, "absolute executable"):
+                        fixture_binary(selected)
+            binary.chmod(0o700)
+            with patch.dict("os.environ", {"PATH": str(root)}):
+                self.assertEqual(fixture_binary(str(binary)), str(binary.resolve()))
+            alias = root / "alias"
+            alias.symlink_to(binary)
+            self.assertEqual(fixture_binary(str(alias)), str(binary.resolve()))
+
+    def test_invalid_binary_fails_before_resource_allocation(self):
+        """Both suites reject PATH-selected executables before starting local servers."""
+        for module, parent in (
+            (assets, assets.StaticAssetsRuntimeTest),
+            (media, media.MediaCacheRuntimeTest),
+        ):
+            with (
+                self.subTest(suite=parent.__name__),
+                patch.object(module, "BINARY", "nginx"),
+                patch.object(assets, "fixture_source", return_value=Path.cwd()),
+                patch.object(module.tempfile, "TemporaryDirectory") as temp,
+                patch.object(module.subprocess, "Popen") as process,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "absolute executable"):
+                    parent.setUpClass()
+                temp.assert_not_called()
+                process.assert_not_called()
+
     def test_missing_source_fails_before_resource_allocation(self):
         """An explicitly requested runtime test cannot silently guess its source."""
         with (
@@ -187,6 +231,7 @@ class RuntimeResourceCleanupTests(unittest.TestCase):
 
                 with (
                     patch.object(assets, "fixture_source", return_value=Path.cwd()),
+                    patch.object(module, "fixture_binary", return_value="/fixture/nginx"),
                     patch.object(
                         module.tempfile,
                         "TemporaryDirectory",
@@ -202,12 +247,56 @@ class RuntimeResourceCleanupTests(unittest.TestCase):
                 self.assertEqual(len(directories), 1)
                 self.assertFalse(directories[0].exists())
 
+    def test_nginx_check_timeout_closes_resources_without_starting_workers(self):
+        """Both configuration-check timeouts release logs, directories and local servers."""
+        for module, parent, owner, attribute in (
+            (assets, assets.StaticAssetsRuntimeTest, assets, "PHPServer"),
+            (media, media.MediaCacheRuntimeTest, media.http.server, "ThreadingHTTPServer"),
+        ):
+            with self.subTest(suite=parent.__name__):
+                runtime = type("DisposableCheckTimeout", (parent,), {})
+                server = MagicMock()
+                server.__enter__.return_value = server
+                server.server_address = ("127.0.0.1", 12345)
+                server.server_port = 12345
+                sock = MagicMock()
+                sock.__enter__.return_value = sock
+                sock.getsockname.return_value = ("127.0.0.1", 12346)
+                with (
+                    patch.object(module, "fixture_binary", return_value="/fixture/nginx"),
+                    patch.object(assets, "fixture_source", return_value=Path.cwd()),
+                    patch.object(assets.shutil, "copy"),
+                    patch.object(owner, attribute, return_value=server),
+                    patch.object(module.threading, "Thread"),
+                    patch.object(module.socket, "socket", return_value=sock),
+                    patch.object(
+                        module.subprocess, "run", side_effect=subprocess.TimeoutExpired("nginx", 15)
+                    ) as check,
+                    patch.object(module.subprocess, "Popen") as workers,
+                ):
+                    try:
+                        with self.assertRaises(subprocess.TimeoutExpired):
+                            runtime.setUpClass()
+                    finally:
+                        runtime.doClassCleanups()
+                self.assertEqual(check.call_args.args[0][0], "/fixture/nginx")
+                self.assertIn("-t", check.call_args.args[0])
+                self.assertEqual(check.call_args.kwargs["timeout"], 15)
+                self.assertIs(check.call_args.kwargs["shell"], False)
+                workers.assert_not_called()
+                self.assertTrue(all(log.closed for log in runtime.logs))
+                directory = runtime.__dict__["base" if module is assets else "directory"]
+                self.assertFalse(directory.exists())
+                server.shutdown.assert_called_once()
+                server.__exit__.assert_called_once()
+
     def test_config_failure_stops_and_closes_origin(self):
         """A config parse failure before the startup loop still shuts down the origin."""
         runtime = type("DisposableMedia", (media.MediaCacheRuntimeTest,), {})
         server = MagicMock()
         server.__enter__.return_value = server
         with (
+            patch.object(media, "fixture_binary", return_value="/fixture/nginx"),
             patch.object(media.http.server, "ThreadingHTTPServer", return_value=server),
             patch.object(media.threading, "Thread") as thread,
             patch.object(media.yaml, "safe_load_all", side_effect=ValueError("synthetic config")),

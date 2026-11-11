@@ -20,6 +20,8 @@ import uuid
 
 import yaml
 
+from nginx_fixture import fixture_binary
+
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = os.environ.get("NGINX_BINARY")
 
@@ -96,6 +98,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.binary = fixture_binary(BINARY)
         directory = cls.enterClassContext(tempfile.TemporaryDirectory(prefix="media-cache-test-"))
         cls.directory = Path(directory)
         cls.origin = cls.enterClassContext(
@@ -132,7 +135,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                 cls.logs.append(log)
                 result = subprocess.run(
                     [
-                        BINARY,
+                        cls.binary,
                         "-e",
                         "stderr",
                         "-t",
@@ -144,12 +147,14 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                     check=False,
                     capture_output=True,
                     text=True,
+                    shell=False,
+                    timeout=15,
                 )
                 if result.returncode:
                     raise RuntimeError(result.stderr)
                 process = subprocess.Popen(
                     [
-                        BINARY,
+                        cls.binary,
                         "-e",
                         "stderr",
                         "-p",
@@ -159,6 +164,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                         "-g",
                         "daemon off;",
                     ],
+                    shell=False,
                     stdout=log,
                     stderr=log,
                 )

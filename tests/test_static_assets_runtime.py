@@ -21,6 +21,8 @@ import unittest
 
 import yaml
 
+from nginx_fixture import fixture_binary
+
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = os.environ.get("STATIC_NGINX_BINARY")
 SOURCE = os.environ.get("STATIC_NGINX_SOURCE")
@@ -116,6 +118,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         source = fixture_source()
+        cls.binary = fixture_binary(BINARY)
         directory = cls.enterClassContext(tempfile.TemporaryDirectory(prefix="static-assets-"))
         cls.base = Path(directory)
         cls.php = cls.enterClassContext(PHPServer(("127.0.0.1", 0), PHP))
@@ -154,16 +157,18 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 log = (directory / "process.log").open("w+")
                 cls.logs.append(log)
                 check = subprocess.run(
-                    [BINARY, "-e", "stderr", "-t", "-p", str(directory), "-c", str(path)],
+                    [cls.binary, "-e", "stderr", "-t", "-p", str(directory), "-c", str(path)],
                     check=False,
                     capture_output=True,
                     text=True,
+                    shell=False,
+                    timeout=15,
                 )
                 if check.returncode:
                     raise RuntimeError(check.stderr)
                 process = subprocess.Popen(
                     [
-                        BINARY,
+                        cls.binary,
                         "-e",
                         "stderr",
                         "-p",
@@ -173,6 +178,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                         "-g",
                         "daemon off;",
                     ],
+                    shell=False,
                     stdout=log,
                     stderr=log,
                 )

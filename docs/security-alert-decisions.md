@@ -2670,3 +2670,28 @@ redirect-callback argument-count diagnostics. Bandit reports no analysis errors.
 No Kubernetes commands, real credentials, live services or containers were used
 in verification. Runtime scanner findings await a genuine published rescan; none
 were dismissed by this source-change batch. No push was performed.
+
+
+### Require deliberate Nginx fixture executables and bound configuration checks
+
+Both opt-in Nginx runtime suites now validate their selected executable before
+allocating fixture resources. Shared nginx_fixture.fixture_binary requires an
+absolute path that resolves to a regular executable file, preserving deliberate
+custom builds, paths with spaces and executable symlinks without a PATH lookup.
+Both suites use the resolved path for configuration checks and worker startup.
+Configuration checks explicitly disable shell execution and have a 15-second
+process timeout; worker argv also explicitly disables shell execution. Existing
+loopback listeners, synthetic content, private directories and worker teardown
+remain intact.
+
+Three new regressions cover invalid/missing/relative/non-executable selections,
+valid explicit paths and symlinks under hostile PATH, rejection before resource
+allocation in both suites, and configuration-check timeout cleanup of logs,
+directories and local server contexts without starting workers. These safety
+checks use mocked servers/processes; no Nginx process or real service is launched.
+The full suite ran 534 tests successfully with 16 skips, including the opt-in real
+Nginx behavior tests. Their skipped status does not establish real Nginx behavior.
+Ruff passes, Bandit has no analysis errors, and full Pylint reports only resource-
+context and duplicate-code heuristics in these fixture classes. No source rule
+suppressions were added. Runtime findings remain open pending genuine rescanning
+and review; no alert was dismissed and no push was performed.
