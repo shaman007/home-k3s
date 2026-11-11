@@ -588,91 +588,96 @@ data:
     {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}]}], "gpuResourceReview": {"node": "talos-d4h-k5m", "resource":
     "nvidia.com/gpu", "capacity": 8}}'
   backfill.py: "\"\"\"Guarded GitOps backfill: exact contracts, admission previews, sequential rollouts.\"\"\"\n\nimport copy\n\
-    import json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.request\n\n\ndef reviewed(doc,\
-    \ entry):\n    \"\"\"Reject workloads that differ from the explicitly reviewed deployment contract.\"\"\"\n    if not\
-    \ (doc[\"kind\"] == entry[\"kind\"] and doc[\"metadata\"][\"name\"] == entry[\"name\"]):\n        raise AssertionError\n\
-    \    if not doc[\"metadata\"][\"namespace\"] == entry[\"namespace\"]:\n        raise AssertionError\n    pod = doc[\"\
-    spec\"][\"template\"][\"spec\"]\n    if not pod.get(\"serviceAccountName\", \"default\") == entry[\"serviceAccount\"]:\n\
-    \        raise AssertionError\n    for key, value in entry[\"labels\"].items():\n        if not doc[\"spec\"][\"template\"\
-    ][\"metadata\"][\"labels\"].get(key) == value:\n            raise AssertionError\n    for section in [\"containers\",\
-    \ \"initContainers\"]:\n        actual, expected = (\n            pod.get(section, []),\n            entry[\"fixture\"\
-    ][\"spec\"][\"template\"][\"spec\"].get(section, []),\n        )\n        if not len(actual) == len(expected):\n     \
-    \       raise AssertionError\n        for a, e in zip(actual, expected):\n            if not all(\n                (\n\
-    \                    a.get(k, []) == e.get(k, [])\n                    for k in [\"name\", \"image\", \"command\", \"\
-    args\", \"volumeMounts\"]\n                )\n            ):\n                raise AssertionError\n    if not pod.get(\"\
+    import json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.request\n\n\ndef review_container_specs(pod,\
+    \ entry):\n    \"\"\"Require the exact reviewed container count, images, commands and mounts.\"\"\"\n    for section in\
+    \ [\"containers\", \"initContainers\"]:\n        actual, expected = (\n            pod.get(section, []),\n           \
+    \ entry[\"fixture\"][\"spec\"][\"template\"][\"spec\"].get(section, []),\n        )\n        if not len(actual) == len(expected):\n\
+    \            raise AssertionError\n        for a, e in zip(actual, expected):\n            if not all(\n             \
+    \   (\n                    a.get(k, []) == e.get(k, [])\n                    for k in [\"name\", \"image\", \"command\"\
+    , \"args\", \"volumeMounts\"]\n                )\n            ):\n                raise AssertionError\n\n\ndef review_target_environment(pod,\
+    \ targets):\n    \"\"\"Require each reviewed target identity and its literal/field-reference environment.\"\"\"\n    for\
+    \ target in targets:\n        actual = pod[target[\"section\"]][target[\"index\"]]\n        if not actual[\"name\"] ==\
+    \ target[\"name\"]:\n            raise AssertionError\n        env = {v[\"name\"]: v for v in actual.get(\"env\", [])}\n\
+    \        for name, value in target.get(\"requiredEnv\", {}).items():\n            if not env.get(name, {}).get(\"value\"\
+    ) == value:\n                raise AssertionError\n        for name, path in target.get(\"requiredFieldRefs\", {}).items():\n\
+    \            if (\n                not env.get(name, {}).get(\"valueFrom\", {}).get(\"fieldRef\", {}).get(\"fieldPath\"\
+    )\n                == path\n            ):\n                raise AssertionError\n\n\ndef reviewed(doc, entry):\n    \"\
+    \"\"Reject workloads that differ from the explicitly reviewed deployment contract.\"\"\"\n    if not (doc[\"kind\"] ==\
+    \ entry[\"kind\"] and doc[\"metadata\"][\"name\"] == entry[\"name\"]):\n        raise AssertionError\n    if not doc[\"\
+    metadata\"][\"namespace\"] == entry[\"namespace\"]:\n        raise AssertionError\n    pod = doc[\"spec\"][\"template\"\
+    ][\"spec\"]\n    if not pod.get(\"serviceAccountName\", \"default\") == entry[\"serviceAccount\"]:\n        raise AssertionError\n\
+    \    for key, value in entry[\"labels\"].items():\n        if not doc[\"spec\"][\"template\"][\"metadata\"][\"labels\"\
+    ].get(key) == value:\n            raise AssertionError\n    review_container_specs(pod, entry)\n    if not pod.get(\"\
     volumes\", []) == entry[\"fixture\"][\"spec\"][\"template\"][\"spec\"].get(\n        \"volumes\", []\n    ):\n       \
-    \ raise AssertionError\n    for target in entry[\"targets\"]:\n        actual = pod[target[\"section\"]][target[\"index\"\
-    ]]\n        if not actual[\"name\"] == target[\"name\"]:\n            raise AssertionError\n        env = {v[\"name\"\
-    ]: v for v in actual.get(\"env\", [])}\n        for name, value in target.get(\"requiredEnv\", {}).items():\n        \
-    \    if not env.get(name, {}).get(\"value\") == value:\n                raise AssertionError\n        for name, path in\
-    \ target.get(\"requiredFieldRefs\", {}).items():\n            if (\n                not env.get(name, {}).get(\"valueFrom\"\
-    , {}).get(\"fieldRef\", {}).get(\"fieldPath\")\n                == path\n            ):\n                raise AssertionError\n\
-    \    if entry[\"kind\"] == \"DaemonSet\":\n        if not doc[\"spec\"][\"updateStrategy\"] == entry[\"fixture\"][\"spec\"\
-    ][\"updateStrategy\"]:\n            raise AssertionError\n        if not doc[\"spec\"][\"updateStrategy\"][\"rollingUpdate\"\
-    ][\"maxUnavailable\"] == 1:\n            raise AssertionError\n\n\ndef expected_spec(doc, entry):\n    \"\"\"Copy the\
-    \ workload specification and apply only its reviewed security context.\"\"\"\n    spec = copy.deepcopy(doc[\"spec\"])\n\
-    \    if entry.get(\"podGuards\"):\n        pod = spec[\"template\"][\"spec\"]\n        pod[\"securityContext\"] = {**(pod.get(\"\
-    securityContext\") or {}), **entry[\"podGuards\"]}\n    for target in entry[\"targets\"]:\n        container = spec[\"\
-    template\"][\"spec\"][target[\"section\"]][target[\"index\"]]\n        container[\"securityContext\"] = {\n          \
-    \  **(container.get(\"securityContext\") or {}),\n            **target[\"guards\"],\n        }\n    return spec\n\n\n\
-    def ready(doc):\n    \"\"\"Require the current generation and every desired replica to be updated and ready.\"\"\"\n \
-    \   s = doc.get(\"status\", {})\n    if s.get(\"observedGeneration\", 0) < doc[\"metadata\"].get(\"generation\", 1):\n\
-    \        return False\n    if doc[\"kind\"] == \"Deployment\":\n        n = doc[\"spec\"].get(\"replicas\", 1)\n     \
-    \   return n > 0 and all(\n            s.get(k) == n\n            for k in [\"replicas\", \"updatedReplicas\", \"readyReplicas\"\
-    , \"availableReplicas\"]\n        )\n    n = s.get(\"desiredNumberScheduled\", 0)\n    return n > 0 and all(\n       \
-    \ s.get(k) == n for k in [\"updatedNumberScheduled\", \"numberReady\", \"numberAvailable\"]\n    )\n\n\ndef patch(doc):\n\
-    \    \"\"\"Build a resource-version-guarded annotation patch to trigger reviewed admission.\"\"\"\n    result = [\n  \
-    \      {\n            \"op\": \"test\",\n            \"path\": \"/metadata/resourceVersion\",\n            \"value\":\
-    \ doc[\"metadata\"][\"resourceVersion\"],\n        }\n    ]\n    if doc[\"metadata\"].get(\"annotations\") is None:\n\
-    \        result.append({\"op\": \"add\", \"path\": \"/metadata/annotations\", \"value\": {}})\n    result.append(\n  \
-    \      {\n            \"op\": \"add\",\n            \"path\": \"/metadata/annotations/hardening.home-k3s~1infra-guards\"\
+    \ raise AssertionError\n    review_target_environment(pod, entry[\"targets\"])\n    if entry[\"kind\"] == \"DaemonSet\"\
+    :\n        if not doc[\"spec\"][\"updateStrategy\"] == entry[\"fixture\"][\"spec\"][\"updateStrategy\"]:\n           \
+    \ raise AssertionError\n        if not doc[\"spec\"][\"updateStrategy\"][\"rollingUpdate\"][\"maxUnavailable\"] == 1:\n\
+    \            raise AssertionError\n\n\ndef expected_spec(doc, entry):\n    \"\"\"Copy the workload specification and apply\
+    \ only its reviewed security context.\"\"\"\n    spec = copy.deepcopy(doc[\"spec\"])\n    if entry.get(\"podGuards\"):\n\
+    \        pod = spec[\"template\"][\"spec\"]\n        pod[\"securityContext\"] = {**(pod.get(\"securityContext\") or {}),\
+    \ **entry[\"podGuards\"]}\n    for target in entry[\"targets\"]:\n        container = spec[\"template\"][\"spec\"][target[\"\
+    section\"]][target[\"index\"]]\n        container[\"securityContext\"] = {\n            **(container.get(\"securityContext\"\
+    ) or {}),\n            **target[\"guards\"],\n        }\n    return spec\n\n\ndef ready(doc):\n    \"\"\"Require the current\
+    \ generation and every desired replica to be updated and ready.\"\"\"\n    s = doc.get(\"status\", {})\n    if s.get(\"\
+    observedGeneration\", 0) < doc[\"metadata\"].get(\"generation\", 1):\n        return False\n    if doc[\"kind\"] == \"\
+    Deployment\":\n        n = doc[\"spec\"].get(\"replicas\", 1)\n        return n > 0 and all(\n            s.get(k) ==\
+    \ n\n            for k in [\"replicas\", \"updatedReplicas\", \"readyReplicas\", \"availableReplicas\"]\n        )\n \
+    \   n = s.get(\"desiredNumberScheduled\", 0)\n    return n > 0 and all(\n        s.get(k) == n for k in [\"updatedNumberScheduled\"\
+    , \"numberReady\", \"numberAvailable\"]\n    )\n\n\ndef patch(doc):\n    \"\"\"Build a resource-version-guarded annotation\
+    \ patch to trigger reviewed admission.\"\"\"\n    result = [\n        {\n            \"op\": \"test\",\n            \"\
+    path\": \"/metadata/resourceVersion\",\n            \"value\": doc[\"metadata\"][\"resourceVersion\"],\n        }\n  \
+    \  ]\n    if doc[\"metadata\"].get(\"annotations\") is None:\n        result.append({\"op\": \"add\", \"path\": \"/metadata/annotations\"\
+    , \"value\": {}})\n    result.append(\n        {\n            \"op\": \"add\",\n            \"path\": \"/metadata/annotations/hardening.home-k3s~1infra-guards\"\
     ,\n            \"value\": \"v1\",\n        }\n    )\n    return result\n\n\ndef gpu_healthy(node, review):\n    \"\"\"\
     Require reviewed node identity, GPU health, permissions, and allocatable capacity.\"\"\"\n    if not node[\"metadata\"\
     ][\"name\"] == review[\"node\"]:\n        raise AssertionError\n    if not any(\n        (\n            c[\"type\"] ==\
     \ \"Ready\" and c[\"status\"] == \"True\"\n            for c in node.get(\"status\", {}).get(\"conditions\", [])\n   \
     \     )\n    ):\n        raise AssertionError(\"GPU node is not Ready\")\n    for field in [\"capacity\", \"allocatable\"\
     ]:\n        if (\n            not int(node.get(\"status\", {}).get(field, {}).get(review[\"resource\"], 0))\n        \
-    \    == review[\"capacity\"]\n        ):\n            raise AssertionError(\"GPU resource count changed\")\n\n\ndef main(config_dir=Path(\"\
-    /config\"), account=Path(\"/var/run/secrets/kubernetes.io/serviceaccount\")):\n    \"\"\"Guarded GitOps backfill: exact\
-    \ contracts, admission previews, sequential rollouts.\"\"\"\n    catalog = json.loads((config_dir / \"catalog.json\").read_text())\n\
-    \    entries = catalog[\"entries\"]\n    context = ssl.create_default_context(cafile=str(account / \"ca.crt\"))\n    token\
-    \ = (account / \"token\").read_text().strip()\n    base = (\n        \"https://\"\n        + os.environ[\"KUBERNETES_SERVICE_HOST\"\
-    ]\n        + \":\"\n        + os.environ[\"KUBERNETES_SERVICE_PORT\"]\n    )\n    opener = urllib.request.build_opener(\n\
-    \        urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context)\n    )\n\n    def request(e, changes=None,\
-    \ dry=False):\n        resource = \"deployments\" if e[\"kind\"] == \"Deployment\" else \"daemonsets\"\n        url =\
-    \ base + \"/apis/apps/v1/namespaces/\" + e[\"namespace\"] + \"/\" + resource + \"/\" + e[\"name\"]\n        if dry:\n\
-    \            url += \"?dryRun=All\"\n        headers = {\"Authorization\": \"Bearer \" + token}\n        if changes is\
-    \ not None:\n            headers[\"Content-Type\"] = \"application/json-patch+json\"\n        req = urllib.request.Request(\n\
-    \            url,\n            method=\"GET\" if changes is None else \"PATCH\",\n            headers=headers,\n     \
-    \       data=None if changes is None else json.dumps(changes).encode(),\n        )\n        with opener.open(req, timeout=15)\
-    \ as response:\n            return json.load(response)\n\n    def storage_check():\n        if not any((e[\"namespace\"\
-    ] == \"longhorn-system\" for e in entries)):\n            return\n        from storage_guard import storage_healthy\n\n\
-    \        documents = []\n        for resource in [\"volumes\", \"nodes\"]:\n            req = urllib.request.Request(\n\
-    \                base + \"/apis/longhorn.io/v1beta2/namespaces/longhorn-system/\" + resource,\n                headers={\"\
-    Authorization\": \"Bearer \" + token},\n            )\n            with opener.open(req, timeout=15) as response:\n  \
-    \              documents.append(json.load(response))\n        storage_healthy(*documents)\n\n    def gpu_check():\n  \
-    \      review = catalog.get(\"gpuResourceReview\")\n        if not review:\n            return\n        req = urllib.request.Request(\n\
-    \            base + \"/api/v1/nodes/\" + review[\"node\"], headers={\"Authorization\": \"Bearer \" + token}\n        )\n\
-    \        with opener.open(req, timeout=15) as response:\n            gpu_healthy(json.load(response), review)\n\n    #\
-    \ Every contract and dry-run mutation must pass before the hook writes anything.\n    for attempt in range(30):\n    \
-    \    try:\n            storage_check()\n            gpu_check()\n            for e in entries:\n                original\
-    \ = request(e)\n                reviewed(original, e)\n                if not ready(original):\n                    raise\
-    \ AssertionError(e[\"name\"] + \": not fully ready\")\n                if not request(e, patch(original), True)[\"spec\"\
-    ] == expected_spec(original, e):\n                    raise AssertionError(e[\"name\"] + \": unexpected admission result\"\
-    )\n            break\n        except AssertionError:\n            if attempt == 29:\n                raise\n         \
-    \   time.sleep(3)\n    for e in entries:\n        storage_check()\n        gpu_check()\n        original = request(e)\n\
-    \        reviewed(original, e)\n        if not ready(original):\n            raise AssertionError(e[\"name\"] + \": readiness\
-    \ changed\")\n        expected = expected_spec(original, e)\n        if expected != original[\"spec\"]:\n            if\
-    \ not request(e, patch(original), True)[\"spec\"] == expected:\n                raise AssertionError\n            if not\
-    \ request(e, patch(original))[\"spec\"] == expected:\n                raise AssertionError\n        deadline = time.monotonic()\
-    \ + 300\n        stable_since = None\n        while True:\n            current = request(e)\n            if not current[\"\
-    spec\"] == expected:\n                raise AssertionError(e[\"name\"] + \": unexpected spec change\")\n            if\
-    \ ready(current):\n                if stable_since is None:\n                    stable_since = time.monotonic()\n   \
-    \             if time.monotonic() - stable_since >= 15:\n                    break\n            else:\n              \
-    \  stable_since = None\n            if time.monotonic() >= deadline:\n                raise RuntimeError(e[\"name\"] +\
-    \ \": rollout failed; later targets untouched\")\n            time.sleep(3)\n        storage_check()\n        gpu_check()\n\
-    \        print(e[\"namespace\"] + \"/\" + e[\"name\"] + \": guards and rollout verified\", flush=True)\n\n\nif __name__\
-    \ == \"__main__\":\n    main()\n"
+    \    == review[\"capacity\"]\n        ):\n            raise AssertionError(\"GPU resource count changed\")\n\n\ndef preflight(entries,\
+    \ request, environment_check):\n    \"\"\"Require every contract and dry-run mutation to pass before any rollout write.\"\
+    \"\"\n    # Every contract and dry-run mutation must pass before the hook writes anything.\n    for attempt in range(30):\n\
+    \        try:\n            environment_check()\n            for e in entries:\n                original = request(e)\n\
+    \                reviewed(original, e)\n                if not ready(original):\n                    raise AssertionError(e[\"\
+    name\"] + \": not fully ready\")\n                if not request(e, patch(original), True)[\"spec\"] == expected_spec(original,\
+    \ e):\n                    raise AssertionError(e[\"name\"] + \": unexpected admission result\")\n            break\n\
+    \        except AssertionError:\n            if attempt == 29:\n                raise\n            time.sleep(3)\n\n\n\
+    def wait_for_rollout(e, request, expected):\n    \"\"\"Require the exact expected spec and fifteen seconds of stable current\
+    \ readiness.\"\"\"\n    deadline = time.monotonic() + 300\n    stable_since = None\n    while True:\n        current =\
+    \ request(e)\n        if not current[\"spec\"] == expected:\n            raise AssertionError(e[\"name\"] + \": unexpected\
+    \ spec change\")\n        if ready(current):\n            if stable_since is None:\n                stable_since = time.monotonic()\n\
+    \            if time.monotonic() - stable_since >= 15:\n                break\n        else:\n            stable_since\
+    \ = None\n        if time.monotonic() >= deadline:\n            raise RuntimeError(e[\"name\"] + \": rollout failed; later\
+    \ targets untouched\")\n        time.sleep(3)\n\n\ndef rollout(entries, request, environment_check):\n    \"\"\"Recheck\
+    \ each target and environment before sequential guarded writes and readback.\"\"\"\n    for e in entries:\n        environment_check()\n\
+    \        original = request(e)\n        reviewed(original, e)\n        if not ready(original):\n            raise AssertionError(e[\"\
+    name\"] + \": readiness changed\")\n        expected = expected_spec(original, e)\n        if expected != original[\"\
+    spec\"]:\n            if not request(e, patch(original), True)[\"spec\"] == expected:\n                raise AssertionError\n\
+    \            if not request(e, patch(original))[\"spec\"] == expected:\n                raise AssertionError\n       \
+    \ wait_for_rollout(e, request, expected)\n        environment_check()\n        print(e[\"namespace\"] + \"/\" + e[\"name\"\
+    ] + \": guards and rollout verified\", flush=True)\n\n\ndef main(config_dir=Path(\"/config\"), account=Path(\"/var/run/secrets/kubernetes.io/serviceaccount\"\
+    )):\n    \"\"\"Guarded GitOps backfill: exact contracts, admission previews, sequential rollouts.\"\"\"\n    catalog =\
+    \ json.loads((config_dir / \"catalog.json\").read_text())\n    entries = catalog[\"entries\"]\n    context = ssl.create_default_context(cafile=str(account\
+    \ / \"ca.crt\"))\n    token = (account / \"token\").read_text().strip()\n    base = (\n        \"https://\"\n        +\
+    \ os.environ[\"KUBERNETES_SERVICE_HOST\"]\n        + \":\"\n        + os.environ[\"KUBERNETES_SERVICE_PORT\"]\n    )\n\
+    \    opener = urllib.request.build_opener(\n        urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context)\n\
+    \    )\n\n    def request(e, changes=None, dry=False):\n        resource = \"deployments\" if e[\"kind\"] == \"Deployment\"\
+    \ else \"daemonsets\"\n        url = base + \"/apis/apps/v1/namespaces/\" + e[\"namespace\"] + \"/\" + resource + \"/\"\
+    \ + e[\"name\"]\n        if dry:\n            url += \"?dryRun=All\"\n        headers = {\"Authorization\": \"Bearer \"\
+    \ + token}\n        if changes is not None:\n            headers[\"Content-Type\"] = \"application/json-patch+json\"\n\
+    \        req = urllib.request.Request(\n            url,\n            method=\"GET\" if changes is None else \"PATCH\"\
+    ,\n            headers=headers,\n            data=None if changes is None else json.dumps(changes).encode(),\n       \
+    \ )\n        with opener.open(req, timeout=15) as response:\n            return json.load(response)\n\n    def storage_check():\n\
+    \        if not any((e[\"namespace\"] == \"longhorn-system\" for e in entries)):\n            return\n        from storage_guard\
+    \ import storage_healthy\n\n        documents = []\n        for resource in [\"volumes\", \"nodes\"]:\n            req\
+    \ = urllib.request.Request(\n                base + \"/apis/longhorn.io/v1beta2/namespaces/longhorn-system/\" + resource,\n\
+    \                headers={\"Authorization\": \"Bearer \" + token},\n            )\n            with opener.open(req, timeout=15)\
+    \ as response:\n                documents.append(json.load(response))\n        storage_healthy(*documents)\n\n    def\
+    \ gpu_check():\n        review = catalog.get(\"gpuResourceReview\")\n        if not review:\n            return\n    \
+    \    req = urllib.request.Request(\n            base + \"/api/v1/nodes/\" + review[\"node\"], headers={\"Authorization\"\
+    : \"Bearer \" + token}\n        )\n        with opener.open(req, timeout=15) as response:\n            gpu_healthy(json.load(response),\
+    \ review)\n\n    def environment_check():\n        storage_check()\n        gpu_check()\n\n    preflight(entries, request,\
+    \ environment_check)\n    rollout(entries, request, environment_check)\n\n\nif __name__ == \"__main__\":\n    main()\n"
   storage_guard.py: "#!/usr/bin/env python3\n\"\"\"Preflight native mutations, then roll reviewed workloads one at a time.\"\
     \"\"\n\nimport copy\nimport json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.error\n\
     import urllib.request\n\nNAMESPACE = \"longhorn-system\"\nMARKER = \"hardening.home-k3s/component-security\"\n\n\ndef\

@@ -424,6 +424,72 @@ class InfrastructureGuardTests(unittest.TestCase):
         self.assertTrue(calls)
         self.assertEqual(set(calls), {"GET"})
 
+    def test_rollout_spec_drift_stops_before_later_targets(self):
+        """A changed first target cannot allow subsequent workloads to be touched."""
+        first = self.entries[0]
+        original = self.healthy(first)
+        expected = b.expected_spec(original, first)
+        calls = []
+        reads = 0
+
+        def request(entry, changes=None, dry=False):
+            nonlocal reads
+            calls.append((entry["name"], changes is not None, dry))
+            document = copy.deepcopy(original)
+            if changes is not None:
+                document["spec"] = copy.deepcopy(expected)
+            else:
+                reads += 1
+                if reads > 1:
+                    document["spec"]["unexpected-fixture-field"] = True
+            return document
+
+        with patch.object(b.time, "monotonic", return_value=0):
+            with self.assertRaisesRegex(AssertionError, "unexpected spec change"):
+                b.rollout(self.entries, request, lambda: None)
+        self.assertEqual({name for name, _, _ in calls}, {first["name"]})
+        self.assertEqual(sum(changed and not dry for _, changed, dry in calls), 1)
+        self.assertEqual(sum(changed and dry for _, changed, dry in calls), 1)
+
+    def test_lost_readiness_blocks_rollout_write(self):
+        """Readiness lost after preflight must prevent a real mutation."""
+        entry = self.entries[0]
+        document = self.healthy(entry)
+        field = "availableReplicas" if entry["kind"] == "Deployment" else "numberAvailable"
+        document["status"][field] = 0
+        calls = []
+
+        def request(_entry, changes=None, dry=False):
+            calls.append((changes, dry))
+            return document
+
+        with self.assertRaisesRegex(AssertionError, "readiness changed"):
+            b.rollout([entry], request, lambda: None)
+        self.assertEqual(calls, [(None, False)])
+
+    def test_readiness_loss_resets_stable_observation_window(self):
+        """Require fifteen continuous ready seconds after readiness resumes."""
+        entry = self.entries[0]
+        healthy = self.healthy(entry)
+        unhealthy = copy.deepcopy(healthy)
+        field = "availableReplicas" if entry["kind"] == "Deployment" else "numberAvailable"
+        unhealthy["status"][field] = 0
+        documents = iter([healthy, unhealthy, healthy, healthy])
+        reads = []
+
+        def request(actual):
+            self.assertEqual(actual, entry)
+            reads.append(actual["name"])
+            return next(documents)
+
+        with (
+            patch.object(b.time, "monotonic", side_effect=[0, 1, 2, 3, 10, 21, 22, 23, 37]),
+            patch.object(b.time, "sleep") as sleep,
+        ):
+            b.wait_for_rollout(entry, request, healthy["spec"])
+        self.assertEqual(len(reads), 4)
+        self.assertEqual(sleep.call_count, 3)
+
 
 if __name__ == "__main__":
     unittest.main()

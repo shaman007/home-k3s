@@ -1590,3 +1590,30 @@ modules and the updated regression module pass full Pylint; Ruff and diff checks
 passed, and Bandit reported no analysis errors. The actual opt-in runtime probes
 were not executed. Publication and genuine scanner refresh remain necessary for
 source-based alert closure; no scanner rule or runtime guard was disabled.
+
+
+### Separate infrastructure backfill contract, preflight and rollout checks
+
+Extracted container/target environment contract checks, all-target preflight,
+sequential rollout and exact-spec/continuous-readiness waiting from the large
+backfill functions. The four complexity warnings are gone. The optional
+storage_guard import remains lazy because the generated hook provides that
+module and non-storage checks do not require it; its existing lint context
+warnings remain open for separate review.
+
+Expanding every extracted helper call reproduces the entire preceding module
+AST exactly, preserving check order, retry limits, environment checks, admission
+dry runs, resource-version patches, rollout deadlines and stability timing.
+Regenerated the infrastructure bundle and compared parsed documents: only the
+ConfigMap's embedded backfill.py changed. All other data, mutation policies,
+RBAC, service accounts and job specifications are identical. The generator's
+--check passes. No live hook or cluster mutation was executed.
+
+Three new offline regressions prove unexpected spec drift stops later targets,
+readiness lost after preflight blocks mutation, and readiness loss resets the
+continuous fifteen-second stable window. Existing admission/storage/GPU refusal
+checks pass. The full suite ran 477 tests successfully with 21 opt-in skips.
+Selected Pylint style/correctness checks, Ruff and diff checks passed; Bandit
+reported no analysis errors. Existing tiny mock-opener method-count warnings
+were left unchanged. Publication and genuine scanner refresh remain necessary
+for remote alert closure; no runtime guard or scanner rule was disabled.
