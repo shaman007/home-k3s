@@ -112,6 +112,8 @@ def main():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=True,
+            shell=False,
+            timeout=30,
         )
         kube = http.server.ThreadingHTTPServer(("127.0.0.1", 0), MockAPI)
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -159,6 +161,7 @@ def main():
                     text=True,
                     capture_output=True,
                     timeout=90,
+                    shell=False,
                     check=False,
                 )
                 if not result.returncode == 0:

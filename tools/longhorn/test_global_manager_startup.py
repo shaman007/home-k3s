@@ -200,11 +200,17 @@ def main():
                     "--kube-config=/test/kubeconfig",
                 ],
                 text=True,
+                shell=False,
+                timeout=90,
             ).strip()
             try:
                 for _ in range(80):
                     logs = subprocess.check_output(
-                        ["/usr/bin/podman", "logs", container], text=True, stderr=subprocess.STDOUT
+                        ["/usr/bin/podman", "logs", container],
+                        text=True,
+                        stderr=subprocess.STDOUT,
+                        shell=False,
+                        timeout=10,
                     )
                     if "Global controllers started; serving as leader" in logs:
                         with closing(
@@ -224,6 +230,8 @@ def main():
                                 'grep -E "Uid:|Gid:|CapEff|NoNewPrivs|Seccomp:" /proc/1/status',
                             ],
                             text=True,
+                            shell=False,
+                            timeout=10,
                         )
                         for expected in [
                             "Uid:\t1000",
@@ -251,6 +259,8 @@ def main():
                 subprocess.run(
                     ["/usr/bin/podman", "stop", "--time", "3", container],
                     check=True,
+                    shell=False,
+                    timeout=10,
                     stdout=subprocess.DEVNULL,
                 )
     finally:

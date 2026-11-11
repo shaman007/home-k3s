@@ -24,6 +24,8 @@ def main():
         help="Image/digest to execute; manifest declarations are checked separately",
     )
     args = parser.parse_args()
+    if not args.image or args.image.startswith("-"):
+        parser.error("Select an image reference, not a container runtime option")
     for name in APPLICATIONS:
         manifest = yaml.safe_load((ROOT / name / f"stateful-set-{name}-postgres.yaml").read_text())
         gid = manifest["spec"]["template"]["spec"]["securityContext"]["runAsGroup"]
@@ -102,7 +104,9 @@ grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/self/status
             "-c",
             setup + init["command"][2] + verify,
         ]
-        result = subprocess.run(command, text=True, capture_output=True, timeout=30, check=False)
+        result = subprocess.run(
+            command, text=True, capture_output=True, timeout=30, check=False, shell=False
+        )
         if not result.returncode == 0:
             raise AssertionError(name + ": " + result.stdout + result.stderr)
         for expected in [

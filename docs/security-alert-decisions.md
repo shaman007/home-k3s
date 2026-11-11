@@ -2845,3 +2845,32 @@ or code change was required by this decision batch, and no push was performed.
 
 Independent API inventory confirms all nine absent: 43 open (Bandit 34, Pylint
 four, Opengrep five).
+
+
+### Bound Longhorn probe commands and reject option-like PostgreSQL images
+
+The global-manager probe now bounds Podman startup at 90 seconds and logs,
+inspection and stop at ten seconds each, with shell=False on every launch. A
+log/inspection timeout still enters its existing finally block and stops the
+container before closing the mock API server. The recurring-job probe bounds
+OpenSSL certificate generation at 30 seconds and explicitly disables shells for
+both certificate and existing 90-second job launches. Existing non-root, dropped
+capabilities, no-new-privileges, synthetic API and mount scopes remain unchanged.
+
+The PostgreSQL permission-init probe rejects empty or dash-prefixed --image
+values before inspecting manifests or starting Podman, so an image selector
+cannot become a runtime option. Its fixed argv retains the 30-second deadline
+and now explicitly sets shell=False. Existing disposable tmpfs, no-network and
+CHOWN/DAC_OVERRIDE-only checks remain intact.
+
+Five new mocked regressions cover bounded global-manager success and log-timeout
+cleanup, certificate failure before server/container allocation, recurring-job
+timeout cleanup of both servers, and option-like image rejection before runtime.
+Running these tests against the original committed modules fails as expected;
+all pass with the changes. No containers, certificate commands, local servers,
+Kubernetes clients, credentials or production data were used in verification.
+The full suite ran 545 tests successfully with 16 skips using isolated JSON::PP.
+Ruff passes, Bandit has no analysis errors, and full Pylint reports only a shared
+container-security argument-list duplicate heuristic. No source suppressions were
+added. Runtime findings await genuine rescanning and review; none were dismissed
+and no push was performed.
