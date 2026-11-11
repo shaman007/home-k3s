@@ -75,6 +75,28 @@ class RecurringSecurityTests(unittest.TestCase):
         )
         self.assertEqual(json.loads(data["names.json"]), self.names)
 
+    def test_preflight_retry_discards_partial_pending_batch(self):
+        """Admission convergence must rebuild the entire batch without duplicate live patches."""
+        names = self.names[:2]
+        previews = []
+
+        def request(name, operations=None, dry=False):
+            """Omit one mutation on the first attempt and converge on the second."""
+            document = f.fixture(name)
+            document["metadata"]["resourceVersion"] = "123"
+            if operations is not None:
+                self.assertTrue(dry)
+                previews.append(name)
+                if len(previews) != 2:
+                    document["spec"] = b.expected_spec(document)
+            return document
+
+        with patch.object(b.time, "sleep") as sleep, patch("builtins.print"):
+            pending = b.preflight(names, request)
+        self.assertEqual([item[0] for item in pending], names)
+        self.assertEqual(previews, names + names)
+        sleep.assert_called_once_with(3)
+
     def test_backfill_only_sends_guarded_annotation_patch(self):
         """Verify backfill only sends guarded annotation patch."""
         doc = f.fixture(self.names[0])

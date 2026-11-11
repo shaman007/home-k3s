@@ -1911,3 +1911,26 @@ checks passed; Bandit reported no analysis errors. No administrative credentials
 live API, container or cluster was used by verification. A refreshed GitHub
 inventory still reports 212 open findings; these source fixes await genuine
 published rescanning and no alert was dismissed in this batch.
+
+
+### Separate recurring-job admission preflight from persisted backfill
+
+Extracted the complete all-target dry-run/retry preflight from the Longhorn
+recurring-security backfill, reducing main's local-variable count. Marked the
+retained original-document tuple field explicitly unused at the commit stage.
+Expanding the helper and normalizing that unused name reproduces the complete
+original module AST, preserving reviewed-contract checks, resource-version tests,
+all-target preflight, bounded retry, persisted response and read-back verification.
+The source and updated regression module pass full Pylint without suppressions.
+
+Updated the bundled ConfigMap script. Parsed before/after comparison proves that
+only backfill.py changed; policies, RBAC, allowlisted names, hook configuration
+and all other workload fields are identical. A new regression forces partial
+preflight success followed by admission failure, then convergence, and verifies
+the pending batch is rebuilt without duplicates and with the original retry delay.
+Existing tests still reject all persisted writes when any preview lacks mutation.
+
+The full suite ran 504 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed, and Bandit reported no analysis errors. No backfill hook was run,
+no cluster resources were patched and no generated change was deployed. Source
+fixes await genuine published rescanning; no alert was dismissed in this batch.

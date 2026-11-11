@@ -91,6 +91,37 @@ def annotation_patch(document):
     return operations
 
 
+def preflight(names, request):
+    """Preview every reviewed CronJob before permitting any persisted metadata patch."""
+    pending = []
+    for attempt in range(30):
+        pending = []
+        try:
+            for name in names:
+                original = request(name)
+                if original is None:
+                    print(f"{name}: absent; future creation is covered by admission", flush=True)
+                    continue
+                reviewed(original, name)
+                expected = expected_spec(original)
+                if original["spec"] == expected:
+                    print(f"{name}: already hardened", flush=True)
+                    continue
+                patch = annotation_patch(original)
+                preview = request(name, patch, dry=True)
+                if not preview["spec"] == expected:
+                    raise AssertionError(
+                        f"{name}: admission mutation absent or unexpected spec change"
+                    )
+                pending.append((name, original, patch, expected))
+            break
+        except AssertionError:
+            if attempt == 29:
+                raise
+            time.sleep(3)  # Allow the API server's admission-policy cache to converge.
+    return pending
+
+
 def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.io/serviceaccount")):
     """PostSync backfill: trigger the reviewed native mutation, then verify its result."""
     names = json.loads((config_dir / "names.json").read_text())
@@ -127,33 +158,8 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
                 return None
             raise RuntimeError(f"{name}: Kubernetes HTTP {error.code}") from None
 
-    pending = []
-    for attempt in range(30):
-        pending = []
-        try:
-            for name in names:
-                original = request(name)
-                if original is None:
-                    print(f"{name}: absent; future creation is covered by admission", flush=True)
-                    continue
-                reviewed(original, name)
-                expected = expected_spec(original)
-                if original["spec"] == expected:
-                    print(f"{name}: already hardened", flush=True)
-                    continue
-                patch = annotation_patch(original)
-                preview = request(name, patch, dry=True)
-                if not preview["spec"] == expected:
-                    raise AssertionError(
-                        f"{name}: admission mutation absent or unexpected spec change"
-                    )
-                pending.append((name, original, patch, expected))
-            break
-        except AssertionError:
-            if attempt == 29:
-                raise
-            time.sleep(3)  # Allow the API server's admission-policy cache to converge.
-    for name, original, patch, expected in pending:
+    pending = preflight(names, request)
+    for name, _original, patch, expected in pending:
         result = request(name, patch)
         if not result["spec"] == expected:
             raise AssertionError(f"{name}: persisted spec differs from preflight")
