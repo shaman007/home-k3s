@@ -1,3 +1,5 @@
+"""Verify ingress authentication, CrowdSec enforcement, and media-cache safeguards."""
+
 from pathlib import Path
 import json
 import unittest
@@ -8,11 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def documents(path):
+    """Load nonempty YAML documents from a repository-relative path."""
     return [d for d in yaml.safe_load_all((ROOT / path).read_text()) if d]
 
 
 class TraefikSecurityPluginsTest(unittest.TestCase):
+    """Check security-sensitive plugin settings and their ingress attachments."""
     def test_console_login_requires_admin_and_preserves_network_restrictions(self):
+        """Check admin OIDC protections, callback scope, and internal ingress middleware."""
         app = documents("argocd/application-traefik-private.yaml")[0]
         values = yaml.safe_load(app["spec"]["source"]["helm"]["values"])
         objects = values["extraObjects"]
@@ -60,6 +65,7 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
         self.assertTrue(all("*" not in uri for uri in callbacks))
 
     def test_crowdsec_limits_enforcement_to_explicit_exploits(self):
+        """Check exploit-only enforcement, log access, and bouncer credential handling."""
         values = documents("crowdsec/values.yaml")[0]
         simulation = yaml.safe_load(values["config"]["simulation.yaml"])
         self.assertTrue(simulation["simulation"])
@@ -133,6 +139,7 @@ class TraefikSecurityPluginsTest(unittest.TestCase):
         self.assertEqual(canonical_middleware, middleware)
 
     def test_media_cache_covers_public_mastodon_reads_with_bounded_proxy(self):
+        """Check public read routing, request bounds, and authenticated origin validation."""
         middleware, ingress = documents("seaweedfs/ingress-route-mastodon-cache-pilot.yaml")
         rule = ingress["spec"]["routes"][0]["match"]
         self.assertIn("PathPrefix(`/mastodon/`)", rule)

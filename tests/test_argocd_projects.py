@@ -1,3 +1,5 @@
+"""Verify Argo CD project boundaries, repository access, and automated sync policy."""
+
 import importlib.util
 import sys
 import tempfile
@@ -268,10 +270,12 @@ CLUSTER_SCOPED_KINDS = {
 
 
 def load_yaml(path: Path) -> dict:
+    """Load a repository YAML document with the safe loader."""
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
 def application_documents() -> dict[str, dict]:
+    """Index Argo CD Application manifests by their declared names."""
     applications = {}
     for path in ARGOCD.glob("application-*.yaml"):
         document = load_yaml(path)
@@ -281,6 +285,7 @@ def application_documents() -> dict[str, dict]:
 
 
 def source_repositories(application: dict) -> set[str]:
+    """Collect repositories from either a single source or a source list."""
     sources = application["spec"].get("sources")
     if sources is None:
         sources = [application["spec"]["source"]]
@@ -288,11 +293,13 @@ def source_repositories(application: dict) -> set[str]:
 
 
 def api_group(document: dict) -> str:
+    """Extract the API group, using an empty string for core resources."""
     api_version = document.get("apiVersion", "")
     return api_version.split("/", 1)[0] if "/" in api_version else ""
 
 
 def repository_documents(application: dict):
+    """Yield local manifests, rendering Git-hosted charts before inspection."""
     sources = application["spec"].get("sources")
     if sources is None:
         sources = [application["spec"]["source"]]
@@ -324,11 +331,14 @@ def repository_documents(application: dict):
 
 
 class ArgoCdProjectsTest(unittest.TestCase):
+    """Check that applications and resource permissions fit their assigned projects."""
     @classmethod
     def setUpClass(cls):
+        """Load the application inventory once for all project-policy checks."""
         cls.applications = application_documents()
 
     def test_every_application_is_assigned_exactly_once(self):
+        """Require the expected membership and reject legacy default/workloads assignments."""
         expected = set().union(*PROJECT_MEMBERS.values())
         self.assertEqual(set(self.applications), expected)
 
@@ -346,6 +356,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
         )
 
     def test_projects_use_only_required_sources_and_destinations(self):
+        """Match each project to its member repositories and required namespaces."""
         for project_name, members in PROJECT_MEMBERS.items():
             project = load_yaml(ARGOCD / f"application-project-{project_name}.yaml")
             self.assertEqual(project["kind"], "AppProject")
@@ -383,6 +394,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
             )
 
     def test_cluster_permissions_are_explicit(self):
+        """Require the declared cluster-kind allowlists without wildcard access."""
         for project_name, expected in EXPECTED_CLUSTER_PERMISSIONS.items():
             project = load_yaml(ARGOCD / f"application-project-{project_name}.yaml")
             actual = {
@@ -393,6 +405,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
             self.assertNotIn(("*", "*"), actual)
 
     def test_cross_namespace_projects_restrict_namespaced_kinds(self):
+        """Check restricted namespaced allowlists against each member manifest."""
         for project_name, expected in EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS.items():
             project = load_yaml(ARGOCD / f"application-project-{project_name}.yaml")
             actual = {
@@ -415,6 +428,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
                     )
 
     def test_default_project_is_bootstrap_only(self):
+        """Limit the default project to Argo CD bootstrap resources and destination."""
         project = load_yaml(ARGOCD / "application-project-default.yaml")
         self.assertEqual(project["metadata"]["name"], "default")
         self.assertEqual(
@@ -450,6 +464,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
         )
 
     def test_git_sources_use_explicit_main_branch(self):
+        """Require local repository sources to track the main branch explicitly."""
         manifests = list(self.applications.values())
         manifests.append(load_yaml(ARGOCD / "applications-manager.yaml"))
 
@@ -467,6 +482,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
                 )
 
     def test_automated_applications_self_heal_live_drift(self):
+        """Require self-healing except for the explicitly recorded exemptions."""
         for name, application in self.applications.items():
             if name in MANUAL_SYNC_APPLICATIONS:
                 self.assertNotIn("automated", application["spec"]["syncPolicy"], name)
@@ -478,11 +494,13 @@ class ArgoCdProjectsTest(unittest.TestCase):
             self.assertTrue(automated.get("selfHeal", False), name)
 
     def test_stateless_and_companion_applications_prune(self):
+        """Require automated pruning for the designated application set."""
         for name in PRUNE_REQUIRED_APPLICATIONS:
             automated = self.applications[name]["spec"]["syncPolicy"]["automated"]
             self.assertTrue(automated.get("prune", False), name)
 
     def test_self_healing_respects_ignored_runtime_fields(self):
+        """Preserve declared runtime-field exceptions during synchronization."""
         for name, application in self.applications.items():
             if not application["spec"].get("ignoreDifferences"):
                 continue
@@ -490,6 +508,7 @@ class ArgoCdProjectsTest(unittest.TestCase):
             self.assertIn("RespectIgnoreDifferences=true", sync_options, name)
 
     def test_repository_manifests_fit_project_cluster_permissions(self):
+        """Require each cluster-scoped manifest to fit its project allowlist."""
         for project_name, members in PROJECT_MEMBERS.items():
             allowed = EXPECTED_CLUSTER_PERMISSIONS[project_name]
             for name in members:

@@ -193,7 +193,7 @@ def main():
                 },
                 headers=bh,
             )
-        for attempt in range(5):
+        for _ in range(5):
             ready = request(url, headers=bh, missing=True)
             policy = request(BAO + "/v1/sys/policies/acl/" + name, headers=bh, missing=True)
             role = request(

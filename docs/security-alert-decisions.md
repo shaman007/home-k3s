@@ -258,3 +258,27 @@ quality checklist as undefined reference links. Converted the completed review t
 ordinary bullets and explicitly retained its historical completion status and
 current-state revalidation caveat. No checklist content or acceptance criterion
 was removed. Closure of those final 16 findings requires a rescan of this edit.
+
+## Refreshed Python lint and remaining formatting
+
+[Python 3 lint run 43006628295](https://github.com/shaman007/home-k3s/actions/runs/43006628295)
+on `6b30e257` completed successfully, including the parser safeguard and upload.
+The genuine rescan found 2,357 current open findings versus the stale inventory's
+1,023; the broader current coverage is retained rather than dismissed. Thirteen
+E5110 findings say Django was not configured for the analyzer's Django plugin;
+these require a tool-configuration decision, not application Django changes.
+
+Formatted 13 files carrying 232 current multiple-statement findings. Before/after
+ASTs, including literal values, are identical; current Pylint reports no remaining
+multiple statements in those files. Refreshed embedded copies in infrastructure
+and Longhorn backfill ConfigMaps. Parsed manifest fields and embedded executable
+ASTs remain identical, and both available generators pass their consistency checks.
+
+Documented the Argo CD project-boundary and Traefik plugin test modules, their two
+classes, and 20 functions without changing executable ASTs. Removed an unused
+network-report import/local value and named an unused retry counter `_`.
+The removed `summarize()` local port set had no readers; expected-port membership
+checks remain in preclassification and verdict handling. New regressions verify
+that unlisted ports remain actionable and configured nondefault ports receive the
+expected-service exception. Full suite: 392 tests passed, 21 skipped. Container
+smoke probes and live cluster changes were not performed.

@@ -587,149 +587,174 @@ data:
     1000, "runAsGroup": 1000, "runAsNonRoot": true, "privileged": false, "allowPrivilegeEscalation": false, "capabilities":
     {"drop": ["ALL"]}, "seccompProfile": {"type": "RuntimeDefault"}}}]}], "gpuResourceReview": {"node": "talos-d4h-k5m", "resource":
     "nvidia.com/gpu", "capacity": 8}}'
-  backfill.py: "\"\"\"Guarded GitOps backfill: exact contracts, admission previews, sequential rollouts.\"\"\"\nimport copy\n\
+  backfill.py: "\"\"\"Guarded GitOps backfill: exact contracts, admission previews, sequential rollouts.\"\"\"\n\nimport copy\n\
     import json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.request\n\n\ndef reviewed(doc,\
-    \ entry):\n    if not (doc['kind'] == entry['kind'] and doc['metadata']['name'] == entry['name']):\n        raise AssertionError\n\
-    \    if not (doc['metadata']['namespace'] == entry['namespace']):\n        raise AssertionError\n    pod = doc['spec']['template']['spec']\n\
-    \    if not (pod.get('serviceAccountName', 'default') == entry['serviceAccount']):\n        raise AssertionError\n   \
-    \ for key, value in entry['labels'].items():\n        if not (doc['spec']['template']['metadata']['labels'].get(key) ==\
-    \ value):\n            raise AssertionError\n    for section in ['containers', 'initContainers']:\n        actual, expected\
-    \ = pod.get(section, []), entry['fixture']['spec']['template']['spec'].get(section, [])\n        if not (len(actual) ==\
-    \ len(expected)):\n            raise AssertionError\n        for a, e in zip(actual, expected):\n            if not (all(a.get(k,\
-    \ []) == e.get(k, []) for k in ['name', 'image', 'command', 'args', 'volumeMounts'])):\n                raise AssertionError\n\
-    \    if not (pod.get('volumes', []) == entry['fixture']['spec']['template']['spec'].get('volumes', [])):\n        raise\
-    \ AssertionError\n    for target in entry['targets']:\n        actual=pod[target['section']][target['index']]\n      \
-    \  if not (actual['name'] == target['name']):\n            raise AssertionError\n        env={v['name']:v for v in actual.get('env',[])}\n\
-    \        for name,value in target.get('requiredEnv',{}).items():\n            if not (env.get(name,{}).get('value') ==\
-    \ value):\n                raise AssertionError\n        for name,path in target.get('requiredFieldRefs',{}).items():\n\
-    \            if not (env.get(name,{}).get('valueFrom',{}).get('fieldRef',{}).get('fieldPath') == path):\n            \
-    \    raise AssertionError\n    if entry['kind'] == 'DaemonSet':\n        if not (doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']):\n\
-    \            raise AssertionError\n        if not (doc['spec']['updateStrategy']['rollingUpdate']['maxUnavailable'] ==\
-    \ 1):\n            raise AssertionError\n\n\ndef expected_spec(doc, entry):\n    spec = copy.deepcopy(doc['spec'])\n \
-    \   if entry.get('podGuards'):\n        pod = spec['template']['spec']\n        pod['securityContext'] = {**(pod.get('securityContext')\
-    \ or {}), **entry['podGuards']}\n    for target in entry['targets']:\n        container = spec['template']['spec'][target['section']][target['index']]\n\
-    \        container['securityContext'] = {**(container.get('securityContext') or {}), **target['guards']}\n    return spec\n\
-    \n\ndef ready(doc):\n    s = doc.get('status', {})\n    if s.get('observedGeneration', 0) < doc['metadata'].get('generation',\
-    \ 1): return False\n    if doc['kind'] == 'Deployment':\n        n = doc['spec'].get('replicas', 1)\n        return n\
-    \ > 0 and all(s.get(k) == n for k in ['replicas', 'updatedReplicas', 'readyReplicas', 'availableReplicas'])\n    n = s.get('desiredNumberScheduled',\
-    \ 0)\n    return n > 0 and all(s.get(k) == n for k in ['updatedNumberScheduled', 'numberReady', 'numberAvailable'])\n\n\
-    \ndef patch(doc):\n    result = [{'op':'test', 'path':'/metadata/resourceVersion', 'value':doc['metadata']['resourceVersion']}]\n\
-    \    if doc['metadata'].get('annotations') is None:\n        result.append({'op':'add','path':'/metadata/annotations','value':{}})\n\
-    \    result.append({'op':'add','path':'/metadata/annotations/hardening.home-k3s~1infra-guards','value':'v1'})\n    return\
-    \ result\n\n\ndef gpu_healthy(node, review):\n    if not (node['metadata']['name'] == review['node']):\n        raise\
-    \ AssertionError\n    if not (any(c['type']=='Ready' and c['status']=='True' for c in node.get('status',{}).get('conditions',[]))):\n\
-    \        raise AssertionError('GPU node is not Ready')\n    for field in ['capacity','allocatable']:\n        if not (int(node.get('status',{}).get(field,{}).get(review['resource'],0))\
-    \ == review['capacity']):\n            raise AssertionError('GPU resource count changed')\n\n\ndef main(config_dir=Path('/config'),\
-    \ account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):\n    catalog = json.loads((config_dir/'catalog.json').read_text())\n\
-    \    entries = catalog['entries']\n    context = ssl.create_default_context(cafile=str(account/'ca.crt'))\n    token =\
-    \ (account/'token').read_text().strip()\n    base = 'https://' + os.environ['KUBERNETES_SERVICE_HOST'] + ':' + os.environ['KUBERNETES_SERVICE_PORT']\n\
-    \    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context))\n\
-    \n    def request(e, changes=None, dry=False):\n        resource = 'deployments' if e['kind'] == 'Deployment' else 'daemonsets'\n\
-    \        url = base + '/apis/apps/v1/namespaces/' + e['namespace'] + '/' + resource + '/' + e['name']\n        if dry:\
-    \ url += '?dryRun=All'\n        headers = {'Authorization':'Bearer ' + token}\n        if changes is not None: headers['Content-Type']\
-    \ = 'application/json-patch+json'\n        req = urllib.request.Request(url, method='GET' if changes is None else 'PATCH',\
-    \ headers=headers,\n                                     data=None if changes is None else json.dumps(changes).encode())\n\
-    \        with opener.open(req, timeout=15) as response: return json.load(response)\n\n    def storage_check():\n     \
-    \   if not any(e['namespace'] == 'longhorn-system' for e in entries): return\n        from storage_guard import storage_healthy\n\
-    \        documents=[]\n        for resource in ['volumes','nodes']:\n            req=urllib.request.Request(base+'/apis/longhorn.io/v1beta2/namespaces/longhorn-system/'+resource,\
-    \ headers={'Authorization':'Bearer '+token})\n            with opener.open(req,timeout=15) as response:documents.append(json.load(response))\n\
-    \        storage_healthy(*documents)\n\n    def gpu_check():\n        review=catalog.get('gpuResourceReview')\n      \
-    \  if not review:return\n        req=urllib.request.Request(base+'/api/v1/nodes/'+review['node'],headers={'Authorization':'Bearer\
-    \ '+token})\n        with opener.open(req,timeout=15) as response:gpu_healthy(json.load(response),review)\n\n    # Every\
-    \ contract and dry-run mutation must pass before the hook writes anything.\n    for attempt in range(30):\n        try:\n\
-    \            storage_check()\n            gpu_check()\n            for e in entries:\n                original = request(e);\
-    \ reviewed(original, e)\n                if not (ready(original)):\n                    raise AssertionError(e['name']\
-    \ + ': not fully ready')\n                if not (request(e, patch(original), True)['spec'] == expected_spec(original,\
-    \ e)):\n                    raise AssertionError(e['name'] + ': unexpected admission result')\n            break\n   \
-    \     except AssertionError:\n            if attempt == 29: raise\n            time.sleep(3)\n    for e in entries:\n\
-    \        storage_check()\n        gpu_check()\n        original = request(e); reviewed(original, e)\n        if not (ready(original)):\n\
-    \            raise AssertionError(e['name'] + ': readiness changed')\n        expected = expected_spec(original, e)\n\
-    \        if expected != original['spec']:\n            if not (request(e, patch(original), True)['spec'] == expected):\n\
-    \                raise AssertionError\n            if not (request(e, patch(original))['spec'] == expected):\n       \
-    \         raise AssertionError\n        deadline = time.monotonic() + 300\n        stable_since = None\n        while\
-    \ True:\n            current = request(e)\n            if not (current['spec'] == expected):\n                raise AssertionError(e['name']\
-    \ + ': unexpected spec change')\n            if ready(current):\n                if stable_since is None: stable_since\
-    \ = time.monotonic()\n                if time.monotonic() - stable_since >= 15: break\n            else: stable_since\
-    \ = None\n            if time.monotonic() >= deadline: raise RuntimeError(e['name'] + ': rollout failed; later targets\
-    \ untouched')\n            time.sleep(3)\n        storage_check()\n        gpu_check()\n        print(e['namespace'] +\
-    \ '/' + e['name'] + ': guards and rollout verified', flush=True)\n\n\nif __name__ == '__main__':\n    main()\n"
+    \ entry):\n    if not (doc[\"kind\"] == entry[\"kind\"] and doc[\"metadata\"][\"name\"] == entry[\"name\"]):\n       \
+    \ raise AssertionError\n    if not (doc[\"metadata\"][\"namespace\"] == entry[\"namespace\"]):\n        raise AssertionError\n\
+    \    pod = doc[\"spec\"][\"template\"][\"spec\"]\n    if not (pod.get(\"serviceAccountName\", \"default\") == entry[\"\
+    serviceAccount\"]):\n        raise AssertionError\n    for key, value in entry[\"labels\"].items():\n        if not (doc[\"\
+    spec\"][\"template\"][\"metadata\"][\"labels\"].get(key) == value):\n            raise AssertionError\n    for section\
+    \ in [\"containers\", \"initContainers\"]:\n        actual, expected = (\n            pod.get(section, []),\n        \
+    \    entry[\"fixture\"][\"spec\"][\"template\"][\"spec\"].get(section, []),\n        )\n        if not (len(actual) ==\
+    \ len(expected)):\n            raise AssertionError\n        for a, e in zip(actual, expected):\n            if not (\n\
+    \                all(\n                    a.get(k, []) == e.get(k, [])\n                    for k in [\"name\", \"image\"\
+    , \"command\", \"args\", \"volumeMounts\"]\n                )\n            ):\n                raise AssertionError\n\
+    \    if not (\n        pod.get(\"volumes\", []) == entry[\"fixture\"][\"spec\"][\"template\"][\"spec\"].get(\"volumes\"\
+    , [])\n    ):\n        raise AssertionError\n    for target in entry[\"targets\"]:\n        actual = pod[target[\"section\"\
+    ]][target[\"index\"]]\n        if not (actual[\"name\"] == target[\"name\"]):\n            raise AssertionError\n    \
+    \    env = {v[\"name\"]: v for v in actual.get(\"env\", [])}\n        for name, value in target.get(\"requiredEnv\", {}).items():\n\
+    \            if not (env.get(name, {}).get(\"value\") == value):\n                raise AssertionError\n        for name,\
+    \ path in target.get(\"requiredFieldRefs\", {}).items():\n            if not (\n                env.get(name, {}).get(\"\
+    valueFrom\", {}).get(\"fieldRef\", {}).get(\"fieldPath\") == path\n            ):\n                raise AssertionError\n\
+    \    if entry[\"kind\"] == \"DaemonSet\":\n        if not (doc[\"spec\"][\"updateStrategy\"] == entry[\"fixture\"][\"\
+    spec\"][\"updateStrategy\"]):\n            raise AssertionError\n        if not (doc[\"spec\"][\"updateStrategy\"][\"\
+    rollingUpdate\"][\"maxUnavailable\"] == 1):\n            raise AssertionError\n\n\ndef expected_spec(doc, entry):\n  \
+    \  spec = copy.deepcopy(doc[\"spec\"])\n    if entry.get(\"podGuards\"):\n        pod = spec[\"template\"][\"spec\"]\n\
+    \        pod[\"securityContext\"] = {**(pod.get(\"securityContext\") or {}), **entry[\"podGuards\"]}\n    for target in\
+    \ entry[\"targets\"]:\n        container = spec[\"template\"][\"spec\"][target[\"section\"]][target[\"index\"]]\n    \
+    \    container[\"securityContext\"] = {\n            **(container.get(\"securityContext\") or {}),\n            **target[\"\
+    guards\"],\n        }\n    return spec\n\n\ndef ready(doc):\n    s = doc.get(\"status\", {})\n    if s.get(\"observedGeneration\"\
+    , 0) < doc[\"metadata\"].get(\"generation\", 1):\n        return False\n    if doc[\"kind\"] == \"Deployment\":\n    \
+    \    n = doc[\"spec\"].get(\"replicas\", 1)\n        return n > 0 and all(\n            s.get(k) == n\n            for\
+    \ k in [\"replicas\", \"updatedReplicas\", \"readyReplicas\", \"availableReplicas\"]\n        )\n    n = s.get(\"desiredNumberScheduled\"\
+    , 0)\n    return n > 0 and all(\n        s.get(k) == n for k in [\"updatedNumberScheduled\", \"numberReady\", \"numberAvailable\"\
+    ]\n    )\n\n\ndef patch(doc):\n    result = [\n        {\n            \"op\": \"test\",\n            \"path\": \"/metadata/resourceVersion\"\
+    ,\n            \"value\": doc[\"metadata\"][\"resourceVersion\"],\n        }\n    ]\n    if doc[\"metadata\"].get(\"annotations\"\
+    ) is None:\n        result.append({\"op\": \"add\", \"path\": \"/metadata/annotations\", \"value\": {}})\n    result.append(\n\
+    \        {\n            \"op\": \"add\",\n            \"path\": \"/metadata/annotations/hardening.home-k3s~1infra-guards\"\
+    ,\n            \"value\": \"v1\",\n        }\n    )\n    return result\n\n\ndef gpu_healthy(node, review):\n    if not\
+    \ (node[\"metadata\"][\"name\"] == review[\"node\"]):\n        raise AssertionError\n    if not (\n        any(\n    \
+    \        c[\"type\"] == \"Ready\" and c[\"status\"] == \"True\"\n            for c in node.get(\"status\", {}).get(\"\
+    conditions\", [])\n        )\n    ):\n        raise AssertionError(\"GPU node is not Ready\")\n    for field in [\"capacity\"\
+    , \"allocatable\"]:\n        if not (\n            int(node.get(\"status\", {}).get(field, {}).get(review[\"resource\"\
+    ], 0))\n            == review[\"capacity\"]\n        ):\n            raise AssertionError(\"GPU resource count changed\"\
+    )\n\n\ndef main(config_dir=Path(\"/config\"), account=Path(\"/var/run/secrets/kubernetes.io/serviceaccount\")):\n    catalog\
+    \ = json.loads((config_dir / \"catalog.json\").read_text())\n    entries = catalog[\"entries\"]\n    context = ssl.create_default_context(cafile=str(account\
+    \ / \"ca.crt\"))\n    token = (account / \"token\").read_text().strip()\n    base = (\n        \"https://\"\n        +\
+    \ os.environ[\"KUBERNETES_SERVICE_HOST\"]\n        + \":\"\n        + os.environ[\"KUBERNETES_SERVICE_PORT\"]\n    )\n\
+    \    opener = urllib.request.build_opener(\n        urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context)\n\
+    \    )\n\n    def request(e, changes=None, dry=False):\n        resource = \"deployments\" if e[\"kind\"] == \"Deployment\"\
+    \ else \"daemonsets\"\n        url = base + \"/apis/apps/v1/namespaces/\" + e[\"namespace\"] + \"/\" + resource + \"/\"\
+    \ + e[\"name\"]\n        if dry:\n            url += \"?dryRun=All\"\n        headers = {\"Authorization\": \"Bearer \"\
+    \ + token}\n        if changes is not None:\n            headers[\"Content-Type\"] = \"application/json-patch+json\"\n\
+    \        req = urllib.request.Request(\n            url,\n            method=\"GET\" if changes is None else \"PATCH\"\
+    ,\n            headers=headers,\n            data=None if changes is None else json.dumps(changes).encode(),\n       \
+    \ )\n        with opener.open(req, timeout=15) as response:\n            return json.load(response)\n\n    def storage_check():\n\
+    \        if not any(e[\"namespace\"] == \"longhorn-system\" for e in entries):\n            return\n        from storage_guard\
+    \ import storage_healthy\n\n        documents = []\n        for resource in [\"volumes\", \"nodes\"]:\n            req\
+    \ = urllib.request.Request(\n                base + \"/apis/longhorn.io/v1beta2/namespaces/longhorn-system/\" + resource,\n\
+    \                headers={\"Authorization\": \"Bearer \" + token},\n            )\n            with opener.open(req, timeout=15)\
+    \ as response:\n                documents.append(json.load(response))\n        storage_healthy(*documents)\n\n    def\
+    \ gpu_check():\n        review = catalog.get(\"gpuResourceReview\")\n        if not review:\n            return\n    \
+    \    req = urllib.request.Request(\n            base + \"/api/v1/nodes/\" + review[\"node\"], headers={\"Authorization\"\
+    : \"Bearer \" + token}\n        )\n        with opener.open(req, timeout=15) as response:\n            gpu_healthy(json.load(response),\
+    \ review)\n\n    # Every contract and dry-run mutation must pass before the hook writes anything.\n    for attempt in\
+    \ range(30):\n        try:\n            storage_check()\n            gpu_check()\n            for e in entries:\n    \
+    \            original = request(e)\n                reviewed(original, e)\n                if not (ready(original)):\n\
+    \                    raise AssertionError(e[\"name\"] + \": not fully ready\")\n                if not (request(e, patch(original),\
+    \ True)[\"spec\"] == expected_spec(original, e)):\n                    raise AssertionError(e[\"name\"] + \": unexpected\
+    \ admission result\")\n            break\n        except AssertionError:\n            if attempt == 29:\n            \
+    \    raise\n            time.sleep(3)\n    for e in entries:\n        storage_check()\n        gpu_check()\n        original\
+    \ = request(e)\n        reviewed(original, e)\n        if not (ready(original)):\n            raise AssertionError(e[\"\
+    name\"] + \": readiness changed\")\n        expected = expected_spec(original, e)\n        if expected != original[\"\
+    spec\"]:\n            if not (request(e, patch(original), True)[\"spec\"] == expected):\n                raise AssertionError\n\
+    \            if not (request(e, patch(original))[\"spec\"] == expected):\n                raise AssertionError\n     \
+    \   deadline = time.monotonic() + 300\n        stable_since = None\n        while True:\n            current = request(e)\n\
+    \            if not (current[\"spec\"] == expected):\n                raise AssertionError(e[\"name\"] + \": unexpected\
+    \ spec change\")\n            if ready(current):\n                if stable_since is None:\n                    stable_since\
+    \ = time.monotonic()\n                if time.monotonic() - stable_since >= 15:\n                    break\n         \
+    \   else:\n                stable_since = None\n            if time.monotonic() >= deadline:\n                raise RuntimeError(e[\"\
+    name\"] + \": rollout failed; later targets untouched\")\n            time.sleep(3)\n        storage_check()\n       \
+    \ gpu_check()\n        print(e[\"namespace\"] + \"/\" + e[\"name\"] + \": guards and rollout verified\", flush=True)\n\
+    \n\nif __name__ == \"__main__\":\n    main()\n"
   storage_guard.py: "#!/usr/bin/env python3\n\"\"\"Preflight native mutations, then roll reviewed workloads one at a time.\"\
-    \"\"\nimport copy\nimport json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.error\nimport\
-    \ urllib.request\n\nNAMESPACE = 'longhorn-system'\nMARKER = 'hardening.home-k3s/component-security'\n\n\ndef security(entry):\n\
-    \    return {'runAsNonRoot': entry['uid'] != 0, 'runAsUser': entry['uid'], 'runAsGroup': entry['gid'],\n            'allowPrivilegeEscalation':\
-    \ False, 'privileged': False,\n            'capabilities': {'drop': ['ALL']}, 'seccompProfile': {'type': 'RuntimeDefault'}}\n\
-    \n\ndef reviewed(doc, entry):\n    meta, pod = doc['metadata'], doc['spec']['template']['spec']\n    if not (doc['kind']\
-    \ == entry['kind'] and meta['namespace'] == NAMESPACE and meta['name'] == entry['name']):\n        raise AssertionError\n\
-    \    if not (doc['spec']['template']['metadata']['labels']['app'] == entry['name']):\n        raise AssertionError\n \
-    \   if not (pod['serviceAccountName'] == entry['serviceAccount']):\n        raise AssertionError\n    if not (len(pod['containers'])\
-    \ == entry['count'] and not pod.get('initContainers')):\n        raise AssertionError\n    c = pod['containers'][entry['index']]\n\
-    \    if not (c['name'] == entry['container'] and c['image'] == entry['image']):\n        raise AssertionError\n    if\
-    \ not (c.get('command', []) == entry['command'] and c.get('args', []) == entry['args']):\n        raise AssertionError\n\
-    \    if entry['kind'] == 'DaemonSet':\n        for index in range(entry['count']):\n            if index == entry['index']:\
-    \ continue\n            actual = pod['containers'][index]\n            expected = entry['fixture']['spec']['template']['spec']['containers'][index]\n\
-    \            if not (actual['name'] == expected['name'] and actual['image'] == expected['image']):\n                raise\
-    \ AssertionError\n            if not (actual['securityContext']['privileged'] is True):\n                raise AssertionError\n\
-    \        if not (doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']):\n            raise AssertionError\n\
-    \n\ndef expected_spec(doc, entry):\n    spec = copy.deepcopy(doc['spec'])\n    c = spec['template']['spec']['containers'][entry['index']]\n\
-    \    c['securityContext'] = {**(c.get('securityContext') or {}), **security(entry)}\n    return spec\n\n\ndef ready(doc):\n\
-    \    status = doc.get('status', {})\n    if status.get('observedGeneration', 0) < doc['metadata'].get('generation', 1):\
-    \ return False\n    if doc['kind'] == 'Deployment':\n        count = doc['spec'].get('replicas', 1)\n        return (count\
-    \ > 0 and status.get('updatedReplicas', 0) == count and status.get('replicas', 0) == count\n                and status.get('readyReplicas',\
-    \ 0) == count and status.get('availableReplicas', 0) == count)\n    count = status.get('desiredNumberScheduled', 0)\n\
-    \    return count > 0 and status.get('updatedNumberScheduled', 0) == count and status.get('numberReady', 0) == count and\
-    \ status.get('numberAvailable', 0) == count\n\n\ndef annotation_patch(doc):\n    patch = [{'op': 'test', 'path': '/metadata/resourceVersion',\
-    \ 'value': doc['metadata']['resourceVersion']}]\n    if doc['metadata'].get('annotations') is None: patch.append({'op':\
-    \ 'add', 'path': '/metadata/annotations', 'value': {}})\n    patch.append({'op': 'add', 'path': '/metadata/annotations/'\
-    \ + MARKER.replace('/', '~1'), 'value': 'v1'})\n    return patch\n\n\ndef storage_healthy(volumes, nodes):\n    \"\"\"\
-    Reject active degradation; detached idle volumes may have unknown health.\"\"\"\n    if not (volumes.get('items')):\n\
-    \        raise AssertionError('No Longhorn volume status available')\n    if not (nodes.get('items')):\n        raise\
-    \ AssertionError('No Longhorn node status available')\n    for volume in volumes['items']:\n        status = volume.get('status',\
-    \ {})\n        detached = status.get('state') == 'detached'\n        acceptable = (status.get('robustness') in ('healthy',\
-    \ 'unknown') if detached\n                      else status.get('state') == 'attached' and status.get('robustness') ==\
-    \ 'healthy')\n        if not (acceptable and status.get('restoreRequired') is False):\n            raise AssertionError('Longhorn\
-    \ storage is not stable and healthy')\n    for node in nodes['items']:\n        status = node.get('status', {})\n    \
-    \    conditions = {c['type']: c['status'] for c in status.get('conditions', [])}\n        if not (conditions.get('Ready')\
-    \ == 'True' and conditions.get('Schedulable') == 'True'):\n            raise AssertionError('Longhorn node is not ready/schedulable')\n\
-    \        disks = status.get('diskStatus', {})\n        if not (disks):\n            raise AssertionError('No Longhorn\
-    \ disk status available')\n        for disk in disks.values():\n            conditions = {c['type']: c['status'] for c\
-    \ in disk.get('conditions', [])}\n            if not (conditions.get('Ready') == 'True' and conditions.get('Schedulable')\
-    \ == 'True'):\n                raise AssertionError('Longhorn disk is not ready/schedulable')\n\n\ndef main(config_dir=Path('/config'),\
-    \ account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):\n    entries = json.loads((config_dir/'catalog.json').read_text())['entries']\n\
-    \    context = ssl.create_default_context(cafile=str(account/'ca.crt'))\n    token = (account/'token').read_text().strip()\n\
-    \    base = 'https://' + os.environ['KUBERNETES_SERVICE_HOST'] + ':' + os.environ['KUBERNETES_SERVICE_PORT']\n    opener\
-    \ = urllib.request.build_opener(urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context))\n\n   \
-    \ def request(entry, patch=None, dry=False):\n        resource = 'deployments' if entry['kind'] == 'Deployment' else 'daemonsets'\n\
-    \        url = base+'/apis/apps/v1/namespaces/'+NAMESPACE+'/'+resource+'/'+entry['name']\n        if dry: url += '?dryRun=All'\n\
-    \        headers = {'Authorization': 'Bearer '+token}\n        if patch is not None: headers['Content-Type'] = 'application/json-patch+json'\n\
-    \        req = urllib.request.Request(url, headers=headers, method='PATCH' if patch is not None else 'GET',\n        \
-    \                             data=json.dumps(patch).encode() if patch is not None else None)\n        try:\n        \
-    \    with opener.open(req, timeout=15) as response: return json.load(response)\n        except urllib.error.HTTPError\
-    \ as error:\n            raise RuntimeError(f'{entry[\"name\"]}: Kubernetes HTTP {error.code}') from None\n\n    check_storage\
-    \ = any(e['name'] == 'longhorn-manager' for e in entries)\n\n    def storage_check():\n        if not check_storage: return\n\
-    \        documents = []\n        for resource in ['volumes', 'nodes']:\n            url = base + '/apis/longhorn.io/v1beta2/namespaces/'\
-    \ + NAMESPACE + '/' + resource\n            req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + token})\n\
-    \            with opener.open(req, timeout=15) as response: documents.append(json.load(response))\n        storage_healthy(*documents)\n\
-    \n    # Complete all safety checks before the first persistent write.\n    for attempt in range(30):\n        try:\n \
-    \           storage_check()\n            for entry in entries:\n                original = request(entry); reviewed(original,\
-    \ entry)\n                if not (ready(original)):\n                    raise AssertionError(f'{entry[\"name\"]}: workload\
-    \ is not fully healthy')\n                preview = request(entry, annotation_patch(original), dry=True)\n           \
-    \     if not (preview['spec'] == expected_spec(original, entry)):\n                    raise AssertionError(f'{entry[\"\
-    name\"]}: unexpected or absent admission mutation')\n            break\n        except AssertionError:\n            if\
-    \ attempt == 29: raise\n            time.sleep(3)\n    for entry in entries:\n        storage_check()\n        # Refetch\
-    \ to tolerate harmless controller resourceVersion updates during earlier rollouts.\n        original = request(entry);\
-    \ reviewed(original, entry)\n        if not (ready(original)):\n            raise AssertionError(f'{entry[\"name\"]}:\
-    \ became unhealthy before mutation')\n        expected = expected_spec(original, entry)\n        if original['spec'] !=\
-    \ expected:\n            patch = annotation_patch(original)\n            if not (request(entry, patch, dry=True)['spec']\
-    \ == expected):\n                raise AssertionError\n            if not (request(entry, patch)['spec'] == expected):\n\
-    \                raise AssertionError\n        deadline = time.monotonic()+300\n        while True:\n            current\
-    \ = request(entry)\n            if not (current['spec'] == expected):\n                raise AssertionError(f'{entry[\"\
-    name\"]}: spec changed during rollout')\n            if ready(current): break\n            if time.monotonic() >= deadline:\
-    \ raise RuntimeError(f'{entry[\"name\"]}: rollout timed out; later targets were not changed')\n            time.sleep(3)\n\
-    \        storage_check()\n        print(f'{entry[\"name\"]}: security context and completed rollout verified', flush=True)\n\
-    \    for path in ['/', '/v1']:\n        req = urllib.request.Request('http://longhorn-frontend'+path)\n        with opener.open(req,\
-    \ timeout=15) as response:\n            if not (response.status == 200):\n                raise AssertionError('UI HTTP\
-    \ check failed')\n    print('Component backfill complete; UI static and API proxy HTTP checks passed', flush=True)\n\n\
-    \nif __name__ == '__main__': main()\n"
+    \"\"\n\nimport copy\nimport json\nimport os\nfrom pathlib import Path\nimport ssl\nimport time\nimport urllib.error\n\
+    import urllib.request\n\nNAMESPACE = \"longhorn-system\"\nMARKER = \"hardening.home-k3s/component-security\"\n\n\ndef\
+    \ security(entry):\n    return {\n        \"runAsNonRoot\": entry[\"uid\"] != 0,\n        \"runAsUser\": entry[\"uid\"\
+    ],\n        \"runAsGroup\": entry[\"gid\"],\n        \"allowPrivilegeEscalation\": False,\n        \"privileged\": False,\n\
+    \        \"capabilities\": {\"drop\": [\"ALL\"]},\n        \"seccompProfile\": {\"type\": \"RuntimeDefault\"},\n    }\n\
+    \n\ndef reviewed(doc, entry):\n    meta, pod = doc[\"metadata\"], doc[\"spec\"][\"template\"][\"spec\"]\n    if not (\n\
+    \        doc[\"kind\"] == entry[\"kind\"]\n        and meta[\"namespace\"] == NAMESPACE\n        and meta[\"name\"] ==\
+    \ entry[\"name\"]\n    ):\n        raise AssertionError\n    if not (doc[\"spec\"][\"template\"][\"metadata\"][\"labels\"\
+    ][\"app\"] == entry[\"name\"]):\n        raise AssertionError\n    if not (pod[\"serviceAccountName\"] == entry[\"serviceAccount\"\
+    ]):\n        raise AssertionError\n    if not (len(pod[\"containers\"]) == entry[\"count\"] and not pod.get(\"initContainers\"\
+    )):\n        raise AssertionError\n    c = pod[\"containers\"][entry[\"index\"]]\n    if not (c[\"name\"] == entry[\"\
+    container\"] and c[\"image\"] == entry[\"image\"]):\n        raise AssertionError\n    if not (c.get(\"command\", [])\
+    \ == entry[\"command\"] and c.get(\"args\", []) == entry[\"args\"]):\n        raise AssertionError\n    if entry[\"kind\"\
+    ] == \"DaemonSet\":\n        for index in range(entry[\"count\"]):\n            if index == entry[\"index\"]:\n      \
+    \          continue\n            actual = pod[\"containers\"][index]\n            expected = entry[\"fixture\"][\"spec\"\
+    ][\"template\"][\"spec\"][\"containers\"][index]\n            if not (actual[\"name\"] == expected[\"name\"] and actual[\"\
+    image\"] == expected[\"image\"]):\n                raise AssertionError\n            if not (actual[\"securityContext\"\
+    ][\"privileged\"] is True):\n                raise AssertionError\n        if not (doc[\"spec\"][\"updateStrategy\"] ==\
+    \ entry[\"fixture\"][\"spec\"][\"updateStrategy\"]):\n            raise AssertionError\n\n\ndef expected_spec(doc, entry):\n\
+    \    spec = copy.deepcopy(doc[\"spec\"])\n    c = spec[\"template\"][\"spec\"][\"containers\"][entry[\"index\"]]\n   \
+    \ c[\"securityContext\"] = {**(c.get(\"securityContext\") or {}), **security(entry)}\n    return spec\n\n\ndef ready(doc):\n\
+    \    status = doc.get(\"status\", {})\n    if status.get(\"observedGeneration\", 0) < doc[\"metadata\"].get(\"generation\"\
+    , 1):\n        return False\n    if doc[\"kind\"] == \"Deployment\":\n        count = doc[\"spec\"].get(\"replicas\",\
+    \ 1)\n        return (\n            count > 0\n            and status.get(\"updatedReplicas\", 0) == count\n         \
+    \   and status.get(\"replicas\", 0) == count\n            and status.get(\"readyReplicas\", 0) == count\n            and\
+    \ status.get(\"availableReplicas\", 0) == count\n        )\n    count = status.get(\"desiredNumberScheduled\", 0)\n  \
+    \  return (\n        count > 0\n        and status.get(\"updatedNumberScheduled\", 0) == count\n        and status.get(\"\
+    numberReady\", 0) == count\n        and status.get(\"numberAvailable\", 0) == count\n    )\n\n\ndef annotation_patch(doc):\n\
+    \    patch = [\n        {\n            \"op\": \"test\",\n            \"path\": \"/metadata/resourceVersion\",\n     \
+    \       \"value\": doc[\"metadata\"][\"resourceVersion\"],\n        }\n    ]\n    if doc[\"metadata\"].get(\"annotations\"\
+    ) is None:\n        patch.append({\"op\": \"add\", \"path\": \"/metadata/annotations\", \"value\": {}})\n    patch.append(\n\
+    \        {\"op\": \"add\", \"path\": \"/metadata/annotations/\" + MARKER.replace(\"/\", \"~1\"), \"value\": \"v1\"}\n\
+    \    )\n    return patch\n\n\ndef storage_healthy(volumes, nodes):\n    \"\"\"Reject active degradation; detached idle\
+    \ volumes may have unknown health.\"\"\"\n    if not (volumes.get(\"items\")):\n        raise AssertionError(\"No Longhorn\
+    \ volume status available\")\n    if not (nodes.get(\"items\")):\n        raise AssertionError(\"No Longhorn node status\
+    \ available\")\n    for volume in volumes[\"items\"]:\n        status = volume.get(\"status\", {})\n        detached =\
+    \ status.get(\"state\") == \"detached\"\n        acceptable = (\n            status.get(\"robustness\") in (\"healthy\"\
+    , \"unknown\")\n            if detached\n            else status.get(\"state\") == \"attached\" and status.get(\"robustness\"\
+    ) == \"healthy\"\n        )\n        if not (acceptable and status.get(\"restoreRequired\") is False):\n            raise\
+    \ AssertionError(\"Longhorn storage is not stable and healthy\")\n    for node in nodes[\"items\"]:\n        status =\
+    \ node.get(\"status\", {})\n        conditions = {c[\"type\"]: c[\"status\"] for c in status.get(\"conditions\", [])}\n\
+    \        if not (conditions.get(\"Ready\") == \"True\" and conditions.get(\"Schedulable\") == \"True\"):\n           \
+    \ raise AssertionError(\"Longhorn node is not ready/schedulable\")\n        disks = status.get(\"diskStatus\", {})\n \
+    \       if not (disks):\n            raise AssertionError(\"No Longhorn disk status available\")\n        for disk in\
+    \ disks.values():\n            conditions = {c[\"type\"]: c[\"status\"] for c in disk.get(\"conditions\", [])}\n     \
+    \       if not (conditions.get(\"Ready\") == \"True\" and conditions.get(\"Schedulable\") == \"True\"):\n            \
+    \    raise AssertionError(\"Longhorn disk is not ready/schedulable\")\n\n\ndef main(config_dir=Path(\"/config\"), account=Path(\"\
+    /var/run/secrets/kubernetes.io/serviceaccount\")):\n    entries = json.loads((config_dir / \"catalog.json\").read_text())[\"\
+    entries\"]\n    context = ssl.create_default_context(cafile=str(account / \"ca.crt\"))\n    token = (account / \"token\"\
+    ).read_text().strip()\n    base = (\n        \"https://\"\n        + os.environ[\"KUBERNETES_SERVICE_HOST\"]\n       \
+    \ + \":\"\n        + os.environ[\"KUBERNETES_SERVICE_PORT\"]\n    )\n    opener = urllib.request.build_opener(\n     \
+    \   urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context)\n    )\n\n    def request(entry, patch=None,\
+    \ dry=False):\n        resource = \"deployments\" if entry[\"kind\"] == \"Deployment\" else \"daemonsets\"\n        url\
+    \ = base + \"/apis/apps/v1/namespaces/\" + NAMESPACE + \"/\" + resource + \"/\" + entry[\"name\"]\n        if dry:\n \
+    \           url += \"?dryRun=All\"\n        headers = {\"Authorization\": \"Bearer \" + token}\n        if patch is not\
+    \ None:\n            headers[\"Content-Type\"] = \"application/json-patch+json\"\n        req = urllib.request.Request(\n\
+    \            url,\n            headers=headers,\n            method=\"PATCH\" if patch is not None else \"GET\",\n   \
+    \         data=json.dumps(patch).encode() if patch is not None else None,\n        )\n        try:\n            with opener.open(req,\
+    \ timeout=15) as response:\n                return json.load(response)\n        except urllib.error.HTTPError as error:\n\
+    \            raise RuntimeError(f\"{entry['name']}: Kubernetes HTTP {error.code}\") from None\n\n    check_storage = any(e[\"\
+    name\"] == \"longhorn-manager\" for e in entries)\n\n    def storage_check():\n        if not check_storage:\n       \
+    \     return\n        documents = []\n        for resource in [\"volumes\", \"nodes\"]:\n            url = base + \"/apis/longhorn.io/v1beta2/namespaces/\"\
+    \ + NAMESPACE + \"/\" + resource\n            req = urllib.request.Request(url, headers={\"Authorization\": \"Bearer \"\
+    \ + token})\n            with opener.open(req, timeout=15) as response:\n                documents.append(json.load(response))\n\
+    \        storage_healthy(*documents)\n\n    # Complete all safety checks before the first persistent write.\n    for attempt\
+    \ in range(30):\n        try:\n            storage_check()\n            for entry in entries:\n                original\
+    \ = request(entry)\n                reviewed(original, entry)\n                if not (ready(original)):\n           \
+    \         raise AssertionError(f\"{entry['name']}: workload is not fully healthy\")\n                preview = request(entry,\
+    \ annotation_patch(original), dry=True)\n                if not (preview[\"spec\"] == expected_spec(original, entry)):\n\
+    \                    raise AssertionError(\n                        f\"{entry['name']}: unexpected or absent admission\
+    \ mutation\"\n                    )\n            break\n        except AssertionError:\n            if attempt == 29:\n\
+    \                raise\n            time.sleep(3)\n    for entry in entries:\n        storage_check()\n        # Refetch\
+    \ to tolerate harmless controller resourceVersion updates during earlier rollouts.\n        original = request(entry)\n\
+    \        reviewed(original, entry)\n        if not (ready(original)):\n            raise AssertionError(f\"{entry['name']}:\
+    \ became unhealthy before mutation\")\n        expected = expected_spec(original, entry)\n        if original[\"spec\"\
+    ] != expected:\n            patch = annotation_patch(original)\n            if not (request(entry, patch, dry=True)[\"\
+    spec\"] == expected):\n                raise AssertionError\n            if not (request(entry, patch)[\"spec\"] == expected):\n\
+    \                raise AssertionError\n        deadline = time.monotonic() + 300\n        while True:\n            current\
+    \ = request(entry)\n            if not (current[\"spec\"] == expected):\n                raise AssertionError(f\"{entry['name']}:\
+    \ spec changed during rollout\")\n            if ready(current):\n                break\n            if time.monotonic()\
+    \ >= deadline:\n                raise RuntimeError(\n                    f\"{entry['name']}: rollout timed out; later\
+    \ targets were not changed\"\n                )\n            time.sleep(3)\n        storage_check()\n        print(f\"\
+    {entry['name']}: security context and completed rollout verified\", flush=True)\n    for path in [\"/\", \"/v1\"]:\n \
+    \       req = urllib.request.Request(\"http://longhorn-frontend\" + path)\n        with opener.open(req, timeout=15) as\
+    \ response:\n            if not (response.status == 200):\n                raise AssertionError(\"UI HTTP check failed\"\
+    )\n    print(\"Component backfill complete; UI static and API proxy HTTP checks passed\", flush=True)\n\n\nif __name__\
+    \ == \"__main__\":\n    main()\n"
 ---
 apiVersion: batch/v1
 kind: Job

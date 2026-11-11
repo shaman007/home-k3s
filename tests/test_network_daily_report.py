@@ -61,6 +61,23 @@ class VerdictTests(unittest.TestCase):
         report.apply_verdict(data, self.finding("threat"))
         self.assertEqual(data["status"], "NO CONCERNING ACTIVITY DETECTED")
 
+    def test_unlisted_port_does_not_receive_expected_service_exception(self):
+        for allowed_ports, port in (([443], 8443), ([8443], 443)):
+            with self.subTest(allowed_ports=allowed_ports, port=port):
+                data = self.assessment("ET DROP Spamhaus DROP Listed Traffic")
+                data["expected_public_ports"] = allowed_ports
+                data["candidates"][0]["port"] = port
+                report.apply_verdict(data, self.finding("threat"))
+                self.assertEqual(data["status"], "ANOMALY REQUIRES ATTENTION")
+                self.assertEqual(len(data["issues"]), 1)
+
+    def test_configured_nondefault_port_receives_expected_service_exception(self):
+        data = self.assessment("ET DROP Spamhaus DROP Listed Traffic")
+        data["expected_public_ports"] = [8443]
+        data["candidates"][0]["port"] = 8443
+        report.apply_verdict(data, self.finding("threat"))
+        self.assertEqual(data["status"], "NO CONCERNING ACTIVITY DETECTED")
+
     def test_outbound_reputation_match_is_not_suppressed_as_inbound_noise(self):
         data = self.assessment("ET CINS Poor Reputation IP")
         data["candidates"][0]["direction"] = "outbound"

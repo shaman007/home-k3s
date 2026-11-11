@@ -12,7 +12,6 @@ import html
 import http.client
 import ipaddress
 import json
-import os
 import pathlib
 import re
 import shutil
@@ -497,7 +496,6 @@ def summarize(assessment, config):
     candidates = [i for i in assessment["candidates"] if not i.get("preclassification")]
     if not candidates:
         return {}
-    expected_ports = set(config.get("expected_public_ports", [25, 80, 443, 993, 25565]))
     ids = [i["id"] for i in candidates]
     schema = {
         "type": "object",
