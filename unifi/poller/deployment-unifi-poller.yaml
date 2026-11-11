@@ -69,7 +69,7 @@ spec:
             limits:
               memory: 64Mi
         - name: unifi-poller
-          image: harbor.andreybondarenko.com/github/unpoller/unpoller:v5.9.4
+          image: harbor.andreybondarenko.com/github/unpoller/unpoller:v5.9.5
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
