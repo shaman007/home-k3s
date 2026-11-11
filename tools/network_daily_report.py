@@ -23,121 +23,140 @@ from zoneinfo import ZoneInfo
 BASE = pathlib.Path("/var/lib/network-daily-report")
 
 
-def collect(now):
-    """Collect and deduplicate the preceding day of local Suricata telemetry."""
-    start = now - dt.timedelta(hours=24)
-    clients = {}
-    counts = collections.Counter()
-    oldest = None
-    newest = None
-    bad = 0
-    latest_stats = None
-    alert_records = []
-    flow_seen = {}
+def is_local_address(ip):
+    """Recognize private clients and the explicitly reviewed local WAN/IPv6 ranges."""
+    try:
+        a = ipaddress.ip_address(ip)
+        return (
+            a.is_private
+            or ip == "81.19.4.105"
+            or (a.version == 6 and a in ipaddress.ip_network("2a02:e98:c0:1800::/64"))
+        )
+    except ValueError:
+        return False
 
-    def local(ip):
-        try:
-            a = ipaddress.ip_address(ip)
-            return (
-                a.is_private
-                or ip == "81.19.4.105"
-                or (a.version == 6 and a in ipaddress.ip_network("2a02:e98:c0:1800::/64"))
-            )
-        except ValueError:
-            return False
 
+def iter_eve_lines():
+    """Read sorted current/rotated telemetry, preserving gzip and replacement decoding."""
     for filename in sorted(glob.glob("/var/log/suricata/eve.json*")):
         opener = gzip.open if filename.endswith(".gz") else open
-        with opener(filename, "rt", errors="replace") as f:
-            for line in f:
-                try:
-                    e = json.loads(line)
-                    t = dt.datetime.fromisoformat(e["timestamp"])
-                except (ValueError, KeyError):
-                    bad += 1
-                    continue
-                if not start <= t < now:
-                    continue
-                oldest = min(oldest, t) if oldest else t
-                newest = max(newest, t) if newest else t
-                kind = e.get("event_type")
-                counts[kind] += 1
-                if kind == "stats":
-                    latest_stats = e.get("stats", {})
-                if kind == "alert":
-                    alert_records.append(
-                        {
-                            k: e.get(k)
-                            for k in (
-                                "timestamp",
-                                "flow_id",
-                                "src_ip",
-                                "dest_ip",
-                                "src_port",
-                                "dest_port",
-                                "proto",
-                                "app_proto",
-                                "flow",
-                                "alert",
-                            )
-                        }
+        with opener(filename, "rt", errors="replace") as stream:
+            yield from stream
+
+
+def record_flow(c, client, endpoints, e, flow_seen):
+    """Count cumulative flow deltas once and preserve upload/download direction."""
+    src, dst = endpoints
+    flow = e.get("flow", {})
+    fid = (client, str(e.get("flow_id")))
+    previous = flow_seen.get(fid, (0, 0))
+    if fid not in flow_seen:
+        c["flows"] += 1
+    sent = flow.get("bytes_toserver", 0)
+    received = flow.get("bytes_toclient", 0)
+    delta_sent = max(0, sent - previous[0])
+    delta_received = max(0, received - previous[1])
+    flow_seen[fid] = (max(sent, previous[0]), max(received, previous[1]))
+    c["flow_bytes"] += delta_sent + delta_received
+    c["upload_bytes"] += delta_sent if client == src else delta_received
+    c["download_bytes"] += delta_received if client == src else delta_sent
+    c["destinations"][dst if client == src else src] += 1
+    c["protocols"][e.get("app_proto", "unknown")] += 1
+
+
+def record_client(clients, flow_seen, e, t):
+    """Aggregate a supported event for its normalized local client address."""
+    kind = e.get("event_type")
+    src = e.get("src_ip", "")
+    dst = e.get("dest_ip", "")
+    try:
+        src = str(ipaddress.ip_address(src))
+        dst = str(ipaddress.ip_address(dst))
+    except ValueError:
+        return
+    client = src if is_local_address(src) else dst if is_local_address(dst) else None
+    if not client or kind not in ("flow", "dns", "tls", "quic", "http", "alert"):
+        return
+    c = clients.setdefault(
+        client,
+        {
+            "events": 0,
+            "flows": 0,
+            "flow_bytes": 0,
+            "upload_bytes": 0,
+            "download_bytes": 0,
+            "domains": collections.Counter(),
+            "destinations": collections.Counter(),
+            "alerts": collections.Counter(),
+            "protocols": collections.Counter(),
+            "first": t.isoformat(),
+            "last": t.isoformat(),
+        },
+    )
+    c["events"] += 1
+    c["first"] = min(c["first"], t.isoformat())
+    c["last"] = max(c["last"], t.isoformat())
+    if kind == "flow":
+        record_flow(c, client, (src, dst), e, flow_seen)
+    if kind == "alert":
+        a = e["alert"]
+        c["alerts"][f"severity {a.get('severity')}: {a.get('signature')}"] += 1
+    for name in [
+        e.get("dns", {}).get("rrname"),
+        e.get("tls", {}).get("sni"),
+        e.get("quic", {}).get("sni"),
+        e.get("http", {}).get("hostname"),
+    ]:
+        if name:
+            c["domains"][str(name)[:200]] += 1
+
+
+def collect_window(start, now):
+    """Count valid in-window telemetry and retain alert evidence for correlation."""
+    clients = {}
+    counts = collections.Counter()
+    summary = {"oldest": None, "newest": None, "bad": 0, "latest_stats": None}
+    alert_records = []
+    flow_seen = {}
+    for line in iter_eve_lines():
+        try:
+            e = json.loads(line)
+            t = dt.datetime.fromisoformat(e["timestamp"])
+        except (ValueError, KeyError):
+            summary["bad"] += 1
+            continue
+        if not start <= t < now:
+            continue
+        summary["oldest"] = min(summary["oldest"], t) if summary["oldest"] else t
+        summary["newest"] = max(summary["newest"], t) if summary["newest"] else t
+        kind = e.get("event_type")
+        counts[kind] += 1
+        if kind == "stats":
+            summary["latest_stats"] = e.get("stats", {})
+        if kind == "alert":
+            alert_records.append(
+                {
+                    k: e.get(k)
+                    for k in (
+                        "timestamp",
+                        "flow_id",
+                        "src_ip",
+                        "dest_ip",
+                        "src_port",
+                        "dest_port",
+                        "proto",
+                        "app_proto",
+                        "flow",
+                        "alert",
                     )
-                src = e.get("src_ip", "")
-                dst = e.get("dest_ip", "")
-                try:
-                    src = str(ipaddress.ip_address(src))
-                    dst = str(ipaddress.ip_address(dst))
-                except ValueError:
-                    continue
-                client = src if local(src) else dst if local(dst) else None
-                if not client or kind not in ("flow", "dns", "tls", "quic", "http", "alert"):
-                    continue
-                c = clients.setdefault(
-                    client,
-                    {
-                        "events": 0,
-                        "flows": 0,
-                        "flow_bytes": 0,
-                        "upload_bytes": 0,
-                        "download_bytes": 0,
-                        "domains": collections.Counter(),
-                        "destinations": collections.Counter(),
-                        "alerts": collections.Counter(),
-                        "protocols": collections.Counter(),
-                        "first": t.isoformat(),
-                        "last": t.isoformat(),
-                    },
-                )
-                c["events"] += 1
-                c["first"] = min(c["first"], t.isoformat())
-                c["last"] = max(c["last"], t.isoformat())
-                if kind == "flow":
-                    flow = e.get("flow", {})
-                    fid = (client, str(e.get("flow_id")))
-                    previous = flow_seen.get(fid, (0, 0))
-                    if fid not in flow_seen:
-                        c["flows"] += 1
-                    sent = flow.get("bytes_toserver", 0)
-                    received = flow.get("bytes_toclient", 0)
-                    delta_sent = max(0, sent - previous[0])
-                    delta_received = max(0, received - previous[1])
-                    flow_seen[fid] = (max(sent, previous[0]), max(received, previous[1]))
-                    c["flow_bytes"] += delta_sent + delta_received
-                    c["upload_bytes"] += delta_sent if client == src else delta_received
-                    c["download_bytes"] += delta_received if client == src else delta_sent
-                    c["destinations"][dst if client == src else src] += 1
-                    c["protocols"][e.get("app_proto", "unknown")] += 1
-                if kind == "alert":
-                    a = e["alert"]
-                    c["alerts"][f"severity {a.get('severity')}: {a.get('signature')}"] += 1
-                for name in [
-                    e.get("dns", {}).get("rrname"),
-                    e.get("tls", {}).get("sni"),
-                    e.get("quic", {}).get("sni"),
-                    e.get("http", {}).get("hostname"),
-                ]:
-                    if name:
-                        c["domains"][str(name)[:200]] += 1
+                }
+            )
+        record_client(clients, flow_seen, e, t)
+    return {**summary, "clients": clients, "event_counts": dict(counts), "alerts": alert_records}
+
+
+def correlate_alerts(alert_records):
+    """Join alerts with final flow/TCP/domain evidence, including rotated snapshots."""
     correlated = {
         str(e["flow_id"]): {"flow": e.get("flow") or {}, "domains": set(), "tcp": {}}
         for e in alert_records
@@ -145,123 +164,163 @@ def collect(now):
     }
     # Correlate alerts with final flow state; a single packet does not prove
     # that a connection was established.
-    for filename in sorted(glob.glob("/var/log/suricata/eve.json*")):
-        opener = gzip.open if filename.endswith(".gz") else open
-        with opener(filename, "rt", errors="replace") as f:
-            for line in f:
-                try:
-                    e = json.loads(line)
-                except ValueError:
-                    continue
-                item = correlated.get(str(e.get("flow_id")))
-                if item is None:
-                    continue
-                flow = e.get("flow") or {}
-                if flow.get("pkts_toserver", 0) + flow.get("pkts_toclient", 0) >= item["flow"].get(
-                    "pkts_toserver", 0
-                ) + item["flow"].get("pkts_toclient", 0):
-                    item["flow"].update(flow)
-                if e.get("tcp"):
-                    item["tcp"].update(e["tcp"])
-                for name in [
-                    e.get("tls", {}).get("sni"),
-                    e.get("quic", {}).get("sni"),
-                    e.get("http", {}).get("hostname"),
-                ]:
-                    if name:
-                        item["domains"].add(str(name)[:200])
+    for line in iter_eve_lines():
+        try:
+            e = json.loads(line)
+        except ValueError:
+            continue
+        item = correlated.get(str(e.get("flow_id")))
+        if item is None:
+            continue
+        flow = e.get("flow") or {}
+        if flow.get("pkts_toserver", 0) + flow.get("pkts_toclient", 0) >= item["flow"].get(
+            "pkts_toserver", 0
+        ) + item["flow"].get("pkts_toclient", 0):
+            item["flow"].update(flow)
+        if e.get("tcp"):
+            item["tcp"].update(e["tcp"])
+        for name in [
+            e.get("tls", {}).get("sni"),
+            e.get("quic", {}).get("sni"),
+            e.get("http", {}).get("hostname"),
+        ]:
+            if name:
+                item["domains"].add(str(name)[:200])
+    return correlated
+
+
+def informational_alert(e):
+    """Recognize informational signatures and sensor/self-test noise."""
+    alert = e["alert"]
+    signature = alert.get("signature", "")
+    metadata = alert.get("metadata") or {}
+    informational = any(
+        str(v).lower() == "informational" for v in metadata.get("signature_severity", [])
+    )
+    return (
+        informational
+        or signature.startswith(("ET INFO", "ET USER_AGENTS", "SURICATA "))
+        or "self-test" in signature.lower()
+    )
+
+
+def alert_connection(e, correlated):
+    """Resolve correlated flow endpoints and local direction without inferring compromise."""
+    item = correlated.get(
+        str(e.get("flow_id")), {"flow": e.get("flow") or {}, "domains": set(), "tcp": {}}
+    )
+    flow = item["flow"]
+    src = str(ipaddress.ip_address(flow.get("src_ip") or e["src_ip"]))
+    dst = str(ipaddress.ip_address(flow.get("dest_ip") or e["dest_ip"]))
+    direction = (
+        "outbound"
+        if is_local_address(src) and not is_local_address(dst)
+        else "inbound"
+        if is_local_address(dst) and not is_local_address(src)
+        else "internal_or_uncertain"
+    )
+    return item, src, dst, direction
+
+
+def unestablished_reputation_probe(e, item, direction):
+    """Suppress only inbound reputation probes lacking an established session."""
+    signature = e["alert"].get("signature", "")
+    flow = item["flow"]
+    reputation = is_reputation_signature(signature)
+    toclient = flow.get("pkts_toclient", 0)
+    state = flow.get("state", "unknown")
+    tcp = item["tcp"]
+    return (
+        reputation
+        and direction == "inbound"
+        and (
+            toclient == 0
+            or (
+                state != "established"
+                and tcp.get("rst")
+                and toclient <= 1
+                and flow.get("bytes_toserver", 0) <= 120
+                and flow.get("bytes_toclient", 0) <= 80
+            )
+        )
+    )
+
+
+def new_incident(e, item, host, peer, direction):
+    """Create the unchanged incident summary fields for an alert group."""
+    alert = e["alert"]
+    flow = item["flow"]
+    return {
+        "signature": alert.get("signature", ""),
+        "signature_id": alert.get("signature_id"),
+        "category": alert.get("category"),
+        "severity": alert.get("severity"),
+        "metadata": alert.get("metadata") or {},
+        "tcp": item["tcp"],
+        "host": host,
+        "peer": peer,
+        "direction": direction,
+        "port": flow.get("dest_port") or e.get("dest_port"),
+        "count": 0,
+        "first": e["timestamp"],
+        "last": e["timestamp"],
+        "flow_ids": set(),
+        "domains": set(),
+        "states": collections.Counter(),
+        "max_response_packets": 0,
+        "max_bytes_to_server": 0,
+        "max_bytes_to_client": 0,
+    }
+
+
+def record_incident(incidents, e, connection):
+    """Merge flow identities, evidence maxima and domains into a stable incident group."""
+    item, src, dst, direction = connection
+    flow = item["flow"]
+    host = src if direction == "outbound" else dst
+    peer = dst if direction == "outbound" else src
+    key = (e["alert"].get("signature_id"), host, peer, direction)
+    if key not in incidents:
+        incidents[key] = {
+            "id": f"E{len(incidents) + 1}",
+            **new_incident(e, item, host, peer, direction),
+        }
+    i = incidents[key]
+    i["count"] += 1
+    i["last"] = e["timestamp"]
+    i["flow_ids"].add(str(e.get("flow_id")))
+    i["domains"].update(item["domains"])
+    i["states"][flow.get("state", "unknown")] += 1
+    i["max_response_packets"] = max(i["max_response_packets"], flow.get("pkts_toclient", 0))
+    i["max_bytes_to_server"] = max(i["max_bytes_to_server"], flow.get("bytes_toserver", 0))
+    i["max_bytes_to_client"] = max(i["max_bytes_to_client"], flow.get("bytes_toclient", 0))
+
+
+def collect_incidents(alert_records):
+    """Group actionable alerts while accounting for each excluded background category."""
+    correlated = correlate_alerts(alert_records)
     incidents = {}
     background = collections.Counter()
     for e in alert_records:
-        alert = e["alert"]
-        signature = alert.get("signature", "")
-        metadata = alert.get("metadata") or {}
-        informational = any(
-            str(v).lower() == "informational" for v in metadata.get("signature_severity", [])
-        )
-        if (
-            informational
-            or signature.startswith(("ET INFO", "ET USER_AGENTS", "SURICATA "))
-            or "self-test" in signature.lower()
-        ):
+        if informational_alert(e):
             background["informational_or_sensor_noise"] += 1
             continue
-        item = correlated.get(
-            str(e.get("flow_id")), {"flow": e.get("flow") or {}, "domains": set(), "tcp": {}}
-        )
-        flow = item["flow"]
-        src = str(ipaddress.ip_address(flow.get("src_ip") or e["src_ip"]))
-        dst = str(ipaddress.ip_address(flow.get("dest_ip") or e["dest_ip"]))
-        direction = (
-            "outbound"
-            if local(src) and not local(dst)
-            else "inbound"
-            if local(dst) and not local(src)
-            else "internal_or_uncertain"
-        )
-        reputation = bool(
-            re.search(r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", signature, re.I)
-        )
-        toclient = flow.get("pkts_toclient", 0)
-        state = flow.get("state", "unknown")
-        tcp = item["tcp"]
-        if (
-            reputation
-            and direction == "inbound"
-            and (
-                toclient == 0
-                or (
-                    state != "established"
-                    and tcp.get("rst")
-                    and toclient <= 1
-                    and flow.get("bytes_toserver", 0) <= 120
-                    and flow.get("bytes_toclient", 0) <= 80
-                )
-            )
-        ):
+        connection = alert_connection(e, correlated)
+        if unestablished_reputation_probe(e, connection[0], connection[3]):
             background["inbound_reputation_probes_without_established_session"] += 1
             continue
-        host = src if direction == "outbound" else dst
-        peer = dst if direction == "outbound" else src
-        key = (alert.get("signature_id"), host, peer, direction)
-        if key not in incidents:
-            incidents[key] = {
-                "id": f"E{len(incidents) + 1}",
-                "signature": signature,
-                "signature_id": alert.get("signature_id"),
-                "category": alert.get("category"),
-                "severity": alert.get("severity"),
-                "metadata": metadata,
-                "tcp": item["tcp"],
-                "host": host,
-                "peer": peer,
-                "direction": direction,
-                "port": flow.get("dest_port") or e.get("dest_port"),
-                "count": 0,
-                "first": e["timestamp"],
-                "last": e["timestamp"],
-                "flow_ids": set(),
-                "domains": set(),
-                "states": collections.Counter(),
-                "max_response_packets": 0,
-                "max_bytes_to_server": 0,
-                "max_bytes_to_client": 0,
-            }
-        i = incidents[key]
-        i["count"] += 1
-        i["last"] = e["timestamp"]
-        i["flow_ids"].add(str(e.get("flow_id")))
-        i["domains"].update(item["domains"])
-        i["states"][state] += 1
-        i["max_response_packets"] = max(i["max_response_packets"], toclient)
-        i["max_bytes_to_server"] = max(i["max_bytes_to_server"], flow.get("bytes_toserver", 0))
-        i["max_bytes_to_client"] = max(i["max_bytes_to_client"], flow.get("bytes_toclient", 0))
+        record_incident(incidents, e, connection)
     incident_list = []
     for i in incidents.values():
         i["distinct_flows"] = len(i.pop("flow_ids"))
         i["domains"] = sorted(i["domains"])
         i["states"] = dict(i["states"])
         incident_list.append(i)
+    return incident_list, background
+
+
+def compact_clients(clients):
+    """Keep the existing client labels, priority ordering and bounded top-count summaries."""
     compact = []
     labels = {
         "192.168.1.106": "Brother printer",
@@ -277,14 +336,23 @@ def collect(now):
         for key, n in [("domains", 25), ("destinations", 10), ("alerts", 15), ("protocols", 10)]:
             row[key] = c[key].most_common(n)
         compact.append(row)
+    return compact
+
+
+def collect(now):
+    """Collect and deduplicate the preceding day of local Suricata telemetry."""
+    start = now - dt.timedelta(hours=24)
+    window = collect_window(start, now)
+    incident_list, background = collect_incidents(window["alerts"])
+    compact = compact_clients(window["clients"])
     return {
         "window_start": start.isoformat(),
         "window_end": now.isoformat(),
-        "first_observed": oldest.isoformat() if oldest else None,
-        "last_observed": newest.isoformat() if newest else None,
-        "event_counts": dict(counts),
-        "malformed_records": bad,
-        "latest_sensor_stats": latest_stats,
+        "first_observed": window["oldest"].isoformat() if window["oldest"] else None,
+        "last_observed": window["newest"].isoformat() if window["newest"] else None,
+        "event_counts": window["event_counts"],
+        "malformed_records": window["bad"],
+        "latest_sensor_stats": window["latest_stats"],
         "client_count": len(compact),
         "clients": compact,
         "incidents": incident_list,
@@ -305,22 +373,8 @@ def collect(now):
     }
 
 
-def assess(evidence, config):
-    """Assess monitoring health and identify network events requiring further analysis."""
-    issues = []
-
-    def issue(title, impact, action, confidence="High", support=None):
-        issues.append(
-            {
-                "id": f"I{len(issues) + 1}",
-                "title": title,
-                "impact": impact,
-                "action": action,
-                "confidence": confidence,
-                "support": support,
-            }
-        )
-
+def assess_monitoring(evidence, issue):
+    """Check service, disk, freshness and capture health in their original issue order."""
     health = {
         name: subprocess.run(
             ["systemctl", "is-active", name], check=False, capture_output=True, text=True
@@ -365,31 +419,50 @@ def assess(evidence, config):
             "Investigate sensor load and capture configuration.",
             support=capture,
         )
-    candidates = evidence.get("incidents", [])
+    return {
+        "health": health,
+        "free": free,
+        "coverage": coverage,
+        "capture": capture,
+        "down": down,
+        "now": now,
+    }
+
+
+def is_reputation_signature(signature):
+    """Recognize the existing reputation-list signature vocabulary."""
+    return bool(re.search(r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", signature, re.I))
+
+
+def has_corroborating_alert(candidate, candidates):
+    """Require a substantive signature on the same host/peer before rejecting background."""
+    return any(
+        other["host"] == candidate["host"]
+        and other["peer"] == candidate["peer"]
+        and not is_reputation_signature(other["signature"])
+        for other in candidates
+    )
+
+
+def small_public_visit(candidate, expected, reputation):
+    """Require an inbound, listed-port visit below both original volume thresholds."""
+    return (
+        reputation
+        and candidate["direction"] == "inbound"
+        and candidate["port"] in expected
+        and candidate["distinct_flows"] < 20
+        and candidate["max_bytes_to_server"] < 65536
+    )
+
+
+def preclassify_public_visits(candidates, config):
+    """Limit reputation-only background exceptions to configured public services."""
     expected = set(config.get("expected_public_ports", [25, 80, 443, 993, 25565]))
     for candidate in candidates:
         candidate["disposition"] = "unresolved"
-        rep = bool(
-            re.search(
-                r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", candidate["signature"], re.I
-            )
-        )
-        corroborated = any(
-            other["host"] == candidate["host"]
-            and other["peer"] == candidate["peer"]
-            and not re.search(
-                r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", other["signature"], re.I
-            )
-            for other in candidates
-        )
-        if (
-            rep
-            and candidate["direction"] == "inbound"
-            and candidate["port"] in expected
-            and candidate["distinct_flows"] < 20
-            and candidate["max_bytes_to_server"] < 65536
-            and not corroborated
-        ):
+        rep = is_reputation_signature(candidate["signature"])
+        corroborated = has_corroborating_alert(candidate, candidates)
+        if small_public_visit(candidate, expected, rep) and not corroborated:
             candidate["preclassification"] = {
                 "disposition": "background",
                 ("reason"): (
@@ -398,7 +471,10 @@ def assess(evidence, config):
                 ),
                 "action": "None",
             }
-    # NAT is a coverage note, not a recurring threat or action item.
+
+
+def relevant_baselines(now):
+    """Read complete prior-day reports without claiming trends from partial evidence."""
     prior = []
     for path in (BASE / "reports").glob("*/evidence.json"):
         try:
@@ -412,6 +488,43 @@ def assess(evidence, config):
                 prior.append((end, old))
         except (ValueError, KeyError, TypeError):
             continue
+    return prior
+
+
+def append_upload_anomalies(clients, old, candidates):
+    """Retain the fivefold and one-GiB gates for per-client upload anomalies."""
+    old_clients = {c["ip"]: c for c in old["clients"]}
+    for c in clients:
+        previous = old_clients.get(c["ip"])
+        if not previous or c["ip"] == "81.19.4.105":
+            continue
+        old_upload = previous.get("upload_bytes")
+        if old_upload is None:
+            continue
+        upload = c.get("upload_bytes", 0)
+        if upload >= 1024**3 and upload >= 5 * max(old_upload, 100 * 1024**2):
+            candidate = {
+                "id": f"B{len(candidates) + 1}",
+                ("signature"): (
+                    "BASELINE: upload volume increased at least fivefold and exceeded 1 GiB"
+                ),
+                "host": c["ip"],
+                "peer": "multiple destinations",
+                "direction": "outbound",
+                "port": None,
+                "distinct_flows": c["flows"],
+                "max_bytes_to_server": upload,
+                "previous_upload_bytes": old_upload,
+                "domains": c["domains"][:12],
+                "states": {},
+                "count": 1,
+            }
+            candidates.append(candidate)
+
+
+def baseline_changes(evidence, candidates, coverage, now):
+    """Compare complete daily evidence and append qualifying upload anomalies."""
+    prior = relevant_baselines(now)
     changes = "Baseline is still being established; no day-over-day trend is claimed."
     if prior and coverage >= 20:
         old = max(prior, key=lambda x: x[0])[1]
@@ -422,33 +535,7 @@ def assess(evidence, config):
             if re.match(r"severity [12]:", sig)
         }
         new_names = {x["signature"] for x in candidates} - old_names
-        old_clients = {c["ip"]: c for c in old["clients"]}
-        for c in evidence["clients"]:
-            previous = old_clients.get(c["ip"])
-            if not previous or c["ip"] == "81.19.4.105":
-                continue
-            old_upload = previous.get("upload_bytes")
-            if old_upload is None:
-                continue
-            upload = c.get("upload_bytes", 0)
-            if upload >= 1024**3 and upload >= 5 * max(old_upload, 100 * 1024**2):
-                candidate = {
-                    "id": f"B{len(candidates) + 1}",
-                    ("signature"): (
-                        "BASELINE: upload volume increased at least fivefold and exceeded 1 GiB"
-                    ),
-                    "host": c["ip"],
-                    "peer": "multiple destinations",
-                    "direction": "outbound",
-                    "port": None,
-                    "distinct_flows": c["flows"],
-                    "max_bytes_to_server": upload,
-                    "previous_upload_bytes": old_upload,
-                    "domains": c["domains"][:12],
-                    "states": {},
-                    "count": 1,
-                }
-                candidates.append(candidate)
+        append_upload_anomalies(evidence["clients"], old, candidates)
         changes = (
             f"{len(new_names)} previously unseen higher-priority alert types need review."
             if new_names
@@ -457,6 +544,29 @@ def assess(evidence, config):
                 "to the previous complete report."
             )
         )
+    return changes
+
+
+def assess(evidence, config):
+    """Assess monitoring health and identify network events requiring further analysis."""
+    issues = []
+
+    def issue(title, impact, action, confidence="High", support=None):
+        issues.append(
+            {
+                "id": f"I{len(issues) + 1}",
+                "title": title,
+                "impact": impact,
+                "action": action,
+                "confidence": confidence,
+                "support": support,
+            }
+        )
+
+    monitoring = assess_monitoring(evidence, issue)
+    candidates = evidence.get("incidents", [])
+    preclassify_public_visits(candidates, config)
+    changes = baseline_changes(evidence, candidates, monitoring["coverage"], monitoring["now"])
     operational = bool(issues)
     status = (
         "MONITORING DEGRADED"
@@ -474,7 +584,7 @@ def assess(evidence, config):
             "Incident evidence is being assessed; no all-clear is issued "
             "until that assessment completes."
         )
-    if down:
+    if monitoring["down"]:
         assessment = (
             "Monitoring is degraded; restore the failed services before relying on this assessment."
         )
@@ -483,15 +593,52 @@ def assess(evidence, config):
         "assessment": assessment,
         "issues": issues,
         "changes": changes,
-        "coverage_hours": round(min(coverage, 24), 1),
-        "health": health,
-        "storage_free_percent": round(free * 100, 1),
-        "capture": capture,
+        "coverage_hours": round(min(monitoring["coverage"], 24), 1),
+        "health": monitoring["health"],
+        "storage_free_percent": round(monitoring["free"] * 100, 1),
+        "capture": monitoring["capture"],
         "candidates": candidates,
         "background_alerts": evidence.get("background_alerts", {}),
         "operational": operational,
         "expected_public_ports": config.get("expected_public_ports", [25, 80, 443, 993, 25565]),
     }
+
+
+def request_model(config, body):
+    """Send telemetry only after CA and certificate-pin checks, closing every failure path."""
+    ctx = ssl.create_default_context(cafile=str(BASE / "ollama-pinned.pem"))
+    ctx.check_hostname = False
+    conn = http.client.HTTPSConnection(config["ollama_ip"], 443, context=ctx, timeout=600)
+    try:
+        conn.connect()
+        if (
+            hashlib.sha256(conn.sock.getpeercert(binary_form=True)).hexdigest()
+            != config["ollama_cert_sha256"]
+        ):
+            raise RuntimeError("Ollama TLS certificate pin mismatch")
+        conn.request(
+            "POST",
+            "/api/chat",
+            body,
+            {"Host": config["ollama_host"], "Content-Type": "application/json"},
+        )
+        response = conn.getresponse()
+        raw = response.read()
+        if response.status != 200:
+            raise RuntimeError(f"Ollama returned HTTP {response.status}")
+        return raw
+    finally:
+        conn.close()
+
+
+def parse_model_stream(raw):
+    """Reject empty, unfinished or length-truncated model streams before using findings."""
+    parts = [json.loads(line) for line in raw.splitlines() if line.strip()]
+    result = parts[-1]
+    text = "".join(part.get("message", {}).get("content", "") for part in parts).strip()
+    if not text or not result.get("done") or result.get("done_reason") == "length":
+        raise RuntimeError("Incomplete model response")
+    return json.loads(text)
 
 
 def summarize(assessment, config):
@@ -500,31 +647,6 @@ def summarize(assessment, config):
     if not candidates:
         return {}
     ids = [i["id"] for i in candidates]
-    schema = {
-        "type": "object",
-        "properties": {
-            "findings": {
-                "type": "array",
-                "maxItems": len(ids),
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "enum": ids},
-                        "disposition": {
-                            "type": "string",
-                            "enum": ["background", "anomaly", "threat", "unresolved"],
-                        },
-                        "reason": {"type": "string", "maxLength": 350},
-                        "action": {"type": "string", "maxLength": 220},
-                    },
-                    "required": ["id", "disposition", "reason", "action"],
-                    "additionalProperties": False,
-                },
-            }
-        },
-        "required": ["findings"],
-        "additionalProperties": False,
-    }
     system = (
         "Expected public services are HTTPS/HTTP, mail and "
         "Minecraft. A small inbound exchange (under 64 KiB) on these "
@@ -592,32 +714,8 @@ def summarize(assessment, config):
                 "keep_alive": "30s",
             }
         ).encode()
-        ctx = ssl.create_default_context(cafile=str(BASE / "ollama-pinned.pem"))
-        ctx.check_hostname = False
-        conn = http.client.HTTPSConnection(config["ollama_ip"], 443, context=ctx, timeout=600)
-        conn.connect()
-        if (
-            hashlib.sha256(conn.sock.getpeercert(binary_form=True)).hexdigest()
-            != config["ollama_cert_sha256"]
-        ):
-            raise RuntimeError("Ollama TLS certificate pin mismatch")
-        conn.request(
-            "POST",
-            "/api/chat",
-            body,
-            {"Host": config["ollama_host"], "Content-Type": "application/json"},
-        )
-        response = conn.getresponse()
-        raw = response.read()
-        conn.close()
-        if response.status != 200:
-            raise RuntimeError(f"Ollama returned HTTP {response.status}")
-        parts = [json.loads(line) for line in raw.splitlines() if line.strip()]
-        result = parts[-1]
-        text = "".join(part.get("message", {}).get("content", "") for part in parts).strip()
-        if not text or not result.get("done") or result.get("done_reason") == "length":
-            raise RuntimeError("Incomplete model response")
-        for evidence_id, finding in json.loads(text).items():
+        raw = request_model(config, body)
+        for evidence_id, finding in parse_model_stream(raw).items():
             if evidence_id in {i["id"] for i in batch}:
                 results[evidence_id] = {**finding, "id": evidence_id}
     missing = set(ids) - set(results)
@@ -639,34 +737,16 @@ def apply_verdict(assessment, findings, error=None):
                 "action": "Inspect this connection in EveBox before issuing an all-clear.",
             },
         )
-        if finding["disposition"] == "threat" and re.search(
-            r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", candidate["signature"], re.I
-        ):
+        if finding["disposition"] == "threat" and is_reputation_signature(candidate["signature"]):
             finding = {
                 **finding,
                 "disposition": "anomaly",
                 "reason": finding["reason"] + " Reputation alone does not establish an attack.",
             }
-        reputation = bool(
-            re.search(
-                r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", candidate["signature"], re.I
-            )
-        )
-        if (
-            reputation
-            and candidate["direction"] == "inbound"
-            and candidate["port"] in assessment.get("expected_public_ports", [])
-            and candidate["distinct_flows"] < 20
-            and candidate["max_bytes_to_server"] < 65536
-            and not any(
-                other["host"] == candidate["host"]
-                and other["peer"] == candidate["peer"]
-                and not re.search(
-                    r"CINS|Dshield|Spamhaus|Poor Reputation|Block Listed", other["signature"], re.I
-                )
-                for other in assessment["candidates"]
-            )
-        ):
+        reputation = is_reputation_signature(candidate["signature"])
+        if small_public_visit(
+            candidate, assessment.get("expected_public_ports", []), reputation
+        ) and not has_corroborating_alert(candidate, assessment["candidates"]):
             finding = {
                 "disposition": "background",
                 ("reason"): (
@@ -841,6 +921,15 @@ def render_report(assessment, now, error=None):
     return body, markup
 
 
+def submit_message(config, message):
+    """Require the existing STARTTLS handshake before submitting the report message."""
+    with smtplib.SMTP(config["smtp_host"], 25, timeout=30) as smtp:
+        smtp.ehlo()
+        smtp.starttls(context=ssl.create_default_context())
+        smtp.ehlo()
+        smtp.send_message(message)
+
+
 def main():
     """Build a daily network assessment from local telemetry and optional model review."""
     ap = argparse.ArgumentParser()
@@ -896,11 +985,7 @@ def main():
             subtype="json",
             filename="network-evidence.json",
         )
-        with smtplib.SMTP(config["smtp_host"], 25, timeout=30) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.ehlo()
-            smtp.send_message(msg)
+        submit_message(config, msg)
         if not args.preview:
             marker.write_text(json.dumps({"submitted_at": now.isoformat(), "model_error": error}))
         print("Report submitted to SMTP")

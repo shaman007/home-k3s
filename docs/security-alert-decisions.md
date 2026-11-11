@@ -1069,3 +1069,38 @@ JSON snapshots, Longhorn resources and live cluster state were not changed.
 An independent API refresh confirms zero open PowerShell findings and 487 open
 findings overall after the user published the preceding renderer batch. The
 PowerShell source removal above remains uncommitted at this verification.
+
+
+### Network report evidence-preserving refactor (2026-11-11)
+
+Separated telemetry-window collection, client/flow accounting, final-flow
+correlation, incident grouping, monitoring health and baseline comparison into
+focused functions. Shared the existing reputation/public-service predicates
+between preclassification and final verdict handling. The configured public
+ports, inbound direction, fewer-than-20-flow and below-64-KiB limits remain;
+substantive corroboration still blocks the background exception. No guard was
+removed, relaxed or disabled. The deployed tool remains self-contained.
+
+Full Pylint findings on this module decrease from twelve to one: four excessive
+locals, three excessive boolean expressions, two excessive branches and two
+excessive statements are resolved. The remaining broad exception boundary is
+intentional: unexpected model/transport/schema failures must retain incomplete
+analysis rather than produce an all-clear, and the process ultimately exits
+with the error. The warning remains open and is not suppressed or dismissed.
+
+Removed an unused pre-batch model schema; the actual bounded per-batch schemas
+and complete evidence-ID checks remain. Model TLS requests now close connections
+on every exit, including certificate-pin, connect, response-read and HTTP errors.
+The reviewed CA/pin checks still precede sending any telemetry. SMTP keeps EHLO,
+STARTTLS, EHLO and message submission in that order; failed TLS prevents delivery.
+
+Validation: 120 deterministic mixed plain/gzip telemetry fixtures produce exactly
+the previous implementation's evidence, assessments and input mutations against
+revision 23897eba. Ten added regression tests cover final-flow evidence beyond
+the window, probe thresholds, malformed/boundary records, custom public ports,
+corroboration, monitoring failure order, model TLS cleanup, incomplete streams,
+bounded/complete model batches and SMTP TLS failure. The full suite passes
+(436 tests, 21 opt-in checks skipped), and the final eighteen network-specific
+tests and full Pylint on their test module pass. No sensor, model, SMTP or cluster
+endpoint was contacted. Deployment and GitHub reconciliation require publication;
+the commit is local only and must not be pushed by the agent.
