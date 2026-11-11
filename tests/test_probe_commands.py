@@ -595,3 +595,46 @@ class LenkaMysqlGuardTests(unittest.TestCase):
             with self.subTest(field=name), patch.object(probe, "run", return_value=status):
                 with self.assertRaises(AssertionError):
                     probe.check_process_guards("fixture")
+
+
+class HisterFixtureGuardTests(unittest.TestCase):
+    """Retain allocation cleanup and read-only startup contracts in the Hister probe."""
+
+    def test_fixture_preparation_failure_removes_volume(self):
+        """A PDF/configuration failure must release the already allocated disposable volume."""
+        probe = load_probe("test_hister_readonly_root.py")
+        with (
+            patch.object(probe, "load_configuration", return_value={}),
+            patch.object(probe, "prepare_fixture", side_effect=OSError("fixture failed")),
+            patch.object(probe, "run", side_effect=["hister-volume", "", ""]) as run,
+        ):
+            with self.assertRaisesRegex(OSError, "fixture failed"):
+                probe.main()
+        self.assertEqual(run.call_args.args[0], ["podman", "volume", "rm", "hister-volume"])
+
+    def test_server_preserves_guards_and_replaces_only_local_base_url(self):
+        """The isolated server keeps read-only identity guards and its synthetic URL override."""
+        probe = load_probe("test_hister_readonly_root.py")
+        server = {
+            "image": "fixture-image",
+            "env": [
+                {"name": "HISTER__SERVER__BASE_URL", "value": "https://production.invalid/"},
+                {"name": "HISTER_DATA_DIR", "value": "/data"},
+            ],
+        }
+        with patch.object(probe, "run", return_value="fixture-container") as run:
+            base, container = probe.start_server(server, "volume", Path("config"), Path("pdf"))
+        argv = run.call_args.args[0]
+        self.assertEqual(container, "fixture-container")
+        for guard in (
+            "--read-only",
+            "--read-only-tmpfs=false",
+            "--user=65532:65532",
+            "--cap-drop=ALL",
+            "--security-opt=no-new-privileges",
+        ):
+            self.assertIn(guard, base)
+            self.assertIn(guard, argv)
+        self.assertIn("HISTER__SERVER__BASE_URL=http://127.0.0.1:8080/", argv)
+        self.assertIn("HISTER_DATA_DIR=/data", argv)
+        self.assertNotIn("HISTER__SERVER__BASE_URL=https://production.invalid/", argv)

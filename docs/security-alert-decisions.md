@@ -1977,3 +1977,23 @@ green. The full suite ran 506 tests successfully with 21 opt-in skips. Ruff and
 diff checks passed; Bandit reported no analysis errors. No MySQL container, volume,
 Helm renderer, external CLI or cluster was launched for this refactor verification.
 Source fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Separate Hister manifest validation, fixture preparation and startup
+
+Extracted manifest guard validation, byte-identical disposable PDF/config creation
+and isolated server startup from the Hister read-only-root probe. Both original
+complexity warnings are gone. Expanding the helpers reproduces the complete
+original module AST, preserving text/PDF import/search, isolated reindex, restart,
+process guards, token redaction and cleanup. The source and regression module each
+independently pass full Pylint. Joint analysis additionally recognizes the explicit
+expected guard literals in the new startup test as duplicated source lines; that
+heuristic was not suppressed or treated as a security defect.
+
+Two permanent regressions verify fixture preparation failure removes its allocated
+volume, and startup retains read-only UID/capability/no-new-privileges guards while
+replacing only the synthetic server base URL. Existing probe command and cleanup
+coverage remains green. The full suite ran 508 tests successfully with 21 opt-in
+skips. Ruff and diff checks passed; Bandit reported no analysis errors. No actual
+container, volume, Hister data, network endpoint or credentials were used. Source
+fixes await genuine published rescanning; no alert was dismissed in this batch.

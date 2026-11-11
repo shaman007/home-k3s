@@ -20,8 +20,8 @@ def run(args, timeout=90):
     return result.stdout.strip()
 
 
-def main():
-    """Offline Hister index/search/reindex/restart probe; disposable data/config only."""
+def load_configuration():
+    """Require the reviewed read-only non-root manifest before allocating fixtures."""
     server = yaml.safe_load((ROOT / "hister/deployment-hister.yaml").read_text())["spec"][
         "template"
     ]["spec"]["containers"][0]
@@ -34,6 +34,78 @@ def main():
         raise AssertionError
     if not sc["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
+    return server
+
+
+def prepare_fixture(directory):
+    """Write the same disposable PDF and synthetic server configuration."""
+    cfg = Path(directory) / "config.yml"
+    pdf = Path(directory) / "fixture.pdf"
+    content = b"BT /F1 14 Tf 72 720 Td (histerguardpdfunique) Tj ET"
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R /MediaBox "
+            b"[0 0 612 792] /Resources << /Font << /F1 "
+            b"5 0 R >> >> /Contents 4 0 R >>"
+        ),
+        b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    data = b"%PDF-1.4\n"
+    offsets = [0]
+    for i, obj in enumerate(objects, 1):
+        offsets.append(len(data))
+        data += f"{i} 0 obj\n".encode() + obj + b"\nendobj\n"
+    xref = len(data)
+    data += b"xref\n0 6\n0000000000 65535 f \n" + b"".join(
+        f"{v:010} 00000 n \n".encode() for v in offsets[1:]
+    )
+    data += f"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
+    pdf.write_bytes(data)
+    pdf.chmod(0o644)
+    cfg.write_text(
+        yaml.safe_dump(
+            {
+                "app": {"access_token": "disposable-guard-token"},
+                "server": {"address": "0.0.0.0:8080", "base_url": "http://127.0.0.1:8080/"},
+            }
+        )
+    )
+    cfg.chmod(0o644)
+    return cfg, pdf
+
+
+def start_server(server, volume, cfg, pdf):
+    """Start the isolated read-only server with only reviewed fixture mounts and environment."""
+    base = [
+        "--read-only",
+        "--read-only-tmpfs=false",
+        "--user=65532:65532",
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "-v",
+        volume + ":/data",
+    ]
+    args = ["podman", "run", "-d", "--network=none"] + base
+    args += [
+        "-v",
+        str(cfg) + ":/data/config.yml:ro,z",
+        "-v",
+        str(pdf) + ":/data/fixture.pdf:ro,z",
+    ]
+    for e in server["env"]:
+        value = "http://127.0.0.1:8080/" if e["name"] == "HISTER__SERVER__BASE_URL" else e["value"]
+        args += ["-e", e["name"] + "=" + value]
+    cid = run(args + [server["image"]])
+
+    return base, cid
+
+
+def main():
+    """Offline Hister index/search/reindex/restart probe; disposable data/config only."""
+    server = load_configuration()
     volume = run(["podman", "volume", "create", "hister-ro-guard-" + uuid.uuid4().hex])
     cid = None
     try:
@@ -61,69 +133,8 @@ def main():
             ]
         )
         with tempfile.TemporaryDirectory(prefix="hister-readonly-") as directory:
-            cfg = Path(directory) / "config.yml"
-            pdf = Path(directory) / "fixture.pdf"
-            content = b"BT /F1 14 Tf 72 720 Td (histerguardpdfunique) Tj ET"
-            objects = [
-                b"<< /Type /Catalog /Pages 2 0 R >>",
-                b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-                (
-                    b"<< /Type /Page /Parent 2 0 R /MediaBox "
-                    b"[0 0 612 792] /Resources << /Font << /F1 "
-                    b"5 0 R >> >> /Contents 4 0 R >>"
-                ),
-                b"<< /Length "
-                + str(len(content)).encode()
-                + b" >>\nstream\n"
-                + content
-                + b"\nendstream",
-                b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-            ]
-            data = b"%PDF-1.4\n"
-            offsets = [0]
-            for i, obj in enumerate(objects, 1):
-                offsets.append(len(data))
-                data += f"{i} 0 obj\n".encode() + obj + b"\nendobj\n"
-            xref = len(data)
-            data += b"xref\n0 6\n0000000000 65535 f \n" + b"".join(
-                f"{v:010} 00000 n \n".encode() for v in offsets[1:]
-            )
-            data += f"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
-            pdf.write_bytes(data)
-            pdf.chmod(0o644)
-            cfg.write_text(
-                yaml.safe_dump(
-                    {
-                        "app": {"access_token": "disposable-guard-token"},
-                        "server": {"address": "0.0.0.0:8080", "base_url": "http://127.0.0.1:8080/"},
-                    }
-                )
-            )
-            cfg.chmod(0o644)
-            base = [
-                "--read-only",
-                "--read-only-tmpfs=false",
-                "--user=65532:65532",
-                "--cap-drop=ALL",
-                "--security-opt=no-new-privileges",
-                "-v",
-                volume + ":/data",
-            ]
-            args = ["podman", "run", "-d", "--network=none"] + base
-            args += [
-                "-v",
-                str(cfg) + ":/data/config.yml:ro,z",
-                "-v",
-                str(pdf) + ":/data/fixture.pdf:ro,z",
-            ]
-            for e in server["env"]:
-                value = (
-                    "http://127.0.0.1:8080/"
-                    if e["name"] == "HISTER__SERVER__BASE_URL"
-                    else e["value"]
-                )
-                args += ["-e", e["name"] + "=" + value]
-            cid = run(args + [server["image"]])
+            cfg, pdf = prepare_fixture(directory)
+            base, cid = start_server(server, volume, cfg, pdf)
 
             def cli(*command):
                 return run(
