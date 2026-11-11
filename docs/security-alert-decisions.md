@@ -2015,3 +2015,22 @@ ran 510 tests successfully with 21 opt-in skips. Ruff and diff checks passed;
 Bandit reported no analysis errors. Verification did not launch containers, create
 interfaces, open raw sockets, announce addresses or contact the Kubernetes API.
 Source fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Reduce static-runtime and Renovate test setup complexity
+
+A broad local Pylint inventory found two remaining excessive-local-variable
+warnings. Extracted static public/private fixture-file population and the private
+Traefik Renovate manager selection/assertions into helpers. Both warnings are gone;
+expanding each helper reproduces the entire original test-module AST, preserving
+all fixture bytes, assertions, version substitutions, setup and cleanup ordering.
+The Renovate module passes full Pylint. Static runtime retains only its two
+existing resource-management heuristics, which were neither suppressed nor
+claimed resolved in this batch.
+
+The full suite ran 510 tests successfully with 21 opt-in skips, including existing
+offline runtime-fixture safety checks and Renovate version simulations. Ruff and
+diff checks passed; Bandit reported no analysis errors. The opt-in real Nginx
+runtime remained skipped; no runtime binary or production configuration was
+launched. No scanner rules or assertions were removed. Source fixes await genuine
+published rescanning; no alert was dismissed in this batch.

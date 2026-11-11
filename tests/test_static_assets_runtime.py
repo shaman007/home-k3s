@@ -83,6 +83,32 @@ class PHPServer(socketserver.ThreadingTCPServer):
     daemon_threads = True
 
 
+def populate_static_fixture(public):
+    """Write public formats and forbidden private paths into the isolated fixture tree."""
+    fixtures = {
+        "index.php": b"PHP fixture",
+        "remote.php": b"PHP fixture",
+        "wp-admin/admin.php": b"PHP fixture",
+        "styles/main.css": CSS,
+        "scripts/main.js": JS,
+        "scripts/module.mjs": JS,
+        "fonts/sample.woff2": b"font-data",
+        "fonts/sample.ttf": b"ttf-data",
+        "images/sample.webp": b"webp-data",
+        "images/sample.avif": b"avif-data",
+        "images/sample.jpeg": b"jpeg-data",
+        "data/user/files/private.png": b"NEVER SERVE",
+        "config/secret.css": b"NEVER SERVE",
+        ".private/secret.js": b"NEVER SERVE",
+        "lib/secret.js": b"NEVER SERVE",
+        "3rdparty/secret.css": b"NEVER SERVE",
+    }
+    for path, body in fixtures.items():
+        target = public / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(body)
+
+
 @unittest.skipUnless(BINARY, "Set STATIC_NGINX_BINARY to exercise real static asset behavior")
 class StaticAssetsRuntimeTest(unittest.TestCase):
     """Exercise real Nginx static caching while keeping private PHP responses private."""
@@ -105,28 +131,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 directory.mkdir()
                 public = directory / "public"
                 public.mkdir()
-                fixtures = {
-                    "index.php": b"PHP fixture",
-                    "remote.php": b"PHP fixture",
-                    "wp-admin/admin.php": b"PHP fixture",
-                    "styles/main.css": CSS,
-                    "scripts/main.js": JS,
-                    "scripts/module.mjs": JS,
-                    "fonts/sample.woff2": b"font-data",
-                    "fonts/sample.ttf": b"ttf-data",
-                    "images/sample.webp": b"webp-data",
-                    "images/sample.avif": b"avif-data",
-                    "images/sample.jpeg": b"jpeg-data",
-                    "data/user/files/private.png": b"NEVER SERVE",
-                    "config/secret.css": b"NEVER SERVE",
-                    ".private/secret.js": b"NEVER SERVE",
-                    "lib/secret.js": b"NEVER SERVE",
-                    "3rdparty/secret.css": b"NEVER SERVE",
-                }
-                for path, body in fixtures.items():
-                    target = public / path
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    target.write_bytes(body)
+                populate_static_fixture(public)
                 shutil.copy(source / "conf/fastcgi_params", directory / "fastcgi_params")
                 with socket.socket() as sock:
                     sock.bind(("127.0.0.1", 0))
