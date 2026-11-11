@@ -1867,3 +1867,22 @@ its remaining context-manager heuristic was left unchanged for separate review.
 The full suite ran 498 tests successfully with 21 opt-in skips. Ruff and diff
 checks passed; Bandit reported no analysis errors. No real cluster, release upload
 or signing command ran. Source fixes await genuine published rescanning.
+
+
+### Separate media-cache forwarding readiness from fixture verification
+
+Extracted loopback forwarding readiness and fixture-response verification from the
+media-cache checker. Both original complexity warnings are gone; the checker and
+updated regression module pass full Pylint without suppressions. Across 132
+mocked scenarios, ordered fetches, stdout, failure messages, subprocess argv/options,
+connection attempts and process cleanup calls match the original. Scenarios cover
+normal verification, missing/private origin expectations, explicit body hashes,
+response statuses and request failures across both replicas.
+
+Three permanent regressions require exact missing/private statuses, repeat HIT
+and content/hash agreement, and independent query/Range/Cookie bypass verification.
+The prior malformed-forwarding cleanup regression remains intact. The full suite
+ran 501 tests successfully with 21 opt-in skips; Ruff and diff checks passed,
+and Bandit reported no analysis errors. Verification did not start a port-forward,
+contact a cache replica or read/write production objects. Source fixes await
+genuine published rescanning; no alert was dismissed in this batch.

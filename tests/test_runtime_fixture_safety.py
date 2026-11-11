@@ -6,6 +6,7 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -222,3 +223,60 @@ class RuntimeResourceCleanupTests(unittest.TestCase):
         process.terminate.assert_called_once()
         process.wait.assert_called_once_with(timeout=5)
         process.__exit__.assert_called_once()
+
+
+class MediaFixtureVerificationTests(unittest.TestCase):
+    """Reject cache success when revocation, integrity or bypass checks disagree."""
+
+    def setUp(self):
+        spec = importlib.util.spec_from_file_location(
+            "media_verification", assets.ROOT / "tools/check_mastodon_media_cache.py"
+        )
+        self.probe = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.probe)
+        self.args = SimpleNamespace(
+            path="/mastodon/cache-pilot/fixture.txt",
+            expect_missing=False,
+            expect_private=False,
+            expect_body_sha256=None,
+        )
+
+    def test_revocation_requires_exact_expected_status(self):
+        """A cached success cannot substitute for origin missing/private status."""
+        for option, status in (("expect_missing", 404), ("expect_private", 403)):
+            with self.subTest(option=option):
+                setattr(self.args, option, True)
+                with patch.object(self.probe, "fetch", return_value=(200, "HIT", "body")):
+                    with self.assertRaisesRegex(RuntimeError, f"expected {status}"):
+                        self.probe.check_fixture("fixture", 1234, self.args)
+                setattr(self.args, option, False)
+
+    def test_hit_and_body_integrity_are_both_required(self):
+        """A repeat response must be a cache hit with matching content and expected digest."""
+        for second in ((200, "MISS", "body"), (200, "HIT", "changed"), (500, "HIT", "body")):
+            with (
+                self.subTest(second=second),
+                patch.object(self.probe, "fetch", side_effect=[(200, "MISS", "body"), second]),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "identical body not verified"):
+                    self.probe.check_fixture("fixture", 1234, self.args)
+        self.args.expect_body_sha256 = "expected"
+        with patch.object(
+            self.probe, "fetch", side_effect=[(200, "MISS", "body"), (200, "HIT", "body")]
+        ):
+            with self.assertRaisesRegex(RuntimeError, "current object"):
+                self.probe.check_fixture("fixture", 1234, self.args)
+
+    def test_every_bypass_variant_is_checked(self):
+        """Query, Range and Cookie requests must each bypass the cache."""
+        for failing_index in range(3):
+            responses = [(200, "MISS", "body"), (200, "HIT", "body")]
+            responses.extend((206, "BYPASS", "partial") for _ in range(3))
+            responses[2 + failing_index] = (200, "HIT", "body")
+            with (
+                self.subTest(index=failing_index),
+                patch.object(self.probe, "fetch", side_effect=responses) as fetch,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "bypass not verified"):
+                    self.probe.check_fixture("fixture", 1234, self.args)
+            self.assertEqual(fetch.call_count, 3 + failing_index)
