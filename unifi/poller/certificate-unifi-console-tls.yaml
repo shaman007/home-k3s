@@ -1,0 +1,19 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: unifi-console-tls
+  namespace: unifi
+spec:
+  secretName: unifi-console-tls
+  dnsNames:
+    - unifi.int.andreybondarenko.com
+  duration: 2160h
+  renewBefore: 720h
+  privateKey:
+    algorithm: RSA
+    size: 2048
+    rotationPolicy: Always
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-internal-prod

@@ -1,0 +1,10 @@
+--- a/versions.tf
++++ b/versions.tf
+@@ -11,5 +11,5 @@
+ provider "unifi" {
+-  api_url        = "https://192.168.1.1"
++  api_url        = "https://unifi.int.andreybondarenko.com"
+   site           = "default"
+-  allow_insecure = true
++  allow_insecure = false
+   # Credentials come from the environment; never put them in configuration.

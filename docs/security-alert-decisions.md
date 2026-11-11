@@ -3193,3 +3193,40 @@ No source or deployment changed in this review. Last full-suite result remains
 555 tests with 16 skips. Local duplicate analysis completed successfully with
 contextual R0801 diagnostics; no new runtime test was necessary for documentation.
 No credentials, configuration writes, router authentication or push occurred.
+
+
+### Prepare trusted router TLS after owner selection
+
+The owner selected trusted-certificate remediation for the final two TLS alerts.
+Prepared the separate unifi-console-tls Certificate using the existing production
+DNS-01 issuer for unifi.int.andreybondarenko.com. Fresh read-only issuer inspection
+confirms Ready=True, the production Let's Encrypt ACME directory and an int-domain
+solver selector. The Certificate validates against the installed cert-manager CRD.
+The proposed private DNS record points directly to 192.168.1.1, not ingress.
+
+The staged migration in docs/migrations/unifi-tls includes independently applicable
+DNS and provider patches for the unmodified unifi-infra checkout, plus a gated
+verified-client patch. That patch removes the BGP unverified-context implementation,
+synchronizes the generated ConfigMap, changes both client URLs, explicitly enables
+UnPoller verification and maps the hostname to the router inside the pod. Its
+regression ensures the legacy insecure-mode variable cannot disable verification.
+All patches pass applicability/dry-run checks. The staged verified-only exporter
+passes twenty offline tests, Ruff and a Bandit scan without B323/analysis errors.
+Runtime-contract validation passes. No active client or trust configuration changed.
+
+The runbook requires supported console certificate upload/rollback verification,
+secure key handling, actual TLS checks from both container trust stores, fresh
+authenticated metrics and post-cutover scanner publication. It explicitly separates
+Secret renewal from router certificate replacement; a supported renewal handoff
+must be assigned/tested before activation. Ubiquiti's documented UI guidance and
+UnPoller's verification settings are linked as primary sources. The new certificate
+request can issue after publication; router activation and client cutover are
+separate gates. No issuance, key extraction, DNS write, router authentication,
+certificate activation, provider apply or push was performed during preparation.
+Alerts 7615 and 7524 remain open until real remediation is verified.
+
+CI audit: CodeQL, Codacy, pre-commit and validate-inputs at ee7839dd succeeded.
+The manifest aggregation gate failed because its audit matrix result was cancelled;
+completed audit jobs succeeded. This is not reported as a green full CI run.
+Last full active-source unit result remains 555 tests with 16 skips; no new active
+Python implementation was introduced in this preparation commit.
