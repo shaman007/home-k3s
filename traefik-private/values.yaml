@@ -1,7 +1,7 @@
 image:
   registry: docker.io
   repository: traefik
-  tag: v3.7.17
+  tag: v3.7.18
 deployment:
   replicas: 2
   annotations:

@@ -13,7 +13,7 @@ spec:
   project: observability
   source:
     repoURL: https://grafana.github.io/helm-charts
-    targetRevision: 7.5.0
+    targetRevision: 7.6.0
     helm:
       # The optional chart test has no security-context overrides; keep canary probes.
       skipTests: true
