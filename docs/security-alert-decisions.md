@@ -2396,3 +2396,30 @@ configuration was installed/changed. The last full suite remains 517 tests with
 Current independently verified GitHub inventory is 77: Bandit 63, modern Pylint
 seven and Opengrep seven. Concurrent source closures contribute to the total;
 only four dismissals are attributable to this batch. No push was performed.
+
+
+### Execute the previously skipped Perl queue regressions
+
+Resolved the queue verification gap without changing system packages. Downloaded
+JSON::PP 4.18 from the official CPAN release URL identified by MetaCPAN and
+verified SHA256 9c7bcb238183c4240db5548b1910ce8428e0464d05e413df5893998e67bf602c.
+Extracted only library files into a private temporary directory and supplied
+PERL5LIB only to the test subprocess. All five queue tests now execute and pass,
+including malformed snapshot failure, payload privacy, empty-queue zeroes,
+concurrent arrivals and failed collection without invented queue zeroes. A second
+execution with fake perl first on PATH also runs all five tests without invoking
+the fake. This supersedes the earlier skipped-test verification limitation.
+
+Reviewed all three subprocess calls in the test module: system-only resolved Perl,
+fixed module availability checks, the checked-in exporter --parse with synthetic
+stdin/time, and --once only when /usr/sbin/postqueue is absent. No shell dispatch,
+untrusted program text, live queue read or HTTP listener is used by these tests.
+Dismissed exact #6844, #6843, #6842 and #6841 as false positives after source,
+rule/path/state/revision guards. Each comment requires review if external code or
+production queue/service access enters the harness. Independent inventory confirms
+all four are absent. No source, scanner rule or operational configuration changed.
+
+The full suite with the temporary Perl dependency ran 517 tests successfully with
+16 skips, five fewer than the prior run. Current GitHub inventory is 73: Bandit
+59, modern Pylint seven and Opengrep seven. No system dependency was installed,
+no credential or production mail payload was read, and no push was performed.
