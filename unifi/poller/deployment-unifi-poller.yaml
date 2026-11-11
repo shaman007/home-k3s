@@ -19,6 +19,9 @@ spec:
       labels:
         app: unifi-poller
     spec:
+      hostAliases:
+        - ip: "192.168.1.1"
+          hostnames: [unifi.int.andreybondarenko.com]
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
       containers:
@@ -31,7 +34,7 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: UNIFI_URL
-              value: https://192.168.1.1
+              value: https://unifi.int.andreybondarenko.com
             - name: UNIFI_USERNAME
               value: shaman007
             - name: UNIFI_PASSWORD
@@ -39,8 +42,6 @@ spec:
                 secretKeyRef:
                   name: unifi-password
                   key: password
-            - name: UNIFI_VERIFY_TLS
-              value: "false"
           ports:
             - name: bgp-metrics
               containerPort: 9131
@@ -92,8 +93,10 @@ spec:
                 secretKeyRef:
                   name: unifi-password
                   key: password
+            - name: UP_UNIFI_DEFAULT_VERIFY_SSL
+              value: "true"
             - name: UP_UNIFI_DEFAULT_URL
-              value: https://192.168.1.1:443
+              value: https://unifi.int.andreybondarenko.com:443
             - name: UP_UNIFI_DEFAULT_USER
               value: shaman007
             - name: UP_UNIFI_DEFAULT_SAVE_DPI

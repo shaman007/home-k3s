@@ -3249,3 +3249,42 @@ runbook. Existing clients remain on the current endpoint until the router serves
 the trusted certificate and validation succeeds. Alerts 7615 and 7524 remain open.
 No source behavior, cluster object or router setting was mutated by this verification.
 No agent push occurred.
+
+
+### Activate approved trusted UniFi identity and prepare verified collectors
+
+After explicit owner approval and successful interactive authentication, uploaded
+and activated the issued certificate using the supported installed console API.
+Validated the matching key/chain before activation and verified the served public
+identity using system trust and the BGP container trust store. Private material
+remained in process memory and authenticated encrypted transport; it was not
+printed or persisted in review artifacts. Preserved independent recovery access.
+
+Created the exact private router A record, verified resolution and unchanged
+unrelated DNS records, and imported its ID into unifi-infra. Its provider now
+requires trusted TLS; formatting, validation and the targeted zero-change plan
+pass. That external directory has no Git metadata. No broad apply occurred.
+
+Applied the staged client changes and removed the one-off patches. Both clients
+use the trusted hostname; UnPoller explicitly verifies SSL and the BGP exporter
+cannot disable certificate verification. Added a live served-certificate expiry
+metric and a 21-day warning with real Prometheus rule fixtures, including the
+case where the Secret was renewed but the console certificate was not.
+
+All 558 unit tests pass with 16 skips. Promtool validates 186 shipped rules and
+both fixture suites. Publication, GitOps rollout, fresh data from both deployed
+collectors and genuine scanner closure remain required. Alerts 7615 and 7524
+are not dismissed. No agent push occurred.
+
+Actual local verified-client execution authenticated to the router, collected
+three established peers and three usable reviewed routes with zero policy
+violations, read 89 days remaining on the served certificate, and logged out.
+An earlier bounded probe timed out; the subsequent staged verification completed.
+Bandit reports no findings or analysis errors in the updated exporter. These
+checks verify the prepared implementation, not the still-pending GitOps rollout.
+
+The full read-only OpenTofu plan exited 1 after reporting 17 additions and eight
+updates outside the targeted console DNS resource. Its full-plan verification is
+incomplete; these unrelated changes were not applied. The targeted imported
+console DNS plan remains the scoped zero-change verification. Do not treat the
+full infrastructure configuration as ready for a broad apply.

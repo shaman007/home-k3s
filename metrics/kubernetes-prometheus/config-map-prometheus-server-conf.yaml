@@ -1176,6 +1176,19 @@ data:
           summary: UDM BGP route-table monitoring is unavailable.
           description: Check the read-only bgp-exporter sidecar, UniFi credentials and controller API. Failed collection does not reuse old route health.
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#bgp
+      - alert: UDMConsoleCertificateExpiring
+        expr: (unifi_bgp_tls_certificate_expiry_timestamp_seconds{job="unifi-bgp"} - time() < 21 * 24 * 3600) and on(instance) (unifi_bgp_scrape_success{job="unifi-bgp"} == 1)
+        for: 30m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          job: unifi-bgp
+          component: bgp
+        annotations:
+          summary: UDM console certificate expires within 21 days.
+          description: Replace the certificate served by the router through the documented console handoff. Cert-manager Secret renewal alone does not update the console.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/migrations/unifi-tls/README.md#renewal-and-rollback
       - alert: UDMBGPRouteMissing
         expr: (unifi_bgp_route_active_next_hops{job="unifi-bgp"} == 0) and on(instance) (unifi_bgp_scrape_success{job="unifi-bgp"} == 1)
         for: 2m

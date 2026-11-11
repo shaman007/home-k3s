@@ -5,7 +5,7 @@ import importlib.util
 import re
 import io
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 import urllib.error
 from pathlib import Path
 import unittest
@@ -216,7 +216,10 @@ class UniFiBGPExporterTests(unittest.TestCase):
             return self.neighbors if path.endswith("neighbors") else self.routes
 
         client.get = get
-        self.assertTrue(client.collect())
+        client.certificate_expiry = Mock(return_value=1893456000)
+        self.assertIn(
+            ("unifi_bgp_tls_certificate_expiry_timestamp_seconds", {}, 1893456000), client.collect()
+        )
         self.assertEqual(
             [
                 "/proxy/network/v2/api/site/default/bgp/neighbors",
@@ -304,3 +307,68 @@ class UniFiMetricsListenerTests(unittest.TestCase):
         self.assertIn(
             {"name": "bgp", "port": 9131, "targetPort": "bgp-metrics"}, service["spec"]["ports"]
         )
+
+
+class UniFiVerifiedTLSTests(unittest.TestCase):
+    """Router identity validation must remain enabled even with legacy override variables."""
+
+    def test_invalid_controller_origins_fail_before_transport_creation(self):
+        """An HTTP or ambiguous endpoint cannot bypass the verified TLS transport."""
+        for url in (
+            "http://router.invalid",
+            "https://user:private@router.invalid",
+            "https://router.invalid/api",
+            "https://router.invalid?token=private",
+            "https://router.invalid#fragment",
+            "https://router.invalid:bad",
+            "https://router.invalid:0",
+            "https://router.invalid/\n",
+            "",
+        ):
+            with (
+                self.subTest(url=url),
+                patch.dict(m.os.environ, {"UNIFI_URL": url}, clear=True),
+                patch.object(m.urllib.request, "build_opener") as transport,
+            ):
+                with self.assertRaisesRegex(ValueError, "HTTPS origin"):
+                    m.Controller()
+            transport.assert_not_called()
+
+    def test_expiry_comes_from_the_live_verified_peer_and_closes_connections(self):
+        """Use the named TLS peer's certificate date, not Kubernetes Secret readiness."""
+        with patch.dict(m.os.environ, {"UNIFI_URL": "https://unifi.int.andreybondarenko.com"}):
+            client = m.Controller()
+        raw, tls = MagicMock(), MagicMock()
+        raw.__enter__.return_value = raw
+        tls.__enter__.return_value = tls
+        tls.getpeercert.return_value = {"notAfter": "Jan  1 00:00:00 2030 GMT"}
+        client.context = SimpleNamespace(wrap_socket=Mock(return_value=tls))
+        with patch.object(m.socket, "create_connection", return_value=raw) as connect:
+            self.assertEqual(client.certificate_expiry(), 1893456000)
+        connect.assert_called_once_with(("unifi.int.andreybondarenko.com", 443), timeout=15)
+        client.context.wrap_socket.assert_called_once_with(
+            raw, server_hostname="unifi.int.andreybondarenko.com"
+        )
+        tls.__exit__.assert_called_once()
+        raw.__exit__.assert_called_once()
+
+    def test_system_trust_and_hostname_verification_cannot_be_disabled(self):
+        """The verified-only client ignores the removed insecure-mode switch."""
+        for value in ("true", "false", ""):
+            with (
+                self.subTest(legacy_override=value),
+                patch.dict(
+                    m.os.environ,
+                    {
+                        "UNIFI_URL": "https://unifi.int.andreybondarenko.com",
+                        "UNIFI_VERIFY_TLS": value,
+                    },
+                    clear=True,
+                ),
+                patch.object(m.urllib.request, "build_opener"),
+                patch.object(m.urllib.request, "HTTPSHandler") as https,
+            ):
+                controller = m.Controller()
+            https.assert_called_once_with(context=controller.context)
+            self.assertEqual(controller.context.verify_mode, m.ssl.CERT_REQUIRED)
+            self.assertTrue(controller.context.check_hostname)

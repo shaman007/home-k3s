@@ -46,8 +46,9 @@ The nine new alerts retain the existing email receiver and priority routing.
 Router-side collection runs as a read-only sidecar on the existing UniFi poller,
 using its existing Secret without new Kubernetes permissions. The collector
 reads the neighbor and forwarding-table APIs every 45 seconds, exposes 9131,
-and is scraped as `unifi-bgp`. The existing local-controller TLS exception is
-explicit; credentials and cookies remain in memory and are never exported.
+and is scraped as `unifi-bgp`. Both collectors verify the trusted identity
+`unifi.int.andreybondarenko.com`; credentials and cookies remain in memory and
+are never exported.
 Its security context is non-root, read-only-root, RuntimeDefault, drop-ALL, with
 32Mi requested/64Mi limited memory and no CPU limit. Metrics access is limited
 to monitoring; outbound access remains the existing controller HTTPS allowance.
@@ -55,6 +56,10 @@ to monitoring; outbound access remains the existing controller HTTPS allowance.
 - `UDMBGPCollectionUnavailable`: warning after five minutes of failed, missing
   or stale collection (last success over 120 seconds old). Collection failures
   do not re-export cached route health and cannot create route-missing alarms.
+- `UDMConsoleCertificateExpiring`: warning after 30 minutes with less than 21 days
+  left on the certificate actually served by the router, gated on successful
+  collection. Secret renewal does not update the console; follow the
+  [renewal handoff](migrations/unifi-tls/README.md#renewal-and-rollback).
 - `UDMBGPRouteMissing`: critical after two minutes without an installed active
   reviewed Kubernetes next hop for a production /32, gated on successful API
   collection. This catches router rejection even when FRR remains established.

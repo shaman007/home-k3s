@@ -1153,3 +1153,66 @@ tests:
   - eval_time: 8m
     alertname: UDMBGPPolicyViolation
     exp_alerts: []
+
+- name: UDMConsoleCertificateExpiring healthy live router certificate
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_tls_certificate_expiry_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 2592000+0x35
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x35
+  - series: certmanager_certificate_expiration_timestamp_seconds{namespace="unifi",name="unifi-console-tls"}
+    values: 7776000+0x35
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: UDMConsoleCertificateExpiring
+    exp_alerts: []
+  - eval_time: 31m
+    alertname: UDMConsoleCertificateExpiring
+    exp_alerts: []
+- name: UDMConsoleCertificateExpiring renewed Secret does not replace expiring router
+    certificate
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_tls_certificate_expiry_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 1728000+0x35
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 1+0x35
+  - series: certmanager_certificate_expiration_timestamp_seconds{namespace="unifi",name="unifi-console-tls"}
+    values: 7776000+0x35
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: UDMConsoleCertificateExpiring
+    exp_alerts: []
+  - eval_time: 31m
+    alertname: UDMConsoleCertificateExpiring
+    exp_alerts:
+    - exp_labels:
+        instance: router
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: unifi-bgp
+        component: bgp
+      exp_annotations:
+        summary: UDM console certificate expires within 21 days.
+        description: Replace the certificate served by the router through the documented
+          console handoff. Cert-manager Secret renewal alone does not update the console.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/migrations/unifi-tls/README.md#renewal-and-rollback
+- name: UDMConsoleCertificateExpiring failed collection cannot claim a certificate
+    expiry
+  interval: 1m
+  input_series:
+  - series: unifi_bgp_tls_certificate_expiry_timestamp_seconds{job="unifi-bgp",instance="router"}
+    values: 1728000+0x35
+  - series: unifi_bgp_scrape_success{job="unifi-bgp",instance="router"}
+    values: 0+0x35
+  - series: certmanager_certificate_expiration_timestamp_seconds{namespace="unifi",name="unifi-console-tls"}
+    values: 7776000+0x35
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: UDMConsoleCertificateExpiring
+    exp_alerts: []
+  - eval_time: 31m
+    alertname: UDMConsoleCertificateExpiring
+    exp_alerts: []

@@ -6,10 +6,12 @@ import http.server
 import json
 import ipaddress
 import os
+import socket
 import ssl
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 PEERS = ("192.168.30.100", "192.168.30.209", "192.168.30.242")
@@ -112,15 +114,35 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+def controller_url(url):
+    """Require an unambiguous HTTPS origin before any credential-bearing request."""
+    try:
+        origin = urllib.parse.urlsplit(url)
+        if origin.scheme != "https" or not origin.hostname or origin.port == 0:
+            raise ValueError
+        if origin.username is not None or origin.password is not None:
+            raise ValueError
+        if (
+            origin.path not in ("", "/")
+            or origin.query
+            or origin.fragment
+            or any(character.isspace() or ord(character) < 32 for character in url)
+        ):
+            raise ValueError
+    except ValueError:
+        raise ValueError(
+            "UNIFI_URL must be an HTTPS origin without credentials or suffixes"
+        ) from None
+    return url.rstrip("/")
+
+
 class Controller:
     """Collect router BGP neighbors and routes with explicit collection-success state."""
 
     def __init__(self):
-        self.base = os.environ["UNIFI_URL"].rstrip("/")
+        self.base = controller_url(os.environ["UNIFI_URL"])
         context = ssl.create_default_context()
-        # Same explicitly configured local-controller TLS exception as UniFi IaC.
-        if os.environ.get("UNIFI_VERIFY_TLS", "true").lower() == "false":
-            context = ssl._create_unverified_context()
+        self.context = context
         self.opener = urllib.request.build_opener(
             urllib.request.ProxyHandler({}),
             NoRedirect(),
@@ -173,10 +195,21 @@ class Controller:
             self.login()
             return self.request(path)
 
+    def certificate_expiry(self):
+        """Inspect the certificate actually served by the verified controller endpoint."""
+        origin = urllib.parse.urlsplit(self.base)
+        with socket.create_connection((origin.hostname, origin.port or 443), timeout=15) as raw:
+            with self.context.wrap_socket(raw, server_hostname=origin.hostname) as connection:
+                return ssl.cert_time_to_seconds(connection.getpeercert()["notAfter"])
+
     def collect(self):
         """Read neighbor and route endpoints and decode their current BGP measurements."""
         base = "/proxy/network/v2/api/site/default/"
-        return decode(self.get(base + "bgp/neighbors"), self.get(base + "routes"))
+        metrics = decode(self.get(base + "bgp/neighbors"), self.get(base + "routes"))
+        metrics.append(
+            ("unifi_bgp_tls_certificate_expiry_timestamp_seconds", {}, self.certificate_expiry())
+        )
+        return metrics
 
 
 def metrics_address():
