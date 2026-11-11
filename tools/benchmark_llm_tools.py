@@ -7,15 +7,13 @@ fixture. Preserve both responses to review tool choice, arguments and synthesis.
 
 import argparse
 from dataclasses import dataclass
-import base64
 import json
-import os
 from pathlib import Path
-import subprocess
 import time
 import urllib.request
 
-from benchmark_http import open_response, validate_base_url
+from benchmark_http import open_response, validate_base_url, validate_cli_url
+from benchmark_credentials import load_api_key
 
 
 TOOL = {
@@ -168,19 +166,8 @@ def main():
     args = parser.parse_args()
     if args.request_timeout_s <= 0:
         parser.error("--request-timeout-s must be positive")
-    try:
-        args.url = validate_base_url(args.url)
-    except ValueError:
-        parser.error("Use an HTTP or HTTPS service URL without credentials or suffixes")
-    key = os.environ.get("LLM_API_KEY", "")
-    if args.kubernetes_secret:
-        namespace, name = args.kubernetes_secret.split("/", 1)
-        secret = json.loads(
-            subprocess.check_output(
-                ["kubectl", "get", "secret", "-n", namespace, name, "-o", "json"]
-            )
-        )
-        key = base64.b64decode(secret["data"]["key"]).decode().strip()
+    args.url = validate_cli_url(parser, args.url)
+    key = load_api_key(args.kubernetes_secret)
     report = {
         "model": args.model,
         "provider": args.provider,

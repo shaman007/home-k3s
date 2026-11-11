@@ -30,6 +30,7 @@ def load(name, path):
 streaming = load("streaming_benchmark", "tools/benchmark_local_llm.py")
 tool_calls = load("tool_benchmark", "tools/benchmark_llm_tools.py")
 http = sys.modules["benchmark_http"]
+credentials = sys.modules["benchmark_credentials"]
 
 
 class BenchmarkHttpTests(unittest.TestCase):
@@ -73,7 +74,7 @@ class BenchmarkHttpTests(unittest.TestCase):
                 ]
                 with (
                     patch("sys.argv", argv),
-                    patch.object(module.subprocess, "check_output") as secret,
+                    patch.object(credentials.subprocess, "check_output") as secret,
                     redirect_stderr(io.StringIO()),
                     self.assertRaises(SystemExit),
                 ):

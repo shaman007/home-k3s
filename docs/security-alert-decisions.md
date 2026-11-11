@@ -2571,3 +2571,33 @@ inventory verifies them absent and reports 64 open: Bandit 53, modern Pylint fiv
 and Opengrep six. No code or deployment changed in this batch. The last full suite
 remains 524 tests with 16 skips; the relevant sixteen tests were rerun successfully.
 No credentials, live router or cluster were accessed, and no push was performed.
+
+
+### Validate and bound shared benchmark secret selection
+
+Consolidated both benchmark tools' duplicate Kubernetes API-key lookup into
+benchmark_credentials.py. Selectors must contain exactly namespace/name, with
+namespace DNS-label and Secret DNS-subdomain syntax/length checks before any
+process. Rules follow the API validators, including numeric label starts and
+63/253-character limits, rather than overrestricting valid names:
+https://github.com/kubernetes/apimachinery/blob/v0.37.2/pkg/api/validation/generic.go#L37-L62
+and https://github.com/kubernetes/apimachinery/blob/v0.37.2/pkg/util/validation/validation.go#L143-L188.
+Flag-like names, extra paths, spaces, shell syntax and invalid identifiers fail
+before execution. The read-only argv retains operator-installed kubectl support,
+adds --request-timeout=15s, explicitly sets shell=False and caps the process at
+30 seconds. Environment-only selection and decoded/stripped key behavior remain
+unchanged; a failed selected lookup never silently falls back to another key.
+
+Shared the existing CLI endpoint error contract in benchmark_http.py while
+preserving URL validation before secret access. Added four regressions covering
+invalid selectors, valid/maximum-length names and fixed bounded argv, environment-
+only behavior, and timeout propagation without fallback. Updated existing endpoint
+rejection tests to observe the shared lookup subprocess. All benchmark request,
+provider, trial and streaming function/class ASTs are unchanged.
+
+The final full suite with isolated JSON::PP ran 528 tests successfully with 16
+skips. Full Pylint across the six changed Python modules reports only the two
+existing benchmark failure-boundary warnings. Ruff and diff checks pass; Bandit
+reported no analysis errors. No real key, kubectl/API, inference endpoint or
+credentials were accessed. Source consolidation and validation fixes await genuine
+published rescanning; no finding was dismissed in this batch and no push was performed.

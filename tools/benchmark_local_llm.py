@@ -10,15 +10,13 @@ import argparse
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 import json
-import os
 import signal
 from pathlib import Path
-import subprocess
 import time
 import urllib.request
-import base64
 
-from benchmark_http import open_response, validate_base_url
+from benchmark_http import open_response, validate_base_url, validate_cli_url
+from benchmark_credentials import load_api_key
 
 
 class BenchmarkDeadline(Exception):
@@ -207,20 +205,6 @@ def request(options, prompt, key):
     return state.result(time.monotonic(), deadline)
 
 
-def load_api_key(kubernetes_secret):
-    """Read the configured API key without including credential material in output."""
-    key = os.environ.get("LLM_API_KEY", "")
-    if kubernetes_secret:
-        namespace, name = kubernetes_secret.split("/", 1)
-        secret = json.loads(
-            subprocess.check_output(
-                ["kubectl", "get", "secret", "-n", namespace, name, "-o", "json"]
-            )
-        )
-        key = base64.b64decode(secret["data"]["key"]).decode().strip()
-    return key
-
-
 def main():
     """Measure local inference via streaming APIs; retain outputs for quality review."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -249,10 +233,7 @@ def main():
     args = parser.parse_args()
     if args.request_deadline_s < 0:
         parser.error("--request-deadline-s must be nonnegative")
-    try:
-        args.url = validate_base_url(args.url)
-    except ValueError:
-        parser.error("Use an HTTP or HTTPS service URL without credentials or suffixes")
+    args.url = validate_cli_url(parser, args.url)
     key = load_api_key(args.kubernetes_secret)
     cases = [
         (

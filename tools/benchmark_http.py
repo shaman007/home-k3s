@@ -10,11 +10,7 @@ def validate_base_url(url):
     """Accept explicit HTTP services without ambiguous authority or URL suffixes."""
     try:
         parsed = urllib.parse.urlsplit(url)
-        if (
-            parsed.scheme not in {"http", "https"}
-            or not parsed.hostname
-            or parsed.port == 0
-        ):
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.port == 0:
             raise ValueError
         if (
             parsed.username is not None
@@ -29,6 +25,14 @@ def validate_base_url(url):
             "Use an HTTP or HTTPS service URL without credentials or suffixes"
         ) from None
     return url.rstrip("/")
+
+
+def validate_cli_url(parser, url):
+    """Reject invalid benchmark endpoints through the existing command-line error contract."""
+    try:
+        return validate_base_url(url)
+    except ValueError:
+        return parser.error("Use an HTTP or HTTPS service URL without credentials or suffixes")
 
 
 class NoRedirects(urllib.request.HTTPErrorProcessor):
