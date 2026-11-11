@@ -1787,3 +1787,24 @@ Ruff at the existing 100-column width and diff checks passed; Bandit reported no
 analysis errors. Source fixes still require publication and genuine rescanning.
 The separately refreshed inventory reports 212 open alerts: Bandit 95, modern
 Pylint 54, Prospector 56 and Opengrep 7. No alerts were dismissed in this batch.
+
+
+### Separate standard NetworkPolicy templates from namespace peer expansion
+
+Extracted the standard default-deny, DNS, web and Kubernetes API templates from
+the common NetworkPolicy dispatcher. The namespace ingress/egress expansion and
+unknown-type rejection remain in the dispatcher. All three original complexity
+warnings are gone; the module and new tests pass full Pylint without suppressions.
+
+All thirteen checked-in catalog bundles render byte-identically to the original
+implementation and pass the generator's committed-output consistency check.
+Another 108 variants compare equal, covering all eight policy kinds, unknown
+types, workload selectors, explicit/empty/default ports and namespace choices.
+Three permanent regressions protect namespace-wide default deny despite an allow
+workload selector, explicitly restricted web destinations and rejection of unknown
+types. No generated manifest changed and no policy was applied to a cluster.
+
+The full suite ran 491 tests successfully with 21 opt-in skips. Ruff and diff
+checks passed; Bandit reported zero findings and zero analysis errors for these
+two Python modules. These source fixes await publication and genuine rescanning;
+no alert was dismissed in this batch.

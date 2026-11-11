@@ -40,6 +40,7 @@ KUBERNETES_API_CONTROL_PLANES = ("192.168.1.0/24", "192.168.30.0/24")
 
 class NoAliasDumper(yaml.SafeDumper):
     """Emit safe YAML without anchors so generated policies remain self-contained."""
+
     def ignore_aliases(self, data: Any) -> bool:
         """Disable YAML aliases for every serialized value."""
         return True
@@ -123,8 +124,8 @@ def normalize_ports(policy_spec: dict[str, Any]) -> list[dict[str, Any]] | None:
     return ports
 
 
-def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str, Any]:
-    """Expand a supported catalog policy, rejecting unknown policy types."""
+def build_standard_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str, Any]:
+    """Expand standard deny, DNS, web and Kubernetes API policy templates."""
     policy_type = policy_spec["type"]
 
     if policy_type == "default-deny":
@@ -145,8 +146,7 @@ def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str,
         cidrs = policy_spec.get("cidrs", ["0.0.0.0/0", "::/0"])
         policy = base_policy(spec, name, ["Egress"])
         policy["spec"]["egress"] = [
-            {"to": [ip_block_peer(cidr)], "ports": copy.deepcopy(WEB_PORTS)}
-            for cidr in cidrs
+            {"to": [ip_block_peer(cidr)], "ports": copy.deepcopy(WEB_PORTS)} for cidr in cidrs
         ]
         return policy
 
@@ -164,6 +164,16 @@ def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str,
             },
         ]
         return policy
+
+    raise ValueError(f"Unsupported standard policy type: {policy_type}")
+
+
+def build_policy(spec: dict[str, Any], policy_spec: dict[str, Any]) -> dict[str, Any]:
+    """Expand a supported catalog policy, rejecting unknown policy types."""
+    policy_type = policy_spec["type"]
+
+    if policy_type in {"default-deny", "dns-egress", "web-egress", "kube-api-egress"}:
+        return build_standard_policy(spec, policy_spec)
 
     if policy_type == "namespace-egress":
         name = policy_spec.get("name", "allow-egress-intra-namespace")
