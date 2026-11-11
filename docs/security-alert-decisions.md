@@ -2367,3 +2367,32 @@ No GPU, SMART device, production directory or cluster was accessed. The rg sourc
 hardening awaits genuine published rescanning. Current GitHub inventory is 86:
 Bandit 67, modern Pylint 12 and Opengrep seven, including concurrent reconciliation.
 No global rules were disabled and no push was performed.
+
+
+### Review isolated Ruby and media failure test subprocesses
+
+Reviewed all subprocess references in the spam-list and bookmarked-media failure
+tests: one run call in each, with no alternate launch aliases. The Ruby harness
+uses fixed /usr/bin/ruby and checked-in importer/harness text, with HTTP and Rails
+models/database operations mocked. The media suite runs fixed /bin/sh against
+checked-in script fragments, private temporary fixtures, dummy credentials and
+stubbed upload/download/install commands, with a bounded timeout. No untrusted
+response or CLI value supplies executable text. Both suites executed successfully:
+two Ruby tests and five media tests.
+
+Dismissed exact subprocess/import findings #8054, #7414, #4297 and #4295 as false
+positives after checking source bytes against analyzed revisions and exact alert
+rule/path/state guards. Comments reopen them if external code, real services or
+production command paths enter the harnesses. Independent inventory confirms all
+four absent. No scanner rule was disabled and no test code changed in this batch.
+
+The five Perl queue tests were skipped: system Perl exists but JSON::PP is absent.
+Therefore queue findings #6844, #6843, #6842 and #6841 remain open pending actual
+runtime verification. This also qualifies the earlier hostile-PATH interpreter
+check: its queue suite completed successfully by skipping, which does not prove
+exporter runtime behavior. Ruby execution was verified; no Perl package or host
+configuration was installed/changed. The last full suite remains 517 tests with
+21 opt-in skips; this batch reran the relevant suites and reports skips explicitly.
+Current independently verified GitHub inventory is 77: Bandit 63, modern Pylint
+seven and Opengrep seven. Concurrent source closures contribute to the total;
+only four dismissals are attributable to this batch. No push was performed.
