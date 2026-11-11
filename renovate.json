@@ -24,6 +24,16 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "Update the private Traefik image embedded in Argo Helm values",
+      "managerFilePatterns": ["/^argocd\\/application-traefik-private\\.yaml$/"],
+      "matchStrings": [
+        "image:\\s+registry: docker\\.io\\s+repository: traefik\\s+tag: (?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "docker.io/traefik",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
       "description": "Update full image references embedded in Mastodon Helm values",
       "managerFilePatterns": ["/^mastodon\\/mastodon-values\\.ya?ml$/"],
       "matchStrings": [
@@ -33,6 +43,17 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "Update both private Traefik image declarations in the same PR",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["docker.io/traefik"],
+      "matchFileNames": [
+        "argocd/application-traefik-private.yaml",
+        "traefik-private/values.yaml"
+      ],
+      "groupName": "private Traefik image",
+      "groupSlug": "private-traefik-image"
+    },
     {
       "description": "Keep Mastodon Helm tags valid for chart version labels",
       "matchManagers": ["helm-values"],
