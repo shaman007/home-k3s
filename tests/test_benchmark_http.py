@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 import urllib.error
 import urllib.request
 
@@ -307,6 +307,88 @@ class ToolTrialTests(unittest.TestCase):
         self.assertEqual(row["failure_stage"], "selection")
         self.assertIn("RuntimeError", row["error"])
         post.assert_called_once()
+
+
+class BenchmarkFailurePrivacyTests(unittest.TestCase):
+    """Keep failure evidence without retaining exception payloads or stopping later trials."""
+
+    def test_cli_failures_omit_private_details_and_continue(self):
+        """Both reports and console output redact arbitrary errors while retaining later runs."""
+        for module, provider in ((streaming, "strata"), (tool_calls, "openai")):
+            for error_type in (RuntimeError, KeyError):
+                with self.subTest(client=module.__name__, error=error_type.__name__):
+                    marker = secrets.token_urlsafe(18)
+                    with tempfile.TemporaryDirectory() as directory:
+                        output = Path(directory) / "report.json"
+                        argv = [
+                            "benchmark",
+                            "--url",
+                            "http://127.0.0.1:18000",
+                            "--provider",
+                            provider,
+                            "--model",
+                            "fixture",
+                            "--out",
+                            str(output),
+                            "--runs",
+                            "2",
+                        ]
+                        if module is streaming:
+                            argv += ["--case", "short_chat"]
+                            operation = "request"
+                            success = {"answer": "synthetic success"}
+                        else:
+                            operation = "post"
+                            success = ({"choices": [{"message": {"content": "fixture"}}]}, 1)
+                        console = io.StringIO()
+                        with (
+                            patch("sys.argv", argv),
+                            patch.object(module, "load_api_key", return_value=marker),
+                            patch.object(
+                                module, operation, side_effect=[error_type(marker), success]
+                            ) as request,
+                            redirect_stdout(console),
+                            redirect_stderr(console),
+                        ):
+                            module.main()
+                        document = output.read_text()
+                        self.assertNotIn(marker, document)
+                        self.assertNotIn(marker, console.getvalue())
+                        rows = json.loads(document)["runs"]
+                        self.assertEqual(len(rows), 2)
+                        self.assertEqual(rows[0]["error"], error_type.__name__)
+                        self.assertNotIn("error", rows[1])
+                        self.assertEqual(request.call_count, 2)
+
+    def test_synthesis_failure_keeps_stage_without_exception_payload(self):
+        """Retain the reviewed tool selection when the follow-up request fails privately."""
+        marker = secrets.token_urlsafe(18)
+        first = {
+            "choices": [
+                {
+                    "message": {
+                        "tool_calls": [
+                            {
+                                "id": "fixture",
+                                "function": {
+                                    "name": "get_namespace_storage",
+                                    "arguments": {"namespace": "bench-demo"},
+                                },
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        options = tool_calls.RequestOptions("http://127.0.0.1:18000", "fixture", "openai", 1024)
+        with patch.object(tool_calls, "post", side_effect=[(first, 1), RuntimeError(marker)]):
+            row = tool_calls.run_trial(options, marker, 0)
+        self.assertEqual(row["failure_stage"], "synthesis")
+        self.assertTrue(row["valid_tool_call"])
+        self.assertEqual(row["selection_response"], first)
+        self.assertEqual(row["error"], "RuntimeError")
+        self.assertNotIn(marker, json.dumps(row))
+        self.assertNotIn("answer", row)
 
 
 class StreamingPartialResultTests(unittest.TestCase):

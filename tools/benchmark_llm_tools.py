@@ -136,7 +136,8 @@ def run_trial(options, key, repeat):
             )
             row["answer"] = final.get("content")
     except Exception as error:
-        row["error"] = f"{type(error).__name__}: {error}"
+        # Exception text can contain private response data or request credentials.
+        row["error"] = type(error).__name__
         row["failure_stage"] = stage
     row["elapsed_s"] = time.monotonic() - started
     return row

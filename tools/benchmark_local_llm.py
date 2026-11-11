@@ -296,8 +296,8 @@ def main():
             try:
                 row.update(request(options, prompt, key))
             except Exception as error:
-                # Never retain request headers or key-bearing request objects.
-                row["error"] = f"{type(error).__name__}: {error}"
+                # Exception text can contain private response data or request credentials.
+                row["error"] = type(error).__name__
             report["runs"].append(row)
             args.out.write_text(json.dumps(report, indent=2))
     print(f"Results: {args.out}")

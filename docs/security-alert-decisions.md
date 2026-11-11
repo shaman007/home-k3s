@@ -2695,3 +2695,27 @@ Ruff passes, Bandit has no analysis errors, and full Pylint reports only resourc
 context and duplicate-code heuristics in these fixture classes. No source rule
 suppressions were added. Runtime findings remain open pending genuine rescanning
 and review; no alert was dismissed and no push was performed.
+
+
+### Prevent benchmark exception payloads from entering result artifacts
+
+The remaining benchmark broad failure handlers exposed arbitrary exception text
+in JSON reports; the tool benchmark also printed that text. Parser/provider errors
+can embed private response data or credentials. Both handlers now retain only the
+exception class name. Existing successful response capture, selection/synthesis
+stages, elapsed time, error presence and continuation to later trials remain
+unchanged. The benchmark contract deliberately records failed trials rather than
+terminating the entire measurement run; this privacy fix does not suppress errors.
+
+New CLI regressions inject private RuntimeError and KeyError payloads into both
+clients, verify JSON and console redaction, and require a later successful trial.
+A synthesis regression preserves the first response and valid-tool selection while
+recording the correct failure stage without the exception payload. All five
+regression scenarios failed against the original handlers and pass after the fix.
+All fourteen benchmark HTTP tests pass. Ruff passes; full Pylint reports only the
+two existing broad-boundary warnings. Bandit reports no analysis errors. No real
+credential, Kubernetes command, inference endpoint or network service was accessed.
+The broad-boundary alerts remain open pending publication and separate decision
+review; none were dismissed in this source-change batch. No push was performed.
+
+The full suite ran 536 tests successfully with 16 skips using isolated JSON::PP.
