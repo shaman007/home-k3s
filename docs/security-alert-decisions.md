@@ -1738,3 +1738,30 @@ No live cluster, credential file or external API was used by the changed tests.
 The independently verified current open total is 226: Bandit 94, modern Pylint
 69, Prospector 56 and Opengrep 7. This combines ongoing source reconciliation
 and the seven exact decisions; source fixes in this commit still need publication.
+
+
+### Group permission helper contracts and separate Plex runtime checks
+
+Replaced the permission probe's seven positional arguments with a frozen named
+case record, retaining the original capability list, fixture shell checks and
+expected process mask. Split Plex manifest validation, synthetic media/hook
+preparation, isolated startup, bounded identity XML checks, software transcode
+and persistent-preference restart verification. All five original local warnings
+are gone; both probes and their updated regression module pass full Pylint.
+
+Compared seventy-five old/new scenarios including optional installer selection
+and injected failures. Ordered command argv/options, fixture bytes, outputs and
+exceptions match. Four permanent offline regressions verify unreviewed helper
+grants fail before execution, missing process guards fail despite successful
+exit, zero-length Plex transcodes fail, and fixture preparation failure removes
+the allocated Plex volume. Existing bounded/defused XML regressions also pass.
+No actual package installer, container, account claim, production media or GPU
+was used. These are source fixes awaiting genuine published rescanning.
+
+The full suite ran 485 tests successfully with 21 opt-in skips. Full Pylint,
+Ruff and diff checks passed; Bandit reported no analysis errors. No scanner rule
+or runtime security check was removed. A separately refreshed GitHub inventory
+now reports 216 open alerts: Bandit 94, modern Pylint 59, Prospector 56 and
+Opengrep 7. The owner reaffirmed the standing won't-fix decision for reviewed
+hardcoded-password values/usages; no possible-hardcoded-password findings are
+currently open, and existing dismissals remain in place.

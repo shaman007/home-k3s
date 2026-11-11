@@ -432,3 +432,60 @@ class GpuAndMailProbeTests(unittest.TestCase):
                 ["podman", "volume", "rm", "postfix-state-fixture"],
             ],
         )
+
+
+class PermissionAndPlexProbeTests(unittest.TestCase):
+    """Retain reviewed grants, nonempty transcodes and disposable-resource cleanup."""
+
+    def permission_case(self, probe, caps):
+        """Build a synthetic permission-check contract for the existing Hister init helper."""
+        return probe.PermissionCase(
+            path="hister/deployment-hister.yaml",
+            name="fix-data-permissions",
+            caps=caps,
+            mount="/data",
+            setup="true",
+            checks="true",
+            expected_mask="0000000000000003",
+        )
+
+    def test_unreviewed_permission_grants_fail_before_execution(self):
+        """A case asking for unreviewed capabilities cannot launch its helper."""
+        probe = load_probe("test_permission_helper_guards.py")
+        case = self.permission_case(probe, ["SYS_ADMIN"])
+        with patch.object(probe, "run") as run:
+            with self.assertRaises(AssertionError):
+                probe.helper(case)
+        run.assert_not_called()
+
+    def test_missing_permission_process_guards_fail(self):
+        """A successful helper exit cannot compensate for missing capability/security flags."""
+        probe = load_probe("test_permission_helper_guards.py")
+        case = self.permission_case(probe, ["CHOWN", "DAC_OVERRIDE"])
+        with patch.object(probe, "run", return_value="NoNewPrivs:\t1\nSeccomp:\t2"):
+            with self.assertRaises(AssertionError):
+                probe.helper(case)
+
+    def test_zero_length_plex_transcode_fails(self):
+        """Require actual nonempty media output after a successful transcoder exit."""
+        probe = load_probe("test_plex_capability_guards.py")
+        status = "CapBnd:\t00000000000000fb\nNoNewPrivs:\t1\nSeccomp:\t2"
+        with patch.object(probe, "run", side_effect=[status, "", "0"]):
+            with self.assertRaises(AssertionError):
+                probe.check_transcode("plex-fixture")
+
+    def test_plex_fixture_preparation_failure_removes_volume(self):
+        """Media generation failures cannot strand the already allocated config volume."""
+        probe = load_probe("test_plex_capability_guards.py")
+        with (
+            patch.object(probe, "run", side_effect=["plex-volume", ""]) as run,
+            patch.object(
+                probe, "prepare_fixture", side_effect=RuntimeError("synthetic media failure")
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "synthetic media failure"):
+                probe.main()
+        self.assertEqual(
+            [call.args[0] for call in run.call_args_list],
+            [["podman", "volume", "create"], ["podman", "volume", "rm", "plex-volume"]],
+        )

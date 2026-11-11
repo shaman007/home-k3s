@@ -6,6 +6,7 @@ No production data, credentials, services or Kubernetes objects are used.
 """
 
 import argparse
+from dataclasses import dataclass
 from pathlib import Path
 import yaml
 
@@ -22,16 +23,29 @@ def run(command, label, timeout=60):
     return result.stdout
 
 
-def helper(path, name, caps, mount, setup, checks, expected_mask):
+@dataclass(frozen=True)
+class PermissionCase:
+    """Keep each reviewed helper's identity, grants and fixture checks together."""
+
+    path: str
+    name: str
+    caps: list[str]
+    mount: str
+    setup: str
+    checks: str
+    expected_mask: str
+
+
+def helper(case):
     """Exercise a permission-init command against disposable storage with reviewed grants."""
-    doc = yaml.safe_load((ROOT / path).read_text())
+    doc = yaml.safe_load((ROOT / case.path).read_text())
     container = next(
-        c for c in doc["spec"]["template"]["spec"]["initContainers"] if c["name"] == name
+        (c for c in doc["spec"]["template"]["spec"]["initContainers"] if c["name"] == case.name)
     )
     sc = container["securityContext"]
     if not (sc["readOnlyRootFilesystem"] and sc["allowPrivilegeEscalation"] is False):
         raise AssertionError
-    if not sc["capabilities"] == {"drop": ["ALL"], "add": caps}:
+    if not sc["capabilities"] == {"drop": ["ALL"], "add": case.caps}:
         raise AssertionError
     command = [
         "podman",
@@ -44,29 +58,32 @@ def helper(path, name, caps, mount, setup, checks, expected_mask):
         "--cap-drop=ALL",
         "--security-opt=no-new-privileges",
         "--tmpfs",
-        mount + ":rw,mode=0700",
+        case.mount + ":rw,mode=0700",
     ]
-    command.extend("--cap-add=" + cap for cap in caps)
-    # Kubernetes command replaces the image's entrypoint (important for Postfix).
+    command.extend(("--cap-add=" + cap for cap in case.caps))
     command += [
         "--entrypoint",
         container["command"][0],
         container["image"],
         container["command"][1],
-        setup + "\n" + container["command"][-1] + "\n" + checks + "\n"
-        'grep -E "^(CapEff|CapBnd|NoNewPrivs|Seccomp):" /proc/self/status',
+        case.setup
+        + "\n"
+        + container["command"][-1]
+        + "\n"
+        + case.checks
+        + '\ngrep -E "^(CapEff|CapBnd|NoNewPrivs|Seccomp):" /proc/self/status',
     ]
-    output = run(command, path)
+    output = run(command, case.path)
     for expected in [
-        "CapEff:\t" + expected_mask,
-        "CapBnd:\t" + expected_mask,
+        "CapEff:\t" + case.expected_mask,
+        "CapBnd:\t" + case.expected_mask,
         "NoNewPrivs:\t1",
         "Seccomp:\t2",
     ]:
         if expected not in output:
-            raise AssertionError((path, output))
+            raise AssertionError((case.path, output))
     print(
-        path
+        case.path
         + ": exact helper passed; reduced caps, read-only root, contents/ownership/modes verified",
         flush=True,
     )
@@ -89,22 +106,26 @@ test "$(stat -c '%u:%g:%a' /data/closed/nested/file)" = 65532:65532:600
 test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
 """
     helper(
-        "hister/deployment-hister.yaml",
-        "fix-data-permissions",
-        ["CHOWN", "DAC_OVERRIDE"],
-        "/data",
-        setup,
-        checks,
-        "0000000000000003",
+        PermissionCase(
+            path="hister/deployment-hister.yaml",
+            name="fix-data-permissions",
+            caps=["CHOWN", "DAC_OVERRIDE"],
+            mount="/data",
+            setup=setup,
+            checks=checks,
+            expected_mask="0000000000000003",
+        )
     )
     helper(
-        "mail/deployment-postfix.yaml",
-        "init-postfix-queue-perms",
-        ["CHOWN", "FOWNER"],
-        "/var/lib/postfix",
-        "set -eu; chmod 700 /var/lib/postfix",
-        "test \"$(stat -c '%u:%g:%a' /var/lib/postfix)\" = 100:102:755",
-        "0000000000000009",
+        PermissionCase(
+            path="mail/deployment-postfix.yaml",
+            name="init-postfix-queue-perms",
+            caps=["CHOWN", "FOWNER"],
+            mount="/var/lib/postfix",
+            setup="set -eu; chmod 700 /var/lib/postfix",
+            checks="test \"$(stat -c '%u:%g:%a' /var/lib/postfix)\" = 100:102:755",
+            expected_mask="0000000000000009",
+        )
     )
     if not args.installers:
         return
