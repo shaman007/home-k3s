@@ -139,6 +139,70 @@ def smart_devices() -> list[Path]:
     return sorted(devices)
 
 
+def read_smart_data(device: Path) -> dict[str, object]:
+    """Read SMART JSON with the existing bounded retry and SATA standby protection."""
+    data: dict[str, object] = {}
+    for attempt in range(2):
+        command = ["/usr/bin/smartctl"]
+        if device.name.startswith("sd"):
+            command.extend(("-n", "standby"))
+        command.extend(("-a", "-j", str(device)))
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=45,
+        )
+        try:
+            data = json.loads(completed.stdout)
+        except json.JSONDecodeError:
+            data = {}
+        if (data.get("smart_status") or {}).get("passed") is not None or attempt == 1:
+            break
+        time.sleep(1)
+    return data
+
+
+def append_smart_statistics(
+    lines: list[str], data: dict[str, object], labels: dict[str, object]
+) -> None:
+    """Append finite temperature, uptime, ATA and NVMe statistics for a readable device."""
+    for name, value in (
+        ("linux_host_smart_temperature_celsius", data.get("temperature", {}).get("current")),
+        ("linux_host_smart_power_on_hours", data.get("power_on_time", {}).get("hours")),
+    ):
+        rendered = sample(name, value, labels)
+        if rendered:
+            lines.append(rendered)
+
+    attributes = {
+        item.get("name"): item.get("raw", {}).get("value")
+        for item in data.get("ata_smart_attributes", {}).get("table", [])
+    }
+    for attribute, name in (
+        ("Reallocated_Sector_Ct", "linux_host_smart_reallocated_sectors"),
+        ("Current_Pending_Sector", "linux_host_smart_pending_sectors"),
+        ("Offline_Uncorrectable", "linux_host_smart_offline_uncorrectable_sectors"),
+    ):
+        rendered = sample(name, attributes.get(attribute), labels)
+        if rendered:
+            lines.append(rendered)
+
+    nvme = data.get("nvme_smart_health_information_log") or {}
+    for source, name in (
+        ("percentage_used", "linux_host_smart_nvme_percentage_used"),
+        ("available_spare", "linux_host_smart_nvme_available_spare_percent"),
+        ("critical_warning", "linux_host_smart_nvme_critical_warning"),
+        ("media_errors", "linux_host_smart_nvme_media_errors_total"),
+        ("num_err_log_entries", "linux_host_smart_nvme_error_log_entries_total"),
+        ("unsafe_shutdowns", "linux_host_smart_nvme_unsafe_shutdowns_total"),
+    ):
+        rendered = sample(name, nvme.get(source), labels)
+        if rendered:
+            lines.append(rendered)
+
+
 def smart_metrics() -> list[str]:
     """Collect SMART health and device statistics in Prometheus text format."""
     lines: list[str] = []
@@ -166,26 +230,7 @@ def smart_metrics() -> list[str]:
 
     successful = 0
     for device in smart_devices():
-        data: dict[str, object] = {}
-        for attempt in range(2):
-            command = ["/usr/bin/smartctl"]
-            if device.name.startswith("sd"):
-                command.extend(("-n", "standby"))
-            command.extend(("-a", "-j", str(device)))
-            completed = subprocess.run(
-                command,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=45,
-            )
-            try:
-                data = json.loads(completed.stdout)
-            except json.JSONDecodeError:
-                data = {}
-            if (data.get("smart_status") or {}).get("passed") is not None or attempt == 1:
-                break
-            time.sleep(1)
+        data = read_smart_data(device)
         if not data:
             lines.append(
                 sample("linux_host_smart_scrape_success", 0, {"device": device.name}) or ""
@@ -203,39 +248,7 @@ def smart_metrics() -> list[str]:
         successful += 1
         lines.append(sample("linux_host_smart_device_info", 1, labels) or "")
         lines.append(sample("linux_host_smart_health_passed", int(bool(health)), labels) or "")
-        for name, value in (
-            ("linux_host_smart_temperature_celsius", data.get("temperature", {}).get("current")),
-            ("linux_host_smart_power_on_hours", data.get("power_on_time", {}).get("hours")),
-        ):
-            rendered = sample(name, value, labels)
-            if rendered:
-                lines.append(rendered)
-
-        attributes = {
-            item.get("name"): item.get("raw", {}).get("value")
-            for item in data.get("ata_smart_attributes", {}).get("table", [])
-        }
-        for attribute, name in (
-            ("Reallocated_Sector_Ct", "linux_host_smart_reallocated_sectors"),
-            ("Current_Pending_Sector", "linux_host_smart_pending_sectors"),
-            ("Offline_Uncorrectable", "linux_host_smart_offline_uncorrectable_sectors"),
-        ):
-            rendered = sample(name, attributes.get(attribute), labels)
-            if rendered:
-                lines.append(rendered)
-
-        nvme = data.get("nvme_smart_health_information_log") or {}
-        for source, name in (
-            ("percentage_used", "linux_host_smart_nvme_percentage_used"),
-            ("available_spare", "linux_host_smart_nvme_available_spare_percent"),
-            ("critical_warning", "linux_host_smart_nvme_critical_warning"),
-            ("media_errors", "linux_host_smart_nvme_media_errors_total"),
-            ("num_err_log_entries", "linux_host_smart_nvme_error_log_entries_total"),
-            ("unsafe_shutdowns", "linux_host_smart_nvme_unsafe_shutdowns_total"),
-        ):
-            rendered = sample(name, nvme.get(source), labels)
-            if rendered:
-                lines.append(rendered)
+        append_smart_statistics(lines, data, labels)
     lines.append(sample("linux_host_smart_collector_success", int(successful > 0)) or "")
     return [line for line in lines if line]
 

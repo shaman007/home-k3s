@@ -1808,3 +1808,22 @@ The full suite ran 491 tests successfully with 21 opt-in skips. Ruff and diff
 checks passed; Bandit reported zero findings and zero analysis errors for these
 two Python modules. These source fixes await publication and genuine rescanning;
 no alert was dismissed in this batch.
+
+
+### Separate SMART device reads from metric rendering
+
+Extracted bounded SMART JSON collection/retry and finite device-statistic rendering
+from the hardware collector. Both original complexity warnings are gone; the
+collector and its new regression module pass full Pylint without suppressions.
+Expanding both helpers reproduces the complete original module AST. In 144
+mocked scenarios, metric lines, ordered command argv/options and retry sleeps
+match exactly, including failing health, missing data, malformed JSON, multiple
+devices, nonfinite values and ATA/NVMe paths.
+
+Three permanent regressions protect readable failing health despite smartctl
+health-failure exit bits, SATA standby protection, exactly one retry for malformed
+JSON with explicit failed scrape/collector metrics, and omission of nonfinite
+statistics. No hardware commands ran and no host exporter was deployed. The full
+suite ran 494 tests successfully with 21 opt-in skips; Ruff and diff checks passed,
+and Bandit reported no analysis errors. Source fixes await genuine published
+rescanning; no alert was dismissed in this batch.
