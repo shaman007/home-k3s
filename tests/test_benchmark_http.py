@@ -171,7 +171,11 @@ class BenchmarkHttpTests(unittest.TestCase):
             opener.open.return_value = body
             with patch.object(urllib.request, "build_opener", return_value=opener):
                 result = streaming.request(
-                    "http://localhost:8080", provider, "fixture", "synthetic", "", 1024, 64
+                    streaming.RequestOptions(
+                        "http://localhost:8080", provider, "fixture", 1024, 64
+                    ),
+                    "synthetic",
+                    "",
                 )
             self.assertEqual(result["answer"], "answer")
             self.assertEqual(result["reasoning"], "thought")
@@ -189,7 +193,9 @@ class BenchmarkHttpTests(unittest.TestCase):
         opener.open.return_value = response
         with patch.object(urllib.request, "build_opener", return_value=opener):
             result = streaming.request(
-                "http://localhost:8080", "strata", "fixture", "synthetic", "", 1024, 64, 5
+                streaming.RequestOptions("http://localhost:8080", "strata", "fixture", 1024, 64, 5),
+                "synthetic",
+                "",
             )
         self.assertTrue(result["incomplete"])
         self.assertEqual(result["finish_reason"], "client_deadline")
@@ -300,3 +306,51 @@ class ToolTrialTests(unittest.TestCase):
         self.assertEqual(row["failure_stage"], "selection")
         self.assertIn("RuntimeError", row["error"])
         post.assert_called_once()
+
+
+class StreamingPartialResultTests(unittest.TestCase):
+    """Keep partial output and incomplete status when provider streams stop early."""
+
+    def test_deadline_retains_partial_answer_and_closes_response(self):
+        """An interrupted read preserves prior text without claiming completion."""
+        event = {"choices": [{"delta": {"content": "partial", "reasoning_content": "thought"}}]}
+
+        def events():
+            yield ("data: " + json.dumps(event)).encode()
+            raise streaming.BenchmarkDeadline()
+
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.__iter__.side_effect = events
+        opener = MagicMock()
+        opener.open.return_value = response
+        with patch.object(urllib.request, "build_opener", return_value=opener):
+            result = streaming.request(
+                streaming.RequestOptions("http://localhost:8080", "strata", "fixture", 1024, 64, 5),
+                "synthetic",
+                "",
+            )
+        self.assertEqual(result["answer"], "partial")
+        self.assertEqual(result["reasoning"], "thought")
+        self.assertEqual(result["finish_reason"], "client_deadline")
+        self.assertTrue(result["incomplete"])
+        response.__exit__.assert_called_once()
+
+    def test_eof_without_completion_marker_remains_incomplete(self):
+        """Visible text alone cannot turn an abruptly ended stream into a completed result."""
+        event = {"choices": [{"delta": {"content": "partial"}}]}
+        body = io.BytesIO(
+            ("data: " + json.dumps(event) + "\n\n: keepalive\ndata: [DONE]\n").encode()
+        )
+        opener = MagicMock()
+        opener.open.return_value = body
+        with patch.object(urllib.request, "build_opener", return_value=opener):
+            result = streaming.request(
+                streaming.RequestOptions("http://localhost:8080", "strata", "fixture", 1024, 64),
+                "synthetic",
+                "",
+            )
+        self.assertEqual(result["answer"], "partial")
+        self.assertEqual(result["finish_reason"], "unexpected_eof")
+        self.assertTrue(result["incomplete"])
+        self.assertTrue(body.closed)

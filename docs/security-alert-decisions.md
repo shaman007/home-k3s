@@ -1411,3 +1411,29 @@ module passes full Pylint; Ruff and diff checks passed. Bandit B607 reports zero
 findings and zero analysis errors across all five changed source modules and the
 new regression module. Other subprocess audit findings remain open for separate
 review; no scanner rule or validation gate was disabled.
+
+
+### Separate streaming benchmark settings, state and metrics
+
+Refactored the streaming benchmark's eight-argument request routine into immutable
+request settings, explicit incremental output/timing state, provider-event
+consumption and result metric assembly. The transport still owns the same
+whole-request deadline and response context; interruption leaves the accumulated
+state available for an incomplete result. Extracted API-key loading preserves
+its existing behavior and does not print or persist credentials. Updated both
+original direct request-test callers. All five original request complexity
+warnings are gone; the existing broad per-trial failure boundary remains open.
+
+Compared the previous implementation with the refactor across 120 deterministic
+Ollama/OpenAI-compatible stream traces. Request URLs/headers/body bytes, timing
+metrics and rates, content/reasoning, completion markers, failures and response
+closure match exactly. Two permanent offline regressions prove a mid-stream
+deadline retains partial text/reasoning and closes its response, and EOF/[DONE]
+without a provider completion marker stays incomplete. Existing protocol,
+redirect, credential, usage/native-metric and deadline regressions also pass.
+No model service, Kubernetes secret, external tool or network endpoint was used.
+
+The full suite ran 463 tests successfully with 21 opt-in skips. The regression
+module passes full Pylint; Ruff and diff checks passed, and Bandit reported no
+analysis errors. These source fixes still require publication and genuine
+scanner refresh; no scanner rule or deadline behavior was weakened.

@@ -8,6 +8,7 @@ OpenAI API. Client decode rates are estimates; Ollama also exposes native rates.
 
 import argparse
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 import json
 import os
 import signal
@@ -51,41 +52,149 @@ def request_deadline(seconds):
         signal.signal(signal.SIGALRM, previous)
 
 
-def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=0):
-    """Stream an inference response while recording output, timing, and completion state."""
-    if provider == "ollama":
+@dataclass(frozen=True)
+class RequestOptions:
+    """Pin endpoint, provider and inference limits for a streaming request."""
+
+    base: str
+    provider: str
+    model: str
+    context: int
+    max_tokens: int
+    deadline_s: float = 0
+
+
+@dataclass
+class StreamTiming:
+    """Track start, first reasoning/content and first visible-answer timestamps."""
+
+    started: float
+    first: float | None = None
+    first_visible: float | None = None
+
+
+@dataclass
+class StreamState:
+    """Retain incremental output and provider metrics even when a deadline interrupts reading."""
+
+    timing: StreamTiming
+    content: list = field(default_factory=list)
+    reasoning: list = field(default_factory=list)
+    usage: dict = field(default_factory=dict)
+    native: dict = field(default_factory=dict)
+    finish_reason: str | None = None
+
+    def consume(self, provider, event):
+        """Update completion, usage, text and timing from one provider event."""
+        if event.get("error"):
+            raise RuntimeError("The inference server returned an error; inspect its logs")
+        if provider == "ollama":
+            delta = event.get("message", {})
+            text, thought = (delta.get("content", ""), delta.get("thinking", ""))
+            if event.get("done"):
+                self.finish_reason = event.get("done_reason")
+                self.usage = {
+                    "prompt_tokens": event.get("prompt_eval_count"),
+                    "completion_tokens": event.get("eval_count"),
+                }
+                self.native = {
+                    k: event.get(k)
+                    for k in (
+                        "load_duration",
+                        "prompt_eval_duration",
+                        "eval_duration",
+                        "done_reason",
+                    )
+                }
+        else:
+            choices = event.get("choices") or [{}]
+            self.finish_reason = choices[0].get("finish_reason") or self.finish_reason
+            delta = choices[0].get("delta", {})
+            text = delta.get("content") or ""
+            thought = delta.get("reasoning_content") or delta.get("reasoning") or ""
+            if event.get("usage"):
+                self.usage = event["usage"]
+        now = time.monotonic()
+        if (text or thought) and self.timing.first is None:
+            self.timing.first = now
+        if text and self.timing.first_visible is None:
+            self.timing.first_visible = now
+        self.content.append(text)
+        self.reasoning.append(thought)
+
+    def result(self, ended, deadline):
+        """Build the original result schema and rates with explicit incomplete status."""
+        output_tokens = self.usage.get("completion_tokens")
+        result = {
+            "elapsed_s": ended - self.timing.started,
+            "ttft_including_reasoning_s": self.timing.first - self.timing.started
+            if self.timing.first
+            else None,
+            "first_visible_answer_s": self.timing.first_visible - self.timing.started
+            if self.timing.first_visible
+            else None,
+            "usage": self.usage,
+            "native": self.native,
+            "finish_reason": "client_deadline"
+            if deadline["exceeded"]
+            else self.finish_reason or "unexpected_eof",
+            "incomplete": deadline["exceeded"] or self.finish_reason is None,
+            "client_decode_tokens_s_estimate": (output_tokens - 1) / (ended - self.timing.first)
+            if output_tokens
+            and output_tokens > 1
+            and self.timing.first
+            and (ended > self.timing.first)
+            else None,
+            "answer": "".join(self.content),
+            "reasoning": "".join(self.reasoning),
+        }
+        if self.native.get("eval_duration") and output_tokens:
+            result["native_decode_tokens_s"] = (
+                output_tokens * 1000000000.0 / self.native["eval_duration"]
+            )
+        if self.native.get("prompt_eval_duration") and self.usage.get("prompt_tokens"):
+            result["native_prompt_tokens_s"] = (
+                self.usage["prompt_tokens"] * 1000000000.0 / self.native["prompt_eval_duration"]
+            )
+        return result
+
+
+def request(options, prompt, key):
+    """Stream an inference response while retaining deadlines and partial completion evidence."""
+    if options.provider == "ollama":
         path = "/api/chat"
         payload = {
-            "model": model,
+            "model": options.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": True,
             "think": "low",
             "keep_alive": "30s",
-            "options": {"temperature": 0, "num_ctx": context, "num_predict": max_tokens},
+            "options": {
+                "temperature": 0,
+                "num_ctx": options.context,
+                "num_predict": options.max_tokens,
+            },
         }
     else:
         path = "/v1/chat/completions"
         payload = {
-            "model": model,
+            "model": options.model,
             "messages": [{"role": "user", "content": prompt}],
             "stream": True,
             "stream_options": {"include_usage": True},
             "temperature": 0,
-            "max_tokens": max_tokens,
+            "max_tokens": options.max_tokens,
             "reasoning_effort": "low",
         }
     headers = {"Content-Type": "application/json"}
     if key:
         headers["Authorization"] = "Bearer " + key
     req = urllib.request.Request(
-        validate_base_url(base) + path, data=json.dumps(payload).encode(), headers=headers
+        validate_base_url(options.base) + path, data=json.dumps(payload).encode(), headers=headers
     )
-    started = time.monotonic()
-    first = first_visible = None
-    content, reasoning, usage, native = [], [], {}, {}
-    finish_reason = None
+    state = StreamState(StreamTiming(time.monotonic()))
     with (
-        request_deadline(deadline_s) as deadline,
+        request_deadline(options.deadline_s) as deadline,
         open_response(req, timeout=1800) as response,
     ):
         for line in response:
@@ -94,69 +203,22 @@ def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=
                 line = line[5:].strip()
             if not line or line == "[DONE]" or line.startswith(":"):
                 continue
-            event = json.loads(line)
-            if event.get("error"):
-                raise RuntimeError("The inference server returned an error; inspect its logs")
-            if provider == "ollama":
-                delta = event.get("message", {})
-                text, thought = delta.get("content", ""), delta.get("thinking", "")
-                if event.get("done"):
-                    finish_reason = event.get("done_reason")
-                    usage = {
-                        "prompt_tokens": event.get("prompt_eval_count"),
-                        "completion_tokens": event.get("eval_count"),
-                    }
-                    native = {
-                        k: event.get(k)
-                        for k in (
-                            "load_duration",
-                            "prompt_eval_duration",
-                            "eval_duration",
-                            "done_reason",
-                        )
-                    }
-            else:
-                choices = event.get("choices") or [{}]
-                finish_reason = choices[0].get("finish_reason") or finish_reason
-                delta = choices[0].get("delta", {})
-                text = delta.get("content") or ""
-                thought = delta.get("reasoning_content") or delta.get("reasoning") or ""
-                if event.get("usage"):
-                    usage = event["usage"]
-            now = time.monotonic()
-            if (text or thought) and first is None:
-                first = now
-            if text and first_visible is None:
-                first_visible = now
-            content.append(text)
-            reasoning.append(thought)
-    ended = time.monotonic()
-    output_tokens = usage.get("completion_tokens")
-    result = {
-        "elapsed_s": ended - started,
-        "ttft_including_reasoning_s": first - started if first else None,
-        "first_visible_answer_s": first_visible - started if first_visible else None,
-        "usage": usage,
-        "native": native,
-        "finish_reason": (
-            "client_deadline" if deadline["exceeded"] else finish_reason or "unexpected_eof"
-        ),
-        "incomplete": deadline["exceeded"] or finish_reason is None,
-        "client_decode_tokens_s_estimate": (
-            (output_tokens - 1) / (ended - first)
-            if output_tokens and output_tokens > 1 and first and ended > first
-            else None
-        ),
-        "answer": "".join(content),
-        "reasoning": "".join(reasoning),
-    }
-    if native.get("eval_duration") and output_tokens:
-        result["native_decode_tokens_s"] = output_tokens * 1e9 / native["eval_duration"]
-    if native.get("prompt_eval_duration") and usage.get("prompt_tokens"):
-        result["native_prompt_tokens_s"] = (
-            usage["prompt_tokens"] * 1e9 / native["prompt_eval_duration"]
+            state.consume(options.provider, json.loads(line))
+    return state.result(time.monotonic(), deadline)
+
+
+def load_api_key(kubernetes_secret):
+    """Read the configured API key without including credential material in output."""
+    key = os.environ.get("LLM_API_KEY", "")
+    if kubernetes_secret:
+        namespace, name = kubernetes_secret.split("/", 1)
+        secret = json.loads(
+            subprocess.check_output(
+                ["kubectl", "get", "secret", "-n", namespace, name, "-o", "json"]
+            )
         )
-    return result
+        key = base64.b64decode(secret["data"]["key"]).decode().strip()
+    return key
 
 
 def main():
@@ -191,15 +253,7 @@ def main():
         args.url = validate_base_url(args.url)
     except ValueError:
         parser.error("Use an HTTP or HTTPS service URL without credentials or suffixes")
-    key = os.environ.get("LLM_API_KEY", "")
-    if args.kubernetes_secret:
-        namespace, name = args.kubernetes_secret.split("/", 1)
-        secret = json.loads(
-            subprocess.check_output(
-                ["kubectl", "get", "secret", "-n", namespace, name, "-o", "json"]
-            )
-        )
-        key = base64.b64decode(secret["data"]["key"]).decode().strip()
+    key = load_api_key(args.kubernetes_secret)
     cases = [
         (
             "short_chat",
@@ -251,23 +305,15 @@ def main():
         "Actual input tokens are authoritative; intended lengths are approximate.",
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    options = RequestOptions(
+        args.url, args.provider, args.model, args.context, 512, args.request_deadline_s
+    )
     for name, prompt in cases:
         for repeat in range(args.runs):
             print(f"{args.provider}: {name} run {repeat + 1}", flush=True)
             row = {"case": name, "repeat": repeat + 1}
             try:
-                row.update(
-                    request(
-                        args.url,
-                        args.provider,
-                        args.model,
-                        prompt,
-                        key,
-                        args.context,
-                        512,
-                        args.request_deadline_s,
-                    )
-                )
+                row.update(request(options, prompt, key))
             except Exception as error:
                 # Never retain request headers or key-bearing request objects.
                 row["error"] = f"{type(error).__name__}: {error}"
