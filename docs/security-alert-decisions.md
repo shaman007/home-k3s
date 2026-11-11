@@ -702,3 +702,42 @@ and the exporter; the finding incorrectly flags the merge site. The GitHub
 API confirmed state `dismissed`, reason `false positive`, with a comment
 recording the scanned commit and requiring reopening if the anchor or merge
 changes. No blanket YAML-rule suppression was added.
+
+
+### Complete requested retired-platform cleanup and protect Sync HTTP (2026-11-11)
+
+Removed 25 more files (671 lines): the remaining `DEPRECATED/omni/`, `ttrss/`,
+and `dashboard/` trees; Wazuh's archived Argo application, Vault policy, and
+Harbor/Loki network policies; the archived TTRSS PostgreSQL configuration; and
+six obsolete Argo declarations for the already retired PostgreSQL/exporter,
+Rancher, Promtail, MySQL, and single-instance MinIO sources. Updated the archive
+index. No Wazuh, TTRSS, Omni, or dashboard-named files remain under DEPRECATED.
+All 25 files are recoverable from revision `dc03cd06d86136be907309fcbce97f955c11c360` in Git history.
+None are selected by the 76 current local GitOps sources. Active applications,
+cluster resources, and persistent data were not changed.
+
+Added a shared origin-bound HTTP transport for Firefox Sync secret bootstrap
+and storage verification. Bootstrap is restricted to the reviewed OpenBao
+HTTPS origin; the verifier accepts only the reviewed Sync HTTPS origin or its
+explicit loopback HTTP tunnel. Requests cannot change origin, and all 301,
+302, 303, 307, and 308 redirects are refused before forwarding. Invalid ports,
+userinfo, fragments, whitespace and non-origin base URLs fail validation before
+secret access. HTTP error responses are closed, preserving optional bootstrap
+404 handling and sanitized error reporting. Timeout remains 15 seconds.
+
+Factored the existing socket-free HTTP fixture for reuse by administrative and
+Sync client regressions. Eight additional tests cover origin validation,
+cross-origin rejection, preserved request transport, redirect handling, error
+closure, and pre-secret validation. Actual urllib redirect dispatch was
+exercised across 120 combinations of origin, status, method and destination.
+Replacing the redirect guard with the standard handler causes 72 failures,
+confirming detection of credential forwarding. No real credentials, endpoints,
+OpenBao writes, or storage-probe writes were used.
+
+Validation: final full suite passes (394 tests, 21 skipped). New transport and
+fixture/test modules pass full Pylint; all touched Python files pass targeted
+error, documentation, and formatting checks. Both CLI import paths work in
+plan/help mode. Bandit decreased from 223 to 221 findings with zero analysis
+errors, resolving both Sync tools' B310 findings without suppression. GitHub
+counts require publication and rescan. `git diff --check` passes. Changes
+remain unstaged and uncommitted.

@@ -78,6 +78,11 @@ migration logs, and Certificate Ready. Verify HTTPS `/__heartbeat__` and
 write/read/cleanup against a local-only port-forward on port 18000, or the public
 endpoint with `--url https://sync.andreybondarenko.com` (trusted HTTPS required). It reads the
 master secret in memory without printing it. It does not verify Mozilla OAuth.
+Both verification and secret bootstrap reject redirects, including redirects
+within the same service. Each request must stay on its configured origin;
+bootstrap uses only the reviewed OpenBao HTTPS endpoint, and verification uses
+only the reviewed public HTTPS endpoint or a loopback HTTP tunnel. HTTP failures
+are closed and reported without response bodies or credential material.
 Then use two Firefox clients to sync a test bookmark and verify it appears on the
 second client. Health checks alone do not establish end-to-end sync.
 

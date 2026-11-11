@@ -13,7 +13,8 @@ from unittest.mock import MagicMock, patch
 import urllib.error
 import urllib.parse
 import urllib.request
-import urllib.response
+
+from http_fixture import fixture_opener
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,32 +23,6 @@ SPEC = importlib.util.spec_from_file_location(
 )
 client = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(client)
-
-
-def fixture_opener(url, status, visits, buffers):
-    """Build a transport fixture whose redirect scenario is bound outside test loops."""
-    original_build = urllib.request.build_opener
-
-    class FixtureHttps(urllib.request.HTTPSHandler):
-        """Return controlled HTTP responses without opening a socket."""
-
-        def https_open(self, req):
-            """Record the request and synthesize the redirect or destination response."""
-            visits.append(req.full_url)
-            response_headers = Message()
-            code = status if req.full_url == url else 200
-            if code != 200:
-                response_headers["Location"] = "https://elsewhere.invalid/collect"
-            body = io.BytesIO(b"{}")
-            buffers.append(body)
-            response = urllib.response.addinfourl(body, response_headers, req.full_url, code)
-            response.msg = "Fixture response"
-            return response
-
-    def build(*handlers):
-        return original_build(urllib.request.ProxyHandler({}), FixtureHttps(), *handlers)
-
-    return build
 
 
 class AdministrativeHttpTests(unittest.TestCase):
@@ -74,7 +49,9 @@ class AdministrativeHttpTests(unittest.TestCase):
                 patch.object(client.urllib.request, "build_opener") as build,
             ):
                 with self.assertRaises(RuntimeError):
-                    client.request(url, headers={"Authorization": "Bearer " + self.marker})
+                    client.request(
+                        url, headers={"Authorization": "Bearer " + self.marker}
+                    )
                 build.assert_not_called()
 
     def test_credential_headers_cannot_cross_services(self):
@@ -112,7 +89,9 @@ class AdministrativeHttpTests(unittest.TestCase):
                             side_effect=fixture_opener(url, status, visits, buffers),
                         ),
                     ):
-                        with self.assertRaisesRegex(RuntimeError, f"HTTP {status}") as caught:
+                        with self.assertRaisesRegex(
+                            RuntimeError, f"HTTP {status}"
+                        ) as caught:
                             client.request(
                                 url,
                                 method=method,
@@ -156,7 +135,9 @@ class AdministrativeHttpTests(unittest.TestCase):
             opener.open.side_effect = error
             with (
                 self.subTest(status=status, missing=missing),
-                patch.object(client.urllib.request, "build_opener", return_value=opener),
+                patch.object(
+                    client.urllib.request, "build_opener", return_value=opener
+                ),
             ):
                 if status == 404 and missing:
                     self.assertIsNone(client.request(url, missing=missing))
@@ -185,7 +166,9 @@ class AdministrativeHttpTests(unittest.TestCase):
         ):
             self.assertEqual(client.keycloak_token(), self.marker)
         req = transport.call_args.args[0]
-        self.assertEqual(req.full_url, client.SSO + "/realms/master/protocol/openid-connect/token")
+        self.assertEqual(
+            req.full_url, client.SSO + "/realms/master/protocol/openid-connect/token"
+        )
         self.assertEqual(req.get_method(), "POST")
         form = urllib.parse.parse_qs(req.data.decode())
         self.assertEqual(form["password"], [self.marker])

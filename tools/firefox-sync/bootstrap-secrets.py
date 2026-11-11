@@ -8,6 +8,8 @@ import secrets
 import urllib.error
 import urllib.request
 
+from http_transport import Transport
+
 ADDRESS = "https://openbao.int.andreybondarenko.com"
 TOKEN_FILE = Path("/home/shaman007/.codex/skills/vault-operator/root-token.txt")
 KEYS = (
@@ -34,6 +36,7 @@ def main():
             )
         )
         return
+    transport = Transport(ADDRESS, {"openbao.int.andreybondarenko.com"})
     candidates = [
         line.strip()
         for line in TOKEN_FILE.read_text(encoding="utf-8").splitlines()
@@ -51,13 +54,16 @@ def main():
             method=method,
         )
         try:
-            with urllib.request.urlopen(request, timeout=15) as response:
+            with transport.open(request) as response:
                 body = response.read()
                 return json.loads(body) if body else {}
         except urllib.error.HTTPError as error:
+            error.close()
             if missing_ok and error.code == 404:
                 return None
-            raise RuntimeError(f"OpenBao {method} {path} failed: HTTP {error.code}") from None
+            raise RuntimeError(
+                f"OpenBao {method} {path} failed: HTTP {error.code}"
+            ) from None
         except Exception:
             raise RuntimeError(
                 f"OpenBao {method} {path} failed; details suppressed to protect credentials"
@@ -68,7 +74,10 @@ def main():
         api(
             "POST",
             "kv/data/firefox-sync",
-            {"options": {"cas": 0}, "data": {key: secrets.token_hex(32) for key in KEYS}},
+            {
+                "options": {"cas": 0},
+                "data": {key: secrets.token_hex(32) for key in KEYS},
+            },
         )
         print("Created dedicated Sync secrets in OpenBao.")
     elif not set(KEYS).issubset(current["data"]["data"]):
@@ -96,7 +105,9 @@ def main():
             "token_ttl": "1h",
         },
     )
-    print("Configured namespace-scoped External Secrets access. No secret values printed.")
+    print(
+        "Configured namespace-scoped External Secrets access. No secret values printed."
+    )
 
 
 if __name__ == "__main__":
