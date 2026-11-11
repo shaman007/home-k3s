@@ -19,6 +19,50 @@ SPEC.loader.exec_module(collector)
 class HardwareMetricsTests(unittest.TestCase):
     """Verify unhealthy disks remain visible and unreadable data cannot appear successful."""
 
+    def test_device_discovery_rejects_non_disk_names_and_deduplicates_nvme(self):
+        """Only anchored SATA/NVMe sysfs names may become command arguments."""
+        names = [
+            "sda",
+            "sdab",
+            "nvme0n1",
+            "nvme0n2",
+            "nvme2n1",
+            "loop0",
+            "sda;id",
+            "--help",
+            "nvme0n1-extra",
+            "sdA",
+            "nvme0",
+        ]
+        with patch.object(
+            collector.Path, "iterdir", return_value=[Path("/sys/block") / name for name in names]
+        ):
+            self.assertEqual(
+                collector.smart_devices(),
+                [Path("/dev/nvme0"), Path("/dev/nvme2"), Path("/dev/sda"), Path("/dev/sdab")],
+            )
+
+    def test_gpu_collection_uses_fixed_executable_and_bounded_argv(self):
+        """GPU telemetry cannot select another executable or omit its execution deadline."""
+        response = SimpleNamespace(returncode=1, stdout="")
+        with patch.object(collector.subprocess, "run", return_value=response) as run:
+            lines = collector.gpu_metrics()
+        argv = run.call_args.args[0]
+        self.assertEqual(argv[0], "/usr/bin/nvidia-smi")
+        self.assertEqual(len(argv), 3)
+        self.assertTrue(argv[1].startswith("--query-gpu=index,name,uuid,"))
+        self.assertEqual(argv[2], "--format=csv,noheader,nounits")
+        self.assertEqual(
+            run.call_args.kwargs,
+            {
+                "check": False,
+                "capture_output": True,
+                "text": True,
+                "timeout": 20,
+            },
+        )
+        self.assertIn("linux_host_gpu_collector_success 0", lines)
+
     def test_failed_health_is_readable_and_does_not_retry(self):
         """SMART failure exit bits must not hide a readable failing health assessment."""
         response = SimpleNamespace(

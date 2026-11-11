@@ -2338,3 +2338,32 @@ no analysis errors; their broader subprocess/import warnings remain for individu
 review. No PostgreSQL container, database, host volume, production credential or
 cluster resource was used. Source fixes await genuine published rescanning;
 no alert was dismissed in this batch and no push was performed.
+
+
+### Verify hardware telemetry command boundaries and pin hostname scanning
+
+Reviewed exact hardware collector alerts #7482, #7481 and #7480. An AST audit
+confirms subprocess has exactly two references, both run calls: fixed
+/usr/bin/nvidia-smi with constant telemetry query/CSV options and fixed
+/usr/bin/smartctl with bounded read-only JSON flags. Device paths come only from
+/sys/block names accepted by anchored SATA/NVMe patterns and are constructed under
+/dev; no response, environment value or CLI argument selects executable code.
+Both calls use argv sequences without a shell and finite timeouts. Dismissed only
+these three false positives with conditions to reopen for external command/argument
+sources or writes. Exact analyzed-source identity and stable alert fields were
+checked, including any newer concurrent revision. Independent inventory confirms
+all three are absent.
+
+Added regressions for rejected non-disk/option-like sysfs names, NVMe controller
+deduplication and the GPU executable/argv/deadline/failure metric contract. Existing
+SATA standby, malformed JSON and failed-health regressions remain green. Separately
+pinned the internal-domain scanner's ripgrep executable to /usr/bin/rg. All five
+domain inventory tests pass with a fake rg earlier on PATH, without running it;
+source/report privacy and output exclusion behavior remain intact.
+
+The full suite ran 517 tests successfully with 21 opt-in skips. Changed Python
+modules pass full Pylint, Ruff and diff checks; Bandit reported no analysis errors.
+No GPU, SMART device, production directory or cluster was accessed. The rg source
+hardening awaits genuine published rescanning. Current GitHub inventory is 86:
+Bandit 67, modern Pylint 12 and Opengrep seven, including concurrent reconciliation.
+No global rules were disabled and no push was performed.

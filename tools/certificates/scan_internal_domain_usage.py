@@ -110,7 +110,7 @@ def main():
         for old, new in zip(c["old_names"], c["new_names"])
     }
     command = [
-        "rg",
+        "/usr/bin/rg",
         "--pcre2",
         "--hidden",
         "--no-heading",
