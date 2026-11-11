@@ -172,6 +172,25 @@ checks. The full suite passed with 384 tests and 21 skips. These are source fixe
 the legacy alert configurations still require matching rescans before closure can
 be claimed. No style alerts were dismissed.
 
+The retained-tool formatting pass covers 13 files associated with 845 historical
+formatting reports, including the previously formatted CI files. Eight additional
+tools were reformatted. Literal wrapping was checked to preserve executable ASTs
+and exact emitted strings; the network-report imports were then split and a module
+description added. All 13 pass current Pylint C0301/C0321/C0410 checks. The full
+suite passed with 384 tests and 21 skips after these source changes.
+
+## CodeQL language configuration after Ruby removal
+
+Removing the final standalone `.rb` file exposed a stale Ruby entry in GitHub's
+default CodeQL setup: the Ruby job failed with `No Ruby code found`. Updated the
+saved default setup through GitHub's interface to select GitHub Actions, Go and
+Python only; verified the persisted configuration lists those three languages.
+The query suite, runner, threat model and triggers are unchanged. This is a live
+GitHub settings change, not a repository commit. The historical failed run remains
+in Actions history. The next analysis,
+[run 43001909513](https://github.com/shaman007/home-k3s/actions/runs/43001909513),
+completed successfully with Actions, Go and Python jobs and no Ruby job.
+
 ## Remaining dispositions
 
 Router TLS verification, subprocess audit findings and remaining lint/correctness
