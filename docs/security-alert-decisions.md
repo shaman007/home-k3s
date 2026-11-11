@@ -2785,3 +2785,30 @@ during this batch, so counts are not a subtraction from the prior snapshot.
 No source suppressions, external process launches, messages, credentials or cluster
 changes occurred. The full-suite result remains 537 tests with 16 skips; the 65
 relevant tests were rerun successfully here. No push was performed.
+
+
+### Keep release tags positional and bound signing commands
+
+The release uploader previously placed its environment-selected tag among CLI
+flags, allowing an option-like input to be interpreted by gh as an option. Upload
+flags now precede an explicit -- separator, followed by the literal tag and
+absolute bundle path. Repository selection, clobber behavior, encoded API tag
+lookup and exact-workflow verification remain unchanged. The GitHub CLI uploader
+assigns its first positional argument to the tag and subsequent arguments to
+assets (https://github.com/cli/cli/blob/trunk/pkg/cmd/release/upload/upload.go).
+The shared runner now explicitly disables shell execution and applies a
+600-second process deadline to API, download, signing, verification and upload
+commands. The workflow's existing 30-minute limit remains the overall bound.
+
+New regressions cover slash-containing, option-like and shell-metacharacter tags
+as literal positional arguments, encoded lookup paths, exact runner deadlines
+and timeout propagation. A signing timeout cannot proceed to verification or
+upload. Missing separator/deadline regressions fail against the original code;
+all eleven supply-chain tests pass after the fix, including changed-inventory
+and failed-verification upload gates. Full Pylint rates both changed modules
+10/10, Ruff passes and Bandit has no analysis errors. Every release command is
+mocked: no download, signing, authentication, publication or upload occurred.
+Runtime alerts remain open pending published rescanning and review. No alert was
+dismissed and no push was performed.
+
+The full suite ran 540 tests successfully with 16 skips using isolated JSON::PP.

@@ -144,7 +144,7 @@ class ReleaseSigningTests(unittest.TestCase):
         self.env.start()
         self.addCleanup(self.env.stop)
 
-    def invoke(self, initial, final=None, fail_verify=False):
+    def invoke(self, initial, final=None, fail_verify=False, timeout_sign=False):
         """Run release signing against simulated asset inventories and verification results."""
         calls = []
         self.last_calls = calls
@@ -156,6 +156,8 @@ class ReleaseSigningTests(unittest.TestCase):
                 return subprocess.CompletedProcess(
                     args, 0, json.dumps({"draft": False, "assets": next(releases)})
                 )
+            if args[:2] == ("cosign", "sign-blob") and timeout_sign:
+                raise subprocess.TimeoutExpired(args, 600)
             if args[:2] == ("cosign", "verify-blob") and fail_verify:
                 raise subprocess.CalledProcessError(1, args)
             return subprocess.CompletedProcess(args, 0)
@@ -172,6 +174,48 @@ class ReleaseSigningTests(unittest.TestCase):
         download = next(c for c in calls if "Accept: application/octet-stream" in c)
         self.assertEqual(download[-1], "repos/shaman007/key-val/releases/assets/123")
         self.assertEqual(calls[-1][:3], ("gh", "release", "upload"))
+
+    def test_upload_tags_are_literal_positional_arguments(self):
+        """Option-like and slash-containing tags cannot change upload flags or repository."""
+        for tag in ("release/v1", "--repo=elsewhere/other", "--help", "v1;$(false)"):
+            with self.subTest(tag=tag), patch.dict(os.environ, {"RELEASE_TAG": tag}):
+                calls = self.invoke([self.asset])
+                upload = calls[-1]
+                separator = upload.index("--")
+                self.assertEqual(
+                    upload[:separator],
+                    ("gh", "release", "upload", "--repo", "shaman007/key-val", "--clobber"),
+                )
+                self.assertEqual(upload[separator + 1], tag)
+                self.assertEqual(len(upload[separator + 2 :]), 1)
+                self.assertTrue(upload[-1].endswith("/app.tar.gz.sigstore.json"))
+                self.assertEqual(
+                    calls[0][-1],
+                    "repos/shaman007/key-val/releases/tags/" + self.module.quote(tag, safe=""),
+                )
+
+    def test_external_commands_have_deadline_and_propagate_timeout(self):
+        """The common runner cannot silently continue after a bounded command fails."""
+        with patch.object(
+            self.module.subprocess, "run", side_effect=subprocess.TimeoutExpired("cosign", 600)
+        ) as command:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                self.module.run("cosign", "verify-blob", "fixture", capture_output=True)
+        command.assert_called_once_with(
+            ("cosign", "verify-blob", "fixture"),
+            check=True,
+            shell=False,
+            timeout=600,
+            capture_output=True,
+        )
+
+    def test_signing_timeout_prevents_verification_and_upload(self):
+        """A timed-out signer cannot publish an incomplete or unverified bundle."""
+        with self.assertRaises(subprocess.TimeoutExpired):
+            self.invoke([self.asset], timeout_sign=True)
+        self.assertTrue(any(c[:2] == ("cosign", "sign-blob") for c in self.last_calls))
+        self.assertFalse(any(c[:2] == ("cosign", "verify-blob") for c in self.last_calls))
+        self.assertFalse(any(c[:3] == ("gh", "release", "upload") for c in self.last_calls))
 
     def test_rejects_no_files_and_unsafe_paths(self):
         """Reject releases without assets and asset names containing unsafe paths."""

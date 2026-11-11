@@ -11,8 +11,8 @@ from urllib.parse import quote
 
 
 def run(*args, **kwargs):
-    """Run an external command and propagate a nonzero exit status."""
-    return subprocess.run(args, check=True, **kwargs)
+    """Bound signing/API commands and propagate nonzero exits or timeouts."""
+    return subprocess.run(args, check=True, shell=False, timeout=600, **kwargs)
 
 
 def main():
@@ -79,10 +79,11 @@ def main():
                 "gh",
                 "release",
                 "upload",
-                tag,
                 "--repo",
                 repo,
                 "--clobber",
+                "--",
+                tag,
                 str(root / (asset["name"] + ".sigstore.json")),
             )
 
