@@ -481,3 +481,35 @@ analysis errors. Other subprocess and security audit findings remain open for
 individual review. Full suite passed: 397 tests, 21 skips. Targeted lint checks
 pass; documented the remaining 12 migration test methods without executable changes.
 Matching GitHub closure remains pending publication and the normal scan.
+
+## Approved completed-migration tooling cleanup
+
+The user approved removing the five identified groups rather than continuing to
+maintain their one-off code. Removed these ten files:
+
+- `tools/certificates/inventory-sso.py` and `migrate-sso.py`: completed domain/SSO migration.
+- `tools/firefox-sync/migrate-mariadb.py`: completed transfer; the old MySQL source is retired.
+- Five YAML files in `tools/nextcloud/`: old PVC-copy jobs and migration-only suspend/resume patches.
+- `tools/longhorn/generate-recurring-job-proposal.py`: initial proposal scaffolding.
+- `tools/security/review-metallb-l2.py`: chart-0.16.1 L2 retirement audit, superseded by BGP/FRR.
+
+Also removed `tests/test_firefox_sync_mariadb.py` and
+`tests/test_migration_cli_errors.py`, which exclusively exercised the removed
+helpers. Historical migration and MetalLB records remain, with links to the last
+retained source revision `254e90b51bc7dd86345987619bc91358d1f0d97c` instead of
+commands targeting nonexistent local scripts. Historical inventory snapshots and
+the MetalLB retirement inventory remain as records, not current desired state.
+
+Active Longhorn recurring jobs and generated policies, reusable Firefox bootstrap
+and storage verification, active CI/generators, security probes and runtime
+backfill hooks are unchanged. No live cluster objects, PVCs, databases or data
+were changed. No alert was dismissed to implement this cleanup.
+
+Validation: no references to the removed paths remain in CI, Argo applications,
+tools or surviving tests; active application manifests/workflows/generated
+configuration have no diff. Runtime-contract validation and component-security,
+infrastructure-guard, UniFi exporter and Kyverno exception generator checks pass.
+The remaining 380 tests pass, with 21 skips; the test count fell by the 17 tests
+specific to removed one-off helpers. Local Bandit findings decreased from 242 to
+225 with no analysis errors. Remote reconciliation awaits publication and rescan;
+the incompatible legacy Pylint analysis is still retained for separate review.

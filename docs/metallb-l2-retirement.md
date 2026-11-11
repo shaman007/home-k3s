@@ -1,5 +1,10 @@
 # Staged retirement of unused FRR
 
+This records the completed chart-0.16.1 retirement. The later
+[BGP services migration](bgp-trial/services-migration.md) restored FRR for active
+BGP routing; the current chart is 0.16.2. The old chart-specific review helper
+has been removed, and this retirement procedure does not describe current desired state.
+
 Reviewed 2026-11-04 against MetalLB chart 0.16.1. The cluster has no BGPPeers,
 BGPAdvertisements, FRRConfigurations or FRRK8sConfigurations. Two IPAddressPools
 and two L2Advertisements serve three LoadBalancer Services, all class
@@ -22,11 +27,9 @@ its FRRConfiguration RBAC rule. Images, probes, capabilities, host networking,
 memberlist, load balancer class, metrics, and seccomp stay unchanged. Pool and
 L2Advertisement manifests stay unchanged.
 
-Run this read-only review with an unpacked copy of the pinned chart:
-
-```sh
-python3 tools/security/review-metallb-l2.py --chart /path/to/metallb --live
-```
+The completed review used the
+[archived chart-specific helper](https://github.com/shaman007/home-k3s/blob/254e90b51bc7dd86345987619bc91358d1f0d97c/tools/security/review-metallb-l2.py)
+with an unpacked copy of chart 0.16.1.
 
 After publishing, verify the controller is available, all three speakers are
 updated/ready, and their backend is native. Compare all Service ingress addresses

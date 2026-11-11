@@ -1,8 +1,11 @@
-# Firefox Sync 0.24.1: MySQL → MariaDB preparation
+# Firefox Sync 0.24.1: historical MySQL → MariaDB migration
 
 Prepared and executed 2026-11-09. **Production now runs on MariaDB 12.3.3.**
-See [execution results and GitOps handoff](EXECUTION.md). The initial live cutover
-preceded publication; reconciliation must resume only against the final MariaDB manifests. All YAML here
+See [execution results and GitOps handoff](EXECUTION.md), including the subsequent
+retirement of the old MySQL deployment and PVC. The procedure below records the
+completed migration, not the current production layout. Its one-off transfer
+helper was removed during cleanup; the reusable `tools/firefox-sync/verify-storage.py`
+probe remains available. All YAML here
 is outside the Argo Application source (`firefox-sync/`); do not point Argo at this
 directory or submit the entire directory as Kubernetes resources (it includes
 strategic merge patch fragments).
@@ -56,13 +59,13 @@ writable `/tmp`; root filesystem remains read-only and UID/GID remains 999.
   writes without populating the real import target.
 - `service-cutover.patch.yaml` / `service-rollback.patch.yaml`: reviewed selector
   changes for the existing `mysql` Service. These are patch fragments, not objects.
-- `tools/firefox-sync/migrate-mariadb.py`: no-op plan by default; explicit
+- [Archived transfer helper](https://github.com/shaman007/home-k3s/blob/254e90b51bc7dd86345987619bc91358d1f0d97c/tools/firefox-sync/migrate-mariadb.py): no-op plan by default; explicit
   `--import-data` streams both schemas to an empty candidate and compares them.
   `--verify` repeats only the read-only comparison. SQL stderr is suppressed so
   failed INSERT statements cannot expose records. It never changes cluster
   control state, retrieves credentials, or writes a dump file.
 
-## Execution runbook (requires authorization for live changes)
+## Historical execution procedure
 
 1. Record current Deployment replicas, Service selectors, Argo auto-sync settings,
    active sync operation, image digests and PVC bindings. Pause Firefox Sync
@@ -87,8 +90,8 @@ writable `/tmp`; root filesystem remains read-only and UID/GID remains 999.
    of the original PVC using the existing approved backup mechanism and confirm
    it completed. Preserve the corresponding OpenBao secret through its normal
    protected backup process; do not export it to this repository or logs.
-4. Run `python3 tools/firefox-sync/migrate-mariadb.py --import-data` only after
-   authorization to write candidate data. It checks that auto-sync is paused,
+4. The archived helper was invoked with `--import-data` after explicit
+   authorization to write candidate data. It checked that auto-sync was paused,
    no sync operation is active, production Sync has no pods, the Service still
    selects MySQL, the PVCs are distinct, versions match and the target has no
    tables. It dumps only `syncstorage` and `tokenserver`, including

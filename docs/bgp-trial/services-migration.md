@@ -116,8 +116,9 @@ The shipped FRR container runs with NET_ADMIN, NET_RAW, SYS_ADMIN and
 NET_BIND_SERVICE capabilities. This is a material runtime change from the
 current native speaker. No Kyverno enforcement settings or policy exceptions
 have been changed, and no additional blanket exemption is proposed. The
-historical `review-metallb-l2.py` is a retirement-specific audit for chart
-0.16.1; it is not a validator for this new backend configuration.
+historical [L2 review helper](https://github.com/shaman007/home-k3s/blob/254e90b51bc7dd86345987619bc91358d1f0d97c/tools/security/review-metallb-l2.py)
+was a retirement-specific audit for chart 0.16.1 and has been removed. It is not a
+validator for this new backend configuration.
 
 ## Configuration files and pre-rollout checks
 

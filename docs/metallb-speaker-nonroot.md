@@ -65,8 +65,12 @@ An exact before/after Helm comparison verified these boundaries.
 
 ```sh
 python3 tools/security/test-metallb-speaker-runtime.py
-python3 tools/security/review-metallb-l2.py --chart /path/to/metallb --live
 ```
+
+The accompanying chart-0.16.1 review used the now-removed
+[one-off L2 review helper](https://github.com/shaman007/home-k3s/blob/254e90b51bc7dd86345987619bc91358d1f0d97c/tools/security/review-metallb-l2.py).
+Current chart/BGP configuration is covered by the later
+[services migration record](bgp-trial/services-migration.md).
 
 The disposable runtime probe creates a veth pair inside a network=none namespace.
 Only the setup container has NET_ADMIN; the tested process is UID/GID 1000 with
