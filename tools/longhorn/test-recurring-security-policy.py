@@ -10,6 +10,7 @@ import importlib.util
 from pathlib import Path
 import subprocess
 import tempfile
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,8 +82,8 @@ def main():
     args = parser.parse_args()
     if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
-    policy, binding = yaml.safe_load_all(
-        (ROOT / "longhorn/policy-recurring-job-security.yaml").read_text()
+    policy, _ = list(
+        yaml.safe_load_all((ROOT / "longhorn/policy-recurring-job-security.yaml").read_text())
     )
     names = policy["spec"]["matchConstraints"]["resourceRules"][0]["resourceNames"]
     policy["apiVersion"] = "policies.kyverno.io/v1"

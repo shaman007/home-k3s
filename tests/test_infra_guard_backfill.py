@@ -163,7 +163,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append((req.get_method(), req.full_url))
                 return Response()
@@ -208,7 +208,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 e = next(e for e in entries if req.full_url.split("?")[0].endswith("/" + e["name"]))
                 doc = outer.healthy(e)
@@ -266,7 +266,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
                 if req.full_url.endswith("/volumes"):
@@ -390,7 +390,7 @@ class InfrastructureGuardTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
                 return Response()

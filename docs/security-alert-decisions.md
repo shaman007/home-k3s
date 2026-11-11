@@ -632,3 +632,35 @@ Live workload inspection was unavailable, and container runtime probes were not
 executed. No live resources or data were changed; no alerts were dismissed.
 GitHub alert reductions require publication and rescan. Changes remain unstaged
 and uncommitted.
+
+### Retained Python maintenance batch (2026-11-11)
+
+Reduced full-repository local Pylint findings from 386 to 316. The batch removes
+11 redundant negations, 23 delayed imports, 10 unused keyword-dictionary
+bindings, four unused local bindings, three assigned lambdas, five dictionary
+constructor calls, two redundant class pass statements, and two inconsistent
+return paths. Callback keyword dictionaries still accept the same arbitrary
+keywords. Membership and comparison guards remain executable, including the
+FRR and Plex security checks. No checks or lint rules were disabled.
+
+Two Longhorn policy probes now materialize the YAML document sequence before
+unpacking its policy and binding. This resolves seven incorrect generator-type
+diagnostics while retaining exact-two-document validation. The hostile-YAML
+regression invokes the renderer's actual imported loader functions, resolving
+its artificial local import-path diagnostic. Complexity counters also decrease
+slightly; Pylint detects one additional duplicate-code block in the now-similar
+policy probe setup, which remains open for later consolidation.
+
+Validation: one full unittest run passed (386 tests, 21 skipped). Final import
+ordering passes Pylint, and component-security, infrastructure-guard, and
+Kyverno exception generation checks produce identical existing artifacts.
+`git diff --check` passes. Container-dependent security probes were not run.
+
+The local full scan reports an unresolved `storage_guard` import in
+`tools/security/infra_guard_backfill.py`. Its runtime module is explicitly
+supplied as `storage_guard.py` by `tools/security/generate-infra-guards.py`,
+using the reviewed Longhorn backfill source. The infrastructure unit tests
+exercise this module via the same source under that name. This is a local
+analysis packaging limitation; the finding remains unsuppressed and has not
+been dismissed. Remote alert counts require publication and rescan. Changes
+remain unstaged and uncommitted.

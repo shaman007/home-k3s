@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -329,7 +330,7 @@ def main():
             count += len(expected)
             cases.append((copy.deepcopy(document), expected.copy(), separate))
 
-        for index, entry in enumerate(catalog["entries"]):
+        for entry in catalog["entries"]:
             expected_skip = {p: "skip" for p in entry["policies"]}
             document = snapshot(entry)
             current = actual.get((entry["kind"], entry["namespace"], entry["name"]))

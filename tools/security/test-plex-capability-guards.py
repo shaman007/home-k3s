@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import time
 import xml.etree.ElementTree as ET
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -127,8 +128,7 @@ def main():
                 ]
             )
             if (
-                not int(run(["podman", "exec", cid, "stat", "-c", "%s", "/tmp/guard-output.mkv"]))
-                > 0
+                int(run(['podman', 'exec', cid, 'stat', '-c', '%s', '/tmp/guard-output.mkv'])) <= 0
             ):
                 raise AssertionError
             # Restart against the same preferences to exercise the non-empty hook branch.

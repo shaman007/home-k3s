@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -438,7 +439,7 @@ def expression(entry, policy):
                 if not rule["seccompDeclaration"] == sc.get("seccompProfile", {}):
                     raise AssertionError
     if policy == "require-drop-all-capabilities":
-        if not not config.get("ephemeralContainers"):
+        if config.get('ephemeralContainers'):
             raise AssertionError
         if not (config.get("initContainers") or config.get("containers")):
             raise AssertionError
@@ -471,7 +472,7 @@ def expression(entry, policy):
             if not entry["kind"] == "Deployment":
                 raise AssertionError
             key = (entry["namespace"], entry["name"], name)
-            if not key in APPLICATION_CAPABILITIES:
+            if key not in APPLICATION_CAPABILITIES:
                 raise AssertionError
             caps, uid, escalation = APPLICATION_CAPABILITIES[key]
             if not set(rule) == {"image", "capabilities", "runAsUser", "allowPrivilegeEscalation"}:

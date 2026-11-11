@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -105,7 +106,7 @@ class RecurringSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return simulated CronJob state for the preflight."""
                 calls.append((req.method, req.full_url))
                 name = req.full_url.split("/cronjobs/")[1].split("?")[0]

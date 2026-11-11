@@ -4,8 +4,9 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
-
 import unittest
+import os
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,7 +67,6 @@ end
 
 def run_import(**env):
     """Execute the spam-list importer against its isolated Ruby test harness."""
-    import os
 
     return subprocess.run(
         ["ruby", "-e", HARNESS + SCRIPT],

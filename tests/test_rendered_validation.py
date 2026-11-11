@@ -8,6 +8,10 @@ import unittest
 import subprocess
 import stat
 from unittest.mock import patch
+import hashlib
+import io
+import json
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -166,9 +170,6 @@ class RenderValidationTest(unittest.TestCase):
 
     def test_github_chart_fallback_verifies_digest_before_using_archive(self):
         """Verify GitHub chart fallback verifies digest before using archive."""
-        import hashlib
-        import io
-        import json
 
         archive = b"chart archive"
         source = {"repoURL": "https://charts.invalid/", "chart": "test", "targetRevision": "1.2.3"}
@@ -482,10 +483,8 @@ class RenderValidationTest(unittest.TestCase):
 
     def test_custom_yaml_loader_rejects_python_object_constructors(self):
         """Verify custom YAML loader rejects python object constructors."""
-        from ci_yaml import load, load_all
-
         payload = '!!python/object/apply:builtins.str ["synthetic-payload"]'
-        for parse in (load, lambda text: list(load_all(text))):
+        for parse in (render.load, lambda text: list(render.load_all(text))):
             with self.subTest(parse=parse), self.assertRaises(yaml.constructor.ConstructorError):
                 parse(payload)
 

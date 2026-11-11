@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 s = importlib.util.spec_from_file_location(
@@ -218,7 +219,6 @@ class ImageRepositoryScopeTests(unittest.TestCase):
 
     def test_matcher_rejects_repository_substitution(self):
         """Verify matcher rejects repository substitution."""
-        import re
 
         expression = gen.image_expression("registry.example:5000/team/app:v1")
         pattern = json.loads(expression[len("c.image.matches(") : -1])

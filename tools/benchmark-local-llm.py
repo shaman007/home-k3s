@@ -15,11 +15,11 @@ from pathlib import Path
 import subprocess
 import time
 import urllib.request
+import base64
 
 
 class BenchmarkDeadline(Exception):
     """Signal that a benchmark request exceeded its whole-request deadline."""
-    pass
 
 
 @contextmanager
@@ -187,7 +187,6 @@ def main():
         parser.error("--request-deadline-s must be nonnegative")
     key = os.environ.get("LLM_API_KEY", "")
     if args.kubernetes_secret:
-        import base64
 
         namespace, name = args.kubernetes_secret.split("/", 1)
         secret = json.loads(

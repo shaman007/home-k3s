@@ -43,7 +43,7 @@ class PHP(socketserver.BaseRequestHandler):
     """Return a synthetic private FastCGI response for static-asset cache tests."""
     def handle(self):
         while True:
-            version, kind, request_id, length, padding, _ = struct.unpack(
+            _version, kind, request_id, length, padding, _ = struct.unpack(
                 "!BBHHBB", receive(self.request, 8)
             )
             receive(self.request, length + padding)

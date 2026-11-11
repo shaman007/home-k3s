@@ -5,6 +5,7 @@ import argparse
 import importlib.util
 import json
 from pathlib import Path
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,7 +18,6 @@ s.loader.exec_module(b)
 
 class Dumper(yaml.SafeDumper):
     """Write multiline strings as YAML block scalars in generated security manifests."""
-    pass
 
 
 Dumper.add_representer(
@@ -130,11 +130,14 @@ def generate(catalog):
             },
         },
     }
-    meta = lambda: {
-        "name": "component-security-backfill",
-        "namespace": "longhorn-system",
-        "annotations": {"argocd.argoproj.io/sync-wave": "-1"},
-    }
+    def meta():
+        """Build fresh metadata for a component-security backfill resource."""
+        return {
+            "name": "component-security-backfill",
+            "namespace": "longhorn-system",
+            "annotations": {"argocd.argoproj.io/sync-wave": "-1"},
+        }
+
     sa = {"apiVersion": "v1", "kind": "ServiceAccount", "metadata": meta()}
     role = {
         "apiVersion": "rbac.authorization.k8s.io/v1",

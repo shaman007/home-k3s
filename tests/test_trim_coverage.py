@@ -3,6 +3,9 @@
 from pathlib import Path
 import fnmatch
 import unittest
+from datetime import timedelta
+import copy
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -186,6 +189,7 @@ class TrimCoverageTest(unittest.TestCase):
             if path.endswith("/broken"):
                 raise RuntimeError("conflict")
             writes.append(path)
+            return None
 
         with self.assertRaisesRegex(RuntimeError, "1 volume"):
             self.guard["reconcile"](api)
@@ -211,7 +215,6 @@ class TrimCoverageTest(unittest.TestCase):
 
     def test_guard_monitor_detects_missing_suspended_stale_and_deleted_definitions(self):
         """Verify guard monitor detects missing suspended stale and deleted definitions."""
-        from datetime import timedelta
 
         now = self.report["utc_now"]()
         jobs = [
@@ -335,7 +338,6 @@ class TrimCoverageTest(unittest.TestCase):
         check = self.report["pvc_trim_attachment_check"]
         self.assertTrue(check([window])["passed"])
         self.assertFalse(check([])["passed"])
-        import copy
 
         for fault in ["suspend", "schedule", "timeZone", "claim"]:
             broken = copy.deepcopy(window)

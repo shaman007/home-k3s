@@ -4,6 +4,7 @@
 import argparse
 import json
 from pathlib import Path
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -182,9 +183,15 @@ def generate(catalog):
             },
         },
     }
-    meta = lambda ns: {"name": name, "namespace": ns}
-    sa = {"apiVersion": "v1", "kind": "ServiceAccount", "metadata": meta("kyverno")}
-    docs = [policy, binding, sa]
+    def meta(namespace):
+        """Build metadata for a named guard resource in the supplied namespace."""
+        return {"name": name, "namespace": namespace}
+
+    docs = [
+        policy,
+        binding,
+        {"apiVersion": "v1", "kind": "ServiceAccount", "metadata": meta("kyverno")},
+    ]
     if catalog.get("gpuResourceReview"):
         docs += [
             {

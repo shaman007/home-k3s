@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,7 +26,9 @@ def main():
     args = parser.parse_args()
     if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
-    policy, _ = yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
+    policy, _ = list(
+        yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
+    )
     policy["apiVersion"] = "policies.kyverno.io/v1"
     policy["kind"] = "MutatingPolicy"
     policy["spec"].pop("reinvocationPolicy")

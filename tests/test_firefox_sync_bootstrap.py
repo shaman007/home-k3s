@@ -58,7 +58,7 @@ class BootstrapTests(unittest.TestCase):
         seen = []
         existing = {key: 'preserve-test-secret' for key in bootstrap.KEYS}
 
-        def handler(request, **kwargs):
+        def handler(request, **_kwargs):
             self.assertEqual(request.get_header('X-vault-token'), 'hvs.fake-test-token')
             seen.append((request.method, request.full_url))
             return Response({'data': {'data': existing}} if request.method == 'GET' else {})
@@ -73,7 +73,7 @@ class BootstrapTests(unittest.TestCase):
         """Refuse partially populated existing credentials without writing a replacement."""
         calls = []
 
-        def handler(request, **kwargs):
+        def handler(request, **_kwargs):
             calls.append(request.method)
             return Response({'data': {'data': {'MYSQL_PASSWORD': 'existing'}}})
 

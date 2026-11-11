@@ -6,6 +6,10 @@ import json
 import unittest
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
+import ast
+import copy
+import urllib.error
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,7 +33,14 @@ class LogsCheckLogicTest(unittest.TestCase):
 
     def entry(self, line, pod="sidekiq-one", ts="2026-10-30T03:00:00+00:00"):
         """Build a log entry with default workload and timestamp metadata."""
-        return dict(namespace="mastodon", container="mastodon", pod=pod, line=line, ts=ts, ts_ns=1)
+        return {
+            "namespace": "mastodon",
+            "container": "mastodon",
+            "pod": pod,
+            "line": line,
+            "ts": ts,
+            "ts_ns": 1,
+        }
 
     def test_mail_arguments_are_removed_and_error_retained(self):
         """Retain mailer error context while removing serialized private arguments."""
@@ -145,14 +156,14 @@ class LogsCheckLogicTest(unittest.TestCase):
         """Filter successful Argo resource results while retaining failed results."""
         item = self.entry(
             json.dumps(
-                dict(
-                    level="info",
-                    kind="PolicyException",
-                    msg=(
+                {
+                    'level': "info",
+                    'kind': "PolicyException",
+                    'msg': (
                         "Adding resource result, status: 'Synced', phase: 'Running', "
                         "message: 'updated'"
                     ),
-                )
+                }
             )
         )
         item.update(namespace="argocd", container="argocd-application-controller")
@@ -170,11 +181,11 @@ class LogsCheckLogicTest(unittest.TestCase):
             ("info", "command failed", False),
         ]:
             item["line"] = json.dumps(
-                dict(
-                    level=level,
-                    msg=message,
-                    args="[helm template . --api-versions kyverno.io/v2/PolicyException]",
-                )
+                {
+                    'level': level,
+                    'msg': message,
+                    'args': "[helm template . --api-versions kyverno.io/v2/PolicyException]",
+                }
             )
             self.assertEqual(
                 expected, self.report["is_false_positive"]("real_fault_candidates", item)
@@ -210,17 +221,17 @@ class LogsCheckLogicTest(unittest.TestCase):
                 item = dict(self.entry(""), namespace="argocd", container=container)
                 for level, expected in [("info", True), ("error", False), ("warning", False)]:
                     item["line"] = json.dumps(
-                        dict(level=level, msg=message, application="kyverno-exceptions")
+                        {'level': level, 'msg': message, 'application': "kyverno-exceptions"}
                     )
                     self.assertEqual(
                         expected, self.report["is_false_positive"]("real_fault_candidates", item)
                     )
                 item["line"] = json.dumps(
-                    dict(
-                        level="info",
-                        msg="exception while processing",
-                        application="kyverno-exceptions",
-                    )
+                    {
+                        'level': "info",
+                        'msg': "exception while processing",
+                        'application': "kyverno-exceptions",
+                    }
                 )
                 self.assertFalse(self.report["is_false_positive"]("real_fault_candidates", item))
 
@@ -259,7 +270,7 @@ class LogsCheckLogicTest(unittest.TestCase):
             return [self.entry("timeout")] * limit if len(calls) == 1 else []
 
         self.report["loki_query_range"] = query
-        entries, coverage = self.report["collect_window"]("query", 0, 24 * 3600 * 10**9, 2)
+        _entries, coverage = self.report["collect_window"]("query", 0, 24 * 3600 * 10**9, 2)
         self.assertEqual(24, len(calls))
         self.assertEqual(calls[0][1] + 1, calls[1][0])
         self.assertFalse(coverage["ok"])
@@ -290,7 +301,6 @@ class LogsCheckLogicTest(unittest.TestCase):
 
     def test_all_queries_exclude_checker_logs(self):
         """Exclude the checker itself from each log query."""
-        import ast
 
         source = yaml.safe_load((ROOT / "metrics/config-map-logs-check-scripts.yaml").read_text())[
             "data"
@@ -374,8 +384,6 @@ class LogsCheckLogicTest(unittest.TestCase):
 
     def history_backend(self):
         """Install an in-memory Kubernetes object API for history persistence tests."""
-        import copy
-        import urllib.error
 
         objects = {}
 

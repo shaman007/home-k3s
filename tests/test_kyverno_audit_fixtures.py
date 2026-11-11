@@ -3,6 +3,13 @@
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest.mock import patch
+import tempfile
+import copy
+import json
+from collections import Counter
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
@@ -16,7 +23,6 @@ class AuditFixtureTests(unittest.TestCase):
     """Preserve policy assertions and applicable exceptions across generated test shards."""
     def test_admission_normalization_does_not_touch_other_workloads(self):
         """Verify admission normalization does not touch other workloads."""
-        from unittest.mock import patch
 
         for kind, namespace, name in [
             ("Deployment", "longhorn-system", "longhorn-manager"),
@@ -35,8 +41,6 @@ class AuditFixtureTests(unittest.TestCase):
 
     def test_policy_partition_preserves_assertions_and_exception_scope(self):
         """Verify policy partition preserves assertions and exception scope."""
-        import tempfile
-        import yaml
 
         policies = [
             {"kind": "ValidatingPolicy", "metadata": {"name": name}} for name in ["first", "second"]
@@ -58,7 +62,6 @@ class AuditFixtureTests(unittest.TestCase):
             "metadata": {"name": "same", "namespace": "one"},
             "spec": {"containers": [{"name": "app", "image": "example:1"}]},
         }
-        import copy
 
         changed = copy.deepcopy(original)
         changed["spec"]["containers"][0]["image"] = "unreviewed:1"
@@ -96,10 +99,6 @@ class AuditFixtureTests(unittest.TestCase):
 
     def test_smaller_shards_preserve_every_case_and_all_applicable_exceptions(self):
         """Verify smaller shards preserve every case and all applicable exceptions."""
-        import json
-        import tempfile
-        import yaml
-        from collections import Counter
 
         policy = {"kind": "ValidatingPolicy", "metadata": {"name": "require-run-as-nonroot"}}
         exceptions = [

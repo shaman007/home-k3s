@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -160,7 +161,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append((req.method, req.full_url))
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
@@ -209,7 +210,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
                 doc = outer.healthy(entry)
@@ -349,7 +350,7 @@ class ComponentSecurityTests(unittest.TestCase):
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
-            def open(self, req, **kwargs):
+            def open(self, req, **_kwargs):
                 """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
                 if req.full_url.endswith("/volumes"):

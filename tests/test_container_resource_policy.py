@@ -3,6 +3,9 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import json
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
@@ -97,8 +100,6 @@ class ContainerResourcePolicyTests(unittest.TestCase):
 
     def test_native_longhorn_csi_settings_are_checked(self):
         """Verify native Longhorn CSI settings are checked."""
-        import json
-        import yaml
 
         settings = {
             "system-managed-csi-components-resource-limits": json.dumps(

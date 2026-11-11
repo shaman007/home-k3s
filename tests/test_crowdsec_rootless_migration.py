@@ -1,6 +1,8 @@
 """Prevent a SQLite cutover from silently starting against an empty database."""
 from pathlib import Path
 import unittest
+import importlib.util
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +49,6 @@ class CrowdSecRenderedMountContractTest(unittest.TestCase):
     """Check rendered mount isolation and writable parent requirements."""
     @classmethod
     def setUpClass(cls):
-        import importlib.util
         spec = importlib.util.spec_from_file_location(
             'crowdsec_mounts', ROOT / 'tools/ci/check-crowdsec-rootless.py')
         cls.check = importlib.util.module_from_spec(spec)

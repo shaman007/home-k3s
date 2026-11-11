@@ -140,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
                     time.sleep(5)
                 except (BrokenPipeError, ConnectionResetError):
                     pass
-                return
+                return None
             if len(parts) == index + 1:
                 return self.respond(
                     {
