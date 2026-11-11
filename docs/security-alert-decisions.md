@@ -1934,3 +1934,26 @@ The full suite ran 504 tests successfully with 21 opt-in skips. Ruff and diff
 checks passed, and Bandit reported no analysis errors. No backfill hook was run,
 no cluster resources were patched and no generated change was deployed. Source
 fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Separate admission contract generation from security manifest assembly
+
+Extracted Longhorn component matching/mutation/resource-scope construction from
+manifest assembly. Split infrastructure target security preconditions and mutation
+construction, per-workload contracts, and ordered combined admission expressions
+into focused helpers. The original one component and two infrastructure complexity
+warnings are gone; each generator independently passes full Pylint without source
+suppressions. Joint analysis still reports pre-existing repeated manifest fragments;
+those duplication heuristics were not hidden or treated as resolved.
+
+Both generators pass committed-output consistency checks, proving the checked-in
+YAML remains byte-identical. Twenty-four complete generated-manifest variations
+also match the original implementations, covering complete/first/last entry sets,
+reversed ordering, modified workload identities and modified UID/GID/security
+values. Every comparison produced manifests successfully, rather than comparing
+matching errors. No policy, scope, RBAC, embedded backfill or workload YAML changed.
+
+The full suite ran 504 tests successfully with 21 opt-in skips; existing policy
+and generator regressions remain green. Ruff and diff checks passed; Bandit
+reported no analysis errors. No admission policy or backfill was deployed or run.
+Source fixes await genuine published rescanning; no alert was dismissed in this batch.

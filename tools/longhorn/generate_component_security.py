@@ -26,9 +26,8 @@ Dumper.add_representer(
 )
 
 
-def generate(catalog):
-    """Generate component security mutations and their scoped backfill manifests."""
-    entries = catalog["entries"]
+def admission_contract(entries):
+    """Build exact workload matching, security mutation and resource scope expressions."""
     branches = []
     if not len({e["name"] for e in entries}) == len(entries):
         raise AssertionError("Ambiguous workload names")
@@ -92,6 +91,13 @@ def generate(catalog):
         }
         for kind, resource in [("Deployment", "deployments"), ("DaemonSet", "daemonsets")]
     ]
+    return expression, mutation, rules
+
+
+def generate(catalog):
+    """Generate component security mutations and their scoped backfill manifests."""
+    entries = catalog["entries"]
+    expression, mutation, rules = admission_contract(entries)
     name = "longhorn-component-security"
     policy = {
         "apiVersion": "admissionregistration.k8s.io/v1",

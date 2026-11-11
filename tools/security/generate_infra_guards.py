@@ -26,131 +26,146 @@ def cel_literal(value):
     return json_literal(value)
 
 
-def generate(catalog):
-    """Generate reviewed admission guards and the matching scoped backfill manifests."""
-    entries = catalog["entries"]
+def security_mutations(e, pod, terms):
+    """Append required security preconditions and return targeted mutation expressions."""
+    mutation_parts = []
+    for target in e["targets"]:
+        section, index = target["section"], target["index"]
+        if not pod[section][index]["name"] == target["name"]:
+            raise AssertionError
+        ref = f"object.spec.template.spec.{section}[{index}]"
+        terms.append(f"p.{section}[{index}].?securityContext.?privileged.orValue(false) == false")
+        for key, value in target.get("requiredEnv", {}).items():
+            terms.append(
+                (
+                    f"p."
+                    f"{section}"
+                    f"["
+                    f"{index}"
+                    f"].?env.orValue([]).exists(v, v.name == "
+                    f"{json_literal(key)}"
+                    f' && v.?value.orValue("") == '
+                    f"{json_literal(value)}"
+                    f")"
+                )
+            )
+        for key, path_value in target.get("requiredFieldRefs", {}).items():
+            terms.append(
+                (
+                    f"p."
+                    f"{section}"
+                    f"["
+                    f"{index}"
+                    f"].?env.orValue([]).exists(v, v.name == "
+                    f"{json_literal(key)}"
+                    f" && v.?valueFrom.?fieldRef.?fieldPath.or"
+                    f'Value("") == '
+                    f"{json_literal(path_value)}"
+                    f")"
+                )
+            )
+
+        path = f"/spec/template/spec/{section}/{index}/securityContext"
+        mutation_parts.append(
+            (
+                f"(!has("
+                f"{ref}"
+                f".securityContext) ? "
+                f'[JSONPatch{{op:"add",path:'
+                f"{json_literal(path)}"
+                f",value:{{}}}}] : [])"
+            )
+        )
+        mutation_parts.append(
+            "["
+            + ", ".join(
+                'JSONPatch{op:"add",path:'
+                + json_literal(path + "/" + key)
+                + ",value:"
+                + json_literal(value)
+                + "}"
+                for key, value in target["guards"].items()
+            )
+            + "]"
+        )
+    if e.get("podGuards"):
+        path = "/spec/template/spec/securityContext"
+        mutation_parts.append(
+            '(!has(object.spec.template.spec.securityContext) ? [JSONPatch{op:"add",path:'
+            + json_literal(path)
+            + ",value:{}}] : [])"
+        )
+        mutation_parts.append(
+            "["
+            + ", ".join(
+                'JSONPatch{op:"add",path:'
+                + json_literal(path + "/" + key)
+                + ",value:"
+                + json_literal(value)
+                + "}"
+                for key, value in e["podGuards"].items()
+            )
+            + "]"
+        )
+    return mutation_parts
+
+
+def entry_contract(e):
+    """Build one exact infrastructure workload contract and its scoped mutations."""
+    pod = e["fixture"]["spec"]["template"]["spec"]
+    identity = (
+        f"object.metadata.namespace == "
+        f"{json_literal(e['namespace'])}"
+        f" && object.kind == "
+        f"{json_literal(e['kind'])}"
+        f" && object.metadata.name == "
+        f"{json_literal(e['name'])}"
+    )
+    terms = [
+        identity,
+        f'p.?serviceAccountName.orValue("default") == {json_literal(e["serviceAccount"])}',
+    ]
+    for label, value in e["labels"].items():
+        terms.append(
+            f"object.spec.template.metadata.?labels.orValue({{}})"
+            f"[{json_literal(label)}] == {json_literal(value)}"
+        )
+    for section in ["containers", "initContainers"]:
+        terms.append(f"p.?{section}.orValue([]).size() == {len(pod[section])}")
+        for i, c in enumerate(pod[section]):
+            ref = f"p.{section}[{i}]"
+            terms.extend([f"{ref}.{k} == {json_literal(c[k])}" for k in ["name", "image"]])
+            terms.extend(
+                f"{ref}.?{k}.orValue([]) == {cel_literal(c.get(k, []))}"
+                for k in ["command", "args", "volumeMounts"]
+            )
+    terms.append(f"p.?volumes.orValue([]) == {cel_literal(pod.get('volumes', []))}")
+    if e["kind"] == "DaemonSet":
+        terms.append(
+            f"object.spec.updateStrategy == {cel_literal(e['fixture']['spec']['updateStrategy'])}"
+        )
+    mutation_parts = security_mutations(e, pod, terms)
+    return "(" + " &&\n".join(terms) + ")", (identity, " + ".join(mutation_parts))
+
+
+def admission_expressions(entries):
+    """Combine exact workload alternatives and ordered targeted patch expressions."""
     branches = []
     patches = []
     for e in entries:
-        pod = e["fixture"]["spec"]["template"]["spec"]
-        identity = (
-            f"object.metadata.namespace == "
-            f"{json_literal(e['namespace'])}"
-            f" && object.kind == "
-            f"{json_literal(e['kind'])}"
-            f" && object.metadata.name == "
-            f"{json_literal(e['name'])}"
-        )
-        terms = [
-            identity,
-            f'p.?serviceAccountName.orValue("default") == {json_literal(e["serviceAccount"])}',
-        ]
-        for label, value in e["labels"].items():
-            terms.append(
-                f"object.spec.template.metadata.?labels.orValue({{}})"
-                f"[{json_literal(label)}] == {json_literal(value)}"
-            )
-        for section in ["containers", "initContainers"]:
-            terms.append(f"p.?{section}.orValue([]).size() == {len(pod[section])}")
-            for i, c in enumerate(pod[section]):
-                ref = f"p.{section}[{i}]"
-                terms.extend([f"{ref}.{k} == {json_literal(c[k])}" for k in ["name", "image"]])
-                terms.extend(
-                    f"{ref}.?{k}.orValue([]) == {cel_literal(c.get(k, []))}"
-                    for k in ["command", "args", "volumeMounts"]
-                )
-        terms.append(f"p.?volumes.orValue([]) == {cel_literal(pod.get('volumes', []))}")
-        if e["kind"] == "DaemonSet":
-            terms.append(
-                "object.spec.updateStrategy == "
-                f"{cel_literal(e['fixture']['spec']['updateStrategy'])}"
-            )
-        mutation_parts = []
-        for target in e["targets"]:
-            section, index = target["section"], target["index"]
-            if not pod[section][index]["name"] == target["name"]:
-                raise AssertionError
-            ref = f"object.spec.template.spec.{section}[{index}]"
-            terms.append(
-                f"p.{section}[{index}].?securityContext.?privileged.orValue(false) == false"
-            )
-            for key, value in target.get("requiredEnv", {}).items():
-                terms.append(
-                    (
-                        f"p."
-                        f"{section}"
-                        f"["
-                        f"{index}"
-                        f"].?env.orValue([]).exists(v, v.name == "
-                        f"{json_literal(key)}"
-                        f' && v.?value.orValue("") == '
-                        f"{json_literal(value)}"
-                        f")"
-                    )
-                )
-            for key, path_value in target.get("requiredFieldRefs", {}).items():
-                terms.append(
-                    (
-                        f"p."
-                        f"{section}"
-                        f"["
-                        f"{index}"
-                        f"].?env.orValue([]).exists(v, v.name == "
-                        f"{json_literal(key)}"
-                        f" && v.?valueFrom.?fieldRef.?fieldPath.or"
-                        f'Value("") == '
-                        f"{json_literal(path_value)}"
-                        f")"
-                    )
-                )
-
-            path = f"/spec/template/spec/{section}/{index}/securityContext"
-            mutation_parts.append(
-                (
-                    f"(!has("
-                    f"{ref}"
-                    f".securityContext) ? "
-                    f'[JSONPatch{{op:"add",path:'
-                    f"{json_literal(path)}"
-                    f",value:{{}}}}] : [])"
-                )
-            )
-            mutation_parts.append(
-                "["
-                + ", ".join(
-                    'JSONPatch{op:"add",path:'
-                    + json_literal(path + "/" + key)
-                    + ",value:"
-                    + json_literal(value)
-                    + "}"
-                    for key, value in target["guards"].items()
-                )
-                + "]"
-            )
-        if e.get("podGuards"):
-            path = "/spec/template/spec/securityContext"
-            mutation_parts.append(
-                '(!has(object.spec.template.spec.securityContext) ? [JSONPatch{op:"add",path:'
-                + json_literal(path)
-                + ",value:{}}] : [])"
-            )
-            mutation_parts.append(
-                "["
-                + ", ".join(
-                    'JSONPatch{op:"add",path:'
-                    + json_literal(path + "/" + key)
-                    + ",value:"
-                    + json_literal(value)
-                    + "}"
-                    for key, value in e["podGuards"].items()
-                )
-                + "]"
-            )
-        branches.append("(" + " &&\n".join(terms) + ")")
-        patches.append((identity, " + ".join(mutation_parts)))
+        branch, patch = entry_contract(e)
+        branches.append(branch)
+        patches.append(patch)
     expression = "[]"
     for identity, patch in reversed(patches):
         expression = "(" + identity + ") ? (" + patch + ") : (" + expression + ")"
+    return branches, expression
+
+
+def generate(catalog):
+    """Generate reviewed admission guards and the matching scoped backfill manifests."""
+    entries = catalog["entries"]
+    branches, expression = admission_expressions(entries)
     name = "reviewed-infrastructure-guards"
     policy = {
         "apiVersion": "admissionregistration.k8s.io/v1",
