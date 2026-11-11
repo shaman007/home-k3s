@@ -2601,3 +2601,26 @@ existing benchmark failure-boundary warnings. Ruff and diff checks pass; Bandit
 reported no analysis errors. No real key, kubectl/API, inference endpoint or
 credentials were accessed. Source consolidation and validation fixes await genuine
 published rescanning; no finding was dismissed in this batch and no push was performed.
+
+
+### Review retry fixtures and exception-only imports
+
+Dismissed exact Bandit findings 8060, 8059, 8058, 8057 and 8052 as false
+positives after checking every subprocess reference and matching current source
+bytes to each alert's analyzed revision. The inventory fixture uses only the
+running Python executable and checked-in scanner with private synthetic inputs.
+The retry fixtures execute checked-in cleanup fragments with fixed /bin/bash in
+private temporary directories, synthetic SARIF basenames, five-second timeouts
+and a private no-op sleep. Both actual cleanup fragments preserve unrelated
+files; invalid absolute, parent-relative and non-report paths fail before removal.
+The Collabora probe imports subprocess only for CalledProcessError handling; its
+launches use the separately reviewed bounded probe_commands runner. This decision
+does not accept arbitrary shell execution or broaden container runtime exceptions.
+
+Seven inventory tests, three retry tests and all 36 probe-command tests pass.
+No container, cluster, credential or remote service was accessed by these tests.
+Each GitHub decision includes its evidence and reopening conditions for changed
+command provenance, fixture isolation or runner behavior. Independent API inventory
+confirms all five absent: 67 alerts remain (Bandit 46, Pylint 15, Opengrep six).
+The increased Pylint count includes newly published forced-plugin diagnostics;
+those require a separate current-source review. No source suppression was added.
