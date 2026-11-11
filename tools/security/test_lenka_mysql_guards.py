@@ -23,8 +23,8 @@ def run(*args):
     return p.stdout.strip()
 
 
-def main():
-    """Test exact deployed MySQL with disposable data, no network or production secrets."""
+def validate_configuration():
+    """Reject configuration drift before allocating any disposable volume."""
     patch = yaml.safe_load(
         Path(__file__).with_name("lenka-mysql-security.patch.yaml").read_text(encoding="utf-8")
     )
@@ -37,6 +37,25 @@ def main():
         raise AssertionError
     if not sc["seccompProfile"] == {"type": "RuntimeDefault"}:
         raise AssertionError
+
+
+def check_process_guards(cid):
+    """Require UID/GID 999, zero capabilities, no-new-privileges and default seccomp."""
+    status = run("exec", cid, "cat", "/proc/1/status")
+    fields = dict(line.split(":", 1) for line in status.splitlines() if ":" in line)
+    if not fields["Uid"].split() == ["999"] * 4:
+        raise AssertionError
+    if not fields["Gid"].split() == ["999"] * 4:
+        raise AssertionError
+    if not all((int(fields[k].strip(), 16) == 0 for k in ["CapEff", "CapPrm", "CapBnd"])):
+        raise AssertionError
+    if not (fields["NoNewPrivs"].strip() == "1" and fields["Seccomp"].strip() == "2"):
+        raise AssertionError
+
+
+def main():
+    """Test exact deployed MySQL with disposable data, no network or production secrets."""
+    validate_configuration()
     volume = run("volume", "create", "lenka-mysql-guard-" + uuid.uuid4().hex)
     cid = None
     try:
@@ -96,16 +115,7 @@ def main():
         )
         if not sql("SELECT id FROM guard_fixture.probe") == "42":
             raise AssertionError
-        status = run("exec", cid, "cat", "/proc/1/status")
-        fields = dict(line.split(":", 1) for line in status.splitlines() if ":" in line)
-        if not fields["Uid"].split() == ["999"] * 4:
-            raise AssertionError
-        if not fields["Gid"].split() == ["999"] * 4:
-            raise AssertionError
-        if not all((int(fields[k].strip(), 16) == 0 for k in ["CapEff", "CapPrm", "CapBnd"])):
-            raise AssertionError
-        if not (fields["NoNewPrivs"].strip() == "1" and fields["Seccomp"].strip() == "2"):
-            raise AssertionError
+        check_process_guards(cid)
         run("stop", "--time=45", cid)
         run("start", cid)
         ready()

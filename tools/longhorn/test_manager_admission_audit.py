@@ -17,20 +17,8 @@ audit = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(audit)
 
 
-def main():
-    """Regression: audit actual Helm output after native prepull admission, not before."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rendered", type=Path, required=True)
-    parser.add_argument("--kyverno", default="kyverno")
-    args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
-    documents = [
-        d
-        for path in args.rendered.glob("*.yaml")
-        for d in yaml.safe_load_all(path.read_text())
-        if isinstance(d, dict)
-    ]
+def prepare_cases(documents, kyverno):
+    """Build raw, admitted, unmatched-image and unsafe-helper audit expectations."""
     raw = copy.deepcopy(
         next(
             d
@@ -42,7 +30,7 @@ def main():
     policies = [d for d in documents if d.get("kind") == "ValidatingPolicy"]
     if not {d["metadata"]["name"] for d in policies} == audit.EXPECTED_POLICIES:
         raise AssertionError
-    admitted = audit.admitted_longhorn_manager(raw, args.kyverno)
+    admitted = audit.admitted_longhorn_manager(raw, kyverno)
     original_spec = copy.deepcopy(admitted["spec"])
     helper = next(
         c
@@ -68,7 +56,7 @@ def main():
         for c in audit.pod_spec(mismatch)["containers"]
         if c["name"] == "pre-pull-share-manager-image"
     )["image"] = "registry.invalid/unreviewed:1"
-    if not audit.admitted_longhorn_manager(mismatch, args.kyverno) == mismatch:
+    if not audit.admitted_longhorn_manager(mismatch, kyverno) == mismatch:
         raise AssertionError
     unsafe = copy.deepcopy(admitted)
     next(
@@ -82,6 +70,24 @@ def main():
         (mismatch, raw_expected),
         (unsafe, {**skip, "require-drop-all-capabilities": "fail"}),
     ]
+    return cases, policies
+
+
+def main():
+    """Regression: audit actual Helm output after native prepull admission, not before."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rendered", type=Path, required=True)
+    parser.add_argument("--kyverno", default="kyverno")
+    args = parser.parse_args()
+    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
+        raise AssertionError
+    documents = [
+        d
+        for path in args.rendered.glob("*.yaml")
+        for d in yaml.safe_load_all(path.read_text())
+        if isinstance(d, dict)
+    ]
+    cases, policies = prepare_cases(documents, args.kyverno)
     with tempfile.TemporaryDirectory(prefix="manager-admission-regression-") as directory:
         directory = Path(directory)
         (directory / "policies.yaml").write_text(yaml.safe_dump_all(policies))

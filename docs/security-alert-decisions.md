@@ -1957,3 +1957,23 @@ The full suite ran 504 tests successfully with 21 opt-in skips; existing policy
 and generator regressions remain green. Ruff and diff checks passed; Bandit
 reported no analysis errors. No admission policy or backfill was deployed or run.
 Source fixes await genuine published rescanning; no alert was dismissed in this batch.
+
+
+### Separate MySQL guard checks and Longhorn admission regression cases
+
+Extracted MySQL manifest validation and runtime process guards, and separated
+Longhorn manager admission case preparation from fixture serialization/execution.
+The original excessive-branches and excessive-locals warnings are gone. Both
+probes and their updated regression module pass full Pylint without suppressions.
+Expanding the helpers reproduces both entire original module ASTs, preserving
+commands, readiness/restart/data checks, cleanup, admission invariants, case
+expectations and CLI invocation options.
+
+Added two permanent MySQL regressions: an unexpected manifest capability grant
+must fail before any allocation command, and each unsafe UID/GID, effective/
+permitted/bounding capability, no-new-privileges or seccomp value must fail the
+process checks. Existing probe-command contracts and failure-cleanup tests remain
+green. The full suite ran 506 tests successfully with 21 opt-in skips. Ruff and
+diff checks passed; Bandit reported no analysis errors. No MySQL container, volume,
+Helm renderer, external CLI or cluster was launched for this refactor verification.
+Source fixes await genuine published rescanning; no alert was dismissed in this batch.

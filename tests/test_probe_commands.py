@@ -536,3 +536,62 @@ class FrrProbeSafetyTests(unittest.TestCase):
         ):
             with self.assertRaises(AssertionError):
                 probe.check_status_exporter("status-fixture", "api-fixture")
+
+
+class LenkaMysqlGuardTests(unittest.TestCase):
+    """Keep database guard failures ahead of allocation and independent of SQL readiness."""
+
+    def test_invalid_configuration_fails_before_volume_allocation(self):
+        """An unexpected capability grant cannot reach any container command."""
+        probe = load_probe("test_lenka_mysql_guards.py")
+        configuration = {
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {
+                                "securityContext": {
+                                    "runAsUser": 999,
+                                    "runAsGroup": 999,
+                                    "runAsNonRoot": True,
+                                    "capabilities": {"drop": ["ALL"], "add": ["SYS_ADMIN"]},
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        with (
+            patch.object(probe.yaml, "safe_load", return_value=configuration),
+            patch.object(probe, "run") as run,
+        ):
+            with self.assertRaises(AssertionError):
+                probe.main()
+        run.assert_not_called()
+
+    def test_process_guards_reject_each_unsafe_field(self):
+        """Healthy SQL cannot substitute for process identity and kernel security guards."""
+        probe = load_probe("test_lenka_mysql_guards.py")
+        fields = {
+            "Uid": "999 999 999 999",
+            "Gid": "999 999 999 999",
+            "CapEff": "0",
+            "CapPrm": "0",
+            "CapBnd": "0",
+            "NoNewPrivs": "1",
+            "Seccomp": "2",
+        }
+        for name, value in (
+            ("Uid", "0 0 0 0"),
+            ("Gid", "0 0 0 0"),
+            ("CapEff", "2"),
+            ("CapPrm", "2"),
+            ("CapBnd", "2"),
+            ("NoNewPrivs", "0"),
+            ("Seccomp", "0"),
+        ):
+            status = "\n".join(f"{key}: {item}" for key, item in {**fields, name: value}.items())
+            with self.subTest(field=name), patch.object(probe, "run", return_value=status):
+                with self.assertRaises(AssertionError):
+                    probe.check_process_guards("fixture")
