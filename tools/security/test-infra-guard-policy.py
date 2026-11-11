@@ -19,6 +19,7 @@ s.loader.exec_module(b)
 
 
 def main():
+    """Exercise native guard CEL with the pinned Kyverno CLI, never against the cluster."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()

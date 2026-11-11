@@ -10,6 +10,7 @@ import urllib.request
 
 
 def reviewed(doc, entry):
+    """Reject workloads that differ from the explicitly reviewed deployment contract."""
     if not (doc["kind"] == entry["kind"] and doc["metadata"]["name"] == entry["name"]):
         raise AssertionError
     if not doc["metadata"]["namespace"] == entry["namespace"]:
@@ -61,6 +62,7 @@ def reviewed(doc, entry):
 
 
 def expected_spec(doc, entry):
+    """Copy the workload specification and apply only its reviewed security context."""
     spec = copy.deepcopy(doc["spec"])
     if entry.get("podGuards"):
         pod = spec["template"]["spec"]
@@ -75,6 +77,7 @@ def expected_spec(doc, entry):
 
 
 def ready(doc):
+    """Require the current generation and every desired replica to be updated and ready."""
     s = doc.get("status", {})
     if s.get("observedGeneration", 0) < doc["metadata"].get("generation", 1):
         return False
@@ -91,6 +94,7 @@ def ready(doc):
 
 
 def patch(doc):
+    """Build a resource-version-guarded annotation patch to trigger reviewed admission."""
     result = [
         {
             "op": "test",
@@ -111,6 +115,7 @@ def patch(doc):
 
 
 def gpu_healthy(node, review):
+    """Require reviewed node identity, GPU health, permissions, and allocatable capacity."""
     if not node["metadata"]["name"] == review["node"]:
         raise AssertionError
     if not any(
@@ -129,6 +134,7 @@ def gpu_healthy(node, review):
 
 
 def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.io/serviceaccount")):
+    """Guarded GitOps backfill: exact contracts, admission previews, sequential rollouts."""
     catalog = json.loads((config_dir / "catalog.json").read_text())
     entries = catalog["entries"]
     context = ssl.create_default_context(cafile=str(account / "ca.crt"))

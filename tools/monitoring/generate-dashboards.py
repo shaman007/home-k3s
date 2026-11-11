@@ -10,6 +10,7 @@ DS = {"type": "prometheus", "uid": UID}
 
 
 def dashboard(uid, title, description, specs, variables=None):
+    """Build a Grafana dashboard with the supplied panels and template variables."""
     panels = []
     for i, (name, expr, unit, legend) in enumerate(specs):
         panels.append(
@@ -73,6 +74,7 @@ def dashboard(uid, title, description, specs, variables=None):
 
 
 def query_variable(name, query):
+    """Build a Prometheus-backed Grafana query variable."""
     return {
         "name": name,
         "label": name.title(),

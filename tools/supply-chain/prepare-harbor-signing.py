@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def prepare(public_key):
+    """Validate the public key and render staged Harbor signing manifests."""
     subprocess.run(
         ["openssl", "pkey", "-pubin", "-noout"],
         input=public_key,
@@ -167,6 +168,7 @@ def prepare(public_key):
 
 
 def main():
+    """Render a staged Harbor signing rollout using a real trusted public key."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--public-key", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

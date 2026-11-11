@@ -19,6 +19,7 @@ s.loader.exec_module(b)
 
 
 def main():
+    """Exercise the native component policy's CEL/JSONPatch through Kyverno 1.19.2."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()

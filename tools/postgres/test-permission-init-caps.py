@@ -16,6 +16,7 @@ IMAGE = "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
 
 
 def main():
+    """Run the exact permission-init commands on disposable tmpfs data."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--image",

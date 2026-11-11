@@ -96,6 +96,7 @@ data:
 
 
     def reviewed(document, name):
+        """Reject workloads that differ from the explicitly reviewed deployment contract."""
         meta = document["metadata"]
         spec = document["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         if not (meta["namespace"] == NAMESPACE and meta["name"] == name):
@@ -133,6 +134,7 @@ data:
 
 
     def expected_spec(document):
+        """Copy the workload specification and apply only its reviewed security context."""
         spec = copy.deepcopy(document["spec"])
         container = spec["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
         container["securityContext"] = {**(container.get("securityContext") or {}), **SECURITY}
@@ -140,6 +142,7 @@ data:
 
 
     def annotation_patch(document):
+        """Build a resource-version-guarded annotation patch to trigger reviewed admission."""
         operations = [
             {
                 "op": "test",
@@ -156,6 +159,7 @@ data:
 
 
     def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.io/serviceaccount")):
+        """PostSync backfill: trigger the reviewed native mutation, then verify its result."""
         names = json.loads((config_dir / "names.json").read_text())
         context = ssl.create_default_context(cafile=str(account / "ca.crt"))
         token = (account / "token").read_text().strip()

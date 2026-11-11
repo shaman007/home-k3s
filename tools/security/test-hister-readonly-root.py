@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args, timeout=90):
+    """Run the probe command and fail when its expected execution does not succeed."""
     result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not result.returncode == 0:
         raise AssertionError(result.stdout[-2000:] + result.stderr[-2000:])
@@ -19,6 +20,7 @@ def run(args, timeout=90):
 
 
 def main():
+    """Offline Hister index/search/reindex/restart probe; disposable data/config only."""
     server = yaml.safe_load((ROOT / "hister/deployment-hister.yaml").read_text())["spec"][
         "template"
     ]["spec"]["containers"][0]

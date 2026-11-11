@@ -59,6 +59,7 @@ c.close()
 
 
 def run(args, timeout=90):
+    """Run the probe command and fail when its expected execution does not succeed."""
     r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not r.returncode == 0:
         raise AssertionError(r.stdout[-2500:] + r.stderr[-2500:])
@@ -66,6 +67,7 @@ def run(args, timeout=90):
 
 
 def check(name, deployment_path, config_path, root, nginx_name, php_name):
+    """Probe Nginx serving read-only fixture content with its deployed configuration."""
     pod = yaml.safe_load((ROOT / deployment_path).read_text())["spec"]["template"]["spec"]
     c = next(c for c in pod["containers"] if c["name"] == nginx_name)
     php = next(c for c in pod["containers"] if c["name"] == php_name)

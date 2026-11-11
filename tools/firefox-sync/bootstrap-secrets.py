@@ -19,6 +19,7 @@ KEYS = (
 
 
 def main():
+    """Initialize dedicated OpenBao secrets and ESO access; never emit secret values."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--execute", action="store_true", help="write OpenBao after explicit approval"

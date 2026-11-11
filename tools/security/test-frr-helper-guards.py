@@ -11,6 +11,7 @@ HELPERS = "quay.io/metallb/frr-k8s:v0.0.25"
 
 
 def run(*args, check=True):
+    """Run the probe command and fail when its expected execution does not succeed."""
     p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
     if check:
         if not p.returncode == 0:
@@ -19,6 +20,7 @@ def run(*args, check=True):
 
 
 def main():
+    """Real FRR VTY/reload/metrics on disposable files and an isolated network."""
     containers = []
     with tempfile.TemporaryDirectory(prefix="frr-helper-guards-") as directory:
         d = Path(directory)

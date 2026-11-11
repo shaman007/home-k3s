@@ -21,6 +21,7 @@ spec.loader.exec_module(backfill)
 
 
 def fixture(name):
+    """Build a synthetic manager-owned recurring CronJob with the pinned image and command."""
     return {
         "apiVersion": "batch/v1",
         "kind": "CronJob",
@@ -74,6 +75,7 @@ def fixture(name):
 
 
 def main():
+    """Evaluate the native policy's CEL/JSONPatch using the pinned Kyverno engine."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()

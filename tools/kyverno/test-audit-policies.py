@@ -21,6 +21,7 @@ EXPECTED_POLICIES = {
 
 
 def pod_spec(document):
+    """Select the pod specification from a Pod or supported workload template."""
     if document["kind"] == "Pod":
         return document["spec"]
     spec = document["spec"]
@@ -30,6 +31,7 @@ def pod_spec(document):
 
 
 def labels(document):
+    """Select pod labels from a Pod or supported workload template."""
     if document["kind"] == "Pod":
         return document["metadata"]["labels"]
     spec = document["spec"]
@@ -39,6 +41,7 @@ def labels(document):
 
 
 def snapshot(entry):
+    """Build a workload fixture from its reviewed catalog snapshot."""
     ps = copy.deepcopy(entry["snapshot"])
     ps["serviceAccountName"] = entry["serviceAccount"]
     ps["nodeSelector"] = {"audit.home-k3s/fixture-do-not-schedule": "true"}
@@ -67,6 +70,7 @@ def snapshot(entry):
 def derived_pod(entry):
     # Prefix a letter: numeric/scientific-looking hashes can be coerced by the
     # CLI's YAML conversion even when emitted as quoted string scalars.
+    """Build a synthetic owned Pod with deterministic controller identity."""
     hash_value = (
         "a" + hashlib.sha256((entry["namespace"] + "/" + entry["name"]).encode()).hexdigest()[:7]
     )
@@ -103,6 +107,7 @@ def derived_pod(entry):
 
 
 def noncompliant_container(policy, name):
+    """Build a container violating the selected policy while retaining other guards."""
     sc = {
         "runAsUser": 1000,
         "runAsNonRoot": True,
@@ -255,6 +260,7 @@ def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=25
 
 
 def main():
+    """Exercise actual rendered CEL policies/exceptions with the pinned Kyverno CLI."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
     parser.add_argument(

@@ -41,6 +41,7 @@ FIXTURE = {
 
 
 def post(url, model, messages, key, provider, context, timeout_s=1800):
+    """Send a synthetic tool-call request and return the response and elapsed time."""
     payload = {
         "model": model,
         "messages": messages,
@@ -76,6 +77,7 @@ def post(url, model, messages, key, provider, context, timeout_s=1800):
 
 
 def main():
+    """Test a synthetic read-only tool round trip through an OpenAI-compatible API."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", required=True)
     parser.add_argument("--model", required=True)

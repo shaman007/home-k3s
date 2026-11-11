@@ -15,10 +15,12 @@ from pathlib import Path
 
 
 def label(value: object) -> str:
+    """Escape backslashes, newlines, and quotes in a Prometheus label value."""
     return str(value or "").replace("\\", "\\\\").replace("\n", "\\n").replace('"', '\\"')
 
 
 def number(value: object) -> float | None:
+    """Convert finite numeric input to a float, returning None for invalid values."""
     try:
         result = float(str(value).strip())
         return result if math.isfinite(result) else None
@@ -27,6 +29,7 @@ def number(value: object) -> float | None:
 
 
 def sample(name: str, value: object, labels: dict[str, object] | None = None) -> str | None:
+    """Render one finite Prometheus sample with deterministically ordered labels."""
     numeric = number(value)
     if numeric is None:
         return None
@@ -39,10 +42,12 @@ def sample(name: str, value: object, labels: dict[str, object] | None = None) ->
 
 
 def metric(lines: list[str], name: str, help_text: str, metric_type: str = "gauge") -> None:
+    """Append Prometheus HELP and TYPE declarations for a metric family."""
     lines.extend((f"# HELP {name} {help_text}", f"# TYPE {name} {metric_type}"))
 
 
 def gpu_metrics() -> list[str]:
+    """Collect NVIDIA telemetry and expose explicit collector success metrics."""
     fields = [
         "index",
         "name",
@@ -123,6 +128,7 @@ def gpu_metrics() -> list[str]:
 
 
 def smart_devices() -> list[Path]:
+    """Discover unique SATA disks and NVMe controllers through sysfs."""
     devices: set[Path] = set()
     for block in Path("/sys/block").iterdir():
         name = block.name
@@ -134,6 +140,7 @@ def smart_devices() -> list[Path]:
 
 
 def smart_metrics() -> list[str]:
+    """Collect SMART health and device statistics in Prometheus text format."""
     lines: list[str] = []
     definitions = {
         "linux_host_smart_scrape_success": "Whether SMART data was available for the device.",
@@ -234,6 +241,7 @@ def smart_metrics() -> list[str]:
 
 
 def write_atomic(output: Path, lines: list[str]) -> None:
+    """Publish textfile metrics by replacing the destination with a temporary file."""
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
         "w", dir=output.parent, prefix=f".{output.name}.", delete=False
@@ -245,6 +253,7 @@ def write_atomic(output: Path, lines: list[str]) -> None:
 
 
 def main() -> None:
+    """Export NVIDIA and SMART data in Prometheus textfile format."""
     parser = argparse.ArgumentParser()
     parser.add_argument("collector", choices=("gpu", "smart"))
     parser.add_argument("output", type=Path)

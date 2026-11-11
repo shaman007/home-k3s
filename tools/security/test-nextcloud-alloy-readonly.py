@@ -30,6 +30,7 @@ ThreadingHTTPServer(('127.0.0.1',3100),Handler).serve_forever()
 
 
 def run(args, timeout=60):
+    """Run the probe command and fail when its expected execution does not succeed."""
     r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not r.returncode == 0:
         raise AssertionError(r.stdout[-2500:] + r.stderr[-2500:])
@@ -37,6 +38,7 @@ def run(args, timeout=60):
 
 
 def decode(data):
+    """Decode a Snappy-compressed protobuf payload received by the mock Loki endpoint."""
     lib = ctypes.CDLL(ctypes.util.find_library("snappy"))
     lib.snappy_uncompressed_length.argtypes = [
         ctypes.c_void_p,
@@ -62,6 +64,7 @@ def decode(data):
 
 
 def main():
+    """Offline Alloy file-tail/push/checkpoint probe using fixture logs and mock Loki."""
     pod = yaml.safe_load((ROOT / "nextcloud/stateful-set-nextcloud-web.yaml").read_text())["spec"][
         "template"
     ]["spec"]

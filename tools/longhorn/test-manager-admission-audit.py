@@ -18,6 +18,7 @@ spec.loader.exec_module(audit)
 
 
 def main():
+    """Regression: audit actual Helm output after native prepull admission, not before."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
     parser.add_argument("--kyverno", default="kyverno")

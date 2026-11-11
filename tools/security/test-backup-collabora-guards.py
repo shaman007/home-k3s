@@ -12,12 +12,14 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args):
+    """Run the probe command and fail when its expected execution does not succeed."""
     return subprocess.run(
         args, check=True, capture_output=True, text=True, timeout=120
     ).stdout.strip()
 
 
 def main():
+    """Rootless disposable SSH/rsync and Collabora startup probes; no production data."""
     backup = yaml.safe_load((ROOT / "backup-rsync/deployment-backup-rsync.yaml").read_text())
     c = backup["spec"]["template"]["spec"]["containers"][0]
     caps = c["securityContext"]["capabilities"]

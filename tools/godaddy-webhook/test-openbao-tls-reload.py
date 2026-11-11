@@ -19,12 +19,14 @@ HOSTNAME = "openbao-api.int.andreybondarenko.com"
 
 
 def free_port():
+    """Return a currently unused loopback port for the isolated server fixture."""
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
 
 
 def certificate(directory):
+    """Create a temporary self-signed fixture certificate and return its fingerprint."""
     directory.mkdir()
     subprocess.run(
         [
@@ -53,12 +55,14 @@ def certificate(directory):
 
 
 def fingerprint(context, port):
+    """Read the certificate fingerprint through a verified loopback TLS connection."""
     with socket.create_connection(("127.0.0.1", port), timeout=2) as connection:
         with context.wrap_socket(connection, server_hostname=HOSTNAME) as tls:
             return hashlib.sha256(tls.getpeercert(binary_form=True)).hexdigest()
 
 
 def main():
+    """Verify dual listeners and projected Secret rotation on an isolated OpenBao binary."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("binary", type=Path)
     args = parser.parse_args()

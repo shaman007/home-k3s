@@ -15,6 +15,7 @@ MARKER = "hardening.home-k3s/component-security"
 
 
 def security(entry):
+    """Build the reviewed user, group, capability, and seccomp security context."""
     return {
         "runAsNonRoot": entry["uid"] != 0,
         "runAsUser": entry["uid"],
@@ -27,6 +28,7 @@ def security(entry):
 
 
 def reviewed(doc, entry):
+    """Reject workloads that differ from the explicitly reviewed deployment contract."""
     meta, pod = doc["metadata"], doc["spec"]["template"]["spec"]
     if not (
         doc["kind"] == entry["kind"]
@@ -60,6 +62,7 @@ def reviewed(doc, entry):
 
 
 def expected_spec(doc, entry):
+    """Copy the workload specification and apply only its reviewed security context."""
     spec = copy.deepcopy(doc["spec"])
     c = spec["template"]["spec"]["containers"][entry["index"]]
     c["securityContext"] = {**(c.get("securityContext") or {}), **security(entry)}
@@ -67,6 +70,7 @@ def expected_spec(doc, entry):
 
 
 def ready(doc):
+    """Require the current generation and every desired replica to be updated and ready."""
     status = doc.get("status", {})
     if status.get("observedGeneration", 0) < doc["metadata"].get("generation", 1):
         return False
@@ -89,6 +93,7 @@ def ready(doc):
 
 
 def annotation_patch(doc):
+    """Build a resource-version-guarded annotation patch to trigger reviewed admission."""
     patch = [
         {
             "op": "test",
@@ -135,6 +140,7 @@ def storage_healthy(volumes, nodes):
 
 
 def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.io/serviceaccount")):
+    """Preflight native mutations, then roll reviewed workloads one at a time."""
     entries = json.loads((config_dir / "catalog.json").read_text())["entries"]
     context = ssl.create_default_context(cafile=str(account / "ca.crt"))
     token = (account / "token").read_text().strip()

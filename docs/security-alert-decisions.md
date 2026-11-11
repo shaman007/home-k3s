@@ -574,3 +574,23 @@ for this extended batch: 386 tests passed, with 21 skipped. Final documentation
 wording refinements also pass targeted lint. Live-dependent skipped tests and
 GitHub alert closure after publication remain unverified; this local cleanup
 does not establish either result. Changes remain unstaged and uncommitted.
+
+### Finish repository Python function documentation (2026-11-11)
+
+Documented the remaining 139 functions across 47 operational, CI, generator,
+probe, and archived-test modules. All 121 repository Python modules now pass
+targeted Pylint checks for missing module/class/function documentation,
+100-character line length, and multiple statements. No rule was disabled and
+no alert was dismissed.
+
+Synchronized the embedded backfill sources in `infra-guards/resources.yaml`,
+`longhorn/component-security-backfill.yaml`, and
+`longhorn/recurring-job-security-backfill.yaml`. Parsed manifest comparison
+confirms that only Python docstrings changed in the embedded `backfill.py` and
+`storage_guard.py` values; all other resource fields remain identical to HEAD.
+Executable AST comparisons also pass for all 47 changed Python source modules.
+Component-security, infrastructure-guard, and Kyverno exception generation
+checks pass. One full unittest run passed (386 tests, 21 skipped), as did
+`git diff --check`. Runtime probes requiring live services or containers were
+not executed for this documentation-only change. GitHub counts still require
+a published-source rescan; this batch remains unstaged and uncommitted.

@@ -12,6 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 class HypermindCrawlerAccessTest(unittest.TestCase):
     """Preserve archived honeypot logging, streaming, and intentional crawler access."""
     def test_honeypot_records_forwarded_ips_on_pvc_and_keeps_sse_streaming(self):
+        """Check persistent forwarded-IP logging and streaming in the archived honeypot
+        manifests.
+        """
         def load(name):
             return yaml.safe_load((ROOT / "hypermind" / name).read_text())
 
@@ -42,6 +45,7 @@ class HypermindCrawlerAccessTest(unittest.TestCase):
     def test_public_honeypot_intentionally_allows_crawling(self):
         # Hypermind is intentionally discoverable to observe automated use.
         # Keep its existing ingress protections without the robots disallow rule.
+        """Check that the archived public honeypot deliberately allows crawler access."""
         ingress = yaml.safe_load(
             (ROOT / "hypermind/ingress-hypermind.yaml").read_text(encoding="utf-8")
         )

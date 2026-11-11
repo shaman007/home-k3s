@@ -17,8 +17,10 @@ class UniqueKeyLoader(yaml.SafeLoader):
 
 
 def load(text):
+    """Parse one YAML document while rejecting duplicate mapping keys."""
     return yaml.load(text, Loader=UniqueKeyLoader)
 
 
 def load_all(text):
+    """Parse YAML documents lazily while rejecting duplicate mapping keys."""
     return yaml.load_all(text, Loader=UniqueKeyLoader)

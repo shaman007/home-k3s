@@ -8,6 +8,7 @@ import time
 
 
 def run(*args):
+    """Run the probe command and fail when its expected execution does not succeed."""
     p = subprocess.run(["podman", *args], text=True, capture_output=True, timeout=90, check=False)
     if not p.returncode == 0:
         raise AssertionError(p.stderr[-2000:])
@@ -15,6 +16,7 @@ def run(*args):
 
 
 def main():
+    """Run only the prepull echo/sleep command, never the share-manager server."""
     root = Path(__file__).resolve().parents[2]
     entry = next(
         e

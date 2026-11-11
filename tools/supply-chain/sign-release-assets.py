@@ -11,10 +11,12 @@ from urllib.parse import quote
 
 
 def run(*args, **kwargs):
+    """Run an external command and propagate a nonzero exit status."""
     return subprocess.run(args, check=True, **kwargs)
 
 
 def main():
+    """Sign and verify uploaded GitHub release files; never execute downloaded files."""
     repo = os.environ["GITHUB_REPOSITORY"]
     tag = os.environ["RELEASE_TAG"]
     identity = "https://github.com/" + os.environ["GITHUB_WORKFLOW_REF"]

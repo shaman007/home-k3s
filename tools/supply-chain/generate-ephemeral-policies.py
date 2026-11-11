@@ -10,6 +10,7 @@ OUTPUT = ROOT / 'kyverno/policy-verify-ephemeral.yaml'
 
 
 def generate():
+    """Derive admission-only ephemeral-container policies from the base signature policies."""
     result = []
     for name in ['own-ghcr', 'own-harbor', 'upstream']:
         for base in yaml.safe_load_all((ROOT / f'kyverno/policy-verify-{name}.yaml').read_text()):

@@ -8,6 +8,7 @@ import yaml
 
 
 def violations(document):
+    """Report CrowdSec persistent-storage and writable-parent mount violations."""
     if document.get("kind") != "Deployment":
         return []
     spec = document.get("spec", {}).get("template", {}).get("spec", {})
@@ -59,6 +60,7 @@ def violations(document):
 
 
 def main():
+    """Check storage/mount contracts that Kubernetes schema validation cannot catch."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rendered", type=Path, required=True)
     args = parser.parse_args()

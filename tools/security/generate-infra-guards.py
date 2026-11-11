@@ -13,6 +13,7 @@ J = json.dumps
 def C(value):
     # CEL map literals otherwise infer a single value type and reject mixed
     # Kubernetes fields such as a volume's name plus configMap object.
+    """Render catalog values as CEL literals with explicit dynamic map values."""
     if isinstance(value, dict):
         return "{" + ", ".join(J(k) + ": dyn(" + C(v) + ")" for k, v in value.items()) + "}"
     if isinstance(value, list):
@@ -21,6 +22,7 @@ def C(value):
 
 
 def generate(catalog):
+    """Generate reviewed admission guards and the matching scoped backfill manifests."""
     entries = catalog["entries"]
     branches = []
     patches = []
@@ -317,6 +319,7 @@ def generate(catalog):
 
 
 def main():
+    """Generate narrowly reviewed native mutations and their guarded GitOps hook."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

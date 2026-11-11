@@ -21,6 +21,7 @@ import urllib.request
 
 
 def main():
+    """Run an isolated authenticated Sync storage round trip."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default="http://127.0.0.1:18000")
     args = parser.parse_args()

@@ -20,6 +20,7 @@ EXCLUDED_PREFIXES = (
 
 
 def tracked_yaml_files(repo_root: Path) -> list[Path]:
+    """List tracked YAML paths using null-delimited Git output."""
     result = subprocess.run(
         [
             "git",
@@ -47,6 +48,7 @@ def tracked_yaml_files(repo_root: Path) -> list[Path]:
 
 
 def looks_like_k8s_manifest(path: Path) -> bool:
+    """Recognize Kubernetes manifests without rejecting template-only YAML files."""
     try:
         content = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
@@ -60,6 +62,7 @@ def looks_like_k8s_manifest(path: Path) -> bool:
 
 
 def main() -> int:
+    """List tracked YAML files that look like Kubernetes manifests."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--print0",

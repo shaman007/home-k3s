@@ -27,12 +27,15 @@ class MockAPI(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
+        """Handle a fixture API GET through the shared synthetic response dispatcher."""
         self.respond()
 
     def do_PUT(self):
+        """Handle a fixture API PUT through the shared synthetic response dispatcher."""
         self.respond()
 
     def respond(self):
+        """Serve the synthetic Kubernetes or manager API response for the fixture request."""
         path = urllib.parse.urlparse(self.path).path
         self.calls.append((self.command, path))
         body = {
@@ -74,6 +77,7 @@ class MockAPI(http.server.BaseHTTPRequestHandler):
 
 
 def main():
+    """Run the pinned job image against isolated mock APIs; select no real volumes."""
     with tempfile.TemporaryDirectory(prefix="longhorn-mock-") as temporary:
         root = Path(temporary)
         root.chmod(0o755)

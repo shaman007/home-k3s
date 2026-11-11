@@ -30,12 +30,14 @@ CAPS = [
 
 
 def run(args):
+    """Run the probe command and fail when its expected execution does not succeed."""
     return subprocess.run(
         args, check=True, capture_output=True, text=True, timeout=90
     ).stdout.strip()
 
 
 def command(name):
+    """Read the deployed mail container image and command from its manifest."""
     doc = yaml.safe_load((ROOT / ("mail/deployment-" + name + ".yaml")).read_text())
     c = doc["spec"]["template"]["spec"]["containers"][0]
     caps = CAPS if name == "dovecot" else [cap for cap in CAPS if cap != "SYS_CHROOT"]
@@ -54,14 +56,17 @@ def command(name):
 
 
 def bind(args, path, destination):
+    """Add a read-only, SELinux-relabeled fixture bind mount to the container arguments."""
     args += ["-v", str(path) + ":" + destination + ":ro,Z"]
 
 
 def port(cid, number):
+    """Resolve the host port published for a fixture container TCP port."""
     return int(run(["podman", "port", cid, str(number) + "/tcp"]).split(":")[-1])
 
 
 def retry(action):
+    """Retry a transient connection or IMAP failure within a bounded attempt count."""
     for _ in range(20):
         try:
             return action()
@@ -71,6 +76,7 @@ def retry(action):
 
 
 def main():
+    """Probe mail daemons with disposable config/storage; never submit a message."""
     containers, volumes = [], []
     with tempfile.TemporaryDirectory(prefix="mail-capability-") as directory:
         d = Path(directory)

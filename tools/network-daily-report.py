@@ -24,6 +24,7 @@ BASE = pathlib.Path("/var/lib/network-daily-report")
 
 
 def collect(now):
+    """Collect and deduplicate the preceding day of local Suricata telemetry."""
     start = now - dt.timedelta(hours=24)
     clients = {}
     counts = collections.Counter()
@@ -305,6 +306,7 @@ def collect(now):
 
 
 def assess(evidence, config):
+    """Assess monitoring health and identify network events requiring further analysis."""
     issues = []
 
     def issue(title, impact, action, confidence="High", support=None):
@@ -493,6 +495,7 @@ def assess(evidence, config):
 
 
 def summarize(assessment, config):
+    """Request structured model findings for candidates lacking a local classification."""
     candidates = [i for i in assessment["candidates"] if not i.get("preclassification")]
     if not candidates:
         return {}
@@ -624,6 +627,7 @@ def summarize(assessment, config):
 
 
 def apply_verdict(assessment, findings, error=None):
+    """Combine evidence and findings without issuing an unsupported all-clear verdict."""
     actionable = []
     for candidate in assessment["candidates"]:
         finding = findings.get(
@@ -733,6 +737,7 @@ def apply_verdict(assessment, findings, error=None):
 
 def render_report(assessment, evidence, now, notes, error=None):
     # Executive body remains useful even if the model fails. Technical details stay in attachments.
+    """Render the final assessment as plain text and escaped HTML."""
     lines = [
         f"Home network executive brief — {now:%d %b %Y}",
         assessment["status"],
@@ -837,6 +842,7 @@ def render_report(assessment, evidence, now, notes, error=None):
 
 
 def main():
+    """Build a daily network assessment from local telemetry and optional model review."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--send", action="store_true")
     ap.add_argument("--collect-only", action="store_true")

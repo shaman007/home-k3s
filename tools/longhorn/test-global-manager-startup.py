@@ -73,15 +73,19 @@ class MockAPI(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
+        """Handle a fixture API GET through the shared synthetic response dispatcher."""
         self.respond()
 
     def do_POST(self):
+        """Handle a fixture API POST through the shared synthetic response dispatcher."""
         self.respond()
 
     def do_PUT(self):
+        """Handle a fixture API PUT through the shared synthetic response dispatcher."""
         self.respond()
 
     def mock_lease(self):
+        """Build a synthetic current leader-election Lease for the manager probe."""
         now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         return {
             "apiVersion": "coordination.k8s.io/v1",
@@ -101,6 +105,7 @@ class MockAPI(http.server.BaseHTTPRequestHandler):
         }
 
     def respond(self):
+        """Serve the synthetic Kubernetes or manager API response for the fixture request."""
         path = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(path.query)
         if "watch" in query:
@@ -149,6 +154,7 @@ class MockAPI(http.server.BaseHTTPRequestHandler):
 
 
 def main():
+    """Verify non-root global-manager startup against local synthetic Kubernetes APIs."""
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), MockAPI)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:

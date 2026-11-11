@@ -107,6 +107,7 @@ PROBE = (
 
 
 def run(*args, check=True):
+    """Run the probe command and fail when its expected execution does not succeed."""
     result = subprocess.run(
         ["podman", *args], capture_output=True, text=True, timeout=90, check=False
     )
@@ -118,6 +119,7 @@ def run(*args, check=True):
 
 
 def main():
+    """Isolated non-root speaker prerequisites: no LAN interfaces, VIPs or secrets."""
     holder = None
     speakers = []
     with tempfile.TemporaryDirectory(prefix="speaker-nonroot-") as directory:

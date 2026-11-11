@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def smoke(image, user, caps, script, extra=()):
+    """Probe the selected service image with the reviewed user and capability grants."""
     command = [
         "podman",
         "run",
@@ -38,6 +39,7 @@ def smoke(image, user, caps, script, extra=()):
 
 
 def main():
+    """Exercise Unbound DNS and uninitialized OpenBao Raft on disposable storage."""
     deployment = yaml.safe_load((ROOT / "mail/deployment-unbound.yaml").read_text())
     container = deployment["spec"]["template"]["spec"]["containers"][0]
     sc = container["securityContext"]

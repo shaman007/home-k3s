@@ -19,6 +19,7 @@ HOST = "s3.andreybondarenko.com"
 
 
 def fetch(port, path, headers=None):
+    """Fetch a media object through a locally forwarded cache replica."""
     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=15)
     try:
         connection.request("GET", path, headers={"Host": HOST, **(headers or {})})
@@ -34,6 +35,7 @@ def fetch(port, path, headers=None):
 
 
 def main():
+    """Verify a disposable fixture against every production media-cache replica."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--path", default="/mastodon/cache-pilot/fixture.txt")
     expectation = parser.add_mutually_exclusive_group()

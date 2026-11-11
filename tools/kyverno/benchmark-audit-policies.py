@@ -18,6 +18,7 @@ import yaml
 
 
 def read_tests(root):
+    """Load fixture assertions and reject ambiguous or missing resource matches."""
     tests = []
     for file in sorted(root.rglob("kyverno-test.yaml")):
         test = yaml.safe_load(file.read_text())
@@ -52,6 +53,7 @@ def read_tests(root):
 
 
 def coverage(tests):
+    """Count the exact resource, policy, and expected-result assertion combinations."""
     return Counter(key for _, _, assertions in tests for key, _, _ in assertions)
 
 
@@ -86,6 +88,7 @@ def policy_scopes(tests):
 
 
 def subset(tests, keys, output):
+    """Write selected assertions while preserving their original policies and exceptions."""
     output.mkdir()
     for index, (file, test, assertions) in enumerate(tests):
         selected = [(doc, ref) for key, doc, ref in assertions if key in keys]
@@ -113,6 +116,7 @@ def subset(tests, keys, output):
 
 
 def main():
+    """Compare prepared legacy/sharded audit fixtures and benchmark identical assertions."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, required=True)
     parser.add_argument("--optimized", type=Path, required=True)

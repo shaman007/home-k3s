@@ -98,6 +98,7 @@ SPEAKER_GUARDS = {
 
 
 def is_speaker(entry):
+    """Recognize only the reviewed MetalLB speaker DaemonSet identity."""
     return (entry["kind"], entry["namespace"], entry["name"]) == (
         "DaemonSet",
         "metallb-system",
@@ -106,10 +107,12 @@ def is_speaker(entry):
 
 
 def literal(value):
+    """Encode a deterministic JSON literal for inclusion in a CEL expression."""
     return json.dumps(value, sort_keys=True)
 
 
 def owner(kind, name, uid=None):
+    """Build a CEL controller-owner constraint with an optional exact owner UID."""
     terms = [
         f"o.kind == {literal(kind)}",
         f"o.name == {name}",
@@ -121,6 +124,7 @@ def owner(kind, name, uid=None):
 
 
 def identity(entry):
+    """Match the reviewed workload and its permitted controller-owned descendants."""
     kind, name = entry["kind"], entry["name"]
     direct = f"(object.kind == {literal(kind)} && object.metadata.name == {literal(name)})"
     if kind == "Pod":
@@ -192,6 +196,7 @@ def identity(entry):
 
 
 def compliant(policy):
+    """Build the CEL condition for a container satisfying the selected security policy."""
     if policy == "require-run-as-nonroot":
         return (
             "c.?securityContext.?runAsNonRoot.orValue"
@@ -230,6 +235,7 @@ def image_repository(image):
 
 
 def image_expression(image):
+    """Match exactly the reviewed image repository with optional tags and digests."""
     repository = image_repository(image)
     pattern = (
         "^"
@@ -240,6 +246,7 @@ def image_expression(image):
 
 
 def approved(policy, allowed):
+    """Build guarded CEL alternatives for explicitly reviewed container exceptions."""
     clauses = []
     for name, rule in sorted(allowed.items()):
         if not (rule["image"] and "*" not in rule["image"]):
@@ -386,6 +393,7 @@ def guard_terms(variable, expected):
 
 
 def expression(entry, policy):
+    """Combine workload identity, compliance, and reviewed exception constraints in CEL."""
     config = entry["policies"][policy]
     if is_speaker(entry):
         if not set(entry["policies"]) == {
@@ -547,6 +555,7 @@ def expression(entry, policy):
 
 
 def exception_name(entry, policy):
+    """Build the deterministic policy-exception name for a reviewed workload."""
     name = f"verified-{POLICIES[policy]}-{entry['namespace']}-{entry['name']}"
     if len(name) > 63:
         name = name[:54].rstrip("-") + "-" + hashlib.sha256(name.encode()).hexdigest()[:8]
@@ -554,6 +563,7 @@ def exception_name(entry, policy):
 
 
 def generate(catalog):
+    """Validate the reviewed catalog and emit narrowly scoped CEL policy exceptions."""
     if not catalog["exceptionNamespace"] == "kyverno":
         raise AssertionError
     names = set()
@@ -612,6 +622,7 @@ def generate(catalog):
 
 
 def main():
+    """Generate narrowly matched CEL exceptions from a reviewed, explicit catalog."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

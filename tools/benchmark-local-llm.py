@@ -50,6 +50,7 @@ def request_deadline(seconds):
 
 
 def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=0):
+    """Stream an inference response while recording output, timing, and completion state."""
     if provider == "ollama":
         path = "/api/chat"
         payload = {
@@ -157,6 +158,7 @@ def request(base, provider, model, prompt, key, context, max_tokens, deadline_s=
 
 
 def main():
+    """Measure local inference via streaming APIs; retain outputs for quality review."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--provider", choices=["ollama", "strata"], required=True)
     parser.add_argument("--url", required=True)

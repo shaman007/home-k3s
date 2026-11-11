@@ -15,6 +15,7 @@ IMAGE = (
 
 
 def run(*args):
+    """Run the probe command and fail when its expected execution does not succeed."""
     p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=180, check=False)
     if p.returncode:
         raise RuntimeError(p.stderr[-2000:])
@@ -22,6 +23,7 @@ def run(*args):
 
 
 def main():
+    """Test exact deployed MySQL with disposable data, no network or production secrets."""
     patch = yaml.safe_load(
         Path(__file__).with_name("lenka-mysql-security.patch.yaml").read_text(encoding="utf-8")
     )

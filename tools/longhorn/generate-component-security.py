@@ -27,6 +27,7 @@ Dumper.add_representer(
 
 
 def generate(catalog):
+    """Generate component security mutations and their scoped backfill manifests."""
     entries = catalog["entries"]
     branches = []
     if not len({e["name"] for e in entries}) == len(entries):
@@ -234,6 +235,7 @@ def generate(catalog):
 
 
 def main():
+    """Generate the reviewed native component mutation and guarded rollout hook."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

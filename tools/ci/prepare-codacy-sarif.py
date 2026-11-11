@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 def prepare(report, reject_parser_errors=False):
+    """Merge Codacy batches while preserving findings and remapping local references."""
     report = copy.deepcopy(report)
     runs = report.get("runs")
     if not isinstance(runs, list) or not runs:
@@ -98,6 +99,7 @@ def prepare(report, reject_parser_errors=False):
 
 
 def main():
+    """Combine Codacy CLI batches without losing their run-local references."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
     parser.add_argument("output", type=Path)

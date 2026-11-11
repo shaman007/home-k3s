@@ -25,6 +25,7 @@ EXCLUSIONS = [
 
 
 def main():
+    """Inventory internal hostnames without copying source lines or secret values."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path.home() / "git")
     parser.add_argument("--output", type=Path, required=True)

@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(command, label, timeout=60):
+    """Run the probe command and fail when its expected execution does not succeed."""
     result = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False)
     if not result.returncode == 0:
         raise AssertionError(label + ": " + result.stdout[-2000:] + result.stderr[-2000:])
@@ -21,6 +22,7 @@ def run(command, label, timeout=60):
 
 
 def helper(path, name, caps, mount, setup, checks, expected_mask):
+    """Exercise a permission-init command against disposable storage with reviewed grants."""
     doc = yaml.safe_load((ROOT / path).read_text())
     container = next(
         c for c in doc["spec"]["template"]["spec"]["initContainers"] if c["name"] == name
@@ -70,6 +72,7 @@ def helper(path, name, caps, mount, setup, checks, expected_mask):
 
 
 def main():
+    """Test permission helpers on disposable tmpfs; optionally smoke-test installers."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--installers", action="store_true")
     args = parser.parse_args()
