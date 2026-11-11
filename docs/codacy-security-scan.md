@@ -116,3 +116,15 @@ infrastructure or analyzer failures remain fatal on the third attempt and preven
 SARIF preparation/upload. Every attempt retains `fail-if-incomplete: true` and
 identical tool/rule/output settings. Before retries, only the validated scanner
 SARIF basename is removed so a partial earlier report cannot be reused.
+
+
+The upstream Python 3 adapter unconditionally loads `pylint_django` and
+`pylint_flask` before scanning each file batch; see its
+[pinned adapter implementation](https://github.com/codacy/codacy-pylint-python3/blob/3ea0e20326b35a8c4afedb550ecdec157f9bb2fa/src/codacy_pylint.py#L211-L238).
+Consequently `django-not-configured` (E5110) can appear on unrelated utilities.
+This repository's reviewed Python sources contain no Django imports or application
+settings. Do not add dummy Django settings to satisfy the adapter. Exact E5110
+findings are reviewed as false positives after auditing the analyzed revision;
+reopen that classification if Django source/settings are introduced. Source/file
+batch changes can produce new instances requiring review. All other Pylint rules
+and parser-error/incomplete-scan upload safeguards remain enabled.

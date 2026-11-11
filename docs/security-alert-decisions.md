@@ -2542,3 +2542,32 @@ reported no analysis errors. No production directory or Kubernetes endpoint was
 accessed. Current inventory is 72: Bandit 53, modern Pylint 13 and Opengrep six.
 New concurrent findings mean this total is not simply the prior count minus five;
 those new findings remain in scope. No push was performed.
+
+
+### Record forced framework-plugin cause and verify the UniFi failure boundary
+
+Confirmed the upstream Python 3 adapter's unconditional Django/Flask plugin loading
+and ten-file batching in the pinned source linked from the scan runbook. This
+explains recurring E5110 diagnostics on non-Django files. Audited all 140 Python
+modules at analyzed revision 1107dafd: no Django imports. Dismissed exact current
+recurrences #8066, #8065, #8064, #8063, #8062, #8061 and #7295 with conditions to
+reopen if Django source/settings are introduced. No dummy application settings,
+unverified adapter override or global rule exclusion was added. The upstream
+integration behavior can still generate new instances after file/batch changes;
+those require a fresh source audit, not automatic blanket dismissal.
+
+After the published timestamp fix, reviewed exact UniFi broad-boundary warning
+#7668 against unchanged analyzed/current source. All sixteen exporter tests pass,
+including driving the real poll closure and HTTP handler through collection and
+render failures: scrape_success=0, no stale route samples, preserved last successful
+snapshot time and no private diagnostic markers. This intentional service boundary
+keeps the failure observable instead of terminating its worker silently. Dismissed
+only this heuristic with conditions to reopen for hidden failures or fabricated
+success. The exporter listen/TLS findings remain open for separate operational
+review; this classification does not accept either security tradeoff.
+
+Exact rule/tool/path/state/revision guards preceded all eight decisions. Independent
+inventory verifies them absent and reports 64 open: Bandit 53, modern Pylint five
+and Opengrep six. No code or deployment changed in this batch. The last full suite
+remains 524 tests with 16 skips; the relevant sixteen tests were rerun successfully.
+No credentials, live router or cluster were accessed, and no push was performed.
