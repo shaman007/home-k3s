@@ -42,9 +42,9 @@ def command(name):
     caps = CAPS if name == "dovecot" else [cap for cap in CAPS if cap != "SYS_CHROOT"]
     if not c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": caps}:
         raise AssertionError
-    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
+    if c["securityContext"]["allowPrivilegeEscalation"] is not False:
         raise AssertionError
-    if not c["securityContext"]["readOnlyRootFilesystem"] is True:
+    if c["securityContext"]["readOnlyRootFilesystem"] is not True:
         raise AssertionError
     args = ["podman", "run", "-d", "--cap-drop=ALL", "--security-opt=no-new-privileges"]
     if c["securityContext"]["readOnlyRootFilesystem"]:
@@ -276,7 +276,7 @@ def main():
                     "NoNewPrivs:\t1",
                     "Seccomp:\t2",
                 ]:
-                    if not line in status:
+                    if line not in status:
                         raise AssertionError(name + ": " + status)
                 run(["podman", "exec", cid, name, "reload"])
             retry(imap)

@@ -72,18 +72,18 @@ def main():
     c = next(c for c in pod["containers"] if c["name"] == "alloy")
     if not pod["securityContext"]["runAsUser"] == pod["securityContext"]["runAsGroup"] == 33:
         raise AssertionError
-    if not c["securityContext"]["readOnlyRootFilesystem"] is True:
+    if c["securityContext"]["readOnlyRootFilesystem"] is not True:
         raise AssertionError
-    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
+    if c["securityContext"]["allowPrivilegeEscalation"] is not False:
         raise AssertionError
     if not c["securityContext"]["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
     if (
-        not next((v for v in c["volumeMounts"] if v["mountPath"] == "/nextcloud"))["readOnly"]
-        is True
+        next((v for v in c["volumeMounts"] if v["mountPath"] == "/nextcloud"))["readOnly"]
+        is not True
     ):
         raise AssertionError
-    if not "--storage.path=/data-alloy" in c["args"]:
+    if "--storage.path=/data-alloy" not in c["args"]:
         raise AssertionError
     config = yaml.safe_load(
         (ROOT / "nextcloud/config-map-alloy-nextcloud-config.yaml").read_text()
@@ -247,7 +247,7 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not expected in status:
+                if expected not in status:
                     raise AssertionError(status)
             # Fixture directory is otherwise writable; the read-only mount blocks writes.
             run(
@@ -278,7 +278,7 @@ def main():
                     "find /state -type f -name '*positions*' -exec cat '{}' ';'",
                 ]
             )
-            if not "/nextcloud/data/guard.log" in positions:
+            if "/nextcloud/data/guard.log" not in positions:
                 raise AssertionError("Fixture checkpoint was not saved under /data-alloy")
             print(
                 "Nextcloud Alloy: initial/appended logs reached mock Loki; Snappy payloads verified"

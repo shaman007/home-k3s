@@ -132,7 +132,7 @@ listener "tcp" {{
                     raise RuntimeError("Projected certificate rotation was not reloaded")
                 if fingerprint(context, old_port) != first:
                     raise AssertionError("Original listener changed unexpectedly")
-                if not process.poll() is None:
+                if process.poll() is not None:
                     raise AssertionError("Server exited after reload")
                 print(
                     (

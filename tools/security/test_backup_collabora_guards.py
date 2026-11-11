@@ -113,7 +113,7 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not line in status:
+                if line not in status:
                     raise AssertionError(status)
             print(
                 "Backup SSH: actual entrypoint/hook, key authentication and rsync round trip passed"
@@ -128,7 +128,7 @@ def main():
         raise AssertionError
     if not (sc["runAsNonRoot"] and sc["privileged"] is False):
         raise AssertionError
-    if not sc["allowPrivilegeEscalation"] is True:
+    if sc["allowPrivilegeEscalation"] is not True:
         raise AssertionError
     if not sc["capabilities"] == {"drop": ["ALL"], "add": ["CHOWN", "FOWNER", "SYS_CHROOT"]}:
         raise AssertionError
@@ -144,7 +144,7 @@ def main():
                 with urllib.request.urlopen(
                     "http://127.0.0.1:" + port + "/hosting/discovery", timeout=2
                 ) as response:
-                    if not b"wopi-discovery" in response.read():
+                    if b"wopi-discovery" not in response.read():
                         raise AssertionError
                 break
             except (OSError, AssertionError):

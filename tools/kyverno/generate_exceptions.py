@@ -262,7 +262,7 @@ def approved(policy, allowed):
                 )
             )
         if policy == "require-drop-all-capabilities" and not rule.get("requirePrivileged"):
-            if not set(rule) in (
+            if set(rule) not in (
                 {"image", "capabilities"},
                 {"image", "capabilities", "runAsUser", "allowPrivilegeEscalation"},
             ):
@@ -315,7 +315,7 @@ def approved(policy, allowed):
                 "seccompDeclaration",
             }:
                 raise AssertionError
-            if not rule["requirePrivileged"] is True:
+            if rule["requirePrivileged"] is not True:
                 raise AssertionError
             fields.extend(
                 [
@@ -357,7 +357,7 @@ def guard_terms(variable, expected):
     """Pin reviewed guards; capability set order is immaterial."""
     terms = []
     for field, value in sorted(expected.items()):
-        if not field in {
+        if field not in {
             "privileged",
             "allowPrivilegeEscalation",
             "readOnlyRootFilesystem",
@@ -425,7 +425,7 @@ def expression(entry, policy):
                     if not policy != "restrict-seccomp-strict":
                         raise AssertionError
                     continue
-                if not "disallow-privileged-containers" in entry["policies"]:
+                if "disallow-privileged-containers" not in entry["policies"]:
                     raise AssertionError
                 reviewed = entry["policies"]["disallow-privileged-containers"].get(section, {})
                 if not (name in reviewed and reviewed[name]["image"] == rule["image"]):
@@ -466,7 +466,7 @@ def expression(entry, policy):
                     raise AssertionError
                 if not (rule["capabilities"] == ["NET_RAW"] and rule["runAsUser"] == 0):
                     raise AssertionError
-                if not rule["allowPrivilegeEscalation"] is False:
+                if rule["allowPrivilegeEscalation"] is not False:
                     raise AssertionError
                 continue
             if not entry["kind"] == "Deployment":
@@ -500,7 +500,7 @@ def expression(entry, policy):
         raise AssertionError
     terms.append("(" + " || ".join(actual) + ")")
     for section, roles in entry.get("requiredGuards", {}).items():
-        if not section in ("containers", "initContainers"):
+        if section not in ("containers", "initContainers"):
             raise AssertionError
         for name, guards in roles.items():
             companion = entry.get("reviewedCompanions", {}).get(section, {}).get(name)
@@ -574,7 +574,7 @@ def generate(catalog):
         if not (entry["labels"] and entry["reason"] and entry["evidence"]):
             raise AssertionError
         for policy in sorted(entry["policies"]):
-            if not policy in POLICIES:
+            if policy not in POLICIES:
                 raise AssertionError
             cap_properties = {}
             if policy == "require-drop-all-capabilities":

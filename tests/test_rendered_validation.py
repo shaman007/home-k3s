@@ -77,7 +77,9 @@ class RenderValidationTest(unittest.TestCase):
         with patch.object(render, "run", return_value="rendered") as run:
             self.assertEqual(
                 "rendered",
-                render.render_source(self.app, source, [source], self.root, self.root, "1.36.0"),
+                render.render_source(
+                    self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.0")
+                ),
             )
         args = run.call_args.args[0]
         self.assertEqual(args[2:4], ["solver", str(chart)])
@@ -221,7 +223,9 @@ class RenderValidationTest(unittest.TestCase):
         ):
             self.assertEqual(
                 "rendered",
-                render.render_source(self.app, source, [source], self.root, self.root, "1.37.1"),
+                render.render_source(
+                    self.app, source, [source], render.RenderContext(self.root, self.root, "1.37.1")
+                ),
             )
         original, fallback = [call.args[0] for call in run.call_args_list]
         expected = original.copy()
@@ -242,7 +246,9 @@ class RenderValidationTest(unittest.TestCase):
             patch("builtins.print"),
             self.assertRaises(RuntimeError) as error,
         ):
-            render.render_source(self.app, source, [source], self.root, self.root, "1.37.1")
+            render.render_source(
+                self.app, source, [source], render.RenderContext(self.root, self.root, "1.37.1")
+            )
         self.assertNotIn("signed-secret", str(error.exception))
         self.assertTrue(error.exception.__suppress_context__)
 
@@ -295,7 +301,9 @@ class RenderValidationTest(unittest.TestCase):
         refs = [source, {"repoURL": render.REPO, "ref": "values"}]
         scratch = self.root / "scratch"
         scratch.mkdir()
-        args = render.helm_args(self.app, source, refs, self.root, scratch, "1.36.4")
+        args = render.helm_args(
+            self.app, source, refs, render.RenderContext(self.root, scratch, "1.36.4")
+        )
         self.assertEqual("release", args[2])
         self.assertEqual("target", args[args.index("--namespace") + 1])
         self.assertEqual("1.36.4", args[args.index("--kube-version") + 1])
@@ -311,7 +319,9 @@ class RenderValidationTest(unittest.TestCase):
             "chart": "openbao",
             "targetRevision": "0.29.4",
         }
-        args = render.helm_args(self.app, source, [source], self.root, self.root, "1.36.4")
+        args = render.helm_args(
+            self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
+        )
         self.assertIn("oci://ghcr.io/openbao/charts/openbao", args)
         self.assertNotIn("--repo", args)
 
@@ -324,7 +334,9 @@ class RenderValidationTest(unittest.TestCase):
             "helm": {"fileParameters": []},
         }
         with self.assertRaises(ValueError):
-            render.helm_args(self.app, source, [], self.root, self.root, "1.36.4")
+            render.helm_args(
+                self.app, source, [], render.RenderContext(self.root, self.root, "1.36.4")
+            )
         with self.assertRaises(ValueError):
             render.local_path(self.root, "../escape")
 
@@ -348,7 +360,7 @@ class RenderValidationTest(unittest.TestCase):
                 patch.object(render, "run", return_value=prefix + manifest),
             ):
                 output = render.render_source(
-                    self.app, source, [source], self.root, self.root, "1.36.4"
+                    self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
                 )
                 self.assertEqual(manifest, output)
                 self.assertEqual(["ConfigMap"], [doc["kind"] for doc in validate.documents(output)])
@@ -356,7 +368,9 @@ class RenderValidationTest(unittest.TestCase):
         with patch.object(render, "run", return_value=unexpected):
             self.assertEqual(
                 unexpected,
-                render.render_source(self.app, source, [source], self.root, self.root, "1.36.4"),
+                render.render_source(
+                    self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
+                ),
             )
 
     def test_directory_include_exclude_and_recursion(self):
@@ -373,7 +387,9 @@ class RenderValidationTest(unittest.TestCase):
             "path": "app",
             "directory": {"include": "{keep.yaml,drop.yaml}", "exclude": "drop.yaml"},
         }
-        output = render.render_source(self.app, source, [source], self.root, self.root, "1.36.4")
+        output = render.render_source(
+            self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
+        )
         self.assertEqual(["keep"], [d["metadata"]["name"] for d in yaml.safe_load_all(output)])
 
     def test_kustomize_source_is_built(self):
@@ -385,7 +401,9 @@ class RenderValidationTest(unittest.TestCase):
         with patch.object(render, "run", return_value="rendered") as run:
             self.assertEqual(
                 "rendered",
-                render.render_source(self.app, source, [source], self.root, self.root, "1.36.4"),
+                render.render_source(
+                    self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
+                ),
             )
             run.assert_called_once_with(["kubectl", "kustomize", str(appdir)])
 
@@ -508,7 +526,9 @@ class RenderValidationTest(unittest.TestCase):
             "targetRevision": "1",
         }
         with patch.object(render, "run", return_value="rendered") as run:
-            render.render_source(self.app, source, [source], self.root, self.root, "1.36.4")
+            render.render_source(
+                self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
+            )
             self.assertEqual(self.root, run.call_args.kwargs["cwd"])
 
     def test_kubernetes_unicode_regex_categories_are_enforced(self):
@@ -553,9 +573,7 @@ class ManifestValidationPipelineTest(unittest.TestCase):
             root = Path(directory)
             applications = root / "argocd"
             applications.mkdir()
-            (applications / "test.yaml").write_text(
-                "kind: Application\nmetadata:\n  name: test\n"
-            )
+            (applications / "test.yaml").write_text("kind: Application\nmetadata:\n  name: test\n")
             rendered = root / "rendered"
             rendered.mkdir()
             (rendered / "inventory.json").write_text("{}")
@@ -596,7 +614,8 @@ class ManifestValidationPipelineTest(unittest.TestCase):
             (config_dir / "validation-config.yaml").write_text("kubernetesVersion: 1.37.1\n")
             marker = secrets.token_hex(16)
             secret = {
-                "apiVersion": "v1", "kind": "Secret",
+                "apiVersion": "v1",
+                "kind": "Secret",
                 "data": {"token": marker},
             }
             custom = {"apiVersion": "unknown/v1", "kind": "Thing"}
@@ -643,7 +662,8 @@ class ManifestValidationPipelineTest(unittest.TestCase):
         """Fail closed without including possibly private kubeconform output in exceptions."""
         with (
             patch.object(
-                validate.subprocess, "run",
+                validate.subprocess,
+                "run",
                 return_value=subprocess.CompletedProcess([], 1, "sensitive-fixture-sentinel"),
             ),
             self.assertRaisesRegex(RuntimeError, "without a JSON report") as error,

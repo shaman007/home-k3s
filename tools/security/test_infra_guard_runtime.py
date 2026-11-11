@@ -99,7 +99,7 @@ def main():
             "NoNewPrivs:\t1",
             "Seccomp:\t2",
         ]:
-            if not expected in output:
+            if expected not in output:
                 raise AssertionError(output)
     print(
         (

@@ -38,7 +38,7 @@ def main():
             raise AssertionError
         if not init["securityContext"]["runAsUser"] == 0:
             raise AssertionError
-        if not init["securityContext"]["allowPrivilegeEscalation"] is False:
+        if init["securityContext"]["allowPrivilegeEscalation"] is not False:
             raise AssertionError
         if not init["securityContext"]["capabilities"] == {
             "drop": ["ALL"],
@@ -111,7 +111,7 @@ grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/self/status
             "NoNewPrivs:\t1",
             "Seccomp:\t2",
         ]:
-            if not expected in result.stdout:
+            if expected not in result.stdout:
                 raise AssertionError((name, result.stdout))
         print(
             (

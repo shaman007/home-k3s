@@ -163,13 +163,13 @@ def main():
                 )
                 if not result.returncode == 0:
                     raise AssertionError(result.stderr)
-                if not "uid=1000" in result.stdout:
+                if "uid=1000" not in result.stdout:
                     raise AssertionError(result.stdout)
-                if not "CapEff:\t0000000000000000" in result.stdout:
+                if "CapEff:\t0000000000000000" not in result.stdout:
                     raise AssertionError(result.stdout)
-                if not "NoNewPrivs:\t1" in result.stdout:
+                if "NoNewPrivs:\t1" not in result.stdout:
                     raise AssertionError(result.stdout)
-                if not "Seccomp:\t2" in result.stdout:
+                if "Seccomp:\t2" not in result.stdout:
                     raise AssertionError(result.stdout)
                 if not any(
                     (method == "PUT" and path.endswith("/status") for method, path in MockAPI.calls)

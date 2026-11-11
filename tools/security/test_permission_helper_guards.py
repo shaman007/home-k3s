@@ -63,7 +63,7 @@ def helper(path, name, caps, mount, setup, checks, expected_mask):
         "NoNewPrivs:\t1",
         "Seccomp:\t2",
     ]:
-        if not expected in output:
+        if expected not in output:
             raise AssertionError((path, output))
     print(
         path
@@ -132,10 +132,10 @@ test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
     for container, installers, smoke in tests:
         if not container["securityContext"]["capabilities"] == {"drop": ["ALL"]}:
             raise AssertionError
-        if not container["securityContext"]["allowPrivilegeEscalation"] is False:
+        if container["securityContext"]["allowPrivilegeEscalation"] is not False:
             raise AssertionError
         for installer in installers:
-            if not installer in [line.strip() for line in container["command"][-1].splitlines()]:
+            if installer not in [line.strip() for line in container["command"][-1].splitlines()]:
                 raise AssertionError
         # Never execute login, fetch, upload, description updates or job API calls.
         script = (
@@ -166,7 +166,7 @@ test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
             "NoNewPrivs:\t1",
             "Seccomp:\t2",
         ]:
-            if not expected in output:
+            if expected not in output:
                 raise AssertionError(output)
         print(
             container["name"] + ": exact installer/client smoke test passed with zero capabilities",

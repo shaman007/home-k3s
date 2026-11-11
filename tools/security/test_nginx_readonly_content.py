@@ -72,16 +72,16 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
     pod = yaml.safe_load((ROOT / deployment_path).read_text())["spec"]["template"]["spec"]
     c = next(c for c in pod["containers"] if c["name"] == nginx_name)
     php = next(c for c in pod["containers"] if c["name"] == php_name)
-    if not next((m for m in c["volumeMounts"] if m["mountPath"] == root))["readOnly"] is True:
+    if next((m for m in c["volumeMounts"] if m["mountPath"] == root))["readOnly"] is not True:
         raise AssertionError
     if (
-        not next((m for m in php["volumeMounts"] if m["mountPath"] == root)).get("readOnly", False)
-        is False
+        next((m for m in php["volumeMounts"] if m["mountPath"] == root)).get("readOnly", False)
+        is not False
     ):
         raise AssertionError
-    if not c["securityContext"]["readOnlyRootFilesystem"] is True:
+    if c["securityContext"]["readOnlyRootFilesystem"] is not True:
         raise AssertionError
-    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
+    if c["securityContext"]["allowPrivilegeEscalation"] is not False:
         raise AssertionError
     if not c["securityContext"]["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
@@ -232,7 +232,7 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not expected in status:
+                if expected not in status:
                     raise AssertionError(status)
             print(
                 name

@@ -51,7 +51,7 @@ def main():
         time.sleep(2)
         if not run("inspect", "--format={{.State.Running}}", cid) == "true":
             raise AssertionError
-        if not "share-manager image pulled" in run("logs", cid):
+        if "share-manager image pulled" not in run("logs", cid):
             raise AssertionError
         status = run("exec", cid, "cat", "/proc/1/status")
         fields = dict(line.split(":", 1) for line in status.splitlines() if ":" in line)

@@ -24,7 +24,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
+    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
     policy, _ = list(
         yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())

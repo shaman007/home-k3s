@@ -41,7 +41,10 @@ class DeprecationCleanupTest(unittest.TestCase):
         config = document("tools/ci/validation-config.yaml")
         with tempfile.TemporaryDirectory() as scratch:
             output = render.render_source(
-                app, source, [source], ROOT, Path(scratch), config["kubernetesVersion"]
+                app,
+                source,
+                [source],
+                render.RenderContext(ROOT, Path(scratch), config["kubernetesVersion"]),
             )
         routes = [d for d in yaml.safe_load_all(output) if d["kind"] == "IngressRoute"]
         self.assertEqual(1, len(routes))

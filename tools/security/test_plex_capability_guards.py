@@ -42,7 +42,7 @@ def main():
     c = doc["spec"]["template"]["spec"]["containers"][0]
     if not c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": CAPS}:
         raise AssertionError
-    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
+    if c["securityContext"]["allowPrivilegeEscalation"] is not False:
         raise AssertionError
     if not all((p["containerPort"] >= 1024 for p in c["ports"])):
         raise AssertionError
@@ -115,7 +115,7 @@ def main():
             identity()
             status = run(["podman", "exec", cid, "cat", "/proc/1/status"])
             for expected in ["CapBnd:\t00000000000000fb", "NoNewPrivs:\t1", "Seccomp:\t2"]:
-                if not expected in status:
+                if expected not in status:
                     raise AssertionError(status)
             # Read a synthetic file and software-transcode as the real media user.
             run(

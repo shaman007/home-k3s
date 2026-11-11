@@ -143,7 +143,7 @@ def main():
                         "NoNewPrivs:\t1",
                         "Seccomp:\t2",
                     ]:
-                        if not text in p.stdout:
+                        if text not in p.stdout:
                             raise AssertionError(p.stdout)
                 # Oneshot may select its default before the informer makes a request.
                 # The separate watch fixture below verifies real node list/watch.
@@ -209,7 +209,7 @@ def main():
             else:
                 raise AssertionError("Node watch did not select alternate config")
             p = run("logs", mock, check=False)
-            if not "node-read" in p.stdout + p.stderr:
+            if "node-read" not in p.stdout + p.stderr:
                 raise AssertionError
             status = run("exec", cid, "cat", "/proc/1/status")
             for text in [
@@ -218,7 +218,7 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not text in status:
+                if text not in status:
                     raise AssertionError(status)
         finally:
             if cid:

@@ -30,7 +30,7 @@ def main():
         raise AssertionError
     if not sc["runAsUser"] == sc["runAsGroup"] == 65532:
         raise AssertionError
-    if not sc["allowPrivilegeEscalation"] is False:
+    if sc["allowPrivilegeEscalation"] is not False:
         raise AssertionError
     if not sc["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
@@ -217,7 +217,7 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not expected in status:
+                if expected not in status:
                     raise AssertionError(status)
             print(
                 (

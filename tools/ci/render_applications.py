@@ -6,6 +6,7 @@ validating a different deployment. Outputs may contain generated chart Secrets.
 """
 
 import argparse
+from dataclasses import dataclass
 import fnmatch
 import hashlib
 import json
@@ -23,6 +24,15 @@ from http_download import fetch
 
 ROOT = Path(__file__).resolve().parents[2]
 REPO = "https://github.com/shaman007/home-k3s.git"
+
+
+@dataclass(frozen=True)
+class RenderContext:
+    """Keep each source's repository, private scratch space and Kubernetes version together."""
+
+    root: Path
+    scratch: Path
+    kubernetes_version: str
 
 
 class HelmDownloadError(RuntimeError):
@@ -46,17 +56,22 @@ def github_chart_fallback(source, scratch):
         match = re.fullmatch(r"/([^/]+)/([^/]+)/releases/download/([^/]+)/([^/]+)", parsed.path)
         if parsed.scheme != "https" or parsed.netloc != "github.com" or not match:
             continue
-        owner, repository, tag, filename = match.groups()
-        api = f"https://api.github.com/repos/{owner}/{repository}/releases"
-        release = json.loads(fetch(f"{api}/tags/{tag}"))
-        asset = next(a for a in release["assets"] if a["name"] == urllib.parse.unquote(filename))
-        archive = fetch(f"{api}/assets/{int(asset['id'])}", "application/octet-stream")
-        if hashlib.sha256(archive).hexdigest() != digest:
-            raise ValueError("Fallback chart digest mismatch")
-        path = scratch / "verified-chart.tgz"
-        path.write_bytes(archive)
-        return path
+        return download_github_asset(match, digest, scratch)
     raise ValueError("No GitHub release asset in the pinned chart index entry")
+
+
+def download_github_asset(match, digest, scratch):
+    """Verify the indexed digest before exposing a GitHub chart archive to Helm."""
+    owner, repository, tag, filename = match.groups()
+    api = f"https://api.github.com/repos/{owner}/{repository}/releases"
+    release = json.loads(fetch(f"{api}/tags/{tag}"))
+    asset = next(a for a in release["assets"] if a["name"] == urllib.parse.unquote(filename))
+    archive = fetch(f"{api}/assets/{int(asset['id'])}", "application/octet-stream")
+    if hashlib.sha256(archive).hexdigest() != digest:
+        raise ValueError("Fallback chart digest mismatch")
+    path = scratch / "verified-chart.tgz"
+    path.write_bytes(archive)
+    return path
 
 
 def run(args, cwd=None):
@@ -106,51 +121,27 @@ def matches(name, pattern):
     return fnmatch.fnmatchcase(name, pattern)
 
 
-def helm_args(app, source, sources, root, scratch, kubernetes_version):
-    """Translate supported Argo Helm options into an explicit render command."""
-    options = source.get("helm", {})
-    supported = {
-        "releaseName",
-        "valueFiles",
-        "values",
-        "valuesObject",
-        "parameters",
-        "skipCrds",
-        "skipTests",
-        "kubeVersion",
-        "apiVersions",
-    }
-    if options.keys() - supported:
-        raise ValueError(f"Unsupported Helm options: {sorted(options.keys() - supported)}")
+def helm_chart_args(source, root):
+    """Resolve a reviewed local chart or a version-pinned Helm/OCI chart reference."""
     repo = source["repoURL"]
     if "chart" not in source:
         if repo != REPO:
             raise ValueError("External Git-hosted charts need explicit support")
-        chart_args = [str(local_path(root, source["path"]))]
+        args = [str(local_path(root, source["path"]))]
     else:
         chart = source["chart"]
         if repo.startswith(("http://", "https://")):
-            chart_args = [chart, "--repo", repo]
+            args = [chart, "--repo", repo]
         else:
-            chart_args = [repo if repo.startswith("oci://") else "oci://" + repo]
-            chart_args[0] = chart_args[0].rstrip("/") + "/" + chart
-        chart_args.extend(["--version", source["targetRevision"]])
-    args = [
-        os.environ.get("HELM", "helm"),
-        "template",
-        options.get("releaseName", app["metadata"]["name"]),
-        *chart_args,
-        "--namespace",
-        app["spec"]["destination"]["namespace"],
-        "--kube-version",
-        options.get("kubeVersion", kubernetes_version),
-    ]
-    if not options.get("skipCrds", False):
-        args.append("--include-crds")
-    if options.get("skipTests", False):
-        args.append("--skip-tests")
-    for version in options.get("apiVersions", []):
-        args.extend(["--api-versions", version])
+            args = [repo if repo.startswith("oci://") else "oci://" + repo]
+            args[0] = args[0].rstrip("/") + "/" + chart
+        args.extend(["--version", source["targetRevision"]])
+    return args
+
+
+def helm_values_args(options, sources, root, scratch):
+    """Apply Argo values precedence while enforcing local values-reference boundaries."""
+    args = []
     refs = {s["ref"]: s for s in sources if "ref" in s}
     for value in options.get("valueFiles", []):
         if not value.startswith("$"):
@@ -174,49 +165,72 @@ def helm_args(app, source, sources, root, scratch, kubernetes_version):
     return args
 
 
-def render_source(app, source, sources, root, scratch, kubernetes_version):
-    """Render one supported Argo source, rejecting options CI cannot reproduce."""
-    if source.keys() - {"repoURL", "targetRevision", "chart", "helm", "path", "directory", "ref"}:
-        raise ValueError("Unsupported application source options")
-    if "chart" in source:
-        args = helm_args(app, source, sources, root, scratch, kubernetes_version)
+def helm_args(app, source, sources, context):
+    """Translate supported Argo Helm options into an explicit render command."""
+    options = source.get("helm", {})
+    supported = {
+        "releaseName",
+        "valueFiles",
+        "values",
+        "valuesObject",
+        "parameters",
+        "skipCrds",
+        "skipTests",
+        "kubeVersion",
+        "apiVersions",
+    }
+    if options.keys() - supported:
+        raise ValueError(f"Unsupported Helm options: {sorted(options.keys() - supported)}")
+    chart_args = helm_chart_args(source, context.root)
+    args = [
+        os.environ.get("HELM", "helm"),
+        "template",
+        options.get("releaseName", app["metadata"]["name"]),
+        *chart_args,
+        "--namespace",
+        app["spec"]["destination"]["namespace"],
+        "--kube-version",
+        options.get("kubeVersion", context.kubernetes_version),
+    ]
+    if not options.get("skipCrds", False):
+        args.append("--include-crds")
+    if options.get("skipTests", False):
+        args.append("--skip-tests")
+    for version in options.get("apiVersions", []):
+        args.extend(["--api-versions", version])
+    args.extend(helm_values_args(options, sources, context.root, context.scratch))
+    return args
+
+
+def render_chart(args, source, scratch):
+    """Render a chart with digest-verified fallback and exact OCI preamble removal."""
+    try:
+        output = run(args, cwd=scratch)
+    except HelmDownloadError:
+        print("GitHub chart download unavailable; trying digest-verified release API", flush=True)
         try:
-            output = run(args, cwd=scratch)
-        except HelmDownloadError:
-            print(
-                "GitHub chart download unavailable; trying digest-verified release API", flush=True
-            )
-            try:
-                archive = github_chart_fallback(source, scratch)
-            except Exception:
-                # Network exceptions can include signed redirect URLs. Keep them private.
-                raise RuntimeError("Digest-verified chart download fallback failed") from None
-            fallback_args = args.copy()
-            fallback_args[3] = str(archive)
-            for flag in ("--repo", "--version"):
-                if flag in fallback_args:
-                    position = fallback_args.index(flag)
-                    del fallback_args[position : position + 2]
-            output = run(fallback_args, cwd=scratch)
-        if args[3].startswith("oci://"):
-            # Helm 4 writes OCI pull metadata to stdout before the YAML stream.
-            # Remove only its known preamble, never arbitrary non-manifest YAML.
-            output = re.sub(
-                r"\APulled: [^\r\n]+\r?\nDigest: sha256:[0-9a-f]{64}\r?\n", "", output, count=1
-            )
-        return output
-    if source["repoURL"] != REPO:
-        raise ValueError("External Git sources need explicit support before use")
-    if "path" not in source and "ref" in source:
-        return ""
-    path = local_path(root, source["path"])
-    if (path / "kustomization.yaml").exists() and "directory" not in source:
-        return run(["kubectl", "kustomize", str(path)])
-    if (path / "Chart.yaml").exists():
-        if "directory" in source:
-            raise ValueError("A Git-hosted chart cannot also be a raw directory source")
-        return run(helm_args(app, source, sources, root, scratch, kubernetes_version), cwd=scratch)
-    options = source.get("directory", {})
+            archive = github_chart_fallback(source, scratch)
+        except Exception:
+            # Network exceptions can include signed redirect URLs. Keep them private.
+            raise RuntimeError("Digest-verified chart download fallback failed") from None
+        fallback_args = args.copy()
+        fallback_args[3] = str(archive)
+        for flag in ("--repo", "--version"):
+            if flag in fallback_args:
+                position = fallback_args.index(flag)
+                del fallback_args[position : position + 2]
+        output = run(fallback_args, cwd=scratch)
+    if args[3].startswith("oci://"):
+        # Helm 4 writes OCI pull metadata to stdout before the YAML stream.
+        # Remove only its known preamble, never arbitrary non-manifest YAML.
+        output = re.sub(
+            r"\APulled: [^\r\n]+\r?\nDigest: sha256:[0-9a-f]{64}\r?\n", "", output, count=1
+        )
+    return output
+
+
+def render_directory(path, options, root):
+    """Render only selected Kubernetes manifests from an explicit raw directory source."""
     if options.keys() - {"recurse", "include", "exclude"}:
         raise ValueError("Unsupported directory options")
     docs = []
@@ -240,6 +254,27 @@ def render_source(app, source, sources, root, scratch, kubernetes_version):
                     )
                 docs.append(document)
     return yaml.safe_dump_all(docs, sort_keys=False)
+
+
+def render_source(app, source, sources, context):
+    """Render one supported Argo source, rejecting options CI cannot reproduce."""
+    if source.keys() - {"repoURL", "targetRevision", "chart", "helm", "path", "directory", "ref"}:
+        raise ValueError("Unsupported application source options")
+    if "chart" in source:
+        args = helm_args(app, source, sources, context)
+        return render_chart(args, source, context.scratch)
+    if source["repoURL"] != REPO:
+        raise ValueError("External Git sources need explicit support before use")
+    if "path" not in source and "ref" in source:
+        return ""
+    path = local_path(context.root, source["path"])
+    if (path / "kustomization.yaml").exists() and "directory" not in source:
+        return run(["kubectl", "kustomize", str(path)])
+    if (path / "Chart.yaml").exists():
+        if "directory" in source:
+            raise ValueError("A Git-hosted chart cannot also be a raw directory source")
+        return run(helm_args(app, source, sources, context), cwd=context.scratch)
+    return render_directory(path, source.get("directory", {}), context.root)
 
 
 def main():
@@ -275,7 +310,10 @@ def main():
             with tempfile.TemporaryDirectory() as tmp:
                 rendered.append(
                     render_source(
-                        app, source, sources, ROOT, Path(tmp), config["kubernetesVersion"]
+                        app,
+                        source,
+                        sources,
+                        RenderContext(ROOT, Path(tmp), config["kubernetesVersion"]),
                     )
                 )
         output = args.output / (name + ".yaml")

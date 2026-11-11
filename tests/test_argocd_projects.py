@@ -317,7 +317,10 @@ def repository_documents(application: dict):
             spec.loader.exec_module(renderer)
             with tempfile.TemporaryDirectory() as temporary:
                 output = renderer.render_source(
-                    application, source, sources, ROOT, Path(temporary), "1.36.0"
+                    application,
+                    source,
+                    sources,
+                    renderer.RenderContext(ROOT, Path(temporary), "1.36.0"),
                 )
             for document in yaml.safe_load_all(output):
                 if isinstance(document, dict):

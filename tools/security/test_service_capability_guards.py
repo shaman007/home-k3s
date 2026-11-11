@@ -31,10 +31,10 @@ def smoke(image, user, caps, script, extra=()):
         raise AssertionError(result.stdout[-3000:] + result.stderr[-3000:])
     expected = "0000000000000400" if caps else "0000000000000000"
     for field in ["CapEff", "CapBnd"]:
-        if not field + ":\t" + expected in result.stdout:
+        if field + ":\t" + expected not in result.stdout:
             raise AssertionError(result.stdout)
     for expected in ["NoNewPrivs:\t1", "Seccomp:\t2"]:
-        if not expected in result.stdout:
+        if expected not in result.stdout:
             raise AssertionError(result.stdout)
 
 

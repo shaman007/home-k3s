@@ -692,7 +692,7 @@ data:
     count\"]):\n            if index == entry[\"index\"]:\n                continue\n            actual = pod[\"containers\"\
     ][index]\n            expected = entry[\"fixture\"][\"spec\"][\"template\"][\"spec\"][\"containers\"][index]\n       \
     \     if not (actual[\"name\"] == expected[\"name\"] and actual[\"image\"] == expected[\"image\"]):\n                raise\
-    \ AssertionError\n            if not actual[\"securityContext\"][\"privileged\"] is True:\n                raise AssertionError\n\
+    \ AssertionError\n            if actual[\"securityContext\"][\"privileged\"] is not True:\n                raise AssertionError\n\
     \        if not doc[\"spec\"][\"updateStrategy\"] == entry[\"fixture\"][\"spec\"][\"updateStrategy\"]:\n            raise\
     \ AssertionError\n\n\ndef expected_spec(doc, entry):\n    \"\"\"Copy the workload specification and apply only its reviewed\
     \ security context.\"\"\"\n    spec = copy.deepcopy(doc[\"spec\"])\n    c = spec[\"template\"][\"spec\"][\"containers\"\

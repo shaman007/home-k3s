@@ -55,7 +55,7 @@ def reviewed(doc, entry):
             expected = entry["fixture"]["spec"]["template"]["spec"]["containers"][index]
             if not (actual["name"] == expected["name"] and actual["image"] == expected["image"]):
                 raise AssertionError
-            if not actual["securityContext"]["privileged"] is True:
+            if actual["securityContext"]["privileged"] is not True:
                 raise AssertionError
         if not doc["spec"]["updateStrategy"] == entry["fixture"]["spec"]["updateStrategy"]:
             raise AssertionError

@@ -229,7 +229,7 @@ def main():
                             "NoNewPrivs:\t1",
                             "Seccomp:\t2",
                         ]:
-                            if not expected in state:
+                            if expected not in state:
                                 raise AssertionError(state)
                         print(
                             (

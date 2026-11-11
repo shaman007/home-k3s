@@ -385,7 +385,7 @@ def main():
                     "NoNewPrivs:\t1",
                     "Seccomp:\t2",
                 ]:
-                    if not flag in output:
+                    if flag not in output:
                         raise AssertionError(output)
                 if not output.split("Uid:", 1)[1].splitlines()[0].split() == ["100"] * 4:
                     raise AssertionError

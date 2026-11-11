@@ -971,3 +971,66 @@ including 54 fewer Bandit reports. The new CI/build fixes above remain local and
 are not included in that remote reduction. All 132 current Python modules still
 pass naming, unused-value/import, missing-docstring, 100-character line-length
 and multiple-statement checks; Ruff E2 spacing remains clean.
+
+
+### Refreshed retained findings and equivalent style fixes (2026-11-11)
+
+A fresh complete open-alert inventory found no genuinely deleted source files.
+The 119 missing-path alerts had twelve verified snake_case counterparts; these
+were retained-code renames, so they were not dismissed as removed tooling.
+The guarded Prospector rescan
+[43038123577](https://github.com/shaman007/home-k3s/actions/runs/43038123577)
+completed successfully at 8e9c748e, including preparation and upload. Every open
+Prospector instance now references that revision. Its total fell from 169 to 155;
+this was genuine scanner reconciliation, not a dismissal or empty report.
+
+Twelve newly emitted E5110 warnings were individually re-reviewed and dismissed
+as false positives. Codacy's
+[official wrapper](https://github.com/codacy/codacy-pylint-python3/blob/master/src/codacy_pylint.py#L225-L236)
+forcibly loads pylint_django, while AST inspection of all 132 repository Python
+files finds no Django imports. Each unchanged alert instance was checked before
+PATCH, and each response confirmed the exact reason and explanatory comment.
+Revisit these decisions if Django is introduced. No source checks were disabled.
+Reviewed IDs: 7807, 7806, 7805, 7804, 7803, 7802, 7801, 7800, 7799, 7798, 7797, 7793.
+
+The refreshed Prospector report also flagged twelve required HTTP handler
+aliases as mixedCase variables (N815). Each is a direct class-body alias from
+one of do_GET/do_POST/do_PUT/do_PATCH/do_HEAD to its snake_case implementation in
+a BaseHTTPRequestHandler subclass. CPython's handle_one_request constructs
+"do_" plus the request method and dispatches through that attribute, so the
+protocol spelling must remain. These exact cases were individually classified
+as false positives, with per-hook explanatory comments and instance guards.
+Reviewed IDs: 7946, 7930, 7929, 7928, 7927, 7911, 7910, 7894, 7892, 7891, 7832, 7831.
+
+Fixed 54 E713/E714 membership/identity spellings across 22 source files,
+including the 34 E713 findings surfaced by the refreshed scan. Canonical AST
+comparison proves the predicates are unchanged. Regenerated the two ConfigMaps
+that embed the storage guard; parsed-bundle comparison confirms their only
+changes are equivalent Python negation spelling. Generator consistency checks
+pass for Longhorn components, infrastructure guards and Kyverno exceptions.
+
+Separated chart lookup, values precedence, release fallback and directory
+rendering into focused functions. A frozen RenderContext groups the source root,
+private scratch path and Kubernetes version. Full Pylint on the renderer falls
+from nine diagnostics to zero: three excessive-locals, two excessive-branches,
+two excessive-arguments and two excessive-positional-arguments findings.
+Comparisons across all 97 current Argo application sources produce exactly the
+same outputs, argv, working directories, values files and error behavior, with
+no source rejections. Existing digest, path, fallback and option checks remain.
+
+The full suite passes: 426 tests, 21 opt-in runtime checks skipped. Ruff E2,
+E713 and E714 checks and git diff --check pass. All twelve jobs of published
+Validate Kubernetes run 43036783957 now pass, verifying the earlier ripgrep
+installation fix and its downstream checks. The renderer/comparison cleanup is
+still local; its eventual alert closure needs publication and fresh scans.
+
+
+Final independent API and UI checks confirm **500 open alerts**: modern Pylint
+165, Bandit 162, Prospector 143, Opengrep 26 and PowerShell 4. Every open source
+path now exists locally. This turn's 24 false-positive dispositions comprise the
+twelve forced-Django warnings and twelve required HTTP aliases described above.
+The remaining decrease follows published source fixes and genuine rescans;
+no current-source finding was dismissed on the basis of a missing renamed path.
+All 132 Python modules also pass the selected naming, unused-value/import,
+missing-docstring, line-length and multiple-statement checks. Changes remain
+uncommitted and unpushed by the agent; no one-off alert JSON was added to the tree.

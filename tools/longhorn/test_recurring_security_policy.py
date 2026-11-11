@@ -80,7 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
+    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
     policy, _ = list(
         yaml.safe_load_all((ROOT / "longhorn/policy-recurring-job-security.yaml").read_text())
@@ -145,7 +145,7 @@ def main():
             )
             if not result.returncode == 0:
                 raise AssertionError(result.stdout + result.stderr)
-            if not "error: 0" in result.stdout:
+            if "error: 0" not in result.stdout:
                 raise AssertionError(result.stdout)
             emitted = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
             if changed:
