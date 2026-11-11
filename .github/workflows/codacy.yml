@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
     inputs:
       legacy_tool:
-        description: Historical linter to rescan; none runs the normal security scanners
+        description: Historical linter to rescan; none runs normal security and Python lint scans
         type: choice
         default: none
         options:
@@ -58,7 +58,7 @@ jobs:
             inputs.legacy_tool == 'prospector' && '["prospector"]' ||
             inputs.legacy_tool == 'remark-lint' && '["remark-lint"]' ||
             inputs.legacy_tool == 'psscriptanalyzer' && '["psscriptanalyzer"]' ||
-            '["bandit","opengrep","shellcheck"]'
+            '["bandit","opengrep","shellcheck","pylintpython3"]'
           ) }}
     env:
       SARIF_FILE: results-${{ matrix.tool }}.sarif

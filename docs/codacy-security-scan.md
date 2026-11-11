@@ -6,6 +6,13 @@ scripts. Each runs independently with default rules, its own SARIF file, and a
 stable GitHub code-scanning category. No Codacy project token is required, so rule
 selection is consistent for pushes and fork pull requests.
 
+Python 3 Pylint also runs on every normal push, pull request and scheduled scan.
+Its successful manual run validated the analyzer and upload path before enabling
+it here. It retains the historical category
+`.github/workflows/codacy.yml:codacy-security-scan`, so source fixes refresh existing
+lint findings instead of waiting for manual dispatch. The parser-error safeguard
+also applies to this regular job. Style and correctness findings remain enabled.
+
 An unrestricted run of Analysis CLI 7.9.25 attempted the full tool catalog. Trivy
 failed without configured patterns, Reek required a configuration, and TSQLLint
 crashed on a duplicate `set-ansi` key. Checkov also emitted `No specified files`
@@ -59,7 +66,7 @@ must still be verified after a new upload. The uploader's behavior is defined in
 [its pinned fingerprint implementation](https://github.com/github/codeql-action/blob/33d7b85da1a04171e211befe2c739303b9a4c066/src/fingerprints.ts#L159-L175).
 
 Manual dispatch can select one historical linter with `legacy_tool`; `none`
-retains the normal three security scanners. Historical reports use their original
+retains the three security scanners plus Python 3 Pylint. Historical reports use their original
 category so genuine rescans can supersede stale findings. These scans fail before
 upload if either Pylint variant reports a parser error, preventing an incomplete
 analysis from replacing historical results. Tool availability and successful

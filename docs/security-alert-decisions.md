@@ -364,3 +364,30 @@ UniFi exporter and Kyverno exception generator consistency checks pass; their
 committed outputs require no changes. Full suite passed: 394 tests, 21 skips.
 No live deployment, migration, container smoke probe, or alert dismissal occurred.
 Matching GitHub lint reconciliation remains pending a published rescan.
+
+## Non-Django plugin configuration disposition and recurring Python lint
+
+Individually verified and dismissed exactly 13 `PyLintPython3_E5110` findings as
+false positives: 6749, 6730, 6626, 6575, 6518, 6413, 6224, 5863, 5153, 5017,
+4813, 4750 and 4655. Every finding had the exact Django-not-configured message,
+and an AST audit of all 127 Python files found no Django imports; a repository
+Python-source text search also found no Django references.
+
+The [upstream wrapper](https://github.com/codacy/codacy-pylint-python3/blob/master/src/codacy_pylint.py)
+forces `pylint_django` in `runPylintWith` and divides files into groups of ten in
+`runTool`, explaining the repeated framework-configuration diagnostic. Inventing
+Django application settings would not repair these utility/test scripts. Each
+GitHub dismissal records that evidence and says to reopen if Django application
+code is added. No style/correctness rules were disabled and no other alerts were
+dismissed in this batch.
+
+Added Python 3 Pylint to normal Codacy workflow dispatch defaults, pushes, pull
+requests and scheduled scans. Its existing successful genuine manual analysis
+validated tool availability and upload. The job keeps the historical category,
+all default lint rules, failure-on-incomplete behavior and parser-error safeguard,
+so source fixes can reconcile automatically after publication. Legacy Pylint,
+Prospector, Remark and PowerShell remain available as targeted manual rescans.
+
+Actionlint/ShellCheck workflow validation and all 14 SARIF adapter tests pass.
+The new automatic matrix configuration still needs a published Actions run;
+this source change does not establish that GitHub has rescanned current fixes.
