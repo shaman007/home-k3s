@@ -21,6 +21,19 @@ on:
     branches: [ "main" ]
   schedule:
     - cron: '41 10 * * 1'
+  workflow_dispatch:
+    inputs:
+      legacy_tool:
+        description: Historical linter to rescan; none runs the normal security scanners
+        type: choice
+        default: none
+        options:
+          - none
+          - pylint
+          - pylintpython3
+          - prospector
+          - remark-lint
+          - psscriptanalyzer
 
 permissions:
   contents: read
@@ -37,7 +50,16 @@ jobs:
       fail-fast: false
       matrix:
         # Run supported source scanners explicitly, rather than the entire catalog.
-        tool: [bandit, opengrep, shellcheck]
+        # Map choices to fixed arrays; never interpolate an input into a shell command.
+        tool: >-
+          ${{ fromJSON(
+            inputs.legacy_tool == 'pylint' && '["pylint"]' ||
+            inputs.legacy_tool == 'pylintpython3' && '["pylintpython3"]' ||
+            inputs.legacy_tool == 'prospector' && '["prospector"]' ||
+            inputs.legacy_tool == 'remark-lint' && '["remark-lint"]' ||
+            inputs.legacy_tool == 'psscriptanalyzer' && '["psscriptanalyzer"]' ||
+            '["bandit","opengrep","shellcheck"]'
+          ) }}
     env:
       SARIF_FILE: results-${{ matrix.tool }}.sarif
       PREPARED_SARIF_FILE: prepared-${{ matrix.tool }}.sarif
@@ -64,11 +86,22 @@ jobs:
           max-allowed-issues: 2147483647
 
       - name: Prepare SARIF for GitHub code scanning
-        run: python3 tools/ci/prepare-codacy-sarif.py "$SARIF_FILE" "$PREPARED_SARIF_FILE"
+        env:
+          LEGACY_SCAN: ${{ !contains(fromJSON('["bandit","opengrep","shellcheck"]'), matrix.tool) }}
+        run: |
+          options=()
+          if [[ "$LEGACY_SCAN" == true ]]; then
+            options+=(--reject-parser-errors)
+          fi
+          python3 tools/ci/prepare-codacy-sarif.py "$SARIF_FILE" "$PREPARED_SARIF_FILE" "${options[@]}"
 
       # Upload the SARIF file generated in the previous step
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
         with:
           sarif_file: ${{ env.PREPARED_SARIF_FILE }}
-          category: codacy-${{ matrix.tool }}
+          # Legacy reports must supersede their original category, not add duplicates.
+          category: >-
+            ${{ contains(fromJSON('["bandit","opengrep","shellcheck"]'), matrix.tool)
+              && format('codacy-{0}', matrix.tool)
+              || '.github/workflows/codacy.yml:codacy-security-scan' }}
