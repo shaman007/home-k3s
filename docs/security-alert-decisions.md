@@ -3114,3 +3114,37 @@ guards preceded each decision, and independent API reads verify all three have
 dismissed_reason=won't fix. Fresh inventory reports eleven open (Pylint four,
 Bandit six, Opengrep one); concurrent rescanning changed other findings during
 review. Last full-suite result remains 555 tests with 16 skips. No push occurred.
+
+
+### Review published bounded media probe and remaining plugin recurrences
+
+Dismissed exact media-probe findings 8083/8007/8006/7533/7530 after inspecting
+all subprocess references and matching current bytes to analyzed 18c5545e. The
+only launches are fixed kubectl pod inventory and a loopback-address port-forward
+with fixed namespace, selector and target port. Pod names originate from trusted
+Kubernetes metadata; executable PATH is trusted operator/CI configuration. Commands
+use argv without a shell. Inventory has API/process deadlines, announcement and
+readiness share a bounded deadline, and tunnel termination/wait/kill cleanup is
+registered through the existing finally/context structure. Reopen for untrusted
+PATH/API provenance or expanded commands, pod selection or forwarding scope.
+
+All four real-pipe/mocked-connection tests and eighteen fixture safety tests pass.
+They verify quiet/partial announcements, size/address/port rejection, connection
+success/expiry, early child exit, inventory timeout and cleanup. No actual kubectl,
+tunnel, live cache request, credential or cluster operation ran. These findings
+are false positives for the deliberately executed bounded diagnostic commands,
+not a claim that arbitrary process execution is safe.
+
+Dismissed exact E5110 recurrences 8111 and 7989. AST inspection of all 146 Python
+modules at analyzed 18c5545e finds no Django imports or selected Django settings;
+flagged files exactly match current source. The known Codacy forced Django plugin
+continues to produce unrelated-framework configuration diagnostics. Reopen if
+Django source/settings appear or the diagnostic cause changes. No global rule
+suppression, fake settings or SARIF filtering was added.
+
+Exact identity/source guards preceded all seven decisions. Last full-suite result
+remains 555 tests with 16 skips; 22 relevant safety tests were rerun here. No code
+change, external service access or push occurred in this decision batch.
+
+Independent API inventory confirms all seven absent: four open, comprising
+two Pylint duplicate-code diagnostics and two UniFi TLS verification findings.
