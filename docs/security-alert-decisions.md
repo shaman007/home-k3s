@@ -1521,3 +1521,42 @@ the updated regression module pass full Pylint; Ruff and diff checks passed, and
 Bandit reported no analysis errors. Publication and genuine scanner refresh are
 still required for source-based alert closure. No scanner rule or guard was
 removed, and the actual opt-in runtime probes were not executed.
+
+
+### Review duplicate offline policy and monitoring subprocess findings
+
+Individually reviewed seventeen Opengrep call sites in seven offline Kyverno and
+promtool harnesses. Executables are explicitly selected by the operator/CI, not
+an external service. Commands use fixed argv lists for version, local apply/test,
+or rule check/test; none enables a shell or Kyverno cluster mode. Resource paths
+refer to local generated fixtures. CI's Kyverno setup verifies the pinned archive
+checksum. Comments require reopening if untrusted input or cluster mode is added.
+Reviewed Opengrep IDs: 7977, 7976, 7975, 7971, 7970, 7969, 7968, 7627, 7625,
+7624, 7623, 7620, 7618, 7617, 6901, 6900, 6899.
+
+Matched the seventeen duplicate Bandit B603 warnings to the same exact AST call
+sites. Audited every subprocess reference in each module before also classifying
+its seven B404 imports: all launch references are the reviewed run/check_output
+calls, with only an output constant otherwise referenced. No hidden alias or
+additional launch API was accepted. Reviewed Bandit IDs: 7974, 7973, 7972, 7967,
+7965, 7964, 7963, 7568, 7567, 7566, 7565, 7551, 7460, 7458, 7452, 7451, 7449,
+7448, 7447, 7446, 6885, 6884, 6883, 4219.
+
+All forty-one findings were dismissed as scoped false positives with individual
+comments. Exact rule/path/revision/state guards refused concurrent instance
+updates; the affected revisions were re-audited before completing the batch.
+Returned reasons/comments and an independent inventory confirm all forty-one
+are absent from the open set. Four unrelated Opengrep subprocess calls remain
+open, as do other unreviewed Bandit launches/imports. No scanner rule was disabled.
+
+Verified the installed Kyverno CLI is 1.19.2 and ran the actual local CEL harnesses
+with KUBECONFIG=/dev/null: 92 component cases plus 16 idempotence checks,
+36 recurring-job cases plus 28 idempotence checks, and 74 infrastructure guard
+checks all passed. Five audit-fixture unit tests also passed. These commands
+used local fixtures; no live-cluster mutation or credential access occurred.
+No source changed, so the full unit suite was not repeated for this review.
+
+The independently verified open count is now 267: Bandit 106, modern Pylint 97,
+Prospector 56 and Opengrep 8. The change from 314 combines these forty-one exact
+decisions with six newly reconciled Pylint source fixes from the paired probe
+refactor. Further actionable findings and unresolved reviews remain.
