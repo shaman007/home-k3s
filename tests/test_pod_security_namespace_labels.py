@@ -17,12 +17,14 @@ EXPECTED_LABELS = {
 
 
 def load_yaml(path: str) -> dict:
+    """Read a repository manifest with the safe YAML loader."""
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
 class PodSecurityNamespaceLabelsTest(unittest.TestCase):
     """Verify versioned admission labels without removing reviewed privileged exceptions."""
     def test_explicit_namespaces_have_restricted_audit_and_warn(self):
+        """Verify explicit namespaces have restricted audit and warn."""
         for path in (
             "comfyui/namespace-comfyui.yaml",
             "open-terminal/namespace-open-terminal.yaml",
@@ -40,6 +42,7 @@ class PodSecurityNamespaceLabelsTest(unittest.TestCase):
                 self.assertNotIn("pod-security.kubernetes.io/enforce", labels)
 
     def test_argo_managed_namespaces_have_restricted_audit_and_warn(self):
+        """Verify Argo managed namespaces have restricted audit and warn."""
         for path in (
             "argocd/application-argocd-install.yaml",
             "argocd/application-ollama.yaml",
@@ -57,6 +60,7 @@ class PodSecurityNamespaceLabelsTest(unittest.TestCase):
             self.assertIn("CreateNamespace=true", sync_policy["syncOptions"])
 
     def test_first_wave_is_pinned_without_changing_privileged_exceptions(self):
+        """Verify first wave is pinned without changing privileged exceptions."""
         namespaces = {
             d["metadata"]["name"]: d
             for d in yaml.safe_load_all((ROOT / "namespaces/namespaces.yaml").read_text())
@@ -88,6 +92,7 @@ class PodSecurityNamespaceLabelsTest(unittest.TestCase):
         )
 
     def test_only_primary_ollama_application_manages_shared_namespace(self):
+        """Verify only primary ollama application manages shared namespace."""
         application = load_yaml("argocd/application-ollama-small.yaml")
         sync_policy = application["spec"]["syncPolicy"]
 

@@ -34,6 +34,7 @@ class Origin(http.server.BaseHTTPRequestHandler):
         pass
 
     def respond(self, head=False):
+        """Serve the fixture object with simulated access, range, and cache semantics."""
         parsed = urllib.parse.urlsplit(self.path)
         item = self.objects.get(parsed.path)
         signed = bool(self.headers.get("Authorization") or "X-Amz-Signature=" in parsed.query)
@@ -75,10 +76,12 @@ class Origin(http.server.BaseHTTPRequestHandler):
             self.wfile.write(body)
 
     def do_HEAD(self):
+        """Count origin metadata probes and serve headers without an object body."""
         type(self).heads += 1
         self.respond(head=True)
 
     def do_GET(self):
+        """Serve an origin object through the shared response implementation."""
         self.respond()
 
 
@@ -182,6 +185,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
         cls.temp.cleanup()
 
     def fixture(self, **extra):
+        """Register a uniquely named media object with overridable origin metadata."""
         path = "/mastodon/test/" + uuid.uuid4().hex
         Origin.objects[path] = {
             "body": b"original media",
@@ -192,6 +196,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
         return path
 
     def get(self, port, path, headers=None, method="GET"):
+        """Request a local fixture server and return its status, headers, and body."""
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
         try:
             connection.request(
@@ -203,6 +208,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
             connection.close()
 
     def warm(self, path):
+        """Populate both cache replicas and require subsequent requests to hit each cache."""
         for port in self.ports:
             first = self.get(port, path)
             second = self.get(port, path)
@@ -212,6 +218,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
             self.assertEqual("private, no-cache", second[1].get("Cache-Control"))
 
     def test_deleted_object_unavailable_on_both_replicas_without_purge(self):
+        """Deny deleted objects through both warm replicas without a manual purge."""
         path = self.fixture()
         self.warm(path)
         del Origin.objects[path]
@@ -219,6 +226,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
             self.assertEqual(404, self.get(port, path)[0])
 
     def test_acl_change_denies_warm_caches_without_purge(self):
+        """Verify ACL change denies warm caches without purge."""
         path = self.fixture()
         self.warm(path)
         Origin.objects[path]["status"] = 403
@@ -226,6 +234,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
             self.assertEqual(403, self.get(port, path)[0])
 
     def test_replacement_selects_new_body_on_both_replicas(self):
+        """Verify replacement selects new body on both replicas."""
         path = self.fixture()
         self.warm(path)
         Origin.objects[path].update(body=b"new media", etag='"version-two"')
@@ -236,6 +245,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
             self.assertEqual("HIT", self.get(port, path)[1].get("X-Media-Cache"))
 
     def test_origin_failure_never_serves_cached_content(self):
+        """Verify origin failure never serves cached content."""
         path = self.fixture()
         self.warm(path)
         Origin.objects[path]["status"] = 503
@@ -243,6 +253,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
             self.assertEqual(503, self.get(port, path)[0])
 
     def test_signed_cookie_query_range_head_and_conditional_bypass(self):
+        """Bypass shared media caching for signed, cookie, range, HEAD, and conditional requests."""
         path = self.fixture()
         self.warm(path)
         for port in self.ports:
@@ -266,6 +277,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
         self.assertEqual(200, self.get(self.ports[0], path + "?X-Amz-Signature=test")[0])
 
     def test_unsafe_responses_are_not_stored(self):
+        """Verify unsafe responses are not stored."""
         for extra in [
             {"etag": None},
             {"omit_head_length": True},
@@ -284,6 +296,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                 self.assertNotEqual("HIT", second[1].get("X-Media-Cache"), extra)
 
     def test_no_public_admin_api_or_other_bucket(self):
+        """Deny public access to cache administration and unrelated object buckets."""
         for port in self.ports:
             for path in [
                 "/souin-api/__mastodon_cache_pilot/flush",
@@ -293,6 +306,7 @@ class MediaCacheRuntimeTest(unittest.TestCase):
                 self.assertIn(self.get(port, path)[0], (403, 404))
 
     def test_cache_policy_and_content_type_changes_with_same_etag(self):
+        """Honor changed origin cache policy and content type even when the ETag is unchanged."""
         path = self.fixture()
         self.warm(path)
         Origin.objects[path]["content_type"] = "image/png"

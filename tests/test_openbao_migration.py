@@ -10,12 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_yaml(path: str):
+    """Read a repository manifest with the safe YAML loader."""
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
 class OpenBaoMigrationTest(unittest.TestCase):
     """Verify the pinned OpenBao deployment, public trust, and migration integration."""
     def test_openbao_release_is_pinned_and_ha_configured(self):
+        """Verify OpenBao release is pinned and ha configured."""
         application = load_yaml("argocd/application-openbao.yaml")
         source = application["spec"]["source"]
         values = yaml.safe_load(source["helm"]["values"])
@@ -54,6 +56,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertFalse(values["snapshotAgent"]["enabled"])
 
     def test_backend_uses_public_certificates_without_private_trust(self):
+        """Verify backend uses public certificates without private trust."""
         values = yaml.safe_load(
             load_yaml("argocd/application-openbao.yaml")["spec"]["source"]["helm"]["values"]
         )
@@ -77,6 +80,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertTrue(load_yaml("openbao/cron-job-vault-pki-renewer.yaml")["spec"]["suspend"])
 
     def test_ingress_bridge_uses_public_sni_transport(self):
+        """Verify ingress bridge uses public SNI transport."""
         bridge = load_yaml("openbao/service-openbao-public-tls.yaml")
         self.assertEqual(
             "openbao-openbao-server@kubernetescrd",
@@ -100,6 +104,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
             )
 
     def test_openbao_tls_data_is_runtime_managed(self):
+        """Verify OpenBao TLS data is runtime managed."""
         application = load_yaml("argocd/application-openbao-custom.yaml")
         ignored = application["spec"]["ignoreDifferences"]
         self.assertIn(
@@ -116,6 +121,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertEqual("Opaque", secret["type"])
 
     def test_retired_backend_issuer_cannot_be_recreated_by_bootstrap(self):
+        """Verify retired backend issuer cannot be recreated by bootstrap."""
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(encoding="utf-8")
         policy = (ROOT / "vault/policy-vault-pki-renewer.hcl").read_text(encoding="utf-8")
         renewer = load_yaml("openbao/cron-job-vault-pki-renewer.yaml")
@@ -135,6 +141,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertNotIn("vault write", script)
 
     def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
+        """Verify TLS bootstrap RBAC precedes certificate wait."""
         for path in (
             "openbao/role-vault-pki-renewer.yaml",
             "openbao/role-binding-vault-pki-renewer.yaml",
@@ -158,6 +165,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         )
 
     def test_server_can_reach_kubernetes_service_registration_api(self):
+        """Verify server can reach kubernetes service registration API."""
         policies = list(
             yaml.safe_load_all(
                 (
@@ -173,6 +181,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
             self.assertEqual({"namespace": "default", "serviceName": "kubernetes"}, service)
 
     def test_traefik_can_reach_acme_solver_and_openbao(self):
+        """Verify Traefik can reach ACME solver and OpenBao."""
         solver_policy = load_yaml("openbao/network-policy-allow-cert-manager-http01-solver.yaml")
         self.assertEqual(
             {"acme.cert-manager.io/http01-solver": "true"},
@@ -190,6 +199,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertIn("openbao", namespaces)
 
     def test_openbao_can_reach_external_keycloak_discovery(self):
+        """Verify OpenBao can reach external Keycloak discovery."""
         policies = list(
             yaml.safe_load_all(
                 (ROOT / "openbao/network-policy-openbao.yaml").read_text(encoding="utf-8")
@@ -207,6 +217,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertIn("81.19.4.105/32", cidrs)
 
     def test_production_consumers_use_openbao_after_cutover(self):
+        """Verify production consumers use OpenBao after cutover."""
         secret_stores = [
             path
             for path in ROOT.rglob("*secret-store*.yaml")

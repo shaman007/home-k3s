@@ -47,6 +47,7 @@ EXPECTED_DIRECT_UPSTREAM_IMAGES = {
 
 
 def is_expected_direct_upstream(relative: Path, image: str) -> bool:
+    """Match an approved tagged upstream image without accepting digest references."""
     return "@sha256:" not in image and any(
         image.startswith(f"{repository}:")
         for repository in EXPECTED_DIRECT_UPSTREAM_IMAGES.get(relative, set())
@@ -54,6 +55,7 @@ def is_expected_direct_upstream(relative: Path, image: str) -> bool:
 
 
 def nested_value(values: dict, path: tuple[str, ...]):
+    """Resolve a nested Helm value through the supplied sequence of keys."""
     current = values
     for key in path:
         current = current[key]
@@ -61,6 +63,7 @@ def nested_value(values: dict, path: tuple[str, ...]):
 
 
 def helm_values(application_name: str) -> dict:
+    """Parse inline Helm values from the named Argo CD application."""
     application = yaml.safe_load((ROOT / "argocd" / application_name).read_text(encoding="utf-8"))
     return yaml.safe_load(application["spec"]["source"]["helm"]["values"])
 
@@ -68,6 +71,7 @@ def helm_values(application_name: str) -> dict:
 class HarborProxyCacheTest(unittest.TestCase):
     """Check approved image origins, proxy-cache coverage, and relevant resource contracts."""
     def test_direct_image_declarations_use_harbor_or_are_approved_exceptions(self):
+        """Verify direct image declarations use Harbor or are approved exceptions."""
         image_pattern = re.compile(r"^\s*(?:-\s*)?image:\s*['\"]?([^'\"#\s]+)")
         violations = []
 
@@ -91,6 +95,7 @@ class HarborProxyCacheTest(unittest.TestCase):
         self.assertEqual(violations, [])
 
     def test_harbor_trivy_has_no_cpu_limit(self):
+        """Verify Harbor Trivy has no CPU limit."""
         application = yaml.safe_load(
             (ROOT / "argocd/application-harbor.yaml").read_text(encoding="utf-8")
         )
@@ -99,6 +104,7 @@ class HarborProxyCacheTest(unittest.TestCase):
         self.assertIsNone(values["trivy"]["resources"]["limits"]["cpu"])
 
     def test_acme_solver_has_no_cpu_limit(self):
+        """Verify ACME solver has no CPU limit."""
         application = yaml.safe_load(
             (ROOT / "argocd/application-cert-manager.yaml").read_text(encoding="utf-8")
         )
@@ -110,12 +116,14 @@ class HarborProxyCacheTest(unittest.TestCase):
         )
 
     def test_platform_helm_workloads_use_upstream_images(self):
+        """Verify platform Helm workloads use upstream images."""
         for application, expected in EXPECTED_HELM_IMAGES.items():
             values = helm_values(application)
             for path, image in expected.items():
                 self.assertEqual(nested_value(values, path), image)
 
     def test_proxy_reconciler_covers_all_declared_upstreams(self):
+        """Verify proxy reconciler covers all declared upstreams."""
         reconciler = (ROOT / "harbor" / "reconcile-proxy-caches.sh").read_text(encoding="utf-8")
         for definition in (
             "dockerhub dockerhub https://hub.docker.com docker-hub",

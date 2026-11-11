@@ -15,6 +15,7 @@ KUBELET_POLICY = (
 class MetricsServerGitopsTest(unittest.TestCase):
     """Check the official chart, GitOps wiring, and kubelet network access."""
     def test_metrics_server_app_installs_official_chart(self):
+        """Verify metrics server app installs official chart."""
         source = APP.read_text(encoding="utf-8")
 
         self.assertIn("name: metrics-server", source)
@@ -26,6 +27,7 @@ class MetricsServerGitopsTest(unittest.TestCase):
         self.assertIn("--kubelet-insecure-tls", source)
 
     def test_metrics_server_network_policy_app_includes_metrics_server_files(self):
+        """Verify metrics server network policy app includes metrics server files."""
         source = POLICY_APP.read_text(encoding="utf-8")
 
         self.assertIn("path: kube-system", source)
@@ -34,6 +36,7 @@ class MetricsServerGitopsTest(unittest.TestCase):
         self.assertIn("network-policy-metrics-server-allow-ingress-https.yaml", source)
 
     def test_metrics_server_cilium_policy_allows_node_kubelets(self):
+        """Verify metrics server cilium policy allows node kubelets."""
         source = KUBELET_POLICY.read_text(encoding="utf-8")
 
         self.assertIn("kind: CiliumNetworkPolicy", source)

@@ -28,6 +28,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         self.entries = self.catalog["entries"]
 
     def healthy(self, e):
+        """Build healthy workload state for the backfill preflight."""
         doc = copy.deepcopy(e["fixture"])
         doc["metadata"].update(generation=1, resourceVersion="fixture")
         if e["kind"] == "Deployment":
@@ -55,6 +56,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         return doc
 
     def test_exact_reviewed_scope(self):
+        """Verify exact reviewed scope."""
         self.assertEqual(
             {(e["namespace"], e["name"]) for e in self.entries},
             {
@@ -94,6 +96,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         )
 
     def test_only_selected_contexts_change(self):
+        """Verify only selected contexts change."""
         for e in self.entries:
             doc = self.healthy(e)
             b.reviewed(doc, e)
@@ -114,6 +117,7 @@ class InfrastructureGuardTests(unittest.TestCase):
             self.assertEqual(b.expected_spec(doc, e), after)
 
     def test_deployer_identity_has_no_persistent_volume_ownership_change(self):
+        """Verify deployer identity has no persistent volume ownership change."""
         e = next(e for e in self.entries if e["name"] == "longhorn-driver-deployer")
         self.assertEqual(e["podGuards"]["fsGroup"], 1000)
         self.assertEqual(e["fixture"]["spec"]["template"]["spec"]["volumes"], [])
@@ -127,6 +131,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         self.assertTrue(all(t["guards"]["runAsUser"] == 1000 for t in e["targets"]))
 
     def test_incomplete_rollout_not_ready(self):
+        """Verify incomplete rollout not ready."""
         for e in self.entries:
             doc = self.healthy(e)
             self.assertTrue(b.ready(doc))
@@ -139,6 +144,7 @@ class InfrastructureGuardTests(unittest.TestCase):
             self.assertFalse(b.ready(doc))
 
     def test_failed_admission_preview_never_writes(self):
+        """Verify failed admission preview never writes."""
         e = self.entries[0]
         calls = []
         outer = self
@@ -152,11 +158,13 @@ class InfrastructureGuardTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(outer.healthy(e)).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 calls.append((req.get_method(), req.full_url))
                 return Response()
 
@@ -178,6 +186,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         self.assertTrue(all("dryRun=All" in url for method, url in calls if method == "PATCH"))
 
     def test_rollout_failure_stops_later_targets(self):
+        """Verify rollout failure stops later targets."""
         entries = [e for e in self.entries if e["namespace"] != "longhorn-system"][:2]
         written = []
         outer = self
@@ -194,11 +203,13 @@ class InfrastructureGuardTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 e = next(e for e in entries if req.full_url.split("?")[0].endswith("/" + e["name"]))
                 doc = outer.healthy(e)
                 if req.get_method() == "PATCH":
@@ -229,6 +240,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         self.assertEqual(written, [entries[0]["name"]])
 
     def test_unhealthy_storage_prevents_any_rollout_write(self):
+        """Verify unhealthy storage prevents any rollout write."""
         e = next(e for e in self.entries if e["namespace"] == "longhorn-system")
         calls = []
         spec = importlib.util.spec_from_file_location(
@@ -249,11 +261,13 @@ class InfrastructureGuardTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
                 if req.full_url.endswith("/volumes"):
                     return Response(
@@ -291,6 +305,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         self.assertEqual(set(calls), {"GET"})
 
     def test_new_helpers_preserve_required_privilege_boundaries(self):
+        """Verify new helpers preserve required privilege boundaries."""
         self.assertFalse(any(e["namespace"] == "metallb-system" for e in self.entries))
         self.assertFalse(
             any(
@@ -316,6 +331,7 @@ class InfrastructureGuardTests(unittest.TestCase):
             self.assertEqual(t["requiredEnv"]["SEND_SIGNAL"], "false")
 
     def test_gpu_health_permission_and_capacity_gate(self):
+        """Verify gpu health permission and capacity gate."""
         docs = g.generate(self.catalog)
         role = next(d for d in docs if d["kind"] == "ClusterRole")
         self.assertEqual(
@@ -346,6 +362,7 @@ class InfrastructureGuardTests(unittest.TestCase):
                 b.gpu_healthy(bad, review)
 
     def test_lost_gpu_resources_prevent_rollout_writes(self):
+        """Verify lost gpu resources prevent rollout writes."""
         e = next(e for e in self.entries if e["name"] == "gpu-operator")
         review = self.catalog["gpuResourceReview"]
         calls = []
@@ -359,6 +376,7 @@ class InfrastructureGuardTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(
                     {
                         "metadata": {"name": review["node"]},
@@ -373,6 +391,7 @@ class InfrastructureGuardTests(unittest.TestCase):
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
                 return Response()
 

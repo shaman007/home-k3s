@@ -21,6 +21,7 @@ class SeaweedFSContainerSecurityTest(unittest.TestCase):
         }
 
     def test_main_containers_are_non_root_with_read_only_root_filesystems(self):
+        """Verify main containers are non root with read only root filesystems."""
         self.assertFalse(self.pod_spec["automountServiceAccountToken"])
         self.assertEqual(1000, self.pod_spec["securityContext"]["fsGroup"])
         self.assertEqual(
@@ -38,6 +39,7 @@ class SeaweedFSContainerSecurityTest(unittest.TestCase):
             self.assertEqual(["ALL"], security["capabilities"]["drop"], name)
 
     def test_only_storage_services_mount_data(self):
+        """Verify only storage services mount data."""
         for name in ("master", "volume", "filer"):
             self.assertIn(
                 {"name": "data", "mountPath": "/data"},

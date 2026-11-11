@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class LegacyIngressRetirementTest(unittest.TestCase):
     """Keep retired issuance sources disabled while preserving private certificate routes."""
     def test_legacy_sources_are_removed(self):
+        """Verify legacy sources are removed."""
         resources = json.loads(
             (
                 ROOT / "docs/migrations/letsencrypt-internal/legacy-ingress-retirement.json"
@@ -23,6 +24,7 @@ class LegacyIngressRetirementTest(unittest.TestCase):
                 self.assertFalse((ROOT / r["source"]).exists())
 
     def test_private_routes_have_public_certificates_and_stay_private(self):
+        """Verify private routes have public certificates and stay private."""
         certs = {}
         routes = []
         for p in ROOT.rglob("*.yaml"):
@@ -48,6 +50,7 @@ class LegacyIngressRetirementTest(unittest.TestCase):
                 self.assertEqual(set(tls["hosts"]), set(cert["spec"]["dnsNames"]))
 
     def test_retired_bootstrap_cannot_reenable_issuance(self):
+        """Verify retired bootstrap cannot reenable issuance."""
         script = (ROOT / "vault/configure-pki-acme.sh").read_text()
         self.assertNotIn("vault write", script)
         self.assertIn("exit 1", script)

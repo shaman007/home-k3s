@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def chart_values(name):
+    """Read inline Helm values from the named controller application."""
     app = yaml.safe_load((ROOT / f"argocd/application-{name}.yaml").read_text())
     return yaml.safe_load(app["spec"]["source"]["helm"]["values"])
 
@@ -16,6 +17,7 @@ def chart_values(name):
 class IngressClassSeparationTest(unittest.TestCase):
     """Keep public and private controllers, services, and CRD ownership separate."""
     def test_controllers_have_disjoint_explicit_class_filters(self):
+        """Verify controllers have disjoint explicit class filters."""
         for name, ingress_class in [("traefik", "traefik"), ("traefik-private", "traefik-private")]:
             values = chart_values(name)
             self.assertEqual(ingress_class, values["ingressClass"]["name"])
@@ -24,10 +26,12 @@ class IngressClassSeparationTest(unittest.TestCase):
                 self.assertEqual(ingress_class, values["providers"][provider]["ingressClass"])
 
     def test_private_controller_does_not_own_shared_crds(self):
+        """Verify private controller does not own shared CRDs."""
         app = yaml.safe_load((ROOT / "argocd/application-traefik-private.yaml").read_text())
         self.assertTrue(app["spec"]["source"]["helm"]["skipCrds"])
 
     def test_private_service_has_no_public_ipv6_and_restricts_sources(self):
+        """Verify private service has no public IPv6 and restricts sources."""
         values = chart_values("traefik-private")
         self.assertEqual(values, yaml.safe_load((ROOT / "traefik-private/values.yaml").read_text()))
         service = values["service"]
@@ -40,6 +44,7 @@ class IngressClassSeparationTest(unittest.TestCase):
         )
 
     def test_private_listener_preserves_encoded_wopi_urls(self):
+        """Verify private listener preserves encoded WOPI urls."""
         public_flags = chart_values("traefik")["additionalArguments"]
         private_flags = chart_values("traefik-private")["additionalArguments"]
         required = {flag for flag in public_flags if ".encodedCharacters." in flag}
@@ -47,6 +52,7 @@ class IngressClassSeparationTest(unittest.TestCase):
         self.assertTrue(required.issubset(set(private_flags)))
 
     def test_every_private_ingress_declares_its_own_tls_secret(self):
+        """Verify every private ingress declares its own TLS secret."""
         for path in ROOT.rglob("ingress*.yaml"):
             if "DEPRECATED" in path.parts:
                 continue
@@ -66,6 +72,7 @@ class IngressClassSeparationTest(unittest.TestCase):
                 self.assertTrue(hosts.issubset(covered), str(path))
 
     def test_every_route_is_explicitly_classified(self):
+        """Verify every route is explicitly classified."""
         count = 0
         for path in ROOT.rglob("*.yaml"):
             if any(

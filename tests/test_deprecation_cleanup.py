@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "tools/ci"))
 
 
 def module(name, filename):
+    """Import a CI helper directly from the repository without invoking its CLI."""
     spec = importlib.util.spec_from_file_location(name, ROOT / "tools/ci" / filename)
     result = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(result)
@@ -26,12 +27,14 @@ contracts = module("cleanup_contracts", "validate-runtime-contracts.py")
 
 
 def document(path):
+    """Parse a repository manifest for deployment-contract assertions."""
     return yaml.safe_load((ROOT / path).read_text())
 
 
 class DeprecationCleanupTest(unittest.TestCase):
     """Verify retained ingress and runtime contracts after deprecated-resource cleanup."""
     def test_env_guard_is_in_the_real_argo_application_render(self):
+        """Verify env guard is in the real Argo application render."""
         app = document("argocd/application-traefik-network-policy.yaml")
         source = app["spec"]["source"]
         config = document("tools/ci/validation-config.yaml")
@@ -45,6 +48,7 @@ class DeprecationCleanupTest(unittest.TestCase):
         self.assertEqual("traefik", routes[0]["spec"]["ingressClassName"])
 
     def test_env_guard_blocks_env_files_without_blocking_other_paths_or_lan(self):
+        """Verify env guard blocks env files without blocking other paths or lan."""
         guard = document("traefik/ingress-route-block-external-env-probes.yaml")
         self.assertEqual(["websecure"], guard["spec"]["entryPoints"])
         route = guard["spec"]["routes"][0]
@@ -86,6 +90,7 @@ class DeprecationCleanupTest(unittest.TestCase):
                 self.assertFalse(blocked("example.com", path, "203.0.113.1"))
 
     def test_plex_preserves_nodeport_and_https_endpoints(self):
+        """Verify Plex preserves NodePort and HTTPS endpoints."""
         service = document("plex/service-plex.yaml")["spec"]
         self.assertEqual("NodePort", service["type"])
         self.assertNotIn("externalIPs", service)
@@ -124,6 +129,7 @@ class DeprecationCleanupTest(unittest.TestCase):
         )
 
     def test_backup_address_is_requested_from_the_existing_metallb_pool(self):
+        """Verify backup address is requested from the existing MetalLB pool."""
         service = document("backup-rsync/service-backup-rsync.yaml")
         address = service["metadata"]["annotations"]["metallb.io/loadBalancerIPs"]
         self.assertEqual("192.168.30.213", address)
@@ -135,6 +141,7 @@ class DeprecationCleanupTest(unittest.TestCase):
         )
 
     def test_runtime_contract_rejects_deprecated_service_fields(self):
+        """Verify runtime contract rejects deprecated service fields."""
         for field, value in [("externalIPs", ["192.0.2.1"]), ("loadBalancerIP", "192.0.2.1")]:
             with self.subTest(field=field):
                 errors = contracts.check_deprecated_service_fields(

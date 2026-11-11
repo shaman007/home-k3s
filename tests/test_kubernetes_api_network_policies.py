@@ -12,6 +12,7 @@ OLD_CONTROL_PLANE_CIDR = "192.168.1.209/32"
 
 
 def active_yaml_files():
+    """Yield repository YAML paths outside the deprecated manifest archive."""
     for path in ROOT.rglob("*.yaml"):
         if "DEPRECATED" in path.parts:
             continue
@@ -19,12 +20,14 @@ def active_yaml_files():
 
 
 def has_port(document: str, port: int) -> bool:
+    """Match an exact network-policy port without accepting numeric prefixes."""
     return re.search(rf"port:\s*{port}\b", document) is not None
 
 
 class KubernetesApiNetworkPolicyTest(unittest.TestCase):
     """Allow current control-plane API endpoints and reject retired endpoint references."""
     def test_kubernetes_api_policies_include_current_control_plane_endpoint(self):
+        """Verify kubernetes API policies include current control plane endpoint."""
         offenders = []
 
         for path in active_yaml_files():
@@ -44,6 +47,7 @@ class KubernetesApiNetworkPolicyTest(unittest.TestCase):
         self.assertEqual([], sorted(set(offenders)))
 
     def test_no_kubernetes_api_policy_uses_old_k3s_endpoint(self):
+        """Verify no kubernetes API policy uses old k3s endpoint."""
         offenders = []
 
         for path in active_yaml_files():

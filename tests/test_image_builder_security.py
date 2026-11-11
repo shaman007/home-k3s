@@ -19,6 +19,7 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.container = self.pod_spec["containers"][0]
 
     def test_builder_uses_versioned_upstream_runtime(self):
+        """Verify builder uses versioned upstream runtime."""
         image = self.container["image"]
 
         self.assertRegex(image, r"^quay\.io/podman/stable:v\d+\.\d+\.\d+$")
@@ -27,6 +28,7 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.assertEqual("IfNotPresent", self.container["imagePullPolicy"])
 
     def test_builder_runs_weekly(self):
+        """Verify builder runs weekly."""
         spec = self.cronjob["spec"]
         container = spec["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
 
@@ -36,9 +38,11 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.assertIn("exec ./build.sh", container["args"][0])
 
     def test_builder_does_not_receive_a_service_account_token(self):
+        """Verify builder does not receive a service account token."""
         self.assertFalse(self.pod_spec["automountServiceAccountToken"])
 
     def test_builder_uses_space_efficient_overlay_storage(self):
+        """Verify builder uses space efficient overlay storage."""
         environment = {
             item["name"]: item.get("value")
             for item in self.container["env"]
@@ -47,6 +51,7 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.assertEqual("overlay", environment["STORAGE_DRIVER"])
 
     def test_checkout_uses_versioned_upstream_git_sync(self):
+        """Verify checkout uses versioned upstream git sync."""
         checkout = self.pod_spec["initContainers"][0]
 
         self.assertRegex(
@@ -56,6 +61,7 @@ class ImageBuilderSecurityTest(unittest.TestCase):
         self.assertNotIn("@sha256:", checkout["image"])
 
     def test_builder_network_policy_limits_traffic(self):
+        """Verify builder network policy limits traffic."""
         policies = {
             document["metadata"]["name"]: document
             for document in yaml.safe_load_all(NETWORK_POLICIES.read_text(encoding="utf-8"))

@@ -10,12 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def documents(path: Path):
+    """Parse every YAML document in the supplied manifest path."""
     return [document for document in yaml.safe_load_all(path.read_text()) if document]
 
 
 class OpenSearchMigrationTest(unittest.TestCase):
     """Check staged search cutover, internal connectivity, and network isolation."""
     def test_opensearch_application_is_present_for_staged_cutover(self):
+        """Verify opensearch application is present for staged cutover."""
         application = yaml.safe_load(
             (ROOT / "argocd/application-opensearch.yaml").read_text(
                 encoding="utf-8"
@@ -26,6 +28,7 @@ class OpenSearchMigrationTest(unittest.TestCase):
         self.assertEqual("opensearch", application["spec"]["source"]["path"])
 
     def test_mastodon_uses_internal_opensearch_without_credentials(self):
+        """Verify Mastodon uses internal opensearch without credentials."""
         values = yaml.safe_load(
             (ROOT / "mastodon/mastodon-values.yaml").read_text(encoding="utf-8")
         )
@@ -40,6 +43,7 @@ class OpenSearchMigrationTest(unittest.TestCase):
         self.assertNotIn("username", search)
 
     def test_opensearch_is_single_node_and_network_isolated(self):
+        """Verify opensearch is single node and network isolated."""
         stateful_set = yaml.safe_load(
             (ROOT / "opensearch/stateful-set-opensearch.yaml").read_text(
                 encoding="utf-8"

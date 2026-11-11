@@ -10,12 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def documents(path: Path):
+    """Parse every YAML document in the supplied manifest path."""
     return list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
 
 
 class HeadlampOidcSecurityTest(unittest.TestCase):
     """Check OIDC secrets, restricted runtime, and absence of long-lived admin credentials."""
     def test_headlamp_uses_oidc_secret(self):
+        """Verify Headlamp uses OIDC secret."""
         deployment = documents(ROOT / "headlamp" / "deployment-headlamp.yaml")[0]
         container = deployment["spec"]["template"]["spec"]["containers"][0]
         env = {item["name"]: item for item in container["env"]}
@@ -33,6 +35,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
         self.assertEqual("profile,email", env["HEADLAMP_CONFIG_OIDC_SCOPES"]["value"])
 
     def test_headlamp_container_uses_restricted_security_context(self):
+        """Verify Headlamp container uses restricted security context."""
         deployment = documents(ROOT / "headlamp" / "deployment-headlamp.yaml")[0]
         pod_spec = deployment["spec"]["template"]["spec"]
         container_security = pod_spec["containers"][0]["securityContext"]
@@ -45,6 +48,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
         self.assertEqual(["ALL"], container_security["capabilities"]["drop"])
 
     def test_no_long_lived_headlamp_tokens_or_service_account_admin(self):
+        """Verify no long lived Headlamp tokens or service account admin."""
         active = [
             path
             for path in ROOT.rglob("*.yaml")
@@ -68,6 +72,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
                     self.assertNotEqual("ServiceAccount", subject.get("kind"), path)
 
     def test_oidc_users_have_expected_rbac(self):
+        """Verify OIDC users have expected RBAC."""
         admin = documents(ROOT / "lenka" / "rbac-shaman007-cluster-admin.yaml")[0]
         readonly = documents(ROOT / "lenka" / "readonly-infra-rbac.yaml")[0]
         namespace_admin = documents(ROOT / "lenka" / "rbac-lenka-admin.yaml")[1]
@@ -80,6 +85,7 @@ class HeadlampOidcSecurityTest(unittest.TestCase):
         self.assertEqual("admin", namespace_admin["roleRef"]["name"])
 
     def test_api_server_maps_preferred_username_without_prefix(self):
+        """Verify API server maps preferred username without prefix."""
         patch = documents(ROOT / "talos" / "api-server-oidc.yaml")[0]
         args = patch["cluster"]["apiServer"]["extraArgs"]
 

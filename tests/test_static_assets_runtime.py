@@ -29,6 +29,7 @@ JS = b'const example = "public application asset";\n' * 300
 
 
 def receive(stream, length):
+    """Read exactly the requested FastCGI record bytes or reject an incomplete stream."""
     result = b""
     while len(result) < length:
         part = stream.recv(length - len(result))
@@ -182,6 +183,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
         cls.temp.cleanup()
 
     def get(self, app, path, headers=None):
+        """Request a local fixture server and return its status, headers, and body."""
         connection = http.client.HTTPConnection("127.0.0.1", self.ports[app], timeout=5)
         try:
             connection.request("GET", path, headers=headers or {})
@@ -191,6 +193,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
             connection.close()
 
     def test_wordpress_cache_lifetimes_and_csp(self):
+        """Require the reviewed WordPress cache lifetimes and content security policy."""
         for query, expected in [
             ("", "public, max-age=3600"),
             ("?ver=1.2.3", "public, max-age=604800"),
@@ -202,6 +205,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
             self.assertNotIn("immutable", headers["Cache-Control"])
 
     def test_nextcloud_lifetimes_and_security_headers(self):
+        """Require the reviewed Nextcloud cache lifetimes and security headers."""
         for path, expected in [
             ("/styles/main.css", "public, max-age=15778463"),
             ("/styles/main.css?v=hash", "public, max-age=15778463, immutable"),
@@ -223,6 +227,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 self.assertIsNotNone(headers[name], name)
 
     def test_gzip_is_negotiated_and_content_is_identical(self):
+        """Verify gzip is negotiated and content is identical."""
         for app in self.ports:
             for path, original in [("/styles/main.css", CSS), ("/scripts/main.js", JS)]:
                 status, headers, encoded = self.get(app, path, {"Accept-Encoding": "gzip"})
@@ -236,6 +241,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 self.assertEqual(original, plain)
 
     def test_etag_revalidation_returns_304(self):
+        """Verify ETag revalidation returns 304."""
         for app in self.ports:
             _, headers, _ = self.get(app, "/styles/main.css")
             self.assertIsNotNone(headers["ETag"])
@@ -244,6 +250,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
             self.assertEqual(b"", body)
 
     def test_php_and_missing_assets_keep_private_php_responses(self):
+        """Verify PHP and missing assets keep private PHP responses."""
         for app in self.ports:
             paths = ["/index.php", "/images/not-present.png", "/scripts/not-present.js"]
             paths += (
@@ -261,6 +268,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
                 self.assertEqual(b"private PHP response", body)
 
     def test_nextcloud_private_physical_files_remain_denied(self):
+        """Verify Nextcloud private physical files remain denied."""
         for path in [
             "/data/user/files/private.png",
             "/config/secret.css",
@@ -274,6 +282,7 @@ class StaticAssetsRuntimeTest(unittest.TestCase):
             self.assertIsNone(headers["Cache-Control"])
 
     def test_modern_static_assets_have_cache_policy_and_mjs_mime(self):
+        """Verify modern static assets have cache policy and MJS MIME."""
         for app in self.ports:
             for path in [
                 "/images/sample.webp",

@@ -18,6 +18,7 @@ ALLOWED_GUARDS = {
 class InternalIngressGuardTest(unittest.TestCase):
     """Require reviewed client-network guards on internal ingress routes."""
     def test_every_internal_ingress_has_a_client_guard(self):
+        """Verify every internal ingress has a client guard."""
         missing = []
         for path in ROOT.rglob("ingress*.yaml"):
             if "DEPRECATED" in path.parts:
@@ -43,6 +44,7 @@ class InternalIngressGuardTest(unittest.TestCase):
         self.assertEqual([], missing)
 
     def test_shared_guard_allows_infrastructure_vpn_and_cluster_pods(self):
+        """Verify shared guard allows infrastructure vpn and cluster pods."""
         application = yaml.safe_load(
             (ROOT / "argocd/application-traefik.yaml").read_text(encoding="utf-8")
         )
@@ -66,6 +68,7 @@ class InternalIngressGuardTest(unittest.TestCase):
         )
 
     def test_headlamp_guard_allows_infrastructure_and_vpn(self):
+        """Verify Headlamp guard allows infrastructure and vpn."""
         middleware = yaml.safe_load(
             (ROOT / "headlamp/middleware-local-network-only.yaml").read_text(encoding="utf-8")
         )

@@ -15,6 +15,7 @@ spec.loader.exec_module(audit)
 class AuditFixtureTests(unittest.TestCase):
     """Preserve policy assertions and applicable exceptions across generated test shards."""
     def test_admission_normalization_does_not_touch_other_workloads(self):
+        """Verify admission normalization does not touch other workloads."""
         from unittest.mock import patch
 
         for kind, namespace, name in [
@@ -33,6 +34,7 @@ class AuditFixtureTests(unittest.TestCase):
                 run.assert_not_called()
 
     def test_policy_partition_preserves_assertions_and_exception_scope(self):
+        """Verify policy partition preserves assertions and exception scope."""
         import tempfile
         import yaml
 
@@ -93,6 +95,7 @@ class AuditFixtureTests(unittest.TestCase):
                 audit.write_test_cases(cases, policies, exceptions, output)
 
     def test_smaller_shards_preserve_every_case_and_all_applicable_exceptions(self):
+        """Verify smaller shards preserve every case and all applicable exceptions."""
         import json
         import tempfile
         import yaml
@@ -161,10 +164,12 @@ class AuditFixtureTests(unittest.TestCase):
                 audit.write_test_cases(cases, [policy], exceptions, Path(tmp) / "invalid", 0)
 
     def test_seccomp_negative_companion_is_unconfined(self):
+        """Verify seccomp negative companion is unconfined."""
         container = audit.noncompliant_container("restrict-seccomp-strict", "unapproved")
         self.assertEqual(container["securityContext"]["seccompProfile"]["type"], "Unconfined")
 
     def test_other_negative_fixtures_target_their_policy(self):
+        """Verify other negative fixtures target their policy."""
         for policy, field, expected in [
             ("require-run-as-nonroot", "runAsNonRoot", False),
             ("disallow-privilege-escalation", "allowPrivilegeEscalation", True),

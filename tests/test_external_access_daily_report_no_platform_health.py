@@ -15,6 +15,7 @@ ANALYTICS_APP = ROOT / "argocd" / "application-external-access-analytics.yaml"
 class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
     """Keep external-access content and access grants separate from platform-health reporting."""
     def test_external_access_report_does_not_embed_platform_health(self):
+        """Verify external access report does not embed platform health."""
         source = SCRIPT_MANIFEST.read_text(encoding="utf-8")
 
         forbidden_fragments = [
@@ -29,6 +30,7 @@ class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
             self.assertNotIn(fragment, source)
 
     def test_platform_health_app_does_not_grant_external_access_report_rbac(self):
+        """Verify platform health app does not grant external access report RBAC."""
         source = PLATFORM_APP.read_text(encoding="utf-8")
 
         self.assertNotIn(
@@ -36,6 +38,7 @@ class ExternalAccessDailyReportNoPlatformHealthTest(unittest.TestCase):
         )
 
     def test_large_generated_configmap_uses_server_side_apply(self):
+        """Verify large generated configmap uses server side apply."""
         application = yaml.safe_load(ANALYTICS_APP.read_text(encoding="utf-8"))
         sync_options = application["spec"]["syncPolicy"]["syncOptions"]
 

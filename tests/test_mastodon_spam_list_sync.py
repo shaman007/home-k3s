@@ -65,6 +65,7 @@ end
 
 
 def run_import(**env):
+    """Execute the spam-list importer against its isolated Ruby test harness."""
     import os
 
     return subprocess.run(
@@ -80,6 +81,7 @@ def run_import(**env):
 class SpamListSyncTest(unittest.TestCase):
     """Preserve manual moderation rules and reject bad sources before applying changes."""
     def test_preview_and_apply_preserve_manual_rules(self):
+        """Verify preview and apply preserve manual rules."""
         for apply in ("false", "true"):
             with self.subTest(apply=apply):
                 result = run_import(SPAM_LIST_APPLY=apply)
@@ -92,6 +94,7 @@ class SpamListSyncTest(unittest.TestCase):
                 self.assertEqual(summary["ip_refreshed"], 0)
 
     def test_bad_source_fails_before_writes(self):
+        """Verify bad source fails before writes."""
         for env in [
             {"EXTRA_DOMAIN": "\nnot-a-domain"},
             {"EXTRA_DOMAIN": "\ngmail.com"},

@@ -543,3 +543,34 @@ Local Bandit findings decreased from 225 to 223, with no analysis errors and no
 remaining B310 report in this helper. No rule was disabled to achieve this change.
 Live administrative endpoint compatibility and GitHub reconciliation remain to
 be verified after publication; no provisioning or deployment was performed.
+
+### Larger retained-test documentation batch (2026-11-11)
+
+Added 152 missing function docstrings across eight retained test modules covering
+rendered-resource validation, platform health, infrastructure backfill, trim
+coverage, Kyverno exceptions, Longhorn reporting and component security, and
+Codacy SARIF preparation. This fixes the documentation findings in source;
+no lint rules or security findings were suppressed.
+
+Validation: all eight modules pass targeted Pylint checks for missing module,
+class, and function docstrings, 100-character line length, and multiple
+statements. Comparing parsed source with function docstrings removed confirms
+that executable ASTs are identical to HEAD. One full unittest run passed
+(386 tests, 21 skipped), and `git diff --check` passed. GitHub alert closure
+remains dependent on a subsequent scan of the published changes.
+
+### Complete retained-test function documentation (2026-11-11)
+
+Extended the documentation cleanup by another 258 missing function docstrings
+across 47 retained test modules. Combined with the preceding 152-finding batch,
+this documents 410 functions across 55 modules. All repository test modules now
+pass the targeted Pylint checks for missing module, class, and function
+docstrings, 100-character line length, and multiple statements. No findings
+were dismissed and no rules were disabled.
+
+Verified executable AST equivalence to HEAD for all 55 changed test modules,
+with function docstrings removed from the comparison. The full suite ran once
+for this extended batch: 386 tests passed, with 21 skipped. Final documentation
+wording refinements also pass targeted lint. Live-dependent skipped tests and
+GitHub alert closure after publication remain unverified; this local cleanup
+does not establish either result. Changes remain unstaged and uncommitted.

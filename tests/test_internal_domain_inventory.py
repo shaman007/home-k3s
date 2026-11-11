@@ -19,6 +19,7 @@ spec.loader.exec_module(scanner)
 class InternalDomainInventoryTest(unittest.TestCase):
     """Find complete internal hostnames without exporting surrounding source secrets."""
     def test_complete_hostnames_and_fqdn_are_recognized(self):
+        """Verify complete hostnames and fqdn are recognized."""
         pattern = re.compile(scanner.PATTERN)
         for host in (
             "grafana.w386.k8s.my.lan",
@@ -37,6 +38,7 @@ class InternalDomainInventoryTest(unittest.TestCase):
             self.assertEqual(pattern.findall(expression), [])
 
     def test_scan_exports_hostnames_but_not_source_secrets(self):
+        """Verify scan exports hostnames but not source secrets."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "demo").mkdir()

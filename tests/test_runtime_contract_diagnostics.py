@@ -18,6 +18,7 @@ spec.loader.exec_module(contracts)
 class RuntimeContractDiagnosticsTest(unittest.TestCase):
     """Require manifest diagnostics to retain locations without exposing sensitive values."""
     def test_external_secret_errors_do_not_echo_manifest_values(self):
+        """Verify external secret errors do not echo manifest values."""
         marker = "synthetic-sensitive-value-must-not-be-logged"
         for kind in ("ExternalSecret", "SecretStore", "ClusterSecretStore", "Secret"):
             for target in (None, {}, {"name": marker}):
@@ -42,6 +43,7 @@ class RuntimeContractDiagnosticsTest(unittest.TestCase):
                         self.assertTrue(errors)
 
     def test_malformed_yaml_traceback_has_location_without_source_snippet(self):
+        """Verify malformed YAML traceback has location without source snippet."""
         marker = "synthetic-parser-secret-must-not-be-logged"
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "fixture.yaml"

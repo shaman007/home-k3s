@@ -24,6 +24,7 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         self.rules = yaml.safe_load(prometheus_config_map["data"]["prometheus.rules"])
 
     def test_linux_host_scrape_is_opted_out_of_down_alerts(self):
+        """Verify linux host scrape is opted out of down alerts."""
         job = next(
             job
             for job in self.prometheus["scrape_configs"]
@@ -52,6 +53,7 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         self.assertEqual(high_swap["expr"].count('host!="fedora"'), 3)
 
     def test_linux_host_dashboard_is_valid_and_provisioned(self):
+        """Verify linux host dashboard is valid and provisioned."""
         config_map = yaml.safe_load(DASHBOARD.read_text(encoding="utf-8"))
         dashboard = json.loads(config_map["data"]["linux-host.json"])
 
@@ -62,6 +64,7 @@ class LinuxHostMonitoringTest(unittest.TestCase):
         self.assertIn("grafana-dashboard-linux-host", GRAFANA.read_text(encoding="utf-8"))
 
     def test_prometheus_can_reach_node_exporter_port(self):
+        """Verify Prometheus can reach node exporter port."""
         policy = yaml.safe_load(EXTERNAL_EGRESS.read_text(encoding="utf-8"))
         ports = {
             port["port"] for egress in policy["spec"]["egress"] for port in egress.get("ports", [])

@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "tools/ci"))
 
 
 def module(name, file):
+    """Load a CI helper directly from its repository source."""
     spec = importlib.util.spec_from_file_location(name, ROOT / "tools/ci" / file)
     result = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(result)
@@ -28,6 +29,7 @@ validate = module("validate", "validate-rendered.py")
 class RenderValidationTest(unittest.TestCase):
     """Exercise safe rendering, source retrieval, schema checks, and custom-resource validation."""
     def test_rendered_secret_output_is_owner_only(self):
+        """Verify rendered secret output is owner only."""
         (self.root / "tools/ci").mkdir(parents=True)
         (self.root / "tools/ci/validation-config.yaml").write_text("kubernetesVersion: 1.37.2\n")
         applications = self.root / "argocd"
@@ -56,6 +58,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual(0o600, stat.S_IMODE((output / "test.yaml").stat().st_mode))
 
     def test_git_hosted_chart_uses_checkout_and_helm_values_without_remote_version(self):
+        """Verify git hosted chart uses checkout and Helm values without remote version."""
         chart = self.root / "chart"
         chart.mkdir()
         (chart / "Chart.yaml").write_text("apiVersion: v2\nname: test\nversion: 0.1.0\n")
@@ -77,6 +80,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual("productionEnabled: true\n", (self.root / "values.yaml").read_text())
 
     def test_remote_kustomize_fetch_retries_without_printing_diagnostics(self):
+        """Verify remote Kustomize fetch retries without printing diagnostics."""
         failed = subprocess.CompletedProcess(
             [], 1, "private manifest", "git fetch failed: private diagnostic"
         )
@@ -92,6 +96,7 @@ class RenderValidationTest(unittest.TestCase):
             self.assertNotIn("private", str(output.call_args_list))
 
     def test_remote_fetch_retries_are_bounded(self):
+        """Verify remote fetch retries are bounded."""
         failed = subprocess.CompletedProcess(
             [], 1, "private manifest", "git fetch failed: private diagnostic"
         )
@@ -106,6 +111,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertNotIn("private", str(error.exception))
 
     def test_local_kustomize_and_helm_errors_are_not_retried(self):
+        """Verify local Kustomize and Helm errors are not retried."""
         for args, diagnostic in [
             (["kubectl", "kustomize", "local"], "invalid YAML"),
             (["helm", "template", "chart"], "git fetch failed"),
@@ -123,6 +129,7 @@ class RenderValidationTest(unittest.TestCase):
             self.assertEqual(1, call.call_count)
 
     def test_github_download_failure_is_classified_without_leaking_diagnostics(self):
+        """Verify GitHub download failure is classified without leaking diagnostics."""
         for binary in ["helm", "/tmp/helm"]:
             failed = subprocess.CompletedProcess(
                 [],
@@ -139,6 +146,7 @@ class RenderValidationTest(unittest.TestCase):
             self.assertNotIn("private", str(error.exception))
 
     def test_template_and_permanent_download_errors_do_not_use_fallback(self):
+        """Verify template and permanent download errors do not use fallback."""
         for diagnostic in [
             "Error: template: chart: invalid value 504",
             "Error: failed to fetch https://github.com/org/repo/chart.tgz : 404 Not Found",
@@ -157,6 +165,7 @@ class RenderValidationTest(unittest.TestCase):
             self.assertNotIsInstance(error.exception, render.HelmDownloadError)
 
     def test_github_chart_fallback_verifies_digest_before_using_archive(self):
+        """Verify GitHub chart fallback verifies digest before using archive."""
         import hashlib
         import io
         import json
@@ -194,6 +203,7 @@ class RenderValidationTest(unittest.TestCase):
                     self.assertFalse(destination.exists())
 
     def test_download_fallback_preserves_helm_render_options(self):
+        """Verify download fallback preserves Helm render options."""
         source = {
             "repoURL": "https://charts.invalid",
             "chart": "test",
@@ -221,6 +231,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual(expected, fallback)
 
     def test_download_fallback_errors_hide_signed_urls(self):
+        """Verify download fallback errors hide signed urls."""
         source = {"repoURL": "https://charts.invalid", "chart": "test", "targetRevision": "1.2.3"}
         with (
             patch.object(render, "run", side_effect=render.HelmDownloadError("private")),
@@ -235,12 +246,14 @@ class RenderValidationTest(unittest.TestCase):
         self.assertTrue(error.exception.__suppress_context__)
 
     def test_additional_crd_url_supports_pinned_runtime_controller_release(self):
+        """Verify additional CRD url supports pinned runtime controller release."""
         source = {"version": "v1.14.2", "url": "https://example.invalid/v{version}/crd.yaml"}
         self.assertEqual(
             "https://example.invalid/v1.14.2/crd.yaml", validate.additional_crd_url(source)
         )
 
     def test_additional_crd_url_uses_helm_controller_release(self):
+        """Verify additional CRD url uses Helm controller release."""
         app = {"spec": {"source": {"chart": "controller", "targetRevision": "v1.2.3"}}}
         with patch.object(validate, "load", return_value=app):
             with patch.object(Path, "read_text", return_value="unused"):
@@ -261,6 +274,7 @@ class RenderValidationTest(unittest.TestCase):
         self.app = {"metadata": {"name": "test"}, "spec": {"destination": {"namespace": "target"}}}
 
     def test_values_reference_inline_and_parameters_follow_argo_precedence(self):
+        """Verify values reference inline and parameters follow argo precedence."""
         (self.root / "values.yaml").write_text("replicas: 1\n")
         source = {
             "repoURL": "https://example.invalid/charts",
@@ -290,6 +304,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual(["--set", "replicas=4", "--set-string", "code=001"], args[-4:])
 
     def test_oci_chart_uses_registry_path(self):
+        """Verify OCI chart uses registry path."""
         source = {
             "repoURL": "ghcr.io/openbao/charts",
             "chart": "openbao",
@@ -300,6 +315,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertNotIn("--repo", args)
 
     def test_unknown_options_and_values_outside_repo_fail(self):
+        """Verify unknown options and values outside repo fail."""
         source = {
             "repoURL": "https://example.invalid",
             "chart": "test",
@@ -312,6 +328,7 @@ class RenderValidationTest(unittest.TestCase):
             render.local_path(self.root, "../escape")
 
     def test_oci_pull_metadata_is_removed_without_changing_manifests(self):
+        """Verify OCI pull metadata is removed without changing manifests."""
         source = {
             "repoURL": "ghcr.io/openbao/charts",
             "chart": "openbao",
@@ -342,6 +359,7 @@ class RenderValidationTest(unittest.TestCase):
             )
 
     def test_directory_include_exclude_and_recursion(self):
+        """Verify directory include exclude and recursion."""
         appdir = self.root / "app"
         appdir.mkdir()
         (appdir / "nested").mkdir()
@@ -358,6 +376,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual(["keep"], [d["metadata"]["name"] for d in yaml.safe_load_all(output)])
 
     def test_kustomize_source_is_built(self):
+        """Verify Kustomize source is built."""
         appdir = self.root / "app"
         appdir.mkdir()
         (appdir / "kustomization.yaml").write_text("resources: []")
@@ -370,6 +389,7 @@ class RenderValidationTest(unittest.TestCase):
             run.assert_called_once_with(["kubectl", "kustomize", str(appdir)])
 
     def test_schema_rejects_unknown_fields_wrong_types_and_missing_schema(self):
+        """Verify schema rejects unknown fields wrong types and missing schema."""
         schema = validate.convert_schema(
             {
                 "type": "object",
@@ -389,6 +409,7 @@ class RenderValidationTest(unittest.TestCase):
         )
 
     def test_nullable_int_or_string_and_preserved_unknown_fields(self):
+        """Verify nullable int or string and preserved unknown fields."""
         schema = validate.convert_schema(
             {
                 "type": "object",
@@ -411,6 +432,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertTrue(list(validator.iter_errors({"port": False})))
 
     def test_custom_validation_uses_served_version_and_constraints(self):
+        """Verify custom validation uses served version and constraints."""
         crd = {
             "kind": "CustomResourceDefinition",
             "spec": {
@@ -450,6 +472,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual(["missing schema"], validate.custom_errors(doc, schemas))
 
     def test_duplicate_yaml_keys_fail_before_normalization(self):
+        """Verify duplicate YAML keys fail before normalization."""
         with self.assertRaises(ValueError):
             list(
                 validate.documents(
@@ -458,6 +481,7 @@ class RenderValidationTest(unittest.TestCase):
             )
 
     def test_custom_yaml_loader_rejects_python_object_constructors(self):
+        """Verify custom YAML loader rejects python object constructors."""
         from ci_yaml import load, load_all
 
         payload = '!!python/object/apply:builtins.str ["synthetic-payload"]'
@@ -466,6 +490,7 @@ class RenderValidationTest(unittest.TestCase):
                 parse(payload)
 
     def test_crd_checks_reject_missing_storage_version(self):
+        """Verify CRD checks reject missing storage version."""
         self.assertTrue(
             validate.crd_errors(
                 {
@@ -477,6 +502,7 @@ class RenderValidationTest(unittest.TestCase):
         )
 
     def test_remote_chart_is_rendered_outside_colliding_repo_directory(self):
+        """Verify remote chart is rendered outside colliding repo directory."""
         source = {
             "repoURL": "https://example.invalid/charts",
             "chart": "test",
@@ -487,6 +513,7 @@ class RenderValidationTest(unittest.TestCase):
             self.assertEqual(self.root, run.call_args.kwargs["cwd"])
 
     def test_kubernetes_unicode_regex_categories_are_enforced(self):
+        """Verify kubernetes unicode regex categories are enforced."""
         validator = validate.CRDValidator(
             validate.convert_schema({"type": "string", "pattern": r"^\PC*$"})
         )
@@ -494,6 +521,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertTrue(list(validator.iter_errors("contains\x00control")))
 
     def test_discovery_excludes_raw_webhook_templates_but_keeps_manifests(self):
+        """Verify discovery excludes raw webhook templates but keeps manifests."""
         discovery = module("discovery_webhook_test", "list-k8s-manifest-files.py")
         paths = {str(p.relative_to(ROOT)) for p in discovery.tracked_yaml_files(ROOT)}
         self.assertNotIn("tools/godaddy-webhook/chart/templates/credentials.yaml", paths)
@@ -504,6 +532,7 @@ class RenderValidationTest(unittest.TestCase):
         self.assertEqual("tools/godaddy-webhook/chart", app["spec"]["source"]["path"])
 
     def test_discovery_excludes_talos_machine_configurations(self):
+        """Verify discovery excludes talos machine configurations."""
         discovery = module("discovery_test", "list-k8s-manifest-files.py")
         files = discovery.tracked_yaml_files(ROOT)
         self.assertNotIn(ROOT / "talos-existing-storage-volume.yaml", files)

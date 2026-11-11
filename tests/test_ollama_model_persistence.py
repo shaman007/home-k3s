@@ -10,12 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_yaml(path: str) -> dict:
+    """Read a repository manifest with the safe YAML loader."""
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
 class OllamaModelPersistenceTest(unittest.TestCase):
     """Require persistent model reuse and the reviewed GPU deployment configuration."""
     def test_both_deployments_use_the_discovered_nvidia_gpu(self):
+        """Verify both deployments use the discovered nvidia GPU."""
         for path in (
             "ollama/deployment-ollama.yaml",
             "ollama-small/deployment-ollama-small.yaml",
@@ -31,6 +33,7 @@ class OllamaModelPersistenceTest(unittest.TestCase):
             self.assertEqual(1, ollama["resources"]["limits"]["nvidia.com/gpu"], path)
 
     def test_model_pullers_reuse_models_from_persistent_storage(self):
+        """Verify model pullers reuse models from persistent storage."""
         deployments = (
             ("ollama/deployment-ollama.yaml", "ollama-data-lh", "gpt-oss:20b"),
             (

@@ -14,11 +14,13 @@ LOGS_CHECK_SECRET = ROOT / "metrics" / "external-secret-logs-check-grafana-token
 class LogsCheckGrafanaAccessTest(unittest.TestCase):
     """Require secret-backed authenticated Grafana access for the log checker."""
     def test_logs_check_app_includes_grafana_token_secret(self):
+        """Verify logs check app includes grafana token secret."""
         source = LOGS_CHECK_APP.read_text(encoding="utf-8")
 
         self.assertIn("external-secret-logs-check-grafana-token.yaml", source)
 
     def test_logs_check_cron_reads_grafana_token_from_secret(self):
+        """Verify logs check cron reads grafana token from secret."""
         source = LOGS_CHECK_CRON.read_text(encoding="utf-8")
 
         self.assertIn("- name: GRAFANA_TOKEN", source)
@@ -27,6 +29,7 @@ class LogsCheckGrafanaAccessTest(unittest.TestCase):
         self.assertIn("optional: true", source)
 
     def test_logs_check_script_uses_authenticated_grafana_api(self):
+        """Verify logs check script uses authenticated grafana API."""
         source = LOGS_CHECK_SCRIPT.read_text(encoding="utf-8")
 
         self.assertIn('for path in ("/api/health", "/api/user")', source)
@@ -35,6 +38,7 @@ class LogsCheckGrafanaAccessTest(unittest.TestCase):
         self.assertIn('"source": "kubernetes_configmap"', source)
 
     def test_logs_check_secret_uses_monitoring_grafana_token(self):
+        """Verify logs check secret uses monitoring grafana token."""
         source = LOGS_CHECK_SECRET.read_text(encoding="utf-8")
 
         self.assertIn("name: logs-check-grafana-token", source)

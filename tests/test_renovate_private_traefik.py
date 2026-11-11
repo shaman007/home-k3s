@@ -16,6 +16,7 @@ VALUES = "traefik-private/values.yaml"
 class PrivateTraefikRenovateTest(unittest.TestCase):
     """Keep private Traefik image updates synchronized across both value sources."""
     def test_future_image_updates_cover_both_equal_value_sources(self):
+        """Verify future image updates cover both equal value sources."""
         config = json.loads((ROOT / "renovate.json").read_text())
         managers = [
             manager for manager in config["customManagers"]
@@ -57,6 +58,7 @@ class PrivateTraefikRenovateTest(unittest.TestCase):
                 self.assertEqual(pattern.search(updated_app)["currentValue"], next_version)
 
     def test_both_managers_share_a_group_for_all_update_types(self):
+        """Verify both managers share a group for all update types."""
         config = json.loads((ROOT / "renovate.json").read_text())
         rules = [rule for rule in config["packageRules"]
                  if rule.get("groupSlug") == "private-traefik-image"]

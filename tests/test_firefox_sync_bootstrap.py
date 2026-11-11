@@ -27,12 +27,14 @@ class Response:
         return False
 
     def read(self):
+        """Encode the simulated API response document as JSON bytes."""
         return json.dumps(self.data).encode()
 
 
 class BootstrapTests(unittest.TestCase):
     """Preserve existing secrets and scoped auth bindings during Firefox Sync bootstrap."""
     def run_bootstrap(self, handler, token='hvs.fake-test-token\nnot-a-token\n'):
+        """Execute bootstrap with a temporary token file and mocked HTTP transport."""
         with tempfile.TemporaryDirectory() as directory:
             token_path = Path(directory) / 'token'
             token_path.write_text(token)
@@ -44,6 +46,7 @@ class BootstrapTests(unittest.TestCase):
                 return output.getvalue()
 
     def test_plan_has_no_network_access(self):
+        """Verify plan has no network access."""
         with patch('sys.argv', ['bootstrap']), \
                 patch.object(bootstrap.urllib.request, 'urlopen') as request, \
                 redirect_stdout(io.StringIO()):
@@ -51,6 +54,7 @@ class BootstrapTests(unittest.TestCase):
             request.assert_not_called()
 
     def test_preserves_existing_credentials_and_selects_only_token_line(self):
+        """Preserve existing credentials and ignore non-token lines in the token file."""
         seen = []
         existing = {key: 'preserve-test-secret' for key in bootstrap.KEYS}
 
@@ -66,6 +70,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(len(seen), 3)
 
     def test_refuses_partial_existing_secret_without_writing(self):
+        """Refuse partially populated existing credentials without writing a replacement."""
         calls = []
 
         def handler(request, **kwargs):
@@ -77,6 +82,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(calls, ['GET'])
 
     def test_transport_failure_cannot_expose_token_in_exception(self):
+        """Verify transport failure cannot expose token in exception."""
         def handler(request, **kwargs):
             raise ValueError('invalid header hvs.fake-test-token')
 

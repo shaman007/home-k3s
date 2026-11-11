@@ -39,6 +39,7 @@ class TrimCoverageTest(unittest.TestCase):
         }
 
     def check(self, jobs=None, volumes=None, pvcs=None):
+        """Assess trim coverage using the supplied inventories or default fixtures."""
         return self.report["pvc_trim_coverage_check"](
             [self.pvc] if pvcs is None else pvcs,
             [self.volume] if volumes is None else volumes,
@@ -46,6 +47,7 @@ class TrimCoverageTest(unittest.TestCase):
         )
 
     def test_missing_assignment_volume_or_job_fails(self):
+        """Verify missing assignment volume or job fails."""
         self.assertFalse(self.check()["passed"])
         self.assertFalse(self.check(volumes=[])["passed"])
         self.volume["metadata"]["labels"]["recurring-job.longhorn.io/trim-daily-a"] = "enabled"
@@ -55,6 +57,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertFalse(self.check()["passed"])
 
     def test_group_and_disabled_labels(self):
+        """Verify group and disabled labels."""
         labels = self.volume["metadata"]["labels"]
         labels["recurring-job-group.longhorn.io/trim"] = "enabled"
         self.assertTrue(self.check()["passed"])
@@ -62,6 +65,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertFalse(self.check()["passed"])
 
     def test_empty_inventory_and_unhandled_storage_fail(self):
+        """Verify empty inventory and unhandled storage fail."""
         self.assertFalse(self.check(pvcs=[])["passed"])
         local = {"metadata": {"name": "plex-lib"}, "spec": {"storageClassName": "local-path"}}
         self.volume["metadata"]["labels"]["recurring-job.longhorn.io/trim-daily-a"] = "enabled"
@@ -71,6 +75,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertIn("explicit review required", result["review_details"][0]["message"])
 
     def test_guard_repairs_source_first_and_preserves_backup_labels(self):
+        """Verify guard repairs source first and preserves backup labels."""
         self.volume["status"] = {"kubernetesStatus": {"namespace": "app", "pvcName": "data"}}
         self.pvc["metadata"]["labels"] = {"recurring-job.longhorn.io/source": "enabled"}
         writes = []
@@ -96,6 +101,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertEqual({"backup": "enabled"}, self.volume["metadata"]["labels"])
 
     def test_guard_preserves_existing_schedule_and_refuses_missing_fallback(self):
+        """Verify guard preserves existing schedule and refuses missing fallback."""
         self.volume["metadata"]["labels"]["recurring-job-group.longhorn.io/trim"] = "enabled"
 
         def api(path, patch=None):
@@ -107,6 +113,7 @@ class TrimCoverageTest(unittest.TestCase):
             self.guard["reconcile"](lambda path: {"items": []})
 
     def test_gitops_includes_guard_and_default_job(self):
+        """Verify GitOps includes guard and default job."""
         app = yaml.safe_load((ROOT / "argocd/application-longhorn-custom.yaml").read_text())
         patterns = app["spec"]["source"]["directory"]["include"].strip("{}").split(",")
         for name in ["trim-coverage-guard.yaml", "recurring-jobs-proposed.yaml"]:
@@ -126,6 +133,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertIn("trim-daily-a", values["persistence"]["recurringJobSelector"]["jobList"])
 
     def test_source_repair_preserves_hourly_volume_cadence(self):
+        """Verify source repair preserves hourly volume cadence."""
         self.job["metadata"]["name"] = "trim-hourly"
         self.volume["metadata"]["labels"]["recurring-job.longhorn.io/trim-hourly"] = "enabled"
         self.pvc["metadata"]["labels"] = {"recurring-job.longhorn.io/source": "enabled"}
@@ -144,6 +152,7 @@ class TrimCoverageTest(unittest.TestCase):
         )
 
     def test_volume_repair_uses_source_cadence(self):
+        """Verify volume repair uses source cadence."""
         self.job["metadata"]["name"] = "trim-hourly"
         self.pvc["metadata"]["labels"] = {
             "recurring-job.longhorn.io/source": "enabled",
@@ -165,6 +174,7 @@ class TrimCoverageTest(unittest.TestCase):
         )
 
     def test_one_conflict_does_not_starve_later_volumes_and_run_fails(self):
+        """Verify one conflict does not starve later volumes and run fails."""
         failed = {"metadata": {"name": "broken", "resourceVersion": "3"}}
         writes = []
 
@@ -182,6 +192,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertEqual([self.guard["PREFIX"] + "volumes/pv"], writes)
 
     def test_deleting_volumes_and_rebound_pvc_sources_are_not_patched(self):
+        """Verify deleting volumes and rebound PVC sources are not patched."""
         self.volume["metadata"]["deletionTimestamp"] = "now"
         self.guard["repair_volume"](
             lambda *args: self.fail("deleting volume touched"), self.volume, [self.job]
@@ -199,6 +210,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.guard["repair_volume"](api, self.volume, [self.job])
 
     def test_guard_monitor_detects_missing_suspended_stale_and_deleted_definitions(self):
+        """Verify guard monitor detects missing suspended stale and deleted definitions."""
         from datetime import timedelta
 
         now = self.report["utc_now"]()
@@ -222,6 +234,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertFalse(check([cron], jobs)["passed"])
 
     def test_monitored_trim_definitions_match_gitops(self):
+        """Verify monitored trim definitions match GitOps."""
         jobs = list(
             yaml.safe_load_all((ROOT / "longhorn/recurring-jobs-proposed.yaml").read_text())
         )
@@ -229,6 +242,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertEqual(expected, self.report["EXPECTED_LONGHORN_TRIM_JOBS"])
 
     def test_guard_permissions_and_schedule_remain_narrow(self):
+        """Verify guard permissions and schedule remain narrow."""
         docs = list(yaml.safe_load_all((ROOT / "longhorn/trim-coverage-guard.yaml").read_text()))
         role = next(d for d in docs if d["kind"] == "Role")
         self.assertEqual("longhorn-system", role["metadata"]["namespace"])
@@ -256,6 +270,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertTrue(pod["containers"][0]["securityContext"]["readOnlyRootFilesystem"])
 
     def test_approved_plex_exception_is_visible_and_not_counted_as_trimmed(self):
+        """Verify approved Plex exception is visible and not counted as trimmed."""
         local = {
             "metadata": {"namespace": "plex", "name": "plex-lib"},
             "spec": {"storageClassName": "local-path", "volumeName": "local-storage"},
@@ -270,6 +285,7 @@ class TrimCoverageTest(unittest.TestCase):
         self.assertIn("Approved exception", exception["message"])
 
     def test_plex_exception_cannot_hide_changed_binding_storage_or_other_pvc(self):
+        """Verify Plex exception cannot hide changed binding storage or other PVC."""
         for namespace, name, storage, volume, mode in [
             ("other", "plex-lib", "local-path", "local-storage", "Filesystem"),
             ("immich", "immich-library-hdd", "local-path", "replacement", "Filesystem"),
@@ -289,6 +305,7 @@ class TrimCoverageTest(unittest.TestCase):
                 self.assertEqual([name], [d["item"] for d in result["review_details"]])
 
     def test_both_approved_hdd_exceptions_are_visible_and_scoped(self):
+        """Verify both approved HDD exceptions are visible and scoped."""
         pvcs = [
             {
                 "metadata": {"namespace": "plex", "name": "plex-lib"},
@@ -313,6 +330,7 @@ class TrimCoverageTest(unittest.TestCase):
         )
 
     def test_batch_pvc_attachment_window_and_source_assignment(self):
+        """Verify batch PVC attachment window and source assignment."""
         window = yaml.safe_load((ROOT / "ooni/cron-job-ooniprobe-trim-window.yaml").read_text())
         check = self.report["pvc_trim_attachment_check"]
         self.assertTrue(check([window])["passed"])

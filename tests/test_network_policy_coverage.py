@@ -13,6 +13,7 @@ ARGOCD = ROOT / "argocd"
 class NetworkPolicyCoverageTest(unittest.TestCase):
     """Require the expected application and infrastructure network-policy coverage."""
     def test_cert_manager_chart_network_policies_are_enabled(self):
+        """Verify cert manager chart network policies are enabled."""
         application = yaml.safe_load(
             (ARGOCD / "application-cert-manager.yaml").read_text(encoding="utf-8")
         )

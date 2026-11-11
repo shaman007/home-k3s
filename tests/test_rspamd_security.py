@@ -19,6 +19,7 @@ class RspamdSecurityTest(unittest.TestCase):
         self.init = self.pod_spec["initContainers"][0]
 
     def test_rspamd_runs_as_the_image_non_root_identity(self):
+        """Verify rspamd runs as the image non root identity."""
         security = self.container["securityContext"]
 
         self.assertTrue(security["runAsNonRoot"])
@@ -31,6 +32,7 @@ class RspamdSecurityTest(unittest.TestCase):
         )
 
     def test_permission_init_has_only_required_capabilities(self):
+        """Verify permission init has only required capabilities."""
         security = self.init["securityContext"]
 
         self.assertEqual(0, security["runAsUser"])

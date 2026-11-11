@@ -31,6 +31,7 @@ class MastodonBounceFilterRuntimeTest(unittest.TestCase):
 
     @classmethod
     def run_pod(cls, args, payload=None):
+        """Execute a test command with optional input inside the existing Dovecot pod."""
         return subprocess.run(
             ["kubectl", "exec", "-i", "-n", "mail", "deployment/dovecot", "--", *args],
             input=payload,
@@ -43,6 +44,7 @@ class MastodonBounceFilterRuntimeTest(unittest.TestCase):
         cls.run_pod(["rm", "-f", cls.path + ".sieve", cls.path + ".svbin", cls.path + ".eml"])
 
     def test_registration_bounces_only(self):
+        """Filter registration bounces while preserving unrelated mail."""
         template = """Return-Path: <>
 From: Mail Delivery System <MAILER-DAEMON@example.invalid>
 To: shaman007@andreybondarenko.com

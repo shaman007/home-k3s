@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class DualStackIngressTest(unittest.TestCase):
     """Check address allocation and service routing across IPv4 and IPv6 ingress."""
     def test_dual_stack_vips_preserve_primary_ipv4_and_match_pool(self):
+        """Verify dual stack vips preserve primary ipv4 and match pool."""
         app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
         embedded = yaml.safe_load(app["spec"]["source"]["helm"]["values"])
         standalone = yaml.safe_load((ROOT / "traefik/values.yaml").read_text())
@@ -28,6 +29,7 @@ class DualStackIngressTest(unittest.TestCase):
                 self.assertTrue(any(ip_address(address) in network for network in ranges))
 
     def test_manual_ipv6_node_allocations_are_unique_and_separate_from_services(self):
+        """Verify manual IPv6 node allocations are unique and separate from services."""
         patch = yaml.safe_load((ROOT / "talos/dual-stack-services.yaml").read_text())
         self.assertNotIn("podSubnets", patch["cluster"]["network"])
         services = patch["cluster"]["network"]["serviceSubnets"]
@@ -48,6 +50,7 @@ class DualStackIngressTest(unittest.TestCase):
         self.assertEqual(3, len(networks))
 
     def test_native_smtp_uses_existing_backend_and_keeps_outgoing_ipv4(self):
+        """Verify native smtp uses existing backend and keeps outgoing ipv4."""
         direct = yaml.safe_load((ROOT / "mail/ingress-route-tcp-postfix-smtp.yaml").read_text())
         existing = yaml.safe_load(
             (ROOT / "mail/ingress-route-tcp-postfix-submission.yaml").read_text()

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class CrowdSecRootlessMigrationTest(unittest.TestCase):
     """Require the migration and runtime to share the persistent CrowdSec database."""
     def test_migration_and_runtime_share_the_same_persistent_database(self):
+        """Verify migration and runtime share the same persistent database."""
         values = yaml.safe_load((ROOT / 'crowdsec/values.yaml').read_text())
         lapi = values['lapi']
         # The source writer must stop before the backup snapshot is taken.
@@ -32,6 +33,7 @@ class CrowdSecRootlessMigrationTest(unittest.TestCase):
 class CrowdSecRootlessAgentMountTest(unittest.TestCase):
     """Require writable parents for CrowdSec agent ConfigMap subpath mounts."""
     def test_configmap_subpaths_have_a_writable_parent(self):
+        """Verify configmap subpaths have a writable parent."""
         values = yaml.safe_load((ROOT / 'crowdsec/values.yaml').read_text())
         mount = next(v for v in values['agent']['extraVolumeMounts']
                      if v['mountPath'] == '/etc/crowdsec')
@@ -52,6 +54,7 @@ class CrowdSecRenderedMountContractTest(unittest.TestCase):
         spec.loader.exec_module(cls.check)
 
     def test_database_init_cannot_read_another_subpath(self):
+        """Verify database init cannot read another subpath."""
         runtime = {'name': 'db', 'mountPath': '/var/lib/crowdsec/data', 'subPath': 'crowdsec'}
         preparation = {'name': 'db', 'mountPath': '/var/lib/crowdsec/data'}
         doc = {'kind': 'Deployment', 'spec': {'template': {'spec': {
@@ -64,6 +67,7 @@ class CrowdSecRenderedMountContractTest(unittest.TestCase):
         self.assertEqual([], self.check.violations(doc))
 
     def test_nested_configmaps_require_a_writable_parent_mount(self):
+        """Verify nested configmaps require a writable parent mount."""
         agent = {'name': 'crowdsec-agent', 'image': 'library/crowdsec-rootless:v1',
                  'volumeMounts': [{'name': 'config', 'mountPath': '/etc/crowdsec/acquis.yaml',
                                    'subPath': 'acquis.yaml'}]}

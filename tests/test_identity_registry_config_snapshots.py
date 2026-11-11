@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class IdentityRegistryConfigSnapshotsTest(unittest.TestCase):
     """Verify expected registry and identity-client snapshots without retained secrets."""
     def test_harbor_snapshot_covers_every_proxy_cache(self):
+        """Verify Harbor snapshot covers every proxy cache."""
         snapshot = yaml.safe_load(
             (ROOT / "harbor/config/harbor.snapshot.yaml").read_text(encoding="utf-8")
         )
@@ -40,6 +41,7 @@ class IdentityRegistryConfigSnapshotsTest(unittest.TestCase):
         self.assertEqual("<restore-from-vault>", snapshot["systemSettings"]["oidc"]["clientSecret"])
 
     def test_keycloak_snapshot_has_expected_custom_clients_and_no_secrets(self):
+        """Verify Keycloak snapshot has expected custom clients and no secrets."""
         snapshot = json.loads(
             (ROOT / "keycloak/config/master-realm.snapshot.json").read_text(
                 encoding="utf-8"

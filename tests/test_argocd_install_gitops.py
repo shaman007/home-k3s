@@ -17,6 +17,7 @@ RENOVATE = ROOT / "renovate.json"
 class ArgoCdInstallGitopsTest(unittest.TestCase):
     """Require pinned Argo CD installation sources and their GitOps integration."""
     def test_upstream_install_is_version_pinned(self):
+        """Verify upstream install is version pinned."""
         manifest = yaml.safe_load(KUSTOMIZATION.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["namespace"], "argocd")
@@ -41,6 +42,7 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         return len(version.split(".")) == 3 and all(part.isdigit() for part in version.split("."))
 
     def test_pin_check_allows_fetch_options_but_rejects_unpinned_refs(self):
+        """Verify pin check allows fetch options but rejects unpinned refs."""
         prefix = "github.com/argoproj/argo-cd//manifests/cluster-install?"
         self.assertTrue(
             self._is_version_pinned_upstream_install(prefix + "ref=v3.5.7&timeout=120s")
@@ -50,6 +52,7 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
                 self.assertFalse(self._is_version_pinned_upstream_install(prefix + query))
 
     def test_install_is_managed_by_argocd(self):
+        """Verify install is managed by Argo CD."""
         application = yaml.safe_load(APPLICATION.read_text(encoding="utf-8"))
 
         self.assertEqual(application["spec"]["source"]["path"], "argocd-install")
@@ -62,6 +65,7 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         )
 
     def test_renovate_requires_review_for_non_patch_upgrades(self):
+        """Verify Renovate requires review for non patch upgrades."""
         config = json.loads(RENOVATE.read_text(encoding="utf-8"))
         rules = [
             rule
@@ -75,6 +79,7 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         self.assertFalse(rules[0]["automerge"])
 
     def test_renovate_scans_mastodon_helm_values(self):
+        """Verify Renovate scans Mastodon Helm values."""
         config = json.loads(RENOVATE.read_text(encoding="utf-8"))
 
         self.assertIn(
@@ -90,6 +95,7 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         self.assertEqual(mastodon_custom_managers[0]["datasourceTemplate"], "docker")
 
     def test_renovate_ignores_deprecated_manifests(self):
+        """Verify Renovate ignores deprecated manifests."""
         config = json.loads(RENOVATE.read_text(encoding="utf-8"))
 
         self.assertIn("DEPRECATED/**", config["ignorePaths"])

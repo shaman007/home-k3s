@@ -10,12 +10,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_yaml(path: str) -> dict:
+    """Read a repository manifest with the safe YAML loader."""
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
 class MailCertificateSyncTest(unittest.TestCase):
     """Check mail certificate renewal integration and retirement of the legacy exporter."""
     def test_cert_manager_transition_releases_http01_from_traefik(self):
+        """Verify cert manager transition releases http01 from Traefik."""
         application = load_yaml("argocd/application-cert-manager.yaml")
         issuer = load_yaml("cert-manager/cluster-issuer-letsencrypt-prod.yaml")
         staging_issuer = load_yaml("cert-manager/cluster-issuer-letsencrypt-staging.yaml")
@@ -53,6 +55,7 @@ class MailCertificateSyncTest(unittest.TestCase):
         self.assertNotIn("certificatesResolvers:", (ROOT / "traefik/values.yaml").read_text())
 
     def test_mail_consumers_use_cert_manager_and_reload_on_renewal(self):
+        """Verify mail consumers use cert manager and reload on renewal."""
         for name in ("postfix", "dovecot"):
             with self.subTest(name=name):
                 deployment = load_yaml(f"mail/deployment-{name}.yaml")
@@ -65,6 +68,7 @@ class MailCertificateSyncTest(unittest.TestCase):
                 )
 
     def test_legacy_exporter_is_retired(self):
+        """Verify legacy exporter is retired."""
         for path in (
             "argocd/application-traefik-acme-exporter.yaml",
             "traefik-acme-exporter",
@@ -78,6 +82,7 @@ class MailCertificateSyncTest(unittest.TestCase):
         self.assertNotIn("/api/v1/namespaces/mail/secrets/letsencrypt-prod", report)
 
     def test_traefik_no_longer_grants_mail_pod_exec(self):
+        """Verify Traefik no longer grants mail pod exec."""
         traefik = (ROOT / "argocd/application-traefik.yaml").read_text(encoding="utf-8")
         self.assertNotIn("sync-le-tls-traefik-readexec", traefik)
         self.assertNotIn("pods/exec", traefik)

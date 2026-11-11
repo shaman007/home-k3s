@@ -14,6 +14,7 @@ SCRIPT_CONFIGMAP = ROOT / "metrics" / "config-map-platform-health-report-scripts
 
 
 def load_report_functions():
+    """Load the report functions embedded in the deployed ConfigMap."""
     configmap = yaml.safe_load(SCRIPT_CONFIGMAP.read_text(encoding="utf-8"))
     namespace = {"__name__": "platform_health_report_test"}
     exec(
@@ -30,6 +31,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         cls.report = load_report_functions()
 
     def test_restart_metrics_coalesce_recreated_pods_without_changing_checks(self):
+        """Verify restart metrics coalesce recreated pods without changing checks."""
         checks = [
             {
                 "name": "restarts",
@@ -69,6 +71,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertIn('platform_health_check_status{scope="cluster",check="restarts"} 1', metrics)
 
     def healthy_application(self, name="example"):
+        """Build a healthy, synced application with automatic self-healing."""
         return {
             "metadata": {"namespace": "argocd", "name": name},
             "spec": {"syncPolicy": {"automated": {"selfHeal": True}}},
@@ -76,6 +79,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         }
 
     def test_argocd_automation_and_lenka_exception(self):
+        """Verify Argo CD automation and Lenka exception."""
         app = self.healthy_application()
         for enabled in (None, True):
             app["spec"]["syncPolicy"]["automated"]["enabled"] = enabled
@@ -95,6 +99,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
 
     def test_argocd_unhealthy_states_and_empty_inventory(self):
+        """Verify Argo CD unhealthy states and empty inventory."""
         self.assertFalse(self.report["argocd_application_check"]([])["passed"])
         for state in ("Progressing", "Suspended", "Degraded", "Missing", "Unknown", "Stalled"):
             app = self.healthy_application()
@@ -109,6 +114,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertFalse(self.report["argocd_application_check"]([app])["passed"])
 
     def test_argocd_pauses_warnings_operations_and_rendering(self):
+        """Verify Argo CD pauses warnings operations and rendering."""
         base = self.healthy_application()
         variants = []
         for phase in ("Running", "Terminating", "Failed", "Error"):
@@ -144,6 +150,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertTrue(self.report["argocd_application_check"]([base])["passed"])
 
     def test_argocd_collection_failure_is_reported(self):
+        """Verify Argo CD collection failure is reported."""
         def denied(path):
             raise PermissionError("denied")
 
@@ -158,6 +165,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertEqual(paths, ["/apis/argoproj.io/v1alpha1/applications"])
 
     def test_tls_probe_selects_ingress_controller_by_class(self):
+        """Verify TLS probe selects ingress controller by class."""
         for ingress_class, destination in [
             ("traefik", "traefik.traefik.svc.cluster.local"),
             ("traefik-private", "traefik-private.traefik.svc.cluster.local"),
@@ -174,6 +182,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
                     connect.assert_called_once_with((destination, 443), timeout=10)
 
     def test_internal_public_domain_uses_public_trust(self):
+        """Verify internal public domain uses public trust."""
         for host in (
             "grafana.int.andreybondarenko.com",
             "cloud.andreybondarenko.com",
@@ -191,6 +200,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
                 unverified.assert_not_called()
 
     def test_new_internal_suffix_is_classified_as_internal(self):
+        """Verify new internal suffix is classified as internal."""
         internal = self.report["is_internal_ingress_host"]
         self.assertTrue(internal("grafana.int.andreybondarenko.com"))
         self.assertTrue(internal("grafana.w386.k8s.my.lan"))
@@ -199,6 +209,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertFalse(internal("cloud.andreybondarenko.com", "traefik"))
 
     def test_certificate_collection_checks_backend_expiry_and_failed_renewals(self):
+        """Verify certificate collection checks backend expiry and failed renewals."""
         certificate = {
             "metadata": {"namespace": "openbao", "name": "backend-tls"},
             "status": {
@@ -230,6 +241,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertFalse(check(kube)["passed"])
 
     def test_certificate_collection_failure_keeps_email_report_running(self):
+        """Verify certificate collection failure keeps email report running."""
         def denied(path):
             raise PermissionError("denied")
 
@@ -239,6 +251,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         )
 
     def test_token_renewal_uses_cronjob_last_success(self):
+        """Verify token renewal uses cronjob last success."""
         now = datetime.now(timezone.utc)
         cronjob = {
             "spec": {"suspend": False},
@@ -253,6 +266,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertIsNotNone(last_success)
 
     def test_suspended_or_stale_token_renewer_fails(self):
+        """Verify suspended or stale token renewer fails."""
         now = datetime.now(timezone.utc)
         stale = {
             "spec": {"suspend": False},
@@ -271,6 +285,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         )
 
     def test_certificate_check_only_uses_tls_declared_hosts(self):
+        """Verify certificate check only uses TLS declared hosts."""
         ingress = {
             "spec": {
                 "rules": [
@@ -292,11 +307,13 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         )
 
     def test_ingress_without_tls_is_not_certificate_checked(self):
+        """Verify ingress without TLS is not certificate checked."""
         ingress = {"spec": {"rules": [{"host": "ollama.w386.k8s.my.lan"}]}}
 
         self.assertEqual([], self.report["ingress_tls_hosts"](ingress))
 
     def test_http01_solver_is_detected_from_cert_manager_label(self):
+        """Verify HTTP-01 solver is detected from cert manager label."""
         ingress = {
             "metadata": {
                 "labels": {"acme.cert-manager.io/http01-solver": "true"},
@@ -306,6 +323,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertTrue(self.report["is_http01_solver_ingress"](ingress))
 
     def test_active_job_pod_is_excluded_from_readiness_failures(self):
+        """Verify active job pod is excluded from readiness failures."""
         for phase in ("Pending", "Running"):
             with self.subTest(phase=phase):
                 pod = {
@@ -315,6 +333,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
                 self.assertTrue(self.report["active_job_pod"](pod))
 
     def test_failed_job_pod_remains_reportable(self):
+        """Verify failed job pod remains reportable."""
         pod = {
             "metadata": {"ownerReferences": [{"kind": "Job"}]},
             "status": {"phase": "Failed"},
@@ -323,6 +342,7 @@ class PlatformHealthReportLogicTest(unittest.TestCase):
         self.assertFalse(self.report["active_job_pod"](pod))
 
     def test_openbao_health_check_uses_openbao_scrape_job(self):
+        """Verify OpenBao health check uses OpenBao scrape job."""
         source = yaml.safe_load(SCRIPT_CONFIGMAP.read_text(encoding="utf-8"))["data"][
             "platform-health-report.py"
         ]

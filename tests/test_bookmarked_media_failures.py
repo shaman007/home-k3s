@@ -32,12 +32,14 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         )["data"]
 
     def stub(self, name, body):
+        """Create an executable shell stub in the isolated fixture command directory."""
         file = self.bin / name
         file.write_text("#!/bin/sh\n" + body + "\n")
         file.chmod(0o755)
         return file
 
     def execute(self, script):
+        """Run a shell fragment with fixture commands and capture its result."""
         return subprocess.run(
             ["/bin/sh", "-c", script],
             check=False,
@@ -48,6 +50,7 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         )
 
     def upload_script(self):
+        """Prepare the deployed upload script with local media and command stubs."""
         doc = yaml.safe_load((ROOT / "mastodon/cron-job-bookmarked-media-sync.yaml").read_text())
         source = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]["command"][
             2
@@ -62,6 +65,7 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         )
 
     def test_install_login_upload_and_description_failures_fail_job(self):
+        """Verify install login upload and description failures fail job."""
         source = self.upload_script()
         for command, body in [
             ("npm", "exit 1"),
@@ -75,11 +79,13 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
                 self.stub(command, "exit 0")
 
     def test_face_detection_remains_best_effort(self):
+        """Verify face detection remains best effort."""
         source = self.upload_script()
         self.stub("curl", "exit 1")
         self.assertEqual(0, self.execute(source).returncode)
 
     def description_script(self):
+        """Prepare description-sync inputs and redirect deployed paths into the fixture."""
         work = self.root / "work"
         (work / "export").mkdir(parents=True)
         (work / "import").mkdir()
@@ -98,11 +104,13 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         )
 
     def test_bulk_lookup_http_failure_is_not_hidden_by_jq(self):
+        """Verify bulk lookup HTTP failure is not hidden by jq."""
         source = self.description_script()
         self.stub("curl", "exit 22")
         self.assertNotEqual(0, self.execute(source).returncode)
 
     def test_failed_description_update_fails_script(self):
+        """Verify failed description update fails script."""
         source = self.description_script()
         self.stub(
             "curl",
@@ -116,6 +124,7 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         self.assertNotEqual(0, self.execute(source).returncode)
 
     def fetch_script(self):
+        """Prepare media-fetch command stubs and redirect paths into the fixture."""
         work = self.root / "work"
         ruby = self.root / "scripts"
         ruby.mkdir()
@@ -134,6 +143,7 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         )
 
     def test_missing_object_is_skipped_but_transient_failure_fails(self):
+        """Verify missing object is skipped but transient failure fails."""
         source = self.fetch_script()
         self.stub("curl", 'case "$*" in *--head*) printf 404;; *) exit 99;; esac')
         self.assertEqual(0, self.execute(source).returncode)

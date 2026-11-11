@@ -10,10 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_yaml(path: str) -> dict:
+    """Read a repository manifest with the safe YAML loader."""
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
 
 
 def load_yaml_documents(path: str) -> list[dict]:
+    """Read all nonempty documents from a repository YAML manifest."""
     content = (ROOT / path).read_text(encoding="utf-8")
     return [document for document in yaml.safe_load_all(content) if document]
 
@@ -213,6 +215,7 @@ class CertManagerMigrationTest(unittest.TestCase):
     )
 
     def test_year_uses_the_production_certificate(self):
+        """Verify year uses the production certificate."""
         production_certificate = load_yaml("year/certificate-year-tls.yaml")
         ingress = load_yaml("year/ingress-year.yaml")
         application = load_yaml("argocd/application-year.yaml")
@@ -243,6 +246,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         )
 
     def test_routes_have_production_certificates(self):
+        """Verify routes have production certificates."""
         issuer_ref = {
             "group": "cert-manager.io",
             "kind": "ClusterIssuer",
@@ -265,6 +269,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 self.assertEqual(certificate["spec"]["issuerRef"], issuer_ref)
 
     def test_cutover_routes_use_cert_manager_secrets(self):
+        """Verify cutover routes use cert manager secrets."""
         resolver_annotation = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver"
         )
@@ -282,6 +287,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 }])
 
     def test_cutover_ingress_routes_use_cert_manager_secrets(self):
+        """Verify cutover ingress routes use cert manager secrets."""
         for path, (name, secret_name) in self.CUTOVER_INGRESS_ROUTES.items():
             with self.subTest(path=path):
                 routes = [
@@ -297,6 +303,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 )
 
     def test_internal_tls_routes_use_public_names_without_native_resolvers(self):
+        """Verify internal TLS routes use public names without native resolvers."""
         resolver_annotation = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver"
         )
@@ -312,6 +319,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 self.assertTrue(all(host.endswith(".int.andreybondarenko.com") for host in hosts))
 
     def test_native_acme_route_references_are_removed(self):
+        """Verify native ACME route references are removed."""
         resolver_markers = (
             "traefik.ingress.kubernetes.io/router.tls.certresolver:",
             "certResolver: letsencrypt",
@@ -330,6 +338,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         self.assertEqual(actual_paths, set())
 
     def test_default_deny_namespaces_allow_only_traefik_to_solver(self):
+        """Verify default deny namespaces allow only Traefik to solver."""
         expected_from = [{
             "namespaceSelector": {
                 "matchLabels": {"kubernetes.io/metadata.name": "traefik"}
@@ -362,6 +371,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 }])
 
     def test_every_solver_policy_has_safe_sync_order_and_source(self):
+        """Verify every solver policy has safe sync order and source."""
         expected_from = [{
             "namespaceSelector": {
                 "matchLabels": {"kubernetes.io/metadata.name": "traefik"}
@@ -385,6 +395,7 @@ class CertManagerMigrationTest(unittest.TestCase):
                 self.assertEqual(policy["spec"]["ingress"][0]["from"], expected_from)
 
     def test_mastodon_application_includes_certificates(self):
+        """Verify Mastodon application includes certificates."""
         application = load_yaml("argocd/application-mastodon-custom.yaml")
         include = application["spec"]["source"]["directory"]["include"]
         self.assertIn("certificate-*.yaml", include)

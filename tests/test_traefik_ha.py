@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class TraefikHATest(unittest.TestCase):
     """Verify unique resource identities and consistent high-availability values."""
     def test_extra_objects_have_unique_resource_identities(self):
+        """Verify extra objects have unique resource identities."""
         app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
         sources = {
             "application": yaml.safe_load(app["spec"]["source"]["helm"]["values"]),
@@ -29,6 +30,7 @@ class TraefikHATest(unittest.TestCase):
                 self.assertEqual(len(identities), len(set(identities)))
 
     def test_both_value_sources_preserve_storage_and_enforce_ha(self):
+        """Verify both value sources preserve storage and enforce ha."""
         app = yaml.safe_load((ROOT / "argocd/application-traefik.yaml").read_text())
         for values in [
             yaml.safe_load(app["spec"]["source"]["helm"]["values"]),

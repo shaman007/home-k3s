@@ -30,6 +30,7 @@ class ComponentSecurityTests(unittest.TestCase):
         )
 
     def healthy(self, entry):
+        """Build healthy workload state for the backfill preflight."""
         doc = copy.deepcopy(entry["fixture"])
         doc["metadata"].update(generation=1, resourceVersion="123")
         if doc["kind"] == "Deployment":
@@ -52,6 +53,7 @@ class ComponentSecurityTests(unittest.TestCase):
         return doc
 
     def test_exact_scope_and_namespace_rbac(self):
+        """Verify exact scope and namespace RBAC."""
         self.assertEqual(
             {e["name"] for e in self.entries},
             {
@@ -91,6 +93,7 @@ class ComponentSecurityTests(unittest.TestCase):
         self.assertEqual(annotation, "ServerSideDiff=true,IncludeMutationWebhook=true")
 
     def test_only_selected_container_changes(self):
+        """Verify only selected container changes."""
         for entry in self.entries:
             doc = copy.deepcopy(entry["fixture"])
             b.reviewed(doc, entry)
@@ -122,6 +125,7 @@ class ComponentSecurityTests(unittest.TestCase):
             )
 
     def test_rollout_readiness_requires_updated_generation_and_all_replicas(self):
+        """Verify rollout readiness requires updated generation and all replicas."""
         for entry in self.entries:
             doc = self.healthy(entry)
             self.assertTrue(b.ready(doc))
@@ -134,6 +138,7 @@ class ComponentSecurityTests(unittest.TestCase):
             self.assertFalse(b.ready(doc))
 
     def test_failed_preflight_writes_nothing(self):
+        """Verify failed preflight writes nothing."""
         entries = self.entries[:2]
         calls = []
         outer = self
@@ -150,11 +155,13 @@ class ComponentSecurityTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 calls.append((req.method, req.full_url))
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
                 doc = outer.healthy(entry)
@@ -180,6 +187,7 @@ class ComponentSecurityTests(unittest.TestCase):
         self.assertTrue(all("dryRun=All" in url for method, url in calls if method == "PATCH"))
 
     def test_failed_rollout_does_not_patch_later_targets(self):
+        """Verify failed rollout does not patch later targets."""
         entries = self.entries[:2]
         live = []
         outer = self
@@ -196,11 +204,13 @@ class ComponentSecurityTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 entry = next(e for e in entries if "/" + e["name"] in req.full_url)
                 doc = outer.healthy(entry)
                 if req.method == "PATCH":
@@ -231,6 +241,7 @@ class ComponentSecurityTests(unittest.TestCase):
         self.assertEqual(live, [entries[0]["name"]])
 
     def test_backfill_only_patches_metadata_with_concurrency_guard(self):
+        """Verify backfill only patches metadata with concurrency guard."""
         patch = b.annotation_patch(self.healthy(self.entries[0]))
         self.assertEqual(
             patch[0], {"op": "test", "path": "/metadata/resourceVersion", "value": "123"}
@@ -244,6 +255,7 @@ class ComponentSecurityTests(unittest.TestCase):
         self.assertEqual(json.loads(data["catalog.json"]), self.catalog)
 
     def test_storage_gate_accepts_idle_detached_but_rejects_degradation(self):
+        """Verify storage gate accepts idle detached but rejects degradation."""
         volumes = {
             "items": [
                 {
@@ -295,6 +307,7 @@ class ComponentSecurityTests(unittest.TestCase):
                 b.storage_healthy(v, n)
 
     def test_manager_rollout_strategy_requires_chart_review(self):
+        """Verify manager rollout strategy requires chart review."""
         app = yaml.safe_load((ROOT / "argocd/application-longhorn.yaml").read_text())
         chart = app["spec"]["sources"][0]
         values = yaml.safe_load(chart["helm"]["values"])
@@ -315,6 +328,7 @@ class ComponentSecurityTests(unittest.TestCase):
         )
 
     def test_unhealthy_storage_preflight_never_patches(self):
+        """Verify unhealthy storage preflight never patches."""
         entry = next(e for e in self.entries if e["name"] == "longhorn-manager")
         calls = []
 
@@ -330,11 +344,13 @@ class ComponentSecurityTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return the simulated API response."""
                 calls.append(req.get_method())
                 if req.full_url.endswith("/volumes"):
                     return Response(

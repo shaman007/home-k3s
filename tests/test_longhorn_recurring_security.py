@@ -33,6 +33,7 @@ class RecurringSecurityTests(unittest.TestCase):
         self.names = self.policy["spec"]["matchConstraints"]["resourceRules"][0]["resourceNames"]
 
     def test_scope_and_backfill_permissions_are_exact(self):
+        """Verify scope and backfill permissions are exact."""
         declared = {
             d["metadata"]["name"]
             for d in yaml.safe_load_all(
@@ -63,6 +64,7 @@ class RecurringSecurityTests(unittest.TestCase):
         )
 
     def test_embedded_program_and_names_match_sources(self):
+        """Verify embedded program and names match sources."""
         data = next(d["data"] for d in self.bundle if d["kind"] == "ConfigMap")
         self.assertEqual(
             data["backfill.py"],
@@ -71,6 +73,7 @@ class RecurringSecurityTests(unittest.TestCase):
         self.assertEqual(json.loads(data["names.json"]), self.names)
 
     def test_backfill_only_sends_guarded_annotation_patch(self):
+        """Verify backfill only sends guarded annotation patch."""
         doc = f.fixture(self.names[0])
         doc["metadata"]["resourceVersion"] = "123"
         patch = b.annotation_patch(doc)
@@ -81,6 +84,7 @@ class RecurringSecurityTests(unittest.TestCase):
         self.assertEqual(patch[-1]["value"], "v1")
 
     def test_no_live_write_when_any_preflight_has_no_mutation(self):
+        """Prevent live writes when any admission preview omits its required mutation."""
         names = self.names[:2]
         calls = []
 
@@ -96,11 +100,13 @@ class RecurringSecurityTests(unittest.TestCase):
                 pass
 
             def read(self):
+                """Encode the simulated API response document as JSON bytes."""
                 return json.dumps(self.doc).encode()
 
         class Opener:
             """Supply mocked HTTP responses for guarded backfill safety tests."""
             def open(self, req, **kwargs):
+                """Record the request and return simulated CronJob state for the preflight."""
                 calls.append((req.method, req.full_url))
                 name = req.full_url.split("/cronjobs/")[1].split("?")[0]
                 doc = f.fixture(name)

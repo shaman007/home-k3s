@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 class OptimizedSecurityGuardsTest(unittest.TestCase):
     """Require security preconditions to reject unsafe inputs even under Python optimization."""
     def test_mail_smoke_check_rejects_unsafe_context_in_optimized_mode(self):
+        """Verify mail smoke check rejects unsafe context in optimized mode."""
         path = ROOT / "tools/security/test-mail-capability-guards.py"
         document = yaml.safe_load((ROOT / "mail/deployment-dovecot.yaml").read_text())
         for optimization in (0, 2):
@@ -48,6 +49,7 @@ class OptimizedSecurityGuardsTest(unittest.TestCase):
         # These suites exercise malformed exception catalogs, changed workload
         # identities, unhealthy storage and absent admission mutations. They
         # must still reject those inputs when Python strips assert statements.
+        """Verify rejection and preflight cases with optimization."""
         for pattern in (
             "test_kyverno_capability_exceptions.py",
             "test_longhorn_component_security.py",

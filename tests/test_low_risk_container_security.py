@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_yaml(path: str) -> dict:
+    """Read a repository manifest with the safe YAML loader."""
     documents = yaml.safe_load_all((ROOT / path).read_text(encoding="utf-8"))
     return next(document for document in documents if document)
 
@@ -17,6 +18,7 @@ def load_yaml(path: str) -> dict:
 class LowRiskContainerSecurityTest(unittest.TestCase):
     """Verify reviewed non-root identities and restricted stateless workload contexts."""
     def assert_restricted_container(self, path: str, uid: int, gid: int):
+        """Require the workload to retain its reviewed identity and restricted context."""
         workload = load_yaml(path)
         pod_spec = workload["spec"]["template"]["spec"]
         container = pod_spec["containers"][0]
@@ -34,6 +36,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
         self.assertEqual("RuntimeDefault", seccomp["type"], path)
 
     def test_stateless_workloads_have_explicit_restricted_contexts(self):
+        """Verify stateless workloads have explicit restricted contexts."""
         workloads = (
             ("canitiser/deployment-ca-report-ui.yaml", 10001, 100, 100),
             ("headlamp/deployment-headlamp.yaml", 100, 101, 101),
@@ -52,6 +55,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                     )
 
     def test_connectivity_exporter_keeps_image_compatible_uid(self):
+        """Verify connectivity exporter keeps image compatible uid."""
         path = "connectivity-exporter/deployment-connectivity-exporter.yaml"
         pod_spec = load_yaml(path)["spec"]["template"]["spec"]
         security = pod_spec["containers"][0]["securityContext"]
@@ -65,12 +69,14 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
         self.assertTrue(security["runAsNonRoot"])
 
     def test_headlamp_tmp_fits_extracted_frontend(self):
+        """Verify Headlamp tmp fits extracted frontend."""
         pod_spec = load_yaml("headlamp/deployment-headlamp.yaml")["spec"]["template"]["spec"]
         tmp = next(volume for volume in pod_spec["volumes"] if volume["name"] == "tmp")
 
         self.assertEqual("64Mi", tmp["emptyDir"]["sizeLimit"])
 
     def test_searxng_config_init_uses_volume_group_identity(self):
+        """Verify SearXNG config init uses volume group identity."""
         pod_spec = load_yaml("searxng/deployment-searxng.yaml")["spec"]["template"]["spec"]
         init = pod_spec["initContainers"][0]
         security = init["securityContext"]
@@ -85,6 +91,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
         self.assertEqual(977, security["runAsGroup"])
 
     def test_high_port_nginx_workloads_run_without_root(self):
+        """Verify high port Nginx workloads run without root."""
         paths = (
             "metrics/deployment-external-access-analytics-exporter.yaml",
             "metrics/deployment-finance-ticker-exporter.yaml",
@@ -101,6 +108,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                 self.assertEqual(101, pod_spec["securityContext"]["fsGroup"], path)
 
     def test_non_api_workloads_do_not_mount_service_account_tokens(self):
+        """Verify non API workloads do not mount service account tokens."""
         paths = (
             "connectivity-exporter/deployment-connectivity-exporter.yaml",
             "unifi/poller/deployment-unifi-poller.yaml",
@@ -112,6 +120,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
                 self.assertFalse(pod_spec["automountServiceAccountToken"], path)
 
     def test_reloader_uses_chart_supported_restricted_context(self):
+        """Verify reloader uses chart supported restricted context."""
         application = load_yaml("argocd/application-reloader.yaml")
         values = yaml.safe_load(application["spec"]["source"]["helm"]["values"])
         reloader = values["reloader"]
@@ -123,6 +132,7 @@ class LowRiskContainerSecurityTest(unittest.TestCase):
         self.assertTrue(security["readOnlyRootFilesystem"])
 
     def test_exporters_use_read_only_root_filesystems(self):
+        """Verify exporters use read only root filesystems."""
         workload_specs = (
             (
                 "metrics/kubernetes-node-exporter/daemon-set-node-exporter.yaml",

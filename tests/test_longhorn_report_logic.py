@@ -30,12 +30,14 @@ class LonghornReportTest(unittest.TestCase):
         ]
 
     def job(self, name, task, groups=None, cron="0 1 * * *", created=None):
+        """Build a recurring-job fixture with configurable task, groups, and schedule."""
         metadata = {"name": name}
         if created:
             metadata["creationTimestamp"] = created.isoformat()
         return {"metadata": metadata, "spec": {"task": task, "groups": groups or [], "cron": cron}}
 
     def volume(self, name, labels=None):
+        """Build a volume fixture with default or explicitly supplied job labels."""
         return {
             "metadata": {
                 "name": name,
@@ -46,6 +48,7 @@ class LonghornReportTest(unittest.TestCase):
         }
 
     def backup(self, volume, age=1, state="Completed", target="default"):
+        """Build a backup fixture with independently controlled age, state, and target."""
         return {
             "status": {
                 "volumeName": volume,
@@ -57,9 +60,11 @@ class LonghornReportTest(unittest.TestCase):
         }
 
     def check_backups(self, volumes, backups):
+        """Assess backup coverage against the fixture jobs and freshness cutoff."""
         return self.report["longhorn_backup_check"](volumes, self.jobs, backups, self.cutoff)
 
     def test_fresh_backup_cannot_hide_stale_or_missing_volume(self):
+        """Verify fresh backup cannot hide stale or missing volume."""
         result = self.check_backups(
             [self.volume("fresh"), self.volume("stale"), self.volume("missing")],
             [self.backup("fresh"), self.backup("stale", age=168)],
@@ -68,11 +73,13 @@ class LonghornReportTest(unittest.TestCase):
         self.assertEqual({"stale", "missing"}, {d["item"] for d in result["review_details"]})
 
     def test_refresh_timestamp_does_not_make_old_backup_fresh(self):
+        """Verify refresh timestamp does not make old backup fresh."""
         self.assertFalse(
             self.check_backups([self.volume("v")], [self.backup("v", age=168)])["passed"]
         )
 
     def test_group_membership_is_resolved_and_trim_only_volume_is_excluded(self):
+        """Verify group membership is resolved and trim only volume is excluded."""
         volumes = [
             self.volume("group", {"recurring-job-group.longhorn.io/protected": "enabled"}),
             self.volume("trim", {"recurring-job.longhorn.io/trim": "enabled"}),
@@ -82,6 +89,7 @@ class LonghornReportTest(unittest.TestCase):
         self.assertEqual(["group"], [d["item"] for d in result["details"]])
 
     def test_latest_success_wins_over_historical_errors(self):
+        """Verify latest success wins over historical errors."""
         self.assertTrue(
             self.check_backups(
                 [self.volume("v")], [self.backup("v", 48, "Error"), self.backup("v")]
@@ -89,14 +97,17 @@ class LonghornReportTest(unittest.TestCase):
         )
 
     def test_failed_backup_and_wrong_target_do_not_count(self):
+        """Verify failed backup and wrong target do not count."""
         for backup in [self.backup("v", state="Error"), self.backup("v", target="other")]:
             with self.subTest(backup=backup):
                 self.assertFalse(self.check_backups([self.volume("v")], [backup])["passed"])
 
     def test_no_expected_volumes_is_not_healthy(self):
+        """Verify no expected volumes is not healthy."""
         self.assertFalse(self.check_backups([], [])["passed"])
 
     def cronjob(self, name, age=1, suspended=False, created=None, successful=True):
+        """Build an owned CronJob with configurable creation and last-success times."""
         metadata = {
             "name": name,
             "ownerReferences": [
@@ -113,12 +124,14 @@ class LonghornReportTest(unittest.TestCase):
         return {"metadata": metadata, "spec": {"suspend": suspended}, "status": status}
 
     def test_maintenance_passes_without_any_pod_history(self):
+        """Verify maintenance passes without any pod history."""
         result = self.report["longhorn_maintenance_check"](
             self.jobs, [self.cronjob("daily"), self.cronjob("trim")], self.cutoff
         )
         self.assertTrue(result["passed"])
 
     def test_each_missing_stale_suspended_job_fails(self):
+        """Verify each missing stale suspended job fails."""
         for cronjobs in [
             [self.cronjob("trim")],
             [self.cronjob("daily", age=48), self.cronjob("trim")],
@@ -129,6 +142,7 @@ class LonghornReportTest(unittest.TestCase):
             self.assertEqual(["daily"], [d["item"] for d in result["review_details"]])
 
     def test_new_monthly_job_is_healthy_until_its_first_due_run(self):
+        """Verify new monthly job is healthy until its first due run."""
         monthly = self.job("monthly", "backup", cron="15 4 1 * *", created=self.now)
         cronjob = self.cronjob("monthly", created=self.now, successful=False)
         result = self.report["longhorn_maintenance_check"](
@@ -139,6 +153,7 @@ class LonghornReportTest(unittest.TestCase):
         self.assertTrue(result["passed"])
 
     def test_overdue_monthly_job_without_success_fails(self):
+        """Verify overdue monthly job without success fails."""
         monthly = self.job(
             "monthly", "backup", cron="15 4 1 * *", created=self.now - timedelta(days=90)
         )
@@ -152,6 +167,7 @@ class LonghornReportTest(unittest.TestCase):
         self.assertEqual(["monthly"], [d["item"] for d in result["review_details"]])
 
     def test_monthly_job_grace_period_boundary(self):
+        """Verify monthly job grace period boundary."""
         due = datetime(2026, 10, 1, 4, 15, tzinfo=timezone.utc)
         for elapsed, passed in [
             (timedelta(hours=12, microseconds=-1), True),
@@ -177,6 +193,7 @@ class LonghornReportTest(unittest.TestCase):
                 )
 
     def test_report_role_can_read_volume_inventory(self):
+        """Verify report role can read volume inventory."""
         role = yaml.safe_load(
             (ROOT / "metrics/cluster-role-platform-health-report.yaml").read_text()
         )

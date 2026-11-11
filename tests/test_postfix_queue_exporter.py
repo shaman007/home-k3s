@@ -21,6 +21,7 @@ AVAILABLE = (
 class PostfixQueueTests(unittest.TestCase):
     """Check queue counts and arrival ages without exporting mail content or addresses."""
     def parse(self, records):
+        """Feed JSON queue records into the exporter parser at a fixed evaluation time."""
         return subprocess.run(
             [PERL, str(SOURCE), "--parse", "2000"],
             input="".join(json.dumps(x) + "\n" for x in records),
@@ -30,11 +31,13 @@ class PostfixQueueTests(unittest.TestCase):
         )
 
     def test_empty_queue_is_explicit_zero(self):
+        """Verify empty queue is explicit zero."""
         result = self.parse([])
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.count("} 0\n"), 10)
 
     def test_counts_oldest_initial_arrival_and_payload_privacy(self):
+        """Count queue entries and oldest initial arrivals without disclosing message payloads."""
         result = self.parse(
             [
                 {
@@ -54,6 +57,7 @@ class PostfixQueueTests(unittest.TestCase):
         self.assertNotIn("PRIVATE", result.stdout)
 
     def test_invalid_snapshot_is_not_empty_queue(self):
+        """Verify invalid snapshot is not empty queue."""
         for record in [
             {"queue_name": "unknown", "arrival_time": 1000},
             {"queue_name": "active"},
@@ -65,12 +69,14 @@ class PostfixQueueTests(unittest.TestCase):
                 self.assertEqual(result.stdout, "")
 
     def test_concurrent_arrival_does_not_fail_snapshot(self):
+        """Verify concurrent arrival does not fail snapshot."""
         result = self.parse([{"queue_name": "active", "arrival_time": 2001}])
         self.assertEqual(result.returncode, 0)
         self.assertIn('postfix_queue_oldest_age_seconds{queue="active"} 0\n', result.stdout)
 
     @unittest.skipIf(Path("/usr/sbin/postqueue").exists(), "requires absent postqueue")
     def test_failed_collection_exports_health_without_queue_zeroes(self):
+        """Verify failed collection exports health without queue zeroes."""
         result = subprocess.run(
             [PERL, str(SOURCE), "--once"], capture_output=True, text=True, check=False
         )
