@@ -67,6 +67,12 @@ KV entries, ACLs and auth roles. It preserves an existing session key and reads
 operator credentials into memory without logging them. It does not deploy
 Kubernetes resources. Follow the repository approval rules before using it.
 
+Administrative requests are restricted to the configured Keycloak and OpenBao
+HTTPS origins on port 443. Bearer and Vault-token headers are scoped to their
+respective service. Redirects fail before any follow-up request; investigate
+canonical API routing if a service returns a 3xx response. Error responses are
+closed and reported without their bodies or URL query values.
+
 DNS verified on 2026-10-29: `thanos.w386.k8s.my.lan`,
 `thanos-compactor.w386.k8s.my.lan`, and `thanos-store.w386.k8s.my.lan` all resolve
 to `192.168.30.211`. The latter two records were added with a targeted OpenTofu

@@ -513,3 +513,33 @@ The remaining 380 tests pass, with 21 skips; the test count fell by the 17 tests
 specific to removed one-off helpers. Local Bandit findings decreased from 242 to
 225 with no analysis errors. Remote reconciliation awaits publication and rescan;
 the incompatible legacy Pylint analysis is still retained for separate review.
+
+## Retained administrative HTTP client boundary
+
+Reviewed the retained Traefik prerequisite provisioner after removing the one-off
+SSO migration tools. The local standard urllib redirect implementation preserves
+headers other than content headers when constructing a redirected request. The
+provisioner's Bearer/Vault-token reads therefore needed an explicit redirect
+policy rather than generic `urlopen` behavior.
+
+Both administrative JSON requests and the Keycloak password grant now use one
+reviewed transport. It accepts only the configured Keycloak/OpenBao HTTPS hosts
+on the default port, rejects URL credentials/fragments and malformed ports, and
+requires Authorization/Vault-token headers to match their respective service.
+All redirects fail before a follow-up request. HTTP error responses are closed;
+existing optional-404 behavior and sanitized path/status diagnostics are retained.
+No secret values or query values are included in those diagnostics.
+
+Six focused tests cover invalid origins before transport, crossed credential
+headers, normal JSON/method/header/timeout behavior, optional missing/error
+responses, and password-grant use of the guarded transport. Twenty redirect
+scenarios exercise real urllib redirect processing with an in-memory HTTPS
+handler and no sockets. A negative control replacing the guard with the standard
+redirect handler is detected in 16 scenarios. No real credentials, services or
+cluster operations were used. Targeted Pylint errors/warnings and documentation/
+format checks pass. Full suite: 386 tests, 21 skips.
+
+Local Bandit findings decreased from 225 to 223, with no analysis errors and no
+remaining B310 report in this helper. No rule was disabled to achieve this change.
+Live administrative endpoint compatibility and GitHub reconciliation remain to
+be verified after publication; no provisioning or deployment was performed.

@@ -23,24 +23,62 @@ SSO = "https://sso.andreybondarenko.com"
 BAO = "https://openbao.int.andreybondarenko.com"
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Prevent administrative credentials from following any HTTP redirect."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        """Reject the redirect before constructing a request to its destination."""
+        raise urllib.error.HTTPError(req.full_url, code, "Redirect refused", headers, fp)
+
+
+def open_request(req):
+    """Open only the reviewed HTTPS services, with scoped headers and no redirects."""
+    try:
+        endpoint = urllib.parse.urlsplit(req.full_url)
+        port = endpoint.port
+    except ValueError:
+        raise RuntimeError("Invalid administrative endpoint") from None
+    sso_host = urllib.parse.urlsplit(SSO).hostname
+    bao_host = urllib.parse.urlsplit(BAO).hostname
+    if (
+        endpoint.scheme != "https"
+        or endpoint.hostname not in {sso_host, bao_host}
+        or port not in (None, 443)
+        or endpoint.username is not None
+        or endpoint.password is not None
+        or endpoint.fragment
+    ):
+        raise RuntimeError("Administrative requests require a reviewed HTTPS origin")
+    for name, _ in req.header_items():
+        name = name.lower()
+        if (name == "authorization" and endpoint.hostname != sso_host) or (
+            name == "x-vault-token" and endpoint.hostname != bao_host
+        ):
+            raise RuntimeError("Administrative credential header does not match its service")
+    return urllib.request.build_opener(NoRedirect()).open(req, timeout=20)
+
+
 def request(url, method="GET", data=None, headers=None, missing=False):
+    """Send administrative JSON while suppressing sensitive HTTP error details."""
     encoded = None if data is None else json.dumps(data).encode()
     headers = dict(headers or {})
     if encoded is not None:
         headers["Content-Type"] = "application/json"
     try:
-        with urllib.request.urlopen(
-            urllib.request.Request(url, data=encoded, headers=headers, method=method), timeout=20
+        with open_request(
+            urllib.request.Request(url, data=encoded, headers=headers, method=method)
         ) as response:
             body = response.read()
             return json.loads(body) if body else None
     except urllib.error.HTTPError as exc:
+        exc.close()
         if missing and exc.code == 404:
             return None
         raise RuntimeError(f"{method} {urllib.parse.urlsplit(url).path}: HTTP {exc.code}") from None
 
 
 def keycloak_token():
+    """Obtain a short-lived admin token without printing credential material."""
     raw = subprocess.run(
         ["kubectl", "get", "secret", "keycloak-admin", "-n", "keycloak", "-o", "json"],
         check=True,
@@ -57,13 +95,15 @@ def keycloak_token():
     ).encode()
     req = urllib.request.Request(SSO + "/realms/master/protocol/openid-connect/token", data=form)
     try:
-        with urllib.request.urlopen(req, timeout=20) as response:
+        with open_request(req) as response:
             return json.load(response)["access_token"]
     except urllib.error.HTTPError as exc:
+        exc.close()
         raise RuntimeError(f"Keycloak administrator authentication: HTTP {exc.code}") from None
 
 
 def main():
+    """Check prerequisites or provision dedicated records when --write is selected."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--write",
