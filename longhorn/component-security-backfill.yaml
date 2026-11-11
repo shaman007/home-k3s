@@ -299,21 +299,30 @@ data:
 
     def reviewed(doc, entry):
         meta, pod = doc['metadata'], doc['spec']['template']['spec']
-        assert doc['kind'] == entry['kind'] and meta['namespace'] == NAMESPACE and meta['name'] == entry['name']
-        assert doc['spec']['template']['metadata']['labels']['app'] == entry['name']
-        assert pod['serviceAccountName'] == entry['serviceAccount']
-        assert len(pod['containers']) == entry['count'] and not pod.get('initContainers')
+        if not (doc['kind'] == entry['kind'] and meta['namespace'] == NAMESPACE and meta['name'] == entry['name']):
+            raise AssertionError
+        if not (doc['spec']['template']['metadata']['labels']['app'] == entry['name']):
+            raise AssertionError
+        if not (pod['serviceAccountName'] == entry['serviceAccount']):
+            raise AssertionError
+        if not (len(pod['containers']) == entry['count'] and not pod.get('initContainers')):
+            raise AssertionError
         c = pod['containers'][entry['index']]
-        assert c['name'] == entry['container'] and c['image'] == entry['image']
-        assert c.get('command', []) == entry['command'] and c.get('args', []) == entry['args']
+        if not (c['name'] == entry['container'] and c['image'] == entry['image']):
+            raise AssertionError
+        if not (c.get('command', []) == entry['command'] and c.get('args', []) == entry['args']):
+            raise AssertionError
         if entry['kind'] == 'DaemonSet':
             for index in range(entry['count']):
                 if index == entry['index']: continue
                 actual = pod['containers'][index]
                 expected = entry['fixture']['spec']['template']['spec']['containers'][index]
-                assert actual['name'] == expected['name'] and actual['image'] == expected['image']
-                assert actual['securityContext']['privileged'] is True
-            assert doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']
+                if not (actual['name'] == expected['name'] and actual['image'] == expected['image']):
+                    raise AssertionError
+                if not (actual['securityContext']['privileged'] is True):
+                    raise AssertionError
+            if not (doc['spec']['updateStrategy'] == entry['fixture']['spec']['updateStrategy']):
+                raise AssertionError
 
 
     def expected_spec(doc, entry):
@@ -343,23 +352,29 @@ data:
 
     def storage_healthy(volumes, nodes):
         """Reject active degradation; detached idle volumes may have unknown health."""
-        assert volumes.get('items'), 'No Longhorn volume status available'
-        assert nodes.get('items'), 'No Longhorn node status available'
+        if not (volumes.get('items')):
+            raise AssertionError('No Longhorn volume status available')
+        if not (nodes.get('items')):
+            raise AssertionError('No Longhorn node status available')
         for volume in volumes['items']:
             status = volume.get('status', {})
             detached = status.get('state') == 'detached'
             acceptable = (status.get('robustness') in ('healthy', 'unknown') if detached
                           else status.get('state') == 'attached' and status.get('robustness') == 'healthy')
-            assert acceptable and status.get('restoreRequired') is False, 'Longhorn storage is not stable and healthy'
+            if not (acceptable and status.get('restoreRequired') is False):
+                raise AssertionError('Longhorn storage is not stable and healthy')
         for node in nodes['items']:
             status = node.get('status', {})
             conditions = {c['type']: c['status'] for c in status.get('conditions', [])}
-            assert conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True', 'Longhorn node is not ready/schedulable'
+            if not (conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True'):
+                raise AssertionError('Longhorn node is not ready/schedulable')
             disks = status.get('diskStatus', {})
-            assert disks, 'No Longhorn disk status available'
+            if not (disks):
+                raise AssertionError('No Longhorn disk status available')
             for disk in disks.values():
                 conditions = {c['type']: c['status'] for c in disk.get('conditions', [])}
-                assert conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True', 'Longhorn disk is not ready/schedulable'
+                if not (conditions.get('Ready') == 'True' and conditions.get('Schedulable') == 'True'):
+                    raise AssertionError('Longhorn disk is not ready/schedulable')
 
 
     def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.io/serviceaccount')):
@@ -399,9 +414,11 @@ data:
                 storage_check()
                 for entry in entries:
                     original = request(entry); reviewed(original, entry)
-                    assert ready(original), f'{entry["name"]}: workload is not fully healthy'
+                    if not (ready(original)):
+                        raise AssertionError(f'{entry["name"]}: workload is not fully healthy')
                     preview = request(entry, annotation_patch(original), dry=True)
-                    assert preview['spec'] == expected_spec(original, entry), f'{entry["name"]}: unexpected or absent admission mutation'
+                    if not (preview['spec'] == expected_spec(original, entry)):
+                        raise AssertionError(f'{entry["name"]}: unexpected or absent admission mutation')
                 break
             except AssertionError:
                 if attempt == 29: raise
@@ -410,16 +427,20 @@ data:
             storage_check()
             # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.
             original = request(entry); reviewed(original, entry)
-            assert ready(original), f'{entry["name"]}: became unhealthy before mutation'
+            if not (ready(original)):
+                raise AssertionError(f'{entry["name"]}: became unhealthy before mutation')
             expected = expected_spec(original, entry)
             if original['spec'] != expected:
                 patch = annotation_patch(original)
-                assert request(entry, patch, dry=True)['spec'] == expected
-                assert request(entry, patch)['spec'] == expected
+                if not (request(entry, patch, dry=True)['spec'] == expected):
+                    raise AssertionError
+                if not (request(entry, patch)['spec'] == expected):
+                    raise AssertionError
             deadline = time.monotonic()+300
             while True:
                 current = request(entry)
-                assert current['spec'] == expected, f'{entry["name"]}: spec changed during rollout'
+                if not (current['spec'] == expected):
+                    raise AssertionError(f'{entry["name"]}: spec changed during rollout')
                 if ready(current): break
                 if time.monotonic() >= deadline: raise RuntimeError(f'{entry["name"]}: rollout timed out; later targets were not changed')
                 time.sleep(3)
@@ -428,7 +449,8 @@ data:
         for path in ['/', '/v1']:
             req = urllib.request.Request('http://longhorn-frontend'+path)
             with opener.open(req, timeout=15) as response:
-                assert response.status == 200, 'UI HTTP check failed'
+                if not (response.status == 200):
+                    raise AssertionError('UI HTTP check failed')
         print('Component backfill complete; UI static and API proxy HTTP checks passed', flush=True)
 
 

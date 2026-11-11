@@ -69,7 +69,10 @@ def load_documents(path: Path) -> list[tuple[int, dict]]:
     try:
         raw_documents = list(yaml.safe_load_all(path.read_text(encoding="utf-8")))
     except yaml.YAMLError as exc:
-        raise RuntimeError(f"{path}: unable to parse YAML: {exc}") from exc
+        # Parser exceptions can quote Secret values from the source document.
+        mark = getattr(exc, "problem_mark", None)
+        location = f" at line {mark.line + 1}, column {mark.column + 1}" if mark else ""
+        raise RuntimeError(f"{path}: unable to parse YAML{location}") from None
 
     documents = []
     for index, document in enumerate(raw_documents, start=1):

@@ -97,10 +97,12 @@ def compliant(policy):
 
 def image_repository(image):
     """Remove a tag/digest while preserving an explicit registry and port."""
-    assert isinstance(image, str) and image and not any(c.isspace() for c in image)
+    if not (isinstance(image, str) and image and not any(c.isspace() for c in image)):
+        raise AssertionError
     image = image.split('@', 1)[0]
     slash = image.rfind('/')
-    assert slash > 0, 'Reviewed images require an explicit registry/repository'
+    if not (slash > 0):
+        raise AssertionError('Reviewed images require an explicit registry/repository')
     colon = image.rfind(':')
     return image[:colon] if colon > slash else image
 
@@ -114,17 +116,22 @@ def image_expression(image):
 def approved(policy, allowed):
     clauses = []
     for name, rule in sorted(allowed.items()):
-        assert rule['image'] and '*' not in rule['image']
+        if not (rule['image'] and '*' not in rule['image']):
+            raise AssertionError
         fields = [f'c.name == {literal(name)}', image_expression(rule['image'])]
         if policy == 'require-run-as-nonroot':
             fields.append('c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0')
         if policy == 'require-drop-all-capabilities' and not rule.get('requirePrivileged'):
-            assert set(rule) in ({'image', 'capabilities'}, {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'})
+            if not (set(rule) in ({'image', 'capabilities'}, {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'})):
+                raise AssertionError
             caps = rule['capabilities']
-            assert isinstance(caps, list)
-            assert caps and len(caps) == len(set(caps))
+            if not (isinstance(caps, list)):
+                raise AssertionError
+            if not (caps and len(caps) == len(set(caps))):
+                raise AssertionError
             if 'runAsUser' not in rule:
-                assert set(caps) <= {'CHOWN', 'DAC_OVERRIDE', 'DAC_READ_SEARCH', 'FOWNER'}
+                if not (set(caps) <= {'CHOWN', 'DAC_OVERRIDE', 'DAC_READ_SEARCH', 'FOWNER'}):
+                    raise AssertionError
             actual = 'c.?securityContext.?capabilities.?add.orValue([])'
             fields.extend([
                 'c.?securityContext.?privileged.orValue(false) == false',
@@ -135,14 +142,18 @@ def approved(policy, allowed):
                 f'{actual}.all(cap, cap in {literal(caps)})',
                 f'{literal(caps)}.all(cap, cap in {actual})'])
         if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict') and rule.get('requirePrivileged'):
-            assert set(rule) == {'image', 'requirePrivileged', 'capabilityDeclaration', 'seccompDeclaration'}
-            assert rule['requirePrivileged'] is True
+            if not (set(rule) == {'image', 'requirePrivileged', 'capabilityDeclaration', 'seccompDeclaration'}):
+                raise AssertionError
+            if not (rule['requirePrivileged'] is True):
+                raise AssertionError
             fields.extend([
                 f'c.?securityContext.?capabilities.orValue({{}}) == {literal(rule["capabilityDeclaration"])}',
                 f'c.?securityContext.?seccompProfile.orValue({{}}) == {literal(rule["seccompDeclaration"])}'])
         if rule.get('requireHardened'):
-            assert policy == 'require-run-as-nonroot'
-            assert set(rule) == {'image', 'requireHardened'}
+            if not (policy == 'require-run-as-nonroot'):
+                raise AssertionError
+            if not (set(rule) == {'image', 'requireHardened'}):
+                raise AssertionError
             fields.extend([
                 'c.?securityContext.?runAsUser.orValue(-1) == 0',
                 'c.?securityContext.?runAsGroup.orValue(-1) == 0',
@@ -161,11 +172,13 @@ def guard_terms(variable, expected):
     """Pin reviewed guards; capability set order is immaterial."""
     terms = []
     for field, value in sorted(expected.items()):
-        assert field in {'privileged', 'allowPrivilegeEscalation', 'readOnlyRootFilesystem',
-                         'runAsNonRoot', 'runAsUser', 'runAsGroup', 'seccompProfile', 'capabilities'}
+        if not (field in {'privileged', 'allowPrivilegeEscalation', 'readOnlyRootFilesystem',
+                         'runAsNonRoot', 'runAsUser', 'runAsGroup', 'seccompProfile', 'capabilities'}):
+            raise AssertionError
         actual = f'{variable}.?securityContext.?{field}'
         if field == 'capabilities':
-            assert set(value) <= {'add', 'drop'}
+            if not (set(value) <= {'add', 'drop'}):
+                raise AssertionError
             for operation in ['add', 'drop']:
                 caps = value.get(operation, [])
                 current = f'{actual}.?{operation}.orValue([])'
@@ -183,55 +196,81 @@ def guard_terms(variable, expected):
 def expression(entry, policy):
     config = entry['policies'][policy]
     if is_speaker(entry):
-        assert set(entry['policies']) == {'require-run-as-nonroot', 'require-drop-all-capabilities'}
-        assert entry['serviceAccount'] == 'metallb-speaker'
-        assert entry['requiredGuards'] == {'containers': {'speaker': SPEAKER_GUARDS}}
+        if not (set(entry['policies']) == {'require-run-as-nonroot', 'require-drop-all-capabilities'}):
+            raise AssertionError
+        if not (entry['serviceAccount'] == 'metallb-speaker'):
+            raise AssertionError
+        if not (entry['requiredGuards'] == {'containers': {'speaker': SPEAKER_GUARDS}}):
+            raise AssertionError
         for reviewed in entry['policies'].values():
-            assert set(reviewed.get('containers', {})) == {'speaker'}
-            assert not reviewed.get('initContainers') and not reviewed.get('ephemeralContainers')
-            assert image_repository(reviewed['containers']['speaker']['image']) == 'quay.io/metallb/speaker'
+            if not (set(reviewed.get('containers', {})) == {'speaker'}):
+                raise AssertionError
+            if not (not reviewed.get('initContainers') and not reviewed.get('ephemeralContainers')):
+                raise AssertionError
+            if not (image_repository(reviewed['containers']['speaker']['image']) == 'quay.io/metallb/speaker'):
+                raise AssertionError
     if policy in ('require-drop-all-capabilities', 'restrict-seccomp-strict'):
         for section, rules in config.items():
             for name, rule in rules.items():
                 if not rule.get('requirePrivileged'):
-                    assert policy != 'restrict-seccomp-strict'
+                    if not (policy != 'restrict-seccomp-strict'):
+                        raise AssertionError
                     continue
-                assert 'disallow-privileged-containers' in entry['policies']
+                if not ('disallow-privileged-containers' in entry['policies']):
+                    raise AssertionError
                 reviewed = entry['policies']['disallow-privileged-containers'].get(section, {})
-                assert name in reviewed and reviewed[name]['image'] == rule['image']
+                if not (name in reviewed and reviewed[name]['image'] == rule['image']):
+                    raise AssertionError
                 snapshot = next(c for c in entry['snapshot'][section] if c['name'] == name)
                 sc = snapshot['securityContext']
-                assert sc['privileged'] is True and snapshot['image'] == rule['image']
-                assert rule['capabilityDeclaration'] == sc.get('capabilities', {})
-                assert rule['seccompDeclaration'] == sc.get('seccompProfile', {})
+                if not (sc['privileged'] is True and snapshot['image'] == rule['image']):
+                    raise AssertionError
+                if not (rule['capabilityDeclaration'] == sc.get('capabilities', {})):
+                    raise AssertionError
+                if not (rule['seccompDeclaration'] == sc.get('seccompProfile', {})):
+                    raise AssertionError
     if policy == 'require-drop-all-capabilities':
-        assert not config.get('ephemeralContainers')
-        assert config.get('initContainers') or config.get('containers')
+        if not (not config.get('ephemeralContainers')):
+            raise AssertionError
+        if not (config.get('initContainers') or config.get('containers')):
+            raise AssertionError
         for name, rule in config.get('initContainers', {}).items():
             if rule.get('requirePrivileged'):
                 continue
             root_roles = entry['policies']['require-run-as-nonroot'].get('initContainers', {})
-            assert name in root_roles and root_roles[name]['image'] == rule['image']
-            assert set(rule) == {'image', 'capabilities'}
+            if not (name in root_roles and root_roles[name]['image'] == rule['image']):
+                raise AssertionError
+            if not (set(rule) == {'image', 'capabilities'}):
+                raise AssertionError
         for name, rule in config.get('containers', {}).items():
             if rule.get('requirePrivileged'):
                 continue
             if is_speaker(entry):
-                assert name == 'speaker'
-                assert set(rule) == {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'}
-                assert rule['capabilities'] == ['NET_RAW'] and rule['runAsUser'] == 0
-                assert rule['allowPrivilegeEscalation'] is False
+                if not (name == 'speaker'):
+                    raise AssertionError
+                if not (set(rule) == {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'}):
+                    raise AssertionError
+                if not (rule['capabilities'] == ['NET_RAW'] and rule['runAsUser'] == 0):
+                    raise AssertionError
+                if not (rule['allowPrivilegeEscalation'] is False):
+                    raise AssertionError
                 continue
-            assert entry['kind'] == 'Deployment'
+            if not (entry['kind'] == 'Deployment'):
+                raise AssertionError
             key = (entry['namespace'], entry['name'], name)
-            assert key in APPLICATION_CAPABILITIES
+            if not (key in APPLICATION_CAPABILITIES):
+                raise AssertionError
             caps, uid, escalation = APPLICATION_CAPABILITIES[key]
-            assert set(rule) == {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'}
-            assert set(rule['capabilities']) == caps
-            assert rule['runAsUser'] == uid and rule['allowPrivilegeEscalation'] is escalation
+            if not (set(rule) == {'image', 'capabilities', 'runAsUser', 'allowPrivilegeEscalation'}):
+                raise AssertionError
+            if not (set(rule['capabilities']) == caps):
+                raise AssertionError
+            if not (rule['runAsUser'] == uid and rule['allowPrivilegeEscalation'] is escalation):
+                raise AssertionError
             review_policy = 'disallow-privilege-escalation' if escalation else 'require-run-as-nonroot'
             reviewed = entry['policies'][review_policy]['containers']
-            assert name in reviewed and reviewed[name]['image'] == rule['image']
+            if not (name in reviewed and reviewed[name]['image'] == rule['image']):
+                raise AssertionError
     ok = compliant(policy)
     terms = []
     actual = []
@@ -241,21 +280,27 @@ def expression(entry, policy):
         terms.append(f'{collection}.all(c, ({ok}) || {allow})')
         if allow != 'false':
             actual.append(f'{collection}.exists(c, !({ok}) && {allow})')
-    assert actual
+    if not (actual):
+        raise AssertionError
     terms.append('(' + ' || '.join(actual) + ')')
     for section, roles in entry.get('requiredGuards', {}).items():
-        assert section in ('containers', 'initContainers')
+        if not (section in ('containers', 'initContainers')):
+            raise AssertionError
         for name, guards in roles.items():
             companion = entry.get('reviewedCompanions', {}).get(section, {}).get(name)
-            assert any(name in config.get(section, {}) for config in entry['policies'].values()) or companion
-            assert guards
+            if not (any(name in config.get(section, {}) for config in entry['policies'].values()) or companion):
+                raise AssertionError
+            if not (guards):
+                raise AssertionError
             conditions = guard_terms('c', guards)
             if companion:
                 # This only constrains an already compliant companion; it never
                 # grants an exception role or bypasses any policy's compliant().
-                assert set(companion) == {'image'}
+                if not (set(companion) == {'image'}):
+                    raise AssertionError
                 snapshot = next(c for c in entry['snapshot'][section] if c['name'] == name)
-                assert snapshot['image'] == companion['image']
+                if not (snapshot['image'] == companion['image']):
+                    raise AssertionError
                 conditions.append(image_expression(companion['image']))
             terms.append(f'p.spec.?{section}.orValue([]).exists(c, c.name == {literal(name)} && ' +
                          ' && '.join(conditions) + ')')
@@ -278,13 +323,17 @@ def exception_name(entry, policy):
 
 
 def generate(catalog):
-    assert catalog['exceptionNamespace'] == 'kyverno'
+    if not (catalog['exceptionNamespace'] == 'kyverno'):
+        raise AssertionError
     names = set()
     for entry in catalog['entries']:
-        assert entry['namespace'] not in ('kyverno', 'kube-system', 'crowdsec', 'lenka')
-        assert entry['labels'] and entry['reason'] and entry['evidence']
+        if not (entry['namespace'] not in ('kyverno', 'kube-system', 'crowdsec', 'lenka')):
+            raise AssertionError
+        if not (entry['labels'] and entry['reason'] and entry['evidence']):
+            raise AssertionError
         for policy in sorted(entry['policies']):
-            assert policy in POLICIES
+            if not (policy in POLICIES):
+                raise AssertionError
             cap_properties = {}
             if policy == 'require-drop-all-capabilities':
                 for section, key in [('initContainers', 'approved-init-capabilities'), ('containers', 'approved-main-capabilities')]:
@@ -292,7 +341,8 @@ def generate(catalog):
                     if rules:
                         cap_properties[key] = literal({name: rule.get('capabilities', 'existing reviewed privileged mode') for name, rule in rules.items()})
             name = exception_name(entry, policy)
-            assert name not in names
+            if not (name not in names):
+                raise AssertionError
             names.add(name)
             yield {'apiVersion': 'policies.kyverno.io/v1', 'kind': 'PolicyException',
                    'metadata': {'name': name, 'namespace': catalog['exceptionNamespace']},

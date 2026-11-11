@@ -126,7 +126,8 @@ def main():
         path = args.output / name
         subset(tests[name], keys, path)
     sampled = coverage(read_tests(args.output / 'baseline'))
-    assert sampled == coverage(read_tests(args.output / 'optimized'))
+    if not (sampled == coverage(read_tests(args.output / 'optimized'))):
+        raise AssertionError
     report['sample_assertions'] = sum(sampled.values())
     for name in tests:
         start = time.monotonic()

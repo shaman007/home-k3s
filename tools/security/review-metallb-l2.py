@@ -40,24 +40,32 @@ def main():
     parser.add_argument('--live', action='store_true', help='Also inspect live configuration, read-only')
     args = parser.parse_args()
     chart = yaml.safe_load((args.chart / 'Chart.yaml').read_text())
-    assert chart['name'] == 'metallb' and chart['version'] == '0.16.1', 'Unreviewed chart'
+    if not (chart['name'] == 'metallb' and chart['version'] == '0.16.1'):
+        raise AssertionError('Unreviewed chart')
     app = yaml.safe_load((ROOT / 'argocd/application-metallb.yaml').read_text())
-    assert app['spec']['source']['targetRevision'] == chart['version']
-    assert app['spec']['syncPolicy']['automated']['prune'] is False, 'Migration must not auto-prune'
+    if not (app['spec']['source']['targetRevision'] == chart['version']):
+        raise AssertionError
+    if not (app['spec']['syncPolicy']['automated']['prune'] is False):
+        raise AssertionError('Migration must not auto-prune')
     values = yaml.safe_load(app['spec']['source']['helm']['values'])
-    assert values['loadBalancerClass'] == 'metallb-l2'
-    assert values['frrk8s'] == {'enabled': False, 'external': False}
-    assert values['speaker']['frr']['enabled'] is False
+    if not (values['loadBalancerClass'] == 'metallb-l2'):
+        raise AssertionError
+    if not (values['frrk8s'] == {'enabled': False, 'external': False}):
+        raise AssertionError
+    if not (values['speaker']['frr']['enabled'] is False):
+        raise AssertionError
     previous = copy.deepcopy(values)
     previous['frrk8s']['enabled'] = True
     before, after = render(args.chart, previous), render(args.chart, values)
-    assert not after.keys() - before.keys(), 'Unexpected new resources'
+    if not (not after.keys() - before.keys()):
+        raise AssertionError('Unexpected new resources')
     removed = sorted(before.keys() - after.keys())
     inventory = json.loads((ROOT / 'tools/security/metallb-frr-retirement-inventory.json').read_text())
     expected = {(entry['kind'], entry['name']) for entry in inventory['retire'] + inventory['retain']}
     # The subchart also generates one TLS Secret; it is intentionally not read.
     expected.discard(('Secret', 'frr-k8s-webhook-server-cert'))
-    assert set(removed) == expected, 'Retirement inventory differs from chart'
+    if not (set(removed) == expected):
+        raise AssertionError('Retirement inventory differs from chart')
     changed = []
     for identity in before.keys() & after.keys():
         original, actual = copy.deepcopy(before[identity]), after[identity]
@@ -71,25 +79,36 @@ def main():
             original['rules'] = [rule for rule in original['rules'] if rule.get('apiGroups') != ['frrk8s.metallb.io']]
         else:
             raise AssertionError('Unexpected changed resource: ' + str(identity))
-        assert original == actual, 'Unexpected change within ' + str(identity)
-    assert len(changed) == 3, 'Expected only controller/speaker backend and speaker RBAC changes'
+        if not (original == actual):
+            raise AssertionError('Unexpected change within ' + str(identity))
+    if not (len(changed) == 3):
+        raise AssertionError('Expected only controller/speaker backend and speaker RBAC changes')
     speaker = after[('DaemonSet', 'metallb-speaker')]['spec']
     pod = speaker['template']['spec']
-    assert pod['securityContext'] == {
+    if not (pod['securityContext'] == {
         'runAsNonRoot': False, 'runAsUser': 0, 'runAsGroup': 0,
-        'seccompProfile': {'type': 'RuntimeDefault'}}, 'Retain the reviewed root identity'
-    assert speaker['updateStrategy'] == {'type': 'RollingUpdate', 'rollingUpdate': {'maxUnavailable': 1}}
-    assert pod['hostNetwork'] is True and not pod.get('hostPID') and not pod.get('hostIPC')
-    assert not pod.get('initContainers'), 'Unexpected speaker init container'
-    assert len(pod['containers']) == 1
+        'seccompProfile': {'type': 'RuntimeDefault'}}):
+        raise AssertionError('Retain the reviewed root identity')
+    if not (speaker['updateStrategy'] == {'type': 'RollingUpdate', 'rollingUpdate': {'maxUnavailable': 1}}):
+        raise AssertionError
+    if not (pod['hostNetwork'] is True and not pod.get('hostPID') and not pod.get('hostIPC')):
+        raise AssertionError
+    if not (not pod.get('initContainers')):
+        raise AssertionError('Unexpected speaker init container')
+    if not (len(pod['containers']) == 1):
+        raise AssertionError
     container = pod['containers'][0]
-    assert container['securityContext'] == {
+    if not (container['securityContext'] == {
         'allowPrivilegeEscalation': False, 'readOnlyRootFilesystem': True,
-        'capabilities': {'drop': ['ALL'], 'add': ['NET_RAW']}}, 'Required raw L2 capability changed'
-    assert all(port['containerPort'] > 1024 for port in container['ports'])
-    assert all(set(volume) <= {'name', 'secret', 'configMap'} for volume in pod['volumes']), 'fsGroup review excludes persistent/host volumes'
+        'capabilities': {'drop': ['ALL'], 'add': ['NET_RAW']}}):
+        raise AssertionError('Required raw L2 capability changed')
+    if not (all(port['containerPort'] > 1024 for port in container['ports'])):
+        raise AssertionError
+    if not (all(set(volume) <= {'name', 'secret', 'configMap'} for volume in pod['volumes'])):
+        raise AssertionError('fsGroup review excludes persistent/host volumes')
     exclude = next(volume for volume in pod['volumes'] if volume['name'] == 'metallb-excludel2')
-    assert exclude['configMap']['defaultMode'] == 0o400, 'Unexpected config mode'
+    if not (exclude['configMap']['defaultMode'] == 0o400):
+        raise AssertionError('Unexpected config mode')
     print('Restored speaker identity, NET_RAW, projected-only volumes and one-at-a-time rollout verified.')
     print('Chart review passed: 3 narrowly changed resources; 17 FRR resources leave desired state, including 4 retained CRDs.')
     if args.live:
@@ -99,15 +118,20 @@ def main():
             return json.loads(run(*command))['items']
         for resource in ['bgppeers.metallb.io', 'bgpadvertisements.metallb.io',
                          'frrconfigurations.frrk8s.metallb.io', 'frrk8sconfigurations.frrk8s.metallb.io']:
-            assert not get(resource), 'BGP/FRR configuration exists: ' + resource
+            if not (not get(resource)):
+                raise AssertionError('BGP/FRR configuration exists: ' + resource)
         ads = get('l2advertisements.metallb.io', 'metallb-system')
         pools = get('ipaddresspools.metallb.io', 'metallb-system')
-        assert ads and pools, 'L2 configuration missing'
+        if not (ads and pools):
+            raise AssertionError('L2 configuration missing')
         services = [service for service in get('services') if service['spec'].get('type') == 'LoadBalancer']
-        assert services, 'No LoadBalancer services'
+        if not (services):
+            raise AssertionError('No LoadBalancer services')
         for service in services:
-            assert service['spec'].get('loadBalancerClass') == 'metallb-l2', 'Unexpected LoadBalancer class'
-            assert service.get('status', {}).get('loadBalancer', {}).get('ingress'), 'Unassigned LoadBalancer'
+            if not (service['spec'].get('loadBalancerClass') == 'metallb-l2'):
+                raise AssertionError('Unexpected LoadBalancer class')
+            if not (service.get('status', {}).get('loadBalancer', {}).get('ingress')):
+                raise AssertionError('Unassigned LoadBalancer')
         print(f'Live prerequisites passed: no BGP/FRR configs; {len(pools)} pools, {len(ads)} L2 advertisements, {len(services)} assigned L2 services.')
         print('This does not prove post-rollout ARP/NDP reachability. Verify from the LAN after backend or identity changes.')
 

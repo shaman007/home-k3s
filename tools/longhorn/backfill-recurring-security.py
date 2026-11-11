@@ -25,17 +25,25 @@ SECURITY = {'runAsNonRoot': True, 'runAsUser': 1000, 'runAsGroup': 1000,
 def reviewed(document, name):
     meta = document['metadata']
     spec = document['spec']['jobTemplate']['spec']['template']['spec']
-    assert meta['namespace'] == NAMESPACE and meta['name'] == name
-    assert meta['labels']['longhorn.io/managed-by'] == 'longhorn-manager'
-    assert meta['labels']['recurring-job.longhorn.io'] == name
-    assert any(o['kind'] == 'RecurringJob' and o['name'] == name
-               and o['apiVersion'] == 'longhorn.io/v1beta2' for o in meta['ownerReferences'])
-    assert spec['serviceAccountName'] == 'longhorn-service-account'
-    assert len(spec['containers']) == 1 and not spec.get('initContainers')
+    if not (meta['namespace'] == NAMESPACE and meta['name'] == name):
+        raise AssertionError
+    if not (meta['labels']['longhorn.io/managed-by'] == 'longhorn-manager'):
+        raise AssertionError
+    if not (meta['labels']['recurring-job.longhorn.io'] == name):
+        raise AssertionError
+    if not (any(o['kind'] == 'RecurringJob' and o['name'] == name
+               and o['apiVersion'] == 'longhorn.io/v1beta2' for o in meta['ownerReferences'])):
+        raise AssertionError
+    if not (spec['serviceAccountName'] == 'longhorn-service-account'):
+        raise AssertionError
+    if not (len(spec['containers']) == 1 and not spec.get('initContainers')):
+        raise AssertionError
     container = spec['containers'][0]
-    assert container['name'] == name and container['image'] == IMAGE
-    assert container['command'] == ['longhorn-manager', '-d', 'recurring-job', name,
-                                    '--manager-url', 'http://longhorn-backend:9500/v1']
+    if not (container['name'] == name and container['image'] == IMAGE):
+        raise AssertionError
+    if not (container['command'] == ['longhorn-manager', '-d', 'recurring-job', name,
+                                    '--manager-url', 'http://longhorn-backend:9500/v1']):
+        raise AssertionError
     return spec
 
 
@@ -91,7 +99,8 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
                     continue
                 patch = annotation_patch(original)
                 preview = request(name, patch, dry=True)
-                assert preview['spec'] == expected, f'{name}: admission mutation absent or unexpected spec change'
+                if not (preview['spec'] == expected):
+                    raise AssertionError(f'{name}: admission mutation absent or unexpected spec change')
                 pending.append((name, original, patch, expected))
             break
         except AssertionError:
@@ -99,8 +108,10 @@ def main(config_dir=Path('/config'), account=Path('/var/run/secrets/kubernetes.i
             time.sleep(3)  # Allow the API server's admission-policy cache to converge.
     for name, original, patch, expected in pending:
         result = request(name, patch)
-        assert result['spec'] == expected, f'{name}: persisted spec differs from preflight'
-        assert request(name)['spec'] == expected, f'{name}: read-back differs from preflight'
+        if not (result['spec'] == expected):
+            raise AssertionError(f'{name}: persisted spec differs from preflight')
+        if not (request(name)['spec'] == expected):
+            raise AssertionError(f'{name}: read-back differs from preflight')
         print(f'{name}: hardened and read-back verified', flush=True)
     print('Recurring-job security backfill complete', flush=True)
 
