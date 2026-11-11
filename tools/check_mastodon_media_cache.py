@@ -11,6 +11,9 @@ import argparse
 import hashlib
 import http.client
 import json
+import os
+import re
+import selectors
 import socket
 import subprocess
 import time
@@ -34,21 +37,39 @@ def fetch(port, path, headers=None):
         connection.close()
 
 
-def forwarded_port(process):
-    """Read the selected loopback port and retain bounded connection readiness checks."""
-    line = process.stdout.readline()
-    if not line.startswith("Forwarding from 127.0.0.1:"):
+def forwarding_announcement(process, deadline):
+    """Read a bounded announcement without blocking on a quiet or partial pipe line."""
+    output = bytearray()
+    with selectors.DefaultSelector() as selector:
+        selector.register(process.stdout, selectors.EVENT_READ)
+        while b"\n" not in output:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not selector.select(remaining):
+                raise RuntimeError("loopback port-forward announcement timed out")
+            chunk = os.read(process.stdout.fileno(), 4096)
+            if not chunk or len(output) + len(chunk) > 4096:
+                raise RuntimeError("Could not start loopback port-forward")
+            output.extend(chunk)
+    return bytes(output).split(b"\n", 1)[0]
+
+
+def forwarded_port(process, timeout=15):
+    """Require a valid announcement and successful loopback connection before the deadline."""
+    deadline = time.monotonic() + timeout
+    line = forwarding_announcement(process, deadline)
+    match = re.fullmatch(rb"Forwarding from 127\.0\.0\.1:([0-9]{1,5}) -> 8080", line)
+    if not match or not 1 <= int(match[1]) <= 65535:
         raise RuntimeError("Could not start loopback port-forward")
-    port = int(line.split("127.0.0.1:", 1)[1].split(" ", 1)[0])
-    for _ in range(100):
+    port = int(match[1])
+    while (remaining := deadline - time.monotonic()) > 0:
         if process.poll() is not None:
             raise RuntimeError("port-forward exited")
         try:
-            with socket.create_connection(("127.0.0.1", port), timeout=0.1):
-                break
+            with socket.create_connection(("127.0.0.1", port), timeout=min(0.1, remaining)):
+                return port
         except OSError:
-            time.sleep(0.1)
-    return port
+            time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+    raise RuntimeError("loopback port-forward readiness timed out")
 
 
 def check_fixture(pod, port, args):

@@ -350,7 +350,6 @@ class RuntimeResourceCleanupTests(unittest.TestCase):
         spec.loader.exec_module(probe)
         process = MagicMock()
         process.__enter__.return_value = process
-        process.stdout.readline.return_value = "not a forwarding announcement"
         pods = {
             "items": [
                 {"metadata": {"name": name}, "status": {"phase": "Running"}}
@@ -361,6 +360,7 @@ class RuntimeResourceCleanupTests(unittest.TestCase):
         with (
             patch.object(probe.subprocess, "run", return_value=response),
             patch.object(probe.subprocess, "Popen", return_value=process),
+            patch.object(probe, "forwarding_announcement", return_value=b"malformed"),
             patch("sys.argv", ["media-probe"]),
         ):
             with self.assertRaisesRegex(RuntimeError, "loopback port-forward"):

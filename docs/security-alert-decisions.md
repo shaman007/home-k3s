@@ -2981,3 +2981,27 @@ was accessed. Scanner findings remain open pending published rescanning/review.
 No alert was dismissed, no suppression was added and no push was performed.
 
 The full suite ran 548 tests successfully with 16 skips using isolated JSON::PP.
+
+
+### Bound port-forward announcements and require actual readiness
+
+The retained media-cache probe previously called blocking stdout.readline before
+its connection loop, so a quiet or partial-line kubectl process could hang forever.
+After 100 failed connections it also returned the announced port without a success.
+Replaced this with selector-based pipe reads capped at 4 KiB and one 15-second
+monotonic deadline covering announcement plus connection readiness. Parsing now
+requires the explicit 127.0.0.1 endpoint, a valid TCP port and target 8080. A port
+is returned only after a successful bounded connection; expiry or child exit
+remains a failure handled by the existing process cleanup. No fixture-body,
+revocation or bypass checks were removed.
+
+Four new regressions exercise real local pipes with quiet/partial output, invalid
+announcements and bounded accumulated data, valid connection/child-exit handling,
+and unreachable endpoints. Connection attempts are mocked and no process/server
+is launched. Existing malformed-announcement cleanup coverage now injects malformed
+bytes through the new reader boundary. All eighteen fixture-safety tests and the
+full suite pass: 552 tests with 16 skips using isolated JSON::PP. Full Pylint
+rates the changed modules 10/10, Ruff passes and Bandit has no analysis errors.
+No kubectl, live tunnel, credentials, container or external service was accessed.
+Scanner findings await genuine publication/rescanning and subsequent review; no
+alert was dismissed, no source suppression was added and no push was performed.
