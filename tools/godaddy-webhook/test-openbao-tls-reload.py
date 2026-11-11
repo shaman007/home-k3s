@@ -50,6 +50,7 @@ def main():
         trust = root/'trust.pem'
         trust.write_text((root/'first/tls.crt').read_text() + (root/'second/tls.crt').read_text())
         context = ssl.create_default_context(cafile=str(trust))
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         old_port, new_port = free_port(), free_port()
         config = root/'server.hcl'
         config.write_text(f'''disable_mlock = true

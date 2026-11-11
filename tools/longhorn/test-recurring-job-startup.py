@@ -77,6 +77,7 @@ def main():
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
         kube = http.server.ThreadingHTTPServer(('127.0.0.1', 0), MockAPI)
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         context.load_cert_chain(str(account / 'ca.crt'), str(root / 'key.pem'))
         kube.socket = context.wrap_socket(kube.socket, server_side=True)
         manager = http.server.ThreadingHTTPServer(('127.0.0.1', 0), MockAPI)

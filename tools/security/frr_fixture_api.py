@@ -68,5 +68,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__=='__main__':
     server=ThreadingHTTPServer(('127.0.0.1',6443),Handler)
-    context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);context.load_cert_chain('/fixture/server.crt','/fixture/server.key')
+    context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.minimum_version=ssl.TLSVersion.TLSv1_2
+    context.load_cert_chain('/fixture/server.crt','/fixture/server.key')
     server.socket=context.wrap_socket(server.socket,server_side=True);server.serve_forever()
