@@ -177,6 +177,49 @@ def admitted_longhorn_manager(document, kyverno):
         return documents[0] if documents else copy.deepcopy(document)
 
 
+def write_shard_cases(folder, shard_name, selected, name):
+    """Write batched/separate resources for one shard without changing assertion order."""
+    resources, results = ([], [])
+    count = 0
+
+    def write_test(target, documents, refs, folder=folder, shard_name=shard_name):
+        (target / "resources.yaml").write_text(yaml.safe_dump_all(documents, sort_keys=False))
+        prefix = "" if target == folder else "../"
+        test = {
+            "apiVersion": "cli.kyverno.io/v1alpha1",
+            "kind": "Test",
+            "metadata": {
+                "name": shard_name if target == folder else shard_name + "-" + target.name
+            },
+            "policies": [prefix + "policies.yaml"],
+            "resources": ["resources.yaml"],
+            "exceptions": [prefix + "exceptions.yaml"],
+            "results": refs,
+        }
+        (target / "kyverno-test.yaml").write_text(yaml.safe_dump(test, sort_keys=False))
+
+    for index, document, expected, separate in selected:
+        ref = {
+            "policy": name,
+            "kind": document["kind"],
+            "resources": [document["metadata"]["name"]],
+            "result": expected[name],
+        }
+        count += 1
+        if separate:
+            target = folder / f"case-{index:04d}"
+            target.mkdir()
+            write_test(target, [document], [ref])
+        else:
+            resources.append(document)
+            results.append(ref)
+    if results:
+        write_test(folder, resources, results)
+    if not count:
+        raise AssertionError(f"No assertions for {name}")
+    return count
+
+
 def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=256):
     """Partition assertions without changing resources or exception scope.
 
@@ -202,7 +245,7 @@ def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=25
             e
             for e in exceptions
             if any(
-                r["name"] == name and r["kind"] == policy["kind"] for r in e["spec"]["policyRefs"]
+                (r["name"] == name and r["kind"] == policy["kind"] for r in e["spec"]["policyRefs"])
             )
         ]
         for shard in range(shard_count):
@@ -211,85 +254,402 @@ def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=25
             folder.mkdir()
             (folder / "policies.yaml").write_text(yaml.safe_dump(policy, sort_keys=False))
             (folder / "exceptions.yaml").write_text(yaml.safe_dump_all(relevant, sort_keys=False))
-            resources, results = [], []
-            count = 0
-
-            def write_test(target, documents, refs, folder=folder, shard_name=shard_name):
-                (target / "resources.yaml").write_text(
-                    yaml.safe_dump_all(documents, sort_keys=False)
-                )
-                prefix = "" if target == folder else "../"
-                test = {
-                    "apiVersion": "cli.kyverno.io/v1alpha1",
-                    "kind": "Test",
-                    "metadata": {
-                        "name": shard_name if target == folder else shard_name + "-" + target.name
-                    },
-                    "policies": [prefix + "policies.yaml"],
-                    "resources": ["resources.yaml"],
-                    "exceptions": [prefix + "exceptions.yaml"],
-                    "results": refs,
-                }
-                (target / "kyverno-test.yaml").write_text(yaml.safe_dump(test, sort_keys=False))
-
-            # Round-robin assignment balances separate Pod cases and batched
-            # resources instead of concentrating expensive case types in one shard.
-            for index, document, expected, separate in selected[shard::shard_count]:
-                ref = {
-                    "policy": name,
-                    "kind": document["kind"],
-                    "resources": [document["metadata"]["name"]],
-                    "result": expected[name],
-                }
-                count += 1
-                if separate:
-                    target = folder / f"case-{index:04d}"
-                    target.mkdir()
-                    write_test(target, [document], [ref])
-                else:
-                    resources.append(document)
-                    results.append(ref)
-            if results:
-                write_test(folder, resources, results)
-            if not count:
-                raise AssertionError(f"No assertions for {name}")
-            counts[shard_name] = count
+            counts[shard_name] = write_shard_cases(
+                folder, shard_name, selected[shard::shard_count], name
+            )
     if not sum(counts.values()) == sum((len(expected) for _, expected, _ in cases)):
         raise AssertionError
     (output / "counts.json").write_text(json.dumps(counts, sort_keys=True, indent=2) + "\n")
     return counts
 
 
-def main():
-    """Exercise actual rendered CEL policies/exceptions with the pinned Kyverno CLI."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rendered", type=Path, required=True)
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Prepare sanitized policy-sharded CLI fixtures without running them",
+def variant_name(document, token, entry):
+    """Give each variant its original deterministic controller-compatible name."""
+    suffix = hashlib.sha256(
+        (entry["namespace"] + "/" + entry["name"] + token).encode()
+    ).hexdigest()[:10]
+    if entry["kind"] == "StatefulSet":
+        document["metadata"]["name"] = entry["name"] + "-" + str(int(suffix, 16))
+    elif entry["kind"] != "Pod":
+        document["metadata"]["name"] = (
+            document["metadata"]["ownerReferences"][0]["name"] + "-" + suffix
+        )
+
+
+def prepare_document(entry, actual, kyverno):
+    """Use sanitized actual workload output when present, otherwise the reviewed snapshot."""
+    document = snapshot(entry)
+    current = actual.get((entry["kind"], entry["namespace"], entry["name"]))
+    if current:
+        current = admitted_longhorn_manager(current, kyverno)
+        ps = pod_spec(current)
+        clean = {
+            k: copy.deepcopy(ps[k]) for k in ["securityContext", "serviceAccountName"] if k in ps
+        }
+        for section in ["containers", "initContainers", "ephemeralContainers"]:
+            if section in ps:
+                clean[section] = [
+                    {k: copy.deepcopy(c[k]) for k in ["name", "image", "securityContext"] if k in c}
+                    for c in ps[section]
+                ]
+        if document["kind"] == "CronJob":
+            document["spec"]["jobTemplate"]["spec"]["template"]["spec"] = clean
+        else:
+            document["spec"]["template"]["spec"] = clean
+        labels(document).clear()
+        labels(document).update(labels(current))
+    return document
+
+
+def identity_cases(case, entry, positive):
+    """Reject altered identities and regressions of required guard fields."""
+    for mutation in ["namespace", "owner", "labels", "service-account"]:
+        changed = copy.deepcopy(positive)
+        variant_name(changed, mutation, entry)
+        if mutation == "namespace":
+            changed["metadata"]["namespace"] = "unapproved-audit-target"
+        if mutation == "owner":
+            changed["metadata"]["ownerReferences"][0]["name"] = "unapproved-controller"
+        if mutation == "labels":
+            changed["metadata"]["labels"][next(iter(entry["labels"]))] = "unapproved"
+        if mutation == "service-account":
+            changed["spec"]["serviceAccountName"] = "unapproved"
+        case(changed, {p: "fail" for p in entry["policies"]}, separate=entry["kind"] == "Pod")
+    for section, roles in entry.get("requiredGuards", {}).items():
+        for role, guards in roles.items():
+            for field in ["privileged", "allowPrivilegeEscalation"]:
+                if guards.get(field) is not False:
+                    continue
+                changed = copy.deepcopy(positive)
+                variant_name(changed, role + field + "guard-regression", entry)
+                sc = next((c for c in changed["spec"][section] if c["name"] == role)).setdefault(
+                    "securityContext", {}
+                )
+                sc[field] = True
+                case(
+                    changed, {p: "fail" for p in entry["policies"]}, separate=entry["kind"] == "Pod"
+                )
+
+
+def repair_containers(changed, policy):
+    """Restore only the policy-specific compliant fields on existing containers."""
+    for c in changed["spec"].get("containers", []) + changed["spec"].get("initContainers", []):
+        sc = c.setdefault("securityContext", {})
+        if policy == "require-run-as-nonroot":
+            sc.update(runAsUser=1000, runAsNonRoot=True)
+        if policy == "disallow-privilege-escalation":
+            sc.update(allowPrivilegeEscalation=False, privileged=False)
+        if policy == "disallow-privileged-containers":
+            sc["privileged"] = False
+        if policy == "require-drop-all-capabilities":
+            sc["capabilities"] = {"drop": ["ALL"]}
+        if policy == "restrict-seccomp-strict":
+            sc["seccompProfile"] = {"type": "RuntimeDefault"}
+
+
+def policy_variants(case, entry, positive, policy, approval):
+    """Exercise image scope, extra containers and repaired-compliance behavior."""
+    for mutation in ["image", "image-version", "image-digest", "sidecar", "ephemeral", "repaired"]:
+        changed = copy.deepcopy(positive)
+        variant_name(changed, policy + mutation, entry)
+        if mutation in ("image", "image-version", "image-digest"):
+            section = next((s for s in ["containers", "initContainers"] if approval[s]))
+            name = next(iter(approval[section]))
+            c = next((c for c in changed["spec"][section] if c["name"] == name))
+            if mutation == "image":
+                c["image"] = "registry.example.invalid/changed:1"
+            else:
+                repository = c["image"].split("@", 1)[0]
+                if repository.rfind(":") > repository.rfind("/"):
+                    repository = repository.rsplit(":", 1)[0]
+                c["image"] = repository + (
+                    ":future-test-version" if mutation == "image-version" else "@sha256:" + "a" * 64
+                )
+        elif mutation in ("sidecar", "ephemeral"):
+            section = "containers" if mutation == "sidecar" else "ephemeralContainers"
+            changed["spec"].setdefault(section, []).append(
+                noncompliant_container(policy, "unapproved-audit-container")
+            )
+        else:
+            repair_containers(changed, policy)
+        case(
+            changed,
+            {
+                policy: "pass"
+                if mutation == "repaired"
+                else "skip"
+                if mutation in ("image-version", "image-digest")
+                else "fail"
+            },
+            separate=entry["kind"] == "Pod",
+        )
+
+
+def privileged_variants(case, entry, positive, policy, approval):
+    """Reject changes to privileged declarations and privileged runtime mode."""
+    for section, rules in approval.items():
+        for role, rule in rules.items():
+            if not rule.get("requirePrivileged"):
+                continue
+            for mutation in [
+                "capability-declaration",
+                "seccomp-declaration",
+                "no-longer-privileged",
+            ]:
+                changed = copy.deepcopy(positive)
+                variant_name(changed, policy + role + mutation, entry)
+                sc = next((c for c in changed["spec"][section] if c["name"] == role))[
+                    "securityContext"
+                ]
+                if mutation == "capability-declaration":
+                    sc["capabilities"] = {"add": ["NET_ADMIN"]}
+                if mutation == "seccomp-declaration":
+                    sc["seccompProfile"] = {"type": "Unconfined"}
+                if mutation == "no-longer-privileged":
+                    sc["privileged"] = False
+                case(changed, {policy: "fail"}, separate=entry["kind"] == "Pod")
+
+
+def hardened_root_variants(case, entry, positive, policy, approval):
+    """Reject regressions of the reviewed hardened-root container contract."""
+    for section in ["containers", "initContainers"]:
+        for role, rule in approval.get(section, {}).items():
+            if not rule.get("requireHardened"):
+                continue
+            for mutation in [
+                "added-capability",
+                "missing-drop",
+                "escalation",
+                "unconfined",
+                "privileged",
+                "gid",
+            ]:
+                changed = copy.deepcopy(positive)
+                variant_name(changed, policy + role + mutation, entry)
+                sc = next((c for c in changed["spec"][section] if c["name"] == role))[
+                    "securityContext"
+                ]
+                if mutation == "added-capability":
+                    sc["capabilities"]["add"] = ["CHOWN"]
+                if mutation == "missing-drop":
+                    sc["capabilities"].pop("drop")
+                if mutation == "escalation":
+                    sc["allowPrivilegeEscalation"] = True
+                if mutation == "unconfined":
+                    sc["seccompProfile"]["type"] = "Unconfined"
+                if mutation == "privileged":
+                    sc["privileged"] = True
+                if mutation == "gid":
+                    sc["runAsGroup"] = 1000
+                case(changed, {policy: "fail"})
+
+
+def mutate_capabilities(changed, section, role, rule, mutation):
+    """Alter one capability contract field without changing the surrounding fixture."""
+    helper = next((c for c in changed["spec"][section] if c["name"] == role))
+    sc = helper["securityContext"]
+    if mutation == "extra-capability":
+        sc["capabilities"]["add"].append("SYS_ADMIN")
+    if mutation == "missing-drop":
+        sc["capabilities"].pop("drop")
+    if mutation == "escalation":
+        sc["allowPrivilegeEscalation"] = not rule.get("allowPrivilegeEscalation", False)
+    if mutation == "privileged":
+        sc["privileged"] = True
+    if mutation == "changed-uid":
+        sc["runAsUser"] = rule.get("runAsUser", 0) + 1
+    if mutation == "moved-section":
+        changed["spec"][section].remove(helper)
+        destination = "initContainers" if section == "containers" else "containers"
+        changed["spec"].setdefault(destination, []).append(helper)
+    if mutation == "duplicate-capabilities":
+        caps = sc["capabilities"]["add"]
+        sc["capabilities"]["add"] = [caps[0]] * max(2, len(caps))
+    if mutation == "missing-escalation-guard":
+        sc.pop("allowPrivilegeEscalation")
+    if mutation == "reordered":
+        sc["capabilities"]["add"].reverse()
+
+
+def capability_variants(case, entry, positive, policy, approval):
+    """Exercise capability role constraints, moved sections, duplicates and ordering."""
+    for section in ["containers", "initContainers"]:
+        for role, rule in approval.get(section, {}).items():
+            if rule.get("requirePrivileged"):
+                continue
+            mutations = [
+                "extra-capability",
+                "missing-drop",
+                "escalation",
+                "privileged",
+                "changed-uid",
+                "moved-section",
+                "duplicate-capabilities",
+                "missing-escalation-guard",
+                "reordered",
+            ]
+            for mutation in mutations:
+                changed = copy.deepcopy(positive)
+                variant_name(changed, policy + role + mutation, entry)
+                mutate_capabilities(changed, section, role, rule, mutation)
+                case(
+                    changed,
+                    {policy: "skip" if mutation == "reordered" else "fail"},
+                    separate=entry["kind"] == "Pod",
+                )
+
+
+def catalog_cases(case, catalog, actual, kyverno):
+    """Append every reviewed workload and negative-policy variant in the original order."""
+    for entry in catalog["entries"]:
+        expected_skip = {p: "skip" for p in entry["policies"]}
+        document = prepare_document(entry, actual, kyverno)
+        case(document, expected_skip)
+        if entry["kind"] != "Pod":
+            positive = derived_pod(entry)
+            case(positive, expected_skip)
+        else:
+            positive = document
+        identity_cases(case, entry, positive)
+        for policy, approval in entry["policies"].items():
+            policy_variants(case, entry, positive, policy, approval)
+            if policy in ("require-drop-all-capabilities", "restrict-seccomp-strict"):
+                privileged_variants(case, entry, positive, policy, approval)
+            if policy == "require-run-as-nonroot":
+                hardened_root_variants(case, entry, positive, policy, approval)
+            if policy == "require-drop-all-capabilities":
+                capability_variants(case, entry, positive, policy, approval)
+
+
+def audit_cases(case):
+    """Append standalone capability and seccomp smoke cases with the original expectations."""
+
+    def audit_case(name, change, policy, result):
+        pod = {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {"name": name, "namespace": "audit-validation"},
+            "spec": {
+                "securityContext": {
+                    "runAsNonRoot": True,
+                    "runAsUser": 1000,
+                    "seccompProfile": {"type": "RuntimeDefault"},
+                },
+                "containers": [
+                    {
+                        "name": "app",
+                        "image": "registry.example.invalid/app:1",
+                        "securityContext": {
+                            "allowPrivilegeEscalation": False,
+                            "capabilities": {"drop": ["ALL"]},
+                        },
+                    }
+                ],
+            },
+        }
+        change(pod)
+        case(pod, {policy: result})
+
+    cap = "require-drop-all-capabilities"
+    seccomp = "restrict-seccomp-strict"
+    audit_case("cap-compliant", lambda p: None, cap, "pass")
+    audit_case(
+        "cap-missing",
+        lambda p: p["spec"]["containers"][0]["securityContext"].pop("capabilities"),
+        cap,
+        "fail",
     )
-    parser.add_argument("--kyverno", default="kyverno")
-    parser.add_argument(
-        "--max-cases-per-shard",
-        type=int,
-        default=256,
-        help="Maximum assertions per policy shard (default: 256)",
+    audit_case(
+        "cap-drop-missing",
+        lambda p: p["spec"]["containers"][0]["securityContext"]["capabilities"].pop("drop"),
+        cap,
+        "fail",
     )
-    args = parser.parse_args()
-    if args.max_cases_per_shard < 1:
-        parser.error("--max-cases-per-shard must be positive")
-    version = subprocess.check_output([args.kyverno, "version"], text=True)
-    if "1.19.2" not in version:
-        raise SystemExit("Tests require the pinned Kyverno CLI 1.19.2")
+    audit_case(
+        "cap-extra",
+        lambda p: p["spec"]["containers"][0]["securityContext"]["capabilities"].update(
+            add=["SYS_ADMIN"]
+        ),
+        cap,
+        "fail",
+    )
+    audit_case(
+        "cap-bind-service",
+        lambda p: p["spec"]["containers"][0]["securityContext"]["capabilities"].update(
+            add=["NET_BIND_SERVICE"]
+        ),
+        cap,
+        "pass",
+    )
+    for section in ["initContainers", "ephemeralContainers"]:
+        audit_case(
+            "cap-" + section.lower(),
+            lambda p, s=section: p["spec"].update(
+                {
+                    s: [
+                        {
+                            "name": "other",
+                            "image": "registry.example.invalid/app:1",
+                            "securityContext": {},
+                        }
+                    ]
+                }
+            ),
+            cap,
+            "fail",
+        )
+    audit_case("seccomp-inherit", lambda p: None, seccomp, "pass")
+    audit_case(
+        "seccomp-missing",
+        lambda p: p["spec"]["securityContext"].pop("seccompProfile"),
+        seccomp,
+        "fail",
+    )
+    audit_case(
+        "seccomp-unconfined",
+        lambda p: p["spec"]["containers"][0]["securityContext"].update(
+            seccompProfile={"type": "Unconfined"}
+        ),
+        seccomp,
+        "fail",
+    )
+    audit_case(
+        "seccomp-localhost",
+        lambda p: p["spec"]["securityContext"].update(
+            seccompProfile={"type": "Localhost", "localhostProfile": "profiles/approved.json"}
+        ),
+        seccomp,
+        "pass",
+    )
+    for section in ["initContainers", "ephemeralContainers"]:
+        audit_case(
+            "seccomp-" + section.lower(),
+            lambda p, s=section: p["spec"].update(
+                {
+                    s: [
+                        {
+                            "name": "other",
+                            "image": "registry.example.invalid/app:1",
+                            "securityContext": {"seccompProfile": {"type": "Unconfined"}},
+                        }
+                    ]
+                }
+            ),
+            seccomp,
+            "fail",
+        )
+
+
+def load_inputs(rendered_path):
+    """Load workload output and require the complete audit-only fail-open policy set."""
     applications = {
         d["metadata"]["name"]: d
         for f in (ROOT / "argocd").glob("*.yaml")
-        if isinstance(d := yaml.safe_load(f.read_text()), dict) and d.get("kind") == "Application"
+        if isinstance((d := yaml.safe_load(f.read_text())), dict) and d.get("kind") == "Application"
     }
     rendered = []
-    for name in json.loads((args.rendered / "inventory.json").read_text()):
-        for document in yaml.safe_load_all((args.rendered / (name + ".yaml")).read_text()):
+    for name in json.loads((rendered_path / "inventory.json").read_text()):
+        for document in yaml.safe_load_all((rendered_path / (name + ".yaml")).read_text()):
             if not isinstance(document, dict):
                 continue
             if document.get("kind") in ("Deployment", "StatefulSet", "DaemonSet", "CronJob", "Pod"):
@@ -320,6 +680,32 @@ def main():
         for d in rendered
         if d.get("kind") in ("Deployment", "StatefulSet", "DaemonSet", "CronJob")
     }
+    return (policies, exceptions, catalog, actual)
+
+
+def main():
+    """Exercise actual rendered CEL policies/exceptions with the pinned Kyverno CLI."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rendered", type=Path, required=True)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Prepare sanitized policy-sharded CLI fixtures without running them",
+    )
+    parser.add_argument("--kyverno", default="kyverno")
+    parser.add_argument(
+        "--max-cases-per-shard",
+        type=int,
+        default=256,
+        help="Maximum assertions per policy shard (default: 256)",
+    )
+    args = parser.parse_args()
+    if args.max_cases_per_shard < 1:
+        parser.error("--max-cases-per-shard must be positive")
+    version = subprocess.check_output([args.kyverno, "version"], text=True)
+    if "1.19.2" not in version:
+        raise SystemExit("Tests require the pinned Kyverno CLI 1.19.2")
+    policies, exceptions, catalog, actual = load_inputs(args.rendered)
     count = 0
     with tempfile.TemporaryDirectory(prefix="kyverno-audit-tests-") as temporary:
         work = Path(temporary)
@@ -330,377 +716,13 @@ def main():
             count += len(expected)
             cases.append((copy.deepcopy(document), expected.copy(), separate))
 
-        for entry in catalog["entries"]:
-            expected_skip = {p: "skip" for p in entry["policies"]}
-            document = snapshot(entry)
-            current = actual.get((entry["kind"], entry["namespace"], entry["name"]))
-            if current:
-                # Use actual chart/source output when available; operator-created
-                # workloads retain reviewed sanitized snapshots in the catalog.
-                current = admitted_longhorn_manager(current, args.kyverno)
-                ps = pod_spec(current)
-                clean = {
-                    k: copy.deepcopy(ps[k])
-                    for k in ["securityContext", "serviceAccountName"]
-                    if k in ps
-                }
-                for section in ["containers", "initContainers", "ephemeralContainers"]:
-                    if section in ps:
-                        clean[section] = [
-                            {
-                                k: copy.deepcopy(c[k])
-                                for k in ["name", "image", "securityContext"]
-                                if k in c
-                            }
-                            for c in ps[section]
-                        ]
-                if document["kind"] == "CronJob":
-                    document["spec"]["jobTemplate"]["spec"]["template"]["spec"] = clean
-                else:
-                    document["spec"]["template"]["spec"] = clean
-                labels(document).clear()
-                labels(document).update(labels(current))
-            case(document, expected_skip)
-            if entry["kind"] != "Pod":
-                positive = derived_pod(entry)
-                case(positive, expected_skip)
-            else:
-                positive = document
-
-            def variant_name(document, token, entry=entry):
-                suffix = hashlib.sha256(
-                    (entry["namespace"] + "/" + entry["name"] + token).encode()
-                ).hexdigest()[:10]
-                if entry["kind"] == "StatefulSet":
-                    # Valid unique ordinals preserve controller identity while
-                    # avoiding hundreds of separate CLI policy compilations.
-                    document["metadata"]["name"] = entry["name"] + "-" + str(int(suffix, 16))
-                elif entry["kind"] != "Pod":
-                    document["metadata"]["name"] = (
-                        document["metadata"]["ownerReferences"][0]["name"] + "-" + suffix
-                    )
-
-            for mutation in ["namespace", "owner", "labels", "service-account"]:
-                changed = copy.deepcopy(positive)
-                variant_name(changed, mutation)
-                if mutation == "namespace":
-                    changed["metadata"]["namespace"] = "unapproved-audit-target"
-                if mutation == "owner":
-                    changed["metadata"]["ownerReferences"][0]["name"] = "unapproved-controller"
-                if mutation == "labels":
-                    changed["metadata"]["labels"][next(iter(entry["labels"]))] = "unapproved"
-                if mutation == "service-account":
-                    changed["spec"]["serviceAccountName"] = "unapproved"
-                case(
-                    changed, {p: "fail" for p in entry["policies"]}, separate=entry["kind"] == "Pod"
-                )
-            for section, roles in entry.get("requiredGuards", {}).items():
-                for role, guards in roles.items():
-                    for field in ["privileged", "allowPrivilegeEscalation"]:
-                        if guards.get(field) is not False:
-                            continue
-                        changed = copy.deepcopy(positive)
-                        variant_name(changed, role + field + "guard-regression")
-                        sc = next(
-                            c for c in changed["spec"][section] if c["name"] == role
-                        ).setdefault("securityContext", {})
-                        sc[field] = True
-                        # Only noncompliant policies are expected to need the exception.
-                        case(
-                            changed,
-                            {p: "fail" for p in entry["policies"]},
-                            separate=entry["kind"] == "Pod",
-                        )
-            for policy, approval in entry["policies"].items():
-                for mutation in [
-                    "image",
-                    "image-version",
-                    "image-digest",
-                    "sidecar",
-                    "ephemeral",
-                    "repaired",
-                ]:
-                    changed = copy.deepcopy(positive)
-                    variant_name(changed, policy + mutation)
-                    if mutation in ("image", "image-version", "image-digest"):
-                        section = next(s for s in ["containers", "initContainers"] if approval[s])
-                        name = next(iter(approval[section]))
-                        c = next(c for c in changed["spec"][section] if c["name"] == name)
-                        if mutation == "image":
-                            c["image"] = "registry.example.invalid/changed:1"
-                        else:
-                            repository = c["image"].split("@", 1)[0]
-                            if repository.rfind(":") > repository.rfind("/"):
-                                repository = repository.rsplit(":", 1)[0]
-                            c["image"] = repository + (
-                                ":future-test-version"
-                                if mutation == "image-version"
-                                else "@sha256:" + "a" * 64
-                            )
-                    elif mutation in ("sidecar", "ephemeral"):
-                        section = "containers" if mutation == "sidecar" else "ephemeralContainers"
-                        changed["spec"].setdefault(section, []).append(
-                            noncompliant_container(policy, "unapproved-audit-container")
-                        )
-                    else:
-                        for c in changed["spec"].get("containers", []) + changed["spec"].get(
-                            "initContainers", []
-                        ):
-                            sc = c.setdefault("securityContext", {})
-                            if policy == "require-run-as-nonroot":
-                                sc.update(runAsUser=1000, runAsNonRoot=True)
-                            if policy == "disallow-privilege-escalation":
-                                sc.update(allowPrivilegeEscalation=False, privileged=False)
-                            if policy == "disallow-privileged-containers":
-                                sc["privileged"] = False
-                            if policy == "require-drop-all-capabilities":
-                                sc["capabilities"] = {"drop": ["ALL"]}
-                            if policy == "restrict-seccomp-strict":
-                                sc["seccompProfile"] = {"type": "RuntimeDefault"}
-                    case(
-                        changed,
-                        {
-                            policy: "pass"
-                            if mutation == "repaired"
-                            else "skip"
-                            if mutation in ("image-version", "image-digest")
-                            else "fail"
-                        },
-                        separate=entry["kind"] == "Pod",
-                    )
-                if policy in ("require-drop-all-capabilities", "restrict-seccomp-strict"):
-                    for section, rules in approval.items():
-                        for role, rule in rules.items():
-                            if not rule.get("requirePrivileged"):
-                                continue
-                            for mutation in [
-                                "capability-declaration",
-                                "seccomp-declaration",
-                                "no-longer-privileged",
-                            ]:
-                                changed = copy.deepcopy(positive)
-                                variant_name(changed, policy + role + mutation)
-                                sc = next(c for c in changed["spec"][section] if c["name"] == role)[
-                                    "securityContext"
-                                ]
-                                if mutation == "capability-declaration":
-                                    sc["capabilities"] = {"add": ["NET_ADMIN"]}
-                                if mutation == "seccomp-declaration":
-                                    sc["seccompProfile"] = {"type": "Unconfined"}
-                                if mutation == "no-longer-privileged":
-                                    sc["privileged"] = False
-                                case(changed, {policy: "fail"}, separate=entry["kind"] == "Pod")
-                if policy == "require-run-as-nonroot":
-                    for section in ["containers", "initContainers"]:
-                        for role, rule in approval.get(section, {}).items():
-                            if not rule.get("requireHardened"):
-                                continue
-                            for mutation in [
-                                "added-capability",
-                                "missing-drop",
-                                "escalation",
-                                "unconfined",
-                                "privileged",
-                                "gid",
-                            ]:
-                                changed = copy.deepcopy(positive)
-                                variant_name(changed, policy + role + mutation)
-                                sc = next(c for c in changed["spec"][section] if c["name"] == role)[
-                                    "securityContext"
-                                ]
-                                if mutation == "added-capability":
-                                    sc["capabilities"]["add"] = ["CHOWN"]
-                                if mutation == "missing-drop":
-                                    sc["capabilities"].pop("drop")
-                                if mutation == "escalation":
-                                    sc["allowPrivilegeEscalation"] = True
-                                if mutation == "unconfined":
-                                    sc["seccompProfile"]["type"] = "Unconfined"
-                                if mutation == "privileged":
-                                    sc["privileged"] = True
-                                if mutation == "gid":
-                                    sc["runAsGroup"] = 1000
-                                case(changed, {policy: "fail"})
-                if policy == "require-drop-all-capabilities":
-                    for section in ["containers", "initContainers"]:
-                        for role, rule in approval.get(section, {}).items():
-                            if rule.get("requirePrivileged"):
-                                continue
-                            mutations = [
-                                "extra-capability",
-                                "missing-drop",
-                                "escalation",
-                                "privileged",
-                                "changed-uid",
-                                "moved-section",
-                                "duplicate-capabilities",
-                                "missing-escalation-guard",
-                                "reordered",
-                            ]
-                            for mutation in mutations:
-                                changed = copy.deepcopy(positive)
-                                variant_name(changed, policy + role + mutation)
-                                helper = next(
-                                    c for c in changed["spec"][section] if c["name"] == role
-                                )
-                                sc = helper["securityContext"]
-                                if mutation == "extra-capability":
-                                    sc["capabilities"]["add"].append("SYS_ADMIN")
-                                if mutation == "missing-drop":
-                                    sc["capabilities"].pop("drop")
-                                if mutation == "escalation":
-                                    sc["allowPrivilegeEscalation"] = not rule.get(
-                                        "allowPrivilegeEscalation", False
-                                    )
-                                if mutation == "privileged":
-                                    sc["privileged"] = True
-                                if mutation == "changed-uid":
-                                    sc["runAsUser"] = rule.get("runAsUser", 0) + 1
-                                if mutation == "moved-section":
-                                    changed["spec"][section].remove(helper)
-                                    destination = (
-                                        "initContainers"
-                                        if section == "containers"
-                                        else "containers"
-                                    )
-                                    changed["spec"].setdefault(destination, []).append(helper)
-                                if mutation == "duplicate-capabilities":
-                                    caps = sc["capabilities"]["add"]
-                                    sc["capabilities"]["add"] = [caps[0]] * max(2, len(caps))
-                                if mutation == "missing-escalation-guard":
-                                    sc.pop("allowPrivilegeEscalation")
-                                if mutation == "reordered":
-                                    sc["capabilities"]["add"].reverse()
-                                case(
-                                    changed,
-                                    {policy: "skip" if mutation == "reordered" else "fail"},
-                                    separate=entry["kind"] == "Pod",
-                                )
-
-        def audit_case(name, change, policy, result):
-            pod = {
-                "apiVersion": "v1",
-                "kind": "Pod",
-                "metadata": {"name": name, "namespace": "audit-validation"},
-                "spec": {
-                    "securityContext": {
-                        "runAsNonRoot": True,
-                        "runAsUser": 1000,
-                        "seccompProfile": {"type": "RuntimeDefault"},
-                    },
-                    "containers": [
-                        {
-                            "name": "app",
-                            "image": "registry.example.invalid/app:1",
-                            "securityContext": {
-                                "allowPrivilegeEscalation": False,
-                                "capabilities": {"drop": ["ALL"]},
-                            },
-                        }
-                    ],
-                },
-            }
-            change(pod)
-            case(pod, {policy: result})
-
-        cap = "require-drop-all-capabilities"
-        seccomp = "restrict-seccomp-strict"
-        audit_case("cap-compliant", lambda p: None, cap, "pass")
-        audit_case(
-            "cap-missing",
-            lambda p: p["spec"]["containers"][0]["securityContext"].pop("capabilities"),
-            cap,
-            "fail",
-        )
-        audit_case(
-            "cap-drop-missing",
-            lambda p: p["spec"]["containers"][0]["securityContext"]["capabilities"].pop("drop"),
-            cap,
-            "fail",
-        )
-        audit_case(
-            "cap-extra",
-            lambda p: p["spec"]["containers"][0]["securityContext"]["capabilities"].update(
-                add=["SYS_ADMIN"]
-            ),
-            cap,
-            "fail",
-        )
-        audit_case(
-            "cap-bind-service",
-            lambda p: p["spec"]["containers"][0]["securityContext"]["capabilities"].update(
-                add=["NET_BIND_SERVICE"]
-            ),
-            cap,
-            "pass",
-        )
-        for section in ["initContainers", "ephemeralContainers"]:
-            audit_case(
-                "cap-" + section.lower(),
-                lambda p, s=section: p["spec"].update(
-                    {
-                        s: [
-                            {
-                                "name": "other",
-                                "image": "registry.example.invalid/app:1",
-                                "securityContext": {},
-                            }
-                        ]
-                    }
-                ),
-                cap,
-                "fail",
-            )
-        audit_case("seccomp-inherit", lambda p: None, seccomp, "pass")
-        audit_case(
-            "seccomp-missing",
-            lambda p: p["spec"]["securityContext"].pop("seccompProfile"),
-            seccomp,
-            "fail",
-        )
-        audit_case(
-            "seccomp-unconfined",
-            lambda p: p["spec"]["containers"][0]["securityContext"].update(
-                seccompProfile={"type": "Unconfined"}
-            ),
-            seccomp,
-            "fail",
-        )
-        audit_case(
-            "seccomp-localhost",
-            lambda p: p["spec"]["securityContext"].update(
-                seccompProfile={"type": "Localhost", "localhostProfile": "profiles/approved.json"}
-            ),
-            seccomp,
-            "pass",
-        )
-        for section in ["initContainers", "ephemeralContainers"]:
-            audit_case(
-                "seccomp-" + section.lower(),
-                lambda p, s=section: p["spec"].update(
-                    {
-                        s: [
-                            {
-                                "name": "other",
-                                "image": "registry.example.invalid/app:1",
-                                "securityContext": {"seccompProfile": {"type": "Unconfined"}},
-                            }
-                        ]
-                    }
-                ),
-                seccomp,
-                "fail",
-            )
+        catalog_cases(case, catalog, actual, args.kyverno)
+        audit_cases(case)
         output = args.output if args.output else work / "tests"
         counts = write_test_cases(cases, policies, exceptions, output, args.max_cases_per_shard)
         print(
-            (
-                f"Prepared "
-                f"{count}"
-                f" exact-match/negative/audit "
-                f"expectations: "
-                f"{json.dumps(counts, sort_keys=True)}"
-            ),
+            f"Prepared {count} exact-match/negative/audit expectations: "
+            f"{json.dumps(counts, sort_keys=True)}",
             flush=True,
         )
         if not args.output:

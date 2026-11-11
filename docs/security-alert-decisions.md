@@ -1650,3 +1650,32 @@ The current independently verified total is 244 open alerts: Bandit 94, modern
 Pylint 87, Prospector 56 and Opengrep 7. This includes ongoing source-scan
 reconciliation as well as the fourteen exact decisions; unreviewed launches,
 imports and other actionable findings remain open.
+
+
+### Split audit-policy case generation and shard writing without reducing coverage
+
+Separated sanitized workload preparation, deterministic variant naming, identity
+and guard negatives, policy image/container/compliance variants, privileged and
+hardened-root negatives, capability mutations, standalone smoke cases, input
+validation and shard writing. All seven original harness complexity/nesting
+warnings are gone. Extracted existing regression fixture-reading checks as well;
+both the harness and its regression module now pass full Pylint.
+
+Compared complete old/new case generation across six scenarios: forward/reversed
+catalog order, catalog snapshots, actual workload snapshots and altered actual
+security contexts/labels. All 9,996 ordered case tuples and expectation counts
+matched, and caller inputs remained unchanged. All 489 files emitted for the
+complete reviewed case corpus with fixed policy identifiers and checked-in
+exceptions were byte-identical, including shard counts and applicable exception
+scope. Independent AST checks also confirm unchanged CLI validation, complete
+input loading and every subprocess command/options expression. No real CLI,
+cluster query or policy deployment was executed for these comparisons.
+
+Three new offline regressions cover separate Pod negatives, capability reordering
+versus duplicate/moved-role refusal, and sanitization of actual workload images/
+labels without copying unrelated environment or mutating the source. Existing
+partition, shard-bound, exception-scope and noncompliant-container tests pass.
+The full suite ran 480 tests successfully with 21 opt-in skips. Full Pylint,
+Ruff and diff checks passed; Bandit reported no analysis errors. Publication and
+genuine scanner refresh remain necessary for source-based alert closure. No
+case, policy guard, scanner rule or failure gate was removed.

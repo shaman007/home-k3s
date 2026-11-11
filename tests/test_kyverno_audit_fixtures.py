@@ -40,6 +40,32 @@ class AuditFixtureTests(unittest.TestCase):
                 self.assertIsNot(result, resource)
                 run.assert_not_called()
 
+    def check_fixture_exceptions(self, file, test, exceptions):
+        """Require every applicable exception, including other namespaces, in the fixture."""
+        loaded = list(yaml.safe_load_all((file.parent / test["exceptions"][0]).read_text()))
+        expected = exceptions[:2] if test["results"][0]["policy"] == "first" else exceptions[2:]
+        self.assertEqual(loaded, expected)
+
+    def shard_expectations(self, folder, count, exceptions):
+        """Read all shard assertions while enforcing exception scope and resource identity."""
+        seen = Counter()
+        self.assertEqual(
+            list(yaml.safe_load_all((folder / "exceptions.yaml").read_text())), exceptions
+        )
+        self.assertEqual(len(list(folder.glob("case-*"))), 1)
+        actual = 0
+        for file in folder.rglob("kyverno-test.yaml"):
+            test = yaml.safe_load(file.read_text())
+            self.assertLessEqual(len(test["metadata"]["name"]), 63)
+            resources = list(yaml.safe_load_all((file.parent / test["resources"][0]).read_text()))
+            for ref in test["results"]:
+                matches = [d for d in resources if d["metadata"]["name"] == ref["resources"][0]]
+                self.assertEqual(len(matches), 1)
+                seen[json.dumps([matches[0], ref["policy"], ref["result"]], sort_keys=True)] += 1
+                actual += 1
+        self.assertEqual(actual, count)
+        return seen
+
     def test_policy_partition_preserves_assertions_and_exception_scope(self):
         """Verify policy partition preserves assertions and exception scope."""
 
@@ -81,11 +107,7 @@ class AuditFixtureTests(unittest.TestCase):
                 self.assertEqual(len(docs), 1)
                 for ref in test["results"]:
                     seen.append((docs[0], ref["policy"], ref["result"]))
-                loaded = list(yaml.safe_load_all((file.parent / test["exceptions"][0]).read_text()))
-                expected = (
-                    exceptions[:2] if test["results"][0]["policy"] == "first" else exceptions[2:]
-                )
-                self.assertEqual(loaded, expected)
+                self.check_fixture_exceptions(file, test, exceptions)
             self.assertCountEqual(
                 seen,
                 [
@@ -133,27 +155,7 @@ class AuditFixtureTests(unittest.TestCase):
             for folder in output.iterdir():
                 if not folder.is_dir():
                     continue
-                self.assertEqual(
-                    list(yaml.safe_load_all((folder / "exceptions.yaml").read_text())), exceptions
-                )
-                self.assertEqual(len(list(folder.glob("case-*"))), 1)
-                actual = 0
-                for file in folder.rglob("kyverno-test.yaml"):
-                    test = yaml.safe_load(file.read_text())
-                    self.assertLessEqual(len(test["metadata"]["name"]), 63)
-                    resources = list(
-                        yaml.safe_load_all((file.parent / test["resources"][0]).read_text())
-                    )
-                    for ref in test["results"]:
-                        matches = [
-                            d for d in resources if d["metadata"]["name"] == ref["resources"][0]
-                        ]
-                        self.assertEqual(len(matches), 1)
-                        seen[
-                            json.dumps([matches[0], ref["policy"], ref["result"]], sort_keys=True)
-                        ] += 1
-                        actual += 1
-                self.assertEqual(actual, counts[folder.name])
+                seen.update(self.shard_expectations(folder, counts[folder.name], exceptions))
             expected = Counter(
                 json.dumps([doc, name, result], sort_keys=True)
                 for doc, refs, _ in cases
@@ -185,6 +187,92 @@ class AuditFixtureTests(unittest.TestCase):
                     audit.noncompliant_container(policy, "unapproved")["securityContext"][field],
                     expected,
                 )
+
+    def test_pod_identity_variants_remain_separate_failures(self):
+        """Keep same-identity Pod negatives in independent CLI folders."""
+        catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
+        entry = next(e for e in catalog["entries"] if e["kind"] == "Pod")
+        positive = audit.snapshot(entry)
+        original = copy.deepcopy(positive)
+        cases = []
+
+        def case(document, expected, separate=False):
+            cases.append((copy.deepcopy(document), expected.copy(), separate))
+
+        audit.identity_cases(case, entry, positive)
+        self.assertTrue(cases)
+        self.assertTrue(all(separate for _, _, separate in cases))
+        self.assertTrue(all(set(expected.values()) == {"fail"} for _, expected, _ in cases))
+        self.assertTrue(
+            any(doc["metadata"]["namespace"] == "unapproved-audit-target" for doc, _, _ in cases)
+        )
+        self.assertTrue(
+            any(doc["spec"]["serviceAccountName"] == "unapproved" for doc, _, _ in cases)
+        )
+        self.assertEqual(positive, original)
+
+    def test_capability_order_is_allowed_but_duplicates_and_moved_roles_fail(self):
+        """Allow capability reordering while rejecting duplicates or relocated roles."""
+        policy = "require-drop-all-capabilities"
+        catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
+        entry = next(
+            e
+            for e in catalog["entries"]
+            if any(
+                len(rule.get("capabilities", [])) > 1 and not rule.get("requirePrivileged")
+                for rule in e["policies"].get(policy, {}).get("containers", {}).values()
+            )
+        )
+        approval = entry["policies"][policy]
+        role = next(
+            name
+            for name, rule in approval["containers"].items()
+            if len(rule.get("capabilities", [])) > 1
+        )
+        positive = audit.derived_pod(entry)
+        caps = next(c for c in positive["spec"]["containers"] if c["name"] == role)[
+            "securityContext"
+        ]["capabilities"]["add"]
+        cases = []
+
+        def case(document, expected, separate=False):
+            cases.append((copy.deepcopy(document), expected[policy], separate))
+
+        audit.capability_variants(case, entry, positive, policy, approval)
+        outcomes = {"reordered": [], "duplicated": [], "moved": []}
+        for document, expected, _ in cases:
+            container = next((c for c in document["spec"]["containers"] if c["name"] == role), None)
+            if container is None:
+                outcomes["moved"].append(expected)
+                continue
+            actual = container["securityContext"]["capabilities"].get("add", [])
+            if actual == list(reversed(caps)):
+                outcomes["reordered"].append(expected)
+            if len(actual) > len(set(actual)):
+                outcomes["duplicated"].append(expected)
+        self.assertEqual(outcomes["reordered"], ["skip"])
+        self.assertEqual(outcomes["duplicated"], ["fail"])
+        self.assertEqual(outcomes["moved"], ["fail"])
+
+    def test_actual_workload_preparation_sanitizes_without_mutating_input(self):
+        """Use current image/guards/labels while excluding unrelated application environment."""
+        catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
+        entry = next(e for e in catalog["entries"] if e["kind"] == "Deployment")
+        current = audit.snapshot(entry)
+        pod = audit.pod_spec(current)
+        pod["containers"][0]["env"] = [{"name": "PRIVATE_FIXTURE", "value": "must-not-copy"}]
+        pod["containers"][0]["image"] = "registry.example.invalid/current:v2"
+        audit.labels(current)["fixture-current-label"] = "preserved"
+        before = copy.deepcopy(current)
+        actual = {(entry["kind"], entry["namespace"], entry["name"]): current}
+        with patch.object(audit.subprocess, "run") as run:
+            prepared = audit.prepare_document(entry, actual, "unused")
+        run.assert_not_called()
+        container = audit.pod_spec(prepared)["containers"][0]
+        self.assertNotIn("env", container)
+        self.assertEqual(container["image"], "registry.example.invalid/current:v2")
+        self.assertEqual(audit.labels(prepared)["fixture-current-label"], "preserved")
+        self.assertEqual(current, before)
 
 
 if __name__ == "__main__":
