@@ -31,6 +31,27 @@ class AdministrativeHttpTests(unittest.TestCase):
     def setUp(self):
         self.marker = secrets.token_urlsafe(18)
 
+    def test_secret_timeout_prevents_administrator_authentication(self):
+        """A stalled Kubernetes read cannot proceed to credential-bearing HTTP."""
+        with (
+            patch.object(
+                client.subprocess,
+                "run",
+                side_effect=client.subprocess.TimeoutExpired("kubectl", 30),
+            ) as command,
+            patch.object(client, "open_request") as request,
+        ):
+            with self.assertRaises(client.subprocess.TimeoutExpired):
+                client.keycloak_token()
+        command.assert_called_once_with(
+            "kubectl get secret keycloak-admin -n keycloak -o json --request-timeout=15s".split(),
+            check=True,
+            capture_output=True,
+            shell=False,
+            timeout=30,
+        )
+        request.assert_not_called()
+
     def test_unreviewed_targets_fail_before_transport(self):
         """Reject alternate schemes, lookalike hosts, credentials, ports and fragments."""
         urls = [

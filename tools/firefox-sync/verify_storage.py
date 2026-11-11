@@ -173,7 +173,10 @@ def main():
                 "firefox-sync",
                 "-o",
                 "json",
-            ]
+                "--request-timeout=15s",
+            ],
+            shell=False,
+            timeout=30,
         )
     )
     master = base64.b64decode(data["data"]["SYNC_MASTER_SECRET"])

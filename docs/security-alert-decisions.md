@@ -2649,3 +2649,24 @@ All eleven decisions use exact current identity and analyzed-source guards befor
 mutation, with evidence and reopening conditions on GitHub. This batch changes
 only the decision record; the last full-suite result remains 528 tests with 16
 skips. No containers or live cluster were accessed and no push was performed.
+
+
+### Bound remaining Kubernetes inventory and administrator lookups
+
+Added explicit shell=False and 30-second process limits to the retained media-cache
+pod inventory, Firefox Sync master-secret lookup and Keycloak administrator-secret
+lookup. The two secret reads now also set --request-timeout=15s; the pod inventory
+already had that API timeout. Fixed read-only argv, namespaces, resource selection
+and operator-installed kubectl support remain unchanged. The administrator CLI
+now handles SubprocessError, including TimeoutExpired, through its existing
+credential-safe error report instead of allowing a raw timeout traceback.
+
+Three new regressions inject a timeout and assert exact bounded argv plus absence
+of downstream administrator HTTP, authenticated storage requests or port-forwards.
+The full suite ran 531 tests successfully with 16 skips using isolated JSON::PP.
+After final assertion formatting, HTTP-boundary and runtime-fixture tests passed
+again. Ruff passes; full Pylint reports only the two existing administrator
+redirect-callback argument-count diagnostics. Bandit reports no analysis errors.
+No Kubernetes commands, real credentials, live services or containers were used
+in verification. Runtime scanner findings await a genuine published rescan; none
+were dismissed by this source-change batch. No push was performed.

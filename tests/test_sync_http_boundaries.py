@@ -161,6 +161,28 @@ class SyncHttpBoundaryTests(unittest.TestCase):
             secret.assert_not_called()
             build.assert_not_called()
 
+    def test_secret_timeout_prevents_storage_requests(self):
+        """A stalled master-key lookup stops before any authenticated storage call."""
+        with (
+            patch("sys.argv", ["probe"]),
+            patch.object(
+                probe.subprocess,
+                "check_output",
+                side_effect=probe.subprocess.TimeoutExpired("kubectl", 30),
+            ) as command,
+            patch.object(probe.Transport, "open") as request,
+        ):
+            with self.assertRaises(probe.subprocess.TimeoutExpired):
+                probe.main()
+        command.assert_called_once_with(
+            (
+                "kubectl get secret firefox-sync-env -n firefox-sync -o json --request-timeout=15s"
+            ).split(),
+            shell=False,
+            timeout=30,
+        )
+        request.assert_not_called()
+
     def test_probe_sanitizes_redirect_errors_and_closes_response(self):
         """Stop a redirected authenticated read before writing or forwarding its Hawk token."""
         body = io.BytesIO(secrets.token_bytes(18))

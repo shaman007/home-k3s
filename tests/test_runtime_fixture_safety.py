@@ -222,6 +222,36 @@ class RuntimeResourceCleanupTests(unittest.TestCase):
         server.__exit__.assert_called_once()
         self.assertFalse(runtime.directory.exists())
 
+    def test_inventory_timeout_prevents_port_forward(self):
+        """A stalled inventory fails before a tunnel or fixture request starts."""
+        spec = importlib.util.spec_from_file_location(
+            "media_inventory_timeout", assets.ROOT / "tools/check_mastodon_media_cache.py"
+        )
+        probe = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(probe)
+        with (
+            patch("sys.argv", ["media-probe"]),
+            patch.object(
+                probe.subprocess, "run", side_effect=subprocess.TimeoutExpired("kubectl", 30)
+            ) as command,
+            patch.object(probe.subprocess, "Popen") as forward,
+            patch.object(probe, "fetch") as fetch,
+        ):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                probe.main()
+        command.assert_called_once_with(
+            (
+                "kubectl get pods -n seaweedfs -l app=mastodon-media-cache "
+                "-o json --request-timeout=15s"
+            ).split(),
+            check=True,
+            capture_output=True,
+            shell=False,
+            timeout=30,
+        )
+        forward.assert_not_called()
+        fetch.assert_not_called()
+
     def test_port_forward_failure_terminates_and_exits_context(self):
         """A malformed forwarding announcement still reaps the child and closes its context."""
         spec = importlib.util.spec_from_file_location(

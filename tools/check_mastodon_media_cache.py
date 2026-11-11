@@ -100,6 +100,8 @@ def main():
             "json",
             "--request-timeout=15s",
         ],
+        timeout=30,
+        shell=False,
         check=True,
         capture_output=True,
     ).stdout

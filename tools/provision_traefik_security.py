@@ -79,9 +79,21 @@ def request(url, method="GET", data=None, headers=None, missing=False):
 def keycloak_token():
     """Obtain a short-lived admin token without printing credential material."""
     raw = subprocess.run(
-        ["kubectl", "get", "secret", "keycloak-admin", "-n", "keycloak", "-o", "json"],
+        [
+            "kubectl",
+            "get",
+            "secret",
+            "keycloak-admin",
+            "-n",
+            "keycloak",
+            "-o",
+            "json",
+            "--request-timeout=15s",
+        ],
         check=True,
         capture_output=True,
+        shell=False,
+        timeout=30,
     ).stdout
     data = json.loads(raw)["data"]
     form = urllib.parse.urlencode(
@@ -315,7 +327,7 @@ if __name__ == "__main__":
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         sys.exit(1)
-    except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as exc:
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
         print("Failure type: " + type(exc).__name__, file=sys.stderr)
         # Response bodies, command stderr and exception text may contain credentials.
         print(
