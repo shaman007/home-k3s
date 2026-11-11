@@ -1,6 +1,5 @@
 """Verdict guards: a model may interpret evidence, but cannot invent an all-clear."""
 
-import copy
 import datetime as dt
 import io
 import json

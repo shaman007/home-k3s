@@ -195,7 +195,7 @@ def main():
                         with urllib.request.urlopen(
                             "http://127.0.0.1:9505/v1/healthz", timeout=2
                         ) as response:
-                            if not (response.status == 200):
+                            if not response.status == 200:
                                 raise AssertionError
                         state = subprocess.check_output(
                             [
@@ -215,13 +215,13 @@ def main():
                             "NoNewPrivs:\t1",
                             "Seccomp:\t2",
                         ]:
-                            if not (expected in state):
+                            if not expected in state:
                                 raise AssertionError(state)
                         print(
                             "UID 1000: informer sync, mock lease acquisition, global controller startup and health HTTP200 passed"
                         )
                         break
-                    if not ("fatal" not in logs.lower()):
+                    if not "fatal" not in logs.lower():
                         raise AssertionError(logs[-3000:])
                     time.sleep(0.25)
                 else:

@@ -282,3 +282,23 @@ checks remain in preclassification and verdict handling. New regressions verify
 that unlisted ports remain actionable and configured nondefault ports receive the
 expected-service exception. Full suite: 392 tests passed, 21 skipped. Container
 smoke probes and live cluster changes were not performed.
+
+## Explicit subprocess status and analyzer-visible interfaces
+
+Made `check=False` explicit in 38 subprocess calls across 26 test/benchmark files.
+These calls retain their existing manual status handling, including intentional
+failure probes. Before/after executable ASTs differ only by that explicit default;
+current Pylint's subprocess-status check passes for the complete file set.
+
+The component backfill now collects Longhorn responses by resource name and calls
+`storage_healthy(volumes, nodes)` explicitly. This preserves request order and
+health checks while removing two spurious missing-argument diagnostics caused by
+unpacking an incrementally built list. Regenerated both embedded copies. The
+optimized mail helper test now accesses dynamically compiled symbols through its
+execution namespace, resolving five no-member findings without weakening its
+normal/optimized rejection cases. Removed seven further unreferenced imports.
+
+Full suite passed: 392 tests, 21 skips. Longhorn preflight still rejects unhealthy
+storage before any PATCH; optimized checks still reject unsafe contexts. Container
+smoke probes and live deployment were not performed. GitHub reconciliation of this
+batch remains pending a matching rescan after publication.

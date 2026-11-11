@@ -6,9 +6,7 @@ is converted to MutatingPolicy. Native binding and API type checks are separate.
 """
 
 import argparse
-import copy
 import importlib.util
-import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -79,7 +77,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if not ("1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True)):
+    if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
     policy, binding = yaml.safe_load_all(
         (ROOT / "longhorn/policy-recurring-job-security.yaml").read_text()
@@ -140,16 +138,17 @@ def main():
                 text=True,
                 capture_output=True,
                 timeout=30,
+                check=False,
             )
-            if not (result.returncode == 0):
+            if not result.returncode == 0:
                 raise AssertionError(result.stdout + result.stderr)
-            if not ("error: 0" in result.stdout):
+            if not "error: 0" in result.stdout:
                 raise AssertionError(result.stdout)
             emitted = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
             if changed:
-                if not (len(emitted) == 1):
+                if not len(emitted) == 1:
                     raise AssertionError((i, result.stdout))
-                if not (emitted[0]["spec"] == backfill.expected_spec(doc)):
+                if not emitted[0]["spec"] == backfill.expected_spec(doc):
                     raise AssertionError((i, emitted))
                 # Idempotence matters because updates can be reinvoked.
                 r.write_text(yaml.safe_dump(emitted[0]))
@@ -160,8 +159,8 @@ def main():
                     capture_output=True,
                     timeout=30,
                 )
-                if not (
-                    next(d for d in yaml.safe_load_all(o.read_text()) if d)["spec"]
+                if (
+                    not next((d for d in yaml.safe_load_all(o.read_text()) if d))["spec"]
                     == emitted[0]["spec"]
                 ):
                     raise AssertionError

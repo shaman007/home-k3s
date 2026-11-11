@@ -23,8 +23,8 @@ def violations(spec):
     for c in (spec.get("containers") or []) + (spec.get("initContainers") or []):
         security = c.get("securityContext") or {}
 
-        def fail(reason):
-            errors.append(c["name"] + ": " + reason)
+        def fail(reason, container=c):
+            errors.append(container["name"] + ": " + reason)
 
         if security.get("privileged"):
             fail("privileged")

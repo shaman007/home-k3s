@@ -20,7 +20,7 @@ def main():
     if not args.execute:
         print('Plan: create missing kv/firefox-sync keys, scoped policy, and Kubernetes auth role. No writes performed.')
         return
-    candidates = [line.strip() for line in TOKEN_FILE.read_text().splitlines()
+    candidates = [line.strip() for line in TOKEN_FILE.read_text(encoding="utf-8").splitlines()
                   if line.strip().startswith(('hvs.', 's.'))]
     if len(candidates) != 1:
         raise RuntimeError('Expected exactly one Vault token in token file')

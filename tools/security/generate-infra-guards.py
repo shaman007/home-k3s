@@ -49,7 +49,7 @@ def generate(catalog):
         mutation_parts = []
         for target in e["targets"]:
             section, index = target["section"], target["index"]
-            if not (pod[section][index]["name"] == target["name"]):
+            if not pod[section][index]["name"] == target["name"]:
                 raise AssertionError
             ref = f"object.spec.template.spec.{section}[{index}]"
             terms.append(
@@ -289,7 +289,7 @@ def main():
     )
     path = ROOT / "infra-guards/resources.yaml"
     if args.check:
-        if not (path.read_text() == text):
+        if not path.read_text() == text:
             raise AssertionError("Generated infrastructure guards are stale")
     else:
         path.write_text(text)

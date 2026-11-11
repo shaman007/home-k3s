@@ -149,25 +149,23 @@ def main():
                     text=True,
                     capture_output=True,
                     timeout=90,
+                    check=False,
                 )
-                if not (result.returncode == 0):
+                if not result.returncode == 0:
                     raise AssertionError(result.stderr)
-                if not ("uid=1000" in result.stdout):
+                if not "uid=1000" in result.stdout:
                     raise AssertionError(result.stdout)
-                if not ("CapEff:\t0000000000000000" in result.stdout):
+                if not "CapEff:\t0000000000000000" in result.stdout:
                     raise AssertionError(result.stdout)
-                if not ("NoNewPrivs:\t1" in result.stdout):
+                if not "NoNewPrivs:\t1" in result.stdout:
                     raise AssertionError(result.stdout)
-                if not ("Seccomp:\t2" in result.stdout):
+                if not "Seccomp:\t2" in result.stdout:
                     raise AssertionError(result.stdout)
-                if not (
-                    any(
-                        method == "PUT" and path.endswith("/status")
-                        for method, path in MockAPI.calls
-                    )
+                if not any(
+                    (method == "PUT" and path.endswith("/status") for method, path in MockAPI.calls)
                 ):
                     raise AssertionError
-                if not (any(path.endswith("/volumes") for method, path in MockAPI.calls)):
+                if not any((path.endswith("/volumes") for method, path in MockAPI.calls)):
                     raise AssertionError
                 print(
                     f"{task}: UID 1000 / drop ALL / NNP / seccomp; API startup passed; zero volumes selected",

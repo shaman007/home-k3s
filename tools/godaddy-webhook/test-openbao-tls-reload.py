@@ -126,9 +126,9 @@ listener "tcp" {{
                     time.sleep(0.5)
                 else:
                     raise RuntimeError("Projected certificate rotation was not reloaded")
-                if not (fingerprint(context, old_port) == first):
+                if not fingerprint(context, old_port) == first:
                     raise AssertionError("Original listener changed unexpectedly")
-                if not (process.poll() is None):
+                if not process.poll() is None:
                     raise AssertionError("Server exited after reload")
                 print(
                     "PASS: dual listeners, hostname verification, projected-file rotation, automatic reload, original listener preserved"

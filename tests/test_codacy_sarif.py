@@ -15,12 +15,26 @@ spec.loader.exec_module(sarif)
 
 def batch(rule, filename):
     return {
-        "tool": {"driver": {"name": "Opengrep (reported by Codacy)", "version": "1", "rules": [{"id": rule}]}},
+        "tool": {
+            "driver": {
+                "name": "Opengrep (reported by Codacy)",
+                "version": "1",
+                "rules": [{"id": rule}],
+            }
+        },
         "artifacts": [{"location": {"uri": filename}}],
         "invocations": [{"executionSuccessful": True}],
-        "results": [{"ruleId": rule, "ruleIndex": 0, "message": {"text": filename},
-                     "partialFingerprints": {"hash": filename},
-                     "locations": [{"physicalLocation": {"artifactLocation": {"index": 0, "uri": filename}}}]}],
+        "results": [
+            {
+                "ruleId": rule,
+                "ruleIndex": 0,
+                "message": {"text": filename},
+                "partialFingerprints": {"hash": filename},
+                "locations": [
+                    {"physicalLocation": {"artifactLocation": {"index": 0, "uri": filename}}}
+                ],
+            }
+        ],
     }
 
 
@@ -73,9 +87,16 @@ class CodacySarifTest(unittest.TestCase):
             run["results"][0]["message"]["text"] = "sensitive-source-sentinel"
             source.write_text(json.dumps({"runs": [run]}))
             result = subprocess.run(
-                [sys.executable, str(ROOT / "tools/ci/prepare-codacy-sarif.py"),
-                 str(source), str(output), "--reject-parser-errors"],
-                capture_output=True, text=True, check=False,
+                [
+                    sys.executable,
+                    str(ROOT / "tools/ci/prepare-codacy-sarif.py"),
+                    str(source),
+                    str(output),
+                    "--reject-parser-errors",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertFalse(output.exists())
@@ -92,10 +113,15 @@ class CodacySarifTest(unittest.TestCase):
         self.assertEqual(len(run["results"]), 5)
         self.assertEqual(len(run["invocations"]), 5)
         for i, result in enumerate(run["results"]):
-            self.assertEqual(run["tool"]["driver"]["rules"][result["ruleIndex"]]["id"], result["ruleId"])
+            self.assertEqual(
+                run["tool"]["driver"]["rules"][result["ruleIndex"]]["id"], result["ruleId"]
+            )
             index = result["locations"][0]["physicalLocation"]["artifactLocation"]["index"]
             self.assertEqual(run["artifacts"][index]["location"]["uri"], f"{i}.py")
-            self.assertEqual(result["partialFingerprints"], original["runs"][i]["results"][0]["partialFingerprints"])
+            self.assertEqual(
+                result["partialFingerprints"],
+                original["runs"][i]["results"][0]["partialFingerprints"],
+            )
 
     def test_empty_results_are_valid_but_missing_runs_fail(self):
         run = batch("a", "a.py")
@@ -161,12 +187,16 @@ class CodacySarifTest(unittest.TestCase):
             source.chmod(0o444)
             original = source.read_bytes()
             command = [sys.executable, str(ROOT / "tools/ci/prepare-codacy-sarif.py"), str(source)]
-            result = subprocess.run(command + [str(output)], capture_output=True, text=True)
+            result = subprocess.run(
+                command + [str(output)], capture_output=True, text=True, check=False
+            )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(output.read_text()), sarif.prepare(report))
             self.assertEqual(source.read_bytes(), original)
             self.assertEqual(source.stat().st_mode & 0o777, 0o444)
-            same = subprocess.run(command + [str(source)], capture_output=True, text=True)
+            same = subprocess.run(
+                command + [str(source)], capture_output=True, text=True, check=False
+            )
             self.assertNotEqual(same.returncode, 0)
             self.assertEqual(source.read_bytes(), original)
 

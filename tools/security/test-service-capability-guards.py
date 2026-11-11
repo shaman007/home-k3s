@@ -25,15 +25,15 @@ def smoke(image, user, caps, script, extra=()):
     command += ["--cap-add=" + cap for cap in caps]
     command += list(extra)
     command += ["--entrypoint", "/bin/sh", image, "-ec", script]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
-    if not (result.returncode == 0):
+    result = subprocess.run(command, capture_output=True, text=True, timeout=60, check=False)
+    if not result.returncode == 0:
         raise AssertionError(result.stdout[-3000:] + result.stderr[-3000:])
     expected = "0000000000000400" if caps else "0000000000000000"
     for field in ["CapEff", "CapBnd"]:
-        if not (field + ":\t" + expected in result.stdout):
+        if not field + ":\t" + expected in result.stdout:
             raise AssertionError(result.stdout)
     for expected in ["NoNewPrivs:\t1", "Seccomp:\t2"]:
-        if not (expected in result.stdout):
+        if not expected in result.stdout:
             raise AssertionError(result.stdout)
 
 
@@ -41,7 +41,7 @@ def main():
     deployment = yaml.safe_load((ROOT / "mail/deployment-unbound.yaml").read_text())
     container = deployment["spec"]["template"]["spec"]["containers"][0]
     sc = container["securityContext"]
-    if not (sc["capabilities"] == {"drop": ["ALL"], "add": ["NET_BIND_SERVICE"]}):
+    if not sc["capabilities"] == {"drop": ["ALL"], "add": ["NET_BIND_SERVICE"]}:
         raise AssertionError
     if not (sc["readOnlyRootFilesystem"] and sc["allowPrivilegeEscalation"] is False):
         raise AssertionError
@@ -56,9 +56,9 @@ def main():
         1,
     )
     script = "cat > /tmp/unbound.conf <<'CONFIG'\n" + config + "\nCONFIG\n"
-    if not (container["command"] == ["/opt/unbound/sbin/unbound"]):
+    if not container["command"] == ["/opt/unbound/sbin/unbound"]:
         raise AssertionError
-    if not (container["args"] == ["-d", "-c", "/opt/unbound/etc/unbound/unbound.conf"]):
+    if not container["args"] == ["-d", "-c", "/opt/unbound/etc/unbound/unbound.conf"]:
         raise AssertionError
     script += """/opt/unbound/sbin/unbound -d -c /tmp/unbound.conf >/tmp/unbound.log 2>&1 &
 server=$!
@@ -82,13 +82,10 @@ grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/$server/status
 
     app = yaml.safe_load((ROOT / "argocd/application-openbao.yaml").read_text())
     values = yaml.safe_load(app["spec"]["source"]["helm"]["values"])
-    if not (
-        values["server"]["statefulSet"]["securityContext"]["container"]
-        == {
-            "allowPrivilegeEscalation": False,
-            "capabilities": {"drop": ["ALL"]},
-        }
-    ):
+    if not values["server"]["statefulSet"]["securityContext"]["container"] == {
+        "allowPrivilegeEscalation": False,
+        "capabilities": {"drop": ["ALL"]},
+    }:
         raise AssertionError
     script = """cat > /tmp/raft.hcl <<'CONFIG'
 listener "tcp" {

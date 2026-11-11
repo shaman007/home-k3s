@@ -363,17 +363,17 @@ def optimize_bipartite_order(left_nodes, right_nodes, edges):
     for _ in range(6):
         left_positions = {key: index for index, key in enumerate(left_order)}
         right_order.sort(
-            key=lambda key: (
+            key=lambda key, positions=left_positions: (
                 right_lookup[key]["is_special"],
-                barycenter_for(key, left_positions, right_neighbors),
+                barycenter_for(key, positions, right_neighbors),
                 right_lookup[key]["label"],
             )
         )
         right_positions = {key: index for index, key in enumerate(right_order)}
         left_order.sort(
-            key=lambda key: (
+            key=lambda key, positions=right_positions: (
                 left_lookup[key]["is_special"],
-                barycenter_for(key, right_positions, left_neighbors),
+                barycenter_for(key, positions, left_neighbors),
                 left_lookup[key]["label"],
             )
         )

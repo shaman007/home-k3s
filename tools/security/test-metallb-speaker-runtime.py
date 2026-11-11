@@ -66,9 +66,11 @@ print('PASS: UID/GID 1000, group-readable config, root-only negative, NET_RAW-on
 
 
 def run(*args, check=True):
-    result = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90)
+    result = subprocess.run(
+        ["podman", *args], capture_output=True, text=True, timeout=90, check=False
+    )
     if check:
-        if not (result.returncode == 0):
+        if not result.returncode == 0:
             raise AssertionError(result.stdout[-2500:] + result.stderr[-2500:])
         return result.stdout.strip()
     return result
@@ -195,7 +197,7 @@ def main():
                     ):
                         raise AssertionError
                 else:
-                    if not ("excludel2.yaml: permission denied" in logs):
+                    if not "excludel2.yaml: permission denied" in logs:
                         raise AssertionError(logs[-3000:])
                 run("rm", "-f", speaker)
                 speakers.remove(speaker)

@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--rendered", type=Path, required=True)
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if not ("1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True)):
+    if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
     documents = [
         d
@@ -39,7 +39,7 @@ def main():
     )
     raw["metadata"].setdefault("namespace", "longhorn-system")
     policies = [d for d in documents if d.get("kind") == "ValidatingPolicy"]
-    if not ({d["metadata"]["name"] for d in policies} == audit.EXPECTED_POLICIES):
+    if not {d["metadata"]["name"] for d in policies} == audit.EXPECTED_POLICIES:
         raise AssertionError
     admitted = audit.admitted_longhorn_manager(raw, args.kyverno)
     original_spec = copy.deepcopy(admitted["spec"])
@@ -55,9 +55,9 @@ def main():
         helper["securityContext"] = copy.deepcopy(original_helper["securityContext"])
     else:
         helper.pop("securityContext", None)
-    if not (original_spec == raw["spec"]):
+    if not original_spec == raw["spec"]:
         raise AssertionError("Admission changed more than the prepull context")
-    if not (admitted != raw):
+    if not admitted != raw:
         raise AssertionError("This regression needs raw chart output, before native admission")
     skip = {p: "skip" for p in audit.EXPECTED_POLICIES}
     raw_expected = {p: "skip" if p == "disallow-privileged-containers" else "fail" for p in skip}
@@ -67,7 +67,7 @@ def main():
         for c in audit.pod_spec(mismatch)["containers"]
         if c["name"] == "pre-pull-share-manager-image"
     )["image"] = "registry.invalid/unreviewed:1"
-    if not (audit.admitted_longhorn_manager(mismatch, args.kyverno) == mismatch):
+    if not audit.admitted_longhorn_manager(mismatch, args.kyverno) == mismatch:
         raise AssertionError
     unsafe = copy.deepcopy(admitted)
     next(

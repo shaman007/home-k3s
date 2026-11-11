@@ -39,11 +39,11 @@ def command(name):
     doc = yaml.safe_load((ROOT / ("mail/deployment-" + name + ".yaml")).read_text())
     c = doc["spec"]["template"]["spec"]["containers"][0]
     caps = CAPS if name == "dovecot" else [cap for cap in CAPS if cap != "SYS_CHROOT"]
-    if not (c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": caps}):
+    if not c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": caps}:
         raise AssertionError
-    if not (c["securityContext"]["allowPrivilegeEscalation"] is False):
+    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
         raise AssertionError
-    if not (c["securityContext"]["readOnlyRootFilesystem"] is True):
+    if not c["securityContext"]["readOnlyRootFilesystem"] is True:
         raise AssertionError
     args = ["podman", "run", "-d", "--cap-drop=ALL", "--security-opt=no-new-privileges"]
     if c["securityContext"]["readOnlyRootFilesystem"]:
@@ -142,7 +142,7 @@ def main():
             args += ["--entrypoint", entrypoint[0]]
             dovecot = run(args + [container["image"]] + entrypoint[1:] + container["args"])
             containers.append(dovecot)
-            if not (run(["podman", "exec", dovecot, "stat", "-c", "%a", "/tmp"]) == "1777"):
+            if not run(["podman", "exec", dovecot, "stat", "-c", "%a", "/tmp"]) == "1777":
                 raise AssertionError
             context = ssl.create_default_context(cafile=str(d / "tls.crt"))
 
@@ -151,11 +151,11 @@ def main():
                     "127.0.0.1", port(dovecot, 993), ssl_context=context, timeout=3
                 )
                 try:
-                    if not (client.login("guard", "disposable-guard-password")[0] == "OK"):
+                    if not client.login("guard", "disposable-guard-password")[0] == "OK":
                         raise AssertionError
-                    if not (client.select("INBOX", readonly=True)[0] == "OK"):
+                    if not client.select("INBOX", readonly=True)[0] == "OK":
                         raise AssertionError
-                    if not (client.noop()[0] == "OK"):
+                    if not client.noop()[0] == "OK":
                         raise AssertionError
                 finally:
                     client.logout()
@@ -177,7 +177,7 @@ def main():
                 for row in services
                 if len(row) >= 8 and row[1] in ["inet", "unix", "unix-dgram", "fifo", "pass"]
             ]
-            if not (services and all(row[4] == "n" for row in services)):
+            if not (services and all((row[4] == "n" for row in services))):
                 raise AssertionError("Review SYS_CHROOT if enabling Postfix chroot")
             args, container = command("postfix")
             args += ["--network=container:" + dovecot]
@@ -222,7 +222,7 @@ def main():
                 def response(stream, code):
                     while True:
                         line = stream.readline()
-                        if not (line[:3] == code):
+                        if not line[:3] == code:
                             raise AssertionError(line)
                         if line[3:4] == b" ":
                             return
@@ -265,7 +265,7 @@ def main():
                     "NoNewPrivs:\t1",
                     "Seccomp:\t2",
                 ]:
-                    if not (line in status):
+                    if not line in status:
                         raise AssertionError(name + ": " + status)
                 run(["podman", "exec", cid, name, "reload"])
             retry(imap)
@@ -274,7 +274,10 @@ def main():
         except Exception:
             for cid in containers:
                 result = subprocess.run(
-                    ["podman", "logs", "--tail=25", cid], capture_output=True, text=True
+                    ["podman", "logs", "--tail=25", cid],
+                    capture_output=True,
+                    text=True,
+                    check=False,
                 )
                 print((result.stdout + result.stderr)[-3000:])
             raise

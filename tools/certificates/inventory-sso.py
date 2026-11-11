@@ -119,4 +119,4 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        raise SystemExit("SSO inventory failed; credential and response details suppressed")
+        raise SystemExit("SSO inventory failed; credential and response details suppressed") from None

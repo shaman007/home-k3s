@@ -2,7 +2,6 @@
 """Real FRR VTY/reload/metrics on disposable files and an isolated network."""
 
 from pathlib import Path
-import json
 import subprocess
 import tempfile
 import time
@@ -12,9 +11,9 @@ HELPERS = "quay.io/metallb/frr-k8s:v0.0.25"
 
 
 def run(*args, check=True):
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90)
+    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
     if check:
-        if not (p.returncode == 0):
+        if not p.returncode == 0:
             raise AssertionError(p.stdout[-3000:] + p.stderr[-3000:])
     return p.stdout.strip() if check else p
 
@@ -37,9 +36,12 @@ def main():
         (d / "conf/vtysh.conf").write_text("service integrated-vtysh-config\n")
         (d / "conf/vtysh.conf").chmod(0o644)
         p = subprocess.run(
-            ["podman", "unshare", "chown", "100:101", str(config)], capture_output=True, text=True
+            ["podman", "unshare", "chown", "100:101", str(config)],
+            capture_output=True,
+            text=True,
+            check=False,
         )
-        if not (p.returncode == 0):
+        if not p.returncode == 0:
             raise AssertionError(p.stderr)
         try:
             image = run("create", "--network=none", "--entrypoint=sh", HELPERS, "-c", "true")
@@ -90,7 +92,7 @@ def main():
                 raise AssertionError(run("logs", daemon))
             # Production helpers use vtysh to query these daemon sockets.
             data = run("exec", daemon, "/usr/bin/vtysh", "-c", "show bgp vrf all json")
-            if not ("default" in data):
+            if not "default" in data:
                 raise AssertionError(data)
             info = run(
                 "exec",
@@ -99,7 +101,7 @@ def main():
                 "-ec",
                 'stat -c "%u:%g %a" /var/run/frr/bgpd.vty; cat /proc/1/status',
             )
-            if not ("100:102 770" in info):
+            if not "100:102 770" in info:
                 raise AssertionError(info)
             # Root reloader retains only DAC_OVERRIDE to read owner-100 mode-0600 config.
             (d / "reload/frr.conf").write_text(
@@ -129,7 +131,7 @@ def main():
             if not ("CapEff:\t0000000000000002" in output and "NoNewPrivs:\t1" in output):
                 raise AssertionError(output)
             running = run("exec", daemon, "/usr/bin/vtysh", "-c", "show running-config")
-            if not ("bgp router-id 192.0.2.2" in running):
+            if not "bgp router-id 192.0.2.2" in running:
                 raise AssertionError(output + "\n" + running)
             # Exercise the actual reloader shell, lock, signal and status path.
             reloader = run(
@@ -162,8 +164,9 @@ def main():
                 ["podman", "unshare", "chown", "100:101", str(config)],
                 capture_output=True,
                 text=True,
+                check=False,
             )
-            if not (p.returncode == 0):
+            if not p.returncode == 0:
                 raise AssertionError(p.stderr)
             no_dac = run(
                 "run",
@@ -182,7 +185,7 @@ def main():
             if not (no_dac.returncode != 0 and "denied" in no_dac.stderr.lower()):
                 raise AssertionError(no_dac.stdout + no_dac.stderr)
             no_kill = run("exec", "--user=0:0", daemon, "sh", "-c", "kill -0 1", check=False)
-            if not (no_kill.returncode != 0):
+            if not no_kill.returncode != 0:
                 raise AssertionError("Root without KILL unexpectedly signalled UID-100 daemon")
             (d / "reload/frr.conf").write_text(
                 "frr defaults traditional\nhostname guardchanged\nservice integrated-vtysh-config\nrouter bgp 64512\n bgp router-id 192.0.2.3\n"
@@ -196,9 +199,8 @@ def main():
                 time.sleep(0.2)
             else:
                 raise AssertionError(run("logs", reloader))
-            if not (
-                "bgp router-id 192.0.2.3"
-                in run("exec", daemon, "/usr/bin/vtysh", "-c", "show running-config")
+            if not "bgp router-id 192.0.2.3" in run(
+                "exec", daemon, "/usr/bin/vtysh", "-c", "show running-config"
             ):
                 raise AssertionError
             helper_status = run(
@@ -236,8 +238,9 @@ def main():
                 ],
                 capture_output=True,
                 text=True,
+                check=False,
             )
-            if not (result.returncode == 0):
+            if not result.returncode == 0:
                 raise AssertionError(result.stderr)
             (tls / "server.key").chmod(0o600)
             (tls / "server.crt").chmod(0o644)
@@ -311,7 +314,7 @@ def main():
                 time.sleep(0.2)
             else:
                 raise AssertionError(p.stdout + p.stderr + run("logs", metrics))
-            if not ("failed to fetch BGP neighbors" not in run("logs", metrics)):
+            if not "failed to fetch BGP neighbors" not in run("logs", metrics):
                 raise AssertionError
             status_exporter = run(
                 *exporter_args,
@@ -334,7 +337,7 @@ def main():
             else:
                 raise AssertionError(run("logs", status_exporter))
             time.sleep(2)
-            if not (run("inspect", "--format={{.State.Running}}", status_exporter) == "true"):
+            if not run("inspect", "--format={{.State.Running}}", status_exporter) == "true":
                 raise AssertionError(run("logs", status_exporter))
             logs = run("logs", api)
             if not ("token-review" in logs and "access-review" in logs):
@@ -347,9 +350,9 @@ def main():
                     "NoNewPrivs:\t1",
                     "Seccomp:\t2",
                 ]:
-                    if not (flag in output):
+                    if not flag in output:
                         raise AssertionError(output)
-                if not (output.split("Uid:", 1)[1].splitlines()[0].split() == ["100"] * 4):
+                if not output.split("Uid:", 1)[1].splitlines()[0].split() == ["100"] * 4:
                     raise AssertionError
             print(
                 "PASS: real UID-100 VTY socket queries and root DAC_OVERRIDE-only syntax/reload; real SIGHUP/lock/status success, authenticated HTTPS metrics and status API caches; no kernel routes or BGP listener"

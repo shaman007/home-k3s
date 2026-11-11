@@ -33,37 +33,34 @@ def reviewed(document, name):
     spec = document["spec"]["jobTemplate"]["spec"]["template"]["spec"]
     if not (meta["namespace"] == NAMESPACE and meta["name"] == name):
         raise AssertionError
-    if not (meta["labels"]["longhorn.io/managed-by"] == "longhorn-manager"):
+    if not meta["labels"]["longhorn.io/managed-by"] == "longhorn-manager":
         raise AssertionError
-    if not (meta["labels"]["recurring-job.longhorn.io"] == name):
+    if not meta["labels"]["recurring-job.longhorn.io"] == name:
         raise AssertionError
-    if not (
-        any(
+    if not any(
+        (
             o["kind"] == "RecurringJob"
             and o["name"] == name
-            and o["apiVersion"] == "longhorn.io/v1beta2"
+            and (o["apiVersion"] == "longhorn.io/v1beta2")
             for o in meta["ownerReferences"]
         )
     ):
         raise AssertionError
-    if not (spec["serviceAccountName"] == "longhorn-service-account"):
+    if not spec["serviceAccountName"] == "longhorn-service-account":
         raise AssertionError
-    if not (len(spec["containers"]) == 1 and not spec.get("initContainers")):
+    if not (len(spec["containers"]) == 1 and (not spec.get("initContainers"))):
         raise AssertionError
     container = spec["containers"][0]
     if not (container["name"] == name and container["image"] == IMAGE):
         raise AssertionError
-    if not (
-        container["command"]
-        == [
-            "longhorn-manager",
-            "-d",
-            "recurring-job",
-            name,
-            "--manager-url",
-            "http://longhorn-backend:9500/v1",
-        ]
-    ):
+    if not container["command"] == [
+        "longhorn-manager",
+        "-d",
+        "recurring-job",
+        name,
+        "--manager-url",
+        "http://longhorn-backend:9500/v1",
+    ]:
         raise AssertionError
     return spec
 
@@ -142,7 +139,7 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
                     continue
                 patch = annotation_patch(original)
                 preview = request(name, patch, dry=True)
-                if not (preview["spec"] == expected):
+                if not preview["spec"] == expected:
                     raise AssertionError(
                         f"{name}: admission mutation absent or unexpected spec change"
                     )
@@ -154,9 +151,9 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
             time.sleep(3)  # Allow the API server's admission-policy cache to converge.
     for name, original, patch, expected in pending:
         result = request(name, patch)
-        if not (result["spec"] == expected):
+        if not result["spec"] == expected:
             raise AssertionError(f"{name}: persisted spec differs from preflight")
-        if not (request(name)["spec"] == expected):
+        if not request(name)["spec"] == expected:
             raise AssertionError(f"{name}: read-back differs from preflight")
         print(f"{name}: hardened and read-back verified", flush=True)
     print("Recurring-job security backfill complete", flush=True)

@@ -22,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if not ("1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True)):
+    if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
     policy = next(
         d
@@ -56,13 +56,14 @@ def main():
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
             if not (p.returncode == 0 and "error: 0" in p.stdout):
                 raise AssertionError(p.stdout + p.stderr)
             documents = (
                 [x for x in yaml.safe_load_all(out.read_text()) if x] if out.exists() else []
             )
-            if not (len(documents) <= 1):
+            if not len(documents) <= 1:
                 raise AssertionError
             return documents[0] if documents else doc
 
@@ -77,9 +78,9 @@ def main():
                             "securityContext", {}
                         )["readOnlyRootFilesystem"] = True
                 result = evaluate(original)
-                if not (result["spec"] == b.expected_spec(original, e)):
+                if not result["spec"] == b.expected_spec(original, e):
                     raise AssertionError(e["name"] + ": wrong mutation")
-                if not (evaluate(result) == result):
+                if not evaluate(result) == result:
                     raise AssertionError(e["name"] + ": not idempotent")
                 b.reviewed(result, e)
                 count += 2
@@ -123,7 +124,7 @@ def main():
                     pod["containers"].append({"name": "extra", "image": "registry.invalid/extra:1"})
                 if mutation == "privileged":
                     c.setdefault("securityContext", {})["privileged"] = True
-                if not (evaluate(changed) == changed):
+                if not evaluate(changed) == changed:
                     raise AssertionError(e["name"] + ": mutated unreviewed " + mutation)
                 count += 1
             for target in e["targets"]:
@@ -133,7 +134,7 @@ def main():
                         target["index"]
                     ]
                     next(v for v in container["env"] if v["name"] == key)["value"] = "unreviewed"
-                    if not (evaluate(changed) == changed):
+                    if not evaluate(changed) == changed:
                         raise AssertionError(e["name"] + ": ignored critical env " + key)
                     count += 1
                 for key in target.get("requiredFieldRefs", {}):
@@ -144,13 +145,13 @@ def main():
                     next(v for v in container["env"] if v["name"] == key)["valueFrom"]["fieldRef"][
                         "fieldPath"
                     ] = "metadata.name"
-                    if not (evaluate(changed) == changed):
+                    if not evaluate(changed) == changed:
                         raise AssertionError
                     count += 1
             if e["kind"] == "DaemonSet":
                 changed = copy.deepcopy(doc)
                 changed["spec"]["updateStrategy"]["rollingUpdate"]["maxUnavailable"] = "100%"
-                if not (evaluate(changed) == changed):
+                if not evaluate(changed) == changed:
                     raise AssertionError
                 count += 1
     print(str(count) + " mutation/scope/idempotence checks passed")

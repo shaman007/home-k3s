@@ -98,9 +98,9 @@ def main():
             run(
                 ["rsync", "-a", "-e", " ".join(ssh), "backup@127.0.0.1:guard-test/", str(out) + "/"]
             )
-            if not ((out / "sentinel").read_text() == "guard-test\n"):
+            if not (out / "sentinel").read_text() == "guard-test\n":
                 raise AssertionError
-            if not ((out / "link").is_symlink()):
+            if not (out / "link").is_symlink():
                 raise AssertionError
             status = run(["podman", "exec", cid, "cat", "/proc/1/status"])
             # Linux capability numbers: CHOWN, DAC_OVERRIDE, FOWNER, SETGID,
@@ -111,7 +111,7 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not (line in status):
+                if not line in status:
                     raise AssertionError(status)
             print(
                 "Backup SSH: actual entrypoint/hook, key authentication and rsync round trip passed"
@@ -122,13 +122,13 @@ def main():
     app = yaml.safe_load((ROOT / "argocd/application-collabora.yaml").read_text())
     values = yaml.safe_load(app["spec"]["source"]["helm"]["values"])
     sc = values["securityContext"]
-    if not (sc["runAsUser"] == sc["runAsGroup"] == 1001):
+    if not sc["runAsUser"] == sc["runAsGroup"] == 1001:
         raise AssertionError
     if not (sc["runAsNonRoot"] and sc["privileged"] is False):
         raise AssertionError
-    if not (sc["allowPrivilegeEscalation"] is True):
+    if not sc["allowPrivilegeEscalation"] is True:
         raise AssertionError
-    if not (sc["capabilities"] == {"drop": ["ALL"], "add": ["CHOWN", "FOWNER", "SYS_CHROOT"]}):
+    if not sc["capabilities"] == {"drop": ["ALL"], "add": ["CHOWN", "FOWNER", "SYS_CHROOT"]}:
         raise AssertionError
     image = values["image"]["repository"] + ":26.04.5.2.1"
     args = ["podman", "run", "-d", "--user=1001:1001", "--cap-drop=ALL", "-p", "127.0.0.1::9980"]
@@ -142,7 +142,7 @@ def main():
                 with urllib.request.urlopen(
                     "http://127.0.0.1:" + port + "/hosting/discovery", timeout=2
                 ) as response:
-                    if not (b"wopi-discovery" in response.read()):
+                    if not b"wopi-discovery" in response.read():
                         raise AssertionError
                 break
             except (OSError, AssertionError):

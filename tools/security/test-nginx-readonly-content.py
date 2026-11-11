@@ -52,8 +52,8 @@ c.close()
 
 
 def run(args, timeout=90):
-    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
-    if not (r.returncode == 0):
+    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    if not r.returncode == 0:
         raise AssertionError(r.stdout[-2500:] + r.stderr[-2500:])
     return r.stdout.strip()
 
@@ -62,20 +62,20 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
     pod = yaml.safe_load((ROOT / deployment_path).read_text())["spec"]["template"]["spec"]
     c = next(c for c in pod["containers"] if c["name"] == nginx_name)
     php = next(c for c in pod["containers"] if c["name"] == php_name)
-    if not (next(m for m in c["volumeMounts"] if m["mountPath"] == root)["readOnly"] is True):
+    if not next((m for m in c["volumeMounts"] if m["mountPath"] == root))["readOnly"] is True:
         raise AssertionError
-    if not (
-        next(m for m in php["volumeMounts"] if m["mountPath"] == root).get("readOnly", False)
+    if (
+        not next((m for m in php["volumeMounts"] if m["mountPath"] == root)).get("readOnly", False)
         is False
     ):
         raise AssertionError
-    if not (c["securityContext"]["readOnlyRootFilesystem"] is True):
+    if not c["securityContext"]["readOnlyRootFilesystem"] is True:
         raise AssertionError
-    if not (c["securityContext"]["allowPrivilegeEscalation"] is False):
+    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
         raise AssertionError
-    if not (c["securityContext"]["capabilities"] == {"drop": ["ALL"]}):
+    if not c["securityContext"]["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
-    if not (pod["securityContext"]["runAsUser"] == pod["securityContext"]["runAsGroup"] == 33):
+    if not pod["securityContext"]["runAsUser"] == pod["securityContext"]["runAsGroup"] == 33:
         raise AssertionError
     config = yaml.safe_load((ROOT / config_path).read_text())["data"]["config"]
     containers = []
@@ -173,17 +173,17 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
                 time.sleep(1)
             else:
                 raise RuntimeError(name + " did not become ready")
-            if not (response["body"] == "body {color:blue;}\n"):
+            if not response["body"] == "body {color:blue;}\n":
                 raise AssertionError
             if name == "wordpress":
-                if not (request("GET", "/wp-content/uploads/guard.txt")["body"] == "fixture media"):
+                if not request("GET", "/wp-content/uploads/guard.txt")["body"] == "fixture media":
                     raise AssertionError
             for method, path, size in [
                 ("GET", "/index.php", 0),
                 ("POST", "/index.php", 2 * 1024 * 1024),
             ]:
                 response = request(method, path, size)
-                if not (response["status"] == 200):
+                if not response["status"] == 200:
                     raise AssertionError(response)
                 body = json.loads(response["body"])
                 if not (body["fastcgi"] and body["received_bytes"] == size):
@@ -196,8 +196,8 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
                 ):
                     raise AssertionError
             mountinfo = run(["podman", "exec", nginx, "cat", "/proc/1/mountinfo"])
-            if not (
-                any(
+            if not any(
+                (
                     p[4] == root and "ro" in p[5].split(",")
                     for p in (s.split() for s in mountinfo.splitlines())
                 )
@@ -222,7 +222,7 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not (expected in status):
+                if not expected in status:
                     raise AssertionError(status)
             print(
                 name
@@ -231,7 +231,9 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
             )
     except Exception:
         for cid in containers:
-            r = subprocess.run(["podman", "logs", "--tail=20", cid], capture_output=True, text=True)
+            r = subprocess.run(
+                ["podman", "logs", "--tail=20", cid], capture_output=True, text=True, check=False
+            )
             print((r.stdout + r.stderr)[-2500:])
         raise
     finally:

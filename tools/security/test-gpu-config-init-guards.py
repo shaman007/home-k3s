@@ -33,9 +33,9 @@ ThreadingHTTPServer(('127.0.0.1',9500),H).serve_forever()
 
 
 def run(*args, check=True):
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90)
+    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
     if check:
-        if not (p.returncode == 0):
+        if not p.returncode == 0:
             raise AssertionError(p.stdout[-1500:] + p.stderr[-1500:])
     return p.stdout.strip() if check else p
 
@@ -122,7 +122,7 @@ def main():
                         "NoNewPrivs:\t1",
                         "Seccomp:\t2",
                     ]:
-                        if not (text in p.stdout):
+                        if not text in p.stdout:
                             raise AssertionError(p.stdout)
                 # Oneshot may select its default before the informer makes a request.
                 # The separate watch fixture below verifies real node list/watch.
@@ -188,7 +188,7 @@ def main():
             else:
                 raise AssertionError("Node watch did not select alternate config")
             p = run("logs", mock, check=False)
-            if not ("node-read" in p.stdout + p.stderr):
+            if not "node-read" in p.stdout + p.stderr:
                 raise AssertionError
             status = run("exec", cid, "cat", "/proc/1/status")
             for text in [
@@ -197,14 +197,14 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not (text in status):
+                if not text in status:
                     raise AssertionError(status)
         finally:
             if cid:
                 run("rm", "-f", cid)
             if mock:
                 run("rm", "-f", mock)
-        if not ((source / "default").read_text().startswith("version: v1")):
+        if not (source / "default").read_text().startswith("version: v1"):
             raise AssertionError
     print(
         "PASS: UID-1000 one-shot/default/fallback and real node list/watch, zero capabilities, NNP/seccomp with live mode-0777 destination; mode-0755 boundary rejected as expected"

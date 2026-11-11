@@ -22,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if not ("1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True)):
+    if not "1.19.2" in subprocess.check_output([args.kyverno, "version"], text=True):
         raise AssertionError
     policy, _ = yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
     policy["apiVersion"] = "policies.kyverno.io/v1"
@@ -103,28 +103,29 @@ def main():
                 capture_output=True,
                 text=True,
                 timeout=30,
+                check=False,
             )
             if not (result.returncode == 0 and "error: 0" in result.stdout):
                 raise AssertionError(result.stdout + result.stderr)
             docs = [d for d in yaml.safe_load_all(o.read_text()) if d] if o.exists() else []
-            if not (len(docs) <= 1):
+            if not len(docs) <= 1:
                 raise AssertionError
             return docs[0] if docs else doc
 
         for entry, doc, changed in cases:
             output = evaluate(doc)
             if changed:
-                if not (output["spec"] == b.expected_spec(doc, entry)):
+                if not output["spec"] == b.expected_spec(doc, entry):
                     raise AssertionError(
                         (
                             entry["name"],
                             "unexpected spec changes",
                         )
                     )
-                if not (evaluate(output) == output):
+                if not evaluate(output) == output:
                     raise AssertionError((entry["name"], "not idempotent"))
             else:
-                if not (output == doc):
+                if not output == doc:
                     raise AssertionError((entry["name"], "mutated out-of-scope resource"))
     print(
         f"{len(cases)} component mutation/scope checks and {len(entries) * 2} idempotence checks passed"

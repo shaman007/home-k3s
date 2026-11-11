@@ -12,8 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args, timeout=90):
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
-    if not (result.returncode == 0):
+    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    if not result.returncode == 0:
         raise AssertionError(result.stdout[-2000:] + result.stderr[-2000:])
     return result.stdout.strip()
 
@@ -24,19 +24,19 @@ def main():
     ]["spec"]["containers"][0]
     job = yaml.safe_load((ROOT / "hister/tools/job-hister-reindex.yaml").read_text())
     client = job["spec"]["template"]["spec"]["containers"][0]
-    if not (job["metadata"]["annotations"]["argocd.argoproj.io/hook"] == "Skip"):
+    if not job["metadata"]["annotations"]["argocd.argoproj.io/hook"] == "Skip":
         raise AssertionError
-    if not (job["spec"]["template"]["spec"]["automountServiceAccountToken"] is False):
+    if not job["spec"]["template"]["spec"]["automountServiceAccountToken"] is False:
         raise AssertionError
     for c in [server, client]:
         sc = c["securityContext"]
         if not (sc["readOnlyRootFilesystem"] and sc["runAsNonRoot"]):
             raise AssertionError
-        if not (sc["runAsUser"] == sc["runAsGroup"] == 65532):
+        if not sc["runAsUser"] == sc["runAsGroup"] == 65532:
             raise AssertionError
-        if not (sc["allowPrivilegeEscalation"] is False):
+        if not sc["allowPrivilegeEscalation"] is False:
             raise AssertionError
-        if not (sc["capabilities"] == {"drop": ["ALL"]}):
+        if not sc["capabilities"] == {"drop": ["ALL"]}:
             raise AssertionError
     volume = run(["podman", "volume", "create", "hister-ro-guard-" + uuid.uuid4().hex])
     cid = None
@@ -208,7 +208,7 @@ def main():
                 "NoNewPrivs:\t1",
                 "Seccomp:\t2",
             ]:
-                if not (expected in status):
+                if not expected in status:
                     raise AssertionError(status)
             print(
                 "Hister: read-only root startup, text/PDF import/search, manual reindex role and persistent restart passed"
@@ -219,7 +219,7 @@ def main():
     except Exception:
         if cid:
             result = subprocess.run(
-                ["podman", "logs", "--tail=20", cid], capture_output=True, text=True
+                ["podman", "logs", "--tail=20", cid], capture_output=True, text=True, check=False
             )
             # Fixture-only server; never print real configuration or credentials.
             print(

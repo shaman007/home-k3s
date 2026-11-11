@@ -31,14 +31,14 @@ def reviewed(doc, entry):
     if not (
         doc["kind"] == entry["kind"]
         and meta["namespace"] == NAMESPACE
-        and meta["name"] == entry["name"]
+        and (meta["name"] == entry["name"])
     ):
         raise AssertionError
-    if not (doc["spec"]["template"]["metadata"]["labels"]["app"] == entry["name"]):
+    if not doc["spec"]["template"]["metadata"]["labels"]["app"] == entry["name"]:
         raise AssertionError
-    if not (pod["serviceAccountName"] == entry["serviceAccount"]):
+    if not pod["serviceAccountName"] == entry["serviceAccount"]:
         raise AssertionError
-    if not (len(pod["containers"]) == entry["count"] and not pod.get("initContainers")):
+    if not (len(pod["containers"]) == entry["count"] and (not pod.get("initContainers"))):
         raise AssertionError
     c = pod["containers"][entry["index"]]
     if not (c["name"] == entry["container"] and c["image"] == entry["image"]):
@@ -53,9 +53,9 @@ def reviewed(doc, entry):
             expected = entry["fixture"]["spec"]["template"]["spec"]["containers"][index]
             if not (actual["name"] == expected["name"] and actual["image"] == expected["image"]):
                 raise AssertionError
-            if not (actual["securityContext"]["privileged"] is True):
+            if not actual["securityContext"]["privileged"] is True:
                 raise AssertionError
-        if not (doc["spec"]["updateStrategy"] == entry["fixture"]["spec"]["updateStrategy"]):
+        if not doc["spec"]["updateStrategy"] == entry["fixture"]["spec"]["updateStrategy"]:
             raise AssertionError
 
 
@@ -106,9 +106,9 @@ def annotation_patch(doc):
 
 def storage_healthy(volumes, nodes):
     """Reject active degradation; detached idle volumes may have unknown health."""
-    if not (volumes.get("items")):
+    if not volumes.get("items"):
         raise AssertionError("No Longhorn volume status available")
-    if not (nodes.get("items")):
+    if not nodes.get("items"):
         raise AssertionError("No Longhorn node status available")
     for volume in volumes["items"]:
         status = volume.get("status", {})
@@ -126,7 +126,7 @@ def storage_healthy(volumes, nodes):
         if not (conditions.get("Ready") == "True" and conditions.get("Schedulable") == "True"):
             raise AssertionError("Longhorn node is not ready/schedulable")
         disks = status.get("diskStatus", {})
-        if not (disks):
+        if not disks:
             raise AssertionError("No Longhorn disk status available")
         for disk in disks.values():
             conditions = {c["type"]: c["status"] for c in disk.get("conditions", [])}
@@ -173,13 +173,13 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
     def storage_check():
         if not check_storage:
             return
-        documents = []
+        documents = {}
         for resource in ["volumes", "nodes"]:
             url = base + "/apis/longhorn.io/v1beta2/namespaces/" + NAMESPACE + "/" + resource
             req = urllib.request.Request(url, headers={"Authorization": "Bearer " + token})
             with opener.open(req, timeout=15) as response:
-                documents.append(json.load(response))
-        storage_healthy(*documents)
+                documents[resource] = json.load(response)
+        storage_healthy(documents["volumes"], documents["nodes"])
 
     # Complete all safety checks before the first persistent write.
     for attempt in range(30):
@@ -188,10 +188,10 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
             for entry in entries:
                 original = request(entry)
                 reviewed(original, entry)
-                if not (ready(original)):
+                if not ready(original):
                     raise AssertionError(f"{entry['name']}: workload is not fully healthy")
                 preview = request(entry, annotation_patch(original), dry=True)
-                if not (preview["spec"] == expected_spec(original, entry)):
+                if not preview["spec"] == expected_spec(original, entry):
                     raise AssertionError(
                         f"{entry['name']}: unexpected or absent admission mutation"
                     )
@@ -205,19 +205,19 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
         # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.
         original = request(entry)
         reviewed(original, entry)
-        if not (ready(original)):
+        if not ready(original):
             raise AssertionError(f"{entry['name']}: became unhealthy before mutation")
         expected = expected_spec(original, entry)
         if original["spec"] != expected:
             patch = annotation_patch(original)
-            if not (request(entry, patch, dry=True)["spec"] == expected):
+            if not request(entry, patch, dry=True)["spec"] == expected:
                 raise AssertionError
-            if not (request(entry, patch)["spec"] == expected):
+            if not request(entry, patch)["spec"] == expected:
                 raise AssertionError
         deadline = time.monotonic() + 300
         while True:
             current = request(entry)
-            if not (current["spec"] == expected):
+            if not current["spec"] == expected:
                 raise AssertionError(f"{entry['name']}: spec changed during rollout")
             if ready(current):
                 break
@@ -231,7 +231,7 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
     for path in ["/", "/v1"]:
         req = urllib.request.Request("http://longhorn-frontend" + path)
         with opener.open(req, timeout=15) as response:
-            if not (response.status == 200):
+            if not response.status == 200:
                 raise AssertionError("UI HTTP check failed")
     print("Component backfill complete; UI static and API proxy HTTP checks passed", flush=True)
 

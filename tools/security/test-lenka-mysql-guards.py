@@ -11,22 +11,22 @@ IMAGE = "harbor.andreybondarenko.com/dockerhub/mysql@sha256:257388edf9c84dbc04c7
 
 
 def run(*args):
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=180)
+    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=180, check=False)
     if p.returncode:
         raise RuntimeError(p.stderr[-2000:])
     return p.stdout.strip()
 
 
 def main():
-    patch = yaml.safe_load(Path(__file__).with_name("lenka-mysql-security.patch.yaml").read_text())
+    patch = yaml.safe_load(Path(__file__).with_name("lenka-mysql-security.patch.yaml").read_text(encoding="utf-8"))
     sc = patch["spec"]["template"]["spec"]["containers"][0]["securityContext"]
     if not (sc["runAsUser"] == sc["runAsGroup"] == 999 and sc["runAsNonRoot"]):
         raise AssertionError
-    if not (sc["capabilities"] == {"drop": ["ALL"]}):
+    if not sc["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
-    if not (not sc["allowPrivilegeEscalation"] and not sc["privileged"]):
+    if not (not sc["allowPrivilegeEscalation"] and (not sc["privileged"])):
         raise AssertionError
-    if not (sc["seccompProfile"] == {"type": "RuntimeDefault"}):
+    if not sc["seccompProfile"] == {"type": "RuntimeDefault"}:
         raise AssertionError
     volume = run("volume", "create", "lenka-mysql-guard-" + uuid.uuid4().hex)
     cid = None
@@ -80,25 +80,25 @@ def main():
         sql(
             "CREATE DATABASE guard_fixture; CREATE TABLE guard_fixture.probe (id INT PRIMARY KEY); INSERT INTO guard_fixture.probe VALUES (42)"
         )
-        if not (sql("SELECT id FROM guard_fixture.probe") == "42"):
+        if not sql("SELECT id FROM guard_fixture.probe") == "42":
             raise AssertionError
         status = run("exec", cid, "cat", "/proc/1/status")
         fields = dict(line.split(":", 1) for line in status.splitlines() if ":" in line)
-        if not (fields["Uid"].split() == ["999"] * 4):
+        if not fields["Uid"].split() == ["999"] * 4:
             raise AssertionError
-        if not (fields["Gid"].split() == ["999"] * 4):
+        if not fields["Gid"].split() == ["999"] * 4:
             raise AssertionError
-        if not (all(int(fields[k].strip(), 16) == 0 for k in ["CapEff", "CapPrm", "CapBnd"])):
+        if not all((int(fields[k].strip(), 16) == 0 for k in ["CapEff", "CapPrm", "CapBnd"])):
             raise AssertionError
         if not (fields["NoNewPrivs"].strip() == "1" and fields["Seccomp"].strip() == "2"):
             raise AssertionError
         run("stop", "--time=45", cid)
         run("start", cid)
         ready()
-        if not (sql("SELECT id FROM guard_fixture.probe") == "42"):
+        if not sql("SELECT id FROM guard_fixture.probe") == "42":
             raise AssertionError
         sql("UPDATE guard_fixture.probe SET id=43")
-        if not (sql("SELECT id FROM guard_fixture.probe") == "43"):
+        if not sql("SELECT id FROM guard_fixture.probe") == "43":
             raise AssertionError
         print(
             "PASS: non-root initialization, SQL writes, graceful restart, persisted data, zero capabilities, NNP and default seccomp"

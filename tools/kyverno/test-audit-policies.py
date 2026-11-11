@@ -157,13 +157,14 @@ def admitted_longhorn_manager(document, kyverno):
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
         if not (result.returncode == 0 and "error: 0" in result.stdout):
             raise AssertionError(result.stdout + result.stderr)
         documents = (
             [d for d in yaml.safe_load_all(output.read_text()) if d] if output.exists() else []
         )
-        if not (len(documents) <= 1):
+        if not len(documents) <= 1:
             raise AssertionError
         # An unmatched contract stays unmodified and must fail the audit, rather
         # than silently substituting the reviewed snapshot or hard-coded guards.
@@ -188,7 +189,7 @@ def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=25
             for index, (document, expected, separate) in enumerate(cases)
             if name in expected
         ]
-        if not (selected):
+        if not selected:
             raise AssertionError(f"No assertions for {name}")
         shard_count = (len(selected) + max_cases_per_shard - 1) // max_cases_per_shard
         relevant = [
@@ -207,7 +208,7 @@ def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=25
             resources, results = [], []
             count = 0
 
-            def write_test(target, documents, refs):
+            def write_test(target, documents, refs, folder=folder, shard_name=shard_name):
                 (target / "resources.yaml").write_text(
                     yaml.safe_dump_all(documents, sort_keys=False)
                 )
@@ -244,10 +245,10 @@ def write_test_cases(cases, policies, exceptions, output, max_cases_per_shard=25
                     results.append(ref)
             if results:
                 write_test(folder, resources, results)
-            if not (count):
+            if not count:
                 raise AssertionError(f"No assertions for {name}")
             counts[shard_name] = count
-    if not (sum(counts.values()) == sum(len(expected) for _, expected, _ in cases)):
+    if not sum(counts.values()) == sum((len(expected) for _, expected, _ in cases)):
         raise AssertionError
     (output / "counts.json").write_text(json.dumps(counts, sort_keys=True, indent=2) + "\n")
     return counts
@@ -290,10 +291,10 @@ def main():
                 )
             rendered.append(document)
     policies = [d for d in rendered if d.get("kind") == "ValidatingPolicy"]
-    if not ({d["metadata"]["name"] for d in policies} == EXPECTED_POLICIES):
+    if not {d["metadata"]["name"] for d in policies} == EXPECTED_POLICIES:
         raise AssertionError
-    if not (
-        all(
+    if not all(
+        (
             d["spec"]["validationActions"] == ["Audit"] and d["spec"]["failurePolicy"] == "Ignore"
             for d in policies
         )
@@ -359,7 +360,7 @@ def main():
             else:
                 positive = document
 
-            def variant_name(document, token):
+            def variant_name(document, token, entry=entry):
                 suffix = hashlib.sha256(
                     (entry["namespace"] + "/" + entry["name"] + token).encode()
                 ).hexdigest()[:10]

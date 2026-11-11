@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(command, label, timeout=60):
-    result = subprocess.run(command, text=True, capture_output=True, timeout=timeout)
-    if not (result.returncode == 0):
+    result = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False)
+    if not result.returncode == 0:
         raise AssertionError(label + ": " + result.stdout[-2000:] + result.stderr[-2000:])
     return result.stdout
 
@@ -28,7 +28,7 @@ def helper(path, name, caps, mount, setup, checks, expected_mask):
     sc = container["securityContext"]
     if not (sc["readOnlyRootFilesystem"] and sc["allowPrivilegeEscalation"] is False):
         raise AssertionError
-    if not (sc["capabilities"] == {"drop": ["ALL"], "add": caps}):
+    if not sc["capabilities"] == {"drop": ["ALL"], "add": caps}:
         raise AssertionError
     command = [
         "podman",
@@ -60,7 +60,7 @@ def helper(path, name, caps, mount, setup, checks, expected_mask):
         "NoNewPrivs:\t1",
         "Seccomp:\t2",
     ]:
-        if not (expected in output):
+        if not expected in output:
             raise AssertionError((path, output))
     print(
         path
@@ -123,12 +123,12 @@ test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
         ),
     ]
     for container, installers, smoke in tests:
-        if not (container["securityContext"]["capabilities"] == {"drop": ["ALL"]}):
+        if not container["securityContext"]["capabilities"] == {"drop": ["ALL"]}:
             raise AssertionError
-        if not (container["securityContext"]["allowPrivilegeEscalation"] is False):
+        if not container["securityContext"]["allowPrivilegeEscalation"] is False:
             raise AssertionError
         for installer in installers:
-            if not (installer in [line.strip() for line in container["command"][-1].splitlines()]):
+            if not installer in [line.strip() for line in container["command"][-1].splitlines()]:
                 raise AssertionError
         # Never execute login, fetch, upload, description updates or job API calls.
         script = (
@@ -159,7 +159,7 @@ test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
             "NoNewPrivs:\t1",
             "Seccomp:\t2",
         ]:
-            if not (expected in output):
+            if not expected in output:
                 raise AssertionError(output)
         print(
             container["name"] + ": exact installer/client smoke test passed with zero capabilities",

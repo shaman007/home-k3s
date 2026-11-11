@@ -28,7 +28,7 @@ Dumper.add_representer(
 def generate(catalog):
     entries = catalog["entries"]
     branches = []
-    if not (len({e["name"] for e in entries}) == len(entries)):
+    if not len({e["name"] for e in entries}) == len(entries):
         raise AssertionError("Ambiguous workload names")
     for e in entries:
         c = f"p.containers[{e['index']}]"
@@ -231,7 +231,7 @@ def main():
         )
         path = ROOT / filename
         if args.check:
-            if not (path.read_text() == text):
+            if not path.read_text() == text:
                 raise AssertionError(filename + " is stale")
         else:
             path.write_text(text)

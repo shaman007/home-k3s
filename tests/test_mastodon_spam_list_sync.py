@@ -1,4 +1,5 @@
 """Exercise the embedded Rails importer with in-memory models and HTTP responses."""
+
 import json
 import shutil
 import subprocess
@@ -8,9 +9,11 @@ import unittest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = yaml.safe_load((ROOT / 'mastodon/config-map-spam-list-sync.yaml').read_text())['data']['sync.rb']
+SCRIPT = yaml.safe_load((ROOT / "mastodon/config-map-spam-list-sync.yaml").read_text())["data"][
+    "sync.rb"
+]
 
-HARNESS = r'''
+HARNESS = r"""
 require 'net/http'
 require 'json'
 class Net::HTTP
@@ -58,41 +61,48 @@ class IpBlock
   end
   def self.create!(**); raise 'must preserve manual IP rule'; end
 end
-'''
+"""
 
 
 def run_import(**env):
     import os
-    return subprocess.run(['ruby', '-e', HARNESS + SCRIPT], env={**os.environ, **env}, text=True, capture_output=True)
+
+    return subprocess.run(
+        ["ruby", "-e", HARNESS + SCRIPT],
+        env={**os.environ, **env},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
 
 
-@unittest.skipUnless(shutil.which('ruby'), 'Ruby required')
+@unittest.skipUnless(shutil.which("ruby"), "Ruby required")
 class SpamListSyncTest(unittest.TestCase):
     def test_preview_and_apply_preserve_manual_rules(self):
-        for apply in ('false', 'true'):
+        for apply in ("false", "true"):
             with self.subTest(apply=apply):
                 result = run_import(SPAM_LIST_APPLY=apply)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 summary = json.loads(result.stdout.splitlines()[-1])
-                self.assertEqual(summary['apply'], apply == 'true')
-                self.assertEqual(summary['mx'], 1)
-                self.assertEqual(summary['email_added'], 100)
-                self.assertEqual(summary['ip_added'], 0)
-                self.assertEqual(summary['ip_refreshed'], 0)
+                self.assertEqual(summary["apply"], apply == "true")
+                self.assertEqual(summary["mx"], 1)
+                self.assertEqual(summary["email_added"], 100)
+                self.assertEqual(summary["ip_added"], 0)
+                self.assertEqual(summary["ip_refreshed"], 0)
 
     def test_bad_source_fails_before_writes(self):
         for env in [
-            {'EXTRA_DOMAIN': '\nnot-a-domain'},
-            {'EXTRA_DOMAIN': '\ngmail.com'},
-            {'TEST_RANGE': '0.0.0.0/0'},
-            {'TEST_RANGE': '127.0.0.1/32'},
-            {'TEST_RANGE': 'invalid'},
+            {"EXTRA_DOMAIN": "\nnot-a-domain"},
+            {"EXTRA_DOMAIN": "\ngmail.com"},
+            {"TEST_RANGE": "0.0.0.0/0"},
+            {"TEST_RANGE": "127.0.0.1/32"},
+            {"TEST_RANGE": "invalid"},
         ]:
             with self.subTest(env=env):
-                result = run_import(SPAM_LIST_APPLY='true', **env)
+                result = run_import(SPAM_LIST_APPLY="true", **env)
                 self.assertNotEqual(result.returncode, 0)
-                self.assertNotIn('Created ', result.stdout)
+                self.assertNotIn("Created ", result.stdout)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

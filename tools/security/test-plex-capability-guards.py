@@ -16,8 +16,8 @@ CAPS = ["CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "KILL", "SETGID", "SETUID"]
 
 
 def run(args, timeout=90):
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
-    if not (result.returncode == 0):
+    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    if not result.returncode == 0:
         raise AssertionError(result.stdout[-2000:] + result.stderr[-2000:])
     return result.stdout.strip()
 
@@ -25,11 +25,11 @@ def run(args, timeout=90):
 def main():
     doc = yaml.safe_load((ROOT / "plex/deployment-plex.yaml").read_text())
     c = doc["spec"]["template"]["spec"]["containers"][0]
-    if not (c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": CAPS}):
+    if not c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": CAPS}:
         raise AssertionError
-    if not (c["securityContext"]["allowPrivilegeEscalation"] is False):
+    if not c["securityContext"]["allowPrivilegeEscalation"] is False:
         raise AssertionError
-    if not (all(p["containerPort"] >= 1024 for p in c["ports"])):
+    if not all((p["containerPort"] >= 1024 for p in c["ports"])):
         raise AssertionError
     hook = yaml.safe_load((ROOT / "plex/config-map-plex-custom-init.yaml").read_text())["data"][
         "10-disable-scheduled-library-updates.sh"
@@ -87,10 +87,11 @@ def main():
                         ["podman", "exec", cid, "curl", "-fsS", "http://127.0.0.1:32400/identity"],
                         capture_output=True,
                         text=True,
+                        check=False,
                     )
                     if p.returncode == 0:
                         root = ET.fromstring(p.stdout)
-                        if not (root.tag == "MediaContainer"):
+                        if not root.tag == "MediaContainer":
                             raise AssertionError
                         return
                     time.sleep(1)
@@ -99,7 +100,7 @@ def main():
             identity()
             status = run(["podman", "exec", cid, "cat", "/proc/1/status"])
             for expected in ["CapBnd:\t00000000000000fb", "NoNewPrivs:\t1", "Seccomp:\t2"]:
-                if not (expected in status):
+                if not expected in status:
                     raise AssertionError(status)
             # Read a synthetic file and software-transcode as the real media user.
             run(
@@ -123,8 +124,9 @@ def main():
                     "/tmp/guard-output.mkv",
                 ]
             )
-            if not (
-                int(run(["podman", "exec", cid, "stat", "-c", "%s", "/tmp/guard-output.mkv"])) > 0
+            if (
+                not int(run(["podman", "exec", cid, "stat", "-c", "%s", "/tmp/guard-output.mkv"]))
+                > 0
             ):
                 raise AssertionError
             # Restart against the same preferences to exercise the non-empty hook branch.
@@ -140,14 +142,14 @@ def main():
                 ]
             )
             p = ET.fromstring(prefs)
-            if not (p.attrib["ScheduledLibraryUpdatesEnabled"] == "0"):
+            if not p.attrib["ScheduledLibraryUpdatesEnabled"] == "0":
                 raise AssertionError
-            if not (p.attrib["FSEventLibraryUpdatesEnabled"] == "1"):
+            if not p.attrib["FSEventLibraryUpdatesEnabled"] == "1":
                 raise AssertionError
-            if not (p.attrib["FSEventLibraryPartialScanEnabled"] == "1"):
+            if not p.attrib["FSEventLibraryPartialScanEnabled"] == "1":
                 raise AssertionError
             advertised = next(e["value"] for e in c["env"] if e["name"] == "ADVERTISE_IP")
-            if not (p.attrib["customConnections"] == advertised):
+            if not p.attrib["customConnections"] == advertised:
                 raise AssertionError
             print(
                 "Plex: offline startup, HTTP identity, UID 1000 software MJPEG transcode and persistent-preference restart passed"
@@ -158,7 +160,7 @@ def main():
     except Exception:
         if cid:
             result = subprocess.run(
-                ["podman", "logs", "--tail=30", cid], capture_output=True, text=True
+                ["podman", "logs", "--tail=30", cid], capture_output=True, text=True, check=False
             )
             print((result.stdout + result.stderr)[-2500:])
         raise

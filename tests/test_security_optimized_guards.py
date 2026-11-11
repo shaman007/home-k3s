@@ -4,7 +4,6 @@ import copy
 from pathlib import Path
 import subprocess
 import sys
-import types
 import unittest
 from unittest.mock import patch
 
@@ -19,16 +18,15 @@ class OptimizedSecurityGuardsTest(unittest.TestCase):
         path = ROOT / "tools/security/test-mail-capability-guards.py"
         document = yaml.safe_load((ROOT / "mail/deployment-dovecot.yaml").read_text())
         for optimization in (0, 2):
-            module = types.ModuleType("mail_smoke_guard_fixture")
-            module.__file__ = str(path)
+            namespace = {"__name__": "mail_smoke_guard_fixture", "__file__": str(path)}
             exec(
-                compile(path.read_text(), str(path), "exec", optimize=optimization), module.__dict__
+                compile(path.read_text(), str(path), "exec", optimize=optimization), namespace
             )
             with patch.object(
-                module.subprocess, "run", side_effect=RuntimeError("Unexpected execution")
+                namespace["subprocess"], "run", side_effect=RuntimeError("Unexpected execution")
             ):
-                with patch.object(module.yaml, "safe_load", return_value=document):
-                    arguments, _ = module.command("dovecot")
+                with patch.object(namespace["yaml"], "safe_load", return_value=document):
+                    arguments, _ = namespace["command"]("dovecot")
                     self.assertIn("--read-only", arguments)
                     self.assertIn("--cap-drop=ALL", arguments)
                 for field, value in (
@@ -41,9 +39,9 @@ class OptimizedSecurityGuardsTest(unittest.TestCase):
                         unsafe["spec"]["template"]["spec"]["containers"][0]["securityContext"][
                             field
                         ] = value
-                        with patch.object(module.yaml, "safe_load", return_value=unsafe):
+                        with patch.object(namespace["yaml"], "safe_load", return_value=unsafe):
                             with self.assertRaises(AssertionError):
-                                module.command("dovecot")
+                                namespace["command"]("dovecot")
 
     def test_rejection_and_preflight_cases_with_optimization(self):
         # These suites exercise malformed exception catalogs, changed workload
@@ -74,5 +72,6 @@ class OptimizedSecurityGuardsTest(unittest.TestCase):
                     capture_output=True,
                     text=True,
                     timeout=60,
+                    check=False,
                 )
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)

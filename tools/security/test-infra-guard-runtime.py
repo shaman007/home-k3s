@@ -6,8 +6,8 @@ import time
 
 
 def run(*args):
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=120)
-    if not (p.returncode == 0):
+    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=120, check=False)
+    if not p.returncode == 0:
         raise AssertionError(p.stderr[-2000:])
     return p.stdout.strip()
 
@@ -79,7 +79,7 @@ def main():
             "NoNewPrivs:\t1",
             "Seccomp:\t2",
         ]:
-            if not (expected in output):
+            if not expected in output:
                 raise AssertionError(output)
     print(
         "PASS: two controller CLI startups and non-root curl/HTTP wait; capability/NNP/seccomp checks passed"

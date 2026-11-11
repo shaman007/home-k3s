@@ -26,37 +26,33 @@ def main():
     for name in APPLICATIONS:
         manifest = yaml.safe_load((ROOT / name / f"stateful-set-{name}-postgres.yaml").read_text())
         gid = manifest["spec"]["template"]["spec"]["securityContext"]["runAsGroup"]
-        if not (gid == 999):
+        if not gid == 999:
             raise AssertionError
         init = next(
             c
             for c in manifest["spec"]["template"]["spec"]["initContainers"]
             if c["name"] == "volume-permissions"
         )
-        if not (init["image"] == IMAGE):
+        if not init["image"] == IMAGE:
             raise AssertionError
-        if not (init["securityContext"]["runAsUser"] == 0):
+        if not init["securityContext"]["runAsUser"] == 0:
             raise AssertionError
-        if not (init["securityContext"]["allowPrivilegeEscalation"] is False):
+        if not init["securityContext"]["allowPrivilegeEscalation"] is False:
             raise AssertionError
-        if not (
-            init["securityContext"]["capabilities"]
-            == {
-                "drop": ["ALL"],
-                "add": ["CHOWN", "DAC_OVERRIDE"],
-            }
-        ):
+        if not init["securityContext"]["capabilities"] == {
+            "drop": ["ALL"],
+            "add": ["CHOWN", "DAC_OVERRIDE"],
+        }:
             raise AssertionError
         if not (
             init["command"][:2] == ["sh", "-c"]
             and len(init["command"]) == 3
-            and not init.get("args")
+            and (not init.get("args"))
         ):
             raise AssertionError
-        if not (
-            [(m["name"], m["mountPath"], m.get("subPath")) for m in init["volumeMounts"]]
-            == [("data", "/var/lib/postgresql/data", "data")]
-        ):
+        if not [(m["name"], m["mountPath"], m.get("subPath")) for m in init["volumeMounts"]] == [
+            ("data", "/var/lib/postgresql/data", "data")
+        ]:
             raise AssertionError
         # Seed restrictive, already-owned data, including a nonempty directory.
         # The tested script must traverse it and preserve contents and modes.
@@ -98,8 +94,8 @@ grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/self/status
             "-c",
             setup + init["command"][2] + verify,
         ]
-        result = subprocess.run(command, text=True, capture_output=True, timeout=30)
-        if not (result.returncode == 0):
+        result = subprocess.run(command, text=True, capture_output=True, timeout=30, check=False)
+        if not result.returncode == 0:
             raise AssertionError(name + ": " + result.stdout + result.stderr)
         for expected in [
             "CapEff:\t0000000000000003",
@@ -107,7 +103,7 @@ grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/self/status
             "NoNewPrivs:\t1",
             "Seccomp:\t2",
         ]:
-            if not (expected in result.stdout):
+            if not expected in result.stdout:
                 raise AssertionError((name, result.stdout))
         print(
             f"{name}: exact init succeeded with CHOWN/DAC_OVERRIDE only; contents, ownership and modes preserved",

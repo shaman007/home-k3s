@@ -169,6 +169,6 @@ if __name__ == '__main__':
     try:
         main()
     except subprocess.SubprocessError:
-        raise SystemExit('Database/Kubernetes command failed; details suppressed to protect data. Keep Sync stopped.')
+        raise SystemExit('Database/Kubernetes command failed; details suppressed to protect data. Keep Sync stopped.') from None
     except RuntimeError as error:
-        raise SystemExit(str(error))
+        raise SystemExit(str(error)) from None

@@ -157,4 +157,4 @@ if __name__ == "__main__":
             str(exc)
             if type(exc) is RuntimeError
             else "SSO migration failed (" + type(exc).__name__ + "); sensitive details suppressed"
-        )
+        ) from None
