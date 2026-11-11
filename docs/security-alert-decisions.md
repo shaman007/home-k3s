@@ -2281,3 +2281,22 @@ no rule was suppressed. No live hook, cluster or credentials were used.
 Current open inventory is 90: Bandit 71, modern Pylint 12 and Opengrep seven.
 Prospector has zero open findings after genuine rescanning and scoped review.
 No push was performed by this batch.
+
+
+### Extract shared dashboard serialization and variable builders
+
+Moved the common Grafana panel/dashboard ConfigMap builder, datasource constants
+and query-variable builder into tools/monitoring/dashboard_builder.py. The existing
+generator imports those helpers and retains its dashboard specifications and
+ordered output-name list. Both modules pass full Pylint without suppressions;
+the original excessive-module-length warning is gone.
+
+Executed original and refactored generation with output writes intercepted. All
+fourteen complete ConfigMap texts and ordered dashboard names match byte-for-byte,
+including queries, panel IDs/layout, metadata and template variables. Every output
+also matches its checked-in file. No generated manifest was rewritten and no
+Grafana instance or Kubernetes API was contacted. The full suite ran 515 tests
+successfully with 21 opt-in skips. Ruff formatting/checks and diff checks passed;
+Bandit reported zero findings and zero analysis errors for the two generator
+modules. Source fixes await genuine published rescanning; no alert was dismissed
+in this batch and no push was performed.
