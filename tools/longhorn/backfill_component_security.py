@@ -76,19 +76,14 @@ def ready(doc):
         return False
     if doc["kind"] == "Deployment":
         count = doc["spec"].get("replicas", 1)
-        return (
-            count > 0
-            and status.get("updatedReplicas", 0) == count
-            and status.get("replicas", 0) == count
-            and status.get("readyReplicas", 0) == count
-            and status.get("availableReplicas", 0) == count
+        return count > 0 and all(
+            status.get(field, 0) == count
+            for field in ["updatedReplicas", "replicas", "readyReplicas", "availableReplicas"]
         )
     count = status.get("desiredNumberScheduled", 0)
-    return (
-        count > 0
-        and status.get("updatedNumberScheduled", 0) == count
-        and status.get("numberReady", 0) == count
-        and status.get("numberAvailable", 0) == count
+    return count > 0 and all(
+        status.get(field, 0) == count
+        for field in ["updatedNumberScheduled", "numberReady", "numberAvailable"]
     )
 
 
@@ -139,6 +134,76 @@ def storage_healthy(volumes, nodes):
                 raise AssertionError("Longhorn disk is not ready/schedulable")
 
 
+def preflight(entries, request, storage_check):
+    """Require every reviewed contract and admission preview before any persistent write."""
+    # Complete all safety checks before the first persistent write.
+    for attempt in range(30):
+        try:
+            storage_check()
+            for entry in entries:
+                original = request(entry)
+                reviewed(original, entry)
+                if not ready(original):
+                    raise AssertionError(f"{entry['name']}: workload is not fully healthy")
+                preview = request(entry, annotation_patch(original), dry=True)
+                if not preview["spec"] == expected_spec(original, entry):
+                    raise AssertionError(
+                        f"{entry['name']}: unexpected or absent admission mutation"
+                    )
+            break
+        except AssertionError:
+            if attempt == 29:
+                raise
+            time.sleep(3)
+
+
+def wait_for_rollout(entry, request, expected):
+    """Require the exact admitted spec and completed rollout before later targets."""
+    deadline = time.monotonic() + 300
+    while True:
+        current = request(entry)
+        if not current["spec"] == expected:
+            raise AssertionError(f"{entry['name']}: spec changed during rollout")
+        if ready(current):
+            break
+        if time.monotonic() >= deadline:
+            raise RuntimeError(
+                f"{entry['name']}: rollout timed out; later targets were not changed"
+            )
+        time.sleep(3)
+
+
+def rollout(entries, request, storage_check):
+    """Recheck each target and storage before guarded sequential admission and readback."""
+    for entry in entries:
+        storage_check()
+        # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.
+        original = request(entry)
+        reviewed(original, entry)
+        if not ready(original):
+            raise AssertionError(f"{entry['name']}: became unhealthy before mutation")
+        expected = expected_spec(original, entry)
+        if original["spec"] != expected:
+            patch = annotation_patch(original)
+            if not request(entry, patch, dry=True)["spec"] == expected:
+                raise AssertionError
+            if not request(entry, patch)["spec"] == expected:
+                raise AssertionError
+        wait_for_rollout(entry, request, expected)
+        storage_check()
+        print(f"{entry['name']}: security context and completed rollout verified", flush=True)
+
+
+def check_frontend(opener):
+    """Verify both the Longhorn static UI and API proxy after successful component rollouts."""
+    for path in ["/", "/v1"]:
+        req = urllib.request.Request("http://longhorn-frontend" + path)
+        with opener.open(req, timeout=15) as response:
+            if not response.status == 200:
+                raise AssertionError("UI HTTP check failed")
+    print("Component backfill complete; UI static and API proxy HTTP checks passed", flush=True)
+
+
 def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.io/serviceaccount")):
     """Preflight native mutations, then roll reviewed workloads one at a time."""
     entries = json.loads((config_dir / "catalog.json").read_text())["entries"]
@@ -172,6 +237,7 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
             with opener.open(req, timeout=15) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
+            error.close()
             raise RuntimeError(f"{entry['name']}: Kubernetes HTTP {error.code}") from None
 
     check_storage = any(e["name"] == "longhorn-manager" for e in entries)
@@ -187,59 +253,9 @@ def main(config_dir=Path("/config"), account=Path("/var/run/secrets/kubernetes.i
                 documents[resource] = json.load(response)
         storage_healthy(documents["volumes"], documents["nodes"])
 
-    # Complete all safety checks before the first persistent write.
-    for attempt in range(30):
-        try:
-            storage_check()
-            for entry in entries:
-                original = request(entry)
-                reviewed(original, entry)
-                if not ready(original):
-                    raise AssertionError(f"{entry['name']}: workload is not fully healthy")
-                preview = request(entry, annotation_patch(original), dry=True)
-                if not preview["spec"] == expected_spec(original, entry):
-                    raise AssertionError(
-                        f"{entry['name']}: unexpected or absent admission mutation"
-                    )
-            break
-        except AssertionError:
-            if attempt == 29:
-                raise
-            time.sleep(3)
-    for entry in entries:
-        storage_check()
-        # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.
-        original = request(entry)
-        reviewed(original, entry)
-        if not ready(original):
-            raise AssertionError(f"{entry['name']}: became unhealthy before mutation")
-        expected = expected_spec(original, entry)
-        if original["spec"] != expected:
-            patch = annotation_patch(original)
-            if not request(entry, patch, dry=True)["spec"] == expected:
-                raise AssertionError
-            if not request(entry, patch)["spec"] == expected:
-                raise AssertionError
-        deadline = time.monotonic() + 300
-        while True:
-            current = request(entry)
-            if not current["spec"] == expected:
-                raise AssertionError(f"{entry['name']}: spec changed during rollout")
-            if ready(current):
-                break
-            if time.monotonic() >= deadline:
-                raise RuntimeError(
-                    f"{entry['name']}: rollout timed out; later targets were not changed"
-                )
-            time.sleep(3)
-        storage_check()
-        print(f"{entry['name']}: security context and completed rollout verified", flush=True)
-    for path in ["/", "/v1"]:
-        req = urllib.request.Request("http://longhorn-frontend" + path)
-        with opener.open(req, timeout=15) as response:
-            if not response.status == 200:
-                raise AssertionError("UI HTTP check failed")
-    print("Component backfill complete; UI static and API proxy HTTP checks passed", flush=True)
+    preflight(entries, request, storage_check)
+    rollout(entries, request, storage_check)
+    check_frontend(opener)
 
 
 if __name__ == "__main__":

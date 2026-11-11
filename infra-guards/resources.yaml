@@ -705,17 +705,16 @@ data:
     \ spec\n\n\ndef ready(doc):\n    \"\"\"Require the current generation and every desired replica to be updated and ready.\"\
     \"\"\n    status = doc.get(\"status\", {})\n    if status.get(\"observedGeneration\", 0) < doc[\"metadata\"].get(\"generation\"\
     , 1):\n        return False\n    if doc[\"kind\"] == \"Deployment\":\n        count = doc[\"spec\"].get(\"replicas\",\
-    \ 1)\n        return (\n            count > 0\n            and status.get(\"updatedReplicas\", 0) == count\n         \
-    \   and status.get(\"replicas\", 0) == count\n            and status.get(\"readyReplicas\", 0) == count\n            and\
-    \ status.get(\"availableReplicas\", 0) == count\n        )\n    count = status.get(\"desiredNumberScheduled\", 0)\n  \
-    \  return (\n        count > 0\n        and status.get(\"updatedNumberScheduled\", 0) == count\n        and status.get(\"\
-    numberReady\", 0) == count\n        and status.get(\"numberAvailable\", 0) == count\n    )\n\n\ndef annotation_patch(doc):\n\
-    \    \"\"\"Build a resource-version-guarded annotation patch to trigger reviewed admission.\"\"\"\n    patch = [\n   \
-    \     {\n            \"op\": \"test\",\n            \"path\": \"/metadata/resourceVersion\",\n            \"value\": doc[\"\
-    metadata\"][\"resourceVersion\"],\n        }\n    ]\n    if doc[\"metadata\"].get(\"annotations\") is None:\n        patch.append({\"\
-    op\": \"add\", \"path\": \"/metadata/annotations\", \"value\": {}})\n    patch.append(\n        {\"op\": \"add\", \"path\"\
-    : \"/metadata/annotations/\" + MARKER.replace(\"/\", \"~1\"), \"value\": \"v1\"}\n    )\n    return patch\n\n\ndef storage_healthy(volumes,\
-    \ nodes):\n    \"\"\"Reject active degradation; detached idle volumes may have unknown health.\"\"\"\n    if not volumes.get(\"\
+    \ 1)\n        return count > 0 and all(\n            status.get(field, 0) == count\n            for field in [\"updatedReplicas\"\
+    , \"replicas\", \"readyReplicas\", \"availableReplicas\"]\n        )\n    count = status.get(\"desiredNumberScheduled\"\
+    , 0)\n    return count > 0 and all(\n        status.get(field, 0) == count\n        for field in [\"updatedNumberScheduled\"\
+    , \"numberReady\", \"numberAvailable\"]\n    )\n\n\ndef annotation_patch(doc):\n    \"\"\"Build a resource-version-guarded\
+    \ annotation patch to trigger reviewed admission.\"\"\"\n    patch = [\n        {\n            \"op\": \"test\",\n   \
+    \         \"path\": \"/metadata/resourceVersion\",\n            \"value\": doc[\"metadata\"][\"resourceVersion\"],\n \
+    \       }\n    ]\n    if doc[\"metadata\"].get(\"annotations\") is None:\n        patch.append({\"op\": \"add\", \"path\"\
+    : \"/metadata/annotations\", \"value\": {}})\n    patch.append(\n        {\"op\": \"add\", \"path\": \"/metadata/annotations/\"\
+    \ + MARKER.replace(\"/\", \"~1\"), \"value\": \"v1\"}\n    )\n    return patch\n\n\ndef storage_healthy(volumes, nodes):\n\
+    \    \"\"\"Reject active degradation; detached idle volumes may have unknown health.\"\"\"\n    if not volumes.get(\"\
     items\"):\n        raise AssertionError(\"No Longhorn volume status available\")\n    if not nodes.get(\"items\"):\n \
     \       raise AssertionError(\"No Longhorn node status available\")\n    for volume in volumes[\"items\"]:\n        status\
     \ = volume.get(\"status\", {})\n        detached = status.get(\"state\") == \"detached\"\n        acceptable = (\n   \
@@ -728,48 +727,54 @@ data:
     \ = status.get(\"diskStatus\", {})\n        if not disks:\n            raise AssertionError(\"No Longhorn disk status\
     \ available\")\n        for disk in disks.values():\n            conditions = {c[\"type\"]: c[\"status\"] for c in disk.get(\"\
     conditions\", [])}\n            if not (conditions.get(\"Ready\") == \"True\" and conditions.get(\"Schedulable\") == \"\
-    True\"):\n                raise AssertionError(\"Longhorn disk is not ready/schedulable\")\n\n\ndef main(config_dir=Path(\"\
-    /config\"), account=Path(\"/var/run/secrets/kubernetes.io/serviceaccount\")):\n    \"\"\"Preflight native mutations, then\
-    \ roll reviewed workloads one at a time.\"\"\"\n    entries = json.loads((config_dir / \"catalog.json\").read_text())[\"\
-    entries\"]\n    context = ssl.create_default_context(cafile=str(account / \"ca.crt\"))\n    token = (account / \"token\"\
-    ).read_text().strip()\n    base = (\n        \"https://\"\n        + os.environ[\"KUBERNETES_SERVICE_HOST\"]\n       \
-    \ + \":\"\n        + os.environ[\"KUBERNETES_SERVICE_PORT\"]\n    )\n    opener = urllib.request.build_opener(\n     \
-    \   urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context)\n    )\n\n    def request(entry, patch=None,\
-    \ dry=False):\n        resource = \"deployments\" if entry[\"kind\"] == \"Deployment\" else \"daemonsets\"\n        url\
-    \ = base + \"/apis/apps/v1/namespaces/\" + NAMESPACE + \"/\" + resource + \"/\" + entry[\"name\"]\n        if dry:\n \
-    \           url += \"?dryRun=All\"\n        headers = {\"Authorization\": \"Bearer \" + token}\n        if patch is not\
-    \ None:\n            headers[\"Content-Type\"] = \"application/json-patch+json\"\n        req = urllib.request.Request(\n\
+    True\"):\n                raise AssertionError(\"Longhorn disk is not ready/schedulable\")\n\n\ndef preflight(entries,\
+    \ request, storage_check):\n    \"\"\"Require every reviewed contract and admission preview before any persistent write.\"\
+    \"\"\n    # Complete all safety checks before the first persistent write.\n    for attempt in range(30):\n        try:\n\
+    \            storage_check()\n            for entry in entries:\n                original = request(entry)\n         \
+    \       reviewed(original, entry)\n                if not ready(original):\n                    raise AssertionError(f\"\
+    {entry['name']}: workload is not fully healthy\")\n                preview = request(entry, annotation_patch(original),\
+    \ dry=True)\n                if not preview[\"spec\"] == expected_spec(original, entry):\n                    raise AssertionError(\n\
+    \                        f\"{entry['name']}: unexpected or absent admission mutation\"\n                    )\n      \
+    \      break\n        except AssertionError:\n            if attempt == 29:\n                raise\n            time.sleep(3)\n\
+    \n\ndef wait_for_rollout(entry, request, expected):\n    \"\"\"Require the exact admitted spec and completed rollout before\
+    \ later targets.\"\"\"\n    deadline = time.monotonic() + 300\n    while True:\n        current = request(entry)\n   \
+    \     if not current[\"spec\"] == expected:\n            raise AssertionError(f\"{entry['name']}: spec changed during\
+    \ rollout\")\n        if ready(current):\n            break\n        if time.monotonic() >= deadline:\n            raise\
+    \ RuntimeError(\n                f\"{entry['name']}: rollout timed out; later targets were not changed\"\n           \
+    \ )\n        time.sleep(3)\n\n\ndef rollout(entries, request, storage_check):\n    \"\"\"Recheck each target and storage\
+    \ before guarded sequential admission and readback.\"\"\"\n    for entry in entries:\n        storage_check()\n      \
+    \  # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.\n        original = request(entry)\n\
+    \        reviewed(original, entry)\n        if not ready(original):\n            raise AssertionError(f\"{entry['name']}:\
+    \ became unhealthy before mutation\")\n        expected = expected_spec(original, entry)\n        if original[\"spec\"\
+    ] != expected:\n            patch = annotation_patch(original)\n            if not request(entry, patch, dry=True)[\"\
+    spec\"] == expected:\n                raise AssertionError\n            if not request(entry, patch)[\"spec\"] == expected:\n\
+    \                raise AssertionError\n        wait_for_rollout(entry, request, expected)\n        storage_check()\n \
+    \       print(f\"{entry['name']}: security context and completed rollout verified\", flush=True)\n\n\ndef check_frontend(opener):\n\
+    \    \"\"\"Verify both the Longhorn static UI and API proxy after successful component rollouts.\"\"\"\n    for path in\
+    \ [\"/\", \"/v1\"]:\n        req = urllib.request.Request(\"http://longhorn-frontend\" + path)\n        with opener.open(req,\
+    \ timeout=15) as response:\n            if not response.status == 200:\n                raise AssertionError(\"UI HTTP\
+    \ check failed\")\n    print(\"Component backfill complete; UI static and API proxy HTTP checks passed\", flush=True)\n\
+    \n\ndef main(config_dir=Path(\"/config\"), account=Path(\"/var/run/secrets/kubernetes.io/serviceaccount\")):\n    \"\"\
+    \"Preflight native mutations, then roll reviewed workloads one at a time.\"\"\"\n    entries = json.loads((config_dir\
+    \ / \"catalog.json\").read_text())[\"entries\"]\n    context = ssl.create_default_context(cafile=str(account / \"ca.crt\"\
+    ))\n    token = (account / \"token\").read_text().strip()\n    base = (\n        \"https://\"\n        + os.environ[\"\
+    KUBERNETES_SERVICE_HOST\"]\n        + \":\"\n        + os.environ[\"KUBERNETES_SERVICE_PORT\"]\n    )\n    opener = urllib.request.build_opener(\n\
+    \        urllib.request.ProxyHandler({}), urllib.request.HTTPSHandler(context=context)\n    )\n\n    def request(entry,\
+    \ patch=None, dry=False):\n        resource = \"deployments\" if entry[\"kind\"] == \"Deployment\" else \"daemonsets\"\
+    \n        url = base + \"/apis/apps/v1/namespaces/\" + NAMESPACE + \"/\" + resource + \"/\" + entry[\"name\"]\n      \
+    \  if dry:\n            url += \"?dryRun=All\"\n        headers = {\"Authorization\": \"Bearer \" + token}\n        if\
+    \ patch is not None:\n            headers[\"Content-Type\"] = \"application/json-patch+json\"\n        req = urllib.request.Request(\n\
     \            url,\n            headers=headers,\n            method=\"PATCH\" if patch is not None else \"GET\",\n   \
     \         data=json.dumps(patch).encode() if patch is not None else None,\n        )\n        try:\n            with opener.open(req,\
     \ timeout=15) as response:\n                return json.load(response)\n        except urllib.error.HTTPError as error:\n\
-    \            raise RuntimeError(f\"{entry['name']}: Kubernetes HTTP {error.code}\") from None\n\n    check_storage = any(e[\"\
-    name\"] == \"longhorn-manager\" for e in entries)\n\n    def storage_check():\n        if not check_storage:\n       \
-    \     return\n        documents = {}\n        for resource in [\"volumes\", \"nodes\"]:\n            url = base + \"/apis/longhorn.io/v1beta2/namespaces/\"\
-    \ + NAMESPACE + \"/\" + resource\n            req = urllib.request.Request(url, headers={\"Authorization\": \"Bearer \"\
-    \ + token})\n            with opener.open(req, timeout=15) as response:\n                documents[resource] = json.load(response)\n\
-    \        storage_healthy(documents[\"volumes\"], documents[\"nodes\"])\n\n    # Complete all safety checks before the\
-    \ first persistent write.\n    for attempt in range(30):\n        try:\n            storage_check()\n            for entry\
-    \ in entries:\n                original = request(entry)\n                reviewed(original, entry)\n                if\
-    \ not ready(original):\n                    raise AssertionError(f\"{entry['name']}: workload is not fully healthy\")\n\
-    \                preview = request(entry, annotation_patch(original), dry=True)\n                if not preview[\"spec\"\
-    ] == expected_spec(original, entry):\n                    raise AssertionError(\n                        f\"{entry['name']}:\
-    \ unexpected or absent admission mutation\"\n                    )\n            break\n        except AssertionError:\n\
-    \            if attempt == 29:\n                raise\n            time.sleep(3)\n    for entry in entries:\n        storage_check()\n\
-    \        # Refetch to tolerate harmless controller resourceVersion updates during earlier rollouts.\n        original\
-    \ = request(entry)\n        reviewed(original, entry)\n        if not ready(original):\n            raise AssertionError(f\"\
-    {entry['name']}: became unhealthy before mutation\")\n        expected = expected_spec(original, entry)\n        if original[\"\
-    spec\"] != expected:\n            patch = annotation_patch(original)\n            if not request(entry, patch, dry=True)[\"\
-    spec\"] == expected:\n                raise AssertionError\n            if not request(entry, patch)[\"spec\"] == expected:\n\
-    \                raise AssertionError\n        deadline = time.monotonic() + 300\n        while True:\n            current\
-    \ = request(entry)\n            if not current[\"spec\"] == expected:\n                raise AssertionError(f\"{entry['name']}:\
-    \ spec changed during rollout\")\n            if ready(current):\n                break\n            if time.monotonic()\
-    \ >= deadline:\n                raise RuntimeError(\n                    f\"{entry['name']}: rollout timed out; later\
-    \ targets were not changed\"\n                )\n            time.sleep(3)\n        storage_check()\n        print(f\"\
-    {entry['name']}: security context and completed rollout verified\", flush=True)\n    for path in [\"/\", \"/v1\"]:\n \
-    \       req = urllib.request.Request(\"http://longhorn-frontend\" + path)\n        with opener.open(req, timeout=15) as\
-    \ response:\n            if not response.status == 200:\n                raise AssertionError(\"UI HTTP check failed\"\
-    )\n    print(\"Component backfill complete; UI static and API proxy HTTP checks passed\", flush=True)\n\n\nif __name__\
-    \ == \"__main__\":\n    main()\n"
+    \            error.close()\n            raise RuntimeError(f\"{entry['name']}: Kubernetes HTTP {error.code}\") from None\n\
+    \n    check_storage = any(e[\"name\"] == \"longhorn-manager\" for e in entries)\n\n    def storage_check():\n        if\
+    \ not check_storage:\n            return\n        documents = {}\n        for resource in [\"volumes\", \"nodes\"]:\n\
+    \            url = base + \"/apis/longhorn.io/v1beta2/namespaces/\" + NAMESPACE + \"/\" + resource\n            req =\
+    \ urllib.request.Request(url, headers={\"Authorization\": \"Bearer \" + token})\n            with opener.open(req, timeout=15)\
+    \ as response:\n                documents[resource] = json.load(response)\n        storage_healthy(documents[\"volumes\"\
+    ], documents[\"nodes\"])\n\n    preflight(entries, request, storage_check)\n    rollout(entries, request, storage_check)\n\
+    \    check_frontend(opener)\n\n\nif __name__ == \"__main__\":\n    main()\n"
 ---
 apiVersion: batch/v1
 kind: Job

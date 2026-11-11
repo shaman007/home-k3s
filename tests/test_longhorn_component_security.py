@@ -2,11 +2,12 @@
 
 import copy
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import yaml
 
@@ -133,10 +134,25 @@ class ComponentSecurityTests(unittest.TestCase):
             self.assertTrue(b.ready(doc))
             doc["metadata"]["generation"] = 2
             self.assertFalse(b.ready(doc))
+            fields = (
+                ["updatedReplicas", "replicas", "readyReplicas", "availableReplicas"]
+                if entry["kind"] == "Deployment"
+                else ["updatedNumberScheduled", "numberReady", "numberAvailable"]
+            )
+            for field in fields:
+                with self.subTest(workload=entry["name"], field=field):
+                    doc = self.healthy(entry)
+                    doc["status"].pop(field)
+                    self.assertFalse(b.ready(doc))
+                    doc["status"][field] = 0
+                    self.assertFalse(b.ready(doc))
             doc = self.healthy(entry)
-            doc["status"][
-                "availableReplicas" if entry["kind"] == "Deployment" else "numberAvailable"
-            ] = 0
+            if entry["kind"] == "Deployment":
+                doc["spec"]["replicas"] = 0
+            else:
+                doc["status"]["desiredNumberScheduled"] = 0
+            for field in fields:
+                doc["status"][field] = 0
             self.assertFalse(b.ready(doc))
 
     def test_failed_preflight_writes_nothing(self):
@@ -248,11 +264,11 @@ class ComponentSecurityTests(unittest.TestCase):
 
     def test_backfill_only_patches_metadata_with_concurrency_guard(self):
         """Verify backfill only patches metadata with concurrency guard."""
-        patch = b.annotation_patch(self.healthy(self.entries[0]))
+        changes = b.annotation_patch(self.healthy(self.entries[0]))
         self.assertEqual(
-            patch[0], {"op": "test", "path": "/metadata/resourceVersion", "value": "123"}
+            changes[0], {"op": "test", "path": "/metadata/resourceVersion", "value": "123"}
         )
-        self.assertTrue(all(p["path"].startswith("/metadata/") for p in patch))
+        self.assertTrue(all(p["path"].startswith("/metadata/") for p in changes))
         data = next(d["data"] for d in self.bundle if d["kind"] == "ConfigMap")
         self.assertEqual(
             data["backfill.py"],
@@ -393,6 +409,32 @@ class ComponentSecurityTests(unittest.TestCase):
                     b.main(root, root)
         self.assertTrue(calls)
         self.assertEqual(set(calls), {"GET"})
+
+    def test_http_failure_is_sanitized_and_response_closed(self):
+        """A failed workload read closes its body without exposing private diagnostics."""
+        entry = next(e for e in self.entries if e["name"] != "longhorn-manager")
+        body = io.BytesIO(b"private-fixture-response")
+        error = b.urllib.error.HTTPError("https://mock.invalid/private", 503, "private", {}, body)
+        opener = MagicMock()
+        opener.open.side_effect = error
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "catalog.json").write_text(json.dumps({"entries": [entry]}))
+            (root / "token").write_text("synthetic-test-only")
+            with (
+                patch.object(b.ssl, "create_default_context"),
+                patch.object(b.urllib.request, "build_opener", return_value=opener),
+                patch.dict(
+                    b.os.environ,
+                    {"KUBERNETES_SERVICE_HOST": "mock.invalid", "KUBERNETES_SERVICE_PORT": "443"},
+                ),
+            ):
+                with self.assertRaises(RuntimeError) as caught:
+                    b.main(root, root)
+        self.assertEqual(str(caught.exception), entry["name"] + ": Kubernetes HTTP 503")
+        self.assertTrue(body.closed)
+        opener.open.assert_called_once()
+        self.assertEqual(opener.open.call_args.args[0].get_method(), "GET")
 
 
 if __name__ == "__main__":

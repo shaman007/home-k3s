@@ -1679,3 +1679,32 @@ The full suite ran 480 tests successfully with 21 opt-in skips. Full Pylint,
 Ruff and diff checks passed; Bandit reported no analysis errors. Publication and
 genuine scanner refresh remain necessary for source-based alert closure. No
 case, policy guard, scanner rule or failure gate was removed.
+
+
+### Separate Longhorn component backfill checks and close HTTP failures
+
+Extracted all-target preflight, sequential rollout, exact-spec/readiness waiting
+and frontend verification. Rewrote readiness count conjunctions as equivalent
+ordered all() checks. All five original local Pylint warnings are gone; the
+component hook passes full Pylint. HTTPError responses are now closed before
+the existing sanitized RuntimeError is raised, fixing a failure-path resource
+leak without exposing response bodies or changing the public error message.
+
+Expanding helper calls reproduces the preceding module AST except the two
+intentional changes: readiness expression spelling and error.close(). Compared
+18,000 Deployment/DaemonSet readiness combinations across desired counts,
+generations, missing fields and mismatched counts; every result matches.
+Regenerated both the component bundle and the infrastructure bundle that embeds
+this module as storage_guard.py. Parsed-document comparisons prove only the
+intended embedded script changes; policies, RBAC, jobs, catalog and other data
+are identical. Both generator --check commands pass. No live hook was run.
+
+Expanded the readiness regression to require every replica/scheduling counter
+and reject zero desired workloads, and added an HTTP-failure regression proving
+response closure plus unchanged sanitized output. Existing failed-preflight,
+storage degradation and timeout/later-target refusal tests pass. Also removed
+an existing test-local shadow of the patch helper. The full suite ran 481 tests
+successfully with 21 opt-in skips. Selected Pylint checks, Ruff and diff checks
+passed; Bandit reported no analysis errors. Existing small mock-opener method-
+count warnings remain unchanged. Publication and genuine scanner refresh remain
+necessary for remote alert closure; no safety gate or scanner rule was disabled.
