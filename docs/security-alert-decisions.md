@@ -1262,3 +1262,28 @@ assertions remain active. No container, live workload or external endpoint was u
 The full unit suite passed with 450 tests and 21 opt-in skips. Ruff and diff
 checks passed; Bandit reported no analysis errors. These source changes still
 require publication and genuine scanner refresh before remote findings close.
+
+
+### Token lifetime and SafeLoader false-positive review
+
+Independently refreshed the open inventory at 387. Reviewed the exact scanned
+4049613b source for Bandit #7526, #7488 and #7484: their 1h/24h values are
+OpenBao auth-role token_ttl/token_max_ttl durations, not credential material.
+Reviewed #7306 against the same revision: UniqueKeyLoader directly subclasses
+yaml.SafeLoader, only overrides mapping construction for duplicate-key rejection,
+and is explicitly passed to both YAML load APIs. It adds no object constructors.
+Existing regressions reject Python object tags through both single-document
+and multi-document parsing and retain duplicate-key rejection.
+
+Dismissed only those four findings as false positives, with individual explanatory
+comments and reopening conditions. Each PATCH checked the current rule, path,
+instance revision and state before changing it; responses and an independent
+open-alert inventory confirmed the decisions. The verified open count is now
+383. No scanner rule or YAML safety check was disabled.
+
+Bound the Firefox Sync bootstrap test's per-iteration response iterator in its
+handler default, removing the remaining W0640 closure warning without changing
+its synchronous behavior. All six bootstrap tests and all 33 rendered-validation
+tests passed; the focused Pylint check, Ruff and diff checks passed. No live
+OpenBao service, cluster resource or credential file was used. The source fix
+still requires publication and scanner refresh.

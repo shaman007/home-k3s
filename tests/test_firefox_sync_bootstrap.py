@@ -138,7 +138,7 @@ class BootstrapTests(unittest.TestCase):
             )
             responses = iter([error, io.BytesIO(b"{}"), io.BytesIO(b"{}"), io.BytesIO(b"{}")])
 
-            def handler(*_args, **_kwargs):
+            def handler(*_args, responses=responses, **_kwargs):
                 response = next(responses)
                 if isinstance(response, Exception):
                     raise response
