@@ -1,6 +1,33 @@
 # Legacy lint remediation inventory
 
-User decision: keep all 2,319 historical Pylint convention/refactor alerts open and fix them. No bulk dismissal is authorized.
+Updated user decision (2026-11-11): mark confirmed stale findings as **won't fix**.
+This supersedes the earlier decision to retain the entire historical inventory.
+Current-source findings still require fixes or individually supported decisions.
+
+The exact reviewed batch of **1440 alerts** and the explanatory comment for
+each group are recorded in [security-stale-alerts.json](security-stale-alerts.json):
+
+| Confirmed stale group | Alerts | Evidence |
+| --- | ---: | --- |
+| Retired legacy Pylint | 1396 | All from commit `2ff670f9b304`; incompatible engine retired; modern Pylint and CodeQL remain active |
+| Retired standalone Ruby | 31 | Every alert references deleted Ruby source; no `.rb` files or RuboCop job remain |
+| Retired Synapse SQL migration | 6 | Referenced migration file deleted; no `.sql` files or TSQLLint job remain |
+| Other deleted historical sources | 7 | No current file or renamed counterpart; these are intentionally removed one-off tools |
+
+All selected alerts originate from the same historical commit. Current scanner
+findings, historical findings on retained code, and renamed-file counterparts
+are excluded. No analysis history or scanner configuration is deleted.
+
+Execution is complete: all 1,440 selected alerts were confirmed dismissed with
+the approved reason and comment, and none remains in the open-alert set. The
+per-group execution summary is recorded in the JSON review file.
+
+The most recent completed local scan verifies zero missing-docstring, long-line,
+naming, or unused-variable/import findings across 129 modules. A separate Ruff
+spacing scan (`E2` rules) is also clean. The old style counts below are historical,
+not evidence that those source defects still exist.
+
+## Original inventory before remediation
 
 These are formatting, docstring, naming, import-style and structural-complexity checks. They are part of the requested remediation scope, alongside correctness and security findings.
 
@@ -45,4 +72,4 @@ The table groups convention/refactor work only. Pylint error/warning reports and
 | `PyLint_R0915` | 8 |
 | `PyLint_R0916` | 3 |
 
-Fix source files and verify behavior before claiming remediation. Historical scanner results require a matching rescan to verify closure; source changes alone do not close retired scanner configurations.
+Fix source files and verify behavior before claiming remediation. Current scanner results require a matching rescan to verify closure; source changes alone do not close retired scanner configurations. Confirmed retired configurations use the explicitly authorized stale-finding disposition above.

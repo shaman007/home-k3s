@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Disposable probes for reviewed images; no devices, production mounts or API writes."""
 
-import subprocess
 import time
+
+from probe_commands import run_command
 
 
 def run(*args):
     """Run the probe command and fail when its expected execution does not succeed."""
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=120, check=False)
+    p = run_command(["podman", *args], capture_output=True, text=True, timeout=120, check=False)
     if not p.returncode == 0:
         raise AssertionError(p.stderr[-2000:])
     return p.stdout.strip()

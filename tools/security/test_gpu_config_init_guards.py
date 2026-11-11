@@ -3,9 +3,10 @@
 
 import json
 from pathlib import Path
-import subprocess
 import tempfile
 import time
+
+from probe_commands import run_command
 
 IMAGE = "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
 MOCK = "harbor.andreybondarenko.com/dockerhub/python:3.13-slim"
@@ -52,7 +53,7 @@ SERVER = (
 
 def run(*args, check=True):
     """Run the probe command and fail when its expected execution does not succeed."""
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
+    p = run_command(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
     if check:
         if not p.returncode == 0:
             raise AssertionError(p.stdout[-1500:] + p.stderr[-1500:])

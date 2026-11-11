@@ -8,11 +8,12 @@ Requires rootless Podman and the host libsnappy library.
 from pathlib import Path
 import ctypes
 import ctypes.util
-import subprocess
 import tempfile
 import time
 import uuid
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 MOCK = """from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
@@ -31,7 +32,7 @@ ThreadingHTTPServer(('127.0.0.1',3100),Handler).serve_forever()
 
 def run(args, timeout=60):
     """Run the probe command and fail when its expected execution does not succeed."""
-    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    r = run_command(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not r.returncode == 0:
         raise AssertionError(r.stdout[-2500:] + r.stderr[-2500:])
     return r.stdout.strip()
@@ -187,7 +188,7 @@ def main():
 
             def received(expected):
                 for _ in range(35):
-                    r = subprocess.run(
+                    r = run_command(
                         [
                             "podman",
                             "exec",
@@ -291,7 +292,7 @@ def main():
             )
     except Exception:
         for cid in containers:
-            r = subprocess.run(
+            r = run_command(
                 ["podman", "logs", "--tail=15", cid], capture_output=True, text=True, check=False
             )
             print((r.stdout + r.stderr)[-2000:])

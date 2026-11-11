@@ -7,15 +7,16 @@ No production data, credentials, services or Kubernetes objects are used.
 
 import argparse
 from pathlib import Path
-import subprocess
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(command, label, timeout=60):
     """Run the probe command and fail when its expected execution does not succeed."""
-    result = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False)
+    result = run_command(command, text=True, capture_output=True, timeout=timeout, check=False)
     if not result.returncode == 0:
         raise AssertionError(label + ": " + result.stdout[-2000:] + result.stderr[-2000:])
     return result.stdout

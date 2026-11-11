@@ -3,10 +3,12 @@
 import importlib.util
 from pathlib import Path
 import secrets
+import sys
 import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools/security"))
 SPEC = importlib.util.spec_from_file_location(
     "plex_probe", ROOT / "tools/security/test_plex_capability_guards.py"
 )

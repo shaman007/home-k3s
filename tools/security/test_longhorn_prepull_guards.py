@@ -3,13 +3,14 @@
 
 import json
 from pathlib import Path
-import subprocess
 import time
+
+from probe_commands import run_command
 
 
 def run(*args):
     """Run the probe command and fail when its expected execution does not succeed."""
-    p = subprocess.run(["podman", *args], text=True, capture_output=True, timeout=90, check=False)
+    p = run_command(["podman", *args], text=True, capture_output=True, timeout=90, check=False)
     if not p.returncode == 0:
         raise AssertionError(p.stderr[-2000:])
     return p.stdout.strip()

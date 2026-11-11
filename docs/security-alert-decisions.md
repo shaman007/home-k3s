@@ -800,3 +800,115 @@ work under their new names. git diff --check passes. No real credentials,
 provisioning operations, container-runtime probes, or live deployments were used.
 GitHub alert closure still requires publication and rescan. Changes remain
 unstaged and uncommitted.
+
+### Frequency-ranked probe subprocess batch (2026-11-11)
+
+Pulled 2,056 open GitHub findings and ranked them by scanner/rule frequency.
+The largest groups were legacy Pylint missing docstrings (440), long lines
+(334), and whitespace (261), all from commit 2ff670f9b304. Current-source
+Pylint checks for those rules are clean, and a full Ruff E2 spacing sweep
+reports zero findings. Retired scanner results are handled by the separately
+approved exact stale-alert list, rather than by disabling current checks.
+
+For the largest retained security groups, consolidated 26 subprocess calls
+across 13 isolated security probes through tools/security/probe_commands.py.
+The runner requires explicit nonempty text argv, rejects relative executable
+paths and process overrides, resolves bare programs only through /usr/bin:/bin,
+uses shell=False, and requires finite positive timeouts. Existing explicit
+capture/text/check options and timeouts are preserved; formerly unbounded host
+calls now default to 90 seconds. Explicit absolute executables remain supported.
+No production workloads, devices, credentials or data were used for verification.
+
+Canonical AST comparison proves the thirteen probe bodies and command vectors
+are otherwise identical to revision 6b24168a1d17. Regression tests cover all
+thirteen wrappers' success/error modes, intentionally inspected failed processes,
+argument boundaries, hostile PATH entries, finite timeouts, subprocess exception
+propagation, and literal metacharacter round trips through a real Python child.
+The optimized precondition tests still reject unsafe contexts under -O/-OO.
+
+Validation: final full suite passed (418 tests, 21 skipped). An initial combined
+run identified a test loader missing the normal CLI sibling-import path; that
+fixture setup was corrected before the successful run. Bandit decreased from
+215 to 161 findings with zero analysis errors: subprocess-call audit sites fell
+from 88 to 63, subprocess import audits from 51 to 41, and partial-executable
+findings from 43 to 24. The remaining centralized subprocess audit is intentional;
+no rules were suppressed. The helper passes full Pylint, and git diff --check
+passes. No container-runtime probes or live deployments were executed.
+
+### Verified current CodeQL false positive and Markdown refresh (2026-11-11)
+
+Individually dismissed CodeQL alert #7610 as false positive after tracing the
+exact SARIF flows in analysis 2143960020 at commit 6b24168a1d17. The sources are
+fixed ExternalSecret diagnostic messages and the non-secret refresh constants
+15m and 900; those values were heuristically classified as credentials. The
+sink excludes resource values and parser source snippets. A new main-level
+logging regression passes invalid Secret/ExternalSecret/SecretStore documents
+with sensitive markers through the actual output path and proves those markers
+never reach output. The API confirmed the false-positive disposition and its
+explanatory comment. Reopen if diagnostics begin including resource values.
+
+Manually dispatched the retained Remark-lint scanner against published commit
+6b24168a1d17. Run https://github.com/shaman007/home-k3s/actions/runs/43029701629
+completed successfully, including SARIF preparation and upload. All sixteen
+historical checklist alerts (#4418 through #4433) were independently verified
+as fixed by the API at 2026-11-11T13:30:53Z. They were not dismissed. The current
+checklist uses plain bullets and retains the original historical-review meaning.
+
+
+### Approved stale dispositions completed (2026-11-11)
+
+The user explicitly approved the exact 1,440 IDs in security-stale-alerts.json,
+superseding the earlier request to keep legacy findings open. Completed 1,396
+retired Pylint, 31 retired Ruby, six retired SQL and seven deleted-source
+historical dispositions as won't fix. Every API response was checked for the
+reason, explanatory comment, scanner identity and unchanged historical commit.
+A final independent open-alert inventory confirms none of the selected IDs
+remains open. Analysis history and active scanners were retained. The initial
+automatic approval rejection was resolved by the user's count-specific approval;
+no alternate route was used to bypass the review.
+
+GitHub open findings fell from 2,056 to 599 after these dispositions, the sixteen
+Markdown fixes verified by rescan, and the separately reviewed CodeQL false
+positive. The remaining list, ranked by rule frequency, is saved in
+security-findings-priority.json. After the Django-plugin review below, the
+independently verified final open count is 586. This does not establish that all remaining findings are resolved.
+
+The thirteen current PyLintPython3_E5110 findings were individually re-reviewed:
+all report forced pylint-django configuration on a repository with no Django
+imports across 131 Python modules. The missing Django framework/settings warning
+is not a defect in these non-Django tools. Each exact alert instance and commit
+was checked before dismissal as false positive, with a comment requiring review
+if Django source/settings are introduced. These are a separate verified decision,
+not an expansion of the approved stale-alert ID set. Current real findings stay
+open, and no lint or security rule was disabled.
+
+Executable resolution hardening constrains top-level host commands; child
+process environments are otherwise inherited normally. The source changes,
+regression tests and decision records remain uncommitted and unpushed.
+
+
+### Final verified remaining priorities (2026-11-11)
+GitHub now reports **586 open findings**, down from 2,056 at the
+start of this batch: 1,440 approved stale dispositions, sixteen fixes verified
+by Markdown rescan, and fourteen individually supported false-positive decisions.
+The full current list is in [security-findings-priority.json](security-findings-priority.json),
+sorted by descending rule frequency and including current local counterparts
+for historical renamed-file paths.
+
+| Count | Scanner | Rule |
+| ---: | --- | --- |
+| 90 | Bandit | `Bandit_B603` |
+| 90 | Prospector | `Prospector_pylint` |
+| 73 | Prospector | `Prospector_pep8` |
+| 52 | Bandit | `Bandit_B404` |
+| 45 | Pylintpython3 | `PyLintPython3_R0914` |
+| 43 | Bandit | `Bandit_B607` |
+| 32 | Pylintpython3 | `PyLintPython3_R0912` |
+| 26 | Pylintpython3 | `PyLintPython3_R0915` |
+
+The uncommitted probe hardening reduces local Bandit findings from 215 to 161;
+that source reduction is not yet reflected in these GitHub counts. All 131
+Python modules pass the current naming, unused-variable/argument/import,
+missing-docstring, line-length and statement checks, and Ruff E2 spacing is
+clean. The overall goal remains active: the retained findings still require
+source fixes, refreshed analyses, or individually evidenced decisions.

@@ -3,17 +3,18 @@
 
 from pathlib import Path
 import uuid
-import subprocess
 import tempfile
 import time
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args, timeout=90):
     """Run the probe command and fail when its expected execution does not succeed."""
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    result = run_command(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not result.returncode == 0:
         raise AssertionError(result.stdout[-2000:] + result.stderr[-2000:])
     return result.stdout.strip()
@@ -234,7 +235,7 @@ def main():
             )
     except Exception:
         if cid:
-            result = subprocess.run(
+            result = run_command(
                 ["podman", "logs", "--tail=20", cid], capture_output=True, text=True, check=False
             )
             # Fixture-only server; never print real configuration or credentials.

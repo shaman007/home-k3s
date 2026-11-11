@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Test exact deployed MySQL with disposable data, no network or production secrets."""
 
-import subprocess
 import time
 import uuid
 from pathlib import Path
 import yaml
+
+from probe_commands import run_command
 
 IMAGE = (
     "harbor.andreybondarenko.com/dockerhub/my"
@@ -16,7 +17,7 @@ IMAGE = (
 
 def run(*args):
     """Run the probe command and fail when its expected execution does not succeed."""
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=180, check=False)
+    p = run_command(["podman", *args], capture_output=True, text=True, timeout=180, check=False)
     if p.returncode:
         raise RuntimeError(p.stderr[-2000:])
     return p.stdout.strip()

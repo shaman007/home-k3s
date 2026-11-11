@@ -10,10 +10,11 @@ import imaplib
 import base64
 import socket
 import ssl
-import subprocess
 import tempfile
 import time
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 CAPS = [
@@ -31,9 +32,7 @@ CAPS = [
 
 def run(args):
     """Run the probe command and fail when its expected execution does not succeed."""
-    return subprocess.run(
-        args, check=True, capture_output=True, text=True, timeout=90
-    ).stdout.strip()
+    return run_command(args, check=True, capture_output=True, text=True, timeout=90).stdout.strip()
 
 
 def command(name):
@@ -285,7 +284,7 @@ def main():
             print("Both daemons reloaded successfully; protocol checks passed again", flush=True)
         except Exception:
             for cid in containers:
-                result = subprocess.run(
+                result = run_command(
                     ["podman", "logs", "--tail=25", cid],
                     capture_output=True,
                     text=True,

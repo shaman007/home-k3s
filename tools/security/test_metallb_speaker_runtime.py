@@ -8,9 +8,10 @@ not a substitute for a post-rollout test of MetalLB's own ARP/NDP responders.
 """
 
 from pathlib import Path
-import subprocess
 import tempfile
 import time
+
+from probe_commands import run_command
 
 IMAGE = "quay.io/frrouting/frr:10.4.3"  # Existing local Python/ip diagnostic image.
 SPEAKER = "quay.io/metallb/speaker:v0.16.1"
@@ -108,9 +109,7 @@ PROBE = (
 
 def run(*args, check=True):
     """Run the probe command and fail when its expected execution does not succeed."""
-    result = subprocess.run(
-        ["podman", *args], capture_output=True, text=True, timeout=90, check=False
-    )
+    result = run_command(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
     if check:
         if not result.returncode == 0:
             raise AssertionError(result.stdout[-2500:] + result.stderr[-2500:])
@@ -141,7 +140,7 @@ def main():
             path = directory / name
             path.write_text("announcedInterfacesToExclude: []\n")
             path.chmod(mode)
-            subprocess.run(
+            run_command(
                 ["podman", "unshare", "chown", "0:1000" if mode == 0o440 else "0:0", str(path)],
                 check=True,
             )
@@ -295,7 +294,7 @@ def main():
             if holder:
                 run("rm", "-f", holder)
             # Restore rootless-user ownership before tempfile cleanup.
-            subprocess.run(["podman", "unshare", "chown", "-R", "0:0", str(directory)], check=True)
+            run_command(["podman", "unshare", "chown", "-R", "0:0", str(directory)], check=True)
 
 
 if __name__ == "__main__":

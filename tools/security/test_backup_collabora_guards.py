@@ -8,14 +8,14 @@ import time
 import urllib.request
 import yaml
 
+from probe_commands import run_command
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args):
     """Run the probe command and fail when its expected execution does not succeed."""
-    return subprocess.run(
-        args, check=True, capture_output=True, text=True, timeout=120
-    ).stdout.strip()
+    return run_command(args, check=True, capture_output=True, text=True, timeout=120).stdout.strip()
 
 
 def main():
@@ -154,7 +154,7 @@ def main():
                 "Collabora discovery failed: " + run(["podman", "logs", cid])[-2000:]
             )
         # Starting a spare document child exercises the file-capability jail setup.
-        result = subprocess.run(
+        result = run_command(
             ["podman", "logs", cid], check=True, capture_output=True, text=True, timeout=10
         )
         logs = result.stdout + result.stderr

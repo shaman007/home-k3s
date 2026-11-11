@@ -5,13 +5,14 @@ No production media, configuration, credentials or GPU devices are mounted.
 """
 
 from pathlib import Path
-import subprocess
 import tempfile
 import time
 
 from defusedxml import ElementTree as ET
 from defusedxml.common import DefusedXmlException
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 CAPS = ["CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "KILL", "SETGID", "SETUID"]
@@ -29,7 +30,7 @@ def parse_xml(document):
 
 def run(args, timeout=90):
     """Run the probe command and fail when its expected execution does not succeed."""
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    result = run_command(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not result.returncode == 0:
         raise AssertionError(result.stdout[-2000:] + result.stderr[-2000:])
     return result.stdout.strip()
@@ -97,7 +98,7 @@ def main():
 
             def identity():
                 for _ in range(40):
-                    p = subprocess.run(
+                    p = run_command(
                         ["podman", "exec", cid, "curl", "-fsS", "http://127.0.0.1:32400/identity"],
                         capture_output=True,
                         text=True,
@@ -178,7 +179,7 @@ def main():
             )
     except Exception:
         if cid:
-            result = subprocess.run(
+            result = run_command(
                 ["podman", "logs", "--tail=30", cid], capture_output=True, text=True, check=False
             )
             print((result.stdout + result.stderr)[-2500:])

@@ -9,10 +9,11 @@ Explicit writable cache/run tmpfs mounts represent the existing emptyDirs.
 from pathlib import Path
 import json
 import os
-import subprocess
 import tempfile
 import time
 import yaml
+
+from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 MOCK = (
@@ -60,7 +61,7 @@ c.close()
 
 def run(args, timeout=90):
     """Run the probe command and fail when its expected execution does not succeed."""
-    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    r = run_command(args, capture_output=True, text=True, timeout=timeout, check=False)
     if not r.returncode == 0:
         raise AssertionError(r.stdout[-2500:] + r.stderr[-2500:])
     return r.stdout.strip()
@@ -244,7 +245,7 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
             )
     except Exception:
         for cid in containers:
-            r = subprocess.run(
+            r = run_command(
                 ["podman", "logs", "--tail=20", cid], capture_output=True, text=True, check=False
             )
             print((r.stdout + r.stderr)[-2500:])

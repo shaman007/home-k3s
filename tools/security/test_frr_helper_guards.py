@@ -2,9 +2,10 @@
 """Real FRR VTY/reload/metrics on disposable files and an isolated network."""
 
 from pathlib import Path
-import subprocess
 import tempfile
 import time
+
+from probe_commands import run_command
 
 FRR = "quay.io/frrouting/frr:10.4.3"
 HELPERS = "quay.io/metallb/frr-k8s:v0.0.25"
@@ -12,7 +13,7 @@ HELPERS = "quay.io/metallb/frr-k8s:v0.0.25"
 
 def run(*args, check=True):
     """Run the probe command and fail when its expected execution does not succeed."""
-    p = subprocess.run(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
+    p = run_command(["podman", *args], capture_output=True, text=True, timeout=90, check=False)
     if check:
         if not p.returncode == 0:
             raise AssertionError(p.stdout[-3000:] + p.stderr[-3000:])
@@ -42,7 +43,7 @@ def main():
         config.chmod(0o600)
         (d / "conf/vtysh.conf").write_text("service integrated-vtysh-config\n")
         (d / "conf/vtysh.conf").chmod(0o644)
-        p = subprocess.run(
+        p = run_command(
             ["podman", "unshare", "chown", "100:101", str(config)],
             capture_output=True,
             text=True,
@@ -180,7 +181,7 @@ def main():
                 raise AssertionError(run("logs", reloader))
             pid = int((d / "reload/reloader.pid").read_text())
             config.chmod(0o600)
-            p = subprocess.run(
+            p = run_command(
                 ["podman", "unshare", "chown", "100:101", str(config)],
                 capture_output=True,
                 text=True,
@@ -240,7 +241,7 @@ def main():
             tls.mkdir(mode=0o755)
             credentials = d / "credentials"
             credentials.mkdir(mode=0o755)
-            result = subprocess.run(
+            result = run_command(
                 [
                     "openssl",
                     "req",

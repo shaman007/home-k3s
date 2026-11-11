@@ -1,10 +1,13 @@
 """Validation failures must not include manifest credential values."""
 
 import importlib.util
+from contextlib import redirect_stdout
+import io
 from pathlib import Path
 import tempfile
 import traceback
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,3 +61,34 @@ class RuntimeContractDiagnosticsTest(unittest.TestCase):
                 self.assertNotIn("yaml.parser.ParserError", diagnostic)
             else:
                 self.fail("Malformed YAML was accepted")
+
+    def test_main_logs_contracts_and_locations_without_secret_values(self):
+        """Exercise the reported logging sink with secret-bearing invalid manifests."""
+        marker = "synthetic-sensitive-value-never-log"
+        documents = [
+            (
+                index,
+                {
+                    "kind": kind,
+                    "spec": {"target": {}, "refreshInterval": marker},
+                    "data": {"password": marker},
+                },
+            )
+            for index, kind in enumerate(
+                ["ExternalSecret", "SecretStore", "ClusterSecretStore", "Secret"], 1
+            )
+        ]
+        output = io.StringIO()
+        with (
+            patch.object(contracts, "repo_root", return_value=ROOT),
+            patch.object(contracts, "tracked_yaml_files", return_value=[ROOT / "fixture.yaml"]),
+            patch.object(contracts, "load_documents", return_value=documents),
+            redirect_stdout(output),
+        ):
+            self.assertEqual(contracts.main(), 1)
+        logged = output.getvalue()
+        self.assertIn("fixture.yaml: document", logged)
+        self.assertIn("15m", logged)
+        self.assertIn("900", logged)
+        self.assertNotIn(marker, logged)
+        self.assertNotIn("password", logged)

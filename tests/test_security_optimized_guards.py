@@ -5,12 +5,13 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools/security"))
 
 
 class OptimizedSecurityGuardsTest(unittest.TestCase):
@@ -23,8 +24,9 @@ class OptimizedSecurityGuardsTest(unittest.TestCase):
         for optimization in (0, 2):
             namespace = {"__name__": "mail_smoke_guard_fixture", "__file__": str(path)}
             exec(compile(path.read_text(), str(path), "exec", optimize=optimization), namespace)
-            with patch.object(
-                namespace["subprocess"], "run", side_effect=RuntimeError("Unexpected execution")
+            with patch.dict(
+                namespace,
+                {"run_command": MagicMock(side_effect=RuntimeError("Unexpected execution"))},
             ):
                 with patch.object(namespace["yaml"], "safe_load", return_value=document):
                     arguments, _ = namespace["command"]("dovecot")
