@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class LogsCheckLogicTest(unittest.TestCase):
-    """Verify log redaction, classification, collection completeness, and history."""
+    """Shared fixture lifecycle and helpers for the focused regression suites."""
 
     @classmethod
     def setUpClass(cls):
@@ -41,6 +41,37 @@ class LogsCheckLogicTest(unittest.TestCase):
             "ts": ts,
             "ts_ns": 1,
         }
+
+    def history_backend(self):
+        """Install an in-memory Kubernetes object API for history persistence tests."""
+
+        objects = {}
+
+        def api(path, method="GET", payload=None):
+            name = path.rsplit("/", 1)[-1]
+            if method == "POST":
+                name = payload["metadata"]["name"]
+                if name in objects:
+                    raise urllib.error.HTTPError(path, 409, "exists", None, None)
+                obj = copy.deepcopy(payload)
+                obj["metadata"].update(uid="uid-" + name, resourceVersion="1")
+                objects[name] = obj
+            elif method == "PUT":
+                uid = objects[name]["metadata"]["uid"]
+                objects[name] = copy.deepcopy(payload)
+                objects[name]["metadata"]["uid"] = uid
+            elif method == "DELETE":
+                return objects.pop(name)
+            elif name not in objects:
+                raise urllib.error.HTTPError(path, 404, "missing", None, None)
+            return copy.deepcopy(objects[name])
+
+        self.report["kube_json"] = api
+        return objects
+
+
+class LogEvidenceTests(LogsCheckLogicTest):
+    """Verify log evidence, redaction and classification failure checks."""
 
     def test_mail_arguments_are_removed_and_error_retained(self):
         """Retain mailer error context while removing serialized private arguments."""
@@ -261,6 +292,44 @@ class LogsCheckLogicTest(unittest.TestCase):
         self.assertIn("Fault candidate log lines after filtering", rendered)
         self.assertNotIn("Real fault evidence", rendered)
 
+    def test_fallback_does_not_invent_api_failure(self):
+        """Avoid inventing an API failure when rendering fallback output."""
+        text = self.report["fallback_analysis"](
+            {"ollama": {"chat_error": "invalid response"}},
+            {"real_fault_candidates": [self.entry("Net::OpenTimeout")]},
+        )
+        self.assertIn("Net::OpenTimeout", text)
+        self.assertNotIn("Kubernetes API connectivity failures", text)
+        self.assertNotIn("unreachable", text)
+
+    def test_candidates_are_not_confirmed_high_severity_incidents(self):
+        """Keep candidate evidence from becoming a confirmed high-severity incident."""
+        text = self.report["render_authoritative_findings"](
+            {"real_fault_candidates": [self.entry("exception")]}
+        )
+        self.assertNotIn("Real problems found", text)
+        self.assertNotIn("| High |", text)
+        self.assertIn("Sampled log lines", text)
+
+    def test_clamav_timeout_remains_visible(self):
+        """Retain ClamAV timeout evidence for review."""
+        item = self.entry("Failed to read response 127.0.0.1:3200 i/o timeout")
+        item.update(namespace="clamav", container="exporter")
+        self.assertFalse(self.report["is_false_positive"]("platform_issue_candidates", item))
+
+    def test_mailer_timeout_remains_visible(self):
+        """Retain mailer timeout evidence for review."""
+        self.assertFalse(
+            self.report["is_false_positive"](
+                "real_fault_candidates",
+                self.entry("ActionMailer::MailDeliveryJob Net::OpenTimeout"),
+            )
+        )
+
+
+class LogCollectionHistoryTests(LogsCheckLogicTest):
+    """Verify complete collection and recurrence/history integrity."""
+
     def test_daily_collection_visits_all_hours_and_marks_caps(self):
         """Collect every hourly window and expose capped results."""
         calls = []
@@ -381,33 +450,6 @@ class LogsCheckLogicTest(unittest.TestCase):
         self.assertTrue(complete)
         self.assertNotIn("capped", text)
         self.assertNotIn("newly observed:", text)
-
-    def history_backend(self):
-        """Install an in-memory Kubernetes object API for history persistence tests."""
-
-        objects = {}
-
-        def api(path, method="GET", payload=None):
-            name = path.rsplit("/", 1)[-1]
-            if method == "POST":
-                name = payload["metadata"]["name"]
-                if name in objects:
-                    raise urllib.error.HTTPError(path, 409, "exists", None, None)
-                obj = copy.deepcopy(payload)
-                obj["metadata"].update(uid="uid-" + name, resourceVersion="1")
-                objects[name] = obj
-            elif method == "PUT":
-                uid = objects[name]["metadata"]["uid"]
-                objects[name] = copy.deepcopy(payload)
-                objects[name]["metadata"]["uid"] = uid
-            elif method == "DELETE":
-                return objects.pop(name)
-            elif name not in objects:
-                raise urllib.error.HTTPError(path, 404, "missing", None, None)
-            return copy.deepcopy(objects[name])
-
-        self.report["kube_json"] = api
-        return objects
 
     def test_sharded_history_roundtrip_and_two_snapshot_retention(self):
         """Round-trip sharded history and retain the expected two snapshots."""
@@ -610,40 +652,6 @@ class LogsCheckLogicTest(unittest.TestCase):
         )
         self.assertIn("History could not be read", text)
         self.assertNotIn("recurring sampled patterns.", text)
-
-    def test_fallback_does_not_invent_api_failure(self):
-        """Avoid inventing an API failure when rendering fallback output."""
-        text = self.report["fallback_analysis"](
-            {"ollama": {"chat_error": "invalid response"}},
-            {"real_fault_candidates": [self.entry("Net::OpenTimeout")]},
-        )
-        self.assertIn("Net::OpenTimeout", text)
-        self.assertNotIn("Kubernetes API connectivity failures", text)
-        self.assertNotIn("unreachable", text)
-
-    def test_candidates_are_not_confirmed_high_severity_incidents(self):
-        """Keep candidate evidence from becoming a confirmed high-severity incident."""
-        text = self.report["render_authoritative_findings"](
-            {"real_fault_candidates": [self.entry("exception")]}
-        )
-        self.assertNotIn("Real problems found", text)
-        self.assertNotIn("| High |", text)
-        self.assertIn("Sampled log lines", text)
-
-    def test_clamav_timeout_remains_visible(self):
-        """Retain ClamAV timeout evidence for review."""
-        item = self.entry("Failed to read response 127.0.0.1:3200 i/o timeout")
-        item.update(namespace="clamav", container="exporter")
-        self.assertFalse(self.report["is_false_positive"]("platform_issue_candidates", item))
-
-    def test_mailer_timeout_remains_visible(self):
-        """Retain mailer timeout evidence for review."""
-        self.assertFalse(
-            self.report["is_false_positive"](
-                "real_fault_candidates",
-                self.entry("ActionMailer::MailDeliveryJob Net::OpenTimeout"),
-            )
-        )
 
     def test_previous_hour_report_is_not_a_daily_baseline(self):
         """Reject a previous-hour report as a full daily comparison baseline."""

@@ -2300,3 +2300,22 @@ successfully with 21 opt-in skips. Ruff formatting/checks and diff checks passed
 Bandit reported zero findings and zero analysis errors for the two generator
 modules. Source fixes await genuine published rescanning; no alert was dismissed
 in this batch and no push was performed.
+
+
+### Split oversized rendering and log regression suites by behavior
+
+Moved tests from the two oversized unittest classes into focused source-rendering,
+resource-validation, log-evidence and collection/history subclasses. Original
+fixture/helper classes contain no test methods, preventing duplicate discovery;
+subclasses inherit the same setup, cleanup and shared helper behavior. Multiset
+comparison of every method AST across both modules proves no test, fixture or
+helper body/decorator was changed, removed or duplicated. All 67 original tests
+remain present. Both excessive-public-method warnings are gone without suppressions.
+
+The full suite ran 515 tests successfully with the same 21 opt-in skips. Ruff and
+diff checks passed; Bandit reported no analysis errors. Pylint retains only the
+already reviewed fixed-source exec and unittest temporary-directory heuristics
+in these modules; no rule was disabled. The class-level log compilation now runs
+once per focused subclass, while each test retains a fresh execution namespace.
+No production entry point, server or external data source was invoked. Source
+fixes await genuine published rescanning; no alert was dismissed in this batch.

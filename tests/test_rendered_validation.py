@@ -32,7 +32,17 @@ validate = module("validate", "validate_rendered.py")
 
 
 class RenderValidationTest(unittest.TestCase):
-    """Exercise safe rendering, source retrieval, schema checks, and custom-resource validation."""
+    """Shared fixture lifecycle and helpers for the focused regression suites."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.app = {"metadata": {"name": "test"}, "spec": {"destination": {"namespace": "target"}}}
+
+
+class RenderingSourceTests(RenderValidationTest):
+    """Verify rendering sources, values and secret-output boundaries."""
 
     def test_rendered_secret_output_is_owner_only(self):
         """Verify rendered secret output is owner only."""
@@ -259,34 +269,6 @@ class RenderValidationTest(unittest.TestCase):
         self.assertNotIn("signed-secret", str(error.exception))
         self.assertTrue(error.exception.__suppress_context__)
 
-    def test_additional_crd_url_supports_pinned_runtime_controller_release(self):
-        """Verify additional CRD url supports pinned runtime controller release."""
-        source = {"version": "v1.14.2", "url": "https://example.invalid/v{version}/crd.yaml"}
-        self.assertEqual(
-            "https://example.invalid/v1.14.2/crd.yaml", validate.additional_crd_url(source)
-        )
-
-    def test_additional_crd_url_uses_helm_controller_release(self):
-        """Verify additional CRD url uses Helm controller release."""
-        app = {"spec": {"source": {"chart": "controller", "targetRevision": "v1.2.3"}}}
-        with patch.object(validate, "load", return_value=app):
-            with patch.object(Path, "read_text", return_value="unused"):
-                self.assertEqual(
-                    "https://example.invalid/v1.2.3/crd.yaml",
-                    validate.additional_crd_url(
-                        {
-                            "application": "controller",
-                            "url": "https://example.invalid/v{version}/crd.yaml",
-                        }
-                    ),
-                )
-
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
-        self.app = {"metadata": {"name": "test"}, "spec": {"destination": {"namespace": "target"}}}
-
     def test_values_reference_inline_and_parameters_follow_argo_precedence(self):
         """Verify values reference inline and parameters follow argo precedence."""
         (self.root / "values.yaml").write_text("replicas: 1\n", encoding="utf-8")
@@ -417,6 +399,53 @@ class RenderValidationTest(unittest.TestCase):
             )
             run.assert_called_once_with(["kubectl", "kustomize", str(appdir)])
 
+    def test_remote_chart_is_rendered_outside_colliding_repo_directory(self):
+        """Verify remote chart is rendered outside colliding repo directory."""
+        source = {
+            "repoURL": "https://example.invalid/charts",
+            "chart": "test",
+            "targetRevision": "1",
+        }
+        with patch.object(render, "run", return_value="rendered") as run:
+            render.render_source(
+                self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
+            )
+            self.assertEqual(self.root, run.call_args.kwargs["cwd"])
+
+    def test_kubernetes_unicode_regex_categories_are_enforced(self):
+        """Verify kubernetes unicode regex categories are enforced."""
+        validator = validate.CRDValidator(
+            validate.convert_schema({"type": "string", "pattern": r"^\PC*$"})
+        )
+        self.assertFalse(list(validator.iter_errors("readable text")))
+        self.assertTrue(list(validator.iter_errors("contains\x00control")))
+
+
+class RenderedResourceValidationTests(RenderValidationTest):
+    """Verify resource schemas, discovery and validation failure boundaries."""
+
+    def test_additional_crd_url_supports_pinned_runtime_controller_release(self):
+        """Verify additional CRD url supports pinned runtime controller release."""
+        source = {"version": "v1.14.2", "url": "https://example.invalid/v{version}/crd.yaml"}
+        self.assertEqual(
+            "https://example.invalid/v1.14.2/crd.yaml", validate.additional_crd_url(source)
+        )
+
+    def test_additional_crd_url_uses_helm_controller_release(self):
+        """Verify additional CRD url uses Helm controller release."""
+        app = {"spec": {"source": {"chart": "controller", "targetRevision": "v1.2.3"}}}
+        with patch.object(validate, "load", return_value=app):
+            with patch.object(Path, "read_text", return_value="unused"):
+                self.assertEqual(
+                    "https://example.invalid/v1.2.3/crd.yaml",
+                    validate.additional_crd_url(
+                        {
+                            "application": "controller",
+                            "url": "https://example.invalid/v{version}/crd.yaml",
+                        }
+                    ),
+                )
+
     def test_schema_rejects_unknown_fields_wrong_types_and_missing_schema(self):
         """Verify schema rejects unknown fields wrong types and missing schema."""
         schema = validate.convert_schema(
@@ -527,27 +556,6 @@ class RenderValidationTest(unittest.TestCase):
                 }
             )
         )
-
-    def test_remote_chart_is_rendered_outside_colliding_repo_directory(self):
-        """Verify remote chart is rendered outside colliding repo directory."""
-        source = {
-            "repoURL": "https://example.invalid/charts",
-            "chart": "test",
-            "targetRevision": "1",
-        }
-        with patch.object(render, "run", return_value="rendered") as run:
-            render.render_source(
-                self.app, source, [source], render.RenderContext(self.root, self.root, "1.36.4")
-            )
-            self.assertEqual(self.root, run.call_args.kwargs["cwd"])
-
-    def test_kubernetes_unicode_regex_categories_are_enforced(self):
-        """Verify kubernetes unicode regex categories are enforced."""
-        validator = validate.CRDValidator(
-            validate.convert_schema({"type": "string", "pattern": r"^\PC*$"})
-        )
-        self.assertFalse(list(validator.iter_errors("readable text")))
-        self.assertTrue(list(validator.iter_errors("contains\x00control")))
 
     def test_discovery_excludes_raw_webhook_templates_but_keeps_manifests(self):
         """Verify discovery excludes raw webhook templates but keeps manifests."""
