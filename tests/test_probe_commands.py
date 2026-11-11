@@ -204,3 +204,59 @@ class ProbeWrapperCompatibilityTests(unittest.TestCase):
                 patch.object(module, "run_command", return_value=process),
             ):
                 self.assertIs(module.run("fixture", check=False), process)
+
+
+class NginxContentProbeTests(unittest.TestCase):
+    """Retain content and runtime security checks while keeping regression tests offline."""
+
+    def test_failed_nginx_start_removes_backend(self):
+        """A partial startup must remove the already-created isolated backend."""
+        probe = load_probe("test_nginx_readonly_content.py")
+        target = probe.NginxTarget("fixture", "deployment", "config", "/content", "nginx", "php")
+        with (
+            patch.object(probe, "load_configuration", return_value=("image", "config")),
+            patch.object(probe, "prepare_fixtures", return_value=("content", "config", "mock")),
+            patch.object(probe, "start_backend", return_value="backend"),
+            patch.object(probe, "start_nginx", side_effect=RuntimeError("startup failed")),
+            patch.object(
+                probe, "run_command", return_value=subprocess.CompletedProcess([], 0, "", "")
+            ),
+            patch.object(probe, "run") as run,
+            patch("builtins.print"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "startup failed"):
+                probe.check(target)
+        run.assert_called_once_with(["podman", "rm", "-f", "backend"])
+
+    def test_guard_checks_reject_writable_mount_and_missing_process_guards(self):
+        """Every required process guard remains mandatory alongside read-only content."""
+        probe = load_probe("test_nginx_readonly_content.py")
+        guards = [
+            "CapEff:\t0000000000000000",
+            "CapBnd:\t0000000000000000",
+            "NoNewPrivs:\t1",
+            "Seccomp:\t2",
+        ]
+        with patch.object(probe, "run", return_value="1 2 3 4 /content rw") as run:
+            with self.assertRaises(AssertionError):
+                probe.check_runtime_guards("nginx", "/content")
+            self.assertEqual(run.call_count, 1)
+        for missing in guards:
+            with self.subTest(missing=missing):
+                status = "\n".join(value for value in guards if value != missing)
+                with patch.object(probe, "run", side_effect=["1 2 3 4 /content ro", "", status]):
+                    with self.assertRaises(AssertionError):
+                        probe.check_runtime_guards("nginx", "/content")
+
+    def test_forwarded_body_size_must_match(self):
+        """A successful HTTP status cannot hide a truncated FastCGI upload."""
+        probe = load_probe("test_nginx_readonly_content.py")
+        responses = [
+            {"status": 200, "body": "body {color:blue;}\n"},
+            {"status": 200, "body": '{"fastcgi":true,"received_bytes":0}'},
+            {"status": 200, "body": '{"fastcgi":true,"received_bytes":1}'},
+        ]
+        with patch.object(probe, "request", side_effect=responses) as request:
+            with self.assertRaises(AssertionError):
+                probe.check_responses("nextcloud", "backend")
+        self.assertEqual(request.call_args.args, ("backend", "POST", "/index.php", 2 * 1024 * 1024))

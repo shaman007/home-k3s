@@ -1239,3 +1239,26 @@ checks passed, and Bandit reported no analysis errors. Full Pylint no longer
 reports main's excessive locals, branches or statements; its three existing
 HTTP callback signature/origin-expression warnings remain open for review.
 Publication and genuine scanner refresh are still required for alert closure.
+
+
+### Separate NGINX read-only content probe responsibilities
+
+Refactored the NGINX content probe into explicit manifest validation, synthetic
+fixture creation, backend and NGINX startup, HTTP behavior checks, and runtime
+guard verification. An immutable target record replaces six positional probe
+arguments. Both application entry points retain their original target values.
+All five local Pylint warnings for argument counts, locals, branches and statements
+are gone; the probe and its regression module both pass full Pylint checks.
+
+A transient comparison with the preceding implementation covered 46 combinations
+of Nextcloud/WordPress and injected command failures. Ordered command arguments,
+fixture file bytes, output and exceptions matched exactly, including reverse
+container cleanup. Three permanent offline regressions check backend cleanup on
+NGINX startup failure, rejection of writable mounts and each missing process
+guard, and refusal of a truncated FastCGI upload despite HTTP 200. Existing
+read-only content, capabilities, no-new-privileges, seccomp and request-size
+assertions remain active. No container, live workload or external endpoint was used.
+
+The full unit suite passed with 450 tests and 21 opt-in skips. Ruff and diff
+checks passed; Bandit reported no analysis errors. These source changes still
+require publication and genuine scanner refresh before remote findings close.
