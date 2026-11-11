@@ -111,7 +111,11 @@ test "$(stat -c '%u:%g:%a' /data/closed/nested)" = 65532:65532:700
         (
             pod["initContainers"][0],
             ["apk add --no-cache ca-certificates coreutils curl jq kubectl"],
-            "kubectl version --client >/dev/null; curl --version >/dev/null; jq --version >/dev/null",
+            (
+                "kubectl version --client >/dev/null; "
+                "curl --version >/dev/null; jq --version "
+                ">/dev/null"
+            ),
         ),
         (
             pod["containers"][0],

@@ -15,32 +15,39 @@ import time
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-MOCK = """import json,socketserver,struct
-def receive(s,n):
-    out=b''
-    while len(out)<n:
-        part=s.recv(n-len(out))
-        if not part: raise ConnectionError('Incomplete FastCGI record')
-        out+=part
-    return out
-class Handler(socketserver.BaseRequestHandler):
-    def handle(self):
-        total=0
-        while True:
-            version,kind,rid,length,padding,_=struct.unpack('!BBHHBB',receive(self.request,8))
-            receive(self.request,length+padding)
-            if kind==5:
-                total+=length
-                if length==0: break
-        body=json.dumps({'fastcgi':True,'received_bytes':total}).encode()
-        payload=b'Content-Type: application/json\\r\\nCache-Control: private, no-store\\r\\n\\r\\n'+body
-        for kind,data in [(6,payload),(6,b''),(3,struct.pack('!IB3s',0,0,b'\\0\\0\\0'))]:
-            self.request.sendall(struct.pack('!BBHHBB',1,kind,rid,len(data),0,0)+data)
-class Server(socketserver.ThreadingTCPServer):
-    allow_reuse_address=True
-    daemon_threads=True
-Server(('127.0.0.1',9000),Handler).serve_forever()
-"""
+MOCK = (
+    "import json,socketserver,struct\ndef "
+    "receive(s,n):\n    out=b''\n    while "
+    "len(out)<n:\n        "
+    "part=s.recv(n-len(out))\n        if not "
+    "part: raise ConnectionError('Incomplete "
+    "FastCGI record')\n        out+=part\n    "
+    "return out\nclass "
+    "Handler(socketserver.BaseRequestHandler)"
+    ":\n    def handle(self):\n        total=0\n "
+    "       while True:\n            "
+    "version,kind,rid,length,padding,_=struct"
+    ".unpack('!BBHHBB',receive(self.request,8"
+    "))\n            "
+    "receive(self.request,length+padding)\n    "
+    "        if kind==5:\n                "
+    "total+=length\n                if "
+    "length==0: break\n        "
+    "body=json.dumps({'fastcgi':True,'receive"
+    "d_bytes':total}).encode()\n        "
+    "payload=b'Content-Type: "
+    "application/json\\r\\nCache-Control: "
+    "private, no-store\\r\\n\\r\\n'+body\n        "
+    "for kind,data in "
+    "[(6,payload),(6,b''),(3,struct.pack('!IB"
+    "3s',0,0,b'\\0\\0\\0'))]:\n            "
+    "self.request.sendall(struct.pack('!BBHHB"
+    "B',1,kind,rid,len(data),0,0)+data)\nclass "
+    "Server(socketserver.ThreadingTCPServer):"
+    "\n    allow_reuse_address=True\n    "
+    "daemon_threads=True\nServer(('127.0.0.1',"
+    "9000),Handler).serve_forever()\n"
+)
 REQUEST = """import http.client,json,sys
 method,path,size=sys.argv[1],sys.argv[2],int(sys.argv[3])
 c=http.client.HTTPConnection('127.0.0.1',8080,timeout=10)
@@ -226,7 +233,11 @@ def check(name, deployment_path, config_path, root, nginx_name, php_name):
                     raise AssertionError(status)
             print(
                 name
-                + ": read-only content, static files, FastCGI forwarding and 2MiB request bodies passed",
+                + (
+                    ": read-only content, static files, "
+                    "FastCGI forwarding and 2MiB request "
+                    "bodies passed"
+                ),
                 flush=True,
             )
     except Exception:

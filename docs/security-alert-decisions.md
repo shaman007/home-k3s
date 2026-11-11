@@ -349,3 +349,18 @@ The 34 log-analysis tests and 13 UniFi exporter tests pass. Full-suite verificat
 is recorded below; matching GitHub lint reconciliation remains pending publication
 and rescan.
 Full suite passed: 394 tests, 21 skipped. The full container smoke probes were not run.
+
+## Repository-wide Python formatting completion
+
+A fresh current-Pylint scan of all 127 repository Python files found 183 remaining
+long-line/multiple-statement findings across 45 files. Formatted those files and
+split long text/byte literals at source level without changing their values.
+The final full-repository scan reports zero findings for both rules at 100 columns.
+
+Compared each changed file's executable AST and non-docstring literal values with
+starting revision `ee0e7055`; all match. The sole docstring wording adjustment
+wraps the Sync storage probe's CLI description. Infrastructure, component-security,
+UniFi exporter and Kyverno exception generator consistency checks pass; their
+committed outputs require no changes. Full suite passed: 394 tests, 21 skips.
+No live deployment, migration, container smoke probe, or alert dismissal occurred.
+Matching GitHub lint reconciliation remains pending a published rescan.

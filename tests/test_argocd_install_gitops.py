@@ -35,13 +35,13 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         if len(refs) != 1 or not refs[0].startswith("v"):
             return False
         version = refs[0][1:]
-        return len(version.split(".")) == 3 and all(
-            part.isdigit() for part in version.split(".")
-        )
+        return len(version.split(".")) == 3 and all(part.isdigit() for part in version.split("."))
 
     def test_pin_check_allows_fetch_options_but_rejects_unpinned_refs(self):
         prefix = "github.com/argoproj/argo-cd//manifests/cluster-install?"
-        self.assertTrue(self._is_version_pinned_upstream_install(prefix + "ref=v3.5.7&timeout=120s"))
+        self.assertTrue(
+            self._is_version_pinned_upstream_install(prefix + "ref=v3.5.7&timeout=120s")
+        )
         for query in ["ref=main&timeout=120s", "timeout=120s", "ref=v3.5", "ref=v3.5.7&ref=main"]:
             with self.subTest(query=query):
                 self.assertFalse(self._is_version_pinned_upstream_install(prefix + query))
@@ -81,13 +81,10 @@ class ArgoCdInstallGitopsTest(unittest.TestCase):
         mastodon_custom_managers = [
             manager
             for manager in config["customManagers"]
-            if "/^mastodon\\/mastodon-values\\.ya?ml$/"
-            in manager["managerFilePatterns"]
+            if "/^mastodon\\/mastodon-values\\.ya?ml$/" in manager["managerFilePatterns"]
         ]
         self.assertEqual(len(mastodon_custom_managers), 1)
-        self.assertEqual(
-            mastodon_custom_managers[0]["datasourceTemplate"], "docker"
-        )
+        self.assertEqual(mastodon_custom_managers[0]["datasourceTemplate"], "docker")
 
     def test_renovate_ignores_deprecated_manifests(self):
         config = json.loads(RENOVATE.read_text(encoding="utf-8"))

@@ -56,7 +56,12 @@ def main():
                 "sh",
                 "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
                 "-ec",
-                'printf "histerguarduniqueword offline fixture\\n" > /data/fixture.txt; chmod 644 /data/fixture.txt; chown 65532:65532 /data',
+                (
+                    'printf "histerguarduniqueword offline '
+                    'fixture\\n" > /data/fixture.txt; chmod '
+                    "644 /data/fixture.txt; chown 65532:65532 "
+                    "/data"
+                ),
             ]
         )
         with tempfile.TemporaryDirectory(prefix="hister-readonly-") as directory:
@@ -66,7 +71,11 @@ def main():
             objects = [
                 b"<< /Type /Catalog /Pages 2 0 R >>",
                 b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-                b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
+                (
+                    b"<< /Type /Page /Parent 2 0 R /MediaBox "
+                    b"[0 0 612 792] /Resources << /Font << /F1 "
+                    b"5 0 R >> >> /Contents 4 0 R >>"
+                ),
                 b"<< /Length "
                 + str(len(content)).encode()
                 + b" >>\nstream\n"
@@ -211,10 +220,18 @@ def main():
                 if not expected in status:
                     raise AssertionError(status)
             print(
-                "Hister: read-only root startup, text/PDF import/search, manual reindex role and persistent restart passed"
+                (
+                    "Hister: read-only root startup, text/PDF "
+                    "import/search, manual reindex role and "
+                    "persistent restart passed"
+                )
             )
             print(
-                "UID/GID 65532, zero capabilities, no-new-privileges and seccomp verified; no production data or credentials used"
+                (
+                    "UID/GID 65532, zero capabilities, "
+                    "no-new-privileges and seccomp verified; "
+                    "no production data or credentials used"
+                )
             )
     except Exception:
         if cid:

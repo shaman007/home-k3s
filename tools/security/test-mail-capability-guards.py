@@ -126,7 +126,9 @@ def main():
                         "90-sieve",
                     ]
                 },
-                "mastodon-registration-bounces.sieve": "sieve-before/mastodon-registration-bounces.sieve",
+                "mastodon-registration-bounces.sieve": (
+                    "sieve-before/mastodon-registration-bounces.sieve"
+                ),
             }
             for key, destination in mapping.items():
                 p = d / key
@@ -253,7 +255,11 @@ def main():
 
             retry(smtp)
             print(
-                "Postfix: read-only root, PROXY protocol, EHLO, STARTTLS, fixture AUTH and NOOP passed; no mail submitted",
+                (
+                    "Postfix: read-only root, PROXY protocol, "
+                    "EHLO, STARTTLS, fixture AUTH and NOOP "
+                    "passed; no mail submitted"
+                ),
                 flush=True,
             )
             for name, cid in [("dovecot", dovecot), ("postfix", postfix)]:

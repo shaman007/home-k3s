@@ -116,7 +116,11 @@ def main():
             [args.kyverno, "test", str(directory), "--fail-only", "--remove-color"], check=True
         )
     print(
-        "20 real CEL expectations passed: raw chart, admitted chart, unmatched image and unsafe helper"
+        (
+            "20 real CEL expectations passed: raw "
+            "chart, admitted chart, unmatched image "
+            "and unsafe helper"
+        )
     )
 
 

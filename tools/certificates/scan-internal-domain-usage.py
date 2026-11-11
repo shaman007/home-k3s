@@ -74,7 +74,9 @@ def main():
         if filename not in annotation_lines:
             annotation_lines[filename] = {
                 n
-                for n, text in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1)
+                for n, text in enumerate(
+                    path.read_text(encoding="utf-8", errors="replace").splitlines(), 1
+                )
                 if "/token-policies" in text
             }
         if int(number) in annotation_lines[filename]:
@@ -119,7 +121,14 @@ def main():
     report = {
         "scan_root": str(args.root.resolve()),
         "excluded_directories": EXCLUSIONS + ["bench/results"],
-        "scope": "candidate hostname inventory, not automatic replacement instructions; .local can also match code identifiers; ignored files and generated directories are excluded; no source lines or credentials copied",
+        "scope": (
+            "candidate hostname inventory, not "
+            "automatic replacement instructions; "
+            ".local can also match code identifiers; "
+            "ignored files and generated directories "
+            "are excluded; no source lines or "
+            "credentials copied"
+        ),
         "counts": {
             "occurrences": len(entries),
             "files": len({e["path"] for e in entries}),

@@ -27,7 +27,12 @@ def main():
         raise AssertionError
     if not entry["command"] == ["sh", "-c", "echo share-manager image pulled && sleep infinity"]:
         raise AssertionError
-    image = "harbor.andreybondarenko.com/dockerhub/longhornio/longhorn-share-manager@sha256:53950f78b7af38b8a943c298cd3020622191a4661a13036f69d83c154cc8690d"
+    image = (
+        "harbor.andreybondarenko.com/dockerhub/lo"
+        "nghornio/longhorn-share-manager@sha256:5"
+        "3950f78b7af38b8a943c298cd3020622191a4661"
+        "a13036f69d83c154cc8690d"
+    )
     cid = run(
         "run",
         "-d",
@@ -56,7 +61,11 @@ def main():
         if not (fields["NoNewPrivs"].strip() == "1" and fields["Seccomp"].strip() == "2"):
             raise AssertionError
         print(
-            "PASS: exact deployed image and echo/sleep command, UID/GID 65534, zero capabilities, NNP, default seccomp"
+            (
+                "PASS: exact deployed image and "
+                "echo/sleep command, UID/GID 65534, zero "
+                "capabilities, NNP, default seccomp"
+            )
         )
     finally:
         run("rm", "-f", cid)

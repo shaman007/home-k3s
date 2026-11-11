@@ -139,10 +139,19 @@ def main():
     if not exclude["configMap"]["defaultMode"] == 256:
         raise AssertionError("Unexpected config mode")
     print(
-        "Restored speaker identity, NET_RAW, projected-only volumes and one-at-a-time rollout verified."
+        (
+            "Restored speaker identity, NET_RAW, "
+            "projected-only volumes and one-at-a-time "
+            "rollout verified."
+        )
     )
     print(
-        "Chart review passed: 3 narrowly changed resources; 17 FRR resources leave desired state, including 4 retained CRDs."
+        (
+            "Chart review passed: 3 narrowly changed "
+            "resources; 17 FRR resources leave "
+            "desired state, including 4 retained "
+            "CRDs."
+        )
     )
     if args.live:
 
@@ -174,10 +183,23 @@ def main():
             if not service.get("status", {}).get("loadBalancer", {}).get("ingress"):
                 raise AssertionError("Unassigned LoadBalancer")
         print(
-            f"Live prerequisites passed: no BGP/FRR configs; {len(pools)} pools, {len(ads)} L2 advertisements, {len(services)} assigned L2 services."
+            (
+                f"Live prerequisites passed: no BGP/FRR "
+                f"configs; "
+                f"{len(pools)}"
+                f" pools, "
+                f"{len(ads)}"
+                f" L2 advertisements, "
+                f"{len(services)}"
+                f" assigned L2 services."
+            )
         )
         print(
-            "This does not prove post-rollout ARP/NDP reachability. Verify from the LAN after backend or identity changes."
+            (
+                "This does not prove post-rollout ARP/NDP "
+                "reachability. Verify from the LAN after "
+                "backend or identity changes."
+            )
         )
 
 

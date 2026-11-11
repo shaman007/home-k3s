@@ -218,7 +218,11 @@ def main():
                             if not expected in state:
                                 raise AssertionError(state)
                         print(
-                            "UID 1000: informer sync, mock lease acquisition, global controller startup and health HTTP200 passed"
+                            (
+                                "UID 1000: informer sync, mock lease "
+                                "acquisition, global controller startup "
+                                "and health HTTP200 passed"
+                            )
                         )
                         break
                     if not "fatal" not in logs.lower():

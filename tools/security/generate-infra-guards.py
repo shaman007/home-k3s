@@ -26,7 +26,14 @@ def generate(catalog):
     patches = []
     for e in entries:
         pod = e["fixture"]["spec"]["template"]["spec"]
-        identity = f"object.metadata.namespace == {J(e['namespace'])} && object.kind == {J(e['kind'])} && object.metadata.name == {J(e['name'])}"
+        identity = (
+            f"object.metadata.namespace == "
+            f"{J(e['namespace'])}"
+            f" && object.kind == "
+            f"{J(e['kind'])}"
+            f" && object.metadata.name == "
+            f"{J(e['name'])}"
+        )
         terms = [identity, f'p.?serviceAccountName.orValue("default") == {J(e["serviceAccount"])}']
         for label, value in e["labels"].items():
             terms.append(
@@ -57,16 +64,44 @@ def generate(catalog):
             )
             for key, value in target.get("requiredEnv", {}).items():
                 terms.append(
-                    f'p.{section}[{index}].?env.orValue([]).exists(v, v.name == {J(key)} && v.?value.orValue("") == {J(value)})'
+                    (
+                        f"p."
+                        f"{section}"
+                        f"["
+                        f"{index}"
+                        f"].?env.orValue([]).exists(v, v.name == "
+                        f"{J(key)}"
+                        f' && v.?value.orValue("") == '
+                        f"{J(value)}"
+                        f")"
+                    )
                 )
             for key, path_value in target.get("requiredFieldRefs", {}).items():
                 terms.append(
-                    f'p.{section}[{index}].?env.orValue([]).exists(v, v.name == {J(key)} && v.?valueFrom.?fieldRef.?fieldPath.orValue("") == {J(path_value)})'
+                    (
+                        f"p."
+                        f"{section}"
+                        f"["
+                        f"{index}"
+                        f"].?env.orValue([]).exists(v, v.name == "
+                        f"{J(key)}"
+                        f" && v.?valueFrom.?fieldRef.?fieldPath.or"
+                        f'Value("") == '
+                        f"{J(path_value)}"
+                        f")"
+                    )
                 )
 
             path = f"/spec/template/spec/{section}/{index}/securityContext"
             mutation_parts.append(
-                f'(!has({ref}.securityContext) ? [JSONPatch{{op:"add",path:{J(path)},value:{{}}}}] : [])'
+                (
+                    f"(!has("
+                    f"{ref}"
+                    f".securityContext) ? "
+                    f'[JSONPatch{{op:"add",path:'
+                    f"{J(path)}"
+                    f",value:{{}}}}] : [])"
+                )
             )
             mutation_parts.append(
                 "["
@@ -252,7 +287,10 @@ def generate(catalog):
                         "containers": [
                             {
                                 "name": "backfill",
-                                "image": "harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine",
+                                "image": (
+                                    "harbor.andreybondarenko.com/dockerhub/li"
+                                    "brary/python:3.15-alpine"
+                                ),
                                 "command": ["python3", "/config/backfill.py"],
                                 "env": [{"name": "PYTHONDONTWRITEBYTECODE", "value": "1"}],
                                 "securityContext": {

@@ -131,7 +131,12 @@ listener "tcp" {{
                 if not process.poll() is None:
                     raise AssertionError("Server exited after reload")
                 print(
-                    "PASS: dual listeners, hostname verification, projected-file rotation, automatic reload, original listener preserved"
+                    (
+                        "PASS: dual listeners, hostname "
+                        "verification, projected-file rotation, "
+                        "automatic reload, original listener "
+                        "preserved"
+                    )
                 )
             finally:
                 process.terminate()

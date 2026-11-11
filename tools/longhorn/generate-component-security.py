@@ -35,7 +35,11 @@ def generate(catalog):
         parts = [
             f"object.kind == {json.dumps(e['kind'])}",
             f"object.metadata.name == {json.dumps(e['name'])}",
-            f'object.spec.template.metadata.?labels.orValue({{}})["app"] == {json.dumps(e["name"])}',
+            (
+                f"object.spec.template.metadata.?labels.or"
+                f'Value({{}})["app"] == '
+                f"{json.dumps(e['name'])}"
+            ),
             f'p.?serviceAccountName.orValue("default") == {json.dumps(e["serviceAccount"])}',
             f"p.containers.size() == {e['count']}",
             "p.?initContainers.orValue([]).size() == 0",
@@ -57,7 +61,13 @@ def generate(catalog):
         branches.append("(" + " &&\n ".join(parts) + ")")
     expression = "[object.spec.template.spec].exists(p,\n" + " ||\n".join(branches) + "\n)"
     path = '"/spec/template/spec/containers/" + string(variables.index) + "/securityContext"'
-    mutation = f'(!has(object.spec.template.spec.containers[variables.index].securityContext) ? [JSONPatch{{op: "add", path: {path}, value: {{}}}}] : []) + [\n'
+    mutation = (
+        f"(!has(object.spec.template.spec.containe"
+        f"rs[variables.index].securityContext) ? "
+        f'[JSONPatch{{op: "add", path: '
+        f"{path}"
+        f", value: {{}}}}] : []) + [\n"
+    )
     for key, value in b.security(entries[0]).items():
         val = (
             "variables.uid"
@@ -190,7 +200,9 @@ def generate(catalog):
                     "containers": [
                         {
                             "name": "backfill",
-                            "image": "harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine",
+                            "image": (
+                                "harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine"
+                            ),
                             "command": ["python3", "/config/backfill.py"],
                             "env": [{"name": "PYTHONDONTWRITEBYTECODE", "value": "1"}],
                             "securityContext": {

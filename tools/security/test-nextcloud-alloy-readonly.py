@@ -192,7 +192,11 @@ def main():
                             "python3",
                             "-B",
                             "-c",
-                            "import urllib.request,sys;sys.stdout.buffer.write(urllib.request.urlopen('http://127.0.0.1:3100/last').read())",
+                            (
+                                "import urllib.request,sys;sys.stdout.buf"
+                                "fer.write(urllib.request.urlopen('http:/"
+                                "/127.0.0.1:3100/last').read())"
+                            ),
                         ],
                         capture_output=True,
                         check=False,
@@ -215,7 +219,12 @@ def main():
                     "python3",
                     "-B",
                     "-c",
-                    "import urllib.request; assert all(urllib.request.urlopen('http://127.0.0.1:12345/'+p).status==200 for p in ['-/ready','-/healthy'])",
+                    (
+                        "import urllib.request; assert "
+                        "all(urllib.request.urlopen('http://127.0"
+                        ".0.1:12345/'+p).status==200 for p in "
+                        "['-/ready','-/healthy'])"
+                    ),
                 ]
             )
             mountinfo = run(["podman", "exec", alloy, "cat", "/proc/1/mountinfo"])
@@ -271,7 +280,11 @@ def main():
                 "Nextcloud Alloy: initial/appended logs reached mock Loki; Snappy payloads verified"
             )
             print(
-                "Read-only root and Nextcloud mount, blocked writes, writable checkpoints, zero caps/NNP/seccomp passed"
+                (
+                    "Read-only root and Nextcloud mount, "
+                    "blocked writes, writable checkpoints, "
+                    "zero caps/NNP/seccomp passed"
+                )
             )
     except Exception:
         for cid in containers:

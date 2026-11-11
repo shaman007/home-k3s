@@ -14,55 +14,96 @@ import time
 
 IMAGE = "quay.io/frrouting/frr:10.4.3"  # Existing local Python/ip diagnostic image.
 SPEAKER = "quay.io/metallb/speaker:v0.16.1"
-PROBE = r"""
-import os,socket,struct,subprocess
-from pathlib import Path
-assert os.getuid()==1000 and os.getgid()==1000
-status=Path('/proc/self/status').read_text()
-for value in ['CapEff:\t0000000000002000','CapBnd:\t0000000000002000','NoNewPrivs:\t1','Seccomp:\t2']:
- assert value in status,value
-assert Path('/fixture/group-readable.yaml').read_text()=='announcedInterfacesToExclude: []\n'
-try: Path('/fixture/root-only.yaml').read_text()
-except PermissionError: pass
-else: raise AssertionError('Root-only 0400 ConfigMap unexpectedly readable')
-p=subprocess.run(['ip','link','set','fixture0','down'],capture_output=True)
-assert p.returncode!=0,'NET_ADMIN unexpectedly available'
-# ARP on a real veth pair, without touching host networking.
-a=socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(0x0806));a.bind(('fixture0',0));a.settimeout(3)
-b=socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(0x0806));b.bind(('fixture1',0));b.settimeout(3)
-mac0=bytes.fromhex(Path('/sys/class/net/fixture0/address').read_text().strip().replace(':',''))
-mac1=bytes.fromhex(Path('/sys/class/net/fixture1/address').read_text().strip().replace(':',''))
-ip0=socket.inet_aton('192.0.2.1');vip=socket.inet_aton('192.0.2.42')
-def arp(op,srcmac,srcip,dstmac,dstip):
- return struct.pack('!HHBBH',1,0x0800,6,4,op)+srcmac+srcip+dstmac+dstip
-request=b'\xff'*6+mac1+b'\x08\x06'+arp(1,mac1,ip0,b'\0'*6,vip)
-b.send(request);data=a.recv(2048);assert data[20:22]==b'\0\1' and data[38:42]==vip
-reply=mac1+mac0+b'\x08\x06'+arp(2,mac0,vip,mac1,ip0)
-a.send(reply);data=b.recv(2048);assert data[20:22]==b'\0\2' and data[28:32]==vip
-# IPv6 raw ICMP sockets and solicited-node multicast membership, as used by ndp.
-i0=socket.if_nametoindex('fixture0');i1=socket.if_nametoindex('fixture1')
-s=socket.socket(socket.AF_INET6,socket.SOCK_RAW,socket.IPPROTO_ICMPV6)
-r=socket.socket(socket.AF_INET6,socket.SOCK_RAW,socket.IPPROTO_ICMPV6)
-s.bind(('fe80::1',0,0,i0));r.bind(('fe80::2',0,0,i1));s.settimeout(3);r.settimeout(3)
-s.setsockopt(socket.IPPROTO_IPV6,socket.IPV6_MULTICAST_IF,i0)
-s.setsockopt(socket.IPPROTO_IPV6,socket.IPV6_MULTICAST_HOPS,255)
-s.setsockopt(socket.IPPROTO_IPV6,socket.IPV6_UNICAST_HOPS,255)
-group=socket.inet_pton(socket.AF_INET6,'ff02::1:ff00:42')+struct.pack('@I',i0)
-s.setsockopt(socket.IPPROTO_IPV6,socket.IPV6_JOIN_GROUP,group)
-vip6=socket.inet_pton(socket.AF_INET6,'fd00::42')
-# Neighbor advertisement containing a synthetic VIP and target link-layer option.
-message=struct.pack('!BBHI',136,0,0,0x20000000)+vip6+bytes([2,1])+mac0
-s.sendto(message,('fe80::2',0,0,i0))
-for _ in range(20):
- data,addr=r.recvfrom(2048)
- if data[0]==136 and data[8:24]==vip6:break
-else:raise AssertionError('No IPv6 neighbor advertisement received')
-s.setsockopt(socket.IPPROTO_IPV6,socket.IPV6_LEAVE_GROUP,group)
-# High listeners used by memberlist and HTTPS metrics need no bind capability.
-for port in [7946,9120]:
- with socket.socket() as listener: listener.bind(('127.0.0.1',port));listener.listen(1)
-print('PASS: UID/GID 1000, group-readable config, root-only negative, NET_RAW-only ARP/NDP, multicast join/leave, high listeners, NNP/seccomp, no NET_ADMIN')
-"""
+PROBE = (
+    "\nimport os,socket,struct,subprocess\nfrom "
+    "pathlib import Path\nassert "
+    "os.getuid()==1000 and "
+    "os.getgid()==1000\nstatus=Path('/proc/sel"
+    "f/status').read_text()\nfor value in "
+    "['CapEff:\\t0000000000002000','CapBnd:\\t0"
+    "000000000002000','NoNewPrivs:\\t1','Secco"
+    "mp:\\t2']:\n assert value in "
+    "status,value\nassert "
+    "Path('/fixture/group-readable.yaml').rea"
+    "d_text()=='announcedInterfacesToExclude: "
+    "[]\\n'\ntry: "
+    "Path('/fixture/root-only.yaml').read_tex"
+    "t()\nexcept PermissionError: pass\nelse: "
+    "raise AssertionError('Root-only 0400 "
+    "ConfigMap unexpectedly "
+    "readable')\np=subprocess.run(['ip','link'"
+    ",'set','fixture0','down'],capture_output"
+    "=True)\nassert p.returncode!=0,'NET_ADMIN "
+    "unexpectedly available'\n# ARP on a real "
+    "veth pair, without touching host "
+    "networking.\na=socket.socket(socket.AF_PA"
+    "CKET,socket.SOCK_RAW,socket.htons(0x0806"
+    "));a.bind(('fixture0',0));a.settimeout(3"
+    ")\nb=socket.socket(socket.AF_PACKET,socke"
+    "t.SOCK_RAW,socket.htons(0x0806));b.bind("
+    "('fixture1',0));b.settimeout(3)\nmac0=byt"
+    "es.fromhex(Path('/sys/class/net/fixture0"
+    "/address').read_text().strip().replace('"
+    ":',''))\nmac1=bytes.fromhex(Path('/sys/cl"
+    "ass/net/fixture1/address').read_text().s"
+    "trip().replace(':',''))\nip0=socket.inet_"
+    "aton('192.0.2.1');vip=socket.inet_aton('"
+    "192.0.2.42')\ndef "
+    "arp(op,srcmac,srcip,dstmac,dstip):\n "
+    "return struct.pack('!HHBBH',1,0x0800,6,4"
+    ",op)+srcmac+srcip+dstmac+dstip\nrequest=b"
+    "'\\xff'*6+mac1+b'\\x08\\x06'+arp(1,mac1,ip0"
+    ",b'\\0'*6,vip)\nb.send(request);data=a.rec"
+    "v(2048);assert data[20:22]==b'\\0\\1' and "
+    "data[38:42]==vip\nreply=mac1+mac0+b'\\x08\\"
+    "x06'+arp(2,mac0,vip,mac1,ip0)\na.send(rep"
+    "ly);data=b.recv(2048);assert "
+    "data[20:22]==b'\\0\\2' and "
+    "data[28:32]==vip\n# IPv6 raw ICMP sockets "
+    "and solicited-node multicast membership, "
+    "as used by "
+    "ndp.\ni0=socket.if_nametoindex('fixture0'"
+    ");i1=socket.if_nametoindex('fixture1')\ns"
+    "=socket.socket(socket.AF_INET6,socket.SO"
+    "CK_RAW,socket.IPPROTO_ICMPV6)\nr=socket.s"
+    "ocket(socket.AF_INET6,socket.SOCK_RAW,so"
+    "cket.IPPROTO_ICMPV6)\ns.bind(('fe80::1',0"
+    ",0,i0));r.bind(('fe80::2',0,0,i1));s.set"
+    "timeout(3);r.settimeout(3)\ns.setsockopt("
+    "socket.IPPROTO_IPV6,socket.IPV6_MULTICAS"
+    "T_IF,i0)\ns.setsockopt(socket.IPPROTO_IPV"
+    "6,socket.IPV6_MULTICAST_HOPS,255)\ns.sets"
+    "ockopt(socket.IPPROTO_IPV6,socket.IPV6_U"
+    "NICAST_HOPS,255)\ngroup=socket.inet_pton("
+    "socket.AF_INET6,'ff02::1:ff00:42')+struc"
+    "t.pack('@I',i0)\ns.setsockopt(socket.IPPR"
+    "OTO_IPV6,socket.IPV6_JOIN_GROUP,group)\nv"
+    "ip6=socket.inet_pton(socket.AF_INET6,'fd"
+    "00::42')\n# Neighbor advertisement "
+    "containing a synthetic VIP and target "
+    "link-layer "
+    "option.\nmessage=struct.pack('!BBHI',136,"
+    "0,0,0x20000000)+vip6+bytes([2,1])+mac0\ns"
+    ".sendto(message,('fe80::2',0,0,i0))\nfor "
+    "_ in range(20):\n "
+    "data,addr=r.recvfrom(2048)\n if "
+    "data[0]==136 and "
+    "data[8:24]==vip6:break\nelse:raise "
+    "AssertionError('No IPv6 neighbor "
+    "advertisement "
+    "received')\ns.setsockopt(socket.IPPROTO_I"
+    "PV6,socket.IPV6_LEAVE_GROUP,group)\n# "
+    "High listeners used by memberlist and "
+    "HTTPS metrics need no bind "
+    "capability.\nfor port in [7946,9120]:\n "
+    "with socket.socket() as listener: "
+    "listener.bind(('127.0.0.1',port));listen"
+    "er.listen(1)\nprint('PASS: UID/GID 1000, "
+    "group-readable config, root-only "
+    "negative, NET_RAW-only ARP/NDP, "
+    "multicast join/leave, high listeners, "
+    "NNP/seccomp, no NET_ADMIN')\n"
+)
 
 
 def run(*args, check=True):
@@ -84,7 +125,15 @@ def main():
         directory.chmod(0o755)
         (directory / "probe.py").write_text(PROBE)
         (directory / "kubeconfig").write_text(
-            "apiVersion: v1\nkind: Config\nclusters:\n- name: fixture\n  cluster:\n    server: http://127.0.0.1:18080\ncontexts:\n- name: fixture\n  context:\n    cluster: fixture\n    user: fixture\ncurrent-context: fixture\nusers:\n- name: fixture\n  user: {}\n"
+            (
+                "apiVersion: v1\nkind: Config\nclusters:\n- "
+                "name: fixture\n  cluster:\n    server: "
+                "http://127.0.0.1:18080\ncontexts:\n- name: "
+                "fixture\n  context:\n    cluster: fixture\n "
+                "   user: fixture\ncurrent-context: "
+                "fixture\nusers:\n- name: fixture\n  user: "
+                "{}\n"
+            )
         )
         for name, mode in [("group-readable.yaml", 0o440), ("root-only.yaml", 0o400)]:
             path = directory / name
@@ -147,7 +196,17 @@ def main():
                 "--entrypoint=python3",
                 IMAGE,
                 "-c",
-                'from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer; import time\nclass H(BaseHTTPRequestHandler):\n def do_GET(self): time.sleep(30); self.send_error(503)\n def log_message(self,*a): pass\nThreadingHTTPServer(("127.0.0.1",18080),H).serve_forever()',
+                (
+                    "from http.server import "
+                    "BaseHTTPRequestHandler,ThreadingHTTPServ"
+                    "er; import time\nclass "
+                    "H(BaseHTTPRequestHandler):\n def "
+                    "do_GET(self): time.sleep(30); "
+                    "self.send_error(503)\n def "
+                    "log_message(self,*a): "
+                    'pass\nThreadingHTTPServer(("127.0.0.1",18'
+                    "080),H).serve_forever()"
+                ),
             )
             speakers.append(api)
             time.sleep(0.3)
@@ -202,7 +261,11 @@ def main():
                 run("rm", "-f", speaker)
                 speakers.remove(speaker)
             print(
-                "PASS: real speaker reads group-owned config and creates ARP/NDP responders; root-only config is rejected"
+                (
+                    "PASS: real speaker reads group-owned "
+                    "config and creates ARP/NDP responders; "
+                    "root-only config is rejected"
+                )
             )
             negative = run(
                 "run",
@@ -214,7 +277,11 @@ def main():
                 "--entrypoint=python3",
                 IMAGE,
                 "-c",
-                "import socket; socket.socket(socket.AF_PACKET,socket.SOCK_RAW,socket.htons(0x0806))",
+                (
+                    "import socket; "
+                    "socket.socket(socket.AF_PACKET,socket.SO"
+                    "CK_RAW,socket.htons(0x0806))"
+                ),
                 check=False,
             )
             if not (negative.returncode != 0 and "PermissionError" in negative.stderr):

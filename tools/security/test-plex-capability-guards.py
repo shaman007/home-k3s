@@ -152,10 +152,18 @@ def main():
             if not p.attrib["customConnections"] == advertised:
                 raise AssertionError
             print(
-                "Plex: offline startup, HTTP identity, UID 1000 software MJPEG transcode and persistent-preference restart passed"
+                (
+                    "Plex: offline startup, HTTP identity, "
+                    "UID 1000 software MJPEG transcode and "
+                    "persistent-preference restart passed"
+                )
             )
             print(
-                "Reduced capability bounding set, no-new-privileges and seccomp verified; GPU/playback not tested"
+                (
+                    "Reduced capability bounding set, "
+                    "no-new-privileges and seccomp verified; "
+                    "GPU/playback not tested"
+                )
             )
     except Exception:
         if cid:

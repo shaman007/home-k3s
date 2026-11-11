@@ -30,7 +30,12 @@ def main():
             (d / name).chmod(0o777)
         config = d / "conf/frr.conf"
         config.write_text(
-            "frr defaults traditional\nhostname guardbase\nservice integrated-vtysh-config\nrouter bgp 64512\n bgp router-id 192.0.2.1\n"
+            (
+                "frr defaults traditional\nhostname "
+                "guardbase\nservice "
+                "integrated-vtysh-config\nrouter bgp "
+                "64512\n bgp router-id 192.0.2.1\n"
+            )
         )
         config.chmod(0o600)
         (d / "conf/vtysh.conf").write_text("service integrated-vtysh-config\n")
@@ -105,7 +110,12 @@ def main():
                 raise AssertionError(info)
             # Root reloader retains only DAC_OVERRIDE to read owner-100 mode-0600 config.
             (d / "reload/frr.conf").write_text(
-                "frr defaults traditional\nhostname guardchanged\nservice integrated-vtysh-config\nrouter bgp 64512\n bgp router-id 192.0.2.2\n"
+                (
+                    "frr defaults traditional\nhostname "
+                    "guardchanged\nservice "
+                    "integrated-vtysh-config\nrouter bgp "
+                    "64512\n bgp router-id 192.0.2.2\n"
+                )
             )
             (d / "reload/frr.conf").chmod(0o644)
             command = [
@@ -126,7 +136,15 @@ def main():
             # Real frr-reload.py performs syntax checking and vtysh command application.
             output = run(
                 *command,
-                "python3 /usr/lib/frr/frr-reload.py --test --stdout /etc/frr_reloader/frr.conf; python3 /usr/lib/frr/frr-reload.py --reload --overwrite --stdout /etc/frr_reloader/frr.conf; cat /proc/self/status",
+                (
+                    "python3 /usr/lib/frr/frr-reload.py "
+                    "--test --stdout "
+                    "/etc/frr_reloader/frr.conf; python3 "
+                    "/usr/lib/frr/frr-reload.py --reload "
+                    "--overwrite --stdout "
+                    "/etc/frr_reloader/frr.conf; cat "
+                    "/proc/self/status"
+                ),
             )
             if not ("CapEff:\t0000000000000002" in output and "NoNewPrivs:\t1" in output):
                 raise AssertionError(output)
@@ -188,7 +206,12 @@ def main():
             if not no_kill.returncode != 0:
                 raise AssertionError("Root without KILL unexpectedly signalled UID-100 daemon")
             (d / "reload/frr.conf").write_text(
-                "frr defaults traditional\nhostname guardchanged\nservice integrated-vtysh-config\nrouter bgp 64512\n bgp router-id 192.0.2.3\n"
+                (
+                    "frr defaults traditional\nhostname "
+                    "guardchanged\nservice "
+                    "integrated-vtysh-config\nrouter bgp "
+                    "64512\n bgp router-id 192.0.2.3\n"
+                )
             )
             # Same UID as production controller, with zero capabilities, can signal the reloader.
             run("exec", "--user=0:0", daemon, "sh", "-ec", "kill -HUP " + str(pid))
@@ -293,7 +316,16 @@ def main():
                 "--metrics-bind-address=127.0.0.1",
             )
             containers.append(metrics)
-            probe = 'import urllib.request,ssl; c=ssl._create_unverified_context();r=urllib.request.Request("https://127.0.0.1:9141/metrics",headers={"Authorization":"Bearer fixture-only"});b=urllib.request.urlopen(r,context=c,timeout=5).read();assert b"go_" in b;print("metrics-authenticated-200")'
+            probe = (
+                "import urllib.request,ssl; "
+                "c=ssl._create_unverified_context();r=url"
+                'lib.request.Request("https://127.0.0.1:9'
+                '141/metrics",headers={"Authorization":"B'
+                'earer fixture-only"});b=urllib.request.u'
+                "rlopen(r,context=c,timeout=5).read();ass"
+                'ert b"go_" in '
+                'b;print("metrics-authenticated-200")'
+            )
             for _ in range(30):
                 p = run(
                     "run",
@@ -355,7 +387,14 @@ def main():
                 if not output.split("Uid:", 1)[1].splitlines()[0].split() == ["100"] * 4:
                     raise AssertionError
             print(
-                "PASS: real UID-100 VTY socket queries and root DAC_OVERRIDE-only syntax/reload; real SIGHUP/lock/status success, authenticated HTTPS metrics and status API caches; no kernel routes or BGP listener"
+                (
+                    "PASS: real UID-100 VTY socket queries "
+                    "and root DAC_OVERRIDE-only "
+                    "syntax/reload; real SIGHUP/lock/status "
+                    "success, authenticated HTTPS metrics and "
+                    "status API caches; no kernel routes or "
+                    "BGP listener"
+                )
             )
         finally:
             for cid in reversed(containers):

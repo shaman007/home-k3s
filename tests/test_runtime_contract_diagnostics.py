@@ -21,12 +21,21 @@ class RuntimeContractDiagnosticsTest(unittest.TestCase):
         for kind in ("ExternalSecret", "SecretStore", "ClusterSecretStore", "Secret"):
             for target in (None, {}, {"name": marker}):
                 with self.subTest(kind=kind, target=target):
-                    document = {"kind": kind, "spec": {
-                        "target": target, "refreshInterval": marker,
-                        "data": [{"secretKey": marker, "remoteRef": {"key": marker}}],
-                    }, "data": {"password": marker}}
-                    errors = contracts.check_external_secret_targets(Path("fixture.yaml"), 1, document)
-                    errors += contracts.check_secret_refresh_intervals(Path("fixture.yaml"), 1, document)
+                    document = {
+                        "kind": kind,
+                        "spec": {
+                            "target": target,
+                            "refreshInterval": marker,
+                            "data": [{"secretKey": marker, "remoteRef": {"key": marker}}],
+                        },
+                        "data": {"password": marker},
+                    }
+                    errors = contracts.check_external_secret_targets(
+                        Path("fixture.yaml"), 1, document
+                    )
+                    errors += contracts.check_secret_refresh_intervals(
+                        Path("fixture.yaml"), 1, document
+                    )
                     self.assertNotIn(marker, "\n".join(errors))
                     if kind != "Secret":
                         self.assertTrue(errors)

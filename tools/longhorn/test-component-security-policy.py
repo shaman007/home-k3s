@@ -128,7 +128,12 @@ def main():
                 if not output == doc:
                     raise AssertionError((entry["name"], "mutated out-of-scope resource"))
     print(
-        f"{len(cases)} component mutation/scope checks and {len(entries) * 2} idempotence checks passed"
+        (
+            f"{len(cases)}"
+            f" component mutation/scope checks and "
+            f"{len(entries) * 2}"
+            f" idempotence checks passed"
+        )
     )
 
 

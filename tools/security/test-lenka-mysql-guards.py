@@ -7,7 +7,11 @@ import uuid
 from pathlib import Path
 import yaml
 
-IMAGE = "harbor.andreybondarenko.com/dockerhub/mysql@sha256:257388edf9c84dbc04c763625446d5f3fa6ed60d1b0873bc552c614ba0a7ab4e"
+IMAGE = (
+    "harbor.andreybondarenko.com/dockerhub/my"
+    "sql@sha256:257388edf9c84dbc04c763625446d"
+    "5f3fa6ed60d1b0873bc552c614ba0a7ab4e"
+)
 
 
 def run(*args):
@@ -18,7 +22,9 @@ def run(*args):
 
 
 def main():
-    patch = yaml.safe_load(Path(__file__).with_name("lenka-mysql-security.patch.yaml").read_text(encoding="utf-8"))
+    patch = yaml.safe_load(
+        Path(__file__).with_name("lenka-mysql-security.patch.yaml").read_text(encoding="utf-8")
+    )
     sc = patch["spec"]["template"]["spec"]["containers"][0]["securityContext"]
     if not (sc["runAsUser"] == sc["runAsGroup"] == 999 and sc["runAsNonRoot"]):
         raise AssertionError
@@ -78,7 +84,12 @@ def main():
 
         ready()
         sql(
-            "CREATE DATABASE guard_fixture; CREATE TABLE guard_fixture.probe (id INT PRIMARY KEY); INSERT INTO guard_fixture.probe VALUES (42)"
+            (
+                "CREATE DATABASE guard_fixture; CREATE "
+                "TABLE guard_fixture.probe (id INT "
+                "PRIMARY KEY); INSERT INTO "
+                "guard_fixture.probe VALUES (42)"
+            )
         )
         if not sql("SELECT id FROM guard_fixture.probe") == "42":
             raise AssertionError
@@ -101,7 +112,12 @@ def main():
         if not sql("SELECT id FROM guard_fixture.probe") == "43":
             raise AssertionError
         print(
-            "PASS: non-root initialization, SQL writes, graceful restart, persisted data, zero capabilities, NNP and default seccomp"
+            (
+                "PASS: non-root initialization, SQL "
+                "writes, graceful restart, persisted "
+                "data, zero capabilities, NNP and default "
+                "seccomp"
+            )
         )
     finally:
         if cid:

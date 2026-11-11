@@ -56,15 +56,22 @@ def main():
             raise AssertionError
         # Seed restrictive, already-owned data, including a nonempty directory.
         # The tested script must traverse it and preserve contents and modes.
-        setup = """set -eu
-mkdir -p /var/lib/postgresql/data/base/nested /var/lib/postgresql/data/shared
-printf '16\\n' > /var/lib/postgresql/data/PG_VERSION
-printf 'existing-data-sentinel\\n' > /var/lib/postgresql/data/base/nested/sentinel
-chmod 700 /var/lib/postgresql/data /var/lib/postgresql/data/base /var/lib/postgresql/data/base/nested
-chmod 600 /var/lib/postgresql/data/PG_VERSION /var/lib/postgresql/data/base/nested/sentinel
-chmod 2770 /var/lib/postgresql/data/shared
-chown -R 999:999 /var/lib/postgresql/data
-"""
+        setup = (
+            "set -eu\nmkdir -p "
+            "/var/lib/postgresql/data/base/nested "
+            "/var/lib/postgresql/data/shared\nprintf "
+            "'16\\n' > /var/lib/postgresql/data/PG_VER"
+            "SION\nprintf 'existing-data-sentinel\\n' > "
+            "/var/lib/postgresql/data/base/nested/sen"
+            "tinel\nchmod 700 /var/lib/postgresql/data "
+            "/var/lib/postgresql/data/base "
+            "/var/lib/postgresql/data/base/nested\nchm"
+            "od 600 /var/lib/postgresql/data/PG_VERSI"
+            "ON /var/lib/postgresql/data/base/nested/"
+            "sentinel\nchmod 2770 "
+            "/var/lib/postgresql/data/shared\nchown -R "
+            "999:999 /var/lib/postgresql/data\n"
+        )
         verify = """
 test "$(cat /var/lib/postgresql/data/PG_VERSION)" = 16
 test "$(cat /var/lib/postgresql/data/base/nested/sentinel)" = existing-data-sentinel
@@ -106,7 +113,12 @@ grep -E '^(CapEff|CapBnd|NoNewPrivs|Seccomp):' /proc/self/status
             if not expected in result.stdout:
                 raise AssertionError((name, result.stdout))
         print(
-            f"{name}: exact init succeeded with CHOWN/DAC_OVERRIDE only; contents, ownership and modes preserved",
+            (
+                f"{name}"
+                f": exact init succeeded with "
+                f"CHOWN/DAC_OVERRIDE only; contents, "
+                f"ownership and modes preserved"
+            ),
             flush=True,
         )
 

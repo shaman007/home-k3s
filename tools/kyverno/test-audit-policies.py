@@ -687,7 +687,13 @@ def main():
         output = args.output if args.output else work / "tests"
         counts = write_test_cases(cases, policies, exceptions, output, args.max_cases_per_shard)
         print(
-            f"Prepared {count} exact-match/negative/audit expectations: {json.dumps(counts, sort_keys=True)}",
+            (
+                f"Prepared "
+                f"{count}"
+                f" exact-match/negative/audit "
+                f"expectations: "
+                f"{json.dumps(counts, sort_keys=True)}"
+            ),
             flush=True,
         )
         if not args.output:

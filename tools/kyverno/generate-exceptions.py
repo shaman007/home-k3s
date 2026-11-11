@@ -128,22 +128,64 @@ def identity(entry):
         return direct + " && " + owner(ref["kind"], literal(ref["name"]), ref["uid"])
     if kind == "Deployment":
         label = "object.metadata.?labels.orValue({})"
-        has_hash = f'"pod-template-hash" in {label} && {label}["pod-template-hash"].matches("^[a-z0-9]{{1,10}}$")'
+        has_hash = (
+            f'"pod-template-hash" in '
+            f"{label}"
+            f" && "
+            f"{label}"
+            f'["pod-template-hash"].matches("^[a-z0-9]'
+            f'{{1,10}}$")'
+        )
         rs_name = f'{literal(name + "-")} + {label}["pod-template-hash"]'
-        rs = f'(object.kind == "ReplicaSet" && {has_hash} && object.metadata.name == {rs_name} && {owner("Deployment", literal(name))})'
-        pod = f'(object.kind == "Pod" && {has_hash} && {owner("ReplicaSet", rs_name)} && object.metadata.name.startsWith({rs_name} + "-"))'
+        rs = (
+            f'(object.kind == "ReplicaSet" && '
+            f"{has_hash}"
+            f" && object.metadata.name == "
+            f"{rs_name}"
+            f" && "
+            f"{owner('Deployment', literal(name))}"
+            f")"
+        )
+        pod = (
+            f'(object.kind == "Pod" && '
+            f"{has_hash}"
+            f" && "
+            f"{owner('ReplicaSet', rs_name)}"
+            f" && object.metadata.name.startsWith("
+            f"{rs_name}"
+            f' + "-"))'
+        )
         return f"({direct} || {rs} || {pod})"
     if kind in ("StatefulSet", "DaemonSet"):
         pattern = "^" + re.escape(name) + ("-[0-9]+$" if kind == "StatefulSet" else "-[a-z0-9]+$")
-        pod = f'(object.kind == "Pod" && object.metadata.name.matches({literal(pattern)}) && {owner(kind, literal(name))})'
+        pod = (
+            f'(object.kind == "Pod" && '
+            f"object.metadata.name.matches("
+            f"{literal(pattern)}"
+            f") && "
+            f"{owner(kind, literal(name))}"
+            f")"
+        )
         return f"({direct} || {pod})"
     if kind == "CronJob":
         pattern = "^" + re.escape(name) + "-[0-9]{8,12}$"
-        job = f'(object.kind == "Job" && object.metadata.name.matches({literal(pattern)}) && {owner("CronJob", literal(name))})'
+        job = (
+            f'(object.kind == "Job" && '
+            f"object.metadata.name.matches("
+            f"{literal(pattern)}"
+            f") && "
+            f"{owner('CronJob', literal(name))}"
+            f")"
+        )
         pod = (
-            '(object.kind == "Pod" && object.metadata.?ownerReferences.orValue([]).exists(o, '
-            f'o.kind == "Job" && o.?controller.orValue(false) == true && o.name.matches({literal(pattern)}) '
-            '&& object.metadata.name.startsWith(o.name + "-")))'
+            f'(object.kind == "Pod" && '
+            f"object.metadata.?ownerReferences.orValue"
+            f'([]).exists(o, o.kind == "Job" && '
+            f"o.?controller.orValue(false) == true && "
+            f"o.name.matches("
+            f"{literal(pattern)}"
+            f") && object.metadata.name.startsWith(o.n"
+            f'ame + "-")))'
         )
         return f"({direct} || {job} || {pod})"
     raise ValueError(f"Unsupported workload kind: {kind}")
@@ -151,7 +193,11 @@ def identity(entry):
 
 def compliant(policy):
     if policy == "require-run-as-nonroot":
-        return "c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true"
+        return (
+            "c.?securityContext.?runAsNonRoot.orValue"
+            "(p.spec.?securityContext.?runAsNonRoot.o"
+            "rValue(false)) == true"
+        )
     if policy == "disallow-privilege-escalation":
         return "c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false"
     if policy == "disallow-privileged-containers":
@@ -162,7 +208,12 @@ def compliant(policy):
             'c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == "NET_BIND_SERVICE")'
         )
     if policy == "restrict-seccomp-strict":
-        return 'c.?securityContext.?seccompProfile.?type.orValue(p.spec.?securityContext.?seccompProfile.?type.orValue("")) in ["RuntimeDefault", "Localhost"]'
+        return (
+            "c.?securityContext.?seccompProfile.?type"
+            ".orValue(p.spec.?securityContext.?seccom"
+            'pProfile.?type.orValue("")) in '
+            '["RuntimeDefault", "Localhost"]'
+        )
     raise ValueError(policy)
 
 
@@ -196,7 +247,11 @@ def approved(policy, allowed):
         fields = [f"c.name == {literal(name)}", image_expression(rule["image"])]
         if policy == "require-run-as-nonroot":
             fields.append(
-                "c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0"
+                (
+                    "c.?securityContext.?runAsUser.orValue(p."
+                    "spec.?securityContext.?runAsUser.orValue"
+                    "(0)) == 0"
+                )
             )
         if policy == "require-drop-all-capabilities" and not rule.get("requirePrivileged"):
             if not set(rule) in (
@@ -217,11 +272,25 @@ def approved(policy, allowed):
                 [
                     "c.?securityContext.?privileged.orValue(false) == false",
                     (
-                        f"has(c.securityContext) && has(c.securityContext.allowPrivilegeEscalation) && c.securityContext.allowPrivilegeEscalation == {literal(rule['allowPrivilegeEscalation'])}"
+                        (
+                            f"has(c.securityContext) && "
+                            f"has(c.securityContext.allowPrivilegeEsca"
+                            f"lation) && "
+                            f"c.securityContext.allowPrivilegeEscalati"
+                            f"on == "
+                            f"{literal(rule['allowPrivilegeEscalation'])}"
+                        )
                         if "runAsUser" in rule
                         else "c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false"
                     ),
-                    f"c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue({0 if 'runAsUser' in rule else -1})) == {rule.get('runAsUser', 0)}",
+                    (
+                        f"c.?securityContext.?runAsUser.orValue(p."
+                        f"spec.?securityContext.?runAsUser.orValue"
+                        f"("
+                        f"{(0 if 'runAsUser' in rule else -1)}"
+                        f")) == "
+                        f"{rule.get('runAsUser', 0)}"
+                    ),
                     'c.?securityContext.?capabilities.?drop.orValue([]) == ["ALL"]',
                     f"{actual}.size() == {len(caps)}",
                     f"{actual}.all(cap, cap in {literal(caps)})",
@@ -242,8 +311,16 @@ def approved(policy, allowed):
                 raise AssertionError
             fields.extend(
                 [
-                    f"c.?securityContext.?capabilities.orValue({{}}) == {literal(rule['capabilityDeclaration'])}",
-                    f"c.?securityContext.?seccompProfile.orValue({{}}) == {literal(rule['seccompDeclaration'])}",
+                    (
+                        f"c.?securityContext.?capabilities.orValue"
+                        f"({{}}) == "
+                        f"{literal(rule['capabilityDeclaration'])}"
+                    ),
+                    (
+                        f"c.?securityContext.?seccompProfile.orVal"
+                        f"ue({{}}) == "
+                        f"{literal(rule['seccompDeclaration'])}"
+                    ),
                 ]
             )
         if rule.get("requireHardened"):
@@ -446,9 +523,22 @@ def expression(entry, policy):
     for key, value in sorted(entry["labels"].items()):
         terms.insert(
             0,
-            f"has(p.metadata.labels) && {literal(key)} in p.metadata.labels && p.metadata.labels[{literal(key)}] == {literal(value)}",
+            (
+                f"has(p.metadata.labels) && "
+                f"{literal(key)}"
+                f" in p.metadata.labels && "
+                f"p.metadata.labels["
+                f"{literal(key)}"
+                f"] == "
+                f"{literal(value)}"
+            ),
         )
-    normalized = '(object.kind == "Pod" ? object : object.kind == "CronJob" ? object.spec.jobTemplate.spec.template : object.spec.template)'
+    normalized = (
+        '(object.kind == "Pod" ? object : '
+        'object.kind == "CronJob" ? '
+        "object.spec.jobTemplate.spec.template : "
+        "object.spec.template)"
+    )
     return (
         f"object.metadata.namespace == {literal(entry['namespace'])} &&\n"
         f"{identity(entry)} &&\n"
@@ -506,7 +596,9 @@ def generate(catalog):
                         "evidence": entry["evidence"],
                         "reviewed-on": entry.get("reviewedOn", catalog["reviewedOn"]),
                         "review-trigger": "repository/guard/startup/chart or ownership change",
-                        "image-scope": "exact registry/repository; tags and sha256 digests may change",
+                        "image-scope": (
+                            "exact registry/repository; tags and sha256 digests may change"
+                        ),
                         **cap_properties,
                     },
                     "matchConditions": [

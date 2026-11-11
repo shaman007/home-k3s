@@ -40,7 +40,11 @@ class InternalDomainInventoryTest(unittest.TestCase):
             root = Path(directory)
             (root / "demo").mkdir()
             (root / "demo/config.txt").write_text(
-                "password=fixture-secret-value url=https://grafana.w386.k8s.my.lan/\napi=https://api.k8s.my.lan\n"
+                (
+                    "password=fixture-secret-value "
+                    "url=https://grafana.w386.k8s.my.lan/\napi"
+                    "=https://api.k8s.my.lan\n"
+                )
             )
             (root / "demo/labels.yaml").write_text(
                 "vault.w386.k8s.my.lan/token-policies: example\n"

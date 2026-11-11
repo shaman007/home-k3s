@@ -103,7 +103,14 @@ def main():
             "default_role": config.get("default_role"),
             "roles": roles,
         },
-        "cutover_rule": "Add exact new redirects/origins while retaining old callbacks; switch base/root/admin URLs only after new DNS, certificates and routes work; remove legacy callbacks after login/logout verification.",
+        "cutover_rule": (
+            "Add exact new redirects/origins while "
+            "retaining old callbacks; switch "
+            "base/root/admin URLs only after new DNS, "
+            "certificates and routes work; remove "
+            "legacy callbacks after login/logout "
+            "verification."
+        ),
     }
     args.output.write_text(json.dumps(result, indent=2) + "\n")
     print(
@@ -119,4 +126,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        raise SystemExit("SSO inventory failed; credential and response details suppressed") from None
+        raise SystemExit(
+            "SSO inventory failed; credential and response details suppressed"
+        ) from None

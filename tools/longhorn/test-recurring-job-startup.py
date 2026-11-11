@@ -168,7 +168,12 @@ def main():
                 if not any((path.endswith("/volumes") for method, path in MockAPI.calls)):
                     raise AssertionError
                 print(
-                    f"{task}: UID 1000 / drop ALL / NNP / seccomp; API startup passed; zero volumes selected",
+                    (
+                        f"{task}"
+                        f": UID 1000 / drop ALL / NNP / seccomp; "
+                        f"API startup passed; zero volumes "
+                        f"selected"
+                    ),
                     flush=True,
                 )
         finally:

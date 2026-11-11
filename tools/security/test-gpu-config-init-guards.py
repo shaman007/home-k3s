@@ -9,27 +9,45 @@ import time
 
 IMAGE = "nvcr.io/nvidia/k8s-device-plugin:v0.20.1"
 MOCK = "harbor.andreybondarenko.com/dockerhub/python:3.13-slim"
-SERVER = r"""
-from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
-from urllib.parse import urlparse,parse_qs
-import json,os,time
-label=os.environ['LABEL']
-node={'apiVersion':'v1','kind':'Node','metadata':{'name':'guard-fixture','resourceVersion':'1','labels':{'nvidia.com/device-plugin.config':label}}}
-class H(BaseHTTPRequestHandler):
- def do_GET(self):
-  path=urlparse(self.path);query=parse_qs(path.query)
-  if path.path!='/api/v1/nodes':self.send_error(404);return
-  print('node-read',flush=True)
-  self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers()
-  try:
-   if query.get('watch')==['true']:
-    self.wfile.write((json.dumps({'type':'ADDED','object':node})+'\n').encode());self.wfile.flush()
-    self.wfile.write((json.dumps({'type':'BOOKMARK','object':{'apiVersion':'v1','kind':'Node','metadata':{'resourceVersion':'1','annotations':{'k8s.io/initial-events-end':'true'}}}})+'\n').encode());self.wfile.flush();time.sleep(5)
-   else:self.wfile.write(json.dumps({'apiVersion':'v1','kind':'NodeList','metadata':{'resourceVersion':'1'},'items':[node]}).encode())
-  except (BrokenPipeError,ConnectionResetError):pass
- def log_message(self,*args):pass
-ThreadingHTTPServer(('127.0.0.1',9500),H).serve_forever()
-"""
+SERVER = (
+    "\nfrom http.server import "
+    "BaseHTTPRequestHandler,ThreadingHTTPServ"
+    "er\nfrom urllib.parse import "
+    "urlparse,parse_qs\nimport "
+    "json,os,time\nlabel=os.environ['LABEL']\nn"
+    "ode={'apiVersion':'v1','kind':'Node','me"
+    "tadata':{'name':'guard-fixture','resourc"
+    "eVersion':'1','labels':{'nvidia.com/devi"
+    "ce-plugin.config':label}}}\nclass "
+    "H(BaseHTTPRequestHandler):\n def "
+    "do_GET(self):\n  "
+    "path=urlparse(self.path);query=parse_qs("
+    "path.query)\n  if "
+    "path.path!='/api/v1/nodes':self.send_err"
+    "or(404);return\n  "
+    "print('node-read',flush=True)\n  "
+    "self.send_response(200);self.send_header"
+    "('Content-Type','application/json');self"
+    ".end_headers()\n  try:\n   if "
+    "query.get('watch')==['true']:\n    "
+    "self.wfile.write((json.dumps({'type':'AD"
+    "DED','object':node})+'\\n').encode());sel"
+    "f.wfile.flush()\n    "
+    "self.wfile.write((json.dumps({'type':'BO"
+    "OKMARK','object':{'apiVersion':'v1','kin"
+    "d':'Node','metadata':{'resourceVersion':"
+    "'1','annotations':{'k8s.io/initial-event"
+    "s-end':'true'}}}})+'\\n').encode());self."
+    "wfile.flush();time.sleep(5)\n   "
+    "else:self.wfile.write(json.dumps({'apiVe"
+    "rsion':'v1','kind':'NodeList','metadata'"
+    ":{'resourceVersion':'1'},'items':[node]}"
+    ").encode())\n  except "
+    "(BrokenPipeError,ConnectionResetError):p"
+    "ass\n def log_message(self,*args):pass\nTh"
+    "readingHTTPServer(('127.0.0.1',9500),H)."
+    "serve_forever()\n"
+)
 
 
 def run(*args, check=True):
@@ -207,7 +225,13 @@ def main():
         if not (source / "default").read_text().startswith("version: v1"):
             raise AssertionError
     print(
-        "PASS: UID-1000 one-shot/default/fallback and real node list/watch, zero capabilities, NNP/seccomp with live mode-0777 destination; mode-0755 boundary rejected as expected"
+        (
+            "PASS: UID-1000 one-shot/default/fallback "
+            "and real node list/watch, zero "
+            "capabilities, NNP/seccomp with live "
+            "mode-0777 destination; mode-0755 "
+            "boundary rejected as expected"
+        )
     )
 
 

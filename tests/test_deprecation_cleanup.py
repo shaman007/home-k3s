@@ -33,7 +33,9 @@ class DeprecationCleanupTest(unittest.TestCase):
         source = app["spec"]["source"]
         config = document("tools/ci/validation-config.yaml")
         with tempfile.TemporaryDirectory() as scratch:
-            output = render.render_source(app, source, [source], ROOT, Path(scratch), config["kubernetesVersion"])
+            output = render.render_source(
+                app, source, [source], ROOT, Path(scratch), config["kubernetesVersion"]
+            )
         routes = [d for d in yaml.safe_load_all(output) if d["kind"] == "IngressRoute"]
         self.assertEqual(1, len(routes))
         self.assertEqual("block-external-env-probes", routes[0]["metadata"]["name"])
@@ -58,15 +60,25 @@ class DeprecationCleanupTest(unittest.TestCase):
         self.assertEqual(ip_network("192.168.1.0/24"), trusted)
 
         def blocked(host, path, client):
-            return bool(re.search(host_pattern, host) and re.search(path_pattern, path)
-                        and ip_address(client) not in trusted)
+            return bool(
+                re.search(host_pattern, host)
+                and re.search(path_pattern, path)
+                and ip_address(client) not in trusted
+            )
 
         for path in ["/.env", "/.env.local", "/app/.env", "/app/.env.backup", "/.env/config"]:
             with self.subTest(path=path):
                 self.assertTrue(blocked("plex.andreybondarenko.com", path, "203.0.113.1"))
                 self.assertTrue(blocked("example.com", path, "2001:db8::1"))
                 self.assertFalse(blocked("example.com", path, "192.168.1.42"))
-        for path in ["/", "/identity", "/app/environment", "/app/file.env", "/.environment", "/.envoy"]:
+        for path in [
+            "/",
+            "/identity",
+            "/app/environment",
+            "/app/file.env",
+            "/.environment",
+            "/.envoy",
+        ]:
             with self.subTest(path=path):
                 self.assertFalse(blocked("example.com", path, "203.0.113.1"))
 
@@ -76,21 +88,37 @@ class DeprecationCleanupTest(unittest.TestCase):
         self.assertNotIn("externalIPs", service)
         self.assertEqual({"app": "plex"}, service["selector"])
         ports = {p["name"]: (p["port"], p.get("protocol", "TCP")) for p in service["ports"]}
-        self.assertEqual({"plex": (32400, "TCP"), "dlna": (1900, "UDP"),
-                          "avahi": (5353, "UDP"), "companion": (8324, "TCP"),
-                          "gdm1": (32410, "UDP"), "gdm2": (32412, "UDP"),
-                          "gdm3": (32413, "UDP"), "gdm4": (32414, "UDP"),
-                          "dlna2": (32469, "TCP")}, ports)
-        self.assertEqual(32355, next(p["nodePort"] for p in service["ports"] if p["name"] == "plex"))
+        self.assertEqual(
+            {
+                "plex": (32400, "TCP"),
+                "dlna": (1900, "UDP"),
+                "avahi": (5353, "UDP"),
+                "companion": (8324, "TCP"),
+                "gdm1": (32410, "UDP"),
+                "gdm2": (32412, "UDP"),
+                "gdm3": (32413, "UDP"),
+                "gdm4": (32414, "UDP"),
+                "dlna2": (32469, "TCP"),
+            },
+            ports,
+        )
+        self.assertEqual(
+            32355, next(p["nodePort"] for p in service["ports"] if p["name"] == "plex")
+        )
         deployment = document("plex/deployment-plex.yaml")
         container = deployment["spec"]["template"]["spec"]["containers"][0]
         advertise = next(e["value"] for e in container["env"] if e["name"] == "ADVERTISE_IP")
-        self.assertEqual({"http://192.168.30.209:32355/", "https://plex.andreybondarenko.com:443/"},
-                         set(advertise.split(",")))
+        self.assertEqual(
+            {"http://192.168.30.209:32355/", "https://plex.andreybondarenko.com:443/"},
+            set(advertise.split(",")),
+        )
         ingress = document("plex/ingress-andreybondarenko-ingress.yaml")
         rule = ingress["spec"]["rules"][0]
         self.assertEqual("plex.andreybondarenko.com", rule["host"])
-        self.assertEqual({"name": "plex", "port": {"number": 32400}}, rule["http"]["paths"][0]["backend"]["service"])
+        self.assertEqual(
+            {"name": "plex", "port": {"number": 32400}},
+            rule["http"]["paths"][0]["backend"]["service"],
+        )
 
     def test_backup_address_is_requested_from_the_existing_metallb_pool(self):
         service = document("backup-rsync/service-backup-rsync.yaml")
@@ -99,14 +127,21 @@ class DeprecationCleanupTest(unittest.TestCase):
         self.assertEqual("metallb-l2", service["spec"]["loadBalancerClass"])
         self.assertNotIn("loadBalancerIP", service["spec"])
         pool = document("metallb/ip-address-pool-public-ingress.yaml")
-        self.assertTrue(any(ip_address(address) in ip_network(cidr) for cidr in pool["spec"]["addresses"]))
+        self.assertTrue(
+            any(ip_address(address) in ip_network(cidr) for cidr in pool["spec"]["addresses"])
+        )
 
     def test_runtime_contract_rejects_deprecated_service_fields(self):
         for field, value in [("externalIPs", ["192.0.2.1"]), ("loadBalancerIP", "192.0.2.1")]:
             with self.subTest(field=field):
-                errors = contracts.check_deprecated_service_fields(Path("service.yaml"), 1,
-                    {"kind": "Service", "spec": {field: value}})
+                errors = contracts.check_deprecated_service_fields(
+                    Path("service.yaml"), 1, {"kind": "Service", "spec": {field: value}}
+                )
                 self.assertEqual(1, len(errors))
                 self.assertIn("spec." + field, errors[0])
-        self.assertEqual([], contracts.check_deprecated_service_fields(Path("service.yaml"), 1,
-            {"kind": "Service", "spec": {"type": "NodePort"}}))
+        self.assertEqual(
+            [],
+            contracts.check_deprecated_service_fields(
+                Path("service.yaml"), 1, {"kind": "Service", "spec": {"type": "NodePort"}}
+            ),
+        )
