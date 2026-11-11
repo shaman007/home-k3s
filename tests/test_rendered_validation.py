@@ -7,9 +7,11 @@ import sys
 import unittest
 import subprocess
 import stat
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import hashlib
 import json
+import secrets
+from types import SimpleNamespace
 
 import yaml
 
@@ -540,3 +542,133 @@ class RenderValidationTest(unittest.TestCase):
         for path in hostname_patches:
             self.assertNotIn(path, files)
         self.assertIn(ROOT / "metrics/cluster-role-platform-health-report.yaml", files)
+
+
+class ManifestValidationPipelineTest(unittest.TestCase):
+    """Cover complete inventory, transport and validation failure paths."""
+
+    def test_input_inventory_requires_every_application_and_keeps_raw_resources(self):
+        """Reject partial renders while expanding Lists and excluding Kustomizations."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            applications = root / "argocd"
+            applications.mkdir()
+            (applications / "test.yaml").write_text(
+                "kind: Application\nmetadata:\n  name: test\n"
+            )
+            rendered = root / "rendered"
+            rendered.mkdir()
+            (rendered / "inventory.json").write_text("{}")
+            with patch.object(validate, "ROOT", root):
+                with self.assertRaisesRegex(ValueError, "Full application render required"):
+                    validate.collect_inputs(rendered)
+            (rendered / "inventory.json").write_text('{"test": {}}')
+            (rendered / "test.yaml").write_text(
+                "kind: List\nitems:\n- apiVersion: v1\n  kind: ConfigMap\n"
+            )
+            raw = root / "raw.yaml"
+            raw.write_text(
+                "apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\n"
+                "---\napiVersion: v1\nkind: Secret\n"
+            )
+            discovery = SimpleNamespace(
+                tracked_yaml_files=lambda _root: [raw],
+                looks_like_k8s_manifest=lambda _path: True,
+            )
+            with (
+                patch.object(validate, "ROOT", root),
+                patch.object(validate.importlib.util, "spec_from_file_location") as spec,
+                patch.object(validate.importlib.util, "module_from_spec", return_value=discovery),
+            ):
+                spec.return_value.loader.exec_module = Mock()
+                inputs = validate.collect_inputs(rendered)
+            self.assertEqual(
+                [("rendered/test", "ConfigMap"), ("raw.yaml", "Secret")],
+                [(origin, document["kind"]) for origin, document in inputs],
+            )
+
+    def test_main_preserves_custom_and_builtin_failure_gates(self):
+        """Return failure for either validation path while retaining private file handling."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config_dir = root / "tools/ci"
+            config_dir.mkdir(parents=True)
+            (config_dir / "validation-config.yaml").write_text("kubernetesVersion: 1.37.1\n")
+            marker = secrets.token_hex(16)
+            secret = {
+                "apiVersion": "v1", "kind": "Secret",
+                "data": {"token": marker},
+            }
+            custom = {"apiVersion": "unknown/v1", "kind": "Thing"}
+            for include_custom, builtin_status in ((False, 0), (True, 0), (False, 1), (True, 1)):
+                inputs = [("fixture", secret)]
+                if include_custom:
+                    inputs.append(("fixture", custom))
+
+                def kubeconform(argv, status=builtin_status, **options):
+                    """Inspect the real serialized input before its private directory is removed."""
+                    path = Path(argv[-1])
+                    self.assertEqual([secret], list(yaml.safe_load_all(path.read_text())))
+                    self.assertEqual(0o600, stat.S_IMODE(path.stat().st_mode))
+                    self.assertEqual(0o700, stat.S_IMODE(path.parent.stat().st_mode))
+                    self.assertIn("-strict", argv)
+                    self.assertIn("1.37.1", argv)
+                    self.assertEqual(options["timeout"], 300)
+                    self.assertFalse(options["check"])
+                    return subprocess.CompletedProcess(argv, status, '{"summary": {}}')
+
+                with (
+                    self.subTest(custom=include_custom, builtin_status=builtin_status),
+                    patch.object(validate, "ROOT", root),
+                    patch.object(validate, "collect_inputs", return_value=inputs),
+                    patch.object(validate.subprocess, "run", side_effect=kubeconform),
+                    patch.object(sys, "argv", ["validate", "--rendered", str(root)]),
+                    patch("builtins.print") as output,
+                ):
+                    self.assertEqual(int(include_custom or builtin_status != 0), validate.main())
+                    self.assertNotIn(marker, str(output.call_args_list))
+
+    def test_invalid_crd_stops_before_builtin_validation(self):
+        """Do not skip invalid CRDs or continue with untrusted custom schemas."""
+        with patch.object(validate.subprocess, "run") as run, patch("builtins.print"):
+            self.assertEqual(
+                1,
+                validate.validate_resources(
+                    [("fixture", {"kind": "CustomResourceDefinition"})], {}
+                ),
+            )
+        run.assert_not_called()
+
+    def test_builtin_parse_failure_suppresses_raw_output(self):
+        """Fail closed without including possibly private kubeconform output in exceptions."""
+        with (
+            patch.object(
+                validate.subprocess, "run",
+                return_value=subprocess.CompletedProcess([], 1, "sensitive-fixture-sentinel"),
+            ),
+            self.assertRaisesRegex(RuntimeError, "without a JSON report") as error,
+        ):
+            validate.validate_builtin_resources([], {"kubernetesVersion": "1.37.1"})
+        self.assertNotIn("sensitive-fixture-sentinel", str(error.exception))
+        self.assertTrue(error.exception.__suppress_context__)
+
+    def test_crd_fetch_requires_https_before_requesting_transport(self):
+        """Apply the shared HTTPS-only boundary to additional CRD downloads."""
+        config = {"additionalCRDs": [{"version": "1", "url": "http://fixture.invalid/{version}"}]}
+        with patch.object(validate.subprocess, "run") as run:
+            with self.assertRaises(ValueError):
+                validate.collect_crds([], config)
+        run.assert_not_called()
+        expected = {"kind": "CustomResourceDefinition"}
+        config["additionalCRDs"][0]["url"] = "https://fixture.invalid/{version}"
+        response = subprocess.CompletedProcess([], 0, yaml.safe_dump(expected))
+        with patch.object(validate.subprocess, "run", return_value=response) as run:
+            self.assertEqual([expected], validate.collect_crds([], config))
+        argv = run.call_args.args[0]
+        self.assertEqual(argv[0], "/usr/bin/curl")
+        self.assertEqual(argv[argv.index("--proto") + 1], "=https")
+        self.assertEqual(argv[argv.index("--proto-redir") + 1], "=https")
+        self.assertEqual(argv[argv.index("--max-time") + 1], "120")
+        self.assertEqual(argv[-1], "https://fixture.invalid/1")
+        self.assertEqual(run.call_args.kwargs["timeout"], 130)
+        self.assertTrue(run.call_args.kwargs["check"])

@@ -6,8 +6,10 @@ import copy
 import gzip
 import hashlib
 import io
+import os
 from pathlib import Path
 import tarfile
+import tempfile
 import yaml
 
 root = Path(__file__).resolve().parent
@@ -136,8 +138,9 @@ container["args"][0] = container["args"][0].replace(
  cosign verify --key "$COSIGN_PUBLIC_KEY" "${IMAGE%:*}@$digest"
  printf '%s\\n' "$digest"''',
 )
-output = Path("/tmp") / (name + ".yaml")
-output.write_text(yaml.safe_dump_all([config, job], sort_keys=False, explicit_start=True))
+descriptor, output = tempfile.mkstemp(prefix=name + "-", suffix=".yaml")
+with os.fdopen(descriptor, "w") as stream:
+    yaml.safe_dump_all([config, job], stream, sort_keys=False, explicit_start=True)
 print("Build manifest:", output)
 print("Source archive SHA256:", SOURCE_HASH)
 print("Target image:", IMAGE)

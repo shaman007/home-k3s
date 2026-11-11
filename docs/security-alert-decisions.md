@@ -916,3 +916,58 @@ Python modules pass the current naming, unused-variable/argument/import,
 missing-docstring, line-length and statement checks, and Ruff E2 spacing is
 clean. The overall goal remains active: the retained findings still require
 source fixes, refreshed analyses, or individually evidenced decisions.
+
+
+### CI validation and private build outputs (2026-11-11)
+
+Split the SARIF adapter and rendered-manifest validator into focused functions,
+removing six excessive-locals/branches/statements diagnostics without disabling
+checks. Both CI modules and the webhook build generator pass full Pylint.
+Five hundred generated mixed-tool, multi-batch SARIF cases produce exactly the
+previous adapter's output and leave their inputs unchanged.
+
+Prospector's retained report includes `invalid syntax ... (syntax-error)` under
+its aggregate `Prospector_pylint` rule. The adapter now recognizes that format,
+including rule-index-only reports, and rejects it before creating upload output.
+It also rejects explicit failed SARIF invocations for every scanner, including
+empty security reports. Other Prospector diagnostics remain uploadable; findings
+are not filtered. No Prospector refresh has been claimed or uploaded here.
+
+Additional CRD downloads validate their HTTPS endpoint and restrict curl's initial
+and redirect protocols to HTTPS. The explicit system curl path removes implicit
+PATH resolution. The original 15-second connect, 120-second total-transfer and
+130-second process limits remain intact. Complete application inventory, raw
+manifest discovery, CRD failure gates, custom/built-in failure exit status,
+private temporary files and value-free diagnostics have regression coverage.
+
+The webhook build generator now allocates a new exclusive 0600 temporary file
+instead of overwriting a predictable /tmp path. Repeated generation preserves
+prior review files and produces identical source archives and Job identity.
+No build Job was submitted, image built or pushed, or live resources changed.
+
+The user's linked Validate Kubernetes job 130570081385 in run 43034568266 checked
+out 5bd93c1d successfully, then failed installing ripgrep because the runner could
+not resolve Ubuntu's package mirror. The requested retry, job 130573860496,
+failed with the identical mirror DNS error and exit 100. No further retry of the
+unchanged commit was requested. The prepared workflow instead downloads official
+ripgrep 15.2.0 from its GitHub
+release, verifies the pinned SHA-256 before extracting the exact binary, and
+cleans the temporary archive. The downloaded binary's digest and PCRE2 support
+were verified locally, and the complete repository suite passes using that binary.
+
+Validation: 426 unit tests passed, 21 skipped; the opt-in live runtime checks
+remain unexecuted. Workflow actionlint/ShellCheck, Ruff E2 spacing and diff checks
+pass. Local Bandit is 159 findings with zero analysis errors, down from 161 at
+this batch's start. GitHub reconciliation still requires publication and scans;
+no commits or pushes were performed by the agent.
+
+
+A subsequent live API refresh after the user published probe hardening and the
+inventory cleanup confirms **542 open GitHub findings**: Bandit 164, modern
+Pylint 179, Opengrep 26, Prospector 169 and PowerShell 4. The current scanner
+instances reference 5bd93c1d; 173 historical Prospector/PowerShell results remain
+at 2ff670f9b304. This is a net reduction of 44 from the preceding 586 snapshot,
+including 54 fewer Bandit reports. The new CI/build fixes above remain local and
+are not included in that remote reduction. All 132 current Python modules still
+pass naming, unused-value/import, missing-docstring, 100-character line-length
+and multiple-statement checks; Ruff E2 spacing remains clean.

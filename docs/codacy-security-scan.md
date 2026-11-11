@@ -68,8 +68,12 @@ must still be verified after a new upload. The uploader's behavior is defined in
 Manual dispatch can select one supported historical linter with `legacy_tool`;
 `none` retains the three security scanners plus Python 3 Pylint. Reports use their original
 category so genuine rescans can supersede stale findings. These scans fail before
-upload if either Pylint variant reports a parser error, preventing an incomplete
-analysis from replacing historical results. Python 3 Pylint and Remark have
+upload if either Pylint variant or Prospector reports a Python parser error,
+preventing an incomplete analysis from replacing historical results. Prospector
+uses a shared `Prospector_pylint` rule; its `(syntax-error)` diagnostic suffix is
+checked as well as the dedicated Pylint rule IDs. Explicit failed SARIF
+invocations are rejected for every scanner, including security tools, even when
+the report contains no findings. Python 3 Pylint and Remark have
 completed genuine uploads and reconciled historical findings. Other targeted
 linters still need verification; no empty reports or bulk dismissals substitute
 for a scan.

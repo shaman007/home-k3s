@@ -6,13 +6,15 @@ import json
 from pathlib import Path
 
 
-def reject_incomplete_scan(runs):
+def reject_incomplete_scan(runs, reject_parser_errors):
     """Reject failed invocations and Python parse failures without echoing source."""
     parser_rules = {"PyLint_E0001", "PyLintPython3_E0001"}
     for run in runs:
         for invocation in run.get("invocations", []):
             if invocation.get("executionSuccessful") is False:
                 raise ValueError("Scanner execution failed; refusing an incomplete scan.")
+        if not reject_parser_errors:
+            continue
         rules = run["tool"]["driver"].get("rules", [])
         for result in run.get("results", []):
             rule_id = result.get("ruleId")
@@ -30,6 +32,61 @@ def reject_incomplete_scan(runs):
                     "Python linter reported parser errors; "
                     "refusing to replace historical results with an incomplete scan."
                 )
+
+
+def merge_rules(target_rules, rules):
+    """Merge compatible descriptors and map batch-local rule indices."""
+    rule_map = {}
+    for index, rule in enumerate(rules):
+        matches = [i for i, existing in enumerate(target_rules) if existing["id"] == rule["id"]]
+        if matches:
+            target = matches[0]
+            if target_rules[target] == {"id": rule["id"]}:
+                target_rules[target] = rule
+            elif rule not in ({"id": rule["id"]}, target_rules[target]):
+                raise ValueError("Conflicting Codacy rule definitions")
+        else:
+            target = len(target_rules)
+            target_rules.append(rule)
+        rule_map[index] = target
+    return rule_map
+
+
+def prepare_result(result, target_rules, rule_map, artifact_range):
+    """Preserve one finding while normalizing rule, fingerprint and artifact references."""
+    artifact_count, offset = artifact_range
+    # Codacy puts its issue hash in GitHub's source-line hash field.
+    # Let upload-sarif calculate that field from the checkout instead;
+    # retain the scanner's value as provenance, not a matching key.
+    partial = result.get("partialFingerprints", {})
+    if "primaryLocationLineHash" in partial:
+        original_hash = partial["primaryLocationLineHash"]
+        properties = result.setdefault("properties", {})
+        provenance_key = "codacy.primaryLocationLineHash"
+        if provenance_key in properties and properties[provenance_key] != original_hash:
+            raise ValueError("Conflicting Codacy fingerprint provenance")
+        properties[provenance_key] = original_hash
+        del partial["primaryLocationLineHash"]
+    # Codacy may emit -1 when a pattern has no description, and
+    # non-security results can use indices relative to their own list.
+    # The explicit ruleId is authoritative in both cases.
+    if "ruleId" in result:
+        rule_id = result["ruleId"]
+        matches = [i for i, rule in enumerate(target_rules) if rule["id"] == rule_id]
+        if not matches:
+            target_rules.append({"id": rule_id})
+            matches = [len(target_rules) - 1]
+        result["ruleIndex"] = matches[0]
+    elif "ruleIndex" in result:
+        if result["ruleIndex"] not in rule_map:
+            raise ValueError("Invalid Codacy rule index without a ruleId")
+        result["ruleIndex"] = rule_map[result["ruleIndex"]]
+    for location in result.get("locations", []):
+        artifact = location.get("physicalLocation", {}).get("artifactLocation", {})
+        if "index" in artifact:
+            if not 0 <= artifact["index"] < artifact_count:
+                raise ValueError("Invalid Codacy artifact index")
+            artifact["index"] += offset
 
 
 def prepare(report, reject_parser_errors=False):
@@ -58,65 +115,16 @@ def prepare(report, reject_parser_errors=False):
             }
         merged = groups[key]
         target_rules = merged["tool"]["driver"]["rules"]
-        rule_map = {}
-        for index, rule in enumerate(rules):
-            matches = [i for i, existing in enumerate(target_rules) if existing["id"] == rule["id"]]
-            if matches:
-                target = matches[0]
-                if target_rules[target] == {"id": rule["id"]}:
-                    target_rules[target] = rule
-                elif rule != {"id": rule["id"]} and target_rules[target] != rule:
-                    raise ValueError("Conflicting Codacy rule definitions")
-            else:
-                target = len(target_rules)
-                target_rules.append(rule)
-            rule_map[index] = target
+        rule_map = merge_rules(target_rules, rules)
         artifacts = run.get("artifacts", [])
         offset = len(merged["artifacts"])
         for result in run.get("results", []):
-            # Codacy puts its issue hash in GitHub's source-line hash field.
-            # Let upload-sarif calculate that field from the checkout instead;
-            # retain the scanner's value as provenance, not a matching key.
-            partial = result.get("partialFingerprints", {})
-            if "primaryLocationLineHash" in partial:
-                original_hash = partial["primaryLocationLineHash"]
-                properties = result.setdefault("properties", {})
-                provenance_key = "codacy.primaryLocationLineHash"
-                if provenance_key in properties and properties[provenance_key] != original_hash:
-                    raise ValueError("Conflicting Codacy fingerprint provenance")
-                properties[provenance_key] = original_hash
-                del partial["primaryLocationLineHash"]
-            # Codacy may emit -1 when a pattern has no description, and
-            # non-security results can use indices relative to their own list.
-            # The explicit ruleId is authoritative in both cases.
-            if "ruleId" in result:
-                rule_id = result["ruleId"]
-                matches = [i for i, rule in enumerate(target_rules) if rule["id"] == rule_id]
-                if not matches:
-                    target_rules.append({"id": rule_id})
-                    matches = [len(target_rules) - 1]
-                result["ruleIndex"] = matches[0]
-            elif "ruleIndex" in result:
-                if result["ruleIndex"] not in rule_map:
-                    raise ValueError("Invalid Codacy rule index without a ruleId")
-                result["ruleIndex"] = rule_map[result["ruleIndex"]]
-            for location in result.get("locations", []):
-                artifact = location.get("physicalLocation", {}).get("artifactLocation", {})
-                if "index" in artifact:
-                    if not 0 <= artifact["index"] < len(artifacts):
-                        raise ValueError("Invalid Codacy artifact index")
-                    artifact["index"] += offset
+            prepare_result(result, target_rules, rule_map, (len(artifacts), offset))
             merged["results"].append(result)
         merged["artifacts"].extend(artifacts)
         merged["invocations"].extend(run.get("invocations", []))
     report["runs"] = list(groups.values())
-    # An explicit scanner execution failure is unsafe for every tool, even if
-    # parser-error rejection was not requested for this analysis.
-    for run in report["runs"]:
-        if any(i.get("executionSuccessful") is False for i in run["invocations"]):
-            raise ValueError("Scanner execution failed; refusing an incomplete scan.")
-    if reject_parser_errors:
-        reject_incomplete_scan(report["runs"])
+    reject_incomplete_scan(report["runs"], reject_parser_errors)
     return report
 
 

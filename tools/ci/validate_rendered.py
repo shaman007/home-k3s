@@ -19,6 +19,7 @@ import jsonschema
 import regex
 import yaml
 from ci_yaml import load, load_all
+from http_download import validate_https_url
 
 ROOT = Path(__file__).resolve().parents[2]
 BUILTIN_GROUPS = {
@@ -177,14 +178,10 @@ def additional_crd_url(source):
     return source["url"].format(version=str(version).removeprefix("v"))
 
 
-def main():
-    """Validate rendered resources against built-in and served custom schemas."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rendered", type=Path, required=True)
-    args = parser.parse_args()
-    config = load((ROOT / "tools/ci/validation-config.yaml").read_text())
+def collect_inputs(rendered):
+    """Require a full application inventory and include discovered raw manifests."""
     inputs = []
-    inventory = json.loads((args.rendered / "inventory.json").read_text())
+    inventory = json.loads((rendered / "inventory.json").read_text())
     expected = []
     for file in (ROOT / "argocd").glob("*.yaml"):
         app = load(file.read_text())
@@ -195,7 +192,7 @@ def main():
     for name in inventory:
         inputs.extend(
             (f"rendered/{name}", doc)
-            for doc in documents((args.rendered / (name + ".yaml")).read_text())
+            for doc in documents((rendered / (name + ".yaml")).read_text())
         )
     spec = importlib.util.spec_from_file_location(
         "discovery", ROOT / "tools/ci/list_k8s_manifest_files.py"
@@ -212,28 +209,34 @@ def main():
                 ):
                     continue
                 inputs.append((str(path.relative_to(ROOT)), doc))
+    return inputs
+
+
+def collect_crds(inputs, config):
+    """Combine rendered CRDs with release-pinned schemas over HTTPS-only transport."""
     crds = [doc for _, doc in inputs if doc.get("kind") == "CustomResourceDefinition"]
     for source in config.get("additionalCRDs", []):
         url = additional_crd_url(source)
+        validate_https_url(url)
+        # Keep curl's whole-transfer deadline as well as the process timeout.
+        # Restrict both initial and redirected requests, including relative redirects.
         result = subprocess.run(
-            ["curl", "-fsSL", "--connect-timeout", "15", "--max-time", "120", url],
+            [
+                "/usr/bin/curl", "-fsSL", "--proto", "=https", "--proto-redir", "=https",
+                "--connect-timeout", "15", "--max-time", "120", url,
+            ],
             capture_output=True,
             text=True,
             timeout=130,
             check=True,
         )
         crds.extend(documents(result.stdout))
+    return crds
+
+
+def classify_resources(inputs, schemas):
+    """Validate custom resources and retain every built-in resource for kubeconform."""
     errors = []
-    for crd in crds:
-        errors.extend(
-            f"CRD/{crd.get('metadata', {}).get('name', '<unnamed>')}: {error}"
-            for error in crd_errors(crd)
-        )
-    if errors:
-        for error in errors:
-            print(error)
-        return 1
-    schemas = collect_schemas(crds)
     standard, custom_count = [], 0
     for origin, doc in inputs:
         api_version = doc.get("apiVersion", "")
@@ -251,8 +254,11 @@ def main():
                         f"{doc.get('metadata', {}).get('name', '<unnamed>')}: {error}"
                     )
                 )
-    for error in errors:
-        print(error)
+    return standard, custom_count, errors
+
+
+def validate_builtin_resources(standard, config):
+    """Validate built-ins in an owner-only temporary file without printing values."""
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "standard.yaml"
         path.write_text(yaml.safe_dump_all(standard, sort_keys=False))
@@ -286,13 +292,42 @@ def main():
                     resource.get("name"),
                     resource.get("status"),
                 )
+    return result.returncode
+
+
+def validate_resources(inputs, config):
+    """Reject invalid CRDs before checking all custom and built-in resources."""
+    crds = collect_crds(inputs, config)
+    errors = [
+        f"CRD/{crd.get('metadata', {}).get('name', '<unnamed>')}: {error}"
+        for crd in crds
+        for error in crd_errors(crd)
+    ]
+    if errors:
+        for error in errors:
+            print(error)
+        return 1
+    schemas = collect_schemas(crds)
+    standard, custom_count, errors = classify_resources(inputs, schemas)
+    for error in errors:
+        print(error)
+    builtin_status = validate_builtin_resources(standard, config)
     print(
         (
             f"Custom resources: {custom_count} checked against {len(schemas)}"
             f" served CRD schemas; {len(errors)} errors"
         )
     )
-    return int(bool(errors) or result.returncode != 0)
+    return int(bool(errors) or builtin_status != 0)
+
+
+def main():
+    """Validate rendered resources against built-in and served custom schemas."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rendered", type=Path, required=True)
+    args = parser.parse_args()
+    config = load((ROOT / "tools/ci/validation-config.yaml").read_text())
+    return validate_resources(collect_inputs(args.rendered), config)
 
 
 if __name__ == "__main__":

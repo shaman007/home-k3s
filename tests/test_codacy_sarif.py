@@ -92,8 +92,10 @@ class CodacySarifTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "input.sarif"
             output = Path(directory) / "prepared.sarif"
-            run = batch("PyLintPython3_E0001", "a.py")
-            run["results"][0]["message"]["text"] = "sensitive-source-sentinel"
+            run = batch("Prospector_pylint", "a.py")
+            run["results"][0]["message"]["text"] = (
+                "sensitive-source-sentinel (syntax-error)"
+            )
             source.write_text(json.dumps({"runs": [run]}))
             result = subprocess.run(
                 [
@@ -112,6 +114,45 @@ class CodacySarifTest(unittest.TestCase):
             self.assertIn("incomplete scan", result.stderr)
             self.assertNotIn("Traceback", result.stderr)
             self.assertNotIn("sensitive-source-sentinel", result.stdout + result.stderr)
+
+    def test_prospector_parse_failure_blocks_all_batches(self):
+        """Recognize aggregate Prospector syntax errors without rejecting other findings."""
+        for indexed in (False, True):
+            for field in ("text", "markdown"):
+                run = batch("Prospector_pylint", "a.py")
+                run["results"][0]["message"] = {
+                    field: "invalid syntax (<unknown>, line 110) (syntax-error)\n"
+                }
+                if indexed:
+                    del run["results"][0]["ruleId"]
+                report = {"runs": [batch("Prospector_pep8", "b.py"), run]}
+                original = copy.deepcopy(report)
+                with self.subTest(indexed=indexed, field=field):
+                    with self.assertRaisesRegex(ValueError, "incomplete scan"):
+                        sarif.prepare(report, reject_parser_errors=True)
+                    self.assertEqual(report, original)
+        for rule, message in [
+            ("Prospector_pylint", "Too many local variables (16/15) (too-many-locals)"),
+            ("Prospector_pylint", "Source contains (syntax-error) text (line-too-long)"),
+            ("Prospector_pep8", "example text (syntax-error)"),
+        ]:
+            run = batch(rule, "a.py")
+            run["results"][0]["message"] = {"text": message}
+            report = {"runs": [run]}
+            self.assertEqual(sarif.prepare(report, reject_parser_errors=True), report)
+
+    def test_explicit_execution_failure_blocks_even_empty_security_scan(self):
+        """Never replace historical results with a scanner-declared failed invocation."""
+        for reject_parser_errors in (False, True):
+            run = batch("Bandit_B603", "a.py")
+            run["results"] = []
+            run["invocations"] = [
+                {"executionSuccessful": True},
+                {"executionSuccessful": False},
+            ]
+            with self.subTest(reject_parser_errors=reject_parser_errors):
+                with self.assertRaisesRegex(ValueError, "execution failed"):
+                    sarif.prepare({"runs": [run]}, reject_parser_errors=reject_parser_errors)
 
     def test_five_batches_preserve_findings_and_remap_local_indices(self):
         """Verify five batches preserve findings and remap local indices."""
