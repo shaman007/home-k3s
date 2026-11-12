@@ -21,7 +21,10 @@ data:
     enabled = true
     published = false
     [ssu2]
-    enabled = false
+    enabled = true
+    published = false
+    firewalled6 = true
+    port = 12345
     [http]
     enabled = false
     [httpproxy]

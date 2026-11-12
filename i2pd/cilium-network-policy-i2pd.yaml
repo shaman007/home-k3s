@@ -36,7 +36,7 @@ spec:
             - port: "4447"
               protocol: TCP
   egress:
-    # NTCP2 peers and HTTPS reseeds. No IPv6 LAN, ULA or link-local destinations.
+    # NTCP2/SSU2 peers and HTTPS reseeds; no IPv6 LAN, ULA or link-local egress.
     - toCIDRSet:
         - cidr: "2000::/3"
           except: ["2a02:e98:c0:181e::/64"]
@@ -45,6 +45,9 @@ spec:
             - port: "1"
               endPort: 65535
               protocol: TCP
+            - port: "1"
+              endPort: 65535
+              protocol: UDP
     - toCIDR: ["2606:4700:4700::1111/128", "2606:4700:4700::1001/128"]
       toPorts:
         - ports:

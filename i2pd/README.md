@@ -1,8 +1,8 @@
 # Experimental IPv6 I2P client proxy
 
 Deployed and runtime-tested on 2026-11-12. The Argo application stays manual.
-The final Service/policy fixes are local and live; publish them before any Argo
-sync. The published initial version does not contain the working configuration.
+Keep the repository and live configuration aligned before manual Argo sync;
+experiment changes need explicit commit approval and owner publication.
 Upstream image is pinned by manifest digest, resolved with `skopeo inspect`.
 
 - HTTP: `http://[2a02:e98:c0:181e::214]:4444`
@@ -70,11 +70,14 @@ explicit Cloudflare IPv6 DNS resolvers, with no cluster search list. Resolving
 an A record over IPv6 is allowed and does not constitute IPv4 traffic. Actual
 IPv4 connection attempts, including reseed fallback, must be dropped.
 
-Only outbound NTCP2 TCP is enabled. SSU2 is disabled, NTCP2 publication is
-turned off, and no inbound transport port is exposed. Public IPv6 TCP is allowed
-for variable peer ports and HTTPS reseeding, excluding the local Infrastructure
-/64. Only the named resolvers have UDP/53 allowed. Verified reseeds require
-IPv6-capable upstreams; an IPv4-only upstream fails closed.
+NTCP2 TCP and SSU2 UDP are enabled over IPv6 only. Both transports are
+unpublished; SSU2 uses `firewalled6=true` and binds the Pod IPv6 on UDP/12345.
+No inbound transport Service, NodePort or WAN opening is created. Public IPv6
+TCP/UDP egress permits variable peer ports, excluding the local Infrastructure
+/64. Unsolicited UDP ingress is not allowed: SSU2 responses use stateful return
+traffic. The explicit IPv4 and node-identity denies remain unchanged and cover
+UDP as well as TCP. DNS still uses the two named IPv6 resolvers. Verified reseeds
+require IPv6-capable upstreams; an IPv4-only upstream fails closed.
 
 There is no clearnet exit service, configured server tunnel or upstream outproxy.
 HTTP/SOCKS serve I2P destinations only. `notransit=true`, `share=0` and
@@ -179,3 +182,42 @@ scale-down or network/router change needs its own applicable authorization.
 - Argo reports Healthy/OutOfSync: resources were created directly under explicit
   user authorization and the final Service/policy corrections are unpublished.
   Do not sync the old published manifests over this working deployment.
+
+## IPv6 SSU2 experiment — 2026-11-12
+
+SSU2 is now enabled and unpublished, alongside NTCP2. No IPv4, outproxy,
+server-tunnel, transit, floodfill, Service or router-firewall relaxation was made.
+The only network-policy allowance added is UDP ports 1–65535 to public IPv6
+`2000::/3`, excluding our Infrastructure /64. SSU2 listens only on the exact Pod
+IPv6 UDP/12345. Stateful replies were observed from multiple IPv6 peers in Hubble;
+there is no UDP Service or unsolicited UDP ingress allowance.
+
+Forced IPv4 TCP to public and node destinations and IPv4 UDP (DNS and an
+arbitrary SSU2-style port) were dropped by Cilium. Incoming IPv4 TCP to both
+proxy ports and IPv4 UDP/12345 from the hosting and another node were also
+explicitly denied. `/proc/net/tcp` and `/proc/net/udp` had no IPv4 sockets.
+Endpoint policy enforcement was `both`, policy valid and pod Ready.
+Clearnet HTTP still returned 502 and SOCKS rejected a literal clearnet IPv4.
+Live ConfigMap/policy match local files; Service, ingress and deny rules match
+the pre-experiment snapshot. Configuration retains `notransit=true`, `share=0`,
+`floodfill=false`, no outproxy and an empty server-tunnel file.
+
+Four HTTP destinations were probed concurrently with the same client/interface,
+proxy and 30-second complete-transfer deadline. The first post-restart round
+included a timeout for reg.i2p; the second round started about three minutes
+after restart, after observable IPv6 SSU2 peer exchange:
+
+| Destination | NTCP2 only, before restart | NTCP2 + SSU2, second round |
+| --- | --- | --- |
+| stats.i2p | HTTP 200, 1.26 s | HTTP 200, 0.55 s |
+| reg.i2p | HTTP 200, 21.19 s | HTTP 200, 2.85 s |
+| identiguy.i2p | HTTP 502, 0.00 s | HTTP 502, 0.00 s |
+| notbob.i2p | No HTTP response (curl exit 52) | HTTP 200 after 1.46 s; incomplete at 30 s |
+
+These are small, uncontrolled observations, not evidence that SSU2 caused the
+speed difference. Tunnel warm-up, destination caches, site state and concurrent
+use can affect it. The persistent 502 and incomplete notbob transfer remain
+unresolved. The owner will test their own failing destinations. Keep SSU2 enabled
+for that trial without relaxing IPv4 policy. Ten focused Harbor/isolation tests,
+Pylint, Bandit and strict schemas passed locally. Runtime acceptance preceded
+this commit; publication and a new GitHub CI run remain pending the owner's push.
