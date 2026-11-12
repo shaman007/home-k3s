@@ -79,20 +79,56 @@ Raft restore, forced unseal, Pod deletion or CA deletion is performed. These
 rollback stages are prepared, not executed against production. If more changes
 occur after this checkpoint, review the scoped snapshot before using it.
 
-## GitOps publication gate
+## GitOps publication and reconciliation
 
-The runtime manifests match the transition and are recorded in the local
-OpenBao TLS commit. Publication is still pending. `argocd-applications` and 32 affected child Applications carry a
-temporary `argocd.argoproj.io/skip-reconcile=true`. The original settings and exact
-application list are retained in private `baseline.json`.
+The user published commit `821664a870647a29bd3971a5b9833622821daaac` to main.
+The remote SHA was checked without fetching or changing refs. Parent
+`argocd-applications` was resumed FIRST with all children still paused. Once it
+was Synced at the published SHA and all 32 child source specifications matched
+Git, the original child pause annotations were restored. This order prevents
+old Helm values from briefly reverting client trust.
 
-Do not remove those pauses before the matching manifests reach protected main.
-Repository policy prohibits this agent from `git push`; runtime manifest commits
-also require explicit authorization. After publication, compare the exact Git
-revision, restore child annotations and parent annotation to their original
-values, then verify application health/revision and TLS functionality again.
-Keep the internal CA key out of Git. The public-only trust Secret in Git has no
-private key or API credential.
+The read-only Argo gate then passed: 93/93 Applications Healthy, Synced and
+unpaused with expected automation. Temporary orphan warnings disappeared after
+resource adoption/cache refresh; no resources or ignore rules were deleted or
+added to hide them. OpenBao's six verified TLS listeners retained their original
+Pod UIDs, and no server restart was requested.
+
+Original pause annotations and the exact application list remain in private
+`baseline.json` for recovery. The private CA key must stay outside Git. The
+public-only trust Secret contains no private key or API credential.
+
+## CI and scanning follow-up
+
+[Validation run 43247068658](https://github.com/shaman007/home-k3s/actions/runs/43247068658)
+failed because the operational helper imported `cryptography`, which was absent
+from the declared CI environment. The helper now uses fixed OpenSSL operations
+with in-memory stdin for key matching and standard-library certificate parsing,
+without adding a production/test package dependency. A regression test imports
+it while deliberately rejecting any cryptography import.
+
+The TLS probe now explicitly enforces TLS 1.2 or newer and preserves CA/hostname
+verification, addressing [CodeQL alert 8322](https://github.com/shaman007/home-k3s/security/code-scanning/8322).
+Administrative commands resolve only allowlisted executables in trusted paths,
+never ambient PATH, and have bounded execution. Runtime gates use explicit
+exceptions rather than assertions that disappear under optimized Python.
+Intentional shell-free subprocess boundaries have narrow Bandit rationale
+comments; no scanner or rule category was disabled globally.
+
+The public-only backend trust Secret uses readable `stringData` PEM instead of
+base64 `data`; this preserves the bytes while making its non-credential contents
+clear and avoiding the entropy-based secrets-in-config-file false positive.
+New helper/test lint findings were corrected. Existing unrelated historical
+alerts, including scanner-side Django initialization diagnostics, are not
+silently dismissed. GitHub scan closure requires a genuine upload after the
+follow-up commit is published.
+
+Local validation used the existing repository CI requirements in a temporary
+virtual environment: 599 tests passed with 21 environment-dependent skips.
+The affected six Python files pass Pylint and Ruff checks. The refactored probe
+was also exercised against all six live listeners, and the cryptography-free CA
+key check succeeded in memory. No PKI/server/client configuration was changed
+by these follow-up code checks.
 
 Harbor, split DNS, VIP allocation, MetalLB and UDM were NOT changed. Its later
 rollout requires UDM prefix-list/maximum-prefix preparation in unifi-infra and
