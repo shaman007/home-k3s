@@ -110,6 +110,8 @@ runtime connectivity, successful secret refresh, or application functionality.
 
 ## Operations and runbooks
 
+- [Harness decision checks and delegation measurements](docs/harness-evaluation.md)
+  cover synthetic regression scenarios, correctness, timing and review/repair cost.
 - [Verifiable read-only procedures](docs/operational-procedures.md) for Argo CD,
   backup freshness and maintenance baselines, with JSON evidence and exit codes.
 - [Upgrade checks](docs/upgrade-playbook.md) and
