@@ -7,24 +7,30 @@ import tempfile
 import time
 import yaml
 
-from probe_commands import run_command
+from probe_commands import (
+    cleanup_fixture_volume,
+    fixture_chown_prefix,
+    require_restricted_status,
+    checked_stdout,
+    run_command,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def run(args, timeout=90):
     """Run the probe command and fail when its expected execution does not succeed."""
-    result = run_command(args, capture_output=True, text=True, timeout=timeout, check=False)
-    if not result.returncode == 0:
-        raise AssertionError(result.stdout[-2000:] + result.stderr[-2000:])
-    return result.stdout.strip()
+    result = run_command(
+        args, capture_output=True, text=True, timeout=timeout, check=False
+    )
+    return checked_stdout(result, strip=True)
 
 
 def load_configuration():
     """Require the reviewed read-only non-root manifest before allocating fixtures."""
-    server = yaml.safe_load((ROOT / "hister/deployment-hister.yaml").read_text())["spec"][
-        "template"
-    ]["spec"]["containers"][0]
+    server = yaml.safe_load((ROOT / "hister/deployment-hister.yaml").read_text())[
+        "spec"
+    ]["template"]["spec"]["containers"][0]
     sc = server["securityContext"]
     if not (sc["readOnlyRootFilesystem"] and sc["runAsNonRoot"]):
         raise AssertionError
@@ -50,7 +56,11 @@ def prepare_fixture(directory):
             b"[0 0 612 792] /Resources << /Font << /F1 "
             b"5 0 R >> >> /Contents 4 0 R >>"
         ),
-        b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content + b"\nendstream",
+        b"<< /Length "
+        + str(len(content)).encode()
+        + b" >>\nstream\n"
+        + content
+        + b"\nendstream",
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     ]
     data = b"%PDF-1.4\n"
@@ -68,8 +78,12 @@ def prepare_fixture(directory):
     cfg.write_text(
         yaml.safe_dump(
             {
-                "app": {"access_token": "disposable-guard-token"},
-                "server": {"address": "0.0.0.0:8080", "base_url": "http://127.0.0.1:8080/"},
+                # Synthetic token for this isolated disposable fixture only.
+                "app": {"access_token": "disposable-guard-token"},  # nosec B105
+                "server": {
+                    "address": "0.0.0.0:8080",
+                    "base_url": "http://127.0.0.1:8080/",
+                },
             }
         )
     )
@@ -96,7 +110,11 @@ def start_server(server, volume, cfg, pdf):
         str(pdf) + ":/data/fixture.pdf:ro,z",
     ]
     for e in server["env"]:
-        value = "http://127.0.0.1:8080/" if e["name"] == "HISTER__SERVER__BASE_URL" else e["value"]
+        value = (
+            "http://127.0.0.1:8080/"
+            if e["name"] == "HISTER__SERVER__BASE_URL"
+            else e["value"]
+        )
         args += ["-e", e["name"] + "=" + value]
     cid = run(args + [server["image"]])
 
@@ -111,13 +129,8 @@ def main():
     try:
         # New disposable volume only: match the existing permission init's UID.
         run(
-            [
-                "podman",
-                "run",
-                "--rm",
-                "--network=none",
-                "--cap-drop=ALL",
-                "--cap-add=CHOWN",
+            fixture_chown_prefix()
+            + [
                 "-v",
                 volume + ":/data",
                 "--entrypoint",
@@ -222,14 +235,7 @@ def main():
                     "/proc/1/status",
                 ]
             )
-            for expected in [
-                "CapEff:\t0000000000000000",
-                "CapBnd:\t0000000000000000",
-                "NoNewPrivs:\t1",
-                "Seccomp:\t2",
-            ]:
-                if expected not in status:
-                    raise AssertionError(status)
+            require_restricted_status(status)
             print(
                 (
                     "Hister: read-only root startup, text/PDF "
@@ -247,7 +253,10 @@ def main():
     except Exception:
         if cid:
             result = run_command(
-                ["podman", "logs", "--tail=20", cid], capture_output=True, text=True, check=False
+                ["podman", "logs", "--tail=20", cid],
+                capture_output=True,
+                text=True,
+                check=False,
             )
             # Fixture-only server; never print real configuration or credentials.
             print(
@@ -257,9 +266,7 @@ def main():
             )
         raise
     finally:
-        if cid:
-            run(["podman", "rm", "-f", cid])
-        run(["podman", "volume", "rm", volume])
+        cleanup_fixture_volume(run, cid, volume)
 
 
 if __name__ == "__main__":

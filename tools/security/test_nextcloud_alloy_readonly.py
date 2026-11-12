@@ -13,7 +13,7 @@ import time
 import uuid
 import yaml
 
-from probe_commands import run_command
+from probe_commands import fixture_chown_prefix, require_restricted_status, run_command
 
 ROOT = Path(__file__).resolve().parents[2]
 MOCK = """from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
@@ -66,11 +66,15 @@ def decode(data):
 
 def load_configuration():
     """Require the reviewed read-only Alloy manifest and substitute only mock Loki."""
-    pod = yaml.safe_load((ROOT / "nextcloud/stateful-set-nextcloud-web.yaml").read_text())["spec"][
-        "template"
-    ]["spec"]
+    pod = yaml.safe_load(
+        (ROOT / "nextcloud/stateful-set-nextcloud-web.yaml").read_text()
+    )["spec"]["template"]["spec"]
     c = next(c for c in pod["containers"] if c["name"] == "alloy")
-    if not pod["securityContext"]["runAsUser"] == pod["securityContext"]["runAsGroup"] == 33:
+    if (
+        not pod["securityContext"]["runAsUser"]
+        == pod["securityContext"]["runAsGroup"]
+        == 33
+    ):
         raise AssertionError
     if c["securityContext"]["readOnlyRootFilesystem"] is not True:
         raise AssertionError
@@ -79,7 +83,9 @@ def load_configuration():
     if not c["securityContext"]["capabilities"] == {"drop": ["ALL"]}:
         raise AssertionError
     if (
-        next((v for v in c["volumeMounts"] if v["mountPath"] == "/nextcloud"))["readOnly"]
+        next((v for v in c["volumeMounts"] if v["mountPath"] == "/nextcloud"))[
+            "readOnly"
+        ]
         is not True
     ):
         raise AssertionError
@@ -109,13 +115,8 @@ def prepare_volumes(volumes):
             )
         )
     run(
-        [
-            "podman",
-            "run",
-            "--rm",
-            "--network=none",
-            "--cap-drop=ALL",
-            "--cap-add=CHOWN",
+        fixture_chown_prefix()
+        + [
             "--group-add=33",
             "-v",
             volumes[0] + ":/data-alloy",
@@ -264,14 +265,7 @@ def check_runtime(alloy, volumes):
         ):
             raise AssertionError
     status = run(["podman", "exec", alloy, "cat", "/proc/1/status"])
-    for expected in [
-        "CapEff:\t0000000000000000",
-        "CapBnd:\t0000000000000000",
-        "NoNewPrivs:\t1",
-        "Seccomp:\t2",
-    ]:
-        if expected not in status:
-            raise AssertionError(status)
+    require_restricted_status(status)
     # Fixture directory is otherwise writable; the read-only mount blocks writes.
     run(
         [
@@ -303,7 +297,9 @@ def check_runtime(alloy, volumes):
     )
     if "/nextcloud/data/guard.log" not in positions:
         raise AssertionError("Fixture checkpoint was not saved under /data-alloy")
-    print("Nextcloud Alloy: initial/appended logs reached mock Loki; Snappy payloads verified")
+    print(
+        "Nextcloud Alloy: initial/appended logs reached mock Loki; Snappy payloads verified"
+    )
     print(
         (
             "Read-only root and Nextcloud mount, "
@@ -332,7 +328,10 @@ def main():
     except Exception:
         for cid in containers:
             r = run_command(
-                ["podman", "logs", "--tail=15", cid], capture_output=True, text=True, check=False
+                ["podman", "logs", "--tail=15", cid],
+                capture_output=True,
+                text=True,
+                check=False,
             )
             print((r.stdout + r.stderr)[-2000:])
         raise

@@ -49,9 +49,10 @@ private. A failed collection produces an error report, not a complete snapshot.
 
 ## Argo CD reconciliation and revision gate
 
-`argocd` reuses the pure assessment functions from the deployed
-[platform health report](platform-health-checks.md), without loading its API,
-ConfigMap-write or email-delivery functions. It requires Healthy/Synced status,
+`argocd` uses a static port of the pure assessments from the deployed
+[platform health report](platform-health-checks.md). Source-fingerprint and shared
+behavior tests guard against drift; YAML is never executed as Python. API,
+ConfigMap-write and email-delivery code is not loaded. It requires Healthy/Synced status,
 expected automation, no paused reconciliation, no conditions, no deletion and no
 pending/running/failed operation. Lenka retains only its documented self-healing
 exception. This does not request a controller refresh; status may be stale.

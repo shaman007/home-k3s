@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+# Codacy's pinned adapter loads pylint_django even for non-Django repositories.
+# This is a plugin setup error, not a defect in these standalone utilities.
+# tests/test_pylint_django_boundary.py fails if Django source/settings appear.
+# All other Pylint diagnostics, including parser errors, stay enabled.
+disable=django-not-configured

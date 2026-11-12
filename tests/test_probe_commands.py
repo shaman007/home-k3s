@@ -19,7 +19,12 @@ SPEC.loader.exec_module(commands)
 
 # Timeout, subprocess check, wrapper call style, expected exception on failure.
 PROBES = {
-    "test_backup_collabora_guards.py": (120, True, "list", subprocess.CalledProcessError),
+    "test_backup_collabora_guards.py": (
+        120,
+        True,
+        "list",
+        subprocess.CalledProcessError,
+    ),
     "test_frr_helper_guards.py": (90, False, "splat", AssertionError),
     "test_gpu_config_init_guards.py": (90, False, "splat", AssertionError),
     "test_hister_readonly_root.py": (90, False, "list", AssertionError),
@@ -57,10 +62,41 @@ def invoke(module, style):
 class ProbeCommandTests(unittest.TestCase):
     """Require explicit argv, trusted executable resolution, bounded waits and no implicit shell."""
 
+    def test_stdin_is_data_and_never_enables_a_shell(self):
+        """Sending a prompt must preserve fixed argv and the no-shell boundary."""
+        with (
+            patch.object(commands.shutil, "which", return_value="/usr/bin/python3"),
+            patch.object(commands.subprocess, "run", return_value="result") as execute,
+        ):
+            result = commands.run_command(
+                ["python3", "-"], input="$(do-not-run)", text=True
+            )
+        self.assertEqual(result, "result")
+        self.assertEqual(execute.call_args.args[0], ["/usr/bin/python3", "-"])
+        self.assertEqual(execute.call_args.kwargs["input"], "$(do-not-run)")
+        self.assertFalse(execute.call_args.kwargs["shell"])
+        self.assertFalse(execute.call_args.kwargs["check"])
+
+    def test_user_cli_lookup_ignores_untrusted_path(self):
+        """Only the caller's known install directories and system paths are searched."""
+        with patch.object(
+            commands.shutil, "which", return_value="/usr/bin/codex"
+        ) as lookup:
+            self.assertEqual(commands.user_executable("codex"), "/usr/bin/codex")
+        paths = lookup.call_args.kwargs["path"].split(os.pathsep)
+        self.assertEqual(paths[-2:], ["/usr/bin", "/bin"])
+        self.assertTrue(paths[0].endswith("/.local/bin"))
+        self.assertTrue(paths[1].endswith("/bin"))
+        with self.assertRaises(ValueError):
+            commands.user_executable("./untrusted")
+
     def test_invalid_arguments_fail_before_process_creation(self):
         """Reject shell strings, byte strings, empty sequences and non-text arguments."""
         for arguments in ["podman run fixture", b"podman", [], ["podman", 1]]:
-            with self.subTest(arguments=arguments), patch.object(commands.subprocess, "run") as run:
+            with (
+                self.subTest(arguments=arguments),
+                patch.object(commands.subprocess, "run") as run,
+            ):
                 with self.assertRaises(TypeError):
                     commands.run_command(arguments)
                 run.assert_not_called()
@@ -71,11 +107,17 @@ class ProbeCommandTests(unittest.TestCase):
         payload = "literal; $(printf accidental-shell)"
         with (
             patch.dict(os.environ, {"PATH": "/untrusted/fixture"}),
-            patch.object(commands.shutil, "which", return_value="/usr/bin/podman") as resolve,
+            patch.object(
+                commands.shutil, "which", return_value="/usr/bin/podman"
+            ) as resolve,
             patch.object(commands.subprocess, "run", return_value=expected) as run,
         ):
             actual = commands.run_command(
-                ["podman", payload], timeout=7, check=True, capture_output=True, text=True
+                ["podman", payload],
+                timeout=7,
+                check=True,
+                capture_output=True,
+                text=True,
             )
         self.assertIs(actual, expected)
         resolve.assert_called_once_with("podman", path="/usr/bin:/bin")
@@ -168,17 +210,27 @@ class ProbeWrapperCompatibilityTests(unittest.TestCase):
                 patch.object(module, "run_command", return_value=process) as run,
             ):
                 result = invoke(module, style)
-            self.assertEqual(result, process.stdout if style == "label" else process.stdout.strip())
+            self.assertEqual(
+                result, process.stdout if style == "label" else process.stdout.strip()
+            )
             run.assert_called_once_with(
-                ["podman", "fixture"], capture_output=True, text=True, timeout=timeout, check=check
+                ["podman", "fixture"],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=check,
             )
 
     def test_all_wrappers_preserve_failure_classes(self):
         """Keep explicit error checks and subprocess check=True behavior intact."""
-        process = subprocess.CompletedProcess(["fixture"], 3, "out fixture", "err fixture")
+        process = subprocess.CompletedProcess(
+            ["fixture"], 3, "out fixture", "err fixture"
+        )
         for filename, (_, check, style, failure) in PROBES.items():
             module = load_probe(filename)
-            outcome = subprocess.CalledProcessError(3, process.args, process.stdout, process.stderr)
+            outcome = subprocess.CalledProcessError(
+                3, process.args, process.stdout, process.stderr
+            )
             with (
                 self.subTest(filename=filename),
                 patch.object(
@@ -193,7 +245,9 @@ class ProbeWrapperCompatibilityTests(unittest.TestCase):
 
     def test_nonchecking_wrappers_return_the_failed_process(self):
         """Retain intentionally inspected failures instead of converting them to exceptions."""
-        process = subprocess.CompletedProcess(["fixture"], 3, "out fixture", "err fixture")
+        process = subprocess.CompletedProcess(
+            ["fixture"], 3, "out fixture", "err fixture"
+        )
         for filename in [
             "test_frr_helper_guards.py",
             "test_gpu_config_init_guards.py",
@@ -213,14 +267,22 @@ class NginxContentProbeTests(unittest.TestCase):
     def test_failed_nginx_start_removes_backend(self):
         """A partial startup must remove the already-created isolated backend."""
         probe = load_probe("test_nginx_readonly_content.py")
-        target = probe.NginxTarget("fixture", "deployment", "config", "/content", "nginx", "php")
+        target = probe.NginxTarget(
+            "fixture", "deployment", "config", "/content", "nginx", "php"
+        )
         with (
             patch.object(probe, "load_configuration", return_value=("image", "config")),
-            patch.object(probe, "prepare_fixtures", return_value=("content", "config", "mock")),
-            patch.object(probe, "start_backend", return_value="backend"),
-            patch.object(probe, "start_nginx", side_effect=RuntimeError("startup failed")),
             patch.object(
-                probe, "run_command", return_value=subprocess.CompletedProcess([], 0, "", "")
+                probe, "prepare_fixtures", return_value=("content", "config", "mock")
+            ),
+            patch.object(probe, "start_backend", return_value="backend"),
+            patch.object(
+                probe, "start_nginx", side_effect=RuntimeError("startup failed")
+            ),
+            patch.object(
+                probe,
+                "run_command",
+                return_value=subprocess.CompletedProcess([], 0, "", ""),
             ),
             patch.object(probe, "run") as run,
             patch("builtins.print"),
@@ -245,7 +307,9 @@ class NginxContentProbeTests(unittest.TestCase):
         for missing in guards:
             with self.subTest(missing=missing):
                 status = "\n".join(value for value in guards if value != missing)
-                with patch.object(probe, "run", side_effect=["1 2 3 4 /content ro", "", status]):
+                with patch.object(
+                    probe, "run", side_effect=["1 2 3 4 /content ro", "", status]
+                ):
                     with self.assertRaises(AssertionError):
                         probe.check_runtime_guards("nginx", "/content")
 
@@ -260,7 +324,9 @@ class NginxContentProbeTests(unittest.TestCase):
         with patch.object(probe, "request", side_effect=responses) as request:
             with self.assertRaises(AssertionError):
                 probe.check_responses("nextcloud", "backend")
-        self.assertEqual(request.call_args.args, ("backend", "POST", "/index.php", 2 * 1024 * 1024))
+        self.assertEqual(
+            request.call_args.args, ("backend", "POST", "/index.php", 2 * 1024 * 1024)
+        )
 
 
 class SplitRuntimeProbeTests(unittest.TestCase):
@@ -271,7 +337,9 @@ class SplitRuntimeProbeTests(unittest.TestCase):
         probe = load_probe("test_backup_collabora_guards.py")
         with (
             patch.object(probe, "start_backup", return_value="backup-fixture"),
-            patch.object(probe, "check_backup_roundtrip", side_effect=AssertionError("roundtrip")),
+            patch.object(
+                probe, "check_backup_roundtrip", side_effect=AssertionError("roundtrip")
+            ),
             patch.object(probe, "run") as run,
         ):
             with self.assertRaisesRegex(AssertionError, "roundtrip"):
@@ -283,14 +351,20 @@ class SplitRuntimeProbeTests(unittest.TestCase):
         probe = load_probe("test_backup_collabora_guards.py")
         with (
             patch.object(
-                probe, "run", side_effect=["collabora-fixture", "127.0.0.1:12345", "logs", ""]
+                probe,
+                "run",
+                side_effect=["collabora-fixture", "127.0.0.1:12345", "logs", ""],
             ) as run,
-            patch.object(probe.http.client, "HTTPConnection", side_effect=OSError("not ready")),
+            patch.object(
+                probe.http.client, "HTTPConnection", side_effect=OSError("not ready")
+            ),
             patch.object(probe.time, "sleep"),
         ):
             with self.assertRaisesRegex(RuntimeError, "Collabora discovery failed"):
                 probe.check_collabora()
-        self.assertEqual(run.call_args.args[0], ["podman", "rm", "-f", "collabora-fixture"])
+        self.assertEqual(
+            run.call_args.args[0], ["podman", "rm", "-f", "collabora-fixture"]
+        )
 
     def test_collabora_redirect_is_rejected_without_following_or_leaking(self):
         """A redirect cannot satisfy discovery even with a plausible body."""
@@ -300,14 +374,20 @@ class SplitRuntimeProbeTests(unittest.TestCase):
         response.status = 302
         response.read.return_value = b"wopi-discovery"
         with (
-            patch.object(probe, "run", side_effect=["fixture", "127.0.0.1:12345", "logs", ""]),
-            patch.object(probe.http.client, "HTTPConnection", return_value=connection) as connect,
+            patch.object(
+                probe, "run", side_effect=["fixture", "127.0.0.1:12345", "logs", ""]
+            ),
+            patch.object(
+                probe.http.client, "HTTPConnection", return_value=connection
+            ) as connect,
             patch.object(probe.time, "sleep"),
         ):
             with self.assertRaisesRegex(RuntimeError, "Collabora discovery failed"):
                 probe.check_collabora()
         self.assertEqual(connect.call_count, 60)
-        self.assertTrue(all(call.args == ("127.0.0.1", 12345) for call in connect.call_args_list))
+        self.assertTrue(
+            all(call.args == ("127.0.0.1", 12345) for call in connect.call_args_list)
+        )
         self.assertEqual(connection.close.call_count, 60)
         self.assertEqual(connection.getresponse.return_value.__exit__.call_count, 60)
         response.read.assert_not_called()
@@ -334,16 +414,23 @@ class SplitRuntimeProbeTests(unittest.TestCase):
                 probe.main()
         self.assertEqual(
             [call.args[0] for call in run.call_args_list],
-            [["podman", "volume", "rm", name] for name in ("state-fixture", "run-fixture")],
+            [
+                ["podman", "volume", "rm", name]
+                for name in ("state-fixture", "run-fixture")
+            ],
         )
 
     def test_alloy_rejects_writable_root_before_checkpoint_checks(self):
         """A writable root filesystem must fail even when the content mount is read-only."""
         probe = load_probe("test_nextcloud_alloy_readonly.py")
-        with patch.object(probe, "run", return_value="1 2 3 4 / rw\n1 2 3 4 /nextcloud ro") as run:
+        with patch.object(
+            probe, "run", return_value="1 2 3 4 / rw\n1 2 3 4 /nextcloud ro"
+        ) as run:
             with self.assertRaises(AssertionError):
                 probe.check_runtime("alloy-fixture", ["state-fixture", "run-fixture"])
-        run.assert_called_once_with(["podman", "exec", "alloy-fixture", "cat", "/proc/1/mountinfo"])
+        run.assert_called_once_with(
+            ["podman", "exec", "alloy-fixture", "cat", "/proc/1/mountinfo"]
+        )
 
 
 class GpuAndMailProbeTests(unittest.TestCase):
@@ -359,7 +446,9 @@ class GpuAndMailProbeTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 result = subprocess.CompletedProcess([], 0, output, "")
                 with (
-                    patch.object(probe, "run", side_effect=["mock-fixture", result, ""]) as run,
+                    patch.object(
+                        probe, "run", side_effect=["mock-fixture", result, ""]
+                    ) as run,
                     patch.object(probe.time, "sleep"),
                 ):
                     with self.assertRaises(AssertionError):
@@ -392,7 +481,9 @@ class GpuAndMailProbeTests(unittest.TestCase):
             [call.args[0].split(b" ", 1)[0] for call in tls.sendall.call_args_list],
             [b"EHLO", b"AUTH", b"NOOP\r\n", b"QUIT\r\n"],
         )
-        context.wrap_socket.assert_called_once_with(plain, server_hostname="guard.invalid")
+        context.wrap_socket.assert_called_once_with(
+            plain, server_hostname="guard.invalid"
+        )
         self.assertTrue(before.closed)
         self.assertTrue(after.closed)
         plain.close.assert_called_once()
@@ -445,7 +536,9 @@ class GpuAndMailProbeTests(unittest.TestCase):
             patch.object(probe, "start_postfix", side_effect=fail_postfix),
             patch.object(probe, "run", side_effect=["1777", "", ""]) as run,
             patch.object(
-                probe, "run_command", return_value=subprocess.CompletedProcess([], 0, "", "")
+                probe,
+                "run_command",
+                return_value=subprocess.CompletedProcess([], 0, "", ""),
             ),
             patch("builtins.print"),
         ):
@@ -506,7 +599,9 @@ class PermissionAndPlexProbeTests(unittest.TestCase):
         with (
             patch.object(probe, "run", side_effect=["plex-volume", ""]) as run,
             patch.object(
-                probe, "prepare_fixture", side_effect=RuntimeError("synthetic media failure")
+                probe,
+                "prepare_fixture",
+                side_effect=RuntimeError("synthetic media failure"),
             ),
         ):
             with self.assertRaisesRegex(RuntimeError, "synthetic media failure"):
@@ -524,7 +619,9 @@ class FrrProbeSafetyTests(unittest.TestCase):
         """A copy failure must retain the temporary image container in cleanup ownership."""
         probe = load_probe("test_frr_helper_guards.py")
         with (
-            patch.object(probe, "prepare_fixture", return_value=Path("synthetic-config")),
+            patch.object(
+                probe, "prepare_fixture", return_value=Path("synthetic-config")
+            ),
             patch.object(
                 probe, "run", side_effect=["helper-image", OSError("copy failed"), ""]
             ) as run,
@@ -545,7 +642,10 @@ class FrrProbeSafetyTests(unittest.TestCase):
             good.replace("CapEff:\t0000000000000000", "CapEff:\t0000000000000002"),
             good.replace("NoNewPrivs:\t1", "NoNewPrivs:\t0"),
         ):
-            with self.subTest(output=output), patch.object(probe, "run", return_value=output):
+            with (
+                self.subTest(output=output),
+                patch.object(probe, "run", return_value=output),
+            ):
                 with self.assertRaises(AssertionError):
                     probe.check_exporter_guards(["exporter-fixture"])
 
@@ -556,7 +656,11 @@ class FrrProbeSafetyTests(unittest.TestCase):
             patch.object(
                 probe,
                 "run",
-                side_effect=["pod-read resource-read", "true", "pod-read resource-read"],
+                side_effect=[
+                    "pod-read resource-read",
+                    "true",
+                    "pod-read resource-read",
+                ],
             ),
             patch.object(probe.time, "sleep"),
         ):
@@ -580,7 +684,10 @@ class LenkaMysqlGuardTests(unittest.TestCase):
                                     "runAsUser": 999,
                                     "runAsGroup": 999,
                                     "runAsNonRoot": True,
-                                    "capabilities": {"drop": ["ALL"], "add": ["SYS_ADMIN"]},
+                                    "capabilities": {
+                                        "drop": ["ALL"],
+                                        "add": ["SYS_ADMIN"],
+                                    },
                                 }
                             }
                         ]
@@ -617,8 +724,13 @@ class LenkaMysqlGuardTests(unittest.TestCase):
             ("NoNewPrivs", "0"),
             ("Seccomp", "0"),
         ):
-            status = "\n".join(f"{key}: {item}" for key, item in {**fields, name: value}.items())
-            with self.subTest(field=name), patch.object(probe, "run", return_value=status):
+            status = "\n".join(
+                f"{key}: {item}" for key, item in {**fields, name: value}.items()
+            )
+            with (
+                self.subTest(field=name),
+                patch.object(probe, "run", return_value=status),
+            ):
                 with self.assertRaises(AssertionError):
                     probe.check_process_guards("fixture")
 
@@ -631,12 +743,16 @@ class HisterFixtureGuardTests(unittest.TestCase):
         probe = load_probe("test_hister_readonly_root.py")
         with (
             patch.object(probe, "load_configuration", return_value={}),
-            patch.object(probe, "prepare_fixture", side_effect=OSError("fixture failed")),
+            patch.object(
+                probe, "prepare_fixture", side_effect=OSError("fixture failed")
+            ),
             patch.object(probe, "run", side_effect=["hister-volume", "", ""]) as run,
         ):
             with self.assertRaisesRegex(OSError, "fixture failed"):
                 probe.main()
-        self.assertEqual(run.call_args.args[0], ["podman", "volume", "rm", "hister-volume"])
+        self.assertEqual(
+            run.call_args.args[0], ["podman", "volume", "rm", "hister-volume"]
+        )
 
     def test_server_preserves_guards_and_replaces_only_local_base_url(self):
         """The isolated server keeps read-only identity guards and its synthetic URL override."""
@@ -644,12 +760,17 @@ class HisterFixtureGuardTests(unittest.TestCase):
         server = {
             "image": "fixture-image",
             "env": [
-                {"name": "HISTER__SERVER__BASE_URL", "value": "https://production.invalid/"},
+                {
+                    "name": "HISTER__SERVER__BASE_URL",
+                    "value": "https://production.invalid/",
+                },
                 {"name": "HISTER_DATA_DIR", "value": "/data"},
             ],
         }
         with patch.object(probe, "run", return_value="fixture-container") as run:
-            base, container = probe.start_server(server, "volume", Path("config"), Path("pdf"))
+            base, container = probe.start_server(
+                server, "volume", Path("config"), Path("pdf")
+            )
         argv = run.call_args.args[0]
         self.assertEqual(container, "fixture-container")
         for guard in (
@@ -693,7 +814,9 @@ class MetallbSpeakerGuardTests(unittest.TestCase):
         with patch.object(probe, "run", return_value="unrelated: permission denied"):
             with self.assertRaises(AssertionError):
                 probe.check_speaker("fixture", False)
-        with patch.object(probe, "run", return_value="excludel2.yaml: permission denied"):
+        with patch.object(
+            probe, "run", return_value="excludel2.yaml: permission denied"
+        ):
             probe.check_speaker("fixture", False)
 
 
@@ -708,7 +831,9 @@ class ServiceCapabilityCommandTests(unittest.TestCase):
         with (
             patch.dict(os.environ, {"PATH": "/untrusted/fixture"}),
             patch.object(probe, "run_command", side_effect=commands.run_command),
-            patch.object(commands.shutil, "which", return_value="/usr/bin/podman") as resolve,
+            patch.object(
+                commands.shutil, "which", return_value="/usr/bin/podman"
+            ) as resolve,
             patch.object(commands.subprocess, "run", return_value=result) as execute,
         ):
             probe.smoke("fixture-image", "1000:1000", [], "fixture command")
@@ -716,7 +841,65 @@ class ServiceCapabilityCommandTests(unittest.TestCase):
         self.assertEqual(execute.call_args.args[0][0], "/usr/bin/podman")
         self.assertEqual(
             execute.call_args.kwargs,
-            {"shell": False, "timeout": 60, "check": False, "capture_output": True, "text": True},
+            {
+                "shell": False,
+                "timeout": 60,
+                "check": False,
+                "capture_output": True,
+                "text": True,
+            },
         )
         self.assertIn("--network=none", execute.call_args.args[0])
         self.assertEqual(execute.call_args.args[0][-1], "fixture command")
+
+
+class FixturePolicyTests(unittest.TestCase):
+    """Keep disposable fixture isolation and cleanup behavior stable across probes."""
+
+    def test_ownership_initializer_is_offline_and_capability_limited(self):
+        """Ownership initialization may grant only CHOWN and no network access."""
+        self.assertEqual(
+            commands.fixture_chown_prefix(),
+            [
+                "podman",
+                "run",
+                "--rm",
+                "--network=none",
+                "--cap-drop=ALL",
+                "--cap-add=CHOWN",
+            ],
+        )
+
+    def test_process_guards_are_independently_required(self):
+        """Missing seccomp, privilege protection or either capability guard must fail."""
+        fields = [
+            "CapEff:\t0000000000000000",
+            "CapBnd:\t0000000000000000",
+            "NoNewPrivs:\t1",
+            "Seccomp:\t2",
+        ]
+        commands.require_restricted_status("\n".join(fields))
+        for omitted in fields:
+            with self.subTest(omitted=omitted), self.assertRaises(AssertionError):
+                commands.require_restricted_status(
+                    "\n".join(f for f in fields if f != omitted)
+                )
+
+    def test_cleanup_removes_container_before_volume(self):
+        """Never remove the volume before removing its fixture container."""
+        calls = []
+        commands.cleanup_fixture_volume(calls.append, "fixture", "volume")
+        self.assertEqual(
+            calls,
+            [["podman", "rm", "-f", "fixture"], ["podman", "volume", "rm", "volume"]],
+        )
+        calls.clear()
+        commands.cleanup_fixture_volume(calls.append, None, "volume")
+        self.assertEqual(calls, [["podman", "volume", "rm", "volume"]])
+
+    def test_cleanup_preserves_container_removal_failure(self):
+        """Do not proceed to volume removal after an unsuccessful container removal."""
+        runner = MagicMock(side_effect=AssertionError("fixture failure"))
+        with self.assertRaises(AssertionError):
+            commands.cleanup_fixture_volume(runner, "fixture", "volume")
+        runner.assert_called_once_with(["podman", "rm", "-f", "fixture"])

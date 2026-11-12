@@ -9,11 +9,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RenovateActionPinningTest(unittest.TestCase):
+    """Keep action commit digests separate from installer version inputs."""
+
     def test_digest_pinning_is_scoped_to_action_references(self):
         """Installer inputs cannot represent the commit pins used by actions."""
         config = json.loads((ROOT / "renovate.json").read_text())
         rules = [
-            rule for rule in config["packageRules"]
+            rule
+            for rule in config["packageRules"]
             if rule.get("pinDigests") is True
             and "github-actions" in rule.get("matchManagers", [])
         ]

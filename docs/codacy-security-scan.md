@@ -123,8 +123,50 @@ The upstream Python 3 adapter unconditionally loads `pylint_django` and
 [pinned adapter implementation](https://github.com/codacy/codacy-pylint-python3/blob/3ea0e20326b35a8c4afedb550ecdec157f9bb2fa/src/codacy_pylint.py#L211-L238).
 Consequently `django-not-configured` (E5110) can appear on unrelated utilities.
 This repository's reviewed Python sources contain no Django imports or application
-settings. Do not add dummy Django settings to satisfy the adapter. Exact E5110
-findings are reviewed as false positives after auditing the analyzed revision;
-reopen that classification if Django source/settings are introduced. Source/file
-batch changes can produce new instances requiring review. All other Pylint rules
-and parser-error/incomplete-scan upload safeguards remain enabled.
+settings. `.pylintrc` disables only that forced plugin's setup diagnostic, not
+Python errors or other lint/security checks. The pinned CLI
+[selects native tool configuration files](https://github.com/codacy/codacy-analysis-cli/blob/7.9.25/cli/src/main/scala/com/codacy/analysis/cli/analysis/AnalyseExecutor.scala)
+for tools using unmodified defaults, as this token-free workflow does.
+`tests/test_pylint_django_boundary.py`
+audits source imports/settings and requires reviewing this exception if Django is
+introduced. A control run without the configuration reproduces E5110; the same
+plugin invocation with the configuration removes it. Do not add dummy Django
+settings or discard parser-error/incomplete-scan safeguards.
+
+## Local verification and execution boundaries
+
+Pylint 4.1.3, pylint-django 2.8.0 and Bandit 1.9.4 were installed in a dedicated
+local virtualenv for reproduction. Their pinned recovery recipe is in the host's
+dotfiles repository. These local versions need not equal the Codacy container's
+versions; a new CI upload must verify GitHub alert reconciliation.
+
+From the repository root, use the adapter's relevant plugin options:
+
+```sh
+python -m pylint --load-plugins=pylint_django --disable=django-installed-checker,django-model-checker PATHS
+python -m bandit -r PATHS
+```
+
+Use the documented scanner virtualenv's Python. Running bare Pylint without the
+plugin can report an unknown plugin-specific diagnostic name; Codacy always loads
+the plugin before applying the configuration.
+
+`tools/ops/verify.py` now imports static assessment functions instead of executing
+Python parsed from a ConfigMap. The static port is checked against the owning
+report's source fingerprint and the report's existing behavioral tests. An owning
+logic change fails the drift guard until the port is deliberately reviewed.
+The deployed report and cluster configuration are unchanged by this refactor.
+
+Harness/operations commands use `tools/security/probe_commands.py`: finite timeout,
+validated argv/options, explicit absolute executable, `shell=False`, and trusted
+CLI install directories instead of environment `PATH`. Prompt input stays stdin
+data. Tests cover hostile PATH, invalid options and literal shell syntax in stdin.
+The sole process boundary retains specific reviewed Bandit B404/B603 annotations;
+there is no repository-wide Bandit skip. Importing subprocess does not itself
+create a vulnerability, and Bandit cannot prove this centralized resolution path.
+New command callers must preserve these invariants rather than copy annotations.
+
+Disposable Hister/Alloy probes share their offline ownership-initialization and
+process-guard checks. Cleanup ordering is covered without running containers.
+Hister's synthetic fixture access token has a local B105 annotation: it is
+intentionally public test data, never a production credential.

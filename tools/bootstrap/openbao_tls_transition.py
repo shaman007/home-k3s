@@ -13,7 +13,8 @@ import os
 from pathlib import Path
 import shutil
 import ssl
-import subprocess  # nosec B404: intentional allowlisted, shell-free administrative commands.
+# Administrative processes use the executable allowlist and never an implicit shell.
+import subprocess  # nosec B404
 
 import yaml
 
@@ -45,7 +46,8 @@ def executable(program):
 def run(args, payload=None):
     """Run an allowlisted command with bounded execution and secret-safe errors."""
     argv = [executable(args[0]), *args[1:]]
-    result = subprocess.run(  # nosec B603: executable allowlist, trusted paths, no shell.
+    # Executable is allowlisted and absolute; input is bytes, never shell source.
+    result = subprocess.run(  # nosec B603
         argv,
         input=payload,
         stdout=subprocess.PIPE,
@@ -60,7 +62,9 @@ def run(args, payload=None):
 
 def kube(*args, payload=None):
     """Pin administrative Kubernetes operations to the intended context."""
-    return run(["kubectl", *args, "--context=admin@home-k8s", "--request-timeout=20s"], payload)
+    return run(
+        ["kubectl", *args, "--context=admin@home-k8s", "--request-timeout=20s"], payload
+    )
 
 
 def get(resource, name=None, ns=None):
@@ -74,7 +78,9 @@ def get(resource, name=None, ns=None):
 
 def clean(obj):
     """Retain restorable desired fields without status or apply annotations."""
-    result = {k: obj[k] for k in ("apiVersion", "kind", "spec", "data", "type") if k in obj}
+    result = {
+        k: obj[k] for k in ("apiVersion", "kind", "spec", "data", "type") if k in obj
+    }
     result["metadata"] = {
         k: obj["metadata"][k]
         for k in ("name", "namespace", "labels", "annotations")
@@ -95,7 +101,11 @@ def write(state, name, value):
 
 def encrypted_backup(state, name, objects):
     """Encrypt sensitive objects in memory and verify an exact age round trip."""
-    recipient = Path("/home/shaman007/.config/talos-backup/age-recipient.txt").read_text().strip()
+    recipient = (
+        Path("/home/shaman007/.config/talos-backup/age-recipient.txt")
+        .read_text(encoding="utf-8")
+        .strip()
+    )
     identity = "/home/shaman007/.config/talos-backup/age-key.txt"
     plaintext = json.dumps(objects, sort_keys=True).encode()
     output = state / (name + ".json.age")
@@ -139,7 +149,12 @@ def public_roots():
     for parsed, der in zip(
         context.get_ca_certs(), context.get_ca_certs(binary_form=True), strict=True
     ):
-        names = [value for part in parsed["subject"] for key, value in part if key == "commonName"]
+        names = [
+            value
+            for part in parsed["subject"]
+            for key, value in part
+            if key == "commonName"
+        ]
         if any(name in ("ISRG Root X1", "ISRG Root X2") for name in names):
             roots.append(ssl.DER_cert_to_PEM_cert(der).encode())
     if len(roots) != 2:
@@ -163,7 +178,8 @@ def snapshot(state):
     stores = [
         x
         for x in get("secretstores,clustersecretstores")["items"]
-        if x.get("spec", {}).get("provider", {}).get("vault", {}).get("server") == OLD_URL
+        if x.get("spec", {}).get("provider", {}).get("vault", {}).get("server")
+        == OLD_URL
     ]
     apps = sorted(
         {
@@ -207,10 +223,15 @@ def bootstrap(state):
         raise ValueError("A nonempty rollback baseline is required")
     # An old-DNS SAN permits a rolling, dual-trust change without client name failures.
     documents = list(
-        yaml.safe_load_all((ROOT / "docs/migrations/openbao-internal-tls/pki.yaml").read_text())
+        yaml.safe_load_all(
+            (ROOT / "docs/migrations/openbao-internal-tls/pki.yaml").read_text()
+        )
     )
     for doc in documents:
-        if doc["kind"] == "Certificate" and doc["metadata"]["name"] == "openbao-internal-tls":
+        if (
+            doc["kind"] == "Certificate"
+            and doc["metadata"]["name"] == "openbao-internal-tls"
+        ):
             if OLD_HOST not in doc["spec"]["dnsNames"]:
                 doc["spec"]["dnsNames"].append(OLD_HOST)
     manifest = state / "pki.yaml"
@@ -222,7 +243,8 @@ def bootstrap(state):
 def backup_pki(state):
     """Preserve CA/leaf keys independently before allowing any TLS cutover."""
     objects = [
-        clean(get("secret", name, "openbao")) for name in (CA_OBJECT_NAME, "openbao-internal-tls")
+        clean(get("secret", name, "openbao"))
+        for name in (CA_OBJECT_NAME, "openbao-internal-tls")
     ]
     encrypted_backup(state, "internal-pki", objects)
     cert = ca_public()
@@ -246,7 +268,11 @@ def dual_trust(state):
             "application",
             name,
             "argocd",
-            {"metadata": {"annotations": {"argocd.argoproj.io/skip-reconcile": "true"}}},
+            {
+                "metadata": {
+                    "annotations": {"argocd.argoproj.io/skip-reconcile": "true"}
+                }
+            },
         )
     for obj in baseline["objects"]:
         if obj["kind"] not in ("SecretStore", "ClusterSecretStore"):
@@ -258,7 +284,10 @@ def dual_trust(state):
             {
                 "spec": {
                     "provider": {
-                        "vault": {"caBundle": base64.b64encode(bundle).decode(), "caProvider": None}
+                        "vault": {
+                            "caBundle": base64.b64encode(bundle).decode(),
+                            "caProvider": None,
+                        }
                     }
                 }
             },
@@ -282,28 +311,41 @@ def dual_trust(state):
     deployment = get("deployment", "prometheus-deployment", "monitoring")
     pod = deployment["spec"]["template"]["spec"]
     pod["volumes"] = [v for v in pod["volumes"] if v["name"] != "openbao-internal-ca"]
-    pod["volumes"].append({"name": "openbao-internal-ca", "configMap": {"name": "vault-ca"}})
+    pod["volumes"].append(
+        {"name": "openbao-internal-ca", "configMap": {"name": "vault-ca"}}
+    )
     found = False
     for container in pod["containers"]:
         if "prometheus" in container["name"]:
             container["volumeMounts"] = [
-                m for m in container.get("volumeMounts", []) if m["name"] != "openbao-internal-ca"
+                m
+                for m in container.get("volumeMounts", [])
+                if m["name"] != "openbao-internal-ca"
             ]
             container["volumeMounts"].append(
-                {"name": "openbao-internal-ca", "mountPath": "/etc/openbao-ca", "readOnly": True}
+                {
+                    "name": "openbao-internal-ca",
+                    "mountPath": "/etc/openbao-ca",
+                    "readOnly": True,
+                }
             )
             found = True
     if not found:
         raise RuntimeError("Prometheus container not identified")
     patch(
-        "deployment", "prometheus-deployment", "monitoring", {"spec": {"template": {"spec": pod}}}
+        "deployment",
+        "prometheus-deployment",
+        "monitoring",
+        {"spec": {"template": {"spec": pod}}},
     )
     config = get("configmap", "prometheus-server-conf", "monitoring")
     for key, text in config["data"].items():
         if "job_name: openbao" not in text:
             continue
         settings = yaml.safe_load(text)
-        job = next(x for x in settings["scrape_configs"] if x.get("job_name") == "openbao")
+        job = next(
+            x for x in settings["scrape_configs"] if x.get("job_name") == "openbao"
+        )
         job.setdefault("tls_config", {})["ca_file"] = "/etc/openbao-ca/ca.crt"
         config["data"][key] = yaml.safe_dump(settings, sort_keys=False)
     patch("configmap", "prometheus-server-conf", "monitoring", {"data": config["data"]})
@@ -315,13 +357,16 @@ def switch(state):
     leaf = next(
         x
         for x in yaml.safe_load_all((state / "pki.yaml").read_text())
-        if x["kind"] == "Certificate" and x["metadata"]["name"] == "openbao-internal-tls"
+        if x["kind"] == "Certificate"
+        and x["metadata"]["name"] == "openbao-internal-tls"
     )
     spec = leaf["spec"].copy()
     spec["secretName"] = BACKEND_OBJECT_NAME
     # Existing projected Secret paths auto-reload on BOTH listeners; no pod restart.
     patch("certificate", BACKEND_OBJECT_NAME, "openbao", {"spec": spec})
-    print("Backend Certificate switched to internal Issuer; wait for issuance and live TLS reload")
+    print(
+        "Backend Certificate switched to internal Issuer; wait for issuance and live TLS reload"
+    )
 
 
 def migrate(state):
@@ -341,7 +386,9 @@ def migrate(state):
     hcl = hcl.replace(OLD_URL, NEW_URL).replace(
         'leader_tls_servername = "' + OLD_HOST + '"',
         'leader_tls_servername = "' + NEW_HOST + '"\n'
-        '    leader_ca_cert_file = "/openbao/userconfig/' + BACKEND_OBJECT_NAME + '/ca.crt"',
+        '    leader_ca_cert_file = "/openbao/userconfig/'
+        + BACKEND_OBJECT_NAME
+        + '/ca.crt"',
     )
     config["data"]["extraconfig-from-values.hcl"] = hcl
     patch("configmap", "openbao-config", "openbao", {"data": config["data"]})
@@ -351,7 +398,10 @@ def migrate(state):
     env = sts["spec"]["template"]["spec"]["containers"][0]["env"]
     env = [x for x in env if x["name"] != "BAO_CACERT"]
     env.append(
-        {"name": "BAO_CACERT", "value": "/openbao/userconfig/" + BACKEND_OBJECT_NAME + "/ca.crt"}
+        {
+            "name": "BAO_CACERT",
+            "value": "/openbao/userconfig/" + BACKEND_OBJECT_NAME + "/ca.crt",
+        }
     )
     # Strategic patch touches one container's env only; no Pod is deleted.
     kube(
@@ -363,7 +413,13 @@ def migrate(state):
         "--type=strategic",
         "-p",
         json.dumps(
-            {"spec": {"template": {"spec": {"containers": [{"name": "openbao", "env": env}]}}}}
+            {
+                "spec": {
+                    "template": {
+                        "spec": {"containers": [{"name": "openbao", "env": env}]}
+                    }
+                }
+            }
         ),
     )
     print(
@@ -387,7 +443,9 @@ def rollback(state):
         json.dumps([{"op": "replace", "path": "/spec", "value": original["spec"]}]),
     )
     identity = "/home/shaman007/.config/talos-backup/age-key.txt"
-    old = json.loads(run(["age", "-d", "-i", identity, str(state / "old-backend-tls.json.age")]))[0]
+    old = json.loads(
+        run(["age", "-d", "-i", identity, str(state / "old-backend-tls.json.age")])
+    )[0]
     # Feed sensitive JSON patch through stdin, never process arguments.
     # kubectl --patch-file=/dev/stdin keeps restored key material in memory only.
     kube(
@@ -418,15 +476,23 @@ def restore_clients(state):
     """Restore clients and reconciliation only after old TLS is live everywhere."""
     # This stage is ONLY for rollback after the old certificate is live again.
     identity = "/home/shaman007/.config/talos-backup/age-key.txt"
-    old = json.loads(run(["age", "-d", "-i", identity, str(state / "old-backend-tls.json.age")]))[0]
+    old = json.loads(
+        run(["age", "-d", "-i", identity, str(state / "old-backend-tls.json.age")])
+    )[0]
     certificate = base64.b64decode(old["data"]["tls.crt"]).decode()
     first_certificate = certificate.split("-----END CERTIFICATE-----", 1)[0]
     first_certificate += "-----END CERTIFICATE-----\n"
-    fingerprint = hashlib.sha256(ssl.PEM_cert_to_DER_cert(first_certificate)).hexdigest()
+    fingerprint = hashlib.sha256(
+        ssl.PEM_cert_to_DER_cert(first_certificate)
+    ).hexdigest()
     probe(state / "dual-trust.pem", OLD_HOST, fingerprint)
     baseline = json.loads((state / "baseline.json").read_text())
     for obj in baseline["objects"]:
-        kind, name, ns = obj["kind"], obj["metadata"]["name"], obj["metadata"].get("namespace")
+        kind, name, ns = (
+            obj["kind"],
+            obj["metadata"]["name"],
+            obj["metadata"].get("namespace"),
+        )
         if kind in ("SecretStore", "ClusterSecretStore"):
             kube(
                 "patch",
@@ -464,15 +530,23 @@ def restore_clients(state):
             patch(kind, name, ns, {"spec": {"template": obj["spec"]["template"]}})
     # Restore child pauses before parent, and preserve their original annotation values.
     apps = [x for x in baseline["objects"] if x["kind"] == "Application"]
-    for obj in sorted(apps, key=lambda x: x["metadata"]["name"] == "argocd-applications"):
-        value = obj["metadata"].get("annotations", {}).get("argocd.argoproj.io/skip-reconcile")
+    for obj in sorted(
+        apps, key=lambda x: x["metadata"]["name"] == "argocd-applications"
+    ):
+        value = (
+            obj["metadata"]
+            .get("annotations", {})
+            .get("argocd.argoproj.io/skip-reconcile")
+        )
         patch(
             "application",
             obj["metadata"]["name"],
             "argocd",
             {"metadata": {"annotations": {"argocd.argoproj.io/skip-reconcile": value}}},
         )
-    print("Original clients/configuration and Argo pauses restored; CA objects retained")
+    print(
+        "Original clients/configuration and Argo pauses restored; CA objects retained"
+    )
 
 
 def main():
