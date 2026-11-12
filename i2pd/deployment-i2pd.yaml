@@ -33,7 +33,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: i2pd
-          image: docker.io/purplei2p/i2pd:release-3.0.0.1@sha256:f3ff7f0e501cc6baf383a5ca2a04659e0c9c8f8e9781e86aead2aa4decd27c9a
+          image: harbor.andreybondarenko.com/dockerhub/purplei2p/i2pd:release-3.0.0.1@sha256:f3ff7f0e501cc6baf383a5ca2a04659e0c9c8f8e9781e86aead2aa4decd27c9a
           command: [/bin/sh, /etc/i2pd/start.sh]
           env:
             - name: POD_IPS
