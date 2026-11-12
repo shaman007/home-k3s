@@ -45,6 +45,10 @@ class HarnessEvaluationTests(unittest.TestCase):
         """Allocate private paths instead of fixed shared temporary filenames."""
         self.directory = Path(tempfile.mkdtemp(prefix="harness-test-"))
         self.addCleanup(shutil.rmtree, self.directory)
+        # Command construction is tested without requiring a local CLI install.
+        resolver = patch.object(RUN, "user_executable", return_value="/fixture/bin/codex")
+        self.resolve_cli = resolver.start()
+        self.addCleanup(resolver.stop)
 
     def test_policy_cases_fail_individually(self):
         """Policy cases fail individually."""
@@ -116,6 +120,8 @@ class HarnessEvaluationTests(unittest.TestCase):
         args = RUN.codex_command(
             self.directory / "fixture", self.directory / "schema", "configured-model"
         )
+        self.assertEqual(args[0], "/fixture/bin/codex")
+        self.resolve_cli.assert_called_once_with("codex")
         for flag in [
             "--ignore-user-config",
             "--ignore-rules",
