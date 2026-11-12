@@ -3,8 +3,9 @@
 
 import http.cookiejar
 import http.server
-import json
 import ipaddress
+import json
+import logging
 import os
 import socket
 import ssl
@@ -13,9 +14,55 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
 
 PEERS = ("192.168.30.100", "192.168.30.209", "192.168.30.242")
 PREFIXES = ("192.168.30.210/32", "192.168.30.211/32", "192.168.30.213/32", "192.168.30.212/32")
+LOGGER = logging.getLogger("unifi_bgp")
+READ_STAGES = {
+    "/proxy/network/v2/api/site/default/bgp/neighbors": "neighbors",
+    "/proxy/network/v2/api/site/default/routes": "routes",
+}
+
+
+def error_kind(error):
+    """Classify failures without serializing exception text or transport details."""
+    if isinstance(error, urllib.error.URLError) and not isinstance(
+        error, urllib.error.HTTPError
+    ):
+        error = error.reason
+    if isinstance(error, TimeoutError):
+        return "timeout"
+    if isinstance(error, ssl.SSLError):
+        return "tls"
+    if isinstance(error, urllib.error.HTTPError):
+        return "http"
+    if isinstance(error, OSError):
+        return "network"
+    if isinstance(error, (ValueError, KeyError, TypeError)):
+        return "invalid_data"
+    return "internal"
+
+
+@contextmanager
+def stage_event(stage, attempt=1):
+    """Log only fixed stage names, numeric timings/status and bounded error categories."""
+    event = {
+        "event": "unifi_bgp_stage",
+        "stage": stage,
+        "attempt": attempt,
+        "phase": "operation",
+        "outcome": "success",
+    }
+    started = time.monotonic()
+    try:
+        yield event
+    except Exception as error:
+        event.update(outcome="failure", error_kind=error_kind(error))
+        raise
+    finally:
+        event["duration_seconds"] = round(time.monotonic() - started, 6)
+        LOGGER.info("%s", json.dumps(event, sort_keys=True))
 
 
 def decode(neighbors, routes):
@@ -152,7 +199,7 @@ class Controller:
         self.logged_in = False
         self.csrf = ""
 
-    def request(self, path, data=None):
+    def request(self, path, data=None, attempt=1):
         """Send a JSON router request and retain an updated CSRF token in memory."""
         headers = {
             "Content-Type": "application/json",
@@ -166,13 +213,19 @@ class Controller:
             data=json.dumps(data).encode() if data is not None else None,
             headers=headers,
         )
-        try:
-            with self.opener.open(req, timeout=15) as response:
-                self.csrf = response.headers.get("X-CSRF-Token", self.csrf)
-                return json.load(response)
-        except urllib.error.HTTPError as error:
-            error.close()
-            raise
+        stage = "login" if path == "/api/auth/login" else READ_STAGES.get(path, "other")
+        with stage_event(stage, attempt) as event:
+            event["phase"] = "response"
+            try:
+                with self.opener.open(req, timeout=15) as response:
+                    event["http_status"] = response.status
+                    event["phase"] = "body_json"
+                    self.csrf = response.headers.get("X-CSRF-Token", self.csrf)
+                    return json.load(response)
+            except urllib.error.HTTPError as error:
+                event["http_status"] = error.code
+                error.close()
+                raise
 
     def login(self):
         """Authenticate using environment-provided credentials and the in-memory cookie jar."""
@@ -183,17 +236,25 @@ class Controller:
         self.logged_in = True
 
     def get(self, path):
-        """Read a router endpoint, renewing authentication once after a 401 or 403 response."""
+        """Renew auth once; retry only reviewed GETs once after a timeout, never login."""
         if not self.logged_in:
             self.login()
-        try:
-            return self.request(path)
-        except urllib.error.HTTPError as error:
-            if error.code not in (401, 403):
-                raise
-            self.logged_in = False
-            self.login()
-            return self.request(path)
+        renewed = retried = False
+        for attempt in range(1, 4):
+            try:
+                return self.request(path, attempt=attempt)
+            except urllib.error.HTTPError as error:
+                if error.code not in (401, 403) or renewed:
+                    raise
+                self.logged_in = False
+                self.login()
+                renewed = True
+            except (TimeoutError, urllib.error.URLError) as error:
+                if error_kind(error) != "timeout" or retried or path not in READ_STAGES:
+                    raise
+                retried = True
+                time.sleep(1)
+        raise RuntimeError("Read attempt budget exhausted")
 
     def certificate_expiry(self):
         """Inspect the certificate actually served by the verified controller endpoint."""
@@ -205,9 +266,14 @@ class Controller:
     def collect(self):
         """Read neighbor and route endpoints and decode their current BGP measurements."""
         base = "/proxy/network/v2/api/site/default/"
-        metrics = decode(self.get(base + "bgp/neighbors"), self.get(base + "routes"))
+        neighbors = self.get(base + "bgp/neighbors")
+        routes = self.get(base + "routes")
+        with stage_event("decode"):
+            metrics = decode(neighbors, routes)
+        with stage_event("certificate"):
+            expiry = self.certificate_expiry()
         metrics.append(
-            ("unifi_bgp_tls_certificate_expiry_timestamp_seconds", {}, self.certificate_expiry())
+            ("unifi_bgp_tls_certificate_expiry_timestamp_seconds", {}, expiry)
         )
         return metrics
 
@@ -225,6 +291,7 @@ def metrics_address():
 
 def main():
     """Poll the router in a background thread and serve metrics and liveness responses."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     listen_address = metrics_address()
     controller = Controller()
     lock = threading.Lock()
@@ -234,10 +301,11 @@ def main():
         last_success = 0
         while True:
             try:
-                metrics = controller.collect()
-                collected_at = time.time()
-                body = render(metrics, True, collected_at)
-                last_success = collected_at
+                with stage_event("collection"):
+                    metrics = controller.collect()
+                    collected_at = time.time()
+                    body = render(metrics, True, collected_at)
+                    last_success = collected_at
             except Exception:
                 # Never log requests, response bodies, passwords or session cookies.
                 body = render([], False, last_success)

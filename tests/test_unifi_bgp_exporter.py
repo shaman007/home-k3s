@@ -2,13 +2,15 @@
 
 import copy
 import importlib.util
-import re
 import io
-from types import SimpleNamespace
-from unittest.mock import MagicMock, Mock, patch
+import json
+import re
+import unittest
 import urllib.error
 from pathlib import Path
-import unittest
+from types import SimpleNamespace
+from unittest.mock import MagicMock, Mock, patch
+
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -282,6 +284,203 @@ class UniFiBGPExporterTests(unittest.TestCase):
                 None, None, 302, "", {}, "https://elsewhere.invalid"
             )
         )
+
+
+class UniFiRequestDiagnosticsTests(unittest.TestCase):
+    """Bound retries and prove that diagnostics cannot disclose request or error data."""
+
+    def client(self):
+        """Create an isolated client without network access or real credentials."""
+        with patch.dict(m.os.environ, {"UNIFI_URL": "https://router.invalid"}):
+            client = m.Controller()
+        client.logged_in = True
+        return client
+
+    def http_error(self, status):
+        """Keep synthetic HTTP failures resource-safe even when request is mocked."""
+        error = urllib.error.HTTPError("https://private", status, "private", {}, io.BytesIO())
+        self.addCleanup(error.close)
+        return error
+
+    def test_body_timeout_retry_emits_failed_and_successful_attempts(self):
+        """Exercise real request parsing, cleanup and retry logging together."""
+        client = self.client()
+        responses = [MagicMock(), MagicMock()]
+        for response in responses:
+            response.__enter__.return_value = response
+            response.status = 200
+            response.headers = {}
+        responses[0].read.side_effect = TimeoutError("private-response")
+        responses[1].read.return_value = b'{"fresh": true}'
+        client.opener = SimpleNamespace(open=Mock(side_effect=responses))
+        with patch.object(m.time, "sleep") as sleep, self.assertLogs(m.LOGGER) as logs:
+            self.assertEqual(client.get(next(iter(m.READ_STAGES))), {"fresh": True})
+        events = [json.loads(record.getMessage()) for record in logs.records]
+        self.assertEqual([event["attempt"] for event in events], [1, 2])
+        self.assertEqual([event["outcome"] for event in events], ["failure", "success"])
+        self.assertEqual(events[0]["phase"], "body_json")
+        self.assertEqual(events[0]["error_kind"], "timeout")
+        self.assertNotIn("private", str(logs.output))
+        sleep.assert_called_once_with(1)
+        for response in responses:
+            response.__exit__.assert_called_once()
+
+    def test_timeout_retry_recovers_with_one_backoff(self):
+        """Both supported timeout representations get exactly one GET retry."""
+        for failure in (
+            TimeoutError("private"),
+            urllib.error.URLError(TimeoutError("private")),
+        ):
+            for path in m.READ_STAGES:
+                with self.subTest(path=path, failure=type(failure).__name__):
+                    client = self.client()
+                    client.request = Mock(side_effect=[failure, {"fresh": True}])
+                    with patch.object(m.time, "sleep") as sleep:
+                        self.assertEqual(client.get(path), {"fresh": True})
+                    self.assertEqual(client.request.call_count, 2)
+                    self.assertEqual(client.request.call_args.kwargs, {"attempt": 2})
+                    sleep.assert_called_once_with(1)
+
+    def test_persistent_timeout_does_not_retry_indefinitely(self):
+        """A second timeout propagates so the collection can fail closed."""
+        client = self.client()
+        client.request = Mock(side_effect=TimeoutError("private"))
+        with patch.object(m.time, "sleep") as sleep, self.assertRaises(TimeoutError):
+            client.get(next(iter(m.READ_STAGES)))
+        self.assertEqual(client.request.call_count, 2)
+        sleep.assert_called_once_with(1)
+
+    def test_non_timeout_and_unreviewed_requests_are_not_retried(self):
+        """Do not retry server, trust, decoding, connection or unrelated endpoint failures."""
+        failures = (
+            self.http_error(500),
+            m.ssl.SSLCertVerificationError("private"),
+            urllib.error.URLError(m.ssl.SSLCertVerificationError("private")),
+            urllib.error.URLError(ConnectionRefusedError("private")),
+            ValueError("private"),
+        )
+        for failure in failures:
+            client = self.client()
+            client.request = Mock(side_effect=failure)
+            with (
+                patch.object(m.time, "sleep") as sleep,
+                self.assertRaises(type(failure)),
+            ):
+                client.get(next(iter(m.READ_STAGES)))
+            client.request.assert_called_once()
+            sleep.assert_not_called()
+        client.request = Mock(side_effect=TimeoutError())
+        with patch.object(m.time, "sleep") as sleep, self.assertRaises(TimeoutError):
+            client.get("/unreviewed")
+        client.request.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_login_timeout_is_not_retried(self):
+        """Never automatically repeat the credential-bearing POST on a timeout."""
+        for renewal in (False, True):
+            client = self.client()
+            client.logged_in = renewal
+            client.login = Mock(side_effect=TimeoutError("private"))
+            client.request = Mock(
+                side_effect=self.http_error(401)
+            )
+            with (
+                patch.object(m.time, "sleep") as sleep,
+                self.assertRaises(TimeoutError),
+            ):
+                client.get(next(iter(m.READ_STAGES)))
+            client.login.assert_called_once()
+            self.assertEqual(client.request.call_count, int(renewal))
+            sleep.assert_not_called()
+
+    def test_auth_renewal_and_timeout_share_a_bounded_budget(self):
+        """One authentication renewal and one timeout retry permit at most three GETs."""
+        for first, second in ((401, "timeout"), ("timeout", 403)):
+            client = self.client()
+
+            def failure(kind):
+                return (
+                    TimeoutError()
+                    if kind == "timeout"
+                    else self.http_error(kind)
+                )
+
+            client.request = Mock(
+                side_effect=[failure(first), failure(second), {"fresh": True}]
+            )
+            client.login = Mock()
+            with patch.object(m.time, "sleep") as sleep:
+                self.assertEqual(client.get(next(iter(m.READ_STAGES))), {"fresh": True})
+            self.assertEqual(client.request.call_count, 3)
+            client.login.assert_called_once()
+            sleep.assert_called_once_with(1)
+        client.request = Mock(
+            side_effect=self.http_error(401)
+        )
+        client.login.reset_mock()
+        client.logged_in = True
+        with self.assertRaises(urllib.error.HTTPError):
+            client.get(next(iter(m.READ_STAGES)))
+        self.assertEqual(client.request.call_count, 2)
+        client.login.assert_called_once()
+
+    def test_request_logs_are_safe_and_distinguish_response_from_body(self):
+        """Untrusted URLs, headers, payloads and exception text never reach JSON logs."""
+        client = self.client()
+        client.csrf = "private-csrf"
+        failures = (
+            TimeoutError("private-timeout"),
+            urllib.error.URLError(TimeoutError("private-reason")),
+            urllib.error.HTTPError(
+                "https://private-url",
+                500,
+                "private-error",
+                {"private-header": "private-value"},
+                io.BytesIO(b"private-body"),
+            ),
+        )
+        for failure in failures:
+            client.opener = SimpleNamespace(open=Mock(side_effect=failure))
+            with (
+                self.assertLogs(m.LOGGER, level="INFO") as logs,
+                self.assertRaises(type(failure)),
+            ):
+                client.request(
+                    "/unreviewed?private-query", {"password": "private-password"}
+                )
+            event = json.loads(logs.records[0].getMessage())
+            self.assertEqual(event["stage"], "other")
+            self.assertEqual(event["phase"], "response")
+            self.assertEqual(event["outcome"], "failure")
+            self.assertNotIn("private", logs.output[0])
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.status = 200
+        response.headers = {"X-CSRF-Token": "private-new-csrf"}
+        response.read.return_value = b"private-invalid-json"
+        client.opener = SimpleNamespace(open=Mock(return_value=response))
+        with self.assertLogs(m.LOGGER, level="INFO") as logs, self.assertRaises(ValueError):
+            client.request(next(iter(m.READ_STAGES)))
+        event = json.loads(logs.records[0].getMessage())
+        self.assertEqual(event["phase"], "body_json")
+        self.assertEqual(event["error_kind"], "invalid_data")
+        self.assertEqual(event["http_status"], 200)
+        self.assertNotIn("private", logs.output[0])
+        response.__exit__.assert_called_once()
+
+    def test_stage_timing_uses_monotonic_clock_without_exception_text(self):
+        """Duration is independent of wall clock and errors use bounded categories."""
+        with (
+            patch.object(m.time, "monotonic", side_effect=[10, 10.125]),
+            self.assertLogs(m.LOGGER, level="INFO") as logs,
+            self.assertRaises(RuntimeError),
+            m.stage_event("certificate"),
+        ):
+            raise RuntimeError("private-certificate")
+        event = json.loads(logs.records[0].getMessage())
+        self.assertEqual(event["duration_seconds"], 0.125)
+        self.assertEqual(event["error_kind"], "internal")
+        self.assertNotIn("private", logs.output[0])
 
 
 class UniFiMetricsListenerTests(unittest.TestCase):

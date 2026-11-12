@@ -5,16 +5,29 @@ metadata:
   namespace: unifi
 data:
   exporter.py: "#!/usr/bin/env python3\n\"\"\"Read-only UniFi BGP telemetry. Credentials/cookies stay in process memory.\"\
-    \"\"\n\nimport http.cookiejar\nimport http.server\nimport json\nimport ipaddress\nimport os\nimport socket\nimport ssl\n\
-    import threading\nimport time\nimport urllib.error\nimport urllib.parse\nimport urllib.request\n\nPEERS = (\"192.168.30.100\"\
-    , \"192.168.30.209\", \"192.168.30.242\")\nPREFIXES = (\"192.168.30.210/32\", \"192.168.30.211/32\", \"192.168.30.213/32\"\
-    , \"192.168.30.212/32\")\n\n\ndef decode(neighbors, routes):\n    \"\"\"Produce explicit zeroes for missing expected peers/routes,\
-    \ not stale data.\"\"\"\n    if (\n        not isinstance(neighbors, list)\n        or not isinstance(routes, dict)\n\
-    \        or not isinstance(routes.get(\"items\"), list)\n    ):\n        raise ValueError(\"Invalid controller response\"\
-    )\n    peers = {}\n    for router in neighbors:\n        if router.get(\"vrf\") == \"default\":\n            for peer\
-    \ in router[\"neighbors\"]:\n                if peer[\"peer\"] in peers:\n                    raise ValueError(\"Duplicate\
-    \ neighbor\")\n                peers[peer[\"peer\"]] = peer\n    bgp = [r for r in routes[\"items\"] if r.get(\"origin\"\
-    ) == \"BGP\"]\n    violations = {\n        \"unexpected_peer\": len(set(peers) - set(PEERS)),\n        \"unexpected_prefix\"\
+    \"\"\n\nimport http.cookiejar\nimport http.server\nimport ipaddress\nimport json\nimport logging\nimport os\nimport socket\n\
+    import ssl\nimport threading\nimport time\nimport urllib.error\nimport urllib.parse\nimport urllib.request\nfrom contextlib\
+    \ import contextmanager\n\nPEERS = (\"192.168.30.100\", \"192.168.30.209\", \"192.168.30.242\")\nPREFIXES = (\"192.168.30.210/32\"\
+    , \"192.168.30.211/32\", \"192.168.30.213/32\", \"192.168.30.212/32\")\nLOGGER = logging.getLogger(\"unifi_bgp\")\nREAD_STAGES\
+    \ = {\n    \"/proxy/network/v2/api/site/default/bgp/neighbors\": \"neighbors\",\n    \"/proxy/network/v2/api/site/default/routes\"\
+    : \"routes\",\n}\n\n\ndef error_kind(error):\n    \"\"\"Classify failures without serializing exception text or transport\
+    \ details.\"\"\"\n    if isinstance(error, urllib.error.URLError) and not isinstance(\n        error, urllib.error.HTTPError\n\
+    \    ):\n        error = error.reason\n    if isinstance(error, TimeoutError):\n        return \"timeout\"\n    if isinstance(error,\
+    \ ssl.SSLError):\n        return \"tls\"\n    if isinstance(error, urllib.error.HTTPError):\n        return \"http\"\n\
+    \    if isinstance(error, OSError):\n        return \"network\"\n    if isinstance(error, (ValueError, KeyError, TypeError)):\n\
+    \        return \"invalid_data\"\n    return \"internal\"\n\n\n@contextmanager\ndef stage_event(stage, attempt=1):\n \
+    \   \"\"\"Log only fixed stage names, numeric timings/status and bounded error categories.\"\"\"\n    event = {\n    \
+    \    \"event\": \"unifi_bgp_stage\",\n        \"stage\": stage,\n        \"attempt\": attempt,\n        \"phase\": \"\
+    operation\",\n        \"outcome\": \"success\",\n    }\n    started = time.monotonic()\n    try:\n        yield event\n\
+    \    except Exception as error:\n        event.update(outcome=\"failure\", error_kind=error_kind(error))\n        raise\n\
+    \    finally:\n        event[\"duration_seconds\"] = round(time.monotonic() - started, 6)\n        LOGGER.info(\"%s\"\
+    , json.dumps(event, sort_keys=True))\n\n\ndef decode(neighbors, routes):\n    \"\"\"Produce explicit zeroes for missing\
+    \ expected peers/routes, not stale data.\"\"\"\n    if (\n        not isinstance(neighbors, list)\n        or not isinstance(routes,\
+    \ dict)\n        or not isinstance(routes.get(\"items\"), list)\n    ):\n        raise ValueError(\"Invalid controller\
+    \ response\")\n    peers = {}\n    for router in neighbors:\n        if router.get(\"vrf\") == \"default\":\n        \
+    \    for peer in router[\"neighbors\"]:\n                if peer[\"peer\"] in peers:\n                    raise ValueError(\"\
+    Duplicate neighbor\")\n                peers[peer[\"peer\"]] = peer\n    bgp = [r for r in routes[\"items\"] if r.get(\"\
+    origin\") == \"BGP\"]\n    violations = {\n        \"unexpected_peer\": len(set(peers) - set(PEERS)),\n        \"unexpected_prefix\"\
     : sum(r[\"destination\"] not in PREFIXES for r in bgp),\n        \"unexpected_next_hop\": sum(\n            n.get(\"gateway\"\
     ) not in PEERS\n            for r in bgp\n            if r[\"destination\"] in PREFIXES\n            for n in r[\"nexthops\"\
     ]\n            if n.get(\"in_use\")\n        ),\n        \"unexpected_remote_as\": sum(p[\"remote_as\"] != 65040 for p\
@@ -51,44 +64,54 @@ data:
     \ def __init__(self):\n        self.base = controller_url(os.environ[\"UNIFI_URL\"])\n        context = ssl.create_default_context()\n\
     \        self.context = context\n        self.opener = urllib.request.build_opener(\n            urllib.request.ProxyHandler({}),\n\
     \            NoRedirect(),\n            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),\n            urllib.request.HTTPSHandler(context=context),\n\
-    \        )\n        self.logged_in = False\n        self.csrf = \"\"\n\n    def request(self, path, data=None):\n    \
-    \    \"\"\"Send a JSON router request and retain an updated CSRF token in memory.\"\"\"\n        headers = {\n       \
-    \     \"Content-Type\": \"application/json\",\n            \"Accept\": \"application/json\",\n            \"User-Agent\"\
+    \        )\n        self.logged_in = False\n        self.csrf = \"\"\n\n    def request(self, path, data=None, attempt=1):\n\
+    \        \"\"\"Send a JSON router request and retain an updated CSRF token in memory.\"\"\"\n        headers = {\n   \
+    \         \"Content-Type\": \"application/json\",\n            \"Accept\": \"application/json\",\n            \"User-Agent\"\
     : \"home-k3s-unifi-bgp-exporter/1.0\",\n        }\n        if self.csrf:\n            headers[\"X-CSRF-Token\"] = self.csrf\n\
     \        req = urllib.request.Request(\n            self.base + path,\n            data=json.dumps(data).encode() if data\
-    \ is not None else None,\n            headers=headers,\n        )\n        try:\n            with self.opener.open(req,\
-    \ timeout=15) as response:\n                self.csrf = response.headers.get(\"X-CSRF-Token\", self.csrf)\n          \
-    \      return json.load(response)\n        except urllib.error.HTTPError as error:\n            error.close()\n      \
-    \      raise\n\n    def login(self):\n        \"\"\"Authenticate using environment-provided credentials and the in-memory\
-    \ cookie jar.\"\"\"\n        self.request(\n            \"/api/auth/login\",\n            {\"username\": os.environ[\"\
-    UNIFI_USERNAME\"], \"password\": os.environ[\"UNIFI_PASSWORD\"]},\n        )\n        self.logged_in = True\n\n    def\
-    \ get(self, path):\n        \"\"\"Read a router endpoint, renewing authentication once after a 401 or 403 response.\"\"\
-    \"\n        if not self.logged_in:\n            self.login()\n        try:\n            return self.request(path)\n  \
-    \      except urllib.error.HTTPError as error:\n            if error.code not in (401, 403):\n                raise\n\
-    \            self.logged_in = False\n            self.login()\n            return self.request(path)\n\n    def certificate_expiry(self):\n\
+    \ is not None else None,\n            headers=headers,\n        )\n        stage = \"login\" if path == \"/api/auth/login\"\
+    \ else READ_STAGES.get(path, \"other\")\n        with stage_event(stage, attempt) as event:\n            event[\"phase\"\
+    ] = \"response\"\n            try:\n                with self.opener.open(req, timeout=15) as response:\n            \
+    \        event[\"http_status\"] = response.status\n                    event[\"phase\"] = \"body_json\"\n            \
+    \        self.csrf = response.headers.get(\"X-CSRF-Token\", self.csrf)\n                    return json.load(response)\n\
+    \            except urllib.error.HTTPError as error:\n                event[\"http_status\"] = error.code\n          \
+    \      error.close()\n                raise\n\n    def login(self):\n        \"\"\"Authenticate using environment-provided\
+    \ credentials and the in-memory cookie jar.\"\"\"\n        self.request(\n            \"/api/auth/login\",\n         \
+    \   {\"username\": os.environ[\"UNIFI_USERNAME\"], \"password\": os.environ[\"UNIFI_PASSWORD\"]},\n        )\n       \
+    \ self.logged_in = True\n\n    def get(self, path):\n        \"\"\"Renew auth once; retry only reviewed GETs once after\
+    \ a timeout, never login.\"\"\"\n        if not self.logged_in:\n            self.login()\n        renewed = retried =\
+    \ False\n        for attempt in range(1, 4):\n            try:\n                return self.request(path, attempt=attempt)\n\
+    \            except urllib.error.HTTPError as error:\n                if error.code not in (401, 403) or renewed:\n  \
+    \                  raise\n                self.logged_in = False\n                self.login()\n                renewed\
+    \ = True\n            except (TimeoutError, urllib.error.URLError) as error:\n                if error_kind(error) !=\
+    \ \"timeout\" or retried or path not in READ_STAGES:\n                    raise\n                retried = True\n    \
+    \            time.sleep(1)\n        raise RuntimeError(\"Read attempt budget exhausted\")\n\n    def certificate_expiry(self):\n\
     \        \"\"\"Inspect the certificate actually served by the verified controller endpoint.\"\"\"\n        origin = urllib.parse.urlsplit(self.base)\n\
     \        with socket.create_connection((origin.hostname, origin.port or 443), timeout=15) as raw:\n            with self.context.wrap_socket(raw,\
     \ server_hostname=origin.hostname) as connection:\n                return ssl.cert_time_to_seconds(connection.getpeercert()[\"\
     notAfter\"])\n\n    def collect(self):\n        \"\"\"Read neighbor and route endpoints and decode their current BGP measurements.\"\
-    \"\"\n        base = \"/proxy/network/v2/api/site/default/\"\n        metrics = decode(self.get(base + \"bgp/neighbors\"\
-    ), self.get(base + \"routes\"))\n        metrics.append(\n            (\"unifi_bgp_tls_certificate_expiry_timestamp_seconds\"\
-    , {}, self.certificate_expiry())\n        )\n        return metrics\n\n\ndef metrics_address():\n    \"\"\"Bind the IPv4\
-    \ metrics server to loopback or an explicitly selected interface.\"\"\"\n    try:\n        address = ipaddress.ip_address(os.environ.get(\"\
-    UNIFI_METRICS_ADDRESS\", \"127.0.0.1\"))\n    except ValueError:\n        raise ValueError(\"UNIFI_METRICS_ADDRESS must\
-    \ be a specific IPv4 address\") from None\n    if address.version != 4 or address.is_unspecified:\n        raise ValueError(\"\
-    UNIFI_METRICS_ADDRESS must be a specific IPv4 address\")\n    return str(address)\n\n\ndef main():\n    \"\"\"Poll the\
-    \ router in a background thread and serve metrics and liveness responses.\"\"\"\n    listen_address = metrics_address()\n\
+    \"\"\n        base = \"/proxy/network/v2/api/site/default/\"\n        neighbors = self.get(base + \"bgp/neighbors\")\n\
+    \        routes = self.get(base + \"routes\")\n        with stage_event(\"decode\"):\n            metrics = decode(neighbors,\
+    \ routes)\n        with stage_event(\"certificate\"):\n            expiry = self.certificate_expiry()\n        metrics.append(\n\
+    \            (\"unifi_bgp_tls_certificate_expiry_timestamp_seconds\", {}, expiry)\n        )\n        return metrics\n\
+    \n\ndef metrics_address():\n    \"\"\"Bind the IPv4 metrics server to loopback or an explicitly selected interface.\"\"\
+    \"\n    try:\n        address = ipaddress.ip_address(os.environ.get(\"UNIFI_METRICS_ADDRESS\", \"127.0.0.1\"))\n    except\
+    \ ValueError:\n        raise ValueError(\"UNIFI_METRICS_ADDRESS must be a specific IPv4 address\") from None\n    if address.version\
+    \ != 4 or address.is_unspecified:\n        raise ValueError(\"UNIFI_METRICS_ADDRESS must be a specific IPv4 address\"\
+    )\n    return str(address)\n\n\ndef main():\n    \"\"\"Poll the router in a background thread and serve metrics and liveness\
+    \ responses.\"\"\"\n    logging.basicConfig(level=logging.INFO, format=\"%(message)s\")\n    listen_address = metrics_address()\n\
     \    controller = Controller()\n    lock = threading.Lock()\n    state = {\"body\": render([], False, 0)}\n\n    def poll():\n\
-    \        last_success = 0\n        while True:\n            try:\n                metrics = controller.collect()\n   \
-    \             collected_at = time.time()\n                body = render(metrics, True, collected_at)\n               \
-    \ last_success = collected_at\n            except Exception:\n                # Never log requests, response bodies, passwords\
-    \ or session cookies.\n                body = render([], False, last_success)\n            with lock:\n              \
-    \  state[\"body\"] = body\n            time.sleep(45)\n\n    class Handler(http.server.BaseHTTPRequestHandler):\n    \
-    \    \"\"\"Expose current BGP collection metrics over HTTP.\"\"\"\n\n        def do_get(self):\n            \"\"\"Serve\
-    \ the current metrics snapshot or liveness response, rejecting other paths.\"\"\"\n            if self.path not in (\"\
-    /metrics\", \"/healthz\"):\n                self.send_error(404)\n                return\n            with lock:\n   \
-    \             body = (state[\"body\"] if self.path == \"/metrics\" else \"ok\\n\").encode()\n            self.send_response(200)\n\
-    \            self.send_header(\"Content-Type\", \"text/plain; version=0.0.4\")\n            self.send_header(\"Content-Length\"\
-    , str(len(body)))\n            self.end_headers()\n            self.wfile.write(body)\n\n        do_GET = do_get\n\n \
-    \       def log_message(self, *_):\n            pass\n\n    threading.Thread(target=poll, daemon=True).start()\n    http.server.ThreadingHTTPServer((listen_address,\
-    \ 9131), Handler).serve_forever()\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    \        last_success = 0\n        while True:\n            try:\n                with stage_event(\"collection\"):\n\
+    \                    metrics = controller.collect()\n                    collected_at = time.time()\n                \
+    \    body = render(metrics, True, collected_at)\n                    last_success = collected_at\n            except Exception:\n\
+    \                # Never log requests, response bodies, passwords or session cookies.\n                body = render([],\
+    \ False, last_success)\n            with lock:\n                state[\"body\"] = body\n            time.sleep(45)\n\n\
+    \    class Handler(http.server.BaseHTTPRequestHandler):\n        \"\"\"Expose current BGP collection metrics over HTTP.\"\
+    \"\"\n\n        def do_get(self):\n            \"\"\"Serve the current metrics snapshot or liveness response, rejecting\
+    \ other paths.\"\"\"\n            if self.path not in (\"/metrics\", \"/healthz\"):\n                self.send_error(404)\n\
+    \                return\n            with lock:\n                body = (state[\"body\"] if self.path == \"/metrics\"\
+    \ else \"ok\\n\").encode()\n            self.send_response(200)\n            self.send_header(\"Content-Type\", \"text/plain;\
+    \ version=0.0.4\")\n            self.send_header(\"Content-Length\", str(len(body)))\n            self.end_headers()\n\
+    \            self.wfile.write(body)\n\n        do_GET = do_get\n\n        def log_message(self, *_):\n            pass\n\
+    \n    threading.Thread(target=poll, daemon=True).start()\n    http.server.ThreadingHTTPServer((listen_address, 9131),\
+    \ Handler).serve_forever()\n\n\nif __name__ == \"__main__\":\n    main()\n"

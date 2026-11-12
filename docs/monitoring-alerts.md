@@ -49,6 +49,21 @@ reads the neighbor and forwarding-table APIs every 45 seconds, exposes 9131,
 and is scraped as `unifi-bgp`. Both collectors verify the trusted identity
 `unifi.int.andreybondarenko.com`; credentials and cookies remain in memory and
 are never exported.
+Each attempt writes a structured JSON log with a fixed stage (`login`,
+`neighbors`, `routes`, `decode`, `certificate`, `collection`), attempt number,
+monotonic duration in seconds, outcome, and a bounded error category on failure.
+HTTP attempts also include a numeric status when received and the last phase:
+`response` covers connection/TLS and waiting for response headers; `body_json`
+covers reading and parsing the body. These logs deliberately omit URLs,
+credentials, cookies, headers, response bodies, exception text and tracebacks.
+Only the two reviewed GET endpoints retry a timeout, once after a one-second
+pause, keeping the existing 15-second socket timeout. Login POSTs, HTTP errors
+(including 500), certificate verification errors and invalid JSON are not retried
+on this basis. The existing one-time renewal after 401/403 remains separate;
+combined with a timeout retry this permits at most three GET attempts per endpoint.
+The next poll still starts 45 seconds after collection finishes. A recovered read
+contributes fresh data to the current collection; exhausted retries fail collection
+and remove route samples as before. Alert expressions and hold times are unchanged.
 Its security context is non-root, read-only-root, RuntimeDefault, drop-ALL, with
 32Mi requested/64Mi limited memory and no CPU limit. Metrics access is limited
 to monitoring; outbound access remains the existing controller HTTPS allowance.
