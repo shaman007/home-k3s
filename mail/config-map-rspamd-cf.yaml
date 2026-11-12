@@ -186,6 +186,16 @@ data:
   surbl: |
     enabled = true;
     whitelist = "/var/lib/rspamd/surbl-whitelist.inc.local";
+  external_relay: |
+    # Trust only our secondary MX, then evaluate SPF/RBL using the original
+    # client in the Received header added by that server. This is not a bypass.
+    enabled = true;
+    rules {
+      EXTERNAL_RELAY_BACKUP_MX {
+        strategy = "ip_map";
+        ip_map = ["157.180.125.24/32"];
+      }
+    }
   options: |
     # Keep Rspamd 4 content-derived URLs explicit so PDFs and other computed
     # parts participate in SURBL, phishing, and fuzzy-driven reputation checks.

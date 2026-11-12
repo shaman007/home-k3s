@@ -119,6 +119,12 @@ spec:
             items:
               - key: options
                 path: options.inc
+        - name: external-relay-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: external_relay
+                path: external_relay.conf
         - name: settings-cf
           configMap:
             name: rspamd-cf
@@ -231,6 +237,10 @@ spec:
             - name: options-cf
               mountPath: /etc/rspamd/local.d/options.inc
               subPath: options.inc
+            - name: external-relay-cf
+              mountPath: /etc/rspamd/local.d/external_relay.conf
+              subPath: external_relay.conf
+              readOnly: true
             - name: settings-cf
               mountPath: /etc/rspamd/local.d/settings.conf
               subPath: settings.conf
