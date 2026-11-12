@@ -3308,3 +3308,23 @@ Prometheus loopback without changing network policy. No credentials were output.
 CodeQL, Codacy, pre-commit and Validate Kubernetes workflows for 08aa3472 remain
 queued at this verification. Final scanner closure of 7615/7524 is not established.
 No agent push or additional live configuration mutation occurred.
+
+
+### Review final redirect-callback arity findings
+
+Reviewed alerts 8112 (PyLintPython3_R0913) and 8113 (PyLintPython3_R0917)
+on tools/monitoring/unifi_bgp_exporter.py, NoRedirect.redirect_request.
+Both report six callback arguments against the generic five-argument threshold.
+Independent standard-library signature inspection confirms the override exactly
+matches HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers,
+newurl). Its entire implementation returns None, rejecting authenticated redirects.
+The existing redirect-rejection regression passes with the full exporter suite
+(22 tests). Reducing or renaming required parameters would change the framework
+interface solely to satisfy a generic style threshold.
+
+Classify these exact two findings as false positives with the framework-contract
+explanation on each. Reopen if the method ceases to implement that callback, its
+signature diverges, or redirect rejection changes. No source behavior, scanner
+configuration, verification gate or TLS setting is weakened. Genuine TLS alerts
+7615 and 7524 were fixed by the verified-client implementation and real scanning,
+not dismissed. No agent push occurred.
