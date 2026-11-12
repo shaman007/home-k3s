@@ -96,6 +96,10 @@ class IngressClassSeparationTest(unittest.TestCase):
                         )
                         else "traefik"
                     )
+                    if path.relative_to(ROOT).as_posix() == "harbor/ingress-harbor-internal-registry.yaml":
+                        self.assertEqual("harbor-internal-registry", document["metadata"]["name"])
+                        self.assertEqual(["harbor.andreybondarenko.com"], hosts)
+                        expected = "traefik-registry"
                     self.assertEqual(expected, document["spec"].get("ingressClassName"), str(path))
                     self.assertNotIn(
                         "kubernetes.io/ingress.class",
