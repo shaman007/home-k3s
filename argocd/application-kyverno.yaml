@@ -102,6 +102,12 @@ spec:
           enabled: false
         cleanupController:
           enabled: false
+        upgrade:
+          legacyPolicyCheck:
+            podResources:
+              limits:
+                cpu: null
+                memory: 256Mi
         webhooksCleanup:
           resources:
             limits:
