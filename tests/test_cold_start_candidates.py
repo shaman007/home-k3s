@@ -182,6 +182,31 @@ class ColdStartCandidates(unittest.TestCase):
             spec["egress"],
         )
 
+    def test_connectivity_probe_only_reaches_internal_registry_backend(self):
+        """Keep the Harbor readiness probe working after internal DNS cutover."""
+        path = (
+            "connectivity-exporter/"
+            "network-policy-connectivity-exporter-allow-egress-internal-registry.yaml"
+        )
+        policy = yaml.safe_load((self.out / path).read_text())
+        self.assertEqual((ROOT / path).read_text(), (self.out / path).read_text())
+        self.assertEqual("connectivity-exporter", policy["metadata"]["namespace"])
+        self.assertEqual(
+            {"matchLabels": {"app": "connectivity-exporter"}}, policy["spec"]["podSelector"]
+        )
+        self.assertEqual(["Egress"], policy["spec"]["policyTypes"])
+        self.assertEqual(
+            [{"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "traefik"}},
+                      "podSelector": {"matchLabels": {"app.kubernetes.io/instance": "traefik-registry-traefik"}}}],
+              "ports": [{"protocol": "TCP", "port": 8443}]}],
+            policy["spec"]["egress"],
+        )
+        owner = yaml.safe_load(
+            (ROOT / "argocd/application-connectivity-exporter-network-policy.yaml").read_text()
+        )
+        patterns = owner["spec"]["source"]["directory"]["include"].strip("{}").split(",")
+        self.assertTrue(any(fnmatch.fnmatch(Path(path).name, p) for p in patterns))
+
     def test_http01_selfchecks_use_public_dns_for_split_registry_hostname(self):
         """Keep public HTTP-01 validation independent of the internal HTTPS-only VIP."""
         app = yaml.safe_load((ROOT / "argocd/application-cert-manager.yaml").read_text())

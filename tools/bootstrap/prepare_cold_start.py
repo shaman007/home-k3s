@@ -288,6 +288,11 @@ def harbor_candidates(root, vip):
     changes[node_policy] = (root / node_policy).read_text()
     builder_policy = "image-builder/network-policy-podman-builder-internal-registry.yaml"
     changes[builder_policy] = (root / builder_policy).read_text()
+    probe_policy = (
+        "connectivity-exporter/"
+        "network-policy-connectivity-exporter-allow-egress-internal-registry.yaml"
+    )
+    changes[probe_policy] = (root / probe_policy).read_text()
     ingress = yaml.safe_load((root / "harbor/ingress-andreybondarenko-ingress.yaml").read_text())
     ingress["metadata"]["name"] = "harbor-internal-registry"
     ingress["metadata"]["annotations"] = {

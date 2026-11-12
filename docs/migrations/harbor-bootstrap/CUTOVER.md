@@ -59,6 +59,22 @@ selective sync of this new CNP through `traefik-network-policy` if needed to add
 Argo tracking: a manually pre-created identical resource can otherwise appear
 Synced while remaining untracked. Do not suppress orphan monitoring to hide it.
 
+## Connectivity alert correction after publication
+
+`CriticalHTTPSProbeFailed` for Harbor began at the DNS cutover. The exporter
+resolved `.212`, but Hubble proved its egress policy denied the translated
+internal backend on TCP8443. This was a missing consumer allowance, not a Harbor
+TLS or service outage.
+
+`connectivity-exporter/network-policy-connectivity-exporter-allow-egress-internal-registry.yaml`
+selects only `app: connectivity-exporter` and permits only the registry-controller
+pod selector in namespace `traefik`, TCP8443. Existing DNS, web, default-deny and
+Prometheus-ingress rules remain unchanged. The live exporter HTTPS request then
+returned verified-TLS HTTP200 and its own `connectivity_status` became 1.
+The source is included by its existing network-policy Argo owner and by the
+cold-start candidate generator. Publish and selectively sync this additional
+policy through `connectivity-exporter-network-policy` to add tracking.
+
 ## Runtime validation
 
 - LAN/Wi-Fi HTTPS with the real hostname and normal DNS returns HTTP 200,
