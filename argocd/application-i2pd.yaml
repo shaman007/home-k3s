@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: i2pd
+  namespace: argocd
+spec:
+  project: applications
+  source:
+    repoURL: https://github.com/shaman007/home-k3s.git
+    path: i2pd
+    targetRevision: main
+    directory:
+      include: "*.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: i2pd
+  # Deliberately manual until network isolation passes runtime acceptance.
+  syncPolicy:
+    syncOptions:
+      - RespectIgnoreDifferences=true

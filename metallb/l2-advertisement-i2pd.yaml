@@ -1,0 +1,7 @@
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: i2pd-ipv6
+  namespace: metallb-system
+spec:
+  ipAddressPools: [i2pd-ipv6]

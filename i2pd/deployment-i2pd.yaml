@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: i2pd
+  namespace: i2pd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: i2pd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: i2pd
+    spec:
+      priorityClassName: homelab-standard
+      automountServiceAccountToken: false
+      dnsPolicy: None
+      dnsConfig:
+        # kube-dns Service is IPv4-only. Never fall back to it.
+        nameservers:
+          - 2606:4700:4700::1111
+          - 2606:4700:4700::1001
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: i2pd
+          image: docker.io/purplei2p/i2pd:release-3.0.0.1@sha256:f3ff7f0e501cc6baf383a5ca2a04659e0c9c8f8e9781e86aead2aa4decd27c9a
+          command: [/bin/sh, /etc/i2pd/start.sh]
+          env:
+            - name: POD_IPS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIPs
+          ports:
+            - name: http-proxy
+              containerPort: 4444
+            - name: socks-proxy
+              containerPort: 4447
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          # Exec avoids kubelet probing the primary IPv4 Pod address.
+          startupProbe:
+            exec:
+              command: [/bin/sh, -ec, "awk '$2 ~ /:115C$/ && $4 == \"0A\" {ok=1} END {exit !ok}' /proc/net/tcp6"]
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: [/bin/sh, -ec, "awk '$2 ~ /:115C$/ && $4 == \"0A\" {ok=1} END {exit !ok}' /proc/net/tcp6"]
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /etc/i2pd
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/i2pd
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: i2pd
+        - name: data
+          persistentVolumeClaim:
+            claimName: i2pd-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi

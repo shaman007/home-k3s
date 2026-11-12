@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: i2pd
+  namespace: i2pd
+  annotations:
+    metallb.io/address-pool: i2pd-ipv6
+    metallb.io/loadBalancerIPs: "2a02:e98:c0:181e::214"
+spec:
+  type: LoadBalancer
+  allocateLoadBalancerNodePorts: false
+  ipFamilyPolicy: SingleStack
+  ipFamilies: [IPv6]
+  externalTrafficPolicy: Local
+  loadBalancerSourceRanges:
+    - 2a02:e98:c0:181e::/64
+  selector:
+    app.kubernetes.io/name: i2pd
+  ports:
+    - name: http-proxy
+      port: 4444
+      targetPort: http-proxy
+    - name: socks-proxy
+      port: 4447
+      targetPort: socks-proxy

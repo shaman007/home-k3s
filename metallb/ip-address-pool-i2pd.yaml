@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: i2pd-ipv6
+  namespace: metallb-system
+spec:
+  autoAssign: false
+  addresses:
+    - 2a02:e98:c0:181e::214/128

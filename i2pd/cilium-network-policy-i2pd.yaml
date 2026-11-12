@@ -1,0 +1,39 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: i2pd-ipv6-only
+  namespace: i2pd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  # Cover all containers, including any future diagnostic pod in this namespace.
+  endpointSelector: {}
+  ingressDeny:
+    - fromCIDR: [0.0.0.0/0]
+  egressDeny:
+    - toCIDR: [0.0.0.0/0]
+  ingress:
+    - fromCIDR: ["2a02:e98:c0:181e::/64"]
+      toPorts:
+        - ports:
+            - port: "4444"
+              protocol: TCP
+            - port: "4447"
+              protocol: TCP
+  egress:
+    # NTCP2 peers and HTTPS reseeds. No IPv6 LAN, ULA or link-local destinations.
+    - toCIDRSet:
+        - cidr: "2000::/3"
+          except: ["2a02:e98:c0:181e::/64"]
+      toPorts:
+        - ports:
+            - port: "1"
+              endPort: 65535
+              protocol: TCP
+    - toCIDR: ["2606:4700:4700::1111/128", "2606:4700:4700::1001/128"]
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP

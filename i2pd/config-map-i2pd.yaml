@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: i2pd
+  namespace: i2pd
+data:
+  i2pd.conf: |
+    daemon = false
+    log = stdout
+    loglevel = warn
+    ipv4 = false
+    ipv6 = true
+    notransit = true
+    floodfill = false
+    bandwidth = 256
+    share = 0
+    certsdir = /i2pd_certificates
+    tunconf = /etc/i2pd/tunnels.conf
+    tunnelsdir = /etc/i2pd/tunnels.d
+    [ntcp2]
+    enabled = true
+    published = false
+    [ssu2]
+    enabled = false
+    [http]
+    enabled = false
+    [httpproxy]
+    enabled = true
+    port = 4444
+    outproxy =
+    [socksproxy]
+    enabled = true
+    port = 4447
+    outproxy.enabled = false
+    [sam]
+    enabled = false
+    [bob]
+    enabled = false
+    [i2cp]
+    enabled = false
+    [i2pcontrol]
+    enabled = false
+    [upnp]
+    enabled = false
+    [nettime]
+    enabled = false
+    [reseed]
+    verify = true
+  tunnels.conf: ""
+  start.sh: |
+    #!/bin/sh
+    set -eu
+    ipv6=
+    for candidate in $(printf '%s' "$POD_IPS" | tr ',' ' '); do
+      case "$candidate" in
+        fd74:67a:1fcf:42*:*) ipv6="$candidate" ;;
+      esac
+    done
+    test -n "$ipv6" || { echo 'Required cluster IPv6 address missing' >&2; exit 1; }
+    exec /usr/local/bin/i2pd --datadir=/var/lib/i2pd --conf=/etc/i2pd/i2pd.conf \
+      --address6="$ipv6" --httpproxy.address="$ipv6" --socksproxy.address="$ipv6"

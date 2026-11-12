@@ -31,6 +31,7 @@ PROJECT_APPLICATIONS = {
     "harbor-network-policy",
     "hister",
     "homeassistant",
+    "i2pd",
     "image-builder",
     "immich",
     "karakeep",
@@ -128,7 +129,8 @@ PROJECT_MEMBERS = {
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
-MANUAL_SYNC_APPLICATIONS = set()
+# Keep experimental I2P gated until runtime IPv4-denial acceptance passes.
+MANUAL_SYNC_APPLICATIONS = {"i2pd"}
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy",
