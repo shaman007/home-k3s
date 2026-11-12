@@ -1,0 +1,70 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: openbao-root-bootstrap
+  namespace: openbao
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-internal-root
+  namespace: openbao
+spec:
+  isCA: true
+  commonName: home-k8s OpenBao internal root
+  subject:
+    organizations:
+    - home-k8s
+  secretName: openbao-internal-root-ca
+  duration: 87600h
+  renewBefore: 8760h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Never
+  usages:
+  - cert sign
+  - crl sign
+  issuerRef:
+    kind: Issuer
+    name: openbao-root-bootstrap
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: openbao-internal-ca
+  namespace: openbao
+spec:
+  ca:
+    secretName: openbao-internal-root-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: openbao-internal-tls
+  namespace: openbao
+spec:
+  secretName: openbao-internal-tls
+  duration: 2160h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+  - server auth
+  dnsNames:
+  - openbao-api.int.andreybondarenko.com
+  - openbao.openbao.svc
+  - openbao.openbao.svc.cluster.local
+  - openbao-active.openbao.svc
+  - openbao-active.openbao.svc.cluster.local
+  - openbao-internal.openbao.svc
+  - openbao-internal.openbao.svc.cluster.local
+  - '*.openbao-internal.openbao.svc'
+  - '*.openbao-internal.openbao.svc.cluster.local'
+  issuerRef:
+    kind: Issuer
+    name: openbao-internal-ca

@@ -1,0 +1,3 @@
+# Public trust anchors required by the configuration tests; never private keys.
+!root-ca.pem
+!dual-trust.pem

@@ -1,4 +1,4 @@
----
+# Compatibility resource/Secret name retained for restart-free TLS migration.
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -6,9 +6,24 @@ metadata:
   namespace: openbao
 spec:
   secretName: openbao-server-letsencrypt-tls
+  duration: 2160h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+  - server auth
   dnsNames:
   - openbao-api.int.andreybondarenko.com
-  renewBefore: 720h
+  - openbao.openbao.svc
+  - openbao.openbao.svc.cluster.local
+  - openbao-active.openbao.svc
+  - openbao-active.openbao.svc.cluster.local
+  - openbao-internal.openbao.svc
+  - openbao-internal.openbao.svc.cluster.local
+  - '*.openbao-internal.openbao.svc'
+  - '*.openbao-internal.openbao.svc.cluster.local'
   issuerRef:
-    kind: ClusterIssuer
-    name: letsencrypt-internal-prod
+    kind: Issuer
+    name: openbao-internal-ca

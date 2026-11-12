@@ -70,6 +70,9 @@ spec:
             timeoutSeconds: 2
             failureThreshold: 3
           volumeMounts:
+            - name: openbao-internal-ca
+              mountPath: /etc/openbao-ca
+              readOnly: true
             - name: spotify-metrics-token
               mountPath: /etc/prometheus-spotify
               readOnly: true
@@ -181,6 +184,9 @@ spec:
             limits:
               memory: 32Mi
       volumes:
+        - name: openbao-internal-ca
+          configMap:
+            name: vault-ca
         - name: spotify-metrics-token
           secret:
             secretName: prometheus-spotify-metrics

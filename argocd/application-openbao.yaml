@@ -47,6 +47,7 @@ spec:
             annotations:
               traefik.ingress.kubernetes.io/service.serverstransport: openbao-openbao-server@kubernetescrd
           extraEnvironmentVars:
+            BAO_CACERT: /openbao/userconfig/openbao-server-letsencrypt-tls/ca.crt
             BAO_TLS_SERVER_NAME: openbao-api.int.andreybondarenko.com
           extraVolumes:
             - type: secret
@@ -112,8 +113,9 @@ spec:
                 storage "raft" {
                   path = "/openbao/data"
                   retry_join {
-                    leader_api_addr = "https://openbao-api.int.andreybondarenko.com:8200"
-                    leader_tls_servername = "openbao-api.int.andreybondarenko.com"
+                    leader_api_addr = "https://openbao-active.openbao.svc.cluster.local:8200"
+                    leader_tls_servername = "openbao-active.openbao.svc.cluster.local"
+                    leader_ca_cert_file = "/openbao/userconfig/openbao-server-letsencrypt-tls/ca.crt"
                   }
                 }
 

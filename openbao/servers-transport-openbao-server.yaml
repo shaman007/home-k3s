@@ -10,3 +10,5 @@ metadata:
     app.kubernetes.io/managed-by: argoCD
 spec:
   serverName: openbao-api.int.andreybondarenko.com
+  rootCAsSecrets:
+  - openbao-backend-trust

@@ -15,7 +15,7 @@ def load_yaml(path: str):
 
 
 class OpenBaoMigrationTest(unittest.TestCase):
-    """Verify the pinned OpenBao deployment, public trust, and migration integration."""
+    """Verify OpenBao internal trust, public ingress, and migration integration."""
     def test_openbao_release_is_pinned_and_ha_configured(self):
         """Verify OpenBao release is pinned and ha configured."""
         application = load_yaml("argocd/application-openbao.yaml")
@@ -42,7 +42,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
             values["server"]["ha"]["apiAddr"],
         )
         self.assertIn(
-            'leader_api_addr = "https://openbao-api.int.andreybondarenko.com:8200"',
+            'leader_api_addr = "https://openbao-active.openbao.svc.cluster.local:8200"',
             values["server"]["ha"]["raft"]["config"],
         )
         self.assertNotIn(
@@ -55,13 +55,14 @@ class OpenBaoMigrationTest(unittest.TestCase):
         )
         self.assertFalse(values["snapshotAgent"]["enabled"])
 
-    def test_backend_uses_public_certificates_without_private_trust(self):
-        """Verify backend uses public certificates without private trust."""
+    def test_backend_uses_independent_ca_with_hot_reload(self):
+        """Backend issuance must not depend on ACME or secrets inside OpenBao."""
         values = yaml.safe_load(
             load_yaml("argocd/application-openbao.yaml")["spec"]["source"]["helm"]["values"]
         )
         server = values["server"]
-        self.assertNotIn("BAO_CACERT", server["extraEnvironmentVars"])
+        self.assertEqual('/openbao/userconfig/openbao-server-letsencrypt-tls/ca.crt',
+                         server['extraEnvironmentVars']['BAO_CACERT'])
         self.assertEqual(
             "openbao-api.int.andreybondarenko.com",
             server["extraEnvironmentVars"]["BAO_TLS_SERVER_NAME"],
@@ -70,13 +71,23 @@ class OpenBaoMigrationTest(unittest.TestCase):
             [{"type": "secret", "name": "openbao-server-letsencrypt-tls"}], server["extraVolumes"]
         )
         config = server["ha"]["raft"]["config"]
-        self.assertNotIn("leader_ca_cert_file", config)
+        self.assertIn('leader_ca_cert_file = "/openbao/userconfig/openbao-server-letsencrypt-tls/ca.crt"', config)
         self.assertNotIn("/openbao-server-tls/", config)
         self.assertEqual(2, config.count("tls_auto_reload = true"))
         self.assertIn('cluster_address = "[::]:8201"', config)
         transport = load_yaml("openbao/servers-transport-openbao-server.yaml")["spec"]
         self.assertEqual("openbao-api.int.andreybondarenko.com", transport["serverName"])
-        self.assertNotIn("rootCAs", transport)
+        self.assertEqual(['openbao-backend-trust'], transport['rootCAsSecrets'])
+        self.assertNotIn('insecureSkipVerify', transport)
+        certificate = load_yaml('openbao/certificate-openbao-server-letsencrypt-tls.yaml')
+        self.assertEqual({'kind': 'Issuer', 'name': 'openbao-internal-ca'}, certificate['spec']['issuerRef'])
+        self.assertIn('openbao-active.openbao.svc.cluster.local', certificate['spec']['dnsNames'])
+        self.assertIn('openbao-api.int.andreybondarenko.com', certificate['spec']['dnsNames'])
+        pki = list(yaml.safe_load_all((ROOT / 'openbao/internal-pki.yaml').read_text()))
+        ca = next(x for x in pki if x['kind'] == 'Issuer' and x['metadata']['name'] == 'openbao-internal-ca')
+        self.assertEqual({'secretName': 'openbao-internal-root-ca'}, ca['spec']['ca'])
+        root = next(x for x in pki if x['kind'] == 'Certificate' and x['spec'].get('isCA'))
+        self.assertEqual('openbao-root-bootstrap', root['spec']['issuerRef']['name'])
         self.assertTrue(load_yaml("openbao/cron-job-vault-pki-renewer.yaml")["spec"]["suspend"])
 
     def test_ingress_bridge_uses_public_sni_transport(self):
@@ -228,8 +239,17 @@ class OpenBaoMigrationTest(unittest.TestCase):
             source = path.read_text(encoding="utf-8")
             if "provider:" in source and "vault:" in source:
                 with self.subTest(path=path.relative_to(ROOT)):
-                    self.assertIn("https://openbao-api.int.andreybondarenko.com:8200", source)
-                    self.assertNotIn("caBundle:", source)
+                    self.assertIn("https://openbao-active.openbao.svc.cluster.local:8200", source)
+                    self.assertIn("caBundle:", source)
+                    import base64
+                    for obj in yaml.safe_load_all(source):
+                        if not isinstance(obj, dict) or obj.get('kind') not in ('SecretStore', 'ClusterSecretStore'):
+                            continue
+                        vault = obj['spec']['provider']['vault']
+                        bundle = base64.b64decode(vault['caBundle']).decode()
+                        root_ca = (ROOT / 'docs/migrations/openbao-internal-tls/root-ca.pem').read_text()
+                        self.assertIn(root_ca.strip(), bundle)
+                        self.assertNotIn('PRIVATE KEY', bundle)
                     self.assertNotIn("caProvider:", source)
                     self.assertNotIn("https://vault.vault.svc:8200", source)
 
