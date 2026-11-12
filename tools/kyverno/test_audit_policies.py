@@ -333,6 +333,8 @@ def identity_cases(case, entry, positive):
 
 def repair_containers(changed, policy):
     """Restore only the policy-specific compliant fields on existing containers."""
+    if policy == "require-run-as-nonroot":
+        changed["spec"].setdefault("securityContext", {}).update(runAsUser=1000, runAsNonRoot=True)
     for c in changed["spec"].get("containers", []) + changed["spec"].get("initContainers", []):
         sc = c.setdefault("securityContext", {})
         if policy == "require-run-as-nonroot":

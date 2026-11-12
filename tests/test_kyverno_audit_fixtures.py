@@ -22,6 +22,31 @@ spec.loader.exec_module(audit)
 class AuditFixtureTests(unittest.TestCase):
     """Preserve policy assertions and applicable exceptions across generated test shards."""
 
+    def test_nonroot_repair_clears_pod_root_declaration(self):
+        """A repaired speaker must satisfy pod and container nonroot requirements."""
+        resource = {
+            "spec": {
+                "securityContext": {
+                    "runAsNonRoot": False,
+                    "runAsUser": 0,
+                    "seccompProfile": {"type": "RuntimeDefault"},
+                },
+                "containers": [
+                    {"name": "speaker", "securityContext": {"runAsNonRoot": False, "runAsUser": 0}}
+                ],
+            }
+        }
+        audit.repair_containers(resource, "require-run-as-nonroot")
+        for context in (
+            resource["spec"]["securityContext"],
+            resource["spec"]["containers"][0]["securityContext"],
+        ):
+            self.assertTrue(context["runAsNonRoot"])
+            self.assertEqual(context["runAsUser"], 1000)
+        self.assertEqual(
+            resource["spec"]["securityContext"]["seccompProfile"], {"type": "RuntimeDefault"}
+        )
+
     def test_admission_normalization_does_not_touch_other_workloads(self):
         """Verify admission normalization does not touch other workloads."""
 
