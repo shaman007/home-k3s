@@ -110,6 +110,8 @@ runtime connectivity, successful secret refresh, or application functionality.
 
 ## Operations and runbooks
 
+- [Verifiable read-only procedures](docs/operational-procedures.md) for Argo CD,
+  backup freshness and maintenance baselines, with JSON evidence and exit codes.
 - [Upgrade checks](docs/upgrade-playbook.md) and
   [Talos etcd backups](docs/talos-etcd-backup.md).
 - [Longhorn rollout safety](docs/longhorn-rollout-safety.md) and
