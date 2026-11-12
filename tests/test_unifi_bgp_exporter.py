@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import re
+import secrets
 import unittest
 import urllib.error
 from pathlib import Path
@@ -428,6 +429,7 @@ class UniFiRequestDiagnosticsTests(unittest.TestCase):
         """Untrusted URLs, headers, payloads and exception text never reach JSON logs."""
         client = self.client()
         client.csrf = "private-csrf"
+        sensitive_payload = {"password": secrets.token_urlsafe(24)}
         failures = (
             TimeoutError("private-timeout"),
             urllib.error.URLError(TimeoutError("private-reason")),
@@ -446,13 +448,14 @@ class UniFiRequestDiagnosticsTests(unittest.TestCase):
                 self.assertRaises(type(failure)),
             ):
                 client.request(
-                    "/unreviewed?private-query", {"password": "private-password"}
+                    "/unreviewed?private-query", sensitive_payload
                 )
             event = json.loads(logs.records[0].getMessage())
             self.assertEqual(event["stage"], "other")
             self.assertEqual(event["phase"], "response")
             self.assertEqual(event["outcome"], "failure")
             self.assertNotIn("private", logs.output[0])
+            self.assertNotIn(sensitive_payload["password"], logs.output[0])
         response = MagicMock()
         response.__enter__.return_value = response
         response.status = 200

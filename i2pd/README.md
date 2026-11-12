@@ -19,6 +19,30 @@ Upstream image is pinned by manifest digest, resolved with `skopeo inspect`.
   it does not create an addressless-IPv4 network namespace. If absence of an IPv4
   assignment or a dedicated outbound /128 is required, do not deploy this design.
 
+## Browser access
+
+Use a separate Firefox profile for I2P experiments. Open Settings, search for
+"proxy", open connection/proxy settings and select manual configuration:
+
+- HTTP proxy host: `2a02:e98:c0:181e::214` (no scheme); port: `4444`.
+- Enable "Also use this proxy for HTTPS". Leave the SOCKS field empty when using
+  this HTTP configuration.
+- Open `http://reg.i2p/` or `http://stats.i2p/` to test. Initial requests can take
+  time while I2P tunnels are built.
+
+Alternatively, clear the HTTP/HTTPS fields, set SOCKS host to the same IPv6 and
+port `4447`, choose SOCKS v5 and enable proxy DNS/name resolution for SOCKS v5.
+Use `reg.i2p` for that test; `stats.i2p` returned an upstream inproxy rejection
+with the tested SOCKS client.
+
+The client must be on the allowed Infrastructure IPv6 /64; untrusted Wi-Fi is
+blocked. Ordinary Internet sites will not work through this proxy because no
+outproxy is configured. Switch the profile back to its previous proxy setting
+when finished. This is a browser connection setup, not an anonymity-hardened
+browser configuration.
+
+See [Mozilla's connection settings guide](https://support.mozilla.org/en-US/kb/connection-settings-firefox).
+
 ## Isolation and client behavior
 
 `ipv4=false`, exact Pod IPv6 listener binding, an IPv6-only Service with no
