@@ -10,10 +10,25 @@ spec:
   endpointSelector: {}
   ingressDeny:
     - fromCIDR: [0.0.0.0/0]
+    # Override Cilium's implicit allow-localhost ingress as well.
+    - fromEntities: [host, remote-node, kube-apiserver]
   egressDeny:
     - toCIDR: [0.0.0.0/0]
+    - toEntities: [host, remote-node, kube-apiserver]
   ingress:
     - fromCIDR: ["2a02:e98:c0:181e::/64"]
+      toPorts:
+        - ports:
+            - port: "4444"
+              protocol: TCP
+            - port: "4447"
+              protocol: TCP
+    # Cross-node forwarding retains world-ipv6 identity after IPv6 SNAT.
+    # The Service filters the ORIGINAL client /64 before forwarding.
+    # Keep this family-specific: never use the dual-stack "world" entity.
+    - fromEndpoints:
+        - matchLabels:
+            reserved:world-ipv6: ""
       toPorts:
         - ports:
             - port: "4444"

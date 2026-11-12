@@ -39,6 +39,12 @@ class I2pdIsolationTest(unittest.TestCase):
         self.assertIn({'fromCIDR': ['0.0.0.0/0']}, spec['ingressDeny'])
         self.assertIn({'toCIDR': ['0.0.0.0/0']}, spec['egressDeny'])
         self.assertEqual(spec['ingress'][0]['fromCIDR'], ['2a02:e98:c0:181e::/64'])
+        self.assertIn({'fromEntities': ['host', 'remote-node', 'kube-apiserver']}, spec['ingressDeny'])
+        self.assertIn({'toEntities': ['host', 'remote-node', 'kube-apiserver']}, spec['egressDeny'])
+        self.assertEqual(spec['ingress'][1]['fromEndpoints'],
+                         [{'matchLabels': {'reserved:world-ipv6': ''}}])
+        self.assertEqual(spec['ingress'][1]['toPorts'], spec['ingress'][0]['toPorts'])
+        self.assertEqual(len(spec['ingress']), 2)
         for rule in spec['egress']:
             self.assertLessEqual(set(rule), {'toCIDR', 'toCIDRSet', 'toPorts'})
             networks = rule.get('toCIDR', []) + [x['cidr'] for x in rule.get('toCIDRSet', [])]
@@ -51,7 +57,9 @@ class I2pdIsolationTest(unittest.TestCase):
         self.assertEqual(svc['ipFamilies'], ['IPv6'])
         self.assertEqual(svc['ipFamilyPolicy'], 'SingleStack')
         self.assertFalse(svc['allocateLoadBalancerNodePorts'])
-        self.assertEqual(svc['externalTrafficPolicy'], 'Local')
+        self.assertEqual(svc['externalTrafficPolicy'], 'Cluster')
+        self.assertEqual(svc['loadBalancerClass'], 'metallb-l2')
+        self.assertNotIn('healthCheckNodePort', svc)
         self.assertEqual(svc['loadBalancerSourceRanges'], ['2a02:e98:c0:181e::/64'])
         self.assertEqual({p['port'] for p in svc['ports']}, {4444, 4447})
         self.assertTrue(all('nodePort' not in p for p in svc['ports']))

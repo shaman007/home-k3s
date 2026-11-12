@@ -8,10 +8,11 @@ metadata:
     metallb.io/loadBalancerIPs: "2a02:e98:c0:181e::214"
 spec:
   type: LoadBalancer
+  loadBalancerClass: metallb-l2
   allocateLoadBalancerNodePorts: false
   ipFamilyPolicy: SingleStack
   ipFamilies: [IPv6]
-  externalTrafficPolicy: Local
+  externalTrafficPolicy: Cluster
   loadBalancerSourceRanges:
     - 2a02:e98:c0:181e::/64
   selector:

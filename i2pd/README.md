@@ -1,6 +1,8 @@
 # Experimental IPv6 I2P client proxy
 
-Prepared for manual GitOps deployment; no runtime acceptance has been performed.
+Deployed and runtime-tested on 2026-11-12. The Argo application stays manual.
+The final Service/policy fixes are local and live; publish them before any Argo
+sync. The published initial version does not contain the working configuration.
 Upstream image is pinned by manifest digest, resolved with `skopeo inspect`.
 
 - HTTP: `http://[2a02:e98:c0:181e::214]:4444`
@@ -21,8 +23,23 @@ Upstream image is pinned by manifest digest, resolved with `skopeo inspect`.
 
 `ipv4=false`, exact Pod IPv6 listener binding, an IPv6-only Service with no
 allocated NodePorts, and namespace-wide Cilium IPv4 ingress/egress deny work
-at separate layers. Cilium deny overrides additive allow policies. No host
+at separate layers. Explicit host/remote-node/kube-apiserver entity denies also
+close Cilium's implicit host-ingress exception; CIDR denies alone do not cover
+all node and pod identities. Cluster-pod IPv4 traffic is default-denied. Cilium
+deny overrides additive allow policies. No host
 network, host ports, privileges, capabilities or API token are used.
+
+The Service uses `loadBalancerClass: metallb-l2`; the installed controller ignores
+unclassified Services. `externalTrafficPolicy: Cluster` avoids the health-check
+NodePort that Kubernetes allocates for `Local`, even with ordinary NodePorts
+disabled. Cross-node IPv6 SNAT preserves the `reserved:world-ipv6` identity;
+matching only the visible router /128 does not admit that traffic. The policy
+therefore admits that exact reserved identity only to 4444/4447. The Service's
+BPF `loadBalancerSourceRanges` map filters the **original client** before SNAT;
+this is the client /64 access boundary for the VIP. Do not replace the identity
+selector with dual-stack `world`, remove the Service source ranges, or expose
+or route the Pod ULA directly outside the cluster. Direct Pod access from
+external IPv6 identities does not have the Service's source-range filter.
 
 Cluster DNS currently has only an IPv4 Service. This pod uses only the two
 explicit Cloudflare IPv6 DNS resolvers, with no cluster search list. Resolving
@@ -53,8 +70,8 @@ Upstream references:
 
 Publish through the owner's permitted Git workflow. Reconcile namespace/project
 and MetalLB pool/advertisement before manually syncing the `i2pd` Application.
-The policy has an earlier sync wave than the workload. Do not enable automatic
-sync or use the proxy until acceptance passes. Schema validation and readiness
+The policy has an earlier sync wave than the workload. Keep automatic sync disabled. Runtime acceptance below passed; publish the final
+Service/policy fixes before performing a manual sync. Schema validation and readiness
 only establish configuration/listener health, not I2P tunnel readiness or policy
 enforcement. Historical restored Cilium endpoints have failed enforcement, so
 policy existence alone is insufficient evidence.
@@ -80,7 +97,7 @@ Acceptance must cover:
 
    ```sh
    curl --noproxy '' --max-time 180 --proxy 'http://[2a02:e98:c0:181e::214]:4444' http://stats.i2p/
-   curl --noproxy '' --max-time 180 --proxy 'socks5h://[2a02:e98:c0:181e::214]:4447' http://stats.i2p/
+   curl --noproxy '' --max-time 180 --proxy 'socks5h://[2a02:e98:c0:181e::214]:4447' http://reg.i2p/
    ```
 
 4. Try each proxy port on the **Pod IPv4 and each node IPv4** from a routed LAN
@@ -103,3 +120,38 @@ Acceptance must cover:
 Stop the experiment if any IPv4 flow succeeds; do not relax the deny to repair
 bootstrap. Retain the PVC when disabling/removing the workload. Any live sync,
 scale-down or network/router change needs its own applicable authorization.
+
+## Verified live outcome — 2026-11-12
+
+- Pod running/ready on talos-d4h-k5m. IPv6-only Service/EndpointSlice and two
+  exact Pod IPv6 listeners; `/proc/net/tcp` has no IPv4 sockets. No proxy NodePorts
+  or health-check NodePort remain. Node IPv4 addresses do not answer on
+  4444/4447 or the retired health-check port.
+- HTTP proxy: `stats.i2p` returned 200 and the expected statistics landing page.
+  SOCKS5 with remote resolution: `reg.i2p` returned 200 and the Registry page
+  (19,351 bytes). `stats.i2p` rejected the SOCKS request with its upstream 403
+  inproxy check; that response was not treated as a successful content check.
+- External trace observed source `2a02:e98:c0:181e:32c5:99ff:fea9:5f84`, in our
+  Infrastructure /64. The trace was a diagnostic request using the existing
+  BusyBox TLS client's no-check-certificate option because its CA trust failed;
+  it was not a certificate validation test. Live TCP sockets show IPv6 I2P peers.
+- IPv6 DNS succeeded. Forced IPv4 public TCP, IPv4 DNS/UDP, own-node/API and
+  cluster-pod connections failed with Cilium policy-drop evidence. IPv4-mapped
+  IPv6 (`::ffff:1.1.1.1`) also produced IPv4 deny events.
+- Incoming IPv4 to both proxy ports from the same node, another node and an
+  ordinary temporary pod failed with destination Cilium policy-drop evidence.
+  The ordinary test pod reached public IPv4 successfully as a positive control.
+  The temporary pod was removed after testing.
+- Wi-Fi IPv6 (untrusted /64) could not reach the proxy. The allowed /64 is present
+  for both proxy frontends in Cilium's BPF source-range maps. No independent WAN
+  client was available; WAN rejection was not separately exercised.
+- HTTP clearnet request returned 502 with no outproxy; SOCKS rejected a literal
+  public IPv4 destination. No server tunnels, outproxy, transit or floodfill are
+  configured. The web console remains disabled.
+- Cilium reports realized policy enforcement `both`, valid policy and explicit
+  IPv4/node denies. These tests establish observed enforcement on this rollout;
+  recheck it after changes or endpoint restore, rather than relying on object
+  existence. Internal Pod IPv4 allocation still exists by cluster design.
+- Argo reports Healthy/OutOfSync: resources were created directly under explicit
+  user authorization and the final Service/policy corrections are unpublished.
+  Do not sync the old published manifests over this working deployment.
