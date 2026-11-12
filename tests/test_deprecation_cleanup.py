@@ -93,57 +93,6 @@ class DeprecationCleanupTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertFalse(blocked("example.com", path, "203.0.113.1"))
 
-    def test_plex_preserves_nodeport_and_https_endpoints(self):
-        """Verify Plex preserves NodePort and HTTPS endpoints."""
-        service = document("plex/service-plex.yaml")["spec"]
-        self.assertEqual("NodePort", service["type"])
-        self.assertNotIn("externalIPs", service)
-        self.assertEqual({"app": "plex"}, service["selector"])
-        ports = {p["name"]: (p["port"], p.get("protocol", "TCP")) for p in service["ports"]}
-        self.assertEqual(
-            {
-                "plex": (32400, "TCP"),
-                "dlna": (1900, "UDP"),
-                "avahi": (5353, "UDP"),
-                "companion": (8324, "TCP"),
-                "gdm1": (32410, "UDP"),
-                "gdm2": (32412, "UDP"),
-                "gdm3": (32413, "UDP"),
-                "gdm4": (32414, "UDP"),
-                "dlna2": (32469, "TCP"),
-            },
-            ports,
-        )
-        self.assertEqual(
-            32355, next(p["nodePort"] for p in service["ports"] if p["name"] == "plex")
-        )
-        deployment = document("plex/deployment-plex.yaml")
-        container = deployment["spec"]["template"]["spec"]["containers"][0]
-        advertise = next(e["value"] for e in container["env"] if e["name"] == "ADVERTISE_IP")
-        self.assertEqual(
-            {"http://192.168.30.209:32355/", "https://plex.andreybondarenko.com:443/"},
-            set(advertise.split(",")),
-        )
-        ingress = document("plex/ingress-andreybondarenko-ingress.yaml")
-        rule = ingress["spec"]["rules"][0]
-        self.assertEqual("plex.andreybondarenko.com", rule["host"])
-        self.assertEqual(
-            {"name": "plex", "port": {"number": 32400}},
-            rule["http"]["paths"][0]["backend"]["service"],
-        )
-
-    def test_backup_address_is_requested_from_the_existing_metallb_pool(self):
-        """Verify backup address is requested from the existing MetalLB pool."""
-        service = document("backup-rsync/service-backup-rsync.yaml")
-        address = service["metadata"]["annotations"]["metallb.io/loadBalancerIPs"]
-        self.assertEqual("192.168.30.213", address)
-        self.assertEqual("metallb-l2", service["spec"]["loadBalancerClass"])
-        self.assertNotIn("loadBalancerIP", service["spec"])
-        pool = document("metallb/ip-address-pool-public-ingress.yaml")
-        self.assertTrue(
-            any(ip_address(address) in ip_network(cidr) for cidr in pool["spec"]["addresses"])
-        )
-
     def test_runtime_contract_rejects_deprecated_service_fields(self):
         """Verify runtime contract rejects deprecated service fields."""
         for field, value in [("externalIPs", ["192.0.2.1"]), ("loadBalancerIP", "192.0.2.1")]:

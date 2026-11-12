@@ -214,37 +214,6 @@ class CertManagerMigrationTest(unittest.TestCase):
         "ollama/ingress-ollama-ingress-letsencrypt.yaml",
     )
 
-    def test_year_uses_the_production_certificate(self):
-        """Verify year uses the production certificate."""
-        production_certificate = load_yaml("year/certificate-year-tls.yaml")
-        ingress = load_yaml("year/ingress-year.yaml")
-        application = load_yaml("argocd/application-year.yaml")
-
-        self.assertFalse(
-            (ROOT / "year/certificate-year-tls-staging.yaml").exists()
-        )
-        self.assertEqual(production_certificate["metadata"]["namespace"], "year")
-        self.assertEqual(production_certificate["spec"], {
-            "secretName": "year-tls",
-            "dnsNames": ["year.andreybondarenko.com"],
-            "issuerRef": {
-                "group": "cert-manager.io",
-                "kind": "ClusterIssuer",
-                "name": "letsencrypt-prod",
-            },
-        })
-        self.assertNotIn(
-            "traefik.ingress.kubernetes.io/router.tls.certresolver",
-            ingress["metadata"]["annotations"],
-        )
-        self.assertEqual(ingress["spec"]["tls"], [{
-            "hosts": ["year.andreybondarenko.com"],
-            "secretName": "year-tls",
-        }])
-        self.assertTrue(
-            application["spec"]["syncPolicy"]["automated"]["prune"]
-        )
-
     def test_routes_have_production_certificates(self):
         """Verify routes have production certificates."""
         issuer_ref = {
@@ -393,12 +362,6 @@ class CertManagerMigrationTest(unittest.TestCase):
                     "-2",
                 )
                 self.assertEqual(policy["spec"]["ingress"][0]["from"], expected_from)
-
-    def test_mastodon_application_includes_certificates(self):
-        """Verify Mastodon application includes certificates."""
-        application = load_yaml("argocd/application-mastodon-custom.yaml")
-        include = application["spec"]["source"]["directory"]["include"]
-        self.assertIn("certificate-*.yaml", include)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,39 @@ rendering with `tools/ci/check_container_resources.py`. Namespace LimitRanges
 are considered for admission defaults. See [container resource policy](container-resources.md)
 for operator-generated pods, sizing evidence and rollout requirements.
 
+## Test retention
+
+Keep tests for reusable tool behavior, failure handling, credential boundaries,
+data preservation, and ongoing deployment or security contracts. A migration
+test remains useful while its migration helper or compatibility path remains
+executable. Review assertions individually rather than deleting files because
+their names contain `migration`, `bootstrap`, `backfill`, or `cleanup`.
+
+Retire completed installation and cutover checklists that only freeze a chart
+version, inventory, old filename or retired endpoint. Rendering and schema
+validation cover manifest validity; they do not prove connectivity, certificate
+renewal, persistence or network isolation. Retain tests for those contracts.
+New tests should describe the lasting failure they prevent. Temporary rollout
+checks belong with the migration runbook and should have a retirement condition.
+
+The November 2026 review retired ten assertions:
+
+| Retired check | Reason | Retained coverage or limitation |
+| --- | --- | --- |
+| Metrics-server installation snapshot (three tests) | Froze chart version 3.14.0, installation wiring and policy text | Application rendering and schema validation remain; kubelet connectivity requires runtime verification |
+| OpenSearch staged application presence | Completed staging checklist | Mastodon search configuration and OpenSearch network/security checks remain |
+| Old k3s API endpoint blacklist | Historical address-specific migration check | Current API network coverage remains |
+| Plex endpoints and backup-rsync address snapshots | Froze values selected during deprecated Service field cleanup | Deprecated-field validator and its negative tests remain; exact endpoint inventories are no longer frozen |
+| Year certificate cutover and Mastodon certificate include | Completed application-specific cutover checklist | Shared certificate/route contracts and application rendering remain |
+| Legacy mail exporter file absence | Completed deletion checklist | Mail certificate mounts, renewal reload wiring and Traefik privilege checks remain |
+
+The remaining suite includes behavioral tests for CI/rendering, reports,
+exporters, HTTP transports, probes, media caching and reconciliation tools, plus
+ongoing manifest contracts for security, ingress, networking, certificates and
+storage. Snapshot sanitization tests remain because they also guard against
+retaining credentials. Policy fixture generators and their positive/negative
+cases remain part of the separate rendered-policy validation path.
+
 ## Kyverno CEL audit tests
 
 The audit fixture generator still checks the complete rendered policy inventory

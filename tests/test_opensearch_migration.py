@@ -16,17 +16,6 @@ def documents(path: Path):
 
 class OpenSearchMigrationTest(unittest.TestCase):
     """Check staged search cutover, internal connectivity, and network isolation."""
-    def test_opensearch_application_is_present_for_staged_cutover(self):
-        """Verify opensearch application is present for staged cutover."""
-        application = yaml.safe_load(
-            (ROOT / "argocd/application-opensearch.yaml").read_text(
-                encoding="utf-8"
-            )
-        )
-
-        self.assertEqual("opensearch", application["metadata"]["name"])
-        self.assertEqual("opensearch", application["spec"]["source"]["path"])
-
     def test_mastodon_uses_internal_opensearch_without_credentials(self):
         """Verify Mastodon uses internal opensearch without credentials."""
         values = yaml.safe_load(

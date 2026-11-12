@@ -15,7 +15,7 @@ def load_yaml(path: str) -> dict:
 
 
 class MailCertificateSyncTest(unittest.TestCase):
-    """Check mail certificate renewal integration and retirement of the legacy exporter."""
+    """Check mail certificate renewal integration and Traefik privilege boundaries."""
     def test_cert_manager_transition_releases_http01_from_traefik(self):
         """Verify cert manager transition releases http01 from Traefik."""
         application = load_yaml("argocd/application-cert-manager.yaml")
@@ -66,20 +66,6 @@ class MailCertificateSyncTest(unittest.TestCase):
                     deployment["metadata"]["annotations"]["secret.reloader.stakater.com/reload"],
                     "mail-tls",
                 )
-
-    def test_legacy_exporter_is_retired(self):
-        """Verify legacy exporter is retired."""
-        for path in (
-            "argocd/application-traefik-acme-exporter.yaml",
-            "traefik-acme-exporter",
-            "mail/secret-letsencrypt-prod.yaml",
-            "mail/role-sync-le-tls.yaml",
-            "mail/role-binding-sync-le-tls.yaml",
-        ):
-            self.assertFalse((ROOT / path).exists(), path)
-        report = (ROOT / "metrics/config-map-platform-health-report-scripts.yaml").read_text()
-        self.assertIn("/api/v1/namespaces/mail/secrets/mail-tls", report)
-        self.assertNotIn("/api/v1/namespaces/mail/secrets/letsencrypt-prod", report)
 
     def test_traefik_no_longer_grants_mail_pod_exec(self):
         """Verify Traefik no longer grants mail pod exec."""

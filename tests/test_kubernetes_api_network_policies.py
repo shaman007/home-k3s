@@ -8,7 +8,6 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 SERVICE_CIDR = "10.43.0.1/32"
 CONTROL_PLANE_LAN_CIDR = "192.168.1.0/24"
-OLD_CONTROL_PLANE_CIDR = "192.168.1.209/32"
 
 
 def active_yaml_files():
@@ -25,7 +24,7 @@ def has_port(document: str, port: int) -> bool:
 
 
 class KubernetesApiNetworkPolicyTest(unittest.TestCase):
-    """Allow current control-plane API endpoints and reject retired endpoint references."""
+    """Require API egress policies to cover the current control-plane networks."""
     def test_kubernetes_api_policies_include_current_control_plane_endpoint(self):
         """Verify kubernetes API policies include current control plane endpoint."""
         offenders = []
@@ -42,20 +41,6 @@ class KubernetesApiNetworkPolicyTest(unittest.TestCase):
                 if any(
                     cidr not in document for cidr in (CONTROL_PLANE_LAN_CIDR, "192.168.30.0/24")
                 ):
-                    offenders.append(str(path.relative_to(ROOT)))
-
-        self.assertEqual([], sorted(set(offenders)))
-
-    def test_no_kubernetes_api_policy_uses_old_k3s_endpoint(self):
-        """Verify no kubernetes API policy uses old k3s endpoint."""
-        offenders = []
-
-        for path in active_yaml_files():
-            source = path.read_text(encoding="utf-8")
-            for document in source.split("\n---"):
-                if OLD_CONTROL_PLANE_CIDR not in document:
-                    continue
-                if has_port(document, 6443):
                     offenders.append(str(path.relative_to(ROOT)))
 
         self.assertEqual([], sorted(set(offenders)))
