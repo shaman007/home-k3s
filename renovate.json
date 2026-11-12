@@ -64,6 +64,7 @@
     {
       "description": "Keep GitHub Actions pinned to immutable commit SHAs",
       "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action", "workflow"],
       "pinDigests": true
     },
     {

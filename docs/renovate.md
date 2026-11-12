@@ -37,6 +37,16 @@ Renovate runs with `LOG_LEVEL=debug` so failures such as `Error updating branch:
 update failure` include the affected dependency/file and underlying error. A
 successful workflow exit alone does not establish that every branch was updated.
 
+Digest pinning for the `github-actions` manager is restricted to the `action`
+and `workflow` dependency types, following Renovate's
+[GitHub Action digest helper](https://docs.renovatebot.com/presets-helpers/#helperspingithubactiondigests).
+The manager also extracts tool versions from action `with:` inputs as
+`uses-with` dependencies. Helm, kubectl and Cosign inputs accept release versions,
+not `version@commit` references. Applying `pinDigests` to these inputs caused the
+`renovate/pin-dependencies` branch in dashboard #1118 to fail with `Digest is not
+updated` for Helm. Tool version updates remain enabled; only action and reusable
+workflow references receive commit pins.
+
 The workflow sets `RENOVATE_DOCKER_MAX_PAGES=100`. GHCR caps Immich tag-list
 responses at 1,000 entries per page even when Renovate requests 10,000. On
 2026-11-11, the server's `v3.3.6` tag appeared on page 33 and `v3.4.0` on the
