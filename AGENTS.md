@@ -38,11 +38,11 @@
 
 ## MemPalace and MCP workflow
 - MemPalace is the preferred durable knowledge store for repo-related context, imported notes, and project snapshots.
-- Prefer reading and writing through the MemPalace pod under `/data/.mempalace`, `/data/imports`, and `/data/projects` when a task needs persistent memory.
-- MemPalace exposes an MCP server; use it when a workflow benefits from structured knowledge retrieval or long-lived context.
+- Prefer MemPalace MCP for structured knowledge retrieval and durable checkpoints. Use the pod paths `/data/.mempalace`, `/data/imports`, and `/data/projects` only as a fallback when MCP is unavailable, subject to the same permissions and secret-handling rules.
 - After completing a large or important repository change, checkpoint a concise durable summary to MemPalace by default, preferably in structured project memory or under `/data/projects`.
 - Include the objective, major decisions, affected applications or manifests, validation performed, operational caveats, and remaining work. Never store credentials, secret values, tokens, raw secret manifests, transient logs, or verbose diffs.
 - Treat multi-component, architectural, security, operational, data, and deployment-behavior changes as important. Skip minor or purely mechanical edits; if MemPalace is unavailable, note it briefly and continue without blocking the handoff.
+- This is standing authorization for concise MemPalace checkpoints after important tasks; do not ask for a separate save request. When a decision changes, supersede the old fact rather than leaving contradictory current entries.
 
 ## Notes
 - Keep `kubectl`, `helm`, and `git` approvals scoped to verifiably read-only commands.
@@ -55,6 +55,6 @@
 A skill is a set of local instructions to follow that is stored in a `SKILL.md` file. Below is the list of skills available in this workspace.
 
 ### Available skills
-- grafana-operator: Operate and audit Grafana instances through the HTTP API with a practical, Kubernetes-friendly workflow. Use when users ask to check Grafana health, inventory datasources/dashboards/folders/alerts, troubleshoot dashboard issues, or apply targeted dashboard/alert changes. (file: C:/Users/me/.codex/skills/grafana-operator/SKILL.md)
-- k8s-readonly-ops: Run read-only Kubernetes and Helm diagnostics without approval. Use when users ask to inspect cluster objects, logs, events, release state, rendered manifests, chart values, or Helm history with non-mutating commands, and ask before any live cluster change. (file: C:/Users/me/.codex/skills/k8s-readonly-ops/SKILL.md)
-- git-readonly-ops: Run read-only Git inspection commands without approval. Use when users ask to inspect repository status, diffs, history, refs, tracked files, or authorship with non-mutating commands, and ask before any repository state change. (file: C:/Users/me/.codex/skills/git-readonly-ops/SKILL.md)
+- grafana-operator: Operate and audit Grafana instances through the HTTP API with a practical, Kubernetes-friendly workflow. Use when users ask to check Grafana health, inventory datasources/dashboards/folders/alerts, troubleshoot dashboard issues, or apply targeted dashboard/alert changes. (file: /home/shaman007/.codex/skills/grafana-operator/SKILL.md)
+- k8s-readonly-ops: Run read-only Kubernetes and Helm diagnostics without approval. Use when users ask to inspect cluster objects, logs, events, release state, rendered manifests, chart values, or Helm history with non-mutating commands, and ask before any live cluster change. (file: /home/shaman007/.codex/skills/k8s-readonly-ops/SKILL.md)
+- git-readonly-ops: Run read-only Git inspection commands without approval. Use when users ask to inspect repository status, diffs, history, refs, tracked files, or authorship with non-mutating commands, and ask before any repository state change. (file: /home/shaman007/.codex/skills/git-readonly-ops/SKILL.md)
