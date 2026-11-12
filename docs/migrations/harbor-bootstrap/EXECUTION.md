@@ -1,5 +1,8 @@
 # Internal Harbor ingress execution — 2026-11-12
 
+Historical pre-DNS deployment snapshot. For the completed DNS cutover and current
+state, including removed Argo pauses, see [CUTOVER.md](CUTOVER.md).
+
 ## Current state
 
 The separate `traefik-registry` Argo application runs two Traefik v3.7.18

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: podman-builder-allow-internal-registry
+  namespace: image-builder
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: podman-builder
+      app.kubernetes.io/instance: podman-builder
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: traefik-registry-traefik
+      ports:
+        - protocol: TCP
+          port: 8443

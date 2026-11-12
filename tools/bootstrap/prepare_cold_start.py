@@ -284,6 +284,10 @@ def harbor_candidates(root, vip):
     changes["argocd/application-traefik-registry.yaml"] = yaml.safe_dump(
         harbor_application(vip), sort_keys=False
     )
+    node_policy = "traefik/cilium-network-policy-traefik-registry-allow-node-pulls.yaml"
+    changes[node_policy] = (root / node_policy).read_text()
+    builder_policy = "image-builder/network-policy-podman-builder-internal-registry.yaml"
+    changes[builder_policy] = (root / builder_policy).read_text()
     ingress = yaml.safe_load((root / "harbor/ingress-andreybondarenko-ingress.yaml").read_text())
     ingress["metadata"]["name"] = "harbor-internal-registry"
     ingress["metadata"]["annotations"] = {

@@ -1,13 +1,11 @@
 # Harbor internal ingress: BGP preparation and rollback
 
-Status: internal Harbor ingress deployed on 2026-11-12; see
-[EXECUTION.md](EXECUTION.md). UDM permits `.212/32`, MetalLB advertises it, and
-monitoring requires all four service routes. DNS remains unchanged. The existing
-public Harbor ingress and its middleware remain in place. The three GitOps
-owners `harbor-custom`, `metallb-config`, `unifi-exporter` are temporarily paused
-with explicit approval until these sources are published. Do not resume against
-old Git. Default Wi-Fi cannot reach `.212`; resolve access policy before any
-DNS change for that network. `unifi-infra` is not yet a Git repository.
+Status: internal DNS cutover completed on 2026-11-12; see
+[CUTOVER.md](CUTOVER.md) for the current firewall, split DNS, node-pull validation,
+source publication caveat and rollback. [EXECUTION.md](EXECUTION.md) retains the
+initial ingress deployment snapshot. The three initial Argo pauses were removed
+after successful CI for `4b7ec8a4`. Public GoDaddy records and the old route are
+preserved. `unifi-infra` is not yet a Git repository.
 
 ## Exact applied UDM change
 

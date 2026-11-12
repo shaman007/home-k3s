@@ -140,6 +140,60 @@ class ColdStartCandidates(unittest.TestCase):
         )
         self.assertFalse((self.out / "harbor/ingress-andreybondarenko-ingress.yaml").exists())
 
+    def test_registry_node_policy_is_narrow_and_included_in_candidates(self):
+        """Retain Cilium node identities without opening other listeners or pods."""
+        policy_path = "traefik/cilium-network-policy-traefik-registry-allow-node-pulls.yaml"
+        policy = yaml.safe_load((self.out / policy_path).read_text())
+        self.assertEqual((ROOT / policy_path).read_text(), (self.out / policy_path).read_text())
+        self.assertEqual("CiliumNetworkPolicy", policy["kind"])
+        self.assertEqual("traefik", policy["metadata"]["namespace"])
+        self.assertEqual(
+            {"matchLabels": {"app.kubernetes.io/instance": "traefik-registry-traefik"}},
+            policy["spec"]["endpointSelector"],
+        )
+        ports = [{"ports": [{"port": "8443", "protocol": "TCP"}]}]
+        self.assertEqual(
+            [{"fromEntities": ["host", "remote-node"], "toPorts": ports},
+             {"fromEndpoints": [{"matchExpressions": [
+                 {"key": "k8s:io.kubernetes.pod.namespace", "operator": "Exists"}]}],
+              "toPorts": ports}],
+            policy["spec"]["ingress"],
+        )
+        self.assertNotIn("egress", policy["spec"])
+        owner = yaml.safe_load((ROOT / "argocd/application-traefik-network-policy.yaml").read_text())
+        patterns = owner["spec"]["source"]["directory"]["include"].strip("{}").split(",")
+        self.assertTrue(any(fnmatch.fnmatch(Path(policy_path).name, p) for p in patterns))
+
+    def test_builder_egress_only_targets_the_internal_registry_backend(self):
+        """Keep existing build egress while permitting only the new HTTPS backend."""
+        path = "image-builder/network-policy-podman-builder-internal-registry.yaml"
+        policy = yaml.safe_load((self.out / path).read_text())
+        self.assertEqual((ROOT / path).read_text(), (self.out / path).read_text())
+        spec = policy["spec"]
+        self.assertEqual(["Egress"], spec["policyTypes"])
+        self.assertEqual(
+            {"app.kubernetes.io/name": "podman-builder", "app.kubernetes.io/instance": "podman-builder"},
+            spec["podSelector"]["matchLabels"],
+        )
+        self.assertEqual(
+            [{"to": [{"namespaceSelector": {"matchLabels": {"kubernetes.io/metadata.name": "traefik"}},
+                      "podSelector": {"matchLabels": {"app.kubernetes.io/instance": "traefik-registry-traefik"}}}],
+              "ports": [{"protocol": "TCP", "port": 8443}]}],
+            spec["egress"],
+        )
+
+    def test_http01_selfchecks_use_public_dns_for_split_registry_hostname(self):
+        """Keep public HTTP-01 validation independent of the internal HTTPS-only VIP."""
+        app = yaml.safe_load((ROOT / "argocd/application-cert-manager.yaml").read_text())
+        source = next(s for s in app["spec"]["sources"] if s.get("chart") == "cert-manager")
+        values = yaml.safe_load(source["helm"]["values"])
+        self.assertIn(
+            "--acme-http01-solver-nameservers=1.1.1.1:53,8.8.8.8:53",
+            values["extraArgs"],
+        )
+        issuer = yaml.safe_load((ROOT / "cert-manager/cluster-issuer-letsencrypt-prod.yaml").read_text())
+        self.assertEqual("traefik", issuer["spec"]["acme"]["solvers"][0]["http01"]["ingress"]["ingressClassName"])
+
     def test_new_files_match_existing_argocd_source_filters(self):
         """Ensure generated manifests are visible to their owning applications."""
         files = defaultdict(list)

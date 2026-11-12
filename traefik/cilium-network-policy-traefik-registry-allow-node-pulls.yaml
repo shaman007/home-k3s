@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: traefik-registry-allow-node-pulls
+  namespace: traefik
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: traefik-registry-traefik
+  ingress:
+  - fromEntities:
+    - host
+    - remote-node
+    toPorts: &id001
+    - ports:
+      - port: '8443'
+        protocol: TCP
+  - fromEndpoints:
+    - matchExpressions:
+      - key: k8s:io.kubernetes.pod.namespace
+        operator: Exists
+    toPorts: *id001
