@@ -9,7 +9,6 @@
 
 ### Never run in this repository
 
-- `git commit`
 - `git push`
 - `kubectl apply`
 - `docker push`
@@ -17,7 +16,14 @@
 - `docker compose up`
 - `docker run`
 
-Do not stage repository changes. Keep Docker usage scoped to diagnostics/read-only operations. General Git and Docker diagnostic rules are in the global `AGENTS.md`.
+Keep Docker usage scoped to diagnostics/read-only operations. General Git and Docker diagnostic rules are in the global `AGENTS.md`.
+
+## Autonomous documentation, tools and tests commits
+
+- Standing authorization: stage and commit your own verified task changes without another question when the entire proposed commit consists only of documentation (including README/AGENTS Markdown files and runbooks), `tools/` and/or `tests/`.
+- Inspect the worktree and index first, preserve unrelated changes and never include someone else's staged work. Run checks appropriate to the change and review the exact staged diff before committing.
+- This exception does not authorize commits containing application/runtime manifests, charts, policies or other files outside those categories. Obtain explicit authorization for such Git mutations. It does not authorize pushes, pull requests or live changes; the Never run restrictions still apply.
+- Outside this exception, do not stage repository changes without explicit authorization.
 
 ## GitOps working conventions
 
