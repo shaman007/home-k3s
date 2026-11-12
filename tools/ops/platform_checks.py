@@ -203,9 +203,13 @@ def cronjobs_by_recurring_owner(cronjobs):
     by_owner = {}
     for cronjob in cronjobs:
         for owner in cronjob.get("metadata", {}).get("ownerReferences", []):
-            if owner.get("kind") == "RecurringJob" and owner.get(
-                "apiVersion", ""
-            ).startswith("longhorn.io/"):
+            api_group, _, version = owner.get("apiVersion", "").partition("/")
+            if (
+                owner.get("kind") == "RecurringJob"
+                and api_group == "longhorn.io"
+                and version
+                and "/" not in version
+            ):
                 by_owner[owner["name"]] = cronjob
     return by_owner
 

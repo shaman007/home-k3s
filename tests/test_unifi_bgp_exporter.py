@@ -44,7 +44,9 @@ class UniFiBGPExporterTests(unittest.TestCase):
                     "destination": prefix,
                     "nexthops": [{"gateway": peer, "in_use": True} for peer in peers],
                 }
-                for prefix, peers in zip(m.PREFIXES, [m.PEERS[1:], m.PEERS[:2], [m.PEERS[2]], m.PEERS[:2]])
+                for prefix, peers in zip(
+                    m.PREFIXES, [m.PEERS[1:], m.PEERS[:2], [m.PEERS[2]], m.PEERS[:2]]
+                )
             ]
         }
 
@@ -65,7 +67,10 @@ class UniFiBGPExporterTests(unittest.TestCase):
             self.assertEqual(1, self.value("unifi_bgp_peer_established", peer=p))
         self.assertEqual(
             [2, 2, 1, 2],
-            [self.value("unifi_bgp_route_active_next_hops", prefix=p) for p in m.PREFIXES],
+            [
+                self.value("unifi_bgp_route_active_next_hops", prefix=p)
+                for p in m.PREFIXES
+            ],
         )
         self.assertTrue(
             all(
@@ -83,8 +88,12 @@ class UniFiBGPExporterTests(unittest.TestCase):
     def test_rejected_route_detected_even_if_other_routes_work(self):
         """Detect a missing expected route even when other routes remain usable."""
         self.routes["items"].pop(2)
-        self.assertEqual(0, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[2]))
-        self.assertEqual(2, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[0]))
+        self.assertEqual(
+            0, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[2])
+        )
+        self.assertEqual(
+            2, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[0])
+        )
 
     def test_inactive_or_unknown_next_hop_is_not_a_usable_path(self):
         """Verify inactive or unknown next hop is not a usable path."""
@@ -93,8 +102,12 @@ class UniFiBGPExporterTests(unittest.TestCase):
             {"gateway": m.PEERS[2], "in_use": False},
             {"gateway": "192.168.30.99", "in_use": True},
         ]
-        self.assertEqual(0, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[2]))
-        self.assertEqual(1, self.value("unifi_bgp_policy_violations", reason="unexpected_next_hop"))
+        self.assertEqual(
+            0, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[2])
+        )
+        self.assertEqual(
+            1, self.value("unifi_bgp_policy_violations", reason="unexpected_next_hop")
+        )
 
     def test_unexpected_peer_prefix_and_as_are_reported(self):
         """Verify unexpected peer prefix and AS are reported."""
@@ -106,9 +119,13 @@ class UniFiBGPExporterTests(unittest.TestCase):
                 "advertised_routes_count": 1,
             }
         )
-        self.routes["items"].append({"origin": "BGP", "destination": "0.0.0.0/0", "nexthops": []})
+        self.routes["items"].append(
+            {"origin": "BGP", "destination": "0.0.0.0/0", "nexthops": []}
+        )
         for reason in ["unexpected_peer", "unexpected_prefix", "unexpected_remote_as"]:
-            self.assertEqual(1, self.value("unifi_bgp_policy_violations", reason=reason))
+            self.assertEqual(
+                1, self.value("unifi_bgp_policy_violations", reason=reason)
+            )
 
     def test_wrong_as_is_not_a_healthy_expected_peer(self):
         """Verify wrong AS is not a healthy expected peer."""
@@ -122,7 +139,9 @@ class UniFiBGPExporterTests(unittest.TestCase):
             {"origin": "Kernel", "destination": "192.168.30.0/24", "nexthops": []}
         )
         self.assertEqual(2, self.value("unifi_bgp_exported_routes", peer=m.PEERS[0]))
-        self.assertEqual(0, self.value("unifi_bgp_policy_violations", reason="unexpected_prefix"))
+        self.assertEqual(
+            0, self.value("unifi_bgp_policy_violations", reason="unexpected_prefix")
+        )
 
     def test_malformed_or_duplicate_data_is_not_silently_healthy(self):
         """Verify malformed or duplicate data is not silently healthy."""
@@ -130,7 +149,9 @@ class UniFiBGPExporterTests(unittest.TestCase):
             m.decode({}, self.routes)
         with self.assertRaises(ValueError):
             m.decode(self.neighbors, {})
-        self.neighbors[0]["neighbors"].append(copy.deepcopy(self.neighbors[0]["neighbors"][0]))
+        self.neighbors[0]["neighbors"].append(
+            copy.deepcopy(self.neighbors[0]["neighbors"][0])
+        )
         with self.assertRaises(ValueError):
             m.decode(self.neighbors, self.routes)
 
@@ -152,13 +173,17 @@ class UniFiBGPExporterTests(unittest.TestCase):
 
         with (
             patch.object(
-                m, "Controller", return_value=SimpleNamespace(collect=Mock(side_effect=outcomes))
+                m,
+                "Controller",
+                return_value=SimpleNamespace(collect=Mock(side_effect=outcomes)),
             ),
             patch.object(m.threading, "Thread") as thread,
             patch.object(m.http.server, "ThreadingHTTPServer") as server,
             patch.object(m.time, "time", return_value=123),
             patch.object(
-                m.time, "sleep", side_effect=[None] * (len(outcomes) - 1) + [StopIteration]
+                m.time,
+                "sleep",
+                side_effect=[None] * (len(outcomes) - 1) + [StopIteration],
             ),
             patch.object(m, "render", side_effect=render),
         ):
@@ -201,7 +226,10 @@ class UniFiBGPExporterTests(unittest.TestCase):
             body = io.BytesIO(b"synthetic-error")
             error = urllib.error.HTTPError(client.base, status, "fixture", {}, body)
             client.opener = SimpleNamespace(open=Mock(side_effect=error))
-            with self.subTest(status=status), self.assertRaises(urllib.error.HTTPError) as caught:
+            with (
+                self.subTest(status=status),
+                self.assertRaises(urllib.error.HTTPError) as caught,
+            ):
                 client.request("/fixture")
             self.assertIs(caught.exception, error)
             self.assertTrue(body.closed)
@@ -218,7 +246,8 @@ class UniFiBGPExporterTests(unittest.TestCase):
         client.get = get
         client.certificate_expiry = Mock(return_value=1893456000)
         self.assertIn(
-            ("unifi_bgp_tls_certificate_expiry_timestamp_seconds", {}, 1893456000), client.collect()
+            ("unifi_bgp_tls_certificate_expiry_timestamp_seconds", {}, 1893456000),
+            client.collect(),
         )
         self.assertEqual(
             [
@@ -230,21 +259,28 @@ class UniFiBGPExporterTests(unittest.TestCase):
 
     def test_generated_configmap_matches_reviewed_source(self):
         """Verify generated ConfigMap matches reviewed source."""
-        cm = yaml.safe_load((ROOT / "unifi/poller/config-map-unifi-bgp-exporter.yaml").read_text())
+        cm = yaml.safe_load(
+            (ROOT / "unifi/poller/config-map-unifi-bgp-exporter.yaml").read_text()
+        )
         self.assertEqual(
-            (ROOT / "tools/monitoring/unifi_bgp_exporter.py").read_text(), cm["data"]["exporter.py"]
+            (ROOT / "tools/monitoring/unifi_bgp_exporter.py").read_text(),
+            cm["data"]["exporter.py"],
         )
 
     def test_reviewed_inventory_matches_router_configuration(self):
         """Require all four routes after the internal Harbor advertisement."""
         text = (ROOT / "docs/bgp-trial/udm-services.conf").read_text()
-        self.assertEqual(set(m.PEERS), set(re.findall(r"neighbor ([0-9.]+) peer-group", text)))
+        self.assertEqual(
+            set(m.PEERS), set(re.findall(r"neighbor ([0-9.]+) peer-group", text))
+        )
         self.assertEqual(set(m.PREFIXES), set(re.findall(r"permit ([0-9.]+/32)", text)))
 
     def test_redirects_are_not_followed(self):
         """Verify redirects are not followed."""
         self.assertIsNone(
-            m.NoRedirect().redirect_request(None, None, 302, "", {}, "https://elsewhere.invalid")
+            m.NoRedirect().redirect_request(
+                None, None, 302, "", {}, "https://elsewhere.invalid"
+            )
         )
 
 
@@ -299,13 +335,20 @@ class UniFiMetricsListenerTests(unittest.TestCase):
         pod = deployment["spec"]["template"]["spec"]
         self.assertFalse(pod.get("hostNetwork", False))
         exporter = next(c for c in pod["containers"] if c["name"] == "bgp-exporter")
-        address = next(e for e in exporter["env"] if e["name"] == "UNIFI_METRICS_ADDRESS")
+        address = next(
+            e for e in exporter["env"] if e["name"] == "UNIFI_METRICS_ADDRESS"
+        )
         self.assertEqual(address["valueFrom"]["fieldRef"]["fieldPath"], "status.podIP")
-        self.assertEqual(exporter["ports"], [{"name": "bgp-metrics", "containerPort": 9131}])
-        service = yaml.safe_load((ROOT / "unifi/poller/service-unifi-poller.yaml").read_text())
+        self.assertEqual(
+            exporter["ports"], [{"name": "bgp-metrics", "containerPort": 9131}]
+        )
+        service = yaml.safe_load(
+            (ROOT / "unifi/poller/service-unifi-poller.yaml").read_text()
+        )
         self.assertEqual(service["spec"].get("type", "ClusterIP"), "ClusterIP")
         self.assertIn(
-            {"name": "bgp", "port": 9131, "targetPort": "bgp-metrics"}, service["spec"]["ports"]
+            {"name": "bgp", "port": 9131, "targetPort": "bgp-metrics"},
+            service["spec"]["ports"],
         )
 
 
@@ -336,7 +379,9 @@ class UniFiVerifiedTLSTests(unittest.TestCase):
 
     def test_expiry_comes_from_the_live_verified_peer_and_closes_connections(self):
         """Use the named TLS peer's certificate date, not Kubernetes Secret readiness."""
-        with patch.dict(m.os.environ, {"UNIFI_URL": "https://unifi.int.andreybondarenko.com"}):
+        with patch.dict(
+            m.os.environ, {"UNIFI_URL": "https://unifi.int.andreybondarenko.com"}
+        ):
             client = m.Controller()
         raw, tls = MagicMock(), MagicMock()
         raw.__enter__.return_value = raw
@@ -345,7 +390,9 @@ class UniFiVerifiedTLSTests(unittest.TestCase):
         client.context = SimpleNamespace(wrap_socket=Mock(return_value=tls))
         with patch.object(m.socket, "create_connection", return_value=raw) as connect:
             self.assertEqual(client.certificate_expiry(), 1893456000)
-        connect.assert_called_once_with(("unifi.int.andreybondarenko.com", 443), timeout=15)
+        connect.assert_called_once_with(
+            ("unifi.int.andreybondarenko.com", 443), timeout=15
+        )
         client.context.wrap_socket.assert_called_once_with(
             raw, server_hostname="unifi.int.andreybondarenko.com"
         )

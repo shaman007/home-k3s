@@ -16,28 +16,40 @@ def chart_values(name):
 
 class IngressClassSeparationTest(unittest.TestCase):
     """Keep public and private controllers, services, and CRD ownership separate."""
+
     def test_controllers_have_disjoint_explicit_class_filters(self):
         """Verify controllers have disjoint explicit class filters."""
-        for name, ingress_class in [("traefik", "traefik"), ("traefik-private", "traefik-private")]:
+        for name, ingress_class in [
+            ("traefik", "traefik"),
+            ("traefik-private", "traefik-private"),
+        ]:
             values = chart_values(name)
             self.assertEqual(ingress_class, values["ingressClass"]["name"])
             self.assertFalse(values["ingressClass"]["isDefaultClass"])
             for provider in ["kubernetesIngress", "kubernetesCRD"]:
-                self.assertEqual(ingress_class, values["providers"][provider]["ingressClass"])
+                self.assertEqual(
+                    ingress_class, values["providers"][provider]["ingressClass"]
+                )
 
     def test_private_controller_does_not_own_shared_crds(self):
         """Verify private controller does not own shared CRDs."""
-        app = yaml.safe_load((ROOT / "argocd/application-traefik-private.yaml").read_text())
+        app = yaml.safe_load(
+            (ROOT / "argocd/application-traefik-private.yaml").read_text()
+        )
         self.assertTrue(app["spec"]["source"]["helm"]["skipCrds"])
 
     def test_private_service_has_no_public_ipv6_and_restricts_sources(self):
         """Verify private service has no public IPv6 and restricts sources."""
         values = chart_values("traefik-private")
-        self.assertEqual(values, yaml.safe_load((ROOT / "traefik-private/values.yaml").read_text()))
+        self.assertEqual(
+            values, yaml.safe_load((ROOT / "traefik-private/values.yaml").read_text())
+        )
         service = values["service"]
         self.assertEqual(["IPv4"], service["spec"]["ipFamilies"])
         self.assertEqual("SingleStack", service["spec"]["ipFamilyPolicy"])
-        self.assertEqual("192.168.30.211", service["annotations"]["metallb.io/loadBalancerIPs"])
+        self.assertEqual(
+            "192.168.30.211", service["annotations"]["metallb.io/loadBalancerIPs"]
+        )
         self.assertEqual(
             ["192.168.30.0/24", "192.168.4.0/24", "10.42.0.0/16"],
             service["spec"]["loadBalancerSourceRanges"],
@@ -86,7 +98,8 @@ class IngressClassSeparationTest(unittest.TestCase):
                 kind = document.get("kind")
                 if kind == "Ingress":
                     hosts = [
-                        rule.get("host", "") for rule in document.get("spec", {}).get("rules", [])
+                        rule.get("host", "")
+                        for rule in document.get("spec", {}).get("rules", [])
                     ]
                     expected = (
                         "traefik-private"
@@ -96,11 +109,18 @@ class IngressClassSeparationTest(unittest.TestCase):
                         )
                         else "traefik"
                     )
-                    if path.relative_to(ROOT).as_posix() == "harbor/ingress-harbor-internal-registry.yaml":
-                        self.assertEqual("harbor-internal-registry", document["metadata"]["name"])
+                    if (
+                        path.relative_to(ROOT).as_posix()
+                        == "harbor/ingress-harbor-internal-registry.yaml"
+                    ):
+                        self.assertEqual(
+                            "harbor-internal-registry", document["metadata"]["name"]
+                        )
                         self.assertEqual(["harbor.andreybondarenko.com"], hosts)
                         expected = "traefik-registry"
-                    self.assertEqual(expected, document["spec"].get("ingressClassName"), str(path))
+                    self.assertEqual(
+                        expected, document["spec"].get("ingressClassName"), str(path)
+                    )
                     self.assertNotIn(
                         "kubernetes.io/ingress.class",
                         document.get("metadata", {}).get("annotations", {}),
@@ -109,20 +129,26 @@ class IngressClassSeparationTest(unittest.TestCase):
                     count += 1
                 elif kind in ["IngressRoute", "IngressRouteTCP", "IngressRouteUDP"]:
                     matches = [
-                        rule.get("match", "") for rule in document.get("spec", {}).get("routes", [])
+                        rule.get("match", "")
+                        for rule in document.get("spec", {}).get("routes", [])
                     ]
                     expected = (
                         "traefik-private"
                         if any(
                             any(
                                 suffix in match
-                                for suffix in (".k8s.my.lan", ".int.andreybondarenko.com")
+                                for suffix in (
+                                    ".k8s.my.lan",
+                                    ".int.andreybondarenko.com",
+                                )
                             )
                             for match in matches
                         )
                         else "traefik"
                     )
-                    self.assertEqual(expected, document["spec"].get("ingressClassName"), str(path))
+                    self.assertEqual(
+                        expected, document["spec"].get("ingressClassName"), str(path)
+                    )
                     self.assertNotIn(
                         "kubernetes.io/ingress.class",
                         document["metadata"].get("annotations", {}),

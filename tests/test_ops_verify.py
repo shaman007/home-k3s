@@ -95,6 +95,77 @@ def backup_resources():
     }
 
 
+class RecurringOwnerIdentityTest(unittest.TestCase):
+    """Treat Kubernetes API group/version metadata as structured identity."""
+
+    def test_exact_longhorn_group_accepts_supported_and_future_versions(self):
+        """Keep valid RecurringJob associations independent of version changes."""
+        for version in ("v1beta1", "v1beta2", "v2"):
+            with self.subTest(version=version):
+                cronjob = {
+                    "metadata": {
+                        "ownerReferences": [
+                            {
+                                "kind": "RecurringJob",
+                                "apiVersion": "longhorn.io/" + version,
+                                "name": "backup-daily",
+                            }
+                        ]
+                    }
+                }
+                self.assertEqual(
+                    {"backup-daily": cronjob},
+                    OPS.platform_checks.cronjobs_by_recurring_owner([cronjob]),
+                )
+
+    def test_foreign_and_malformed_owner_identities_are_not_associated(self):
+        """Reject URL-like strings and lookalike groups without parsing as URLs."""
+        for api_version in (
+            "",
+            "longhorn.io",
+            "longhorn.io/",
+            "longhorn.io//v1beta2",
+            "longhorn.io/v1beta2/extra",
+            "longhorn.io.evil/v1beta2",
+            "evil/longhorn.io/v1beta2",
+            "https://longhorn.io/v1beta2",
+            "longhorn.io@evil/v1beta2",
+        ):
+            with self.subTest(api_version=api_version):
+                cronjob = {
+                    "metadata": {
+                        "ownerReferences": [
+                            {
+                                "kind": "RecurringJob",
+                                "apiVersion": api_version,
+                                "name": "backup-daily",
+                            }
+                        ]
+                    }
+                }
+                self.assertEqual(
+                    {}, OPS.platform_checks.cronjobs_by_recurring_owner([cronjob])
+                )
+        self.assertEqual(
+            {},
+            OPS.platform_checks.cronjobs_by_recurring_owner(
+                [
+                    {
+                        "metadata": {
+                            "ownerReferences": [
+                                {
+                                    "kind": "OtherKind",
+                                    "apiVersion": "longhorn.io/v1beta2",
+                                    "name": "backup-daily",
+                                }
+                            ]
+                        }
+                    }
+                ]
+            ),
+        )
+
+
 class OpsVerifyTest(unittest.TestCase):
     """Test scope, evidence and command boundaries independently of implementation."""
 
