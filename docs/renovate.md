@@ -81,17 +81,3 @@ merge does not force every queued PR through another rebase/CI cycle. All 13 CI
 checks and signed commits remain required. CI validates each PR's tested revision;
 it does not necessarily cover integration with the latest `main`. No
 branch-protection bypass is needed.
-
-### One-off migration of legacy PRs
-
-For the five existing PAT-authored PRs (#1108, #1109, #1111, #1112, #1113), run
-the workflow manually with `migrate_legacy_prs` enabled. This enables
-`ignorePrAuthor` for that run so the App can find the old account's PRs, and
-passes their exact branch names through `checkedBranches` to request regeneration.
-Scheduled runs and ordinary manual runs leave both migration settings disabled.
-
-Review each PR for manual edits before using this option: forced regeneration
-can discard branch edits and may select a newer dependency version. Verify all
-commits in each resulting PR, including any historical merge commits, rather
-than checking only its latest commit. Remove this migration option after the
-five PRs have been migrated or closed.
