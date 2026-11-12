@@ -1,8 +1,8 @@
 # Experimental IPv6 I2P client proxy
 
-Deployed and runtime-tested on 2026-11-12. The Argo application stays manual.
-Keep the repository and live configuration aligned before manual Argo sync;
-experiment changes need explicit commit approval and owner publication.
+Deployed and runtime-tested on 2026-11-12. Argo CD is configured for automatic
+synchronization and self-healing with `prune=false`; `allowEmpty` remains disabled.
+Changes become authoritative after explicit commit approval and owner publication.
 Upstream image is pinned by manifest digest, resolved with `skopeo inspect`.
 
 - HTTP: `http://[2a02:e98:c0:181e::214]:4444`
@@ -96,9 +96,12 @@ Upstream references:
 ## Rollout and acceptance
 
 Publish through the owner's permitted Git workflow. Reconcile namespace/project
-and MetalLB pool/advertisement before manually syncing the `i2pd` Application.
-The policy has an earlier sync wave than the workload. Keep automatic sync disabled. Runtime acceptance below passed; publish the final
-Service/policy fixes before performing a manual sync. Schema validation and readiness
+and MetalLB pool/advertisement before the `i2pd` Application reconciles.
+The policy has an earlier sync wave than the workload. After successful runtime
+acceptance, automatic sync and self-heal are enabled without pruning. The PVC
+also retains `Prune=false,Delete=false`; an empty application is not allowed.
+The parent app-of-apps owns the child policy: publish its manifest before expecting
+a live policy change to persist. Schema validation and readiness
 only establish configuration/listener health, not I2P tunnel readiness or policy
 enforcement. Historical restored Cilium endpoints have failed enforcement, so
 policy existence alone is insufficient evidence.

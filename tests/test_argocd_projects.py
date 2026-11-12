@@ -129,8 +129,7 @@ PROJECT_MEMBERS = {
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
-# Keep experimental I2P gated until runtime IPv4-denial acceptance passes.
-MANUAL_SYNC_APPLICATIONS = {"i2pd"}
+MANUAL_SYNC_APPLICATIONS = set()
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy",

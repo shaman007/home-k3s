@@ -14,7 +14,10 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: i2pd
-  # Deliberately manual until network isolation passes runtime acceptance.
   syncPolicy:
+    automated:
+      enabled: true
+      selfHeal: true
+      prune: false
     syncOptions:
       - RespectIgnoreDifferences=true

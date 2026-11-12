@@ -98,7 +98,7 @@ class I2pdIsolationTest(unittest.TestCase):
         self.assertTrue(all('nodePort' not in p for p in svc['ports']))
 
     def test_no_ipv4_dns_or_probe_fallback(self):
-        """Keep DNS and probes on IPv6 with automatic deployment gated."""
+        """Keep DNS and probes on IPv6 without host-network or API-token access."""
         pod = load('i2pd/deployment-i2pd.yaml')['spec']['template']['spec']
         self.assertEqual(pod['dnsPolicy'], 'None')
         self.assertTrue(
@@ -110,5 +110,15 @@ class I2pdIsolationTest(unittest.TestCase):
             self.assertIn('@sha256:', container['image'])
             for probe in ('startupProbe', 'readinessProbe'):
                 self.assertIn('/proc/net/tcp6', container[probe]['exec']['command'][-1])
-        app = load('argocd/application-i2pd.yaml')
-        self.assertNotIn('automated', app['spec']['syncPolicy'])
+
+    def test_automatic_reconciliation_never_prunes(self):
+        """Heal drift automatically without deleting resources or allowing an empty app."""
+        policy = load('argocd/application-i2pd.yaml')['spec']['syncPolicy']
+        self.assertEqual(policy['automated'], {
+            'enabled': True, 'selfHeal': True, 'prune': False,
+        })
+        self.assertFalse(policy['automated'].get('allowEmpty', False))
+        claim = load('i2pd/persistent-volume-claim-i2pd.yaml')
+        options = claim['metadata']['annotations']['argocd.argoproj.io/sync-options']
+        self.assertIn('Prune=false', options.split(','))
+        self.assertIn('Delete=false', options.split(','))
