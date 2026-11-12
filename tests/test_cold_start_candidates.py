@@ -119,8 +119,14 @@ class ColdStartCandidates(unittest.TestCase):
         """Keep internal image pulls independent of optional public middleware."""
         app = yaml.safe_load((self.out / "argocd/application-traefik-registry.yaml").read_text())
         values = yaml.safe_load(app["spec"]["source"]["helm"]["values"])
-        for key in ("experimental", "volumes", "additionalArguments"):
+        for key in ("experimental", "volumes"):
             self.assertNotIn(key, values)
+        self.assertEqual(2, len(values["additionalArguments"]))
+        self.assertFalse(values["providers"]["kubernetesIngress"]["publishedService"]["enabled"])
+        policy = values["extraObjects"][0]
+        self.assertEqual("NetworkPolicy", policy["kind"])
+        self.assertEqual({"app.kubernetes.io/instance": "traefik-registry-traefik"}, policy["spec"]["podSelector"]["matchLabels"])
+        self.assertEqual(8443, policy["spec"]["ingress"][0]["ports"][0]["port"])
         self.assertFalse(values["persistence"]["enabled"])
         self.assertFalse(values["providers"]["kubernetesCRD"]["enabled"])
         self.assertEqual(["harbor"], values["providers"]["kubernetesIngress"]["namespaces"])

@@ -1,75 +1,89 @@
-# UDM-only BGP expansion — 2026-11-12
+# Internal Harbor ingress execution — 2026-11-12
 
-Applied with explicit user authorization to only `unifi_bgp.kubernetes` in
-`/home/shaman007/git/unifi-infra`. The fresh targeted plan was checked to contain
-exactly one in-place update and the expected two FRR changes. No plan file was
-saved because serialized plans may include sensitive prior state.
+## Current state
 
-```text
-Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
-```
+The separate `traefik-registry` Argo application runs two Traefik v3.7.18
+replicas (chart 42.3.2) on distinct nodes. Its only route is the additional
+`harbor/harbor-internal-registry` Ingress for the existing Harbor hostname and
+`harbor-tls` certificate. It watches only Harbor Ingress resources; CRDs,
+plugins, optional mounts and persistence are disabled. The container image is
+pulled directly from Docker Hub so this controller does not depend on Harbor.
+It uses the existing namespace egress rules and a dedicated ingress NetworkPolicy
+selecting only its own pods on TCP 8443. The Service exposes TCP 443, uses
+`externalTrafficPolicy: Local` and the explicit `192.168.30.212` VIP. Sources are
+limited to Infrastructure, default LAN, WireGuard and pod CIDRs; this does not
+override UDM firewall rules.
 
-Applied policy: permit only the additional `192.168.30.212/32` at sequence 35,
-raise `neighbor K8S-TRIAL maximum-prefix` from 3 to 4. All other payload bytes
-match the preserved baseline. A fresh `--bgp-only` plan after apply returned
-exit 0 / no changes, including a refreshed controller read.
+MetalLB has a separate non-auto-assigned `registry-bootstrap` IPAddressPool,
+L2Advertisement and exact `/32` BGPAdvertisement to `udm-bgp-trial`. Existing
+pools and advertisements are preserved. Monitoring now requires `.210`, `.211`,
+`.213` and `.212`; the canonical exporter and mounted ConfigMap match.
 
-## Access and before/after observations
+## Verified
 
-SSH remains unavailable because the hardware-key/agent authentication fails.
-The existing authenticated HTTPS controller API was reachable with normal TLS
-verification. Credentials and session cookies stayed in process memory only.
-Live neighbor and forwarding data came from the existing exporter's reviewed
-`bgp/neighbors` and `routes` endpoints, not from stale Terraform state.
+- Two ready replicas, zero restarts; ready endpoints on `.209` and `.242`.
+- All three UDM BGP peers Established, ASN 65040, zero exported routes.
+- Active next hops: `.210` via `.100`/`.242`; `.211` via `.100`/`.209`;
+  `.213` via `.242`; new `.212` via `.209`/`.242`.
+- Exporter scrape succeeds, reports all four routes, and reports zero policy
+  violations. Its first startup scrape was temporarily unsuccessful; subsequent
+  background and direct collections succeeded.
+- Kubernetes schema validation reports 8 valid resources, 0 invalid, 0 errors;
+  3 MetalLB CRDs were skipped by the public schema validator.
+- Direct Infrastructure VLAN access to `.212` validates the system-trusted
+  certificate, hostname and TLS 1.3. The certificate is identical to `.210`
+  and expires 2026-12-27. No TLS verification bypass was used.
+- Temporary private BusyBox fixture: anonymous manifest request 401; anonymous
+  token grants no pull and still gets 401; authenticated token grants pull and
+  manifest returns 200. Two complete `skopeo copy` pulls into fresh directories
+  verified configuration/layer SHA-256 hashes (2 blobs, 2,226,622 bytes).
+- Existing `.210` Harbor ping and `.211` OpenBao health return verified-TLS 200;
+  `.213` still serves its SSH banner. `.210` also returns 200 over routed Wi-Fi.
+- DNS answers match the captured pre-deployment baseline. No DNS, WAN forward,
+  Harbor external URL, old ingress or UDM firewall change was made.
+- 42 focused unit tests pass (cold-start candidates, BGP exporter, isolated pool
+  and prefix scope, Argo project membership). Helm rendering succeeds.
 
-Baseline was collected at 16:13:54 UTC; stable post-change checks passed at
-16:15:59 UTC and again at 16:17:02 UTC. One immediate post-change gate failed
-during configuration reload; later fresh checks passed. Zero interruption or
-preservation of every established connection was not measured or claimed.
+## Remaining limits and cleanup
 
-| Peer | Before / after | Remote ASN | Received prefixes | Exported routes |
-| --- | --- | --- | --- | --- |
-| 192.168.30.100 | Established / Established | 65040 | 2 / 2 | 0 / 0 |
-| 192.168.30.209 | Established / Established | 65040 | 1 / 1 | 0 / 0 |
-| 192.168.30.242 | Established / Established | 65040 | 2 / 2 | 0 / 0 |
+Routed Wi-Fi (`192.168.1.112` through `192.168.1.1`) to `.212:443` times out.
+The local UDM source explicitly treats this network as untrusted and permits
+published ingress only at `.210`; the broad trusted-LAN policy is disabled.
+This is consistent with isolation, but the exact dropping device/rule has not
+been confirmed by packet capture/counters. No firewall allowance was added.
+A diagnostic request from the existing unifi-poller pod also timed out; its
+namespace egress policy permits the controller, DNS and Prometheus rather than
+Harbor. No exception was added for this optional diagnostic. This does not test
+the node/containerd network path. WireGuard access and actual Talos/containerd
+pull through `.212` remain untested.
+The private pull was performed by a host client, not a Kubernetes image pull.
+Do not switch DNS for a client network until its intended access is verified.
 
-Active forwarding next hops matched before and after exactly:
+The private project `ingress-verification` (id 10), repository `busybox`, tag
+`probe` remains for **the owner to delete**. Auto-review rejected using the
+Kubernetes admin secret for cleanup; the owner declined that credential use and
+explicitly chose manual deletion. No cleanup mutation ran.
 
-| Prefix | Active next hops |
-| --- | --- |
-| 192.168.30.210/32 | 192.168.30.100, 192.168.30.242 |
-| 192.168.30.211/32 | 192.168.30.100, 192.168.30.209 |
-| 192.168.30.213/32 | 192.168.30.242 |
+## Publication and rollback
 
-The existing exporter's policy-violation checks were zero. No unexpected BGP
-prefix was present; `.212/32` remained absent from the forwarding table.
+`harbor-custom`, `metallb-config`, and `unifi-exporter` had no skip-reconcile
+annotation before this task; they now have `argocd.argoproj.io/skip-reconcile:
+"true"` with explicit approval. Preserve these pauses until matching manifests
+are published. New `traefik-registry` reconciliation remains enabled. The
+new application pins the external Traefik Helm chart version.
 
-Service checks before and after:
+After publication, verify the revision contains all new resources and the
+four-prefix monitoring inventory, then remove only those three temporary pause
+annotations and check owner sync/health and runtime tests again. Harbor sources
+are committed locally at the owner’s request; publication is performed by the
+owner. The temporary pause annotations are live state, not desired Git state.
 
-- `.210`: certificate-verified Harbor `/api/v2.0/ping` returned HTTP 200 over the
-  infrastructure VLAN. An additional request bound to Wi-Fi `wlo1` verified
-  routed public HTTPS returned HTTP 200 before and after.
-- `.211`: certificate-verified OpenBao `/v1/sys/health` returned HTTP 200.
-- `.213`: TCP 22 returned the expected `SSH-2.0-OpenSSH_10.0` banner; no login,
-  remote command or backup-data operation was performed.
-
-The API forwarding-table observations cover all three routes; positive service
-probes for private VIPs were from the permitted infrastructure VLAN. No new
-WireGuard session or network access rule was created for a routed private probe.
-
-## Scope and recovery
-
-No other Terraform resource was applied. The unrelated full-plan drift/provider
-identity errors were not repaired or applied. Harbor, MetalLB pools and
-advertisements, DNS, firewall policies and required-route monitoring were not
-changed. The new VIP is allowed by UDM but is not allocated or advertised.
-
-Original payload: [udm-before.conf](udm-before.conf), SHA-256
-`ea4be2a6c58532a34476d8515754549748dfe8c4b7fe105774a5b85393400dba`.
-Since no fourth route exists, rollback remains a scoped restoration of this
-original BGP payload after verifying every peer accepts at most three prefixes.
-Do not withdraw the shared existing `routed-services` advertisement.
-
-The staged Harbor rollout and later withdrawal-first rollback remain in
-[README.md](README.md). No Git repository was initialized in `unifi-infra`, and
-no commit or push was performed by this deployment step.
+DNS has not changed, so clients still resolve the previous route. If rollback
+is needed, first withdraw only `registry-bootstrap` BGPAdvertisement, restore
+three-prefix exporter inventory, and verify original routes/services. Remove
+only the new Harbor Ingress, controller application and dedicated L2/pool
+resources when unused. Never delete shared advertisements or Harbor data.
+Keep UDM maximum-prefix four unless separately rolling back its policy; reduce
+to three only after no peer can advertise a fourth accepted prefix. Publish
+matching rollback sources before resuming the paused owners. Live deletions
+require scoped authorization; these are instructions, not executed actions.

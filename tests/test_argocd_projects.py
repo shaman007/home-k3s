@@ -81,6 +81,7 @@ PROJECT_PLATFORM = {
     "traefik",
     "traefik-network-policy",
     "traefik-private",
+    "traefik-registry",
 }
 
 PROJECT_STORAGE = {

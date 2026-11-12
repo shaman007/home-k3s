@@ -93,7 +93,7 @@ def harbor_application(vip):
                 "enabled": True,
                 "ingressClass": "traefik-registry",
                 "namespaces": ["harbor"],
-                "publishedService": {"enabled": True, "pathOverride": "traefik/traefik-registry"},
+                "publishedService": {"enabled": False},
             },
             "kubernetesCRD": {"enabled": False},
         },
@@ -120,6 +120,25 @@ def harbor_application(vip):
             "web": {"expose": {"default": False}},
             "websecure": {"http": {"tls": {"enabled": True}}},
         },
+        "additionalArguments": [
+            "--providers.kubernetesingress.ingressendpoint.ip=" + vip,
+            "--entryPoints.websecure.http.aliasHeadersStrategy=reject",
+        ],
+        "extraObjects": [{
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {"name": "traefik-registry-allow-https", "namespace": "traefik"},
+            "spec": {
+                "podSelector": {"matchLabels": {
+                    "app.kubernetes.io/instance": "traefik-registry-traefik"}},
+                "policyTypes": ["Ingress"],
+                "ingress": [{
+                    "from": [{"ipBlock": {"cidr": subnet}} for subnet in (
+                        "192.168.30.0/24", "192.168.1.0/24", "192.168.4.0/24", "10.42.0.0/16")],
+                    "ports": [{"protocol": "TCP", "port": 8443}],
+                }],
+            },
+        }],
         "persistence": {"enabled": False},
         "priorityClassName": "homelab-critical",
         "tolerations": [

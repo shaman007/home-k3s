@@ -1,6 +1,11 @@
 # IPv4 BGP for all current MetalLB services
 
-Deployed and verified 2026-11-06. All three production services now use IPv4 BGP
+Deployed and verified 2026-11-06. These results describe the three-service baseline;
+[Harbor rollout](../migrations/harbor-bootstrap/EXECUTION.md) subsequently added
+the internal `.212/32` route and monitoring, preserving these original routes.
+DNS remains unchanged.
+
+All three production services now use IPv4 BGP
 for routed traffic, retaining their original addresses and L2 access. Load
 spreading is not an acceptance requirement.
 

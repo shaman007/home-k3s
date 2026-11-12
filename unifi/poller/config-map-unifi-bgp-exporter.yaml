@@ -8,15 +8,15 @@ data:
     \"\"\n\nimport http.cookiejar\nimport http.server\nimport json\nimport ipaddress\nimport os\nimport socket\nimport ssl\n\
     import threading\nimport time\nimport urllib.error\nimport urllib.parse\nimport urllib.request\n\nPEERS = (\"192.168.30.100\"\
     , \"192.168.30.209\", \"192.168.30.242\")\nPREFIXES = (\"192.168.30.210/32\", \"192.168.30.211/32\", \"192.168.30.213/32\"\
-    )\n\n\ndef decode(neighbors, routes):\n    \"\"\"Produce explicit zeroes for missing expected peers/routes, not stale\
-    \ data.\"\"\"\n    if (\n        not isinstance(neighbors, list)\n        or not isinstance(routes, dict)\n        or\
-    \ not isinstance(routes.get(\"items\"), list)\n    ):\n        raise ValueError(\"Invalid controller response\")\n   \
-    \ peers = {}\n    for router in neighbors:\n        if router.get(\"vrf\") == \"default\":\n            for peer in router[\"\
-    neighbors\"]:\n                if peer[\"peer\"] in peers:\n                    raise ValueError(\"Duplicate neighbor\"\
-    )\n                peers[peer[\"peer\"]] = peer\n    bgp = [r for r in routes[\"items\"] if r.get(\"origin\") == \"BGP\"\
-    ]\n    violations = {\n        \"unexpected_peer\": len(set(peers) - set(PEERS)),\n        \"unexpected_prefix\": sum(r[\"\
-    destination\"] not in PREFIXES for r in bgp),\n        \"unexpected_next_hop\": sum(\n            n.get(\"gateway\") not\
-    \ in PEERS\n            for r in bgp\n            if r[\"destination\"] in PREFIXES\n            for n in r[\"nexthops\"\
+    , \"192.168.30.212/32\")\n\n\ndef decode(neighbors, routes):\n    \"\"\"Produce explicit zeroes for missing expected peers/routes,\
+    \ not stale data.\"\"\"\n    if (\n        not isinstance(neighbors, list)\n        or not isinstance(routes, dict)\n\
+    \        or not isinstance(routes.get(\"items\"), list)\n    ):\n        raise ValueError(\"Invalid controller response\"\
+    )\n    peers = {}\n    for router in neighbors:\n        if router.get(\"vrf\") == \"default\":\n            for peer\
+    \ in router[\"neighbors\"]:\n                if peer[\"peer\"] in peers:\n                    raise ValueError(\"Duplicate\
+    \ neighbor\")\n                peers[peer[\"peer\"]] = peer\n    bgp = [r for r in routes[\"items\"] if r.get(\"origin\"\
+    ) == \"BGP\"]\n    violations = {\n        \"unexpected_peer\": len(set(peers) - set(PEERS)),\n        \"unexpected_prefix\"\
+    : sum(r[\"destination\"] not in PREFIXES for r in bgp),\n        \"unexpected_next_hop\": sum(\n            n.get(\"gateway\"\
+    ) not in PEERS\n            for r in bgp\n            if r[\"destination\"] in PREFIXES\n            for n in r[\"nexthops\"\
     ]\n            if n.get(\"in_use\")\n        ),\n        \"unexpected_remote_as\": sum(p[\"remote_as\"] != 65040 for p\
     \ in peers.values()),\n    }\n    metrics = []\n    for ip in PEERS:\n        peer = peers.get(ip)\n        metrics.append(\n\
     \            (\n                \"unifi_bgp_peer_established\",\n                {\"peer\": ip},\n                int(bool(peer\

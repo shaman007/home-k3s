@@ -1,0 +1,11 @@
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: registry-bootstrap
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - registry-bootstrap
+  peers:
+  - udm-bgp-trial
+  aggregationLength: 32

@@ -44,7 +44,7 @@ class UniFiBGPExporterTests(unittest.TestCase):
                     "destination": prefix,
                     "nexthops": [{"gateway": peer, "in_use": True} for peer in peers],
                 }
-                for prefix, peers in zip(m.PREFIXES, [m.PEERS[1:], m.PEERS[:2], [m.PEERS[2]]])
+                for prefix, peers in zip(m.PREFIXES, [m.PEERS[1:], m.PEERS[:2], [m.PEERS[2]], m.PEERS[:2]])
             ]
         }
 
@@ -64,7 +64,7 @@ class UniFiBGPExporterTests(unittest.TestCase):
         for p in m.PEERS:
             self.assertEqual(1, self.value("unifi_bgp_peer_established", peer=p))
         self.assertEqual(
-            [2, 2, 1],
+            [2, 2, 1, 2],
             [self.value("unifi_bgp_route_active_next_hops", prefix=p) for p in m.PREFIXES],
         )
         self.assertTrue(
@@ -82,7 +82,7 @@ class UniFiBGPExporterTests(unittest.TestCase):
 
     def test_rejected_route_detected_even_if_other_routes_work(self):
         """Detect a missing expected route even when other routes remain usable."""
-        self.routes["items"].pop()
+        self.routes["items"].pop(2)
         self.assertEqual(0, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[2]))
         self.assertEqual(2, self.value("unifi_bgp_route_active_next_hops", prefix=m.PREFIXES[0]))
 
@@ -236,7 +236,7 @@ class UniFiBGPExporterTests(unittest.TestCase):
         )
 
     def test_reviewed_inventory_matches_router_configuration(self):
-        """Keep reviewed BGP peer and route inventories aligned with router configuration."""
+        """Require all four routes after the internal Harbor advertisement."""
         text = (ROOT / "docs/bgp-trial/udm-services.conf").read_text()
         self.assertEqual(set(m.PEERS), set(re.findall(r"neighbor ([0-9.]+) peer-group", text)))
         self.assertEqual(set(m.PREFIXES), set(re.findall(r"permit ([0-9.]+/32)", text)))

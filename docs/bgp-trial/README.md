@@ -10,8 +10,12 @@ and NetworkPolicy; MetalLB IPAddressPool `bgp-trial`; and BGPAdvertisement
 
 Removed from UniFi: the `192.168.40.240/32` acceptance entry and temporary
 workstation-to-test TCP/8080 policy, including its generated return policy.
-The shared BGP config now permits only `192.168.30.210/32`, `.211/32` and `.213/32`,
-with maximum-prefix three and no route exports.
+The original deployed baseline permitted only `192.168.30.210/32`, `.211/32` and `.213/32`,
+with maximum-prefix three and no route exports. On 2026-11-12 the UDM-only Harbor
+preparation added `.212/32` to the allowlist and raised the limit to four. The new
+prefix is now advertised by the separate internal Harbor ingress; monitoring
+requires all four routes. DNS remains unchanged. See
+[the staged plan and rollback](../migrations/harbor-bootstrap/README.md).
 
 The shared peer `udm-bgp-trial` and production advertisement `routed-services`
 are retained. The peer's historical name does not mean the trial still exists;
@@ -32,5 +36,8 @@ and 20/20 through the third node. Production subsequently passed its own routed
 checks and a 40/40-request withdrawal exercise. Load spreading was not required.
 
 See [production rollout, verification and rollback](services-migration.md).
-[udm-services.conf](udm-services.conf) is the current production router payload.
-No commit or push was performed by the assistant.
+[udm-services.conf](udm-services.conf) is the applied four-prefix policy;
+[udm-before.conf](../migrations/harbor-bootstrap/udm-before.conf) preserves the
+verified-before-edit deployed baseline.
+Publication is performed by the owner; see the Harbor execution record for
+GitOps pause and resume requirements.

@@ -1,0 +1,9 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: registry-bootstrap
+  namespace: metallb-system
+spec:
+  autoAssign: false
+  addresses:
+  - 192.168.30.212/32
