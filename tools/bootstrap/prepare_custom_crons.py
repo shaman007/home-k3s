@@ -40,8 +40,46 @@ def mastodon(bookmarked=False):
     if bookmarked:
         files = {
             n: batch.script(n)
-            for n in ("bookmarked_job_gate.sh", "bookmarked_upload_probe.cjs")
+            for n in (
+                "bookmarked_job_gate.sh",
+                "bookmarked_upload_probe.cjs",
+                "mastodon_startup.rb",
+            )
         }
+        service_account = "/var/run/secrets/kubernetes.io/serviceaccount"
+        files["kubeconfig"] = yaml.safe_dump(
+            {
+                "apiVersion": "v1",
+                "kind": "Config",
+                "clusters": [
+                    {
+                        "name": "in-cluster",
+                        "cluster": {
+                            "server": "https://kubernetes.default.svc",
+                            "certificate-authority": service_account + "/ca.crt",
+                        },
+                    }
+                ],
+                "users": [
+                    {
+                        "name": "service-account",
+                        "user": {"tokenFile": service_account + "/token"},
+                    }
+                ],
+                "contexts": [
+                    {
+                        "name": "in-cluster",
+                        "context": {
+                            "cluster": "in-cluster",
+                            "user": "service-account",
+                            "namespace": "mastodon",
+                        },
+                    }
+                ],
+                "current-context": "in-cluster",
+            },
+            sort_keys=False,
+        )
         cm = batch.config_map(name + "-dependencies", "mastodon", files)
         init = pod["initContainers"][0]
         old = "/scripts/fetch-bookmarked-media.sh"

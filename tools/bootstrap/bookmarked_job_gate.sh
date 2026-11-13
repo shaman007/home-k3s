@@ -1,6 +1,8 @@
 #!/bin/sh
 # Runs after existing package installation, before export, downloads or uploads.
 set -eu
+# Explicit tokenFile config: kubectl must not fall back to localhost:8080.
+export KUBECONFIG=/cron-gate/kubeconfig
 budget=${STARTUP_WAIT_SECONDS:-300}
 case "$budget" in ''|*[!0-9]*) exit 78 ;; esac
 [ "$budget" -ge 1 ] && [ "$budget" -le 300 ] || exit 78
@@ -20,10 +22,10 @@ while [ "$(now)" -lt "$deadline" ]; do
     | jq -r '[.items[]|select(any(.status.conditions[]?; .type=="Ready" and .status=="True"))][0].metadata.name // empty') || pod=''
   mastodon_ready=false
   if [ -n "$pod" ]; then
-    if run kubectl exec -n mastodon "$pod" -c mastodon-web --request-timeout=6s -- \
-      timeout -s TERM -k 1 4 bundle exec ruby /startup-gate/mastodon_startup.rb dependencies >/dev/null 2>&1 &&
-       run kubectl exec -n mastodon "$pod" -c mastodon-web --request-timeout=6s -- \
-      timeout -s TERM -k 1 4 bundle exec ruby /startup-gate/mastodon_startup.rb schema >/dev/null 2>&1; then
+    if run kubectl exec -i -n mastodon "$pod" -c mastodon-web --request-timeout=6s -- \
+      timeout -s TERM -k 1 4 bundle exec ruby - dependencies < /cron-gate/mastodon_startup.rb >/dev/null 2>&1 &&
+       run kubectl exec -i -n mastodon "$pod" -c mastodon-web --request-timeout=6s -- \
+      timeout -s TERM -k 1 4 bundle exec ruby - schema < /cron-gate/mastodon_startup.rb >/dev/null 2>&1; then
       mastodon_ready=true
     fi
   fi

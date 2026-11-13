@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: bookmarked-media-sync-dependencies-4750d6357e72
+  namespace: mastodon
+data:
+  bookmarked_job_gate.sh: "#!/bin/sh\n# Runs after existing package installation,\
+    \ before export, downloads or uploads.\nset -eu\n# Explicit tokenFile config:\
+    \ kubectl must not fall back to localhost:8080.\nexport KUBECONFIG=/cron-gate/kubeconfig\n\
+    budget=${STARTUP_WAIT_SECONDS:-300}\ncase \"$budget\" in ''|*[!0-9]*) exit 78\
+    \ ;; esac\n[ \"$budget\" -ge 1 ] && [ \"$budget\" -le 300 ] || exit 78\n[ \"${IMMICH_INSTANCE_URL:-}\"\
+    \ = https://immich.andreybondarenko.com/api ] || exit 78\ncase \"${IMMICH_API_KEY:-}\"\
+    \ in ''|*[!a-zA-Z0-9+/.=_-]*) exit 78 ;; esac\nnow() { read -r seconds rest <\
+    \ /proc/uptime; printf '%s' \"${seconds%%.*}\"; }\ndeadline=$(( $(now) + budget\
+    \ ))\nrun() {\n  left=$((deadline - $(now)))\n  [ \"$left\" -gt 0 ] || return\
+    \ 1\n  if [ \"$left\" -gt 8 ]; then left=8; fi\n  timeout -s TERM -k 1 \"$left\"\
+    \ \"$@\"\n}\nwhile [ \"$(now)\" -lt \"$deadline\" ]; do\n  pod=$(run kubectl get\
+    \ pods -n mastodon --request-timeout=5s \\\n    -l app.kubernetes.io/component=web,app.kubernetes.io/instance=mastodon\
+    \ -o json 2>/dev/null \\\n    | jq -r '[.items[]|select(any(.status.conditions[]?;\
+    \ .type==\"Ready\" and .status==\"True\"))][0].metadata.name // empty') || pod=''\n\
+    \  mastodon_ready=false\n  if [ -n \"$pod\" ]; then\n    if run kubectl exec -n\
+    \ mastodon \"$pod\" -c mastodon-web --request-timeout=6s -- \\\n      timeout\
+    \ -s TERM -k 1 4 bundle exec ruby /startup-gate/mastodon_startup.rb dependencies\
+    \ >/dev/null 2>&1 &&\n       run kubectl exec -n mastodon \"$pod\" -c mastodon-web\
+    \ --request-timeout=6s -- \\\n      timeout -s TERM -k 1 4 bundle exec ruby /startup-gate/mastodon_startup.rb\
+    \ schema >/dev/null 2>&1; then\n      mastodon_ready=true\n    fi\n  fi\n  status=$(printf\
+    \ 'header = \"x-api-key: %s\"\\nurl = \"%s/users/me\"\\n' \"$IMMICH_API_KEY\"\
+    \ \"$IMMICH_INSTANCE_URL\" \\\n    | run curl --config - --noproxy '*' --proto\
+    \ '=https' --silent --max-time 5 \\\n      --output /dev/null --write-out '%{http_code}'\
+    \ 2>/dev/null) || status=''\n  case \"$status\" in\n    401|403) printf '{\"event\"\
+    :\"cron_dependencies\",\"result\":\"denied\"}\\n'; exit 77 ;;\n    404) printf\
+    \ '{\"event\":\"cron_dependencies\",\"result\":\"invalid-config\"}\\n'; exit 78\
+    \ ;;\n  esac\n  if [ \"$mastodon_ready\" = true ] && [ \"$status\" = 200 ] &&\
+    \ [ \"$(now)\" -le \"$deadline\" ]; then\n    printf '{\"event\":\"cron_dependencies\"\
+    ,\"result\":\"ready\"}\\n'\n    exec /scripts/fetch-bookmarked-media.sh\n  fi\n\
+    \  left=$((deadline - $(now)))\n  [ \"$left\" -gt 0 ] || break\n  if [ \"$left\"\
+    \ -gt 5 ]; then left=5; fi\n  sleep \"$left\"\ndone\nmkdir -p /work/import\n:\
+    \ > /work/.dependencies-skipped\nprintf '{\"event\":\"cron_dependencies\",\"result\"\
+    :\"skipped\"}\\n'\nexit 0\n"
+  bookmarked_upload_probe.cjs: "\"use strict\";\nconst http = require(\"node:http\"\
+    );\nconst https = require(\"node:https\");\nconst { performance } = require(\"\
+    node:perf_hooks\");\n\nfunction status(url, key, timeoutMs) {\n  return new Promise((resolve)\
+    \ => {\n    let request;\n    let finished = false;\n    const finish = (code)\
+    \ => {\n      if (finished) return;\n      finished = true;\n      clearTimeout(timer);\n\
+    \      if (request) request.destroy();\n      resolve(code);\n    };\n    const\
+    \ timer = setTimeout(() => finish(0), timeoutMs);\n    try {\n      const transport\
+    \ = url.startsWith(\"https:\") ? https : http;\n      request = transport.get(url,\
+    \ {headers: {\"x-api-key\": key}}, (response) => {\n        finish(response.statusCode);\n\
+    \        response.destroy();\n      });\n      request.on(\"error\", () => finish(0));\n\
+    \    } catch { finish(0); }\n  });\n}\n\nasync function wait({check, budgetMs\
+    \ = 300000, intervalMs = 5000,\n  now = () => performance.now(), sleep = (ms)\
+    \ => new Promise((r) => setTimeout(r, ms))}) {\n  const started = now();\n  while\
+    \ (now() - started < budgetMs) {\n    const code = await check(Math.min(5000,\
+    \ budgetMs - (now() - started)));\n    if (code === 200 && now() - started <=\
+    \ budgetMs) return 0;\n    if (code === 401 || code === 403) return 77;\n    if\
+    \ (code === 404) return 78;\n    const delay = Math.min(intervalMs, budgetMs -\
+    \ (now() - started));\n    if (delay > 0) await sleep(delay);\n  }\n  return 75;\n\
+    }\n\nasync function main() {\n  const base = process.env.IMMICH_INSTANCE_URL;\n\
+    \  const key = process.env.IMMICH_API_KEY || \"\";\n  if (base !== \"https://immich.andreybondarenko.com/api\"\
+    \ || !/^[a-zA-Z0-9+/.=_-]+$/.test(key)) return 78;\n  const result = await wait({check:\
+    \ (timeout) => status(base + \"/users/me\", key, timeout)});\n  console.log(JSON.stringify({event:\
+    \ \"cron_dependencies\", result: result === 0 ? \"ready\" : result === 75 ? \"\
+    skipped\" : \"denied-or-invalid\"}));\n  return result;\n}\n\nmodule.exports =\
+    \ {status, wait};\nif (require.main === module) {\n  main().then((code) => {process.exitCode\
+    \ = code;}).catch(() => {process.exitCode = 78;});\n}\n"
+  kubeconfig: "apiVersion: v1\nkind: Config\nclusters:\n- name: in-cluster\n  cluster:\n\
+    \    server: https://kubernetes.default.svc\n    certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n\
+    users:\n- name: service-account\n  user:\n    tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token\n\
+    contexts:\n- name: in-cluster\n  context:\n    cluster: in-cluster\n    user:\
+    \ service-account\n    namespace: mastodon\ncurrent-context: in-cluster\n"

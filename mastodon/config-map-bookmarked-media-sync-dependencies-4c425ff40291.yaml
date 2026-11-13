@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: bookmarked-media-sync-dependencies-4c425ff40291
+  namespace: mastodon
+data:
+  bookmarked_job_gate.sh: "#!/bin/sh\n# Runs after existing package installation,\
+    \ before export, downloads or uploads.\nset -eu\n# Explicit tokenFile config:\
+    \ kubectl must not fall back to localhost:8080.\nexport KUBECONFIG=/cron-gate/kubeconfig\n\
+    budget=${STARTUP_WAIT_SECONDS:-300}\ncase \"$budget\" in ''|*[!0-9]*) exit 78\
+    \ ;; esac\n[ \"$budget\" -ge 1 ] && [ \"$budget\" -le 300 ] || exit 78\n[ \"${IMMICH_INSTANCE_URL:-}\"\
+    \ = https://immich.andreybondarenko.com/api ] || exit 78\ncase \"${IMMICH_API_KEY:-}\"\
+    \ in ''|*[!a-zA-Z0-9+/.=_-]*) exit 78 ;; esac\nnow() { read -r seconds rest <\
+    \ /proc/uptime; printf '%s' \"${seconds%%.*}\"; }\ndeadline=$(( $(now) + budget\
+    \ ))\nrun() {\n  left=$((deadline - $(now)))\n  [ \"$left\" -gt 0 ] || return\
+    \ 1\n  if [ \"$left\" -gt 8 ]; then left=8; fi\n  timeout -s TERM -k 1 \"$left\"\
+    \ \"$@\"\n}\nwhile [ \"$(now)\" -lt \"$deadline\" ]; do\n  pod=$(run kubectl get\
+    \ pods -n mastodon --request-timeout=5s \\\n    -l app.kubernetes.io/component=web,app.kubernetes.io/instance=mastodon\
+    \ -o json 2>/dev/null \\\n    | jq -r '[.items[]|select(any(.status.conditions[]?;\
+    \ .type==\"Ready\" and .status==\"True\"))][0].metadata.name // empty') || pod=''\n\
+    \  mastodon_ready=false\n  if [ -n \"$pod\" ]; then\n    if run kubectl exec -i\
+    \ -n mastodon \"$pod\" -c mastodon-web --request-timeout=6s -- \\\n      timeout\
+    \ -s TERM -k 1 4 bundle exec ruby - dependencies < /cron-gate/mastodon_startup.rb\
+    \ >/dev/null 2>&1 &&\n       run kubectl exec -i -n mastodon \"$pod\" -c mastodon-web\
+    \ --request-timeout=6s -- \\\n      timeout -s TERM -k 1 4 bundle exec ruby -\
+    \ schema < /cron-gate/mastodon_startup.rb >/dev/null 2>&1; then\n      mastodon_ready=true\n\
+    \    fi\n  fi\n  status=$(printf 'header = \"x-api-key: %s\"\\nurl = \"%s/users/me\"\
+    \\n' \"$IMMICH_API_KEY\" \"$IMMICH_INSTANCE_URL\" \\\n    | run curl --config\
+    \ - --noproxy '*' --proto '=https' --silent --max-time 5 \\\n      --output /dev/null\
+    \ --write-out '%{http_code}' 2>/dev/null) || status=''\n  case \"$status\" in\n\
+    \    401|403) printf '{\"event\":\"cron_dependencies\",\"result\":\"denied\"}\\\
+    n'; exit 77 ;;\n    404) printf '{\"event\":\"cron_dependencies\",\"result\":\"\
+    invalid-config\"}\\n'; exit 78 ;;\n  esac\n  if [ \"$mastodon_ready\" = true ]\
+    \ && [ \"$status\" = 200 ] && [ \"$(now)\" -le \"$deadline\" ]; then\n    printf\
+    \ '{\"event\":\"cron_dependencies\",\"result\":\"ready\"}\\n'\n    exec /scripts/fetch-bookmarked-media.sh\n\
+    \  fi\n  left=$((deadline - $(now)))\n  [ \"$left\" -gt 0 ] || break\n  if [ \"\
+    $left\" -gt 5 ]; then left=5; fi\n  sleep \"$left\"\ndone\nmkdir -p /work/import\n\
+    : > /work/.dependencies-skipped\nprintf '{\"event\":\"cron_dependencies\",\"result\"\
+    :\"skipped\"}\\n'\nexit 0\n"
+  bookmarked_upload_probe.cjs: "\"use strict\";\nconst http = require(\"node:http\"\
+    );\nconst https = require(\"node:https\");\nconst { performance } = require(\"\
+    node:perf_hooks\");\n\nfunction status(url, key, timeoutMs) {\n  return new Promise((resolve)\
+    \ => {\n    let request;\n    let finished = false;\n    const finish = (code)\
+    \ => {\n      if (finished) return;\n      finished = true;\n      clearTimeout(timer);\n\
+    \      if (request) request.destroy();\n      resolve(code);\n    };\n    const\
+    \ timer = setTimeout(() => finish(0), timeoutMs);\n    try {\n      const transport\
+    \ = url.startsWith(\"https:\") ? https : http;\n      request = transport.get(url,\
+    \ {headers: {\"x-api-key\": key}}, (response) => {\n        finish(response.statusCode);\n\
+    \        response.destroy();\n      });\n      request.on(\"error\", () => finish(0));\n\
+    \    } catch { finish(0); }\n  });\n}\n\nasync function wait({check, budgetMs\
+    \ = 300000, intervalMs = 5000,\n  now = () => performance.now(), sleep = (ms)\
+    \ => new Promise((r) => setTimeout(r, ms))}) {\n  const started = now();\n  while\
+    \ (now() - started < budgetMs) {\n    const code = await check(Math.min(5000,\
+    \ budgetMs - (now() - started)));\n    if (code === 200 && now() - started <=\
+    \ budgetMs) return 0;\n    if (code === 401 || code === 403) return 77;\n    if\
+    \ (code === 404) return 78;\n    const delay = Math.min(intervalMs, budgetMs -\
+    \ (now() - started));\n    if (delay > 0) await sleep(delay);\n  }\n  return 75;\n\
+    }\n\nasync function main() {\n  const base = process.env.IMMICH_INSTANCE_URL;\n\
+    \  const key = process.env.IMMICH_API_KEY || \"\";\n  if (base !== \"https://immich.andreybondarenko.com/api\"\
+    \ || !/^[a-zA-Z0-9+/.=_-]+$/.test(key)) return 78;\n  const result = await wait({check:\
+    \ (timeout) => status(base + \"/users/me\", key, timeout)});\n  console.log(JSON.stringify({event:\
+    \ \"cron_dependencies\", result: result === 0 ? \"ready\" : result === 75 ? \"\
+    skipped\" : \"denied-or-invalid\"}));\n  return result;\n}\n\nmodule.exports =\
+    \ {status, wait};\nif (require.main === module) {\n  main().then((code) => {process.exitCode\
+    \ = code;}).catch(() => {process.exitCode = 78;});\n}\n"
+  mastodon_startup.rb: "# frozen_string_literal: true\n\n# No Rails bootstrap for\
+    \ probes. Only the web init is permitted to run migrations.\nrequire 'json'\n\
+    require 'timeout'\n\nmodule MastodonStartup\n  class NotReady < StandardError;\
+    \ end\n  LOCK = 901_746_283\n  MIGRATION_COMMAND = %w[bundle exec rake db:migrate].freeze\n\
+    \n  def self.log(stage, result, started, exit_code: nil)\n    puts JSON.generate(event:\
+    \ 'mastodon_startup', stage: stage, result: result,\n                       duration_seconds:\
+    \ (now - started).round(6), exit_code: exit_code)\n  end\n\n  def self.now\n \
+    \   Process.clock_gettime(Process::CLOCK_MONOTONIC)\n  end\n\n  def self.postgres\n\
+    \    require 'pg'\n    PG.connect(host: ENV.fetch('DB_HOST'), port: ENV.fetch('DB_PORT',\
+    \ '5432'),\n               user: ENV.fetch('DB_USER'), password: ENV.fetch('DB_PASS'),\n\
+    \               dbname: ENV.fetch('DB_NAME'), connect_timeout: 4,\n          \
+    \     options: '-c default_transaction_read_only=on -c statement_timeout=4000')\n\
+    \  end\n\n  def self.valkey\n    require 'redis'\n    client = Redis.new(host:\
+    \ ENV.fetch('REDIS_HOST'), port: ENV.fetch('REDIS_PORT', '6379'),\n          \
+    \             password: ENV.fetch('REDIS_PASSWORD'), connect_timeout: 4,\n   \
+    \                    read_timeout: 4, write_timeout: 4, reconnect_attempts: 0)\n\
+    \    raise NotReady unless client.ping == 'PONG'\n  ensure\n    client&.close\n\
+    \  end\n\n  def self.dependencies\n    connection = postgres\n    raise NotReady\
+    \ unless connection.exec('SELECT 1 AS ready').first.fetch('ready') == '1'\n  \
+    \  valkey\n  ensure\n    connection&.close\n  end\n\n  def self.expected_versions\n\
+    \    files = Dir['db/migrate/[0-9]*.rb', 'db/post_migrate/[0-9]*.rb']\n    versions\
+    \ = files.map { |file| File.basename(file).split('_', 2).first }\n    raise NotReady\
+    \ if versions.empty? || versions.any? { |v| !v.match?(/\\A[0-9]+\\z/) }\n    raise\
+    \ NotReady unless versions.uniq.length == versions.length\n\n    versions\n  end\n\
+    \n  def self.schema_versions(connection)\n    # Missing/uninitialized production\
+    \ DB fails closed; never db:prepare/create/seeds.\n    versions = Timeout.timeout(5)\
+    \ do\n      connection.exec('SELECT version FROM schema_migrations').map { |row|\
+    \ row.fetch('version') }\n    end\n    raise NotReady if versions.empty?\n\n \
+    \   versions\n  end\n\n  def self.pending?(connection)\n    !(expected_versions\
+    \ - schema_versions(connection)).empty?\n  end\n\n  def self.schema\n    connection\
+    \ = postgres\n    acquired = connection.exec(\"SELECT pg_try_advisory_lock_shared(#{LOCK})\
+    \ AS acquired\").first.fetch('acquired') == 't'\n    raise NotReady unless acquired\n\
+    \    raise NotReady if pending?(connection)\n\n    valkey\n  ensure\n    # Closing\
+    \ a session also releases its advisory locks, including error paths.\n    connection&.close\n\
+    \  end\n\n  def self.wait(stage, budget: 300, interval: 5, attempt_timeout: 5)\n\
+    \    raise ArgumentError unless %w[dependencies schema].include?(stage)\n\n  \
+    \  started = now\n    deadline = started + budget\n    loop do\n      remaining\
+    \ = deadline - now\n      break if remaining <= 0\n      begin\n        Timeout.timeout([attempt_timeout,\
+    \ remaining].min) { public_send(stage) }\n        log(stage, 'ready', started)\n\
+    \        return true\n      rescue StandardError, LoadError\n        log(stage,\
+    \ 'waiting', started) # Driver exceptions may contain credentials.\n      end\n\
+    \      sleep [interval, [deadline - now, 0].max].min\n    end\n    log(stage,\
+    \ 'timeout', started)\n    false\n  end\n\n  def self.stop_child(pid)\n    return\
+    \ unless pid\n\n    Process.kill('TERM', -pid)\n    deadline = now + 5\n    loop\
+    \ do\n      return if Process.waitpid(pid, Process::WNOHANG)\n      break if now\
+    \ >= deadline\n      sleep 0.1\n    end\n    Process.kill('KILL', -pid)\n    Process.waitpid(pid)\n\
+    \  rescue Errno::ESRCH, Errno::ECHILD\n    nil\n  end\n\n  def self.run_migration(connection,\
+    \ deadline)\n    # Fixed argv, no shell and no default raw migration/driver output.\n\
+    \    started = now\n    pid = Process.spawn({ 'SKIP_POST_DEPLOYMENT_MIGRATIONS'\
+    \ => nil }, *MIGRATION_COMMAND,\n                        pgroup: true, out: File::NULL,\
+    \ err: File::NULL)\n    loop do\n      if Process.waitpid(pid, Process::WNOHANG)\n\
+    \        status = $?\n        pid = nil\n        log('migration_process', status.success?\
+    \ ? 'complete' : 'failed', started, exit_code: status.exitstatus)\n        raise\
+    \ NotReady unless status.success?\n        return\n      end\n      raise NotReady\
+    \ if now >= deadline\n      # A lost coordinator lock/session must not leave an\
+    \ unobserved writer running.\n      Timeout.timeout(5) { connection.exec('SELECT\
+    \ 1 AS ready') }\n      sleep 1\n    end\n  ensure\n    stop_child(pid)\n  end\n\
+    \n  def self.migrate(budget: 1800, interval: 5)\n    raise ArgumentError unless\
+    \ ENV['MASTODON_MIGRATION_OWNER'] == 'web-init'\n\n    started = now\n    deadline\
+    \ = started + budget\n    connection = Timeout.timeout(5) { postgres }\n    loop\
+    \ do\n      acquired = Timeout.timeout(5) do\n        connection.exec(\"SELECT\
+    \ pg_try_advisory_lock(#{LOCK}) AS acquired\").first.fetch('acquired') == 't'\n\
+    \      end\n      break if acquired\n      raise NotReady if now >= deadline\n\
+    \      log('migration_lock', 'waiting', started)\n      sleep [interval, [deadline\
+    \ - now, 0].max].min\n    end\n    schema_versions(connection) # Refuse an empty\
+    \ or missing production schema.\n    if pending?(connection)\n      # Initial\
+    \ adoption must be no-op; future writes need a reviewed maintenance commit.\n\
+    \      raise NotReady unless ENV['MASTODON_ALLOW_PENDING_MIGRATIONS'] == 'true'\n\
+    \      log('migrations', 'running', started)\n      run_migration(connection,\
+    \ deadline)\n      raise NotReady if pending?(connection)\n      log('migrations',\
+    \ 'complete', started)\n    else\n      log('migrations', 'already_applied', started)\n\
+    \    end\n    true\n  ensure\n    connection&.close\n  end\n\n  def self.main(mode)\n\
+    \    case mode\n    when 'dependencies' then wait('dependencies')\n    when 'schema'\
+    \ then wait('schema', budget: 1800)\n    when 'migrate'\n      wait('dependencies')\
+    \ && migrate\n    else raise ArgumentError\n    end\n  end\nend\n\nif $PROGRAM_NAME\
+    \ == __FILE__\n  $stdout.sync = true\n  Signal.trap('TERM') { raise Interrupt\
+    \ }\n  Signal.trap('INT') { raise Interrupt }\n  begin\n    success = MastodonStartup.main(ARGV.fetch(0))\n\
+    \  rescue StandardError, LoadError, Interrupt\n    puts JSON.generate(event: 'mastodon_startup',\
+    \ result: 'blocked')\n    success = false\n  end\n  exit(success ? 0 : 1)\nend\n"
+  kubeconfig: "apiVersion: v1\nkind: Config\nclusters:\n- name: in-cluster\n  cluster:\n\
+    \    server: https://kubernetes.default.svc\n    certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n\
+    users:\n- name: service-account\n  user:\n    tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token\n\
+    contexts:\n- name: in-cluster\n  context:\n    cluster: in-cluster\n    user:\
+    \ service-account\n    namespace: mastodon\ncurrent-context: in-cluster\n"

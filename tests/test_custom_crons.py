@@ -1,5 +1,6 @@
 """Active custom jobs: offline outage, authorization and multi-container barriers."""
 
+import fnmatch
 import importlib.util
 import os
 import shutil
@@ -36,6 +37,66 @@ class CustomCronTests(unittest.TestCase):
             if doc["kind"] == "ConfigMap":
                 self.assertTrue(doc["immutable"])
 
+    def test_argocd_sources_include_every_dependency_config_map(self):
+        """Explicit directory filters must ship script ConfigMaps with their jobs."""
+        owners = {
+            "logs-check": "logs-check",
+            "external-access-daily-report": "external-access-analytics",
+            "wordpress-daily-report": "wordpress",
+            "nextcloud": "nextcloud",
+            "rspamd-spam-trainer": "mail",
+            "bookmarked-media-sync": "mastodon-custom",
+            "mastodon-spam-list-sync": "mastodon-custom",
+        }
+        documents = CUSTOM.documents()
+        for job in (d for d in documents.values() if d["kind"] == "CronJob"):
+            app = yaml.safe_load(
+                (
+                    ROOT
+                    / "argocd"
+                    / ("application-" + owners[job["metadata"]["name"]] + ".yaml")
+                ).read_text()
+            )
+            source = app["spec"]["source"]
+            options = source.get("directory", {})
+            pattern = options.get("include", "*")
+            patterns = (
+                pattern[1:-1].split(",") if pattern.startswith("{") else [pattern]
+            )
+            pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+            refs = {v.get("configMap", {}).get("name") for v in pod.get("volumes", [])}
+            for path, cm in documents.items():
+                if cm["kind"] != "ConfigMap" or cm["metadata"]["name"] not in refs:
+                    continue
+                relative = Path(path).relative_to(source["path"]).as_posix()
+                self.assertTrue(
+                    any(fnmatch.fnmatchcase(relative, p) for p in patterns), path
+                )
+                self.assertFalse(
+                    fnmatch.fnmatchcase(relative, options.get("exclude", "")), path
+                )
+
+    def test_media_uses_explicit_in_cluster_token_file(self):
+        """The gate and inherited fetch must never depend on kubectl fallback."""
+        docs = CUSTOM.mastodon(True)
+        cm = next(d for d in docs.values() if d["kind"] == "ConfigMap")
+        self.assertEqual(
+            cm["data"]["mastodon_startup.rb"],
+            (BOOT / "mastodon_startup.rb").read_text(),
+        )
+        config = yaml.safe_load(cm["data"]["kubeconfig"])
+        self.assertEqual(
+            config["clusters"][0]["cluster"]["server"], "https://kubernetes.default.svc"
+        )
+        self.assertEqual(
+            config["users"][0]["user"],
+            {"tokenFile": "/var/run/secrets/kubernetes.io/serviceaccount/token"},
+        )
+        self.assertIn(
+            "export KUBECONFIG=/cron-gate/kubeconfig",
+            cm["data"]["bookmarked_job_gate.sh"],
+        )
+
     def test_media_upload_guard_precedes_all_work(self):
         """An init skip cannot release npm, login, upload or description work."""
         job = CUSTOM.mastodon(True)["mastodon/cron-job-bookmarked-media-sync.yaml"]
@@ -57,7 +118,9 @@ class CustomCronTests(unittest.TestCase):
             )
         fetch = (BOOT / "bookmarked_job_gate.sh").read_text()
         self.assertNotIn("mastodon_startup.rb migrate", fetch)
-        self.assertIn("mastodon_startup.rb schema", fetch)
+        self.assertIn(
+            "bundle exec ruby - schema < /cron-gate/mastodon_startup.rb", fetch
+        )
         self.assertIn("timeout -s TERM -k 1 4", fetch)
         self.assertIn(": > /work/.dependencies-skipped", fetch)
 
@@ -75,6 +138,9 @@ class CustomCronTests(unittest.TestCase):
                 executable.write_text("#!/bin/sh\n" + body + "\n")
                 executable.chmod(0o755)
             script = (BOOT / "bookmarked_job_gate.sh").read_text()
+            script = script.replace(
+                "/cron-gate/mastodon_startup.rb", str(BOOT / "mastodon_startup.rb")
+            )
             script = script.replace("/work", str(root / "work")).replace(
                 "/scripts/fetch-bookmarked-media.sh", str(root / "fetch")
             )

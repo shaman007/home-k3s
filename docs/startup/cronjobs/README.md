@@ -14,7 +14,9 @@ python3 tools/bootstrap/prepare_custom_crons.py --write-source  # regenerate loc
 Mastodon spam sync waits for authenticated SQL/Valkey and the current schema;
 it never runs migrations and fails with exit75 after 300 seconds if unavailable.
 Bookmarked media checks the same contracts through the existing web Pod and
-existing exec RBAC, plus authenticated Immich `GET /api/users/me` before export.
+existing exec RBAC. Its explicit in-cluster kubeconfig references the projected
+ServiceAccount `tokenFile` and CA, preventing kubectl fallback to localhost; no
+token value is copied. It also checks authenticated Immich `GET /api/users/me` before export.
 An init skip writes a shared marker, checked before any uploader work. The Node
 uploader rechecks Immich independently before npm/login/upload. Each wait has a
 300-second budget; authentication denial fails instead of silently skipping.
@@ -101,3 +103,19 @@ Health-report/monitoring jobs should continue reporting missing dependencies,
 rather than being globally blocked by the systems they observe. Do not patch
 Longhorn-generated CronJobs with this wrapper: their controller owns the template.
 The selected report-only skip policy must be explicit for each future adoption.
+
+## Runtime acceptance follow-up (2026-11-13)
+
+Initial deployment of `90fc5ca3` exposed two integration omissions: the explicit
+Argo directory includes for logs-check and external-access-analytics omitted the
+new immutable ConfigMaps; the media init kubectl fell back to localhost without
+an explicit in-cluster configuration. The source fixes include versioned script
+ConfigMaps, a tokenFile-based kubeconfig and the read-only Ruby helper sent through
+stdin (the helper is not mounted in the ordinary web container). Tests verify
+source selection, credentials references and both container barriers.
+The old media ConfigMap must stay while an existing Job references it.
+These fixes require publication before the scheduled templates are considered
+fully verified; a successful isolated diagnostic Job alone is insufficient.
+
+The [runtime execution record](EXECUTION.md) distinguishes scheduled templates,
+approved diagnostic/retry Jobs, successful skips and pending Git publication.

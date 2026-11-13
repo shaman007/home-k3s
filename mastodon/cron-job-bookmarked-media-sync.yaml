@@ -155,4 +155,4 @@ spec:
             emptyDir: {}
           - name: cron-gate
             configMap:
-              name: bookmarked-media-sync-dependencies-8f14e44a2a69
+              name: bookmarked-media-sync-dependencies-4c425ff40291
