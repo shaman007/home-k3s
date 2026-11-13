@@ -1,0 +1,768 @@
+format_version: 1
+observed_date: '2026-11-13'
+scope: Core bootstrap plus Dawarich, Immich, Mastodon, Nextcloud, Keycloak; not all Applications
+direction: provider -> consumer; phase is descriptive, not installed orchestration
+nodes:
+  kubernetes:
+    phase: 0
+    ready: API reachable; etcd quorum and schedulable node(s). This is a bootstrap prerequisite, not an app Job.
+    sources:
+    - argocd/application-cilium.yaml
+  node-dns:
+    phase: 0
+    ready: Node/containerd DNS resolves Harbor to .212 without public AAAA; upstream registry names resolve. UDM
+      is outside Kubernetes.
+    sources:
+    - docs/migrations/harbor-bootstrap/CUTOVER.md
+  upstream-images:
+    phase: 0
+    ready: Required upstream manifest and layers available, or exact images preloaded. A warm cache does not prove
+      this.
+    sources:
+    - argocd/application-harbor.yaml
+    - argocd/application-openbao.yaml
+  cilium:
+    phase: 1
+    ready: Agents Ready on all target nodes; pod/service connectivity and required policies verified.
+    sources:
+    - argocd/application-cilium.yaml
+  coredns:
+    phase: 1
+    ready: DNS replicas Ready and service-name queries resolve from target application namespace.
+    sources:
+    - kube-system
+  longhorn:
+    phase: 1
+    ready: Managers/CSI Ready; each required volume healthy enough to attach and mounts on its target Pod. Bound
+      PVC alone is insufficient.
+    sources:
+    - argocd/application-longhorn.yaml
+  metallb:
+    phase: 1
+    ready: Controllers/speakers/FRR Ready; .212 advertised via valid peers with endpoints.
+    sources:
+    - argocd/application-metallb.yaml
+  internal-ca:
+    phase: 1
+    ready: Original root Secret restored/valid; matching public trust distributed; independent age backup available.
+      Never silently replace the root.
+    sources:
+    - docs/migrations/openbao-internal-tls/README.md
+  cert-manager:
+    phase: 1
+    ready: Controller and webhook operational, CA Issuer Ready; no GoDaddy dependency for local-CA signing.
+    sources:
+    - argocd/application-cert-manager.yaml
+  openbao-tls:
+    phase: 1
+    ready: Backend leaf Secret present, valid, key matches certificate and expected SAN/trust.
+    sources:
+    - docs/migrations/openbao-internal-tls/pki.yaml
+  openbao:
+    phase: 2
+    ready: Raft quorum; required servers unsealed and an active leader; verified internal health request succeeds.
+      Unseal is manual.
+    sources:
+    - argocd/application-openbao.yaml
+  eso:
+    phase: 1
+    ready: Controller/webhook available. Provider/store health is evaluated per required Secret, not globally.
+    sources:
+    - argocd/application-external-secrets.yaml
+  registry-ingress:
+    phase: 2
+    ready: traefik-registry Ready endpoints, .212:443 verified TLS/SNI and Harbor authentication challenge.
+    sources:
+    - argocd/application-traefik-registry.yaml
+  harbor-data:
+    phase: 2
+    ready: Internal Harbor PostgreSQL and Redis healthy, required PVCs mounted. These start before Harbor is available.
+    sources:
+    - argocd/application-harbor.yaml
+  harbor:
+    phase: 2
+    ready: Core/registry ready; token exchange and real authenticated private-image pull via .212 succeeds.
+    sources:
+    - argocd/application-harbor.yaml
+    - docs/migrations/harbor-bootstrap/CUTOVER.md
+  seaweedfs:
+    phase: 2
+    ready: HostPath available; master/volume/filer ready, S3 identities loaded and signed read of a known object
+      succeeds.
+    sources:
+    - seaweedfs/deployment-seaweedfs-s3.yaml
+  longhorn-restore:
+    phase: 2
+    ready: Backup target reachable; independent S3 credentials and chosen backups available. Not required for existing
+      healthy volume attachment.
+    sources:
+    - longhorn/backup-target-seaweedfs-patch.json
+  kyverno:
+    phase: 2
+    ready: Admission controllers available; resource verification uses Ignore and audit. Not a hard prerequisite
+      to app Pod admission in this configuration.
+    sources:
+    - kyverno/README.md
+  dawarich-secrets:
+    phase: 3
+    ready: Only required target Secrets/keys present; if missing, relevant ESO store and ExternalSecret Ready. Do
+      not wait for all cluster Secrets.
+    sources:
+    - dawarich
+  dawarich-db:
+    phase: 3
+    ready: 'dawarich-postgres:5432 in dawarich: SELECT 1 authenticated as the application against the configured
+      database; read-only, not merely TCP or pg_isready.'
+    sources:
+    - dawarich/stateful-set-dawarich-postgres.yaml
+  dawarich:
+    phase: 4
+    ready: GET /api/v1/ready with Host localhost returns HTTP200/status ok after web-entrypoint schema/data migrations
+      and seeds. Sidekiq must wait for local web readiness before its entrypoint.
+    sources:
+    - dawarich/deployment-dawarich.yaml
+  dawarich-valkey:
+    phase: 3
+    ready: 'valkey-dawarich:6379 in dawarich: protocol PING returns PONG, with configured authentication; persistence
+      loaded.'
+    sources:
+    - dawarich/stateful-set-valkey.yaml
+  immich-secrets:
+    phase: 3
+    ready: Only required target Secrets/keys present; if missing, relevant ESO store and ExternalSecret Ready. Do
+      not wait for all cluster Secrets.
+    sources:
+    - immich
+  immich-db:
+    phase: 3
+    ready: 'immich-postgres:5432 in immich: SELECT 1 authenticated as the application against the configured database;
+      read-only, not merely TCP or pg_isready.'
+    sources:
+    - immich/stateful-set-immich-postgres.yaml
+  immich:
+    phase: 4
+    ready: Application health after its own schema migrations; worker heartbeat/queue connectivity separately. Specific
+      readiness endpoint must be validated per app.
+    sources:
+    - immich/deployment-immich-server.yaml
+  immich-valkey:
+    phase: 3
+    ready: 'immich-valkey:6379 in immich: protocol PING returns PONG, with configured authentication; persistence
+      loaded.'
+    sources:
+    - immich/stateful-set-immich-valkey.yaml
+  mastodon-secrets:
+    phase: 3
+    ready: Only required target Secrets/keys present; if missing, relevant ESO store and ExternalSecret Ready. Do
+      not wait for all cluster Secrets.
+    sources:
+    - mastodon
+  mastodon-db:
+    phase: 3
+    ready: 'mastodon-postgres:5432 in mastodon: SELECT 1 authenticated as the application against the configured
+      database; read-only, not merely TCP or pg_isready.'
+    sources:
+    - mastodon/stateful-set-mastodon-postgres.yaml
+  mastodon:
+    phase: 4
+    ready: Application health after its own schema migrations; worker heartbeat/queue connectivity separately. Specific
+      readiness endpoint must be validated per app.
+    sources:
+    - mastodon/mastodon-values.yaml
+  mastodon-valkey:
+    phase: 3
+    ready: 'valkey:6379 in mastodon: protocol PING returns PONG, with configured authentication; persistence loaded.'
+    sources:
+    - mastodon/stateful-set-valkey.yaml
+  nextcloud-secrets:
+    phase: 3
+    ready: Only required target Secrets/keys present; if missing, relevant ESO store and ExternalSecret Ready. Do
+      not wait for all cluster Secrets.
+    sources:
+    - nextcloud
+  nextcloud-db:
+    phase: 3
+    ready: 'mysql-nextcloud:3306 in nextcloud: SELECT 1 authenticated as the application against the configured
+      database; read-only, not merely TCP or pg_isready.'
+    sources:
+    - nextcloud/deployment-mysql-nextcloud.yaml
+  nextcloud:
+    phase: 4
+    ready: Application health after its own schema migrations; worker heartbeat/queue connectivity separately. Specific
+      readiness endpoint must be validated per app.
+    sources:
+    - nextcloud/stateful-set-nextcloud-web.yaml
+  nextcloud-valkey:
+    phase: 3
+    ready: 'valkey:6379 in nextcloud: protocol PING returns PONG, with configured authentication; persistence loaded.'
+    sources:
+    - nextcloud/stateful-set-valkey.yaml
+  keycloak-secrets:
+    phase: 3
+    ready: Only required target Secrets/keys present; if missing, relevant ESO store and ExternalSecret Ready. Do
+      not wait for all cluster Secrets.
+    sources:
+    - keycloak
+  keycloak-db:
+    phase: 3
+    ready: 'keycloak-postgres:5432 in keycloak: SELECT 1 authenticated as the application against the configured
+      database; read-only, not merely TCP or pg_isready.'
+    sources:
+    - keycloak/stateful-set-keycloak-postgres.yaml
+  keycloak:
+    phase: 4
+    ready: Application health after its own schema migrations; worker heartbeat/queue connectivity separately. Specific
+      readiness endpoint must be validated per app.
+    sources:
+    - keycloak/stateful-set-keycloak.yaml
+  photon:
+    phase: 3
+    ready: Geocoding query returns a valid response; optional to Dawarich process startup.
+    sources:
+    - dawarich/deployment-photon.yaml
+  opensearch:
+    phase: 3
+    ready: Authenticated cluster/index health appropriate for search; optional to basic Mastodon web startup.
+    sources:
+    - mastodon/mastodon-values.yaml
+  immich-ml:
+    phase: 3
+    ready: ML health endpoint and required model available; separate from basic server startup.
+    sources:
+    - immich/deployment-immich-machine-learning.yaml
+  public-ingress:
+    phase: 2
+    ready: Public Traefik/HTTP01 solver path on port80 works from public DNS view; plugin/init prerequisites satisfied.
+      Not the .212 controller.
+    sources:
+    - argocd/application-traefik.yaml
+    - cert-manager/cluster-issuer-letsencrypt-prod.yaml
+  harbor-tls:
+    phase: 2
+    ready: Existing harbor/harbor-tls Secret has a valid certificate/key for Harbor hostname; a root/leaf recovery
+      path exists if expired or lost.
+    sources:
+    - harbor/certificate-harbor-tls.yaml
+  dawarich-schema:
+    phase: 4
+    ready: Existing web-entrypoint completes db:migrate, data:migrate and db:seed before starting the web server.
+      SQL login alone is not schema readiness.
+    sources:
+    - dawarich/deployment-dawarich.yaml
+    - docs/startup/README.md
+  dawarich-worker:
+    phase: 4
+    ready: 'Pilot: localhost web /api/v1/ready HTTP200/status ok, then original sidekiq-entrypoint; verify actual
+      worker heartbeat/queue processing separately.'
+    sources:
+    - dawarich/deployment-dawarich.yaml
+    - tools/bootstrap/prepare_startup_gate.py
+edges:
+- from: kubernetes
+  to: cilium
+  kind: startup
+  when: always
+- from: upstream-images
+  to: cilium
+  kind: image
+  when: image_cache_miss
+- from: kubernetes
+  to: coredns
+  kind: startup
+  when: always
+- from: upstream-images
+  to: coredns
+  kind: image
+  when: image_cache_miss
+- from: kubernetes
+  to: longhorn
+  kind: startup
+  when: always
+- from: upstream-images
+  to: longhorn
+  kind: image
+  when: image_cache_miss
+- from: kubernetes
+  to: metallb
+  kind: startup
+  when: always
+- from: upstream-images
+  to: metallb
+  kind: image
+  when: image_cache_miss
+- from: kubernetes
+  to: cert-manager
+  kind: startup
+  when: always
+- from: upstream-images
+  to: cert-manager
+  kind: image
+  when: image_cache_miss
+- from: kubernetes
+  to: eso
+  kind: startup
+  when: always
+- from: upstream-images
+  to: eso
+  kind: image
+  when: image_cache_miss
+- from: kubernetes
+  to: kyverno
+  kind: startup
+  when: always
+- from: upstream-images
+  to: kyverno
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: coredns
+  kind: startup
+  when: always
+- from: cilium
+  to: longhorn
+  kind: startup
+  when: always
+- from: cilium
+  to: metallb
+  kind: startup
+  when: always
+- from: cilium
+  to: cert-manager
+  kind: startup
+  when: always
+- from: cilium
+  to: eso
+  kind: startup
+  when: always
+- from: node-dns
+  to: upstream-images
+  kind: image
+  when: image_cache_miss
+- from: internal-ca
+  to: openbao-tls
+  kind: startup
+  when: always
+- from: cert-manager
+  to: openbao-tls
+  kind: issuance
+  when: leaf_missing_or_needs_renewal
+- from: openbao-tls
+  to: openbao
+  kind: startup
+  when: always
+- from: longhorn
+  to: openbao
+  kind: startup
+  when: always
+- from: coredns
+  to: openbao
+  kind: startup
+  when: always
+- from: upstream-images
+  to: openbao
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: harbor-data
+  kind: startup
+  when: always
+- from: coredns
+  to: harbor-data
+  kind: startup
+  when: always
+- from: upstream-images
+  to: harbor-data
+  kind: image
+  when: image_cache_miss
+- from: harbor-data
+  to: harbor
+  kind: startup
+  when: always
+- from: registry-ingress
+  to: harbor
+  kind: access
+  when: node_or_LAN_registry_access
+- from: metallb
+  to: registry-ingress
+  kind: startup
+  when: always
+- from: cilium
+  to: registry-ingress
+  kind: startup
+  when: always
+- from: upstream-images
+  to: registry-ingress
+  kind: image
+  when: image_cache_miss
+- from: node-dns
+  to: harbor
+  kind: access
+  when: node_or_LAN_registry_access
+- from: upstream-images
+  to: seaweedfs
+  kind: image
+  when: image_cache_miss_after_commit_6f6ac885_rollout
+- from: harbor
+  to: seaweedfs
+  kind: observed-image
+  when: CURRENT_RUNTIME_image_cache_miss_until_6f6ac885_rollout
+- from: cilium
+  to: seaweedfs
+  kind: startup
+  when: always
+- from: coredns
+  to: seaweedfs
+  kind: startup
+  when: always
+- from: seaweedfs
+  to: longhorn-restore
+  kind: recovery
+  when: always
+- from: longhorn-restore
+  to: harbor-data
+  kind: recovery
+  when: Harbor_volumes_lost_and_restored_from_this_backup_target
+- from: eso
+  to: dawarich-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: dawarich-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: longhorn
+  to: dawarich-db
+  kind: startup
+  when: always
+- from: harbor
+  to: dawarich-db
+  kind: image
+  when: image_cache_miss
+- from: dawarich-secrets
+  to: dawarich-db
+  kind: startup
+  when: always
+- from: coredns
+  to: dawarich-db
+  kind: startup
+  when: always
+- from: dawarich-db
+  to: dawarich
+  kind: startup
+  when: always
+- from: dawarich-secrets
+  to: dawarich
+  kind: startup
+  when: always
+- from: harbor
+  to: dawarich
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: dawarich
+  kind: startup
+  when: always
+- from: coredns
+  to: dawarich
+  kind: startup
+  when: always
+- from: longhorn
+  to: dawarich-valkey
+  kind: startup
+  when: always
+- from: harbor
+  to: dawarich-valkey
+  kind: image
+  when: image_cache_miss
+- from: dawarich-valkey
+  to: dawarich
+  kind: startup
+  when: always
+- from: eso
+  to: immich-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: immich-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: longhorn
+  to: immich-db
+  kind: startup
+  when: always
+- from: harbor
+  to: immich-db
+  kind: image
+  when: image_cache_miss
+- from: immich-secrets
+  to: immich-db
+  kind: startup
+  when: always
+- from: coredns
+  to: immich-db
+  kind: startup
+  when: always
+- from: immich-db
+  to: immich
+  kind: startup
+  when: always
+- from: immich-secrets
+  to: immich
+  kind: startup
+  when: always
+- from: harbor
+  to: immich
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: immich
+  kind: startup
+  when: always
+- from: coredns
+  to: immich
+  kind: startup
+  when: always
+- from: longhorn
+  to: immich-valkey
+  kind: startup
+  when: always
+- from: harbor
+  to: immich-valkey
+  kind: image
+  when: image_cache_miss
+- from: immich-valkey
+  to: immich
+  kind: startup
+  when: always
+- from: eso
+  to: mastodon-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: mastodon-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: longhorn
+  to: mastodon-db
+  kind: startup
+  when: always
+- from: harbor
+  to: mastodon-db
+  kind: image
+  when: image_cache_miss
+- from: mastodon-secrets
+  to: mastodon-db
+  kind: startup
+  when: always
+- from: coredns
+  to: mastodon-db
+  kind: startup
+  when: always
+- from: mastodon-db
+  to: mastodon
+  kind: startup
+  when: always
+- from: mastodon-secrets
+  to: mastodon
+  kind: startup
+  when: always
+- from: harbor
+  to: mastodon
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: mastodon
+  kind: startup
+  when: always
+- from: coredns
+  to: mastodon
+  kind: startup
+  when: always
+- from: longhorn
+  to: mastodon-valkey
+  kind: startup
+  when: always
+- from: harbor
+  to: mastodon-valkey
+  kind: image
+  when: image_cache_miss
+- from: mastodon-valkey
+  to: mastodon
+  kind: startup
+  when: always
+- from: eso
+  to: nextcloud-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: nextcloud-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: longhorn
+  to: nextcloud-db
+  kind: startup
+  when: always
+- from: harbor
+  to: nextcloud-db
+  kind: image
+  when: image_cache_miss
+- from: nextcloud-secrets
+  to: nextcloud-db
+  kind: startup
+  when: always
+- from: coredns
+  to: nextcloud-db
+  kind: startup
+  when: always
+- from: nextcloud-db
+  to: nextcloud
+  kind: startup
+  when: always
+- from: nextcloud-secrets
+  to: nextcloud
+  kind: startup
+  when: always
+- from: harbor
+  to: nextcloud
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: nextcloud
+  kind: startup
+  when: always
+- from: coredns
+  to: nextcloud
+  kind: startup
+  when: always
+- from: longhorn
+  to: nextcloud-valkey
+  kind: startup
+  when: always
+- from: harbor
+  to: nextcloud-valkey
+  kind: image
+  when: image_cache_miss
+- from: nextcloud-valkey
+  to: nextcloud
+  kind: startup
+  when: always
+- from: eso
+  to: keycloak-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: keycloak-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: longhorn
+  to: keycloak-db
+  kind: startup
+  when: always
+- from: harbor
+  to: keycloak-db
+  kind: image
+  when: image_cache_miss
+- from: keycloak-secrets
+  to: keycloak-db
+  kind: startup
+  when: always
+- from: coredns
+  to: keycloak-db
+  kind: startup
+  when: always
+- from: keycloak-db
+  to: keycloak
+  kind: startup
+  when: always
+- from: keycloak-secrets
+  to: keycloak
+  kind: startup
+  when: always
+- from: harbor
+  to: keycloak
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: keycloak
+  kind: startup
+  when: always
+- from: coredns
+  to: keycloak
+  kind: startup
+  when: always
+- from: photon
+  to: dawarich
+  kind: feature
+  when: geocoding
+- from: keycloak
+  to: dawarich
+  kind: feature
+  when: OIDC login; required oidc Secret itself is a Pod prerequisite
+- from: keycloak
+  to: mastodon
+  kind: feature
+  when: OIDC login
+- from: seaweedfs
+  to: mastodon
+  kind: feature
+  when: media access
+- from: opensearch
+  to: mastodon
+  kind: feature
+  when: search
+- from: immich-ml
+  to: immich
+  kind: feature
+  when: machine_learning
+- from: cert-manager
+  to: harbor-tls
+  kind: issuance
+  when: certificate_missing_or_needs_renewal
+- from: public-ingress
+  to: harbor-tls
+  kind: issuance
+  when: HTTP01_certificate_missing_or_needs_renewal
+- from: harbor-tls
+  to: registry-ingress
+  kind: access
+  when: verified_Harbor_TLS_access
+- from: upstream-images
+  to: public-ingress
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: public-ingress
+  kind: startup
+  when: always
+- from: eso
+  to: public-ingress
+  kind: materialization
+  when: required_Traefik_target_secret_missing
+- from: openbao
+  to: public-ingress
+  kind: materialization
+  when: required_Traefik_target_secret_missing
+- from: mastodon-secrets
+  to: mastodon-valkey
+  kind: startup
+  when: configured_cache_auth_secret_required
+- from: dawarich-db
+  to: dawarich-schema
+  kind: startup
+  when: always
+- from: dawarich-valkey
+  to: dawarich-schema
+  kind: startup
+  when: pilot_gate_installed
+- from: dawarich-schema
+  to: dawarich
+  kind: startup
+  when: existing_web_entrypoint
+- from: dawarich
+  to: dawarich-worker
+  kind: startup
+  when: pilot_local_web_barrier_installed
+- from: dawarich-db
+  to: dawarich-worker
+  kind: observed-startup
+  when: current_worker_checks_SQL_login_only

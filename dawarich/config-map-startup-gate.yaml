@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dawarich-startup-gate
+  namespace: dawarich
+data:
+  wait_dependencies.rb: "# frozen_string_literal: true\n\n# Run under the application's Bundler environment; never\
+    \ load Rails or migrations.\nrequire 'json'\nrequire 'net/http'\nrequire 'timeout'\n\nmodule StartupGate\n \
+    \ class NotReady < StandardError; end\n\n  def self.postgres\n    require 'pg'\n    connection = PG.connect(\n\
+    \      host: ENV.fetch('DATABASE_HOST'), port: ENV.fetch('DATABASE_PORT'),\n      user: ENV.fetch('DATABASE_USERNAME'),\
+    \ password: ENV.fetch('DATABASE_PASSWORD'),\n      dbname: ENV.fetch('DATABASE_NAME'), connect_timeout: 5,\n\
+    \      options: '-c default_transaction_read_only=on -c statement_timeout=4000'\n    )\n    raise NotReady unless\
+    \ connection.exec('SELECT 1').getvalue(0, 0) == '1'\n  ensure\n    connection&.close\n  end\n\n  def self.valkey\n\
+    \    require 'redis'\n    client = Redis.new(url: ENV.fetch('REDIS_URL'), connect_timeout: 5,\n            \
+    \           read_timeout: 5, write_timeout: 5, reconnect_attempts: 0)\n    raise NotReady unless client.ping\
+    \ == 'PONG'\n  ensure\n    client&.close\n  end\n\n  def self.web\n    # Bypass proxy environment variables\
+    \ and never follow redirects.\n    http = Net::HTTP.new('127.0.0.1', 3000, nil)\n    http.open_timeout = 5\n\
+    \    http.read_timeout = 5\n    request = Net::HTTP::Get.new('/api/v1/ready')\n    request['Host'] = 'localhost'\n\
+    \    response = http.request(request)\n    raise NotReady unless response.code == '200' && JSON.parse(response.body)['status']\
+    \ == 'ok'\n  end\n\n  def self.wait(mode, budget: 300, interval: 5, attempt_timeout: 5)\n    checks = { 'dependencies'\
+    \ => %i[postgres valkey], 'web' => %i[web] }.fetch(mode)\n    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC)\
+    \ + budget\n    loop do\n      ready = true\n      checks.each do |stage|\n        remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)\n\
+    \        return 1 if remaining <= 0\n\n        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)\n \
+    \       result = 'ready'\n        begin\n          Timeout.timeout([attempt_timeout, remaining].min) { public_send(stage)\
+    \ }\n        rescue StandardError, LoadError\n          # Deliberately discard exception class/text: drivers\
+    \ can include credentials.\n          ready = false\n          result = 'not_ready'\n        end\n        puts\
+    \ JSON.generate(event: 'startup_gate', stage: stage, result: result,\n                           duration_seconds:\
+    \ (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(6))\n      end\n      return 0 if ready\n\
+    \n      remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)\n      return 1 if remaining\
+    \ <= 0\n\n      sleep [interval, remaining].min\n    end\n  end\nend\n\nif $PROGRAM_NAME == __FILE__\n  $stdout.sync\
+    \ = true\n  begin\n    result = StartupGate.wait(ARGV.fetch(0))\n  rescue StandardError, LoadError\n    puts\
+    \ JSON.generate(event: 'startup_gate', result: 'configuration_error')\n    result = 1\n  end\n  puts JSON.generate(event:\
+    \ 'startup_gate', result: result.zero? ? 'complete' : 'blocked')\n  exit result\nend\n"

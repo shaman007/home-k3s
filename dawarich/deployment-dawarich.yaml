@@ -18,6 +18,8 @@ spec:
     metadata:
       labels:
         app: dawarich
+      annotations:
+        checksum/dawarich-startup-gate: 6d54f26867e6cd147a06b277a87f26c7be2434aceebcbd2beead3048a80c3ec1
     spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
@@ -61,6 +63,54 @@ spec:
               name: tmp
             - mountPath: /schema-dumps
               name: schema-dumps
+        - name: wait-for-data-services
+          image: harbor.andreybondarenko.com/dockerhub/freikin/dawarich:1.22.0
+          imagePullPolicy: IfNotPresent
+          command:
+          - bundle
+          - exec
+          - ruby
+          - /startup-gate/wait_dependencies.rb
+          - dependencies
+          env:
+          - name: RAILS_ENV
+            value: development
+          - name: REDIS_URL
+            value: redis://valkey-dawarich.dawarich.svc.cluster.local:6379
+          - name: DATABASE_HOST
+            value: dawarich-postgres.dawarich.svc.cluster.local
+          - name: DATABASE_PORT
+            value: '5432'
+          - name: DATABASE_USERNAME
+            value: postgres
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-password
+                key: password
+          - name: DATABASE_NAME
+            value: dawarich_development
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 192Mi
+          volumeMounts:
+          - name: startup-gate
+            mountPath: /startup-gate
+            readOnly: true
       containers:
         - name: dawarich
           env:
@@ -161,6 +211,16 @@ spec:
               memory: "2Gi"
           ports:
             - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /api/v1/ready
+              port: 3000
+              httpHeaders:
+              - name: Host
+                value: localhost
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
         - name: dawarich-sidekiq
           env:
             - name: RAILS_ENV
@@ -234,8 +294,14 @@ spec:
             - mountPath: /var/app/db/data_schema.rb
               name: schema-dumps
               subPath: data_schema.rb
-          command:
-            - "sidekiq-entrypoint.sh"
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              bundle exec ruby /startup-gate/wait_dependencies.rb web
+              exec sidekiq-entrypoint.sh
           resources:
             requests:
               memory: "512Mi"
@@ -260,3 +326,6 @@ spec:
           emptyDir: {}
         - name: schema-dumps
           emptyDir: {}
+        - name: startup-gate
+          configMap:
+            name: dawarich-startup-gate
