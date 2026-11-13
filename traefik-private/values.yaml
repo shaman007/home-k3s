@@ -174,3 +174,230 @@ extraObjects:
             AnyOf:
             - admin
           CheckOnEveryRequest: true
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: oidc-callback-errors
+    namespace: traefik
+  data:
+    nginx.conf: |
+      pid /tmp/nginx.pid;
+      error_log /dev/stderr warn;
+      worker_processes 1;
+      events { worker_connections 128; }
+      http {
+        access_log off;
+        client_body_temp_path /tmp/client_temp;
+        proxy_temp_path /tmp/proxy_temp;
+        fastcgi_temp_path /tmp/fastcgi_temp;
+        uwsgi_temp_path /tmp/uwsgi_temp;
+        scgi_temp_path /tmp/scgi_temp;
+        default_type text/html;
+        charset utf-8;
+        server {
+          listen 8080;
+          server_name _;
+          add_header Cache-Control "no-store" always;
+          add_header Referrer-Policy "no-referrer" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'" always;
+          location = /callback-error.html { root /etc/oidc-errors; }
+          location = /healthz { default_type text/plain; return 200 "ok\n"; }
+          location / { return 404; }
+        }
+      }
+    callback-error.html: |
+      <!DOCTYPE html>
+      <html lang="ru">
+      <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Не удалось завершить вход</title>
+      <style>
+      :root {
+        --bg: #f9fafb;
+        --text: #111827;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --card-bg: #ffffff;
+        --border: #e5e7eb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111827;
+          --text: #f9fafb;
+          --muted: #9ca3af;
+          --accent: #3b82f6;
+          --accent-hover: #60a5fa;
+          --card-bg: #1f2937;
+          --border: #374151;
+        }
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        line-height: 1.6;
+      }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 480px;
+        width: 100%;
+        text-align: center;
+      }
+      h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+      p { color: var(--muted); margin-bottom: 1.5rem; }
+      a.btn {
+        display: inline-block;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      a.btn:hover { background: var(--accent-hover); }
+      </style>
+      </head>
+      <body>
+      <div class="card">
+      <h1>Не удалось завершить вход</h1>
+      <p>Возможно, браузер восстановил старую вкладку входа. Попробуйте войти снова с главной страницы.</p>
+      <a class="btn" href="/">Открыть главную</a>
+      </div>
+      </body>
+      </html>
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: oidc-callback-errors
+    namespace: traefik
+  spec:
+    replicas: 2
+    selector:
+      matchLabels: &id001
+        app.kubernetes.io/name: oidc-callback-errors
+    template:
+      metadata:
+        labels: *id001
+        annotations:
+          checksum/config: b23f5928c3126cccd983e57cc7388cdf772be1b5f68407b6d5faa3eb386a6e45
+      spec:
+        automountServiceAccountToken: false
+        enableServiceLinks: false
+        securityContext:
+          seccompProfile:
+            type: RuntimeDefault
+        containers:
+        - name: errors
+          image: harbor.andreybondarenko.com/dockerhub/nginx:1.31.8-alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+          command:
+          - nginx
+          args:
+          - -e
+          - stderr
+          - -c
+          - /etc/oidc-errors/nginx.conf
+          - -g
+          - daemon off;
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            capabilities:
+              drop:
+              - ALL
+          ports:
+          - name: http
+            containerPort: 8080
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+          volumeMounts:
+          - name: config
+            mountPath: /etc/oidc-errors
+            readOnly: true
+          - name: tmp
+            mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+        volumes:
+        - name: config
+          configMap:
+            name: oidc-callback-errors
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: oidc-callback-errors
+    namespace: traefik
+  spec:
+    selector: *id001
+    ports:
+    - name: http
+      port: 8080
+      targetPort: http
+- apiVersion: traefik.io/v1alpha1
+  kind: Middleware
+  metadata:
+    name: oidc-callback-errors
+    namespace: traefik
+    annotations:
+      kubernetes.io/ingress.class: traefik-private
+  spec:
+    errors:
+      status:
+      - '500'
+      service:
+        name: oidc-callback-errors
+        port: 8080
+        passHostHeader: false
+      query: /callback-error.html
+      errorRequestHeaders: []
+- apiVersion: traefik.io/v1alpha1
+  kind: IngressRoute
+  metadata:
+    name: oidc-callback-errors
+    namespace: traefik
+  spec:
+    ingressClassName: traefik-private
+    entryPoints:
+    - websecure
+    routes:
+    - kind: Rule
+      match: (Host(`alerts.int.andreybondarenko.com`) || Host(`longhorn.int.andreybondarenko.com`) || Host(`prometheus.int.andreybondarenko.com`) || Host(`thanos-compactor.int.andreybondarenko.com`) || Host(`thanos-store.int.andreybondarenko.com`) || Host(`thanos.int.andreybondarenko.com`)) && Path(`/oidc/callback`)
+      priority: 1000
+      middlewares:
+      - name: internal-clients-only
+      - name: oidc-callback-errors
+      - name: admin-oidc
+      services:
+      - kind: TraefikService
+        name: noop@internal
+    tls: {}

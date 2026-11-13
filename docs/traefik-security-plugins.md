@@ -88,6 +88,50 @@ Longhorn updates/live connections. Confirm internal monitoring targets and
 Grafana's datasource queries still work. Browser login against real Keycloak has
 not been validated by local mock-provider tests.
 
+
+### Callback recovery page
+
+The private controller's Helm `extraObjects` (mirrored in
+`traefik-private/values.yaml`) include `oidc-callback-errors`: a ConfigMap,
+non-root static nginx Deployment, ClusterIP Service, Errors middleware and
+IngressRoute. Two small replicas serve the recovery HTML; a configuration
+checksum rolls the pods when the page changes. Existing intra-namespace
+Traefik NetworkPolicies permit controller-to-page traffic.
+
+The route matches **exactly `/oidc/callback`**, only on the six hosts in
+`keycloak/config/traefik-admin.client.json`, with priority 1000. Keep that host
+list aligned when adding a protected console. Middleware order is
+`internal-clients-only` → `oidc-callback-errors` → `admin-oidc`.
+The source restriction remains outside error handling. Only HTTP **500** gets
+the replacement page, including stale-code exchange failures and other callback
+500s; Traefik Errors cannot distinguish their response text. Successful OIDC
+redirects, 401/403 responses and application errors on other paths pass through
+unchanged. The callback router uses `noop@internal` as its terminal service:
+the OIDC plugin handles callbacks itself, without forwarding to an application.
+Existing Ingress TLS secrets continue to load the certificates selected by SNI;
+the callback IngressRoute uses the same private HTTPS entrypoint and TLS store.
+
+The page's **«Открыть главную»** button is an ordinary `href="/"`, so it
+opens the current domain's root without the old code/state query. There is no
+automatic redirect or script. The response retains status 500, sends `no-store`
+and `no-referrer`, and loads no external assets. The Errors middleware requests
+a fixed internal `/callback-error.html` URL without interpolating the callback
+query and forwards no original request headers. The page service has no public
+Ingress and does not log access URLs.
+
+After publishing and reconciling through the normal GitOps workflow, verify both
+error-page pods are Ready. In an authenticated browser, restore an expired
+callback tab: it should return the recovery HTML with status 500. Check that the
+button opens the same domain's `/` and a new login completes. Also verify a
+normal successful login, existing source restrictions and an unrelated
+application error. Rendering/schema tests alone do not establish those live
+behaviors. Do not paste real callback URLs, codes or cookies into logs or docs.
+
+Rollback: remove only these five `oidc-callback-errors` extraObjects from both
+values copies. Existing protected Ingresses then handle callbacks as before;
+keep their `admin-oidc` middleware attached.
+
+
 ## CrowdSec observation
 
 `crowdsec-config` manages RBAC, acquisition configuration, External Secrets and
