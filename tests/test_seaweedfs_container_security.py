@@ -1,10 +1,9 @@
 """Verify SeaweedFS container security contexts and required writable paths."""
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "seaweedfs/deployment-seaweedfs-s3.yaml"
@@ -37,6 +36,22 @@ class SeaweedFSContainerSecurityTest(unittest.TestCase):
             self.assertTrue(security["readOnlyRootFilesystem"], name)
             self.assertFalse(security["allowPrivilegeEscalation"], name)
             self.assertEqual(["ALL"], security["capabilities"]["drop"], name)
+
+    def test_backup_storage_can_start_without_harbor_images(self):
+        """Recovery of Harbor must not require Harbor to fetch any SeaweedFS image."""
+        containers = self.pod_spec["initContainers"] + self.pod_spec["containers"]
+        for container in containers:
+            repository = (
+                "docker.io/library/busybox"
+                if container["name"] == "prepare-data-and-tmp"
+                else "docker.io/chrislusf/seaweedfs"
+            )
+            with self.subTest(container=container["name"]):
+                self.assertRegex(
+                    container["image"],
+                    "^" + repository.replace(".", r"\.") + r":[^@\s]+@sha256:[0-9a-f]{64}$",
+                )
+        self.assertEqual(1, len({container["image"] for container in self.containers.values()}))
 
     def test_only_storage_services_mount_data(self):
         """Verify only storage services mount data."""

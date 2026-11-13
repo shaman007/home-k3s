@@ -1,11 +1,10 @@
 """Verify Harbor proxy-cache routing and approved direct-upstream image exceptions."""
 
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 HARBOR = "harbor.andreybondarenko.com"
@@ -45,12 +44,26 @@ EXPECTED_DIRECT_UPSTREAM_IMAGES = {
     },
 }
 
+# SeaweedFS serves Longhorn backups needed to recover Harbor itself.
+EXPECTED_PINNED_UPSTREAM_IMAGES = {
+    Path("seaweedfs/deployment-seaweedfs-s3.yaml"): {
+        "docker.io/library/busybox",
+        "docker.io/chrislusf/seaweedfs",
+    },
+}
+
 
 def is_expected_direct_upstream(relative: Path, image: str) -> bool:
-    """Match an approved tagged upstream image without accepting digest references."""
-    return "@sha256:" not in image and any(
-        image.startswith(f"{repository}:")
-        for repository in EXPECTED_DIRECT_UPSTREAM_IMAGES.get(relative, set())
+    """Scope upstream exceptions by file/repository and require pins for DR images."""
+    pinned = any(
+        re.fullmatch(re.escape(repository) + r":[^@\s]+@sha256:[0-9a-f]{64}", image)
+        for repository in EXPECTED_PINNED_UPSTREAM_IMAGES.get(relative, set())
+    )
+    return pinned or (
+        "@sha256:" not in image and any(
+            image.startswith(f"{repository}:")
+            for repository in EXPECTED_DIRECT_UPSTREAM_IMAGES.get(relative, set())
+        )
     )
 
 
@@ -70,6 +83,20 @@ def helm_values(application_name: str) -> dict:
 
 class HarborProxyCacheTest(unittest.TestCase):
     """Check approved image origins, proxy-cache coverage, and relevant resource contracts."""
+    def test_seaweedfs_upstream_exception_is_scoped_and_pinned(self):
+        """Do not permit other files, repositories or mutable recovery images."""
+        path = Path("seaweedfs/deployment-seaweedfs-s3.yaml")
+        image = "docker.io/chrislusf/seaweedfs:4.53@sha256:" + "a" * 64
+        self.assertTrue(is_expected_direct_upstream(path, image))
+        for candidate_path, candidate_image in (
+            (Path("seaweedfs/media-cache.yaml"), image),
+            (path, image.replace("chrislusf/seaweedfs", "other/seaweedfs")),
+            (path, "docker.io/chrislusf/seaweedfs:4.53"),
+            (path, image[:-1]),
+        ):
+            with self.subTest(path=candidate_path, image=candidate_image):
+                self.assertFalse(is_expected_direct_upstream(candidate_path, candidate_image))
+
     def test_direct_image_declarations_use_harbor_or_are_approved_exceptions(self):
         """Verify direct image declarations use Harbor or are approved exceptions."""
         image_pattern = re.compile(r"^\s*(?:-\s*)?image:\s*['\"]?([^'\"#\s]+)")

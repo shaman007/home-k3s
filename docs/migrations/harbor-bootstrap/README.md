@@ -7,6 +7,25 @@ initial ingress deployment snapshot. The three initial Argo pauses were removed
 after successful CI for `4b7ec8a4`. Public GoDaddy records and the old route are
 preserved. `unifi-infra` is not yet a Git repository.
 
+## SeaweedFS recovery dependency
+
+The SeaweedFS S3 Deployment source uses digest-pinned Docker Hub images for
+both its BusyBox init container and all four SeaweedFS services. Their upstream
+manifest digests were checked against the previous Harbor proxy references and
+matched, retaining BusyBox 1.38 and SeaweedFS 4.53 content. This removes the
+recovery loop: restoring Harbor's Longhorn volumes needs SeaweedFS, which must
+be able to start without pulling its own images from Harbor. External registry
+availability or preloaded images are still required on an empty node cache.
+
+Only image references change; the hostPath, S3 identities and data are retained.
+This Deployment has one replica and `Recreate`, so GitOps rollout causes a brief
+S3 interruption. No live rollout or destructive restore test was performed while
+preparing this change. Rollback is to restore the previous image references in
+Git and publish them; it requires a working Harbor or cached images. The separate
+media-cache Deployment remains a Harbor client and is not needed for S3 recovery.
+Repository tests guard all init/service image origins and narrowly scope the
+upstream exception to these two repositories in this Deployment.
+
 ## Exact applied UDM change
 
 Owning source: `/home/shaman007/git/unifi-infra/bgp-kubernetes.conf`, read by the

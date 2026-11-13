@@ -33,7 +33,7 @@ spec:
         kubernetes.io/hostname: "talos-d4h-k5m"
       initContainers:
         - name: prepare-data-and-tmp
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          image: docker.io/library/busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -67,7 +67,7 @@ spec:
       containers:
         # MASTER
         - name: master
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.53
+          image: docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0
           imagePullPolicy: IfNotPresent
           args:
             - "master"
@@ -129,7 +129,7 @@ spec:
               memory: 192Mi
         # VOLUME
         - name: volume
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.53
+          image: docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0
           imagePullPolicy: IfNotPresent
           args:
             - "volume"
@@ -192,7 +192,7 @@ spec:
               memory: 3Gi
         # FILER
         - name: filer
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.53
+          image: docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -274,7 +274,7 @@ spec:
               memory: 1600Mi
         # S3 GATEWAY
         - name: s3
-          image: harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.53
+          image: docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
