@@ -59,11 +59,12 @@ was silenced. No schedule or CronJob suspension changed.
 
 ## Remaining work and rollback
 
-Authorization deliberately excluded creating/deleting backups and restore
-volumes. A disposable-volume backup and isolated restore, and observation of the
-next scheduled backup through this endpoint, remain pending. Full cold boot and
-independent S3-credential recovery are also unverified. Loki/Thanos and all other
-inactive startup proposals remain unchanged.
+The endpoint authorization excluded creating/deleting backups and restore
+volumes. A subsequent explicit request authorized one small existing-PVC backup;
+that successful check is recorded below. Isolated restore and observation of the
+next scheduled backup remain pending. Full cold boot and independent S3-credential
+recovery are also unverified. Loki/Thanos and all other inactive startup proposals
+remain unchanged.
 
 The updated Secret is manually managed, so an unrelated Argo sync does not
 restore the old endpoint. The existing BackupTarget still references the same
@@ -76,3 +77,33 @@ endpoint-only patch, and patch that Secret. Verify a new successful target sync
 and inventory. Do not restore old credentials, restart storage components,
 restore over a working volume or delete data. Restoring the public HTTPS endpoint
 also restores its public-Traefik recovery dependency.
+
+## Subsequent authorized backup validation
+
+The user requested one backup of a small PVC and an error check. Selected
+`traefik/traefik-geoip-rwx`, Longhorn volume
+`pvc-ebe1aab2-d3fa-4710-9e78-5dcf04c5a1d0`: provisioned 1GiB, about 69MiB Longhorn
+actual storage and 8.1MiB in its GeoIP directory. This replaceable GeoIP cache was
+chosen instead of database, vault or host-key volumes.
+
+Used the native Longhorn REST snapshot/backup actions through its existing
+internal Service, without starting a Job or a retention-cleanup command:
+
+* Snapshot: `s3-internal-check-b5f4524fd617`, created 20:29:01 UTC.
+* Backup: `backup-0dc70835650e4a37`, `backupMode: full`, target `default`.
+* Final state: `Completed`, progress 100; error and messages fields empty.
+* Reported backup size: 92,274,688 bytes (88MiB), not a claim about compressed
+  network transfer size. Remote synchronization recorded 20:29:37 UTC.
+* Volume remained `attached/healthy`; lastBackup points to this new backup.
+  Traefik remained 2/2 Ready/Available and the backup target stayed available.
+* Backup inventory increased from 1719 to 1720. No existing backup, snapshot, PVC,
+  queue or database was deleted, restored or modified by a cleanup operation.
+
+The normal backup had no planned service interruption or expected alert to
+suppress; storage-failure alerts stayed active. No application restart or
+schedule change was performed. The new snapshot and backup are retained.
+
+This proves a completed new backup after switching to the internal endpoint;
+it does not replace an isolated restore/data comparison. The earlier Hubble
+observation proves the controller's direct route; no packet-level claim is made
+for this individual backup upload.

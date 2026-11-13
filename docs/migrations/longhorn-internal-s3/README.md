@@ -2,7 +2,8 @@
 
 Status: **direct endpoint active**, 2026-11-13. The separately authorized
 endpoint-only cutover and signed acceptance are recorded in [EXECUTION.md](EXECUTION.md).
-No backup was created/deleted and no restore or rollout was performed.
+One subsequent explicitly authorized GeoIP-PVC full backup completed successfully.
+No backup was deleted, and no restore or rollout was performed.
 
 The live default BackupTarget is `s3://backup@us-east-1/`, using Secret
 `longhorn-system/longhorn-backup-s3`. Its `AWS_ENDPOINTS` previously pointed to
@@ -62,9 +63,10 @@ does not turn an HTTP endpoint into TLS.
 
 ## Transition after separate live authorization
 
-Steps 1–5 below were completed for the endpoint-only transition. Step 6 requires
-separate authorization; it was not included in the executed scope. This remains
-the reusable transition/rollback procedure, not an instruction to reapply a patch.
+Steps 1–5 below were completed for the endpoint-only transition. One small-PVC
+backup was subsequently authorized and completed. The isolated restore in Step 6
+still requires separate authorization. This remains the reusable procedure,
+not an instruction to reapply a patch or overwrite a working volume.
 
 1. Confirm Git/CI, Argo health, Longhorn volumes and the default target. Record
    numeric backup-volume/object counts and freshness; do not persist raw Secret
@@ -112,7 +114,8 @@ the reusable transition/rollback procedure, not an instruction to reapply a patc
    separately approved maintenance plan.
 
 Signed read/list, target reconciliation and direct controller traffic are verified.
-Step 6, the next scheduled backup, full cold boot and full disaster recovery remain
+One small existing-PVC full backup passed. The isolated-restore portion of Step 6,
+the next scheduled backup, full cold boot and full disaster recovery remain
 untested. A warm image cache is not
 proof of upstream registry availability.
 

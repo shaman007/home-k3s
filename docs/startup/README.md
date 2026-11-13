@@ -111,8 +111,8 @@ during initialization needs a separate check before treating SSO as optional.
 The former conditional **public S3 route / GeoIP-volume recovery ring** is
 recorded separately in `recovery_scenarios`. Longhorn now uses the
 [direct internal S3 route](../migrations/longhorn-internal-s3/EXECUTION.md), removing
-those public-route edges for backup-store access. Signed reads and controller
-polls passed; a new backup and isolated restore remain pending. The historical
+those public-route edges for backup-store access. Signed reads, controller polls
+and a small GeoIP-PVC full backup passed; isolated restore remains pending. The historical
 public route describes rollback risk. Existing-volume restart does not imply
 this recovery scenario.
 

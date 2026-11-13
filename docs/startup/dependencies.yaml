@@ -38,7 +38,7 @@ recovery_scenarios:
     - seaweedfs/ingress-andreybondarenko-ingress.yaml
     - docs/migrations/longhorn-internal-s3/README.md
   prepared_direct_s3:
-    status: active for Longhorn; signed reads and target poll verified; new backup/isolated restore pending
+    status: active for Longhorn; signed reads, target polls and small-PVC full backup passed; isolated restore pending
     endpoint: http://s3.seaweedfs.svc.cluster.local:8333
     extra_edges: []
     evidence:

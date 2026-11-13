@@ -36,7 +36,7 @@ tracked generators and tests are the reproducible source.
 
 | Order | Package | Prepared behavior | Required decision/acceptance before deployment |
 | --- | --- | --- | --- |
-| 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match and controller polls passed | Next scheduled backup plus separately authorized disposable backup and isolated restore remain pending |
+| 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match, controller polls and small GeoIP-PVC full backup passed | Next scheduled backup and separately authorized isolated restore remain pending |
 | 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Accept internal HTTP; historical queries, ingestion and object reads after rolling Loki |
 | 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Verify source type is S3, actual ESO rendering and signed access; separately authorize sequential client rollouts, including shared Prometheus Pod |
 | 4 | `mail` | Existing permissions init → exact Valkey PONG → Rspamd; remove old Redis-shutdown wait from Valkey | Confirm legacy Redis absent; accept Rspamd remaining unavailable while Valkey is down; maintain explicit existing Postfix fail-open policy |
