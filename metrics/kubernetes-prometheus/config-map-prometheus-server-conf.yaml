@@ -1031,17 +1031,28 @@ data:
           summary: Thanos compaction is halted.
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
-      - alert: LokiIngestionLoss
-        expr: sum by(job,instance) (increase(loki_discarded_samples_total[15m])) > 0
-        for: 10m
+      - alert: LokiIngestionRateLimited
+        expr: sum by(job,instance,reason) (rate(loki_discarded_samples_total{job="loki",reason=~"rate_limited|per_stream_rate_limit|stream_limit"}[5m])) > 0
+        for: 15m
         labels:
           severity: mail
           priority: warning
           owner: homelab
         annotations:
-          summary: Loki is discarding log samples.
-          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
-          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          summary: Loki ingestion limits have been rejecting requests persistently.
+          description: 'Reason: {{ $labels.reason }}; affected resource: {{ $labels }}. Retryable rejections remain present in every five-minute window for fifteen minutes. Check Alloy retries and backlog before changing Loki limits; this does not establish permanent loss.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+      - alert: LokiRejectedSamples
+        expr: sum by(job,instance,reason) (increase(loki_discarded_samples_total{job="loki",reason!~"rate_limited|per_stream_rate_limit|stream_limit"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+        annotations:
+          summary: Loki is rejecting log entries for a reason other than retryable ingestion limits.
+          description: 'Reason: {{ $labels.reason }}; affected resource: {{ $labels }}; rejected entries over fifteen minutes: {{ $value }}. Inspect timestamp, ordering and validation errors; unknown reasons also require investigation.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
       - alert: LokiWalFailure
         expr: increase(loki_ingester_wal_disk_full_failures_total[15m]) > 0 or increase(loki_ingester_wal_corruptions_total[15m]) > 0
         for: 10m
@@ -1065,16 +1076,16 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: AlloyLogsDropped
-        expr: sum by(job,instance) (increase(loki_write_dropped_entries_total[15m])) > 0
+        expr: sum by(job,instance,reason) (increase(loki_write_dropped_entries_total[15m])) > 0
         for: 10m
         labels:
           severity: mail
           priority: warning
           owner: homelab
         annotations:
-          summary: Alloy is dropping log entries.
-          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
-          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+          summary: Alloy permanently dropped log entries during delivery.
+          description: 'Affected resource: {{ $labels }}; entries dropped over fifteen minutes: {{ $value }}. Alloy could not deliver these entries; check final write errors and retry exhaustion. Intentional processing-stage filters are not included.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
       - alert: HubbleEventsLost
         expr: sum by(instance) (rate(hubble_lost_events_total[10m])) > 1
         for: 10m

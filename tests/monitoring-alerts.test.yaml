@@ -1330,3 +1330,352 @@ tests:
         description: 'Affected service: web; fraction of requests slower than five
           seconds: 0.2. Check application latency and long-lived requests; see runbook.'
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+- name: Loki sustained rate_limited
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="rate_limited"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: rate_limited
+      exp_annotations:
+        summary: Loki ingestion limits have been rejecting requests persistently.
+        description: 'Reason: rate_limited; affected resource: map[instance:loki:3100
+          job:loki reason:rate_limited]. Retryable rejections remain present in every
+          five-minute window for fifteen minutes. Check Alloy retries and backlog
+          before changing Loki limits; this does not establish permanent loss.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+- name: Loki sustained per_stream_rate_limit
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="per_stream_rate_limit"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: per_stream_rate_limit
+      exp_annotations:
+        summary: Loki ingestion limits have been rejecting requests persistently.
+        description: 'Reason: per_stream_rate_limit; affected resource: map[instance:loki:3100
+          job:loki reason:per_stream_rate_limit]. Retryable rejections remain present
+          in every five-minute window for fifteen minutes. Check Alloy retries and
+          backlog before changing Loki limits; this does not establish permanent loss.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+- name: Loki sustained stream_limit
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="stream_limit"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: stream_limit
+      exp_annotations:
+        summary: Loki ingestion limits have been rejecting requests persistently.
+        description: 'Reason: stream_limit; affected resource: map[instance:loki:3100
+          job:loki reason:stream_limit]. Retryable rejections remain present in every
+          five-minute window for fifteen minutes. Check Alloy retries and backlog
+          before changing Loki limits; this does not establish permanent loss.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+- name: Loki transient rate limiting does not notify
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="rate_limited"}
+    values: 0 10+0x39
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+- name: Loki duplicate headless scrape excluded
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki-headless",instance="loki:3100",reason="rate_limited"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+- name: Loki duplicate scrape does not double notifications
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="rate_limited"}
+    values: 0+1x40
+  - series: loki_discarded_samples_total{job="loki-headless",instance="loki:3100",reason="rate_limited"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: rate_limited
+      exp_annotations:
+        summary: Loki ingestion limits have been rejecting requests persistently.
+        description: 'Reason: rate_limited; affected resource: map[instance:loki:3100
+          job:loki reason:rate_limited]. Retryable rejections remain present in every
+          five-minute window for fifteen minutes. Check Alloy retries and backlog
+          before changing Loki limits; this does not establish permanent loss.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+- name: Loki validation rejection too_far_behind
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="too_far_behind"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: too_far_behind
+      exp_annotations:
+        summary: Loki is rejecting log entries for a reason other than retryable ingestion
+          limits.
+        description: 'Reason: too_far_behind; affected resource: map[instance:loki:3100
+          job:loki reason:too_far_behind]; rejected entries over fifteen minutes:
+          15. Inspect timestamp, ordering and validation errors; unknown reasons also
+          require investigation.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 3m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+- name: Loki validation rejection line_too_long
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="line_too_long"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: line_too_long
+      exp_annotations:
+        summary: Loki is rejecting log entries for a reason other than retryable ingestion
+          limits.
+        description: 'Reason: line_too_long; affected resource: map[instance:loki:3100
+          job:loki reason:line_too_long]; rejected entries over fifteen minutes: 15.
+          Inspect timestamp, ordering and validation errors; unknown reasons also
+          require investigation.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 3m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+- name: Loki validation rejection unrecognized_reason
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="unrecognized_reason"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+        reason: unrecognized_reason
+      exp_annotations:
+        summary: Loki is rejecting log entries for a reason other than retryable ingestion
+          limits.
+        description: 'Reason: unrecognized_reason; affected resource: map[instance:loki:3100
+          job:loki reason:unrecognized_reason]; rejected entries over fifteen minutes:
+          15. Inspect timestamp, ordering and validation errors; unknown reasons also
+          require investigation.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 3m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+- name: Loki validation rejection None
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: loki
+        instance: loki:3100
+      exp_annotations:
+        summary: Loki is rejecting log entries for a reason other than retryable ingestion
+          limits.
+        description: 'Reason: ; affected resource: map[instance:loki:3100 job:loki];
+          rejected entries over fifteen minutes: 15. Inspect timestamp, ordering and
+          validation errors; unknown reasons also require investigation.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+  - eval_time: 3m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+- name: Loki counter reset is not rejection
+  interval: 1m
+  input_series:
+  - series: loki_discarded_samples_total{job="loki",instance="loki:3100",reason="rate_limited"}
+    values: 100+0x10 0+0x29
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+- name: Alloy final delivery drops notify
+  interval: 1m
+  input_series:
+  - series: loki_write_dropped_entries_total{job="alloy",instance="alloy:12345",reason="retries_exhausted"}
+    values: 0+1x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        job: alloy
+        instance: alloy:12345
+        reason: retries_exhausted
+      exp_annotations:
+        summary: Alloy permanently dropped log entries during delivery.
+        description: 'Affected resource: map[instance:alloy:12345 job:alloy reason:retries_exhausted];
+          entries dropped over fifteen minutes: 15. Alloy could not deliver these
+          entries; check final write errors and retry exhaustion. Intentional processing-stage
+          filters are not included.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#loki-ingestion
+  - eval_time: 5m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
+- name: Intentional Alloy pipeline filters do not notify
+  interval: 1m
+  input_series:
+  - series: loki_process_dropped_lines_total{reason="too_far_behind"}
+    values: 0+100x40
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: LokiIngestionRateLimited
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: LokiRejectedSamples
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: AlloyLogsDropped
+    exp_alerts: []
