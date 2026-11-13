@@ -1,4 +1,3 @@
----
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -10,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: mastodon
     app.kubernetes.io/managed-by: argoCD
 spec:
-  schedule: "0 * * * *"
+  schedule: 0 * * * *
   timeZone: Europe/Prague
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
@@ -34,123 +33,126 @@ spec:
           serviceAccountName: bookmarked-media-sync
           restartPolicy: Never
           initContainers:
-            - name: fetch-bookmarked-media
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-              image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
-              imagePullPolicy: IfNotPresent
-              command:
-                - /bin/sh
-                - -lc
-                - |
-                  set -eu
-                  apk add --no-cache ca-certificates coreutils curl jq kubectl
-                  /scripts/fetch-bookmarked-media.sh
-              env:
-                - name: BOOKMARKED_MEDIA_LOOKBACK_DAYS
-                  value: "30"
-                - name: BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS
-                  value: "3"
-                - name: BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS
-                  value: "15"
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 256Mi
-                limits:
-                  memory: 512Mi
-              volumeMounts:
-                - name: scripts
-                  mountPath: /scripts
-                - name: work
-                  mountPath: /work
-          containers:
-            - name: immich-upload
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-              image: harbor.andreybondarenko.com/dockerhub/node:26-alpine
-              imagePullPolicy: IfNotPresent
-              command:
-                - /bin/sh
-                - -lc
-                - |
-                  set -eu
-                  if ! find /import -type f -print -quit | grep -q .; then
-                    echo "No bookmarked media files to upload"
-                    exit 0
-                  fi
+          - name: fetch-bookmarked-media
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            image: harbor.andreybondarenko.com/dockerhub/alpine:3.24
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -lc
+            - 'set -eu
 
-                  npm install -g @immich/cli@3.0.2
-                  immich -d /config login-key "${IMMICH_INSTANCE_URL}" "${IMMICH_API_KEY}"
-                  upload_args="--recursive --no-progress"
-                  if [ "${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}" = "true" ]; then
-                    upload_args="${upload_args} --dry-run --json-output"
-                  fi
+              apk add --no-cache ca-certificates coreutils curl jq kubectl
 
-                  # Deliberately word-split the composed option list.
-                  # shellcheck disable=SC2086
-                  immich -d /config upload ${upload_args} /import
+              /bin/sh /cron-gate/bookmarked_job_gate.sh
 
-                  if [ "${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}" != "true" ]; then
-                    apk add --no-cache ca-certificates coreutils curl jq
-                    /scripts/apply-immich-descriptions.sh
-
-                    echo "Queueing face detection for assets missing face processing"
-                    if curl --fail --silent --show-error \
-                      --retry 5 \
-                      --connect-timeout 15 \
-                      --max-time 60 \
-                      -o /dev/null \
-                      -X PUT \
-                      -H "content-type: application/json" \
-                      -H "x-api-key: ${IMMICH_API_KEY}" \
-                      -d '{"command":"start","force":false}' \
-                      "${IMMICH_INSTANCE_URL}/jobs/faceDetection"; then
-                      echo "Queued missing face detection jobs"
-                    else
-                      echo "Warning: could not queue face detection; the endpoint requires an Immich admin API key" >&2
-                    fi
-                  fi
-              env:
-                - name: IMMICH_INSTANCE_URL
-                  value: https://immich.andreybondarenko.com/api
-                - name: IMMICH_API_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: bookmarked-media-sync
-                      key: IMMICH_API_KEY
-                - name: BOOKMARKED_MEDIA_IMMICH_DRY_RUN
-                  value: "false"
-                - name: NO_COLOR
-                  value: "1"
-              resources:
-                requests:
-                  cpu: 10m
-                  memory: 512Mi
-                limits:
-                  memory: 512Mi
-              volumeMounts:
-                - name: scripts
-                  mountPath: /scripts
-                - name: work
-                  mountPath: /import
-                  subPath: import
-                - name: work
-                  mountPath: /work
-                - name: immich-config
-                  mountPath: /config
-          volumes:
+              '
+            env:
+            - name: BOOKMARKED_MEDIA_LOOKBACK_DAYS
+              value: '30'
+            - name: BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS
+              value: '3'
+            - name: BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS
+              value: '15'
+            - name: IMMICH_INSTANCE_URL
+              value: https://immich.andreybondarenko.com/api
+            - name: IMMICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bookmarked-media-sync
+                  key: IMMICH_API_KEY
+            resources:
+              requests:
+                cpu: 10m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
             - name: scripts
-              configMap:
-                name: bookmarked-media-sync-scripts
-                defaultMode: 0555
+              mountPath: /scripts
             - name: work
-              emptyDir: {}
+              mountPath: /work
+            - name: cron-gate
+              mountPath: /cron-gate
+              readOnly: true
+          containers:
+          - name: immich-upload
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            image: harbor.andreybondarenko.com/dockerhub/node:26-alpine
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -lc
+            - "set -eu\n# BEGIN dependency gate\nif [ -f /work/.dependencies-skipped\
+              \ ]; then\n  printf '{\"event\":\"cron_dependencies\",\"result\":\"\
+              skipped\"}\\n'\n  exit 0\nfi\nstatus=0\nnode /cron-gate/bookmarked_upload_probe.cjs\
+              \ || status=$?\ncase \"$status\" in 0) ;; 75) exit 0 ;; *) exit \"$status\"\
+              \ ;; esac\n# END dependency gate\nif ! find /import -type f -print -quit\
+              \ | grep -q .; then\n  echo \"No bookmarked media files to upload\"\n\
+              \  exit 0\nfi\n\nnpm install -g @immich/cli@3.0.2\nimmich -d /config\
+              \ login-key \"${IMMICH_INSTANCE_URL}\" \"${IMMICH_API_KEY}\"\nupload_args=\"\
+              --recursive --no-progress\"\nif [ \"${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}\"\
+              \ = \"true\" ]; then\n  upload_args=\"${upload_args} --dry-run --json-output\"\
+              \nfi\n\n# Deliberately word-split the composed option list.\n# shellcheck\
+              \ disable=SC2086\nimmich -d /config upload ${upload_args} /import\n\n\
+              if [ \"${BOOKMARKED_MEDIA_IMMICH_DRY_RUN:-false}\" != \"true\" ]; then\n\
+              \  apk add --no-cache ca-certificates coreutils curl jq\n  /scripts/apply-immich-descriptions.sh\n\
+              \n  echo \"Queueing face detection for assets missing face processing\"\
+              \n  if curl --fail --silent --show-error \\\n    --retry 5 \\\n    --connect-timeout\
+              \ 15 \\\n    --max-time 60 \\\n    -o /dev/null \\\n    -X PUT \\\n\
+              \    -H \"content-type: application/json\" \\\n    -H \"x-api-key: ${IMMICH_API_KEY}\"\
+              \ \\\n    -d '{\"command\":\"start\",\"force\":false}' \\\n    \"${IMMICH_INSTANCE_URL}/jobs/faceDetection\"\
+              ; then\n    echo \"Queued missing face detection jobs\"\n  else\n  \
+              \  echo \"Warning: could not queue face detection; the endpoint requires\
+              \ an Immich admin API key\" >&2\n  fi\nfi\n"
+            env:
+            - name: IMMICH_INSTANCE_URL
+              value: https://immich.andreybondarenko.com/api
+            - name: IMMICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bookmarked-media-sync
+                  key: IMMICH_API_KEY
+            - name: BOOKMARKED_MEDIA_IMMICH_DRY_RUN
+              value: 'false'
+            - name: NO_COLOR
+              value: '1'
+            resources:
+              requests:
+                cpu: 10m
+                memory: 512Mi
+              limits:
+                memory: 512Mi
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: work
+              mountPath: /import
+              subPath: import
+            - name: work
+              mountPath: /work
             - name: immich-config
-              emptyDir: {}
+              mountPath: /config
+            - name: cron-gate
+              mountPath: /cron-gate
+              readOnly: true
+          volumes:
+          - name: scripts
+            configMap:
+              name: bookmarked-media-sync-scripts
+              defaultMode: 365
+          - name: work
+            emptyDir: {}
+          - name: immich-config
+            emptyDir: {}
+          - name: cron-gate
+            configMap:
+              name: bookmarked-media-sync-dependencies-8f14e44a2a69

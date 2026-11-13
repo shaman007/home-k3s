@@ -2,13 +2,33 @@
 
 Preparation only. No live CronJob, schedule, active Job or alert is changed.
 
-Candidates cover five independently reviewed CronJobs. The Python main wrapper
-covers `monitoring/logs-check`, `monitoring/external-access-daily-report` and
-`wordpress/wordpress-daily-report`. The separate native batch covers
-`nextcloud/nextcloud` and `mail/rspamd-spam-trainer`; see
-[package acceptance and rollback](../NEXT-STEPS.md).
+Seven gates are now wired into active Git sources (not yet deployed by this task):
+three Python reports, Nextcloud, Rspamd training and both Mastodon jobs.
+Longhorn sources and controller-owned jobs are excluded.
 
-The first candidate is `monitoring/logs-check`, an expensive daily report. It
+```sh
+python3 tools/bootstrap/prepare_custom_crons.py                 # check active sources
+python3 tools/bootstrap/prepare_custom_crons.py --write-source  # regenerate locally
+```
+
+Mastodon spam sync waits for authenticated SQL/Valkey and the current schema;
+it never runs migrations and fails with exit75 after 300 seconds if unavailable.
+Bookmarked media checks the same contracts through the existing web Pod and
+existing exec RBAC, plus authenticated Immich `GET /api/users/me` before export.
+An init skip writes a shared marker, checked before any uploader work. The Node
+uploader rechecks Immich independently before npm/login/upload. Each wait has a
+300-second budget; authentication denial fails instead of silently skipping.
+The existing Immich key must permit `user.read`; no permissions are broadened.
+Dependency checks do not prove later upload success; existing upload errors remain
+failures. Required HTTP endpoint is documented in the upstream
+[user controller](https://github.com/immich-app/immich/blob/main/server/src/controllers/user.controller.ts).
+
+Existing native failure semantics remain for image publication, Keycloak token
+renewal and Talos backups. Health reports and finance reports must still describe
+missing providers; OONI must measure connectivity failures. Storage safety jobs
+retain their existing failure semantics. The retired OpenBao renewer is not revived.
+
+The first report is `monitoring/logs-check`, an expensive daily report. It
 checks Loki's labels API through the same gateway/network-policy path used by the
 report, and Ollama's tags API. These are read-only API availability checks, not
 proof that the selected model can finish inference or that log history is intact.
@@ -19,7 +39,7 @@ probe subprocesses killed after at most 5 seconds. All checks must pass in one
 iteration. A missing provider emits one fixed JSON `cron_dependencies/skipped`
 event and exits0 without executing the original report. Configuration errors
 exit2; `mode: fail` exits75 on dependency timeout. When ready, `exec` preserves
-the original argv, signals and eventual exit status. No shell concatenation,
+the fixed allowlisted report entrypoint, signals and eventual exit status. No shell concatenation,
 credentials, exception bodies, response bodies or endpoint URLs are logged.
 Redirects and environment proxies are disabled; HTTPS keeps normal verification.
 
@@ -41,7 +61,7 @@ python3 tools/bootstrap/prepare_cron_gate.py > /tmp/logs-check-gated-candidate.y
 python3 tools/bootstrap/prepare_cron_gate.py --job all > /tmp/report-gate-candidates.yaml
 ```
 
-The generator never writes the active `metrics/` tree or calls Kubernetes. Its
+Generators call no Kubernetes APIs; `--write-source` explicitly updates Git sources. Each
 ConfigMap contains only source code and credential-free internal probe URLs.
 The active report retains its own preflight checks; this wrapper is not an
 ongoing dependency watchdog and cannot prevent an outage after the checks pass.

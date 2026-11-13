@@ -1,6 +1,6 @@
 format_version: 1
 observed_date: '2026-11-13'
-scope: 31 observed schedules; policies describe preparation intent, not deployed behavior
+scope: 31 observed schedules; source-ready gates require publication and runtime verification
 jobs:
 - namespace: image-builder
   name: podman-builder
@@ -8,7 +8,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: fail
-  criterion: Git source, build resources and Harbor authenticated push; no silent missed publication
+  criterion: Git source, build resources and Harbor authenticated push; no silent
+    missed publication
   preparation: reviewed-no-wrapper
   source: image-builder/cron-job-podman-builder.yaml
 - namespace: keycloak
@@ -17,7 +18,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: fail
-  criterion: Keycloak token endpoint and required target access; renewal freshness retained
+  criterion: Keycloak token endpoint and required target access; renewal freshness
+    retained
   preparation: reviewed-no-wrapper
   source: keycloak/cron-job-oidc-token-renewer.yaml
 - namespace: longhorn-system
@@ -27,7 +29,8 @@ jobs:
     kind: RecurringJob
     name: backup-daily-retain1
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -37,7 +40,8 @@ jobs:
     kind: RecurringJob
     name: backup-daily-retain11
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -47,7 +51,8 @@ jobs:
     kind: RecurringJob
     name: backup-daily-retain30
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -57,7 +62,8 @@ jobs:
     kind: RecurringJob
     name: backup-daily-retain31-a
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -67,7 +73,8 @@ jobs:
     kind: RecurringJob
     name: backup-daily-retain31-b
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -77,7 +84,8 @@ jobs:
     kind: RecurringJob
     name: backup-daily-retain31-c
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -87,7 +95,8 @@ jobs:
     kind: RecurringJob
     name: backup-monthly-retain60-hister
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -97,7 +106,8 @@ jobs:
     kind: RecurringJob
     name: backup-monthly-retain60-mempalace
   unavailable_policy: fail
-  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required
+    for backup tasks
   preparation: controller-owned-no-wrapper
   source: longhorn/recurring-jobs-export.yaml
 - namespace: longhorn-system
@@ -126,7 +136,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: report
-  criterion: Kubernetes and Longhorn API; retain safety findings instead of suppressing them
+  criterion: Kubernetes and Longhorn API; retain safety findings instead of suppressing
+    them
   preparation: reviewed-no-wrapper
   source: longhorn/trim-coverage-guard.yaml
 - namespace: longhorn-system
@@ -175,18 +186,20 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: skip
-  criterion: Rspamd HTTP200 before starting private Dovecot; original learning/delete checks retained
-  preparation: candidate
+  criterion: Rspamd HTTP200 before starting private Dovecot; original learning/delete
+    checks retained
+  preparation: source-ready
   source: mail/cron-job-rspamd-spam-trainer.yaml
 - namespace: mastodon
   name: bookmarked-media-sync
   schedule_observed: 0 * * * *
   owner:
     kind: GitOps source
-  unavailable_policy: fail
-  criterion: Authenticated Mastodon/Immich operations, media source and package registries; multi-container
-    skip design pending
-  preparation: reviewed-no-wrapper
+  unavailable_policy: skip
+  criterion: Ready Mastodon web, authenticated PostgreSQL/Valkey and matching schema;
+    authenticated Immich /users/me before export and upload
+  auth_or_configuration_error_policy: fail
+  preparation: source-ready
   source: mastodon/cron-job-bookmarked-media-sync.yaml
 - namespace: mastodon
   name: mastodon-spam-list-sync
@@ -194,9 +207,9 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: fail
-  criterion: Mastodon database/app access plus external block-list source; preserve original transaction/error
-    behavior
-  preparation: reviewed-no-wrapper
+  criterion: Mastodon database/app access plus external block-list source; preserve
+    original transaction/error behavior
+  preparation: source-ready
   source: mastodon/cron-job-spam-list-sync.yaml
 - namespace: monitoring
   name: external-access-daily-report
@@ -205,7 +218,7 @@ jobs:
     kind: GitOps source
   unavailable_policy: skip
   criterion: Loki labels API; original Kubernetes/Prometheus/SMTP preflight remains
-  preparation: candidate
+  preparation: source-ready
   source: metrics/cron-job-external-access-daily-report.yaml
 - namespace: monitoring
   name: finance-ticker-collector
@@ -213,7 +226,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: report
-  criterion: Public financial providers and Kubernetes API; retain partial-source/error visibility
+  criterion: Public financial providers and Kubernetes API; retain partial-source/error
+    visibility
   preparation: reviewed-no-wrapper
   source: metrics/cron-job-finance-ticker-collector.yaml
 - namespace: monitoring
@@ -222,8 +236,9 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: skip
-  criterion: Loki labels and Ollama tags APIs; selected model and inference success still checked by work
-  preparation: candidate
+  criterion: Loki labels and Ollama tags APIs; selected model and inference success
+    still checked by work
+  preparation: source-ready
   source: metrics/cron-job-logs-check.yaml
 - namespace: monitoring
   name: platform-health-report
@@ -231,8 +246,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: report
-  criterion: Kubernetes/API access; observed provider failures must be reported, not used to skip the
-    health report
+  criterion: Kubernetes/API access; observed provider failures must be reported, not
+    used to skip the health report
   preparation: reviewed-no-wrapper
   source: metrics/cron-job-platform-health-report.yaml
 - namespace: nextcloud
@@ -241,8 +256,9 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: skip
-  criterion: Authenticated read-only SQL, configured ACL Valkey PING and web status installed/not-maintenance/no-schema-upgrade
-  preparation: candidate
+  criterion: Authenticated read-only SQL, configured ACL Valkey PING and web status
+    installed/not-maintenance/no-schema-upgrade
+  preparation: source-ready
   source: nextcloud/cron-job-nextcloud.yaml
 - namespace: ooni
   name: ooniprobe
@@ -250,8 +266,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: measure
-  criterion: External connectivity is the measurement, not a mandatory healthy prerequisite; preserve
-    failed measurements
+  criterion: External connectivity is the measurement, not a mandatory healthy prerequisite;
+    preserve failed measurements
   preparation: reviewed-no-wrapper
   source: ooni/cron-job-ooniprobe.yaml
 - namespace: ooni
@@ -269,7 +285,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: retire
-  criterion: Retired source awaiting separately authorized removal of live legacy resources
+  criterion: Retired source awaiting separately authorized removal of live legacy
+    resources
   preparation: retired-source
 - namespace: talos-backup
   name: talos-backup
@@ -277,7 +294,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: fail
-  criterion: Talos snapshot API and authenticated S3 write; keep backup-freshness failure visible
+  criterion: Talos snapshot API and authenticated S3 write; keep backup-freshness
+    failure visible
   preparation: reviewed-no-wrapper
   source: talos-backup/cron-job-talos-backup.yaml
 - namespace: traefik
@@ -286,7 +304,8 @@ jobs:
   owner:
     kind: GitOps source
   unavailable_policy: fail
-  criterion: Mounted GeoIP PVC and public download; retain last valid database on failure
+  criterion: Mounted GeoIP PVC and public download; retain last valid database on
+    failure
   preparation: reviewed-no-wrapper
   source: argocd/application-traefik.yaml
 - namespace: wordpress
@@ -296,5 +315,5 @@ jobs:
     kind: GitOps source
   unavailable_policy: skip
   criterion: Loki labels API; original pod/API/SMTP work retains its checks
-  preparation: candidate
+  preparation: source-ready
   source: wordpress/cron-job-wordpress-daily-report.yaml

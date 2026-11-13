@@ -128,17 +128,15 @@ class CronDependencyTests(unittest.TestCase):
             "gate.py",
             "--config",
             "fixture.json",
-            "--",
-            "python3",
-            "/original.py",
-            "literal arg",
+            "--job",
+            "logs-check",
         ]
         for result, expected in (("skipped", 0), ("unavailable", 75)):
             with (
                 mock.patch.object(GATE.sys, "argv", argv),
                 mock.patch.object(GATE.Path, "read_text", return_value="{}"),
                 mock.patch.object(GATE, "wait", return_value=result),
-                mock.patch.object(GATE.os, "execvp") as execute,
+                mock.patch.object(GATE.os, "execv") as execute,
             ):
                 self.assertEqual(GATE.main(), expected)
                 execute.assert_not_called()
@@ -146,11 +144,11 @@ class CronDependencyTests(unittest.TestCase):
             mock.patch.object(GATE.sys, "argv", argv),
             mock.patch.object(GATE.Path, "read_text", return_value="{}"),
             mock.patch.object(GATE, "wait", return_value="ready"),
-            mock.patch.object(GATE.os, "execvp") as execute,
+            mock.patch.object(GATE.os, "execv") as execute,
         ):
             GATE.main()
             execute.assert_called_once_with(
-                "python3", ["python3", "/original.py", "literal arg"]
+                sys.executable, [sys.executable, "/scripts/logs-check.py"]
             )
 
     def test_probe_timeout_and_error_are_sanitized(self):
@@ -165,7 +163,7 @@ class CronDependencyTests(unittest.TestCase):
         with (
             contextlib.redirect_stdout(output),
             mock.patch.object(
-                GATE.sys, "argv", ["gate", "--config", "fixture", "--", "work"]
+                GATE.sys, "argv", ["gate", "--config", "fixture", "--job", "logs-check"]
             ),
             mock.patch.object(
                 GATE.Path, "read_text", return_value='{"secret":"never-log-this"}'
@@ -184,8 +182,8 @@ class CronDependencyTests(unittest.TestCase):
                 "s=importlib.util.spec_from_file_location('g',sys.argv[1]); "
                 "g=importlib.util.module_from_spec(s); s.loader.exec_module(g); "
                 "result=sys.argv[3]; g.wait=lambda *a,**k:result; "
-                "sys.argv=['gate','--config',sys.argv[2],'--',sys.executable,"
-                "'-c','raise SystemExit(7)']; sys.exit(g.main())"
+                "g.launch=lambda job:g.os.execv(sys.executable,[sys.executable,'-c','raise SystemExit(7)']); "
+                "sys.argv=['gate','--config',sys.argv[2],'--job','logs-check']; sys.exit(g.main())"
             )
             for result, expected in (("ready", 7), ("skipped", 0), ("unavailable", 75)):
                 # Fixed local interpreter/code and synthetic configuration only.
@@ -244,7 +242,7 @@ class CronDependencyTests(unittest.TestCase):
         pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         old_pod = original["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         wrapped = pod["containers"][0]
-        self.assertEqual(wrapped["command"][5:], old_pod["containers"][0]["command"])
+        self.assertEqual(wrapped["command"][-2:], ["--job", "logs-check"])
         for key in ("env", "image", "securityContext", "resources"):
             self.assertEqual(wrapped[key], old_pod["containers"][0][key])
         self.assertEqual(job["spec"]["schedule"], original["spec"]["schedule"])

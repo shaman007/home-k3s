@@ -33,11 +33,8 @@ spec:
             image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
             workingDir: /opt/mastodon
             command:
-            - bundle
-            - exec
-            - rails
-            - runner
-            - /scripts/sync.rb
+            - /bin/sh
+            - /cron-gate/mastodon_spam_job_gate.sh
             envFrom:
             - configMapRef:
                 name: mastodon-env
@@ -83,6 +80,9 @@ spec:
             - name: scripts
               mountPath: /scripts
               readOnly: true
+            - name: cron-gate
+              mountPath: /cron-gate
+              readOnly: true
             resources:
               requests:
                 cpu: 50m
@@ -98,3 +98,6 @@ spec:
           - name: scripts
             configMap:
               name: mastodon-spam-list-sync
+          - name: cron-gate
+            configMap:
+              name: mastodon-spam-list-sync-dependencies-852c655b89f9

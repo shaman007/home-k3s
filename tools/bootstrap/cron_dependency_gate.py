@@ -14,6 +14,29 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+JOBS = ("logs-check", "external-access-daily-report", "wordpress-daily-report")
+
+
+def launch(job):
+    """Only reviewed report scripts can be executed; never accept arbitrary argv."""
+    if job == "logs-check":
+        os.execv(sys.executable, [sys.executable, "/scripts/logs-check.py"])  # nosec B606
+    elif job == "external-access-daily-report":
+        os.execv(
+            sys.executable,
+            [
+                sys.executable,
+                "/opt/external-access-daily-report/external-access-daily-report.py",
+            ],
+        )  # nosec B606
+    elif job == "wordpress-daily-report":
+        os.execv(
+            sys.executable,
+            [sys.executable, "/scripts/wordpress-daily-report.py"],
+        )  # nosec B606
+    else:
+        raise ValueError("Unknown report")
+
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     """Readiness must not silently follow a login or public ingress redirect."""
@@ -157,11 +180,8 @@ def main():
         return 0 if http_ready(sys.argv[2], float(sys.argv[3])) else 1
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True)
-    parser.add_argument("command", nargs=argparse.REMAINDER)
+    parser.add_argument("--job", choices=JOBS, required=True)
     args = parser.parse_args()
-    command = args.command[1:] if args.command[:1] == ["--"] else args.command
-    if not command:
-        parser.error("Original work command is required")
     try:
         result = wait(
             json.loads(Path(args.config).read_text(encoding="utf-8")),
@@ -175,8 +195,7 @@ def main():
     if result != "ready":
         return 75
     try:
-        # Preserve the original reviewed manifest argv; never invoke a shell.
-        os.execvp(command[0], command)  # nosec B606
+        launch(args.job)
     except OSError:
         print('{"event":"cron_dependencies","result":"exec-failed"}', flush=True)
     return 127

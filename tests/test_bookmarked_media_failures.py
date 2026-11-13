@@ -3,7 +3,7 @@
 import json
 import os
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import unittest
 import yaml
@@ -58,11 +58,24 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         media = self.root / "import"
         media.mkdir()
         (media / "image.jpg").write_text("test")
-        for name in ["npm", "immich", "apk", "curl", "descriptions"]:
+        for name in ["npm", "immich", "apk", "curl", "descriptions", "node"]:
             self.stub(name, "exit 0")
         return source.replace("/import", str(media)).replace(
             "/scripts/apply-immich-descriptions.sh", "descriptions"
         )
+
+    def test_dependency_skip_marker_prevents_upload_work(self):
+        """A successful init skip must never start upload in the next container."""
+        source = self.upload_script()
+        work = self.root / "work"
+        work.mkdir()
+        (work / ".dependencies-skipped").touch()
+        called = self.root / "unexpected-work"
+        for name in ("node", "npm", "immich"):
+            self.stub(name, f"touch '{called}'; exit 99")
+        result = self.execute(source.replace("/work", str(work)))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(called.exists())
 
     def test_install_login_upload_and_description_failures_fail_job(self):
         """Verify install login upload and description failures fail job."""

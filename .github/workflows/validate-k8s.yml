@@ -113,6 +113,10 @@ jobs:
         run: |
           python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
           python tools/monitoring/generate_queue_exporters.py --check
+          python tools/bootstrap/prepare_custom_crons.py
+          sh -n tools/bootstrap/bookmarked_job_gate.sh
+          sh -n tools/bootstrap/mastodon_spam_job_gate.sh
+          node --check tools/bootstrap/bookmarked_upload_probe.cjs
           python tools/bootstrap/prepare_startup_gate.py --check
           python tools/bootstrap/prepare_application_gates.py --check
 

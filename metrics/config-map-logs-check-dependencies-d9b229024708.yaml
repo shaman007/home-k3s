@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: logs-check-dependencies-d9b229024708
+  namespace: monitoring
+data:
+  gate.py: "#!/usr/bin/env python3\n\"\"\"Bounded per-Job HTTP readiness gate; exec\
+    \ work only after all providers are ready.\"\"\"\n\nimport argparse\nimport json\n\
+    import math\nimport os\nimport re\nimport subprocess  # nosec B404\nimport sys\n\
+    import time\nimport urllib.error\nimport urllib.parse\nimport urllib.request\n\
+    from pathlib import Path\n\nJOBS = (\"logs-check\", \"external-access-daily-report\"\
+    , \"wordpress-daily-report\")\n\n\ndef launch(job):\n    \"\"\"Only reviewed report\
+    \ scripts can be executed; never accept arbitrary argv.\"\"\"\n    if job == \"\
+    logs-check\":\n        os.execv(sys.executable, [sys.executable, \"/scripts/logs-check.py\"\
+    ])  # nosec B606\n    elif job == \"external-access-daily-report\":\n        os.execv(\n\
+    \            sys.executable,\n            [\n                sys.executable,\n\
+    \                \"/opt/external-access-daily-report/external-access-daily-report.py\"\
+    ,\n            ],\n        )  # nosec B606\n    elif job == \"wordpress-daily-report\"\
+    :\n        os.execv(\n            sys.executable,\n            [sys.executable,\
+    \ \"/scripts/wordpress-daily-report.py\"],\n        )  # nosec B606\n    else:\n\
+    \        raise ValueError(\"Unknown report\")\n\n\nclass NoRedirect(urllib.request.HTTPRedirectHandler):\n\
+    \    \"\"\"Readiness must not silently follow a login or public ingress redirect.\"\
+    \"\"\n\n    # urllib's extension API fixes this signature.\n    # pylint: disable-next=too-many-arguments,too-many-positional-arguments\n\
+    \    def redirect_request(self, req, fp, code, msg, headers, newurl):\n      \
+    \  return None\n\n\ndef validate(config):\n    \"\"\"Allow credential-free internal\
+    \ HTTP endpoints and bounded timing only.\"\"\"\n    if set(config) != {\n   \
+    \     \"mode\",\n        \"budget_seconds\",\n        \"interval_seconds\",\n\
+    \        \"probe_seconds\",\n        \"checks\",\n    }:\n        raise ValueError(\"\
+    Invalid dependency configuration fields\")\n    if config[\"mode\"] not in (\"\
+    skip\", \"fail\"):\n        raise ValueError(\"Invalid timeout policy\")\n   \
+    \ for key, maximum in (\n        (\"budget_seconds\", 300),\n        (\"interval_seconds\"\
+    , 30),\n        (\"probe_seconds\", 5),\n    ):\n        value = config[key]\n\
+    \        if isinstance(value, bool) or not isinstance(value, (int, float)):\n\
+    \            raise TypeError(\"Invalid timing\")\n        if not math.isfinite(value)\
+    \ or not 0 < value <= maximum:\n            raise ValueError(\"Invalid timing\"\
+    )\n    if not isinstance(config[\"checks\"], list) or not 1 <= len(config[\"checks\"\
+    ]) <= 8:\n        raise ValueError(\"Expected one to eight readiness checks\"\
+    )\n    names = set()\n    for check in config[\"checks\"]:\n        if set(check)\
+    \ != {\"name\", \"url\"} or not re.fullmatch(\n            r\"[a-z][a-z0-9-]{0,62}\"\
+    , check[\"name\"]\n        ):\n            raise ValueError(\"Invalid readiness\
+    \ check\")\n        if check[\"name\"] in names:\n            raise ValueError(\"\
+    Duplicate readiness check\")\n        names.add(check[\"name\"])\n        url\
+    \ = urllib.parse.urlsplit(check[\"url\"])\n        if any(\n            (\n  \
+    \              url.scheme not in (\"http\", \"https\"),\n                url.username,\n\
+    \                url.password,\n                url.query,\n                url.fragment,\n\
+    \            )\n        ):\n            raise ValueError(\"Only credential-free\
+    \ HTTP(S) URLs are allowed\")\n        if not re.fullmatch(\n            r\"[a-z0-9-]+\\\
+    .[a-z0-9-]+\\.svc\\.cluster\\.local\", url.hostname or \"\"\n        ):\n    \
+    \        raise ValueError(\"Only credential-free cluster Service URLs are allowed\"\
+    )\n        if url.port is not None and not 1 <= url.port <= 65535:\n         \
+    \   raise ValueError(\"Invalid readiness port\")\n    return config\n\n\ndef http_ready(url,\
+    \ timeout):\n    \"\"\"Require HTTP 200, verified HTTPS, no environment proxy\
+    \ and no redirects.\"\"\"\n    if urllib.parse.urlsplit(url).scheme not in (\"\
+    http\", \"https\"):\n        return False\n    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),\
+    \ NoRedirect())\n    try:\n        with opener.open(url, timeout=timeout) as response:\
+    \  # nosec B310\n            return response.status == 200\n    except urllib.error.HTTPError\
+    \ as error:\n        error.close()\n        return False\n    except (OSError,\
+    \ ValueError, urllib.error.URLError):\n        return False\n\n\ndef probe(check,\
+    \ timeout):\n    \"\"\"A child deadline also bounds DNS resolution, unlike socket\
+    \ timeout alone.\"\"\"\n    try:\n        # Fixed interpreter/script, validated\
+    \ URL, no shell; timeout includes DNS.\n        result = subprocess.run(  # nosec\
+    \ B603\n            [\n                sys.executable,\n                str(Path(__file__).resolve()),\n\
+    \                \"--probe\",\n                check[\"url\"],\n             \
+    \   str(timeout),\n            ],\n            stdin=subprocess.DEVNULL,\n   \
+    \         stdout=subprocess.DEVNULL,\n            stderr=subprocess.DEVNULL,\n\
+    \            timeout=timeout,\n            check=False,\n        )\n        return\
+    \ result.returncode == 0\n    except (OSError, subprocess.TimeoutExpired):\n \
+    \       return False\n\n\ndef wait(\n    config, *, check_ready=probe, clock=time.monotonic,\
+    \ sleep=time.sleep, emit=print\n):\n    \"\"\"Return ready/skip/fail; no work\
+    \ command runs here and no URL is logged.\"\"\"\n    validate(config)\n    started\
+    \ = clock()\n    deadline = started + config[\"budget_seconds\"]\n    while True:\n\
+    \        all_ready = True\n        for check in config[\"checks\"]:\n        \
+    \    remaining = deadline - clock()\n            if remaining <= 0:\n        \
+    \        all_ready = False\n                break\n            if not check_ready(check,\
+    \ min(config[\"probe_seconds\"], remaining)):\n                all_ready = False\n\
+    \        if all_ready and clock() <= deadline:\n            result = \"ready\"\
+    \n            break\n        remaining = deadline - clock()\n        if remaining\
+    \ <= 0:\n            result = \"skipped\" if config[\"mode\"] == \"skip\" else\
+    \ \"unavailable\"\n            break\n        sleep(min(config[\"interval_seconds\"\
+    ], remaining))\n    emit(\n        json.dumps(\n            {\n              \
+    \  \"event\": \"cron_dependencies\",\n                \"result\": result,\n  \
+    \              \"duration_seconds\": round(clock() - started, 3),\n          \
+    \  }\n        )\n    )\n    return result\n\n\ndef main():\n    \"\"\"Replace\
+    \ this process with the original command; preserve its exit status.\"\"\"\n  \
+    \  if len(sys.argv) == 4 and sys.argv[1] == \"--probe\":\n        return 0 if\
+    \ http_ready(sys.argv[2], float(sys.argv[3])) else 1\n    parser = argparse.ArgumentParser(description=__doc__)\n\
+    \    parser.add_argument(\"--config\", required=True)\n    parser.add_argument(\"\
+    --job\", choices=JOBS, required=True)\n    args = parser.parse_args()\n    try:\n\
+    \        result = wait(\n            json.loads(Path(args.config).read_text(encoding=\"\
+    utf-8\")),\n            emit=lambda line: print(line, flush=True),\n        )\n\
+    \    except (OSError, ValueError, TypeError, KeyError):\n        print('{\"event\"\
+    :\"cron_dependencies\",\"result\":\"invalid-config\"}', flush=True)\n        return\
+    \ 2\n    if result == \"skipped\":\n        return 0\n    if result != \"ready\"\
+    :\n        return 75\n    try:\n        launch(args.job)\n    except OSError:\n\
+    \        print('{\"event\":\"cron_dependencies\",\"result\":\"exec-failed\"}',\
+    \ flush=True)\n    return 127\n\n\nif __name__ == \"__main__\":\n    sys.exit(main())\n"
+  config.json: "{\n  \"mode\": \"skip\",\n  \"budget_seconds\": 300,\n  \"interval_seconds\"\
+    : 5,\n  \"probe_seconds\": 5,\n  \"checks\": [\n    {\n      \"name\": \"loki\"\
+    ,\n      \"url\": \"http://loki-gateway.loki.svc.cluster.local/loki/api/v1/labels\"\
+    \n    },\n    {\n      \"name\": \"ollama\",\n      \"url\": \"http://ollama.ollama.svc.cluster.local:11434/api/tags\"\
+    \n    }\n  ]\n}"

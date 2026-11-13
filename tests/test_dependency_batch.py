@@ -76,7 +76,7 @@ class DependencyBatchTests(unittest.TestCase):
         identities = {(row["namespace"], row["name"]) for row in catalogue}
         self.assertEqual(len(identities), len(catalogue))
         candidates = {
-            row["name"] for row in catalogue if row["preparation"] == "candidate"
+            row["name"] for row in catalogue if row["preparation"] == "source-ready"
         }
         self.assertEqual(
             candidates,
@@ -86,6 +86,8 @@ class DependencyBatchTests(unittest.TestCase):
                 "wordpress-daily-report",
                 "nextcloud",
                 "rspamd-spam-trainer",
+                "bookmarked-media-sync",
+                "mastodon-spam-list-sync",
             },
         )
         for row in catalogue:
@@ -156,8 +158,14 @@ class DependencyBatchTests(unittest.TestCase):
         old_work, work = before["containers"][0], after["containers"][0]
         for key in ("image", "resources", "securityContext"):
             self.assertEqual(work[key], old_work[key])
-        self.assertEqual(work["volumeMounts"][:-1], old_work["volumeMounts"])
-        self.assertEqual(after["volumes"][:-1], before["volumes"])
+        self.assertEqual(
+            work["volumeMounts"][:-1],
+            [m for m in old_work["volumeMounts"] if m["name"] != "cron-gate"],
+        )
+        self.assertEqual(
+            after["volumes"][:-1],
+            [v for v in before["volumes"] if v["name"] != "cron-gate"],
+        )
         self.assertNotIn("initContainers", after)
         self.assertIn(
             "exec php /nextcloud/cron.php", BATCH.script("nextcloud_job_gate.sh")
@@ -224,11 +232,15 @@ class DependencyBatchTests(unittest.TestCase):
         pod = candidate["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         self.assertNotIn("initContainers", pod)
         self.assertEqual(
-            pod["containers"][0]["command"][2:], old["containers"][0]["command"]
+            pod["containers"][0]["command"][2:], ["/bin/sh", "/config/train-spam.sh"]
         )
         self.assertEqual(
             pod["containers"][0]["volumeMounts"][:-1],
-            old["containers"][0]["volumeMounts"],
+            [
+                m
+                for m in old["containers"][0]["volumeMounts"]
+                if m["name"] != "mail-training"
+            ],
         )
         for key in ("image", "securityContext", "resources"):
             self.assertEqual(pod["containers"][0][key], old["containers"][0][key])

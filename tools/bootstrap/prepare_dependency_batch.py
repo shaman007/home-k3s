@@ -126,9 +126,17 @@ def nextcloud_cron():
     job = read("nextcloud/cron-job-nextcloud.yaml")
     pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
     work = pod["containers"][0]
-    if work["command"] != ["/bin/sh", "-c", "sleep 120; exec php /nextcloud/cron.php"]:
+    desired = ["/bin/sh", "/cron-gate/nextcloud_job_gate.sh"]
+    if work["command"] not in (
+        ["/bin/sh", "-c", "sleep 120; exec php /nextcloud/cron.php"],
+        desired,
+    ):
         raise ValueError("Review changed Nextcloud cron command")
-    work["command"] = ["/bin/sh", "/cron-gate/nextcloud_job_gate.sh"]
+    work["command"] = desired
+    work["volumeMounts"] = [
+        m for m in work.get("volumeMounts", []) if m["name"] != "cron-gate"
+    ]
+    pod["volumes"] = [v for v in pod.get("volumes", []) if v["name"] != "cron-gate"]
     cm = config_map(
         "nextcloud-cron-dependencies",
         "nextcloud",
@@ -162,7 +170,9 @@ def mail_training():
     job = read("mail/cron-job-rspamd-spam-trainer.yaml")
     pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
     work = pod["containers"][0]
-    if work["command"] != ["/bin/sh", "/config/train-spam.sh"]:
+    original = ["/bin/sh", "/config/train-spam.sh"]
+    desired = ["/bin/sh", "/mail-training/mail_training_gate.sh", *original]
+    if work["command"] not in (original, desired):
         raise ValueError("Review changed spam trainer command")
     cm = config_map(
         "mail-training-dependencies",
@@ -171,11 +181,11 @@ def mail_training():
             "mail_training_gate.sh": script("mail_training_gate.sh"),
         },
     )
-    work["command"] = [
-        "/bin/sh",
-        "/mail-training/mail_training_gate.sh",
-        *work["command"],
+    work["command"] = desired
+    work["volumeMounts"] = [
+        m for m in work.get("volumeMounts", []) if m["name"] != "mail-training"
     ]
+    pod["volumes"] = [v for v in pod.get("volumes", []) if v["name"] != "mail-training"]
     work.setdefault("volumeMounts", []).append(
         {
             "name": "mail-training",

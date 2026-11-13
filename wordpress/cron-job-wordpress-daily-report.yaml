@@ -1,4 +1,3 @@
----
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -10,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: wordpress
     app.kubernetes.io/managed-by: argoCD
 spec:
-  schedule: "15 6 * * *"
+  schedule: 15 6 * * *
   timeZone: Europe/Prague
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
@@ -33,67 +32,78 @@ spec:
           serviceAccountName: wordpress-daily-report
           restartPolicy: Never
           containers:
-            - name: report
-              image: harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine
-              imagePullPolicy: IfNotPresent
-              securityContext:
-                runAsUser: 65534
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 65534
-                runAsNonRoot: true
-                allowPrivilegeEscalation: false
-              command:
-                - python3
-                - /scripts/wordpress-daily-report.py
-              env:
-                - name: REPORT_NAMESPACE
-                  value: wordpress
-                - name: REPORT_POD_SELECTOR
-                  value: app=wordpress,component=web
-                - name: REPORT_CONTAINER
-                  value: nginx
-                - name: REPORT_TIMEZONE
-                  value: Europe/Prague
-                - name: LOKI_BASE_URL
-                  value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
-                - name: KUBERNETES_API_URL
-                  value: https://kubernetes.default.svc.cluster.local
-                - name: SITE_TITLE
-                  value: andreybondarenko.com
-                - name: SITE_HOSTS
-                  value: andreybondarenko.com,www.andreybondarenko.com
-                - name: SMTP_HOST
-                  value: traefik.traefik.svc.cluster.local
-                - name: SMTP_PORT
-                  value: "25"
-                - name: MAIL_FROM
-                  value: wordpress-report@andreybondarenko.com
-                - name: MAIL_TO
-                  value: me@andreybondarenko.com
-                - name: SEND_EMAIL
-                  value: "true"
-                - name: METRICS_CONFIGMAP_NAME
-                  value: wordpress-daily-report-metrics
-                - name: HTTP_TIMEOUT_SECONDS
-                  value: "180"
-                - name: HTTP_MAX_ATTEMPTS
-                  value: "3"
-                - name: HTTP_RETRY_DELAY_SECONDS
-                  value: "5"
-              resources:
-                requests:
-                  cpu: 25m
-                  memory: 128Mi
-                limits:
-                  memory: 256Mi
-              volumeMounts:
-                - name: scripts
-                  mountPath: /scripts
-                  readOnly: true
-          volumes:
+          - name: report
+            image: harbor.andreybondarenko.com/dockerhub/library/python:3.15-alpine
+            imagePullPolicy: IfNotPresent
+            securityContext:
+              runAsUser: 65534
+              capabilities:
+                drop:
+                - ALL
+              runAsGroup: 65534
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+            command:
+            - python3
+            - /opt/cron-dependencies/gate.py
+            - --config
+            - /opt/cron-dependencies/config.json
+            - --job
+            - wordpress-daily-report
+            env:
+            - name: REPORT_NAMESPACE
+              value: wordpress
+            - name: REPORT_POD_SELECTOR
+              value: app=wordpress,component=web
+            - name: REPORT_CONTAINER
+              value: nginx
+            - name: REPORT_TIMEZONE
+              value: Europe/Prague
+            - name: LOKI_BASE_URL
+              value: http://loki-gateway.loki.svc.cluster.local/loki/api/v1
+            - name: KUBERNETES_API_URL
+              value: https://kubernetes.default.svc.cluster.local
+            - name: SITE_TITLE
+              value: andreybondarenko.com
+            - name: SITE_HOSTS
+              value: andreybondarenko.com,www.andreybondarenko.com
+            - name: SMTP_HOST
+              value: traefik.traefik.svc.cluster.local
+            - name: SMTP_PORT
+              value: '25'
+            - name: MAIL_FROM
+              value: wordpress-report@andreybondarenko.com
+            - name: MAIL_TO
+              value: me@andreybondarenko.com
+            - name: SEND_EMAIL
+              value: 'true'
+            - name: METRICS_CONFIGMAP_NAME
+              value: wordpress-daily-report-metrics
+            - name: HTTP_TIMEOUT_SECONDS
+              value: '180'
+            - name: HTTP_MAX_ATTEMPTS
+              value: '3'
+            - name: HTTP_RETRY_DELAY_SECONDS
+              value: '5'
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+            volumeMounts:
             - name: scripts
-              configMap:
-                name: wordpress-daily-report-scripts
-                defaultMode: 0555
+              mountPath: /scripts
+              readOnly: true
+            - name: cron-dependencies
+              mountPath: /opt/cron-dependencies
+              readOnly: true
+          volumes:
+          - name: scripts
+            configMap:
+              name: wordpress-daily-report-scripts
+              defaultMode: 365
+          - name: cron-dependencies
+            configMap:
+              name: wordpress-daily-report-dependencies-73dfc4adafc0
+      activeDeadlineSeconds: 3600

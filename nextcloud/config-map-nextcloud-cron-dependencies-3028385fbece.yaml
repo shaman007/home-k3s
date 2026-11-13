@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: nextcloud-cron-dependencies-3028385fbece
+  namespace: nextcloud
+data:
+  nextcloud_job_gate.sh: "#!/bin/sh\n# Same-image main wrapper. A missing dependency\
+    \ must never release cron.php.\nset -eu\nbudget=${STARTUP_WAIT_SECONDS:-300}\n\
+    case \"$budget\" in ''|*[!0-9]*) exit 2 ;; esac\n[ \"$budget\" -ge 1 ] && [ \"\
+    $budget\" -le 300 ] || exit 2\nmonotonic() { read -r seconds rest < /proc/uptime;\
+    \ printf '%s' \"${seconds%%.*}\"; }\nstarted=$(monotonic)\nwhile :; do\n  ready=true\n\
+    \  for mode in nextcloud-sql nextcloud-valkey web; do\n    elapsed=$(( $(monotonic)\
+    \ - started ))\n    remaining=$((budget - elapsed))\n    if [ \"$remaining\" -le\
+    \ 0 ]; then ready=false; break; fi\n    timeout_seconds=5\n    if [ \"$remaining\"\
+    \ -lt 5 ]; then timeout_seconds=$remaining; fi\n    if [ \"$mode\" = web ]; then\n\
+    \      timeout -s TERM -k 1 \"$timeout_seconds\" php /cron-gate/nextcloud_job_ready.php\
+    \ >/dev/null 2>&1 || ready=false\n    else\n      timeout -s TERM -k 1 \"$timeout_seconds\"\
+    \ php /cron-gate/probe_data.php \"$mode\" >/dev/null 2>&1 || ready=false\n   \
+    \ fi\n  done\n  elapsed=$(( $(monotonic) - started ))\n  if [ \"$ready\" = true\
+    \ ] && [ \"$elapsed\" -le \"$budget\" ]; then\n    printf '{\"event\":\"cron_dependencies\"\
+    ,\"result\":\"ready\",\"duration_seconds\":%s}\\n' \"$elapsed\"\n    exec php\
+    \ /nextcloud/cron.php\n  fi\n  if [ \"$elapsed\" -ge \"$budget\" ]; then\n   \
+    \ printf '{\"event\":\"cron_dependencies\",\"result\":\"skipped\",\"duration_seconds\"\
+    :%s}\\n' \"$elapsed\"\n    exit 0\n  fi\n  remaining=$((budget - elapsed))\n \
+    \ if [ \"$remaining\" -gt 5 ]; then remaining=5; fi\n  sleep \"$remaining\"\n\
+    done\n"
+  probe_data.php: "<?php\n/** Read literals, never execute an application's configuration\
+    \ or bootstrap. */\ndeclare(strict_types=1);\n\nfinal class ConfigLiterals\n{\n\
+    \    private array $tokens;\n    private int $position = 0;\n\n    public function\
+    \ __construct(string $source)\n    {\n        $this->tokens = array_values(array_filter(token_get_all($source),\
+    \ static fn($t) =>\n            !is_array($t) || !in_array($t[0], [T_OPEN_TAG,\
+    \ T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)));\n    }\n\n    private function\
+    \ take(): mixed\n    {\n        if (!array_key_exists($this->position, $this->tokens))\
+    \ {\n            throw new RuntimeException('Invalid config');\n        }\n  \
+    \      return $this->tokens[$this->position++];\n    }\n\n    private function\
+    \ expect(mixed $expected): void\n    {\n        $token = $this->take();\n    \
+    \    if ((is_array($token) ? $token[0] : $token) !== $expected) {\n          \
+    \  throw new RuntimeException('Invalid config');\n        }\n    }\n\n    private\
+    \ function literal(int $depth = 0): mixed\n    {\n        if ($depth > 16) {\n\
+    \            throw new RuntimeException('Invalid config');\n        }\n      \
+    \  $token = $this->take();\n        if ($token === '[' || (is_array($token) &&\
+    \ $token[0] === T_ARRAY)) {\n            $close = ']';\n            if (is_array($token))\
+    \ {\n                $this->expect('(');\n                $close = ')';\n    \
+    \        }\n            $result = [];\n            while (($this->tokens[$this->position]\
+    \ ?? null) !== $close) {\n                $value = $this->literal($depth + 1);\n\
+    \                $next = $this->tokens[$this->position] ?? null;\n           \
+    \     if (is_array($next) && $next[0] === T_DOUBLE_ARROW) {\n                \
+    \    $this->position++;\n                    if ((!is_string($value) && !is_int($value))\
+    \ || array_key_exists($value, $result)) {\n                        throw new RuntimeException('Invalid\
+    \ config');\n                    }\n                    $result[$value] = $this->literal($depth\
+    \ + 1);\n                } else {\n                    $result[] = $value;\n \
+    \               }\n                if (($this->tokens[$this->position] ?? null)\
+    \ === $close) {\n                    break;\n                }\n             \
+    \   $this->expect(',');\n            }\n            $this->expect($close);\n \
+    \           return $result;\n        }\n        if (is_array($token) && $token[0]\
+    \ === T_CONSTANT_ENCAPSED_STRING) {\n            $inner = substr($token[1], 1,\
+    \ -1);\n            if ($token[1][0] === \"'\") {\n                return preg_replace_callback('/\\\
+    \\\\\\([\\\\\\\\\\x27])/', static fn($m) => $m[1], $inner);\n            }\n \
+    \           // token_get_all already rejects interpolated strings as a single\
+    \ literal.\n            // Fail closed on uncommon PHP escape forms rather than\
+    \ misdecode credentials.\n            if (preg_match('/\\\\\\\\(?:[0-7xXuU]|\\\
+    {)/', $inner)) {\n                throw new RuntimeException('Unsupported escape');\n\
+    \            }\n            return preg_replace_callback('/\\\\\\\\([nrtvef\\\\\
+    \\\\\"$])/', static fn($m) =>\n                ['n' => \"\\n\", 'r' => \"\\r\"\
+    , 't' => \"\\t\", 'v' => \"\\v\", 'e' => \"\\e\", 'f' => \"\\f\",\n          \
+    \       '\\\\' => '\\\\', '\"' => '\"', '$' => '$'][$m[1]], $inner);\n       \
+    \ }\n        if (is_array($token) && $token[0] === T_LNUMBER && preg_match('/^(0|[1-9][0-9]*)$/D',\
+    \ $token[1])) {\n            return (int)$token[1];\n        }\n        if (is_array($token)\
+    \ && $token[0] === T_STRING) {\n            return match (strtolower($token[1]))\
+    \ {\n                'true' => true, 'false' => false, 'null' => null,\n     \
+    \           default => throw new RuntimeException('Invalid config'),\n       \
+    \     };\n        }\n        throw new RuntimeException('Invalid config');\n \
+    \   }\n\n    public function nextcloud(): array\n    {\n        $token = $this->take();\n\
+    \        if (!is_array($token) || $token[0] !== T_VARIABLE || $token[1] !== '$CONFIG')\
+    \ {\n            throw new RuntimeException('Invalid config');\n        }\n  \
+    \      $this->expect('=');\n        $result = $this->literal();\n        $this->expect(';');\n\
+    \        if ($this->position !== count($this->tokens) || !is_array($result)) {\n\
+    \            throw new RuntimeException('Invalid config');\n        }\n      \
+    \  return $result;\n    }\n\n    public function wordpress(): array\n    {\n \
+    \       $wanted = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'WP_REDIS_HOST',\n\
+    \                   'WP_REDIS_PORT', 'WP_REDIS_PASSWORD', 'WP_REDIS_DATABASE'];\n\
+    \        $result = [];\n        while ($this->position < count($this->tokens))\
+    \ {\n            $token = $this->take();\n            if (!is_array($token) ||\
+    \ $token[0] !== T_STRING || strtolower($token[1]) !== 'define') {\n          \
+    \      continue;\n            }\n            $this->expect('(');\n           \
+    \ $name = $this->literal();\n            if (!in_array($name, $wanted, true))\
+    \ {\n                continue; // Other definitions and bootstrap code are never\
+    \ evaluated.\n            }\n            $this->expect(',');\n            $value\
+    \ = $this->literal();\n            $this->expect(')');\n            $this->expect(';');\n\
+    \            if (array_key_exists($name, $result)) {\n                throw new\
+    \ RuntimeException('Invalid config');\n            }\n            $result[$name]\
+    \ = $value;\n        }\n        return $result;\n    }\n}\n\nfunction requiredString(array\
+    \ $config, string $key): string\n{\n    if (!isset($config[$key]) || !is_string($config[$key]))\
+    \ {\n        throw new RuntimeException('Missing config');\n    }\n    return\
+    \ $config[$key];\n}\n\nfunction probeData(string $mode): void\n{\n    $nextcloud\
+    \ = str_starts_with($mode, 'nextcloud-');\n    if (!in_array($mode, ['nextcloud-sql',\
+    \ 'nextcloud-valkey', 'wordpress-sql', 'wordpress-valkey'], true)) {\n       \
+    \ throw new RuntimeException('Invalid mode');\n    }\n    $source = file_get_contents($nextcloud\
+    \ ? '/nextcloud/config/config.php' : '/code/wp-config.php');\n    if ($source\
+    \ === false || strlen($source) > 1048576) {\n        throw new RuntimeException('Invalid\
+    \ config');\n    }\n    $parser = new ConfigLiterals($source);\n    $config =\
+    \ $nextcloud ? $parser->nextcloud() : $parser->wordpress();\n    if (str_ends_with($mode,\
+    \ '-sql')) {\n        if ($nextcloud && ($config['dbtype'] ?? null) !== 'mysql')\
+    \ {\n            throw new RuntimeException('Unsupported DB');\n        }\n  \
+    \      $host = requiredString($config, $nextcloud ? 'dbhost' : 'DB_HOST');\n \
+    \       // Current stacks use DNS[:port], not sockets or arbitrary PDO DSN fragments.\n\
+    \        if (!preg_match('/^([a-zA-Z0-9._-]+)(?::([0-9]{1,5}))?$/D', $host, $parts))\
+    \ {\n            throw new RuntimeException('Invalid host');\n        }\n    \
+    \    $database = requiredString($config, $nextcloud ? 'dbname' : 'DB_NAME');\n\
+    \        if (!preg_match('/^[a-zA-Z0-9_-]+$/D', $database)) {\n            throw\
+    \ new RuntimeException('Invalid database');\n        }\n        $pdo = new PDO('mysql:host='\
+    \ . $parts[1] . ';port=' . ($parts[2] ?? '3306') . ';dbname=' . $database,\n \
+    \           requiredString($config, $nextcloud ? 'dbuser' : 'DB_USER'),\n    \
+    \        requiredString($config, $nextcloud ? 'dbpassword' : 'DB_PASSWORD'),\n\
+    \            [PDO::ATTR_TIMEOUT => 4, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);\n\
+    \        $pdo->exec('SET TRANSACTION READ ONLY');\n        $pdo->beginTransaction();\n\
+    \        if ((string)$pdo->query('SELECT 1')->fetchColumn() !== '1') {\n     \
+    \       throw new RuntimeException('Invalid reply');\n        }\n        $pdo->rollBack();\n\
+    \        return;\n    }\n    $redisConfig = $nextcloud ? ($config['redis'] ??\
+    \ []) : $config;\n    $redis = new Redis();\n    $host = requiredString($redisConfig,\
+    \ $nextcloud ? 'host' : 'WP_REDIS_HOST');\n    $port = $redisConfig[$nextcloud\
+    \ ? 'port' : 'WP_REDIS_PORT'] ?? 6379;\n    if (is_string($port) && ctype_digit($port))\
+    \ {\n        $port = (int)$port;\n    }\n    if (!is_int($port) || $port < 1 ||\
+    \ $port > 65535) {\n        throw new RuntimeException('Invalid port');\n    }\n\
+    \    $redis->connect($host, $port, 4, null, 0, 4);\n    $password = $redisConfig[$nextcloud\
+    \ ? 'password' : 'WP_REDIS_PASSWORD'] ?? '';\n    if ($password !== '') {\n  \
+    \      $user = $nextcloud ? ($redisConfig['user'] ?? '') : '';\n        if (!$redis->auth($user\
+    \ !== '' ? [$user, $password] : $password)) {\n            throw new RuntimeException('Authentication\
+    \ failed');\n        }\n    }\n    $database = $redisConfig[$nextcloud ? 'dbindex'\
+    \ : 'WP_REDIS_DATABASE'] ?? 0;\n    if (!is_int($database) || $database < 0) {\n\
+    \        throw new RuntimeException('Invalid database');\n    }\n    $redis->select($database);\n\
+    \    if (!in_array($redis->ping(), [true, 'PONG', '+PONG'], true)) {\n       \
+    \ throw new RuntimeException('Invalid reply');\n    }\n    $redis->close();\n\
+    }\n\n// Requiring this file in parser tests does not run a probe.\nif (realpath($_SERVER['SCRIPT_FILENAME']\
+    \ ?? '') === __FILE__) {\n    ini_set('display_errors', '0');\n    ini_set('log_errors',\
+    \ '0');\n    try {\n        probeData($argv[1] ?? '');\n        exit(0);\n   \
+    \ } catch (Throwable) {\n        exit(1); // Never print configuration, credentials\
+    \ or driver exceptions.\n    }\n}\n"
+  nextcloud_job_ready.php: "<?php\n/** Read-only web readiness, including maintenance/schema\
+    \ status. No app bootstrap. */\ndeclare(strict_types=1);\n\nfunction nextcloudJobReady(mixed\
+    \ $value): bool\n{\n    return is_array($value)\n        && ($value['installed']\
+    \ ?? null) === true\n        && ($value['maintenance'] ?? null) === false\n  \
+    \      && ($value['needsDbUpgrade'] ?? null) === false;\n}\n\nif (realpath($_SERVER['SCRIPT_FILENAME']\
+    \ ?? '') === __FILE__) {\n    ini_set('display_errors', '0');\n    ini_set('log_errors',\
+    \ '0');\n    try {\n        $context = stream_context_create(['http' => [\n  \
+    \          'timeout' => 4,\n            'follow_location' => 0,\n            'ignore_errors'\
+    \ => true,\n            'header' => \"Host: cloud.andreybondarenko.com\\r\\nConnection:\
+    \ close\\r\\n\",\n        ]]);\n        $body = @file_get_contents(\n        \
+    \    'http://nginx-nextcloud.nextcloud.svc.cluster.local:8080/status.php',\n \
+    \           false, $context, 0, 65537\n        );\n        $status = $http_response_header[0]\
+    \ ?? '';\n        if (!preg_match('/^HTTP\\/\\S+ 200(?: |$)/D', $status)\n   \
+    \         || !is_string($body) || strlen($body) > 65536) {\n            exit(1);\n\
+    \        }\n        exit(nextcloudJobReady(json_decode($body, true, 32, JSON_THROW_ON_ERROR))\
+    \ ? 0 : 1);\n    } catch (Throwable) {\n        exit(1);\n    }\n}\n"

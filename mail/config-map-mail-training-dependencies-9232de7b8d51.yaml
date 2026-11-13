@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: mail-training-dependencies-9232de7b8d51
+  namespace: mail
+data:
+  mail_training_gate.sh: "#!/bin/sh\n# Skip before starting private Dovecot or touching\
+    \ mail when Rspamd is unavailable.\nset -eu\n[ \"$#\" -gt 0 ] || exit 2\nbudget=${STARTUP_WAIT_SECONDS:-300}\n\
+    case \"$budget\" in ''|*[!0-9]*) exit 2 ;; esac\n[ \"$budget\" -ge 1 ] && [ \"\
+    $budget\" -le 300 ] || exit 2\nmonotonic() { read -r seconds rest < /proc/uptime;\
+    \ printf '%s' \"${seconds%%.*}\"; }\nstarted=$(monotonic)\nwhile :; do\n  elapsed=$((\
+    \ $(monotonic) - started ))\n  remaining=$((budget - elapsed))\n  if [ \"$remaining\"\
+    \ -le 0 ]; then break; fi\n  timeout_seconds=5\n  if [ \"$remaining\" -lt 5 ];\
+    \ then timeout_seconds=$remaining; fi\n  status=$(timeout -s TERM -k 1 \"$timeout_seconds\"\
+    \ curl --noproxy '*' --proto '=http' \\\n    --silent --connect-timeout 2 --max-time\
+    \ 4 --output /dev/null --write-out '%{http_code}' \\\n    http://rspamd.mail.svc.cluster.local:11334/ping\
+    \ 2>/dev/null) || status=''\n  elapsed=$(( $(monotonic) - started ))\n  if [ \"\
+    $status\" = 200 ] && [ \"$elapsed\" -le \"$budget\" ]; then\n    printf '{\"event\"\
+    :\"cron_dependencies\",\"result\":\"ready\",\"duration_seconds\":%s}\\n' \"$elapsed\"\
+    \n    exec \"$@\"\n  fi\n  if [ \"$elapsed\" -ge \"$budget\" ]; then break; fi\n\
+    \  remaining=$((budget - elapsed))\n  if [ \"$remaining\" -gt 5 ]; then remaining=5;\
+    \ fi\n  sleep \"$remaining\"\ndone\nprintf '{\"event\":\"cron_dependencies\",\"\
+    result\":\"skipped\"}\\n'\nexit 0\n"
