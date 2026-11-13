@@ -39,7 +39,7 @@ EXPECTED_DIRECT_UPSTREAM_IMAGES = {
         "quay.io/podman/stable",
         "registry.k8s.io/git-sync/git-sync",
     },
-    Path("karakeep/deployment-karakeep.yaml"): {
+    Path("karakeep/deployment-chrome.yaml"): {
         "ghcr.io/karakeep-app/karakeep-chrome",
     },
 }

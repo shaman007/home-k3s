@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: chrome-allow-ingress-karakeep
+  namespace: karakeep
+spec:
+  podSelector:
+    matchLabels:
+      app: karakeep-chrome
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: karakeep
+    ports:
+    - protocol: TCP
+      port: 9222

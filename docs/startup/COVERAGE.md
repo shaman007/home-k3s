@@ -96,7 +96,7 @@ workloads, declared images and object references; it is not proof of independenc
 | i2pd | 1 / 0 | Infrastructure | Network; structural review only. |
 | image-builder | 0 / 1 | Scheduled Job | Podman builder; structural review only. |
 | immich | 4 / 0 | App | Active gate (server). |
-| karakeep | 2 / 0 | App | Local SQLite + Meilisearch. Optional search/jobs must be audited before global gate. Init waiting same-Pod Chrome would deadlock. |
+| karakeep | 3 / 0 | App | Prepared: separate Chrome Service + Meilisearch gate only s6 workers; migrations/UI independent. Local CDP/DOM and s6 checks passed; not deployed. |
 | keycloak | 2 / 1 | App | Active gate. |
 | kube-system | 9 / 0 | Infrastructure | Core K8s components; structural review only. |
 | kyverno | 2 / 0 | Infrastructure | Policy engine; structural review only. |

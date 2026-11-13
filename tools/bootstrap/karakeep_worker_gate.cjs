@@ -1,4 +1,4 @@
-/* Gate the s6 workers service only; web, migrations and Chrome start independently. */
+/* Gate the s6 workers service only; web, migrations and the browser Deployment start independently. */
 "use strict";
 const http = require("node:http");
 const { performance } = require("node:perf_hooks");
@@ -53,7 +53,7 @@ async function wait({ budgetMs = 300000, intervalMs = 5000, check, now = () => p
 
 async function main() {
   // These addresses were inspected in the pinned image's deployed configuration.
-  if (process.env.BROWSER_WEB_URL !== "http://127.0.0.1:9222" ||
+  if (!["http://127.0.0.1:9222", "http://chrome.karakeep.svc.cluster.local:9222"].includes(process.env.BROWSER_WEB_URL) ||
       process.env.MEILI_ADDR !== "http://meilisearch.karakeep.svc.cluster.local:7700" ||
       typeof process.execve !== "function") {
     console.log('{"event":"karakeep_worker_dependencies","result":"invalid-config"}');
@@ -61,7 +61,7 @@ async function main() {
   }
   const ready = await wait({ check: async (timeout) => {
     const results = await Promise.all([
-      probe("http://127.0.0.1:9222/json/version", "webSocketDebuggerUrl", null, timeout),
+      probe(`${process.env.BROWSER_WEB_URL}/json/version`, "webSocketDebuggerUrl", null, timeout),
       probe("http://meilisearch.karakeep.svc.cluster.local:7700/health", "status", "available", timeout),
     ]);
     return results.every(Boolean);

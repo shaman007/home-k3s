@@ -139,11 +139,11 @@ def mail_training():
 
 
 def karakeep():
-    """Gate only s6 workers; the ordinary Chrome container can start immediately."""
+    """Gate only s6 workers; the browser Deployment starts independently."""
     deployment = read("karakeep/deployment-karakeep.yaml")
     env = read("karakeep/config-map-karakeep-env.yaml")["data"]
     if (
-        env.get("BROWSER_WEB_URL") != "http://127.0.0.1:9222"
+        env.get("BROWSER_WEB_URL") not in ("http://127.0.0.1:9222", "http://chrome.karakeep.svc.cluster.local:9222")
         or env.get("MEILI_ADDR") != "http://meilisearch.karakeep.svc.cluster.local:7700"
     ):
         raise ValueError("Review changed Karakeep worker-provider addresses")
@@ -165,6 +165,8 @@ def karakeep():
             "run": runner,
         },
     )
+    web["volumeMounts"] = [m for m in web.get("volumeMounts", []) if m["name"] != "worker-startup"]
+    pod["volumes"] = [v for v in pod.get("volumes", []) if v["name"] != "worker-startup"]
     web.setdefault("volumeMounts", []).extend(
         [
             {

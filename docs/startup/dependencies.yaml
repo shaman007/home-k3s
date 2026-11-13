@@ -17,8 +17,8 @@ prepared_packages:
     provider: SQL and ACL Valkey plus web maintenance/schema status
     consumer: Nextcloud cron main command
   karakeep:
-    status: inactive; entire worker pool tradeoff needs acceptance
-    provider: same-Pod Chrome and Meilisearch
+    status: prepared; all-worker gate accepted; separate Chrome CDP and s6 tested locally; not deployed
+    provider: independent Chrome Service and Meilisearch
     consumer: s6 workers only; never Pod init
   observability:
     status: inactive; internal HTTP and staged client reloads need acceptance

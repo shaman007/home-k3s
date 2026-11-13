@@ -42,7 +42,7 @@ tracked generators and tests are the reproducible source.
 | 4 | `mail` | Valkey + Unbound + ClamAV → Rspamd → Postfix; independent Dovecot provides SASL/LMTP | Superseded by [complete mail package](mail/README.md): deployed by 32517070 with tempfail/AV soft-reject policy; isolated SMTP failure tests pending |
 | 5 | `mail-training` | Wait up to 300 seconds for Rspamd HTTP200, then existing trainer; otherwise skip before starting private Dovecot/reading mail | Review one-hour deadline; observe next scheduled training without injecting mail or cancelling an active Job |
 | 6 | `nextcloud-cron` + report gates | Native SQL/ACL-Valkey/maintenance checks for cron; Loki/Ollama API checks for three reports | Check stale-report detection, runtime limits and actual mounted-PVC permissions; no skipped run counted as useful completion |
-| 7 | `karakeep` | s6 workers wait for Chrome and Meilisearch; no Pod init wait for same-Pod Chrome | Accept gating the entire worker service, not only crawler/search; validate s6 mount/startup and signal behavior in isolation first |
+| 7 | `karakeep` | Prepared: separate Chrome Deployment/Service; s6 workers wait for Chrome and Meilisearch | Whole-worker tradeoff accepted; real s6 and separate-container CDP/DOM passed locally; publish and verify rollout next |
 
 Do not combine these into one rollout. For each selected package, review source
 diffs, publish only after the user requests a commit, observe CI/Code Scanning,
@@ -147,8 +147,8 @@ exec node dist/index.js
 ```
 
 The candidate replaces only that worker-service run file with a ConfigMap mount,
-leaving web, migration service, Chrome, SQLite/PVC, OIDC and Ollama configuration
-unchanged. The native Node probe requires Chrome's JSON debugger URL and Meili's
+leaving web, migration service, SQLite/PVC, OIDC and Ollama configuration
+unchanged. Chrome is prepared as a separate Deployment/ClusterIP Service. The native Node probe requires Chrome's JSON debugger URL and Meili's
 `status: available`, bounds DNS/headers/body with a total request timer, then
 execves the original worker process. Failure exits75 so s6 can retry this service.
 Reinspect any changed imageID: a mutable tag or new chart may change s6 paths and
@@ -157,9 +157,12 @@ startup contracts. Source generation refuses a different version/entrypoint.
 Tradeoff: one s6 service contains crawler, search, inference and other workers.
 This proposal delays all of them while either selected provider is down; it does
 not claim isolated per-queue gating. It adds no unconditional wait for Ollama/SSO.
-User approval of that tradeoff and an isolated full s6 startup test remain pending.
-Without that acceptance, keep the original worker runner and rely on existing
-per-job retries; do not deploy the candidate merely because HTTP unit tests pass.
+The user accepted gating the whole worker pool. Full isolated s6 startup verified
+that migrations and web start while providers are unavailable, one ready provider
+does not release workers, both ready providers release the real worker process,
+and s6 stops without SIGKILL. A separate-container Patchright CDP/DOM check also
+passed. These are local checks; no Karakeep rollout has been performed.
+See [the transition plan](karakeep/README.md).
 
 Rollback the worker Deployment to the previous mounts/template, retain database
 and service state, and retire only unused script ConfigMaps. Do not clear or

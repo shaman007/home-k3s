@@ -21,6 +21,8 @@ spec:
       app: karakeep
   template:
     metadata:
+      annotations:
+        checksum/karakeep-worker-startup: 7c7e2cfefb0d2d0091f581d05968f0d721060ced8dd2cc6bf06e439c6c467c26
       labels:
         app: karakeep
     spec:
@@ -40,7 +42,7 @@ spec:
               find /karakeep-data -path /karakeep-data/lost+found -prune -o -exec chown 1000:1000 {} +
               chmod 0755 /run
               chown 1000:1000 /run
-              chmod 1777 /chrome-tmp /web-tmp
+              chmod 1777 /web-tmp
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -53,7 +55,6 @@ spec:
               type: RuntimeDefault
           volumeMounts:
             - {name: karakeep-data, mountPath: /karakeep-data}
-            - {name: chrome-tmp, mountPath: /chrome-tmp}
             - {name: tmp, mountPath: /web-tmp}
             - {name: run, mountPath: /run}
       containers:
@@ -104,48 +105,20 @@ spec:
               mountPath: /run
             - name: tmp
               mountPath: /tmp
+            - name: worker-startup
+              mountPath: /worker-startup
+              readOnly: true
+            - name: worker-startup
+              mountPath: /etc/s6-overlay/s6-rc.d/svc-workers/run
+              subPath: run
+              readOnly: true
           resources:
             requests:
               cpu: 93m
               memory: 1Gi
             limits:
               memory: 2Gi
-        - name: chrome
-          image: ghcr.io/karakeep-app/karakeep-chrome:157.0.8103.38-r1
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 65534
-            runAsGroup: 65534
-            seccompProfile:
-              type: RuntimeDefault
-          args:
-            - --disable-gpu
-            - --disable-dev-shm-usage
-            - --hide-scrollbars
-            - --disable-blink-features=AutomationControlled
-            - --window-size=1440,900
-          volumeMounts:
-            - {name: dshm, mountPath: /dev/shm}
-            - {name: chrome-tmp, mountPath: /tmp}
-          ports:
-            - {containerPort: 9222}
-          resources:
-            requests:
-              cpu: 40m
-              memory: 1Gi
-            limits:
-              memory: 1536Mi
       volumes:
-        - name: dshm
-          emptyDir: {medium: Memory, sizeLimit: 1Gi}
-        - name: chrome-tmp
-          emptyDir:
-            sizeLimit: 1Gi
         - name: karakeep-data
           persistentVolumeClaim:
             claimName: karakeep-data
@@ -153,3 +126,7 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: worker-startup
+          configMap:
+            name: karakeep-worker-startup-7c7e2cfefb0d
+            defaultMode: 0555

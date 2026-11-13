@@ -166,8 +166,8 @@ class DependencyBatchTests(unittest.TestCase):
             "exec php /nextcloud/cron.php", BATCH.script("nextcloud_job_gate.sh")
         )
 
-    def test_karakeep_gates_workers_not_the_pod_or_chrome(self):
-        """The same-Pod Chrome provider must remain free to start."""
+    def test_karakeep_gates_workers_not_web_or_browser(self):
+        """Only the worker runner is changed; independent browser and web remain free to start."""
         original = document("karakeep/deployment-karakeep.yaml")
         proposed = BATCH.karakeep()
         changed = proposed["karakeep/deployment-karakeep.yaml"]

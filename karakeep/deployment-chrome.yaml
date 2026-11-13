@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chrome
+  namespace: karakeep
+  labels: &id001
+    app: karakeep-chrome
+    app.kubernetes.io/name: karakeep-chrome
+    app.kubernetes.io/instance: karakeep
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: karakeep-chrome
+  template:
+    metadata:
+      labels: *id001
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 65534
+        fsGroupChangePolicy: OnRootMismatch
+      priorityClassName: homelab-standard
+      containers:
+      - name: chrome
+        image: ghcr.io/karakeep-app/karakeep-chrome:157.0.8103.38-r1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          seccompProfile:
+            type: RuntimeDefault
+        args:
+        - --disable-gpu
+        - --disable-dev-shm-usage
+        - --hide-scrollbars
+        - --disable-blink-features=AutomationControlled
+        - --window-size=1440,900
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        - name: chrome-tmp
+          mountPath: /tmp
+        ports:
+        - containerPort: 9222
+        resources:
+          requests:
+            cpu: 40m
+            memory: 1Gi
+          limits:
+            memory: 1536Mi
+        startupProbe:
+          httpGet:
+            path: /json/version
+            port: 9222
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /json/version
+            port: 9222
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi
+      - name: chrome-tmp
+        emptyDir:
+          sizeLimit: 1Gi
