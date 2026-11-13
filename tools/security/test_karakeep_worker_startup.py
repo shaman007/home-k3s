@@ -59,7 +59,7 @@ def main():
 const http = require("node:http");
 const fs = require("node:fs");
 http.createServer((req,res) => {
-  const ready = fs.existsSync("/fixture/chrome-ready");
+  const ready = fs.existsSync("/fixture/chrome-ready") && req.headers.host === "localhost";
   res.writeHead(ready ? 200 : 503, {"Content-Type":"application/json"});
   res.end(JSON.stringify(ready ? {webSocketDebuggerUrl:"ws://127.0.0.1:9222/devtools/browser/fixture"} : {}));
 }).listen(9222,"127.0.0.1");

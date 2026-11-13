@@ -94,3 +94,15 @@ now-unused separate browser Deployment/Service/policies and gate ConfigMap if
 necessary: this Argo Application does not enable automatic prune. Their temporary
 continued existence does not receive traffic after localhost is restored.
 Never delete old projected ConfigMaps until no running Pod references them.
+
+## Post-publication CDP discovery correction
+
+On 2034b16d the separate Chrome and web Pods became Healthy, but workers stayed
+in the gate: Chrome rejected discovery with a DNS Service name in the HTTP Host
+header. The real crawler resolves the name to an IP first, so its isolated CDP
+check passed; the initial fake-provider test did not reproduce this restriction.
+The gate now sets `Host: localhost` only for CDP discovery using Node http.get.
+Both the HTTP regression and full s6 fake provider enforce this restriction.
+A read-only request using the same HTTP API confirmed valid debugger JSON over
+the real Service. The fixed immutable ConfigMap and Deployment reference are
+prepared for a new GitOps rollout; manual cluster state was not changed.

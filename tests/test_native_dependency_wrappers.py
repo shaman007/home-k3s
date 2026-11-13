@@ -180,6 +180,7 @@ const {probe, wait} = require(process.argv[1]);
   let hits=[];
   const server=http.createServer((req,res)=>{
     hits.push(req.url);
+    if(req.url==='/chrome' && req.headers.host!=='localhost'){res.writeHead(500);res.end('Host header is specified and is not an IP address or localhost.');return;}
     if(req.url==='/hang'){res.writeHead(200);res.write('{');return;}
     if(req.url==='/redirect'){res.writeHead(302,{Location:'/ready'});res.end();return;}
     res.writeHead(200,{'Content-Type':'application/json'});
@@ -190,9 +191,10 @@ const {probe, wait} = require(process.argv[1]);
     const base='http://127.0.0.1:'+server.address().port;
     assert.equal(await probe(base+'/ready','status','available',1000),true);
     assert.equal(await probe(base+'/wrong','status','available',1000),false);
-    assert.equal(await probe(base+'/chrome','webSocketDebuggerUrl',null,1000),true);
+    assert.equal(await probe(base+'/chrome','webSocketDebuggerUrl',null,1000),false);
+    assert.equal(await probe(base+'/chrome','webSocketDebuggerUrl',null,1000,{Host:'localhost'}),true);
     assert.equal(await probe(base+'/redirect','status','available',1000),false);
-    assert.deepEqual(hits,['/ready','/wrong','/chrome','/redirect']);
+    assert.deepEqual(hits,['/ready','/wrong','/chrome','/chrome','/redirect']);
     const start=Date.now();
     assert.equal(await probe(base+'/hang','status','available',50),false);
     assert(Date.now()-start<1000);

@@ -3,7 +3,7 @@
 const http = require("node:http");
 const { performance } = require("node:perf_hooks");
 
-function probe(url, field, expected, timeoutMs = 5000) {
+function probe(url, field, expected, timeoutMs = 5000, headers = {}) {
   return new Promise((resolve) => {
     let finished = false;
     let request;
@@ -19,7 +19,7 @@ function probe(url, field, expected, timeoutMs = 5000) {
     // Covers DNS, connect, headers and body, not merely idle socket time.
     const timer = setTimeout(() => finish(false), timeoutMs);
     try {
-      request = http.get(url, (incoming) => {
+      request = http.get(url, {headers}, (incoming) => {
         response = incoming;
         if (response.statusCode !== 200) return finish(false);
         let body = "";
@@ -61,7 +61,8 @@ async function main() {
   }
   const ready = await wait({ check: async (timeout) => {
     const results = await Promise.all([
-      probe(`${process.env.BROWSER_WEB_URL}/json/version`, "webSocketDebuggerUrl", null, timeout),
+      // Chrome rejects DNS names in Host; this discovery probe does not use its WS address.
+      probe(`${process.env.BROWSER_WEB_URL}/json/version`, "webSocketDebuggerUrl", null, timeout, {Host: "localhost"}),
       probe("http://meilisearch.karakeep.svc.cluster.local:7700/health", "status", "available", timeout),
     ]);
     return results.every(Boolean);

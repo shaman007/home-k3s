@@ -22,7 +22,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/karakeep-worker-startup: 7c7e2cfefb0d2d0091f581d05968f0d721060ced8dd2cc6bf06e439c6c467c26
+        checksum/karakeep-worker-startup: da912ba1d437c66329a1a41e1bc8cc6fc9b9263809d240fb7c5433570d82679c
       labels:
         app: karakeep
     spec:
@@ -128,5 +128,5 @@ spec:
           emptyDir: {}
         - name: worker-startup
           configMap:
-            name: karakeep-worker-startup-7c7e2cfefb0d
+            name: karakeep-worker-startup-da912ba1d437
             defaultMode: 0555
