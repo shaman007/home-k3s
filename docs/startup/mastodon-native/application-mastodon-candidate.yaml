@@ -1,0 +1,19 @@
+# Inactive proposal. Not in argocd/; activation requires the reviewed maintenance plan.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mastodon
+  namespace: argocd
+spec:
+  project: applications
+  source:
+    repoURL: https://github.com/shaman007/home-k3s.git
+    targetRevision: main
+    path: mastodon/native
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mastodon
+  syncPolicy:
+    # Deliberately manual during ownership/source transition; no Replace or prune.
+    syncOptions:
+      - CreateNamespace=true

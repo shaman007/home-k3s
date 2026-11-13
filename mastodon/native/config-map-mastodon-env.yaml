@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastodon-env
+  labels:
+    app.kubernetes.io/name: mastodon
+    app.kubernetes.io/instance: mastodon
+    app.kubernetes.io/version: 2026-11-09-022903
+    app.kubernetes.io/managed-by: argocd
+  namespace: mastodon
+data:
+  TZ: UTC
+  LOCAL_DOMAIN: mastodon.andreybondarenko.com
+  WEB_DOMAIN: mastodon.andreybondarenko.com
+  DEFAULT_LOCALE: en
+  RAILS_LOG_LEVEL: info
+  LOG_LEVEL: info
+  MALLOC_ARENA_MAX: '2'
+  NODE_ENV: production
+  RAILS_ENV: production
+  STREAMING_CLUSTER_NUM: '1'
+  DB_HOST: mastodon-postgres.mastodon.svc.cluster.local
+  DB_PORT: '5432'
+  DB_NAME: mastodon_production
+  PREPARED_STATEMENTS: 'true'
+  ES_ENABLED: 'true'
+  ES_HOST: opensearch.opensearch.svc.cluster.local
+  ES_PRESET: single_node_cluster
+  ES_PORT: '9200'
+  REDIS_HOST: valkey.mastodon.svc.cluster.local
+  REDIS_PORT: '6379'
+  S3_ENABLED: 'true'
+  S3_BUCKET: mastodon
+  S3_ENDPOINT: https://s3.andreybondarenko.com
+  S3_HOSTNAME: s3.andreybondarenko.com
+  S3_PROTOCOL: https
+  S3_ALIAS_HOST: s3.andreybondarenko.com/mastodon
+  SMTP_AUTH_METHOD: plain
+  SMTP_CA_FILE: /etc/ssl/certs/ca-certificates.crt
+  SMTP_DELIVERY_METHOD: smtp
+  SMTP_DOMAIN: andreybondarenko.com
+  SMTP_ENABLE_STARTTLS: auto
+  SMTP_FROM_ADDRESS: notifications@andreybondarenko.com
+  SMTP_RETURN_PATH: notifications@andreybondarenko.com
+  SMTP_OPENSSL_VERIFY_MODE: peer
+  SMTP_PORT: '25'
+  SMTP_REPLY_TO: me@andreybondarenko.com
+  SMTP_SERVER: andreybondarenko.com
+  CACHE_BUSTER_ENABLED: 'false'
+  OIDC_ENABLED: 'true'
+  OIDC_DISPLAY_NAME: Login via SSO
+  OIDC_ISSUER: https://sso.andreybondarenko.com/realms/master
+  OIDC_DISCOVERY: 'true'
+  OIDC_SCOPE: openid,email,profile
+  OIDC_UID_FIELD: uid
+  OIDC_REDIRECT_URI: https://mastodon.andreybondarenko.com/auth/auth/openid_connect/callback
+  OIDC_SECURITY_ASSUME_EMAIL_IS_VERIFIED: 'true'
+  SAML_ENABLED: 'false'
+  CAS_ENABLED: 'false'
+  PAM_ENABLED: 'false'
+  LDAP_ENABLED: 'false'
+  OMNIAUTH_ONLY: 'false'
+  MAX_TOOT_CHARS: '5000'

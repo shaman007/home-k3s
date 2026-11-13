@@ -258,3 +258,11 @@ During a rolling update, a Service gate can be satisfied by an older healthy
 replica. This checks dependency availability, not completion of a particular new
 ReplicaSet or cross-Application rollout ordering. A successful warm rollout is
 not evidence of a full cluster cold boot.
+
+## Mastodon native candidate
+
+The separately prepared [native package and transition plan](mastodon-native/README.md)
+replaces the prior chart-extension deferral. It remains inactive: normal publication
+keeps chart1.2.8. Its web init owns full migrations; web/Sidekiq/streaming check both
+ordinary and post-migration IDs under a PostgreSQL advisory-lock barrier. Activation
+and every future version update require the documented maintenance window.

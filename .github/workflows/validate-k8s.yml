@@ -115,6 +115,15 @@ jobs:
         run: |
           python tools/ci/render_applications.py --output "${RUNNER_TEMP}/rendered-applications"
 
+      - name: Validate inactive native Mastodon candidate
+        run: |
+          python tools/bootstrap/prepare_mastodon_native.py --check
+          python tools/bootstrap/prepare_mastodon_native.py --output "${RUNNER_TEMP}/native-mastodon"
+          python tools/ci/check_mastodon_native_contract.py --baseline "${RUNNER_TEMP}/rendered-applications/mastodon.yaml" --candidate "${RUNNER_TEMP}/native-mastodon/mastodon.yaml"
+          python tools/ci/check_container_resources.py --rendered "${RUNNER_TEMP}/native-mastodon"
+          python tools/ci/check_restricted_contexts.py --rendered "${RUNNER_TEMP}/native-mastodon"
+          kubeconform -strict -summary -kubernetes-version 1.37.1 "${RUNNER_TEMP}/native-mastodon/mastodon.yaml"
+
       - name: Prepare generated Kyverno exceptions and real CEL cases
         id: audit-cases
         run: |

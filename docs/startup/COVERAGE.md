@@ -52,7 +52,7 @@ contain only fixed stage/result/duration. Each init name identifies the schema.
 
 | Stack | Source-grounded dependency | Correct next step |
 | --- | --- | --- |
-| Mastodon | PostgreSQL + Valkey, pre/post-upgrade migration hooks; chart1.2.8 has no init/command extension | Separate Helm rendering/migration package, as agreed. Do not attach a gate to a post-sync migration barrier from a pre-sync hook. |
+| Mastodon | PostgreSQL + Valkey, pre/post-upgrade migration hooks; chart1.2.8 has no init/command extension | Native candidate now prepared with a web-init migration owner and schema gates; active chart remains unchanged pending maintenance transition. |
 | Karakeep | Local SQLite (`/data/db.db` present), separate Meilisearch; Chrome in same Pod; Ollama and OIDC integrations | Check search indexing/worker retry semantics separately. An init waiting for same-Pod Chrome deadlocks, because ordinary containers start after all init containers. Gate Chrome-dependent worker entry only if required, not the entire Pod. |
 | Mail | Valkey → Rspamd state/greylisting; Unbound → DNS consumers; Postfix → Rspamd milter and Dovecot LMTP | Separate mail readiness/failure-policy work. `mail/config-map-main-cf.yaml` currently has `milter_default_action=accept`; a startup-only check cannot prevent filtering bypass after a later Rspamd outage. Do not silently change accept/reject or delivery policy. |
 | Matrix/Synapse | SQLite `/data/homeserver.db`; nginx serves well-known discovery | No external SQL gate. Nginx contains stale upstream `matrix:6167`, but Service exposes8448→6167. Live requests from nginx:6167 fails,8448/health=200. Public `/_matrix/client/versions`=200 because ingress routes API directly to Service8448. Fix/remove stale unused proxy separately; no current public API outage inferred. |
@@ -103,7 +103,7 @@ workloads, declared images and object references; it is not proof of independenc
 | loki | 5 / 0 | Infrastructure | Observability; datasource readiness distinct from global app startup. |
 | longhorn-system | 10 / 15 | Infrastructure | Storage/CSI; structural review only. |
 | mail | 5 / 1 | App | Valkey->Rspamd, Unbound, Postfix/Dovecot. Audit failure/retry behavior separately; do not gate whole SMTP on feature dependencies. |
-| mastodon | 5 / 2 | App | Explicitly deferred (Helm chart extension). |
+| mastodon | 5 / 2 | App | Native candidate prepared inactive; see mastodon-native/README.md. |
 | matrix | 2 / 0 | App | SQLite; public API goes directly to Service8448. Nginx unused API proxy uses wrong6167. |
 | mempalace | 1 / 0 | App | Structural review only. |
 | metallb-system | 4 / 0 | Infrastructure | Load balancing; structural review only. |
