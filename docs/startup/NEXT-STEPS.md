@@ -52,6 +52,10 @@ on `kubectl apply` still applies.
 
 ## Observability details
 
+Current runtime graph, optional-feature boundaries and staged plan:
+[Observability recovery audit](observability/README.md). Monitoring is not an
+application startup prerequisite; do not add reciprocal Loki/Thanos/Grafana gates.
+
 Loki currently uses public S3 through Traefik. The candidate changes exactly
 `loki.storage.s3.endpoint` and `insecure`, retaining all other values and the
 existing Secret references. New egress and SeaweedFS ingress rules permit only

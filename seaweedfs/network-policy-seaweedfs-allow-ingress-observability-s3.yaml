@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: seaweedfs-allow-ingress-observability-s3
+  namespace: seaweedfs
+spec:
+  podSelector:
+    matchLabels:
+      app: seaweedfs-s3
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - prometheus-server
+          - thanos-store-gateway
+          - thanos-compactor
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: loki
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: single-binary
+          app.kubernetes.io/name: loki
+          app.kubernetes.io/instance: loki
+    ports:
+    - protocol: TCP
+      port: 8333

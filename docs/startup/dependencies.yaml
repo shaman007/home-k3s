@@ -21,7 +21,7 @@ prepared_packages:
     provider: independent Chrome Service and Meilisearch
     consumer: s6 workers only; never Pod init
   observability:
-    status: inactive; internal HTTP and staged client reloads need acceptance
+    status: stage-one network policies and Argo allowlist prepared locally; client endpoints unchanged; no global waits
     provider: direct SeaweedFS Service
     consumer: Loki and Thanos S3 clients; not a Prometheus startup gate
 recovery_scenarios:

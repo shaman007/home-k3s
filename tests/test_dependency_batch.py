@@ -243,6 +243,25 @@ class DependencyBatchTests(unittest.TestCase):
             self.assertEqual(pod["containers"][0][key], old["containers"][0][key])
         self.assertEqual(candidate["spec"]["schedule"], original["spec"]["schedule"])
 
+    def test_observability_stage_one_cannot_switch_storage_or_restart_workloads(self):
+        """Only permissions/adoption may be published before connectivity acceptance."""
+        proposal = BATCH.observability_network()
+        self.assertEqual(len(proposal), 4)
+        self.assertEqual(
+            sorted(doc["kind"] for doc in proposal.values()),
+            ["Application", "NetworkPolicy", "NetworkPolicy", "NetworkPolicy"],
+        )
+        self.assertNotIn("argocd/application-loki.yaml", proposal)
+        self.assertNotIn("thanos/external-secret-thanos-objstore-secret.yaml", proposal)
+        self.assertEqual(proposal, {p: BATCH.observability()[p] for p in proposal})
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "network"
+            inventory = BATCH.prepare(output, ["observability"], network_only=True)
+            self.assertEqual({row["path"] for row in inventory["observability"]}, set(proposal))
+            with self.assertRaises(ValueError):
+                BATCH.prepare(Path(directory) / "invalid", ["karakeep"], network_only=True)
+            self.assertFalse((Path(directory) / "invalid").exists())
+
     def test_loki_only_changes_storage_transport(self):
         """Keep bucket names, schema, retention, env references and every other value."""
         original = document("argocd/application-loki.yaml")
@@ -258,6 +277,23 @@ class DependencyBatchTests(unittest.TestCase):
         self.assertEqual(before, after)
         new_source["helm"]["values"] = old_source["helm"]["values"]
         self.assertEqual(changed, original)
+
+    def test_monitoring_s3_policy_is_selected_by_its_argo_application(self):
+        """A policy file alone cannot take effect behind an explicit include list."""
+        proposal = BATCH.observability()
+        app = proposal["argocd/application-monitoring-network-policy.yaml"]
+        original = document("argocd/application-monitoring-network-policy.yaml")
+        before = original["spec"]["source"]["directory"]["include"][1:-1].split(",")
+        after = app["spec"]["source"]["directory"]["include"][1:-1].split(",")
+        self.assertEqual(
+            set(after),
+            set(before) | {"network-policy-monitoring-allow-egress-thanos-s3-internal.yaml"},
+        )
+        self.assertTrue(set(before).issubset(after))
+        app["spec"]["source"]["directory"]["include"] = (
+            original["spec"]["source"]["directory"]["include"]
+        )
+        self.assertEqual(app, original)
 
     def test_thanos_preserves_vault_reference_and_no_raw_provider_data_is_merged(self):
         """ESO produces exactly objstore.yml; the intermediate source key is private."""
@@ -283,6 +319,12 @@ class DependencyBatchTests(unittest.TestCase):
             if doc["kind"] == "NetworkPolicy"
         ]
         self.assertEqual(len(policies), 3)
+        loki_policy = next(p for p in policies if p["metadata"]["namespace"] == "loki")
+        self.assertEqual(loki_policy["spec"]["podSelector"]["matchLabels"], {
+            "app.kubernetes.io/component": "single-binary",
+            "app.kubernetes.io/name": "loki",
+            "app.kubernetes.io/instance": "loki",
+        })
         for policy in policies:
             spec = policy["spec"]
             self.assertTrue(spec["podSelector"])

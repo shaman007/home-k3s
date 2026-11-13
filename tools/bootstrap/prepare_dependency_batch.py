@@ -143,7 +143,10 @@ def karakeep():
     deployment = read("karakeep/deployment-karakeep.yaml")
     env = read("karakeep/config-map-karakeep-env.yaml")["data"]
     if (
-        env.get("BROWSER_WEB_URL") not in ("http://127.0.0.1:9222", "http://chrome.karakeep.svc.cluster.local:9222")
+        env.get("BROWSER_WEB_URL") not in (
+            "http://127.0.0.1:9222",
+            "http://chrome.karakeep.svc.cluster.local:9222",
+        )
         or env.get("MEILI_ADDR") != "http://meilisearch.karakeep.svc.cluster.local:7700"
     ):
         raise ValueError("Review changed Karakeep worker-provider addresses")
@@ -247,6 +250,16 @@ def observability():
         "mergePolicy": "Replace",
         "data": {"objstore.yml": THANOS_TEMPLATE},
     }
+    # Monitoring policies use an explicit Argo include list, unlike Loki/SeaweedFS.
+    policy_app = read("argocd/application-monitoring-network-policy.yaml")
+    include = policy_app["spec"]["source"]["directory"]["include"]
+    policy_file = "network-policy-monitoring-allow-egress-thanos-s3-internal.yaml"
+    if not (include.startswith("{") and include.endswith("}")):
+        raise ValueError("Review monitoring policy source include format")
+    entries = include[1:-1].split(",")
+    if policy_file not in entries:
+        entries.append(policy_file)
+    policy_app["spec"]["source"]["directory"]["include"] = "{" + ",".join(entries) + "}"
     selector = {
         "matchExpressions": [
             {
@@ -259,6 +272,13 @@ def observability():
                 ],
             }
         ]
+    }
+    loki_selector = {
+        "matchLabels": {
+            "app.kubernetes.io/component": "single-binary",
+            "app.kubernetes.io/name": "loki",
+            "app.kubernetes.io/instance": "loki",
+        }
     }
     ingress = {
         "apiVersion": "networking.k8s.io/v1",
@@ -285,11 +305,7 @@ def observability():
                             "namespaceSelector": {
                                 "matchLabels": {"kubernetes.io/metadata.name": "loki"}
                             },
-                            "podSelector": {
-                                "matchLabels": {
-                                    "app.kubernetes.io/component": "single-binary"
-                                }
-                            },
+                            "podSelector": loki_selector,
                         },
                     ],
                     "ports": [{"protocol": "TCP", "port": 8333}],
@@ -299,6 +315,7 @@ def observability():
     }
     return {
         "argocd/application-loki.yaml": loki,
+        "argocd/application-monitoring-network-policy.yaml": policy_app,
         "thanos/external-secret-thanos-objstore-secret.yaml": thanos,
         "metrics/network-policy-monitoring-allow-egress-thanos-s3-internal.yaml": egress_policy(
             "monitoring-allow-egress-thanos-s3-internal", "monitoring", selector
@@ -306,7 +323,7 @@ def observability():
         "loki/network-policy-loki-allow-egress-s3-internal.yaml": egress_policy(
             "loki-allow-egress-s3-internal",
             "loki",
-            {"matchLabels": {"app.kubernetes.io/component": "single-binary"}},
+            loki_selector,
         ),
         "seaweedfs/network-policy-seaweedfs-allow-ingress-observability-s3.yaml": ingress,
     }
@@ -321,12 +338,29 @@ PACKAGES = {
 }
 
 
-def prepare(output, packages):
+def observability_network():
+    """Stage one contains only scoped permissions and their Argo source adoption."""
+    proposal = observability()
+    paths = (
+        "argocd/application-monitoring-network-policy.yaml",
+        "metrics/network-policy-monitoring-allow-egress-thanos-s3-internal.yaml",
+        "loki/network-policy-loki-allow-egress-s3-internal.yaml",
+        "seaweedfs/network-policy-seaweedfs-allow-ingress-observability-s3.yaml",
+    )
+    return {path: proposal[path] for path in paths}
+
+
+def prepare(output, packages, *, network_only=False):
     """Write a new review directory outside the repository, never overwrite one."""
     output = output.resolve()
     if output.is_relative_to(ROOT):
         raise ValueError("Candidates must remain outside active repository sources")
-    proposals = {name: PACKAGES[name]() for name in packages}
+    if network_only and packages != ["observability"]:
+        raise ValueError("Network-only stage is specific to observability")
+    proposals = {
+        name: observability_network() if network_only else PACKAGES[name]()
+        for name in packages
+    }
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     inventory = {}
     for name, documents in proposals.items():
@@ -355,9 +389,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--package", choices=[*PACKAGES, "all"], default="all")
+    parser.add_argument("--network-only", action="store_true",
+                        help="Render only observability stage-one policies and Argo adoption")
     args = parser.parse_args()
+    if args.network_only and args.package != "observability":
+        parser.error("--network-only requires --package observability")
     packages = list(PACKAGES) if args.package == "all" else [args.package]
-    inventory = prepare(args.output, packages)
+    inventory = prepare(args.output, packages, network_only=args.network_only)
     print(
         json.dumps(
             {"output": str(args.output), "packages": list(inventory), "inactive": True}
