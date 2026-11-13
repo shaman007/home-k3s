@@ -22,7 +22,7 @@ script; selected source configurations were reviewed separately. CronJobs are
 included as scheduled consumers, not Service backends or reboot startup phases.
 Completed one-off Jobs are excluded to avoid confusing historical work with boot.
 
-## Clear omissions prepared now
+## SQL gates deployed after the original census
 
 * **Bitwarden:** dedicated PostgreSQL `bw` → Bitwarden Lite. Existing permissions
   init stays first, followed by authenticated read-only `SELECT 1`; original Lite
@@ -78,7 +78,7 @@ workloads, declared images and object references; it is not proof of independenc
 | argocd | 8 / 0 | Infrastructure | GitOps control plane; structural review only. |
 | backup-rsync | 1 / 0 | Persistent backup service | Deployment, not a CronJob; backup target access is task-specific. |
 | bastioncam | 1 / 0 | App | Structural review only. |
-| bitwarden | 2 / 0 | App | Prepared PostgreSQL gate; no Valkey configured. |
+| bitwarden | 2 / 0 | App | Active PostgreSQL gate; no Valkey configured. |
 | ca-scanner | 1 / 0 | App | Structural review only. |
 | cert-manager | 4 / 0 | Infrastructure | Certificate management; structural review only. |
 | clamav | 1 / 0 | Infrastructure | Antivirus; structural review only. |
@@ -88,7 +88,7 @@ workloads, declared images and object references; it is not proof of independenc
 | crowdsec | 2 / 0 | Infrastructure | Security; structural review only. |
 | dawarich | 4 / 0 | App | Active gate. |
 | external-secrets | 3 / 0 | Infrastructure | Secrets management; structural review only. |
-| firefox-sync | 2 / 0 | App | Preparing MariaDB read-only gate. |
+| firefox-sync | 2 / 0 | App | Active read-only gates for both MariaDB schemas. |
 | gpu-operator | 10 / 0 | Infrastructure | Hardware/Node management; structural review only. |
 | harbor | 9 / 0 | Infrastructure | Container registry; structural review only. |
 | headlamp | 1 / 0 | Infrastructure | K8s UI; structural review only. |
@@ -131,6 +131,11 @@ workloads, declared images and object references; it is not proof of independenc
 | year | 1 / 0 | App | Structural review only. |
 
 ## Staged rollout and rollback
+
+The Bitwarden/Firefox package described below has completed its gate rollout.
+New inactive packages and remaining functional/deployment acceptance are indexed
+in [NEXT-STEPS.md](NEXT-STEPS.md); the five new CronJob candidates are proposals,
+not already-running gates.
 
 Publish only after local review and green CI. Roll out Bitwarden first; observe
 permissions init → SQL gate → Lite migration/startup, then authorized login/vault

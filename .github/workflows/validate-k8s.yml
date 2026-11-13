@@ -59,9 +59,14 @@ jobs:
           /usr/bin/php --version
           /usr/bin/node --version
           /usr/bin/php -l tools/bootstrap/probe_data.php
+          /usr/bin/php -l tools/bootstrap/nextcloud_job_ready.php
           /usr/bin/node --check tools/bootstrap/probe_http.cjs
+          /usr/bin/node --check tools/bootstrap/karakeep_worker_gate.cjs
           /bin/sh -n tools/bootstrap/wait_service.sh
           /bin/sh -n tools/bootstrap/wait_mysql.sh
+          /bin/sh -n tools/bootstrap/mail_valkey_gate.sh
+          /bin/sh -n tools/bootstrap/mail_training_gate.sh
+          /bin/sh -n tools/bootstrap/nextcloud_job_gate.sh
 
       - name: Validate Ruby syntax
         shell: bash
@@ -113,8 +118,12 @@ jobs:
 
       - name: Validate inactive CronJob dependency candidate
         run: |
-          python tools/bootstrap/prepare_cron_gate.py > "${RUNNER_TEMP}/logs-check-dependency-candidate.yaml"
+          python tools/bootstrap/prepare_cron_gate.py --job all > "${RUNNER_TEMP}/logs-check-dependency-candidate.yaml"
           kubeconform -strict -summary -kubernetes-version 1.37.1 "${RUNNER_TEMP}/logs-check-dependency-candidate.yaml"
+          python tools/bootstrap/prepare_dependency_batch.py --output "${RUNNER_TEMP}/dependency-candidates"
+          # CRD proposals retain source schemas; their semantic contracts have unit tests.
+          # Exact ESO reconciliation remains a separately authorized runtime acceptance gate.
+          kubeconform -strict -summary -kubernetes-version 1.37.1 -skip Application,ExternalSecret -ignore-filename-pattern 'index[.]json$' "${RUNNER_TEMP}/dependency-candidates"
 
       - name: Render Argo CD applications
         run: |

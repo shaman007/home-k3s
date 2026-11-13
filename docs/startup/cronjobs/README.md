@@ -2,14 +2,20 @@
 
 Preparation only. No live CronJob, schedule, active Job or alert is changed.
 
+Candidates cover five independently reviewed CronJobs. The Python main wrapper
+covers `monitoring/logs-check`, `monitoring/external-access-daily-report` and
+`wordpress/wordpress-daily-report`. The separate native batch covers
+`nextcloud/nextcloud` and `mail/rspamd-spam-trainer`; see
+[package acceptance and rollback](../NEXT-STEPS.md).
+
 The first candidate is `monitoring/logs-check`, an expensive daily report. It
 checks Loki's labels API through the same gateway/network-policy path used by the
 report, and Ollama's tags API. These are read-only API availability checks, not
 proof that the selected model can finish inference or that log history is intact.
 They do not call model generation, load models, send mail or execute the report.
 
-The wrapper waits at most300 seconds per invocation, with individual HTTP/DNS
-probe subprocesses killed after at most5 seconds. All checks must pass in one
+The wrapper waits at most 300 seconds per invocation, with individual HTTP/DNS
+probe subprocesses killed after at most 5 seconds. All checks must pass in one
 iteration. A missing provider emits one fixed JSON `cron_dependencies/skipped`
 event and exits0 without executing the original report. Configuration errors
 exit2; `mode: fail` exits75 on dependency timeout. When ready, `exec` preserves
@@ -24,12 +30,15 @@ service account, environment, mounts and `concurrencyPolicy: Forbid` remain.
 The candidate adds a four-hour Job deadline covering waiting and work; review
 that ceiling against observed report duration before rollout. The next scheduled
 Job runs the checks afresh, so recovery needs no resume controller or Argo override.
-An old already-running Job does not adopt a changed CronJob template.
+An old already-running Job does not adopt a changed CronJob template. Immutable,
+content-addressed script ConfigMaps also prevent its probe code changing through
+an in-place projected ConfigMap update. Retain old ConfigMaps while referenced.
 
 Generate the complete candidate ConfigMap and CronJob outside active sources:
 
 ```sh
 python3 tools/bootstrap/prepare_cron_gate.py > /tmp/logs-check-gated-candidate.yaml
+python3 tools/bootstrap/prepare_cron_gate.py --job all > /tmp/report-gate-candidates.yaml
 ```
 
 The generator never writes the active `metrics/` tree or calls Kubernetes. Its
@@ -55,11 +64,13 @@ ongoing dependency watchdog and cannot prevent an outage after the checks pass.
 
 ## Extending to other jobs
 
-Do not wrap all31 CronJobs indiscriminately. Catalogue each mandatory dependency
+The [31-schedule catalogue](catalog.yaml) records the policy for every observed
+CronJob, including controller-owned Longhorn tasks. Do not wrap all 31 CronJobs
+indiscriminately. Catalogue each mandatory dependency
 and use its real readiness contract: authenticated SQL/Valkey for Nextcloud,
 Mastodon API and Immich readiness for bookmarked media, and task-specific SMTP,
 S3 or database checks for the remaining jobs. Preserve existing authentication
-without printing it. This initial wrapper supports only credential-free HTTP
+without printing it. The Python wrapper supports only credential-free HTTP
 checks; SQL, Valkey, authenticated endpoints and multi-container early init work
 need their own reviewed native adapters. Never use an unauthenticated health page
 as proof that protected data access works.

@@ -54,7 +54,7 @@ class LonghornInternalS3Tests(unittest.TestCase):
                     self.plan["old_endpoint"].encode()
                 ).decode(),
                 "AWS_ACCESS_KEY_ID": "c3ludGhldGlj",
-                "AWS_SECRET_ACCESS_KEY": "Zml4dHVyZQ==",
+                "AWS_SECRET_ACCESS_KEY": base64.b64encode(b"fixture").decode(),
                 "AWS_CERT": "dGVzdC1jYQ==",
                 "AWS_VIRTUAL_HOSTED_STYLE": "ZmFsc2U=",
             },

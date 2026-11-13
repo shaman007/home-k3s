@@ -261,6 +261,26 @@ class CronDependencyTests(unittest.TestCase):
         )
         self.assertEqual(original_path.read_bytes(), before)
 
+    def test_only_reviewed_reports_get_versioned_immutable_configs(self):
+        """No health reporter, backup or token renewal is silently skipped."""
+        self.assertEqual(
+            set(GENERATOR.REPORTS),
+            {
+                "logs-check",
+                "external-access-daily-report",
+                "wordpress-daily-report",
+            },
+        )
+        for name in GENERATOR.REPORTS:
+            cm, job = GENERATOR.candidate(name)
+            self.assertIs(cm["immutable"], True)
+            self.assertEqual(cm["metadata"]["namespace"], job["metadata"]["namespace"])
+            pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+            self.assertEqual(
+                pod["volumes"][-1]["configMap"]["name"], cm["metadata"]["name"]
+            )
+            self.assertEqual(GENERATOR.candidate(name), [cm, job])
+
 
 if __name__ == "__main__":
     unittest.main()

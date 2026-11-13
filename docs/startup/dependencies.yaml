@@ -1,8 +1,29 @@
 format_version: 1
 observed_date: '2026-11-13'
 scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud, Keycloak, WordPress and YourSpotify,
-  Bitwarden and Firefox Sync (local gates prepared)
+  Bitwarden and Firefox Sync (deployed gates); additional inactive packages listed separately
 direction: provider -> consumer; phase is descriptive, not installed orchestration
+prepared_packages:
+  mail:
+    status: inactive
+    provider: mail Valkey
+    consumer: Rspamd init
+  mail-training:
+    status: inactive
+    provider: Rspamd ping
+    consumer: spam trainer main command
+  nextcloud-cron:
+    status: inactive
+    provider: SQL and ACL Valkey plus web maintenance/schema status
+    consumer: Nextcloud cron main command
+  karakeep:
+    status: inactive; entire worker pool tradeoff needs acceptance
+    provider: same-Pod Chrome and Meilisearch
+    consumer: s6 workers only; never Pod init
+  observability:
+    status: inactive; internal HTTP and staged client reloads need acceptance
+    provider: direct SeaweedFS Service
+    consumer: Loki and Thanos S3 clients; not a Prometheus startup gate
 recovery_scenarios:
   current_public_s3_geoip_loss:
     status: observed configuration; conditional on restoring the public Traefik GeoIP PVC

@@ -6,6 +6,9 @@ Bitwarden, Firefox Sync and native Mastodon, plus core bootstrap dependencies.
 The [coverage audit](COVERAGE.md) distinguishes detailed stack checks from the
 broader structural census. The [native Mastodon plan](mastodon-native/README.md)
 records its offline backup/restore validation and controlled source transition.
+The [next-steps package index](NEXT-STEPS.md) contains inactive mail, Karakeep
+worker, observability S3 and per-Job proposals, their acceptance gates and rollback
+boundaries. Nothing in that package is deployed by this preparation.
 The machine-readable [graph](dependencies.yaml) records provider → consumer
 edges, readiness criteria and source evidence. Phases describe a partial order;
 there is no global startup controller or cluster-wide sync barrier.

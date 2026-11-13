@@ -1,0 +1,300 @@
+format_version: 1
+observed_date: '2026-11-13'
+scope: 31 observed schedules; policies describe preparation intent, not deployed behavior
+jobs:
+- namespace: image-builder
+  name: podman-builder
+  schedule_observed: 29 2 * * 1
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Git source, build resources and Harbor authenticated push; no silent missed publication
+  preparation: reviewed-no-wrapper
+  source: image-builder/cron-job-podman-builder.yaml
+- namespace: keycloak
+  name: oidc-token-renewer
+  schedule_observed: '*/30 * * * *'
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Keycloak token endpoint and required target access; renewal freshness retained
+  preparation: reviewed-no-wrapper
+  source: keycloak/cron-job-oidc-token-renewer.yaml
+- namespace: longhorn-system
+  name: backup-daily-retain1
+  schedule_observed: 35 1 * * *
+  owner:
+    kind: RecurringJob
+    name: backup-daily-retain1
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-daily-retain11
+  schedule_observed: 20 1 * * *
+  owner:
+    kind: RecurringJob
+    name: backup-daily-retain11
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-daily-retain30
+  schedule_observed: 35 2 * * *
+  owner:
+    kind: RecurringJob
+    name: backup-daily-retain30
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-daily-retain31-a
+  schedule_observed: 5 1 * * *
+  owner:
+    kind: RecurringJob
+    name: backup-daily-retain31-a
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-daily-retain31-b
+  schedule_observed: 5 2 * * *
+  owner:
+    kind: RecurringJob
+    name: backup-daily-retain31-b
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-daily-retain31-c
+  schedule_observed: 5 3 * * *
+  owner:
+    kind: RecurringJob
+    name: backup-daily-retain31-c
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-monthly-retain60-hister
+  schedule_observed: 45 4 1 * *
+  owner:
+    kind: RecurringJob
+    name: backup-monthly-retain60-hister
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: backup-monthly-retain60-mempalace
+  schedule_observed: 15 4 1 * *
+  owner:
+    kind: RecurringJob
+    name: backup-monthly-retain60-mempalace
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume state; signed S3 operations also required for backup tasks
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: snapshot-daily-retain1
+  schedule_observed: 20 4 * * *
+  owner:
+    kind: RecurringJob
+    name: snapshot-daily-retain1
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume maintenance state
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: trim-15min
+  schedule_observed: '*/15 * * * *'
+  owner:
+    kind: RecurringJob
+    name: trim-15min
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume maintenance state
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: trim-coverage-guard
+  schedule_observed: '*/15 * * * *'
+  owner:
+    kind: GitOps source
+  unavailable_policy: report
+  criterion: Kubernetes and Longhorn API; retain safety findings instead of suppressing them
+  preparation: reviewed-no-wrapper
+  source: longhorn/trim-coverage-guard.yaml
+- namespace: longhorn-system
+  name: trim-daily-a
+  schedule_observed: 5 0 * * *
+  owner:
+    kind: RecurringJob
+    name: trim-daily-a
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume maintenance state
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: trim-daily-b
+  schedule_observed: 25 0 * * *
+  owner:
+    kind: RecurringJob
+    name: trim-daily-b
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume maintenance state
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: trim-daily-c
+  schedule_observed: 45 0 * * *
+  owner:
+    kind: RecurringJob
+    name: trim-daily-c
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume maintenance state
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: longhorn-system
+  name: trim-hourly
+  schedule_observed: 17 * * * *
+  owner:
+    kind: RecurringJob
+    name: trim-hourly
+  unavailable_policy: fail
+  criterion: Longhorn manager/engine and volume maintenance state
+  preparation: controller-owned-no-wrapper
+  source: longhorn/recurring-jobs-export.yaml
+- namespace: mail
+  name: rspamd-spam-trainer
+  schedule_observed: 7 * * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: skip
+  criterion: Rspamd HTTP200 before starting private Dovecot; original learning/delete checks retained
+  preparation: candidate
+  source: mail/cron-job-rspamd-spam-trainer.yaml
+- namespace: mastodon
+  name: bookmarked-media-sync
+  schedule_observed: 0 * * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Authenticated Mastodon/Immich operations, media source and package registries; multi-container
+    skip design pending
+  preparation: reviewed-no-wrapper
+  source: mastodon/cron-job-bookmarked-media-sync.yaml
+- namespace: mastodon
+  name: mastodon-spam-list-sync
+  schedule_observed: 23 4 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Mastodon database/app access plus external block-list source; preserve original transaction/error
+    behavior
+  preparation: reviewed-no-wrapper
+  source: mastodon/cron-job-spam-list-sync.yaml
+- namespace: monitoring
+  name: external-access-daily-report
+  schedule_observed: 20 6 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: skip
+  criterion: Loki labels API; original Kubernetes/Prometheus/SMTP preflight remains
+  preparation: candidate
+  source: metrics/cron-job-external-access-daily-report.yaml
+- namespace: monitoring
+  name: finance-ticker-collector
+  schedule_observed: '*/15 * * * *'
+  owner:
+    kind: GitOps source
+  unavailable_policy: report
+  criterion: Public financial providers and Kubernetes API; retain partial-source/error visibility
+  preparation: reviewed-no-wrapper
+  source: metrics/cron-job-finance-ticker-collector.yaml
+- namespace: monitoring
+  name: logs-check
+  schedule_observed: 0 5 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: skip
+  criterion: Loki labels and Ollama tags APIs; selected model and inference success still checked by work
+  preparation: candidate
+  source: metrics/cron-job-logs-check.yaml
+- namespace: monitoring
+  name: platform-health-report
+  schedule_observed: 10 6 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: report
+  criterion: Kubernetes/API access; observed provider failures must be reported, not used to skip the
+    health report
+  preparation: reviewed-no-wrapper
+  source: metrics/cron-job-platform-health-report.yaml
+- namespace: nextcloud
+  name: nextcloud
+  schedule_observed: 15 * * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: skip
+  criterion: Authenticated read-only SQL, configured ACL Valkey PING and web status installed/not-maintenance/no-schema-upgrade
+  preparation: candidate
+  source: nextcloud/cron-job-nextcloud.yaml
+- namespace: ooni
+  name: ooniprobe
+  schedule_observed: 17 3 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: measure
+  criterion: External connectivity is the measurement, not a mandatory healthy prerequisite; preserve
+    failed measurements
+  preparation: reviewed-no-wrapper
+  source: ooni/cron-job-ooniprobe.yaml
+- namespace: ooni
+  name: ooniprobe-trim-window
+  schedule_observed: 0 0 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Kubernetes/Longhorn maintenance path; never mask unsafe storage state
+  preparation: reviewed-no-wrapper
+  source: ooni/cron-job-ooniprobe-trim-window.yaml
+- namespace: openbao
+  name: vault-pki-renewer
+  schedule_observed: 27 4 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: retire
+  criterion: Retired source awaiting separately authorized removal of live legacy resources
+  preparation: retired-source
+- namespace: talos-backup
+  name: talos-backup
+  schedule_observed: 17 * * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Talos snapshot API and authenticated S3 write; keep backup-freshness failure visible
+  preparation: reviewed-no-wrapper
+  source: talos-backup/cron-job-talos-backup.yaml
+- namespace: traefik
+  name: geoip-db-refresh
+  schedule_observed: 17 4 2 * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: fail
+  criterion: Mounted GeoIP PVC and public download; retain last valid database on failure
+  preparation: reviewed-no-wrapper
+  source: argocd/application-traefik.yaml
+- namespace: wordpress
+  name: wordpress-daily-report
+  schedule_observed: 15 6 * * *
+  owner:
+    kind: GitOps source
+  unavailable_policy: skip
+  criterion: Loki labels API; original pod/API/SMTP work retains its checks
+  preparation: candidate
+  source: wordpress/cron-job-wordpress-daily-report.yaml
