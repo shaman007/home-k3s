@@ -214,6 +214,9 @@ not pretend to install it.
 `tools/bootstrap/prepare_application_gates.py --check` checks committed-source
 consistency. `--write-source` regenerates only local gate ConfigMaps, init
 containers, script checksum and FerretDB readiness; it makes no Kubernetes calls.
+Nextcloud gates request 64Mi to satisfy its namespace LimitRange; the other four
+stacks require at least 32Mi. A regression test checks gate requests against the
+tracked namespace minima before rollout.
 Native clients use already pinned images from each stack; no package installation
 at startup. ConfigMaps contain scripts only. PostgreSQL passwords stay Secret
 refs. PHP gates read the existing PVC read-only and parse literal config with
@@ -246,3 +249,8 @@ Rollback: revert this package's workload changes (retain any later image/securit
 updates), sync the previous workloads through Argo, then remove unused script
 ConfigMaps. No database/PVC/Secret changes need reverting; no data is deleted.
 Do not force restarts or failure injection on live databases for verification.
+
+During a rolling update, a Service gate can be satisfied by an older healthy
+replica. This checks dependency availability, not completion of a particular new
+ReplicaSet or cross-Application rollout ordering. A successful warm rollout is
+not evidence of a full cluster cold boot.

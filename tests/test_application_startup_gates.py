@@ -243,6 +243,29 @@ class ApplicationSourceTests(unittest.TestCase):
                 for mount in gate["volumeMounts"]:
                     self.assertTrue(mount["readOnly"])
 
+    def test_gate_memory_requests_respect_real_namespace_minimums(self):
+        """Catch Pod admission failures before Argo replaces a working replica."""
+        ranges = {}
+        for document in yaml.safe_load_all(
+            (ROOT / "namespaces/limit-ranges.yaml").read_text()
+        ):
+            for limit in document["spec"]["limits"]:
+                if limit["type"] == "Container":
+                    minimum = limit.get("min", {}).get("memory")
+                    if minimum is not None:
+                        self.assertTrue(minimum.endswith("Mi"))
+                        ranges[document["metadata"]["namespace"]] = int(minimum[:-2])
+        for relative, document in GATES.candidates().items():
+            if document["kind"] == "ConfigMap":
+                continue
+            namespace = document["metadata"]["namespace"]
+            for gate in document["spec"]["template"]["spec"]["initContainers"]:
+                if not gate["name"].startswith("wait-for-"):
+                    continue
+                request = gate["resources"]["requests"]["memory"]
+                self.assertTrue(request.endswith("Mi"))
+                self.assertGreaterEqual(int(request[:-2]), ranges[namespace], relative)
+
     def test_mastodon_stays_out_of_package(self):
         """Mastodon stays out of package."""
         self.assertFalse(any(p.startswith("mastodon/") for p in GATES.candidates()))

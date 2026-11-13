@@ -14,17 +14,19 @@ class SourceDumper(yaml.SafeDumper):
     """Use readable script blocks and the repository's indented sequence style."""
 
     def increase_indent(self, flow=False, indentless=False):
-        return super().increase_indent(flow, False)
+        """Normalize PyYAML sequence indentation to the repository style."""
+        if indentless:
+            indentless = False
+        return super().increase_indent(flow, indentless)
+
+    def represent_string(self, value):
+        """Keep generated multiline script copies reviewable."""
+        return self.represent_scalar(
+            "tag:yaml.org,2002:str", value, style="|" if "\n" in value else None
+        )
 
 
-def represent_string(dumper, value):
-    """Keep generated script copies reviewable."""
-    return dumper.represent_scalar(
-        "tag:yaml.org,2002:str", value, style="|" if "\n" in value else None
-    )
-
-
-SourceDumper.add_representer(str, represent_string)
+SourceDumper.add_representer(str, SourceDumper.represent_string)
 SCRIPTS = ("wait_service.sh", "probe_data.php", "probe_http.cjs")
 MOUNT = {"name": "startup-gate", "mountPath": "/startup-gate", "readOnly": True}
 SECURITY = {
@@ -79,7 +81,10 @@ def gate(name, image, mode, env=None, mounts=None):
         "command": ["/bin/sh", "/startup-gate/wait_service.sh", mode],
         "securityContext": security,
         "resources": {
-            "requests": {"cpu": "10m", "memory": "32Mi"},
+            "requests": {
+                "cpu": "10m",
+                "memory": "64Mi" if mode.startswith("nextcloud-") else "32Mi",
+            },
             "limits": {"memory": "128Mi"},
         },
         "env": env or [],
