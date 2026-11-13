@@ -19,6 +19,8 @@ spec:
       tier: backend
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: 03554aa36669116e354d55a28174e6103f782628e8b1dfdefb99de5fabd4207d
       labels:
         app: web
         tier: backend
@@ -42,7 +44,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
-              drop: ["ALL"]
+              drop:
+                - ALL
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
@@ -52,6 +55,35 @@ spec:
           volumeMounts:
             - name: runtime-assets
               mountPath: /runtime-assets
+        - name: wait-for-server
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server:1.20.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - spotify
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env: []
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
       containers:
         - env:
             - name: API_ENDPOINT
@@ -114,3 +146,6 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: startup-gate
+          configMap:
+            name: spotify-startup-gate

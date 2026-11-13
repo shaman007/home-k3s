@@ -1,6 +1,6 @@
 format_version: 1
 observed_date: '2026-11-13'
-scope: Core bootstrap plus Dawarich, Immich, Mastodon, Nextcloud, Keycloak; not all Applications
+scope: Core bootstrap plus Dawarich, Immich, Mastodon (gates deferred), Nextcloud, Keycloak, WordPress and YourSpotify
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 nodes:
   kubernetes:
@@ -257,6 +257,58 @@ nodes:
     sources:
     - dawarich/deployment-dawarich.yaml
     - tools/bootstrap/prepare_startup_gate.py
+  wordpress-secrets:
+    phase: 3
+    ready: Required MariaDB Secret present; WordPress DB and Valkey credentials remain in existing PVC wp-config.php.
+      Never execute the config to inspect it.
+    sources:
+    - wordpress
+  wordpress-db:
+    phase: 3
+    ready: 'mysql-wordpress:3306: authenticated read-only SELECT 1 using literal app credentials parsed from /code/wp-config.php.'
+    sources:
+    - wordpress/deployment-mysql-wordpress.yaml
+  wordpress-valkey:
+    phase: 3
+    ready: 'valkey:6379: authenticated/configured database PING returns PONG using existing literal wp-config.php
+      data.'
+    sources:
+    - wordpress/stateful-set-valkey.yaml
+  wordpress:
+    phase: 4
+    ready: SQL and Valkey gates pass before PHP/nginx start; gate never loads WordPress bootstrap or runs migrations.
+      HTTP /health is only a cheap process probe; functional login/site check at rollout.
+    sources:
+    - wordpress/deployment-php.yaml
+  spotify-secrets:
+    phase: 3
+    ready: ferretdb-credentials and spotify Secret required keys present; ESO/OpenBao needed if missing.
+    sources:
+    - your-spotify
+  spotify-db:
+    phase: 3
+    ready: 'ferretdb-postgres:5432/postgres: authenticated SELECT 1 with read-only PostgreSQL session using existing
+      ferretdb-credentials Secret refs.'
+    sources:
+    - your-spotify/stateful-set-ferretdb-postgres.yaml
+  spotify-ferretdb:
+    phase: 4
+    ready: Postgres gate passes, then /debug/readyz:8088 returns 200 (deep Mongo protocol ping/backend connection
+      and DocumentDB check). TCP liveness stays cheap.
+    sources:
+    - your-spotify/deployment-ferretdb.yaml
+  spotify-server:
+    phase: 5
+    ready: Deep FerretDB readiness gate before original server entrypoint; internal GET /:8080 returns 200. Pinned
+      server listens only after its own Mongo connect completes; ongoing functionality needs separate validation.
+    sources:
+    - your-spotify/deployment-server.yaml
+  spotify-web:
+    phase: 6
+    ready: Internal server GET / returns 200 before client entrypoint. Public Spotify/OAuth/ingress are functional
+      dependencies, not gates.
+    sources:
+    - your-spotify/deployment-web.yaml
 edges:
 - from: kubernetes
   to: cilium
@@ -401,11 +453,7 @@ edges:
 - from: upstream-images
   to: seaweedfs
   kind: image
-  when: image_cache_miss_after_commit_6f6ac885_rollout
-- from: harbor
-  to: seaweedfs
-  kind: observed-image
-  when: CURRENT_RUNTIME_image_cache_miss_until_6f6ac885_rollout
+  when: image_cache_miss
 - from: cilium
   to: seaweedfs
   kind: startup
@@ -766,3 +814,155 @@ edges:
   to: dawarich-worker
   kind: observed-startup
   when: current_worker_checks_SQL_login_only
+- from: eso
+  to: wordpress-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: wordpress-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: eso
+  to: spotify-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: openbao
+  to: spotify-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: cilium
+  to: wordpress-db
+  kind: startup
+  when: always
+- from: coredns
+  to: wordpress-db
+  kind: startup
+  when: always
+- from: harbor
+  to: wordpress-db
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: wordpress-valkey
+  kind: startup
+  when: always
+- from: coredns
+  to: wordpress-valkey
+  kind: startup
+  when: always
+- from: harbor
+  to: wordpress-valkey
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: wordpress
+  kind: startup
+  when: always
+- from: coredns
+  to: wordpress
+  kind: startup
+  when: always
+- from: harbor
+  to: wordpress
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: spotify-db
+  kind: startup
+  when: always
+- from: coredns
+  to: spotify-db
+  kind: startup
+  when: always
+- from: harbor
+  to: spotify-db
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: spotify-ferretdb
+  kind: startup
+  when: always
+- from: coredns
+  to: spotify-ferretdb
+  kind: startup
+  when: always
+- from: harbor
+  to: spotify-ferretdb
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: spotify-server
+  kind: startup
+  when: always
+- from: coredns
+  to: spotify-server
+  kind: startup
+  when: always
+- from: harbor
+  to: spotify-server
+  kind: image
+  when: image_cache_miss
+- from: cilium
+  to: spotify-web
+  kind: startup
+  when: always
+- from: coredns
+  to: spotify-web
+  kind: startup
+  when: always
+- from: harbor
+  to: spotify-web
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: wordpress-db
+  kind: startup
+  when: always
+- from: longhorn
+  to: wordpress
+  kind: startup
+  when: always
+- from: longhorn
+  to: spotify-db
+  kind: startup
+  when: always
+- from: wordpress-secrets
+  to: wordpress-db
+  kind: startup
+  when: always
+- from: wordpress-secrets
+  to: wordpress
+  kind: startup
+  when: always
+- from: spotify-secrets
+  to: spotify-db
+  kind: startup
+  when: always
+- from: spotify-secrets
+  to: spotify-ferretdb
+  kind: startup
+  when: always
+- from: spotify-secrets
+  to: spotify-server
+  kind: startup
+  when: always
+- from: wordpress-db
+  to: wordpress
+  kind: startup
+  when: always
+- from: wordpress-valkey
+  to: wordpress
+  kind: startup
+  when: always
+- from: spotify-db
+  to: spotify-ferretdb
+  kind: startup
+  when: always
+- from: spotify-ferretdb
+  to: spotify-server
+  kind: startup
+  when: always
+- from: spotify-server
+  to: spotify-web
+  kind: startup
+  when: always

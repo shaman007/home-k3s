@@ -1,0 +1,218 @@
+<?php
+/** Read literals, never execute an application's configuration or bootstrap. */
+declare(strict_types=1);
+
+final class ConfigLiterals
+{
+    private array $tokens;
+    private int $position = 0;
+
+    public function __construct(string $source)
+    {
+        $this->tokens = array_values(array_filter(token_get_all($source), static fn($t) =>
+            !is_array($t) || !in_array($t[0], [T_OPEN_TAG, T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)));
+    }
+
+    private function take(): mixed
+    {
+        if (!array_key_exists($this->position, $this->tokens)) {
+            throw new RuntimeException('Invalid config');
+        }
+        return $this->tokens[$this->position++];
+    }
+
+    private function expect(mixed $expected): void
+    {
+        $token = $this->take();
+        if ((is_array($token) ? $token[0] : $token) !== $expected) {
+            throw new RuntimeException('Invalid config');
+        }
+    }
+
+    private function literal(int $depth = 0): mixed
+    {
+        if ($depth > 16) {
+            throw new RuntimeException('Invalid config');
+        }
+        $token = $this->take();
+        if ($token === '[' || (is_array($token) && $token[0] === T_ARRAY)) {
+            $close = ']';
+            if (is_array($token)) {
+                $this->expect('(');
+                $close = ')';
+            }
+            $result = [];
+            while (($this->tokens[$this->position] ?? null) !== $close) {
+                $value = $this->literal($depth + 1);
+                $next = $this->tokens[$this->position] ?? null;
+                if (is_array($next) && $next[0] === T_DOUBLE_ARROW) {
+                    $this->position++;
+                    if ((!is_string($value) && !is_int($value)) || array_key_exists($value, $result)) {
+                        throw new RuntimeException('Invalid config');
+                    }
+                    $result[$value] = $this->literal($depth + 1);
+                } else {
+                    $result[] = $value;
+                }
+                if (($this->tokens[$this->position] ?? null) === $close) {
+                    break;
+                }
+                $this->expect(',');
+            }
+            $this->expect($close);
+            return $result;
+        }
+        if (is_array($token) && $token[0] === T_CONSTANT_ENCAPSED_STRING) {
+            $inner = substr($token[1], 1, -1);
+            if ($token[1][0] === "'") {
+                return preg_replace_callback('/\\\\([\\\\\x27])/', static fn($m) => $m[1], $inner);
+            }
+            // token_get_all already rejects interpolated strings as a single literal.
+            // Fail closed on uncommon PHP escape forms rather than misdecode credentials.
+            if (preg_match('/\\\\(?:[0-7xXuU]|\{)/', $inner)) {
+                throw new RuntimeException('Unsupported escape');
+            }
+            return preg_replace_callback('/\\\\([nrtvef\\\\"$])/', static fn($m) =>
+                ['n' => "\n", 'r' => "\r", 't' => "\t", 'v' => "\v", 'e' => "\e", 'f' => "\f",
+                 '\\' => '\\', '"' => '"', '$' => '$'][$m[1]], $inner);
+        }
+        if (is_array($token) && $token[0] === T_LNUMBER && preg_match('/^(0|[1-9][0-9]*)$/D', $token[1])) {
+            return (int)$token[1];
+        }
+        if (is_array($token) && $token[0] === T_STRING) {
+            return match (strtolower($token[1])) {
+                'true' => true, 'false' => false, 'null' => null,
+                default => throw new RuntimeException('Invalid config'),
+            };
+        }
+        throw new RuntimeException('Invalid config');
+    }
+
+    public function nextcloud(): array
+    {
+        $token = $this->take();
+        if (!is_array($token) || $token[0] !== T_VARIABLE || $token[1] !== '$CONFIG') {
+            throw new RuntimeException('Invalid config');
+        }
+        $this->expect('=');
+        $result = $this->literal();
+        $this->expect(';');
+        if ($this->position !== count($this->tokens) || !is_array($result)) {
+            throw new RuntimeException('Invalid config');
+        }
+        return $result;
+    }
+
+    public function wordpress(): array
+    {
+        $wanted = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST', 'WP_REDIS_HOST',
+                   'WP_REDIS_PORT', 'WP_REDIS_PASSWORD', 'WP_REDIS_DATABASE'];
+        $result = [];
+        while ($this->position < count($this->tokens)) {
+            $token = $this->take();
+            if (!is_array($token) || $token[0] !== T_STRING || strtolower($token[1]) !== 'define') {
+                continue;
+            }
+            $this->expect('(');
+            $name = $this->literal();
+            if (!in_array($name, $wanted, true)) {
+                continue; // Other definitions and bootstrap code are never evaluated.
+            }
+            $this->expect(',');
+            $value = $this->literal();
+            $this->expect(')');
+            $this->expect(';');
+            if (array_key_exists($name, $result)) {
+                throw new RuntimeException('Invalid config');
+            }
+            $result[$name] = $value;
+        }
+        return $result;
+    }
+}
+
+function requiredString(array $config, string $key): string
+{
+    if (!isset($config[$key]) || !is_string($config[$key])) {
+        throw new RuntimeException('Missing config');
+    }
+    return $config[$key];
+}
+
+function probeData(string $mode): void
+{
+    $nextcloud = str_starts_with($mode, 'nextcloud-');
+    if (!in_array($mode, ['nextcloud-sql', 'nextcloud-valkey', 'wordpress-sql', 'wordpress-valkey'], true)) {
+        throw new RuntimeException('Invalid mode');
+    }
+    $source = file_get_contents($nextcloud ? '/nextcloud/config/config.php' : '/code/wp-config.php');
+    if ($source === false || strlen($source) > 1048576) {
+        throw new RuntimeException('Invalid config');
+    }
+    $parser = new ConfigLiterals($source);
+    $config = $nextcloud ? $parser->nextcloud() : $parser->wordpress();
+    if (str_ends_with($mode, '-sql')) {
+        if ($nextcloud && ($config['dbtype'] ?? null) !== 'mysql') {
+            throw new RuntimeException('Unsupported DB');
+        }
+        $host = requiredString($config, $nextcloud ? 'dbhost' : 'DB_HOST');
+        // Current stacks use DNS[:port], not sockets or arbitrary PDO DSN fragments.
+        if (!preg_match('/^([a-zA-Z0-9._-]+)(?::([0-9]{1,5}))?$/D', $host, $parts)) {
+            throw new RuntimeException('Invalid host');
+        }
+        $database = requiredString($config, $nextcloud ? 'dbname' : 'DB_NAME');
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/D', $database)) {
+            throw new RuntimeException('Invalid database');
+        }
+        $pdo = new PDO('mysql:host=' . $parts[1] . ';port=' . ($parts[2] ?? '3306') . ';dbname=' . $database,
+            requiredString($config, $nextcloud ? 'dbuser' : 'DB_USER'),
+            requiredString($config, $nextcloud ? 'dbpassword' : 'DB_PASSWORD'),
+            [PDO::ATTR_TIMEOUT => 4, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $pdo->exec('SET TRANSACTION READ ONLY');
+        $pdo->beginTransaction();
+        if ((string)$pdo->query('SELECT 1')->fetchColumn() !== '1') {
+            throw new RuntimeException('Invalid reply');
+        }
+        $pdo->rollBack();
+        return;
+    }
+    $redisConfig = $nextcloud ? ($config['redis'] ?? []) : $config;
+    $redis = new Redis();
+    $host = requiredString($redisConfig, $nextcloud ? 'host' : 'WP_REDIS_HOST');
+    $port = $redisConfig[$nextcloud ? 'port' : 'WP_REDIS_PORT'] ?? 6379;
+    if (is_string($port) && ctype_digit($port)) {
+        $port = (int)$port;
+    }
+    if (!is_int($port) || $port < 1 || $port > 65535) {
+        throw new RuntimeException('Invalid port');
+    }
+    $redis->connect($host, $port, 4, null, 0, 4);
+    $password = $redisConfig[$nextcloud ? 'password' : 'WP_REDIS_PASSWORD'] ?? '';
+    if ($password !== '') {
+        $user = $nextcloud ? ($redisConfig['user'] ?? '') : '';
+        if (!$redis->auth($user !== '' ? [$user, $password] : $password)) {
+            throw new RuntimeException('Authentication failed');
+        }
+    }
+    $database = $redisConfig[$nextcloud ? 'dbindex' : 'WP_REDIS_DATABASE'] ?? 0;
+    if (!is_int($database) || $database < 0) {
+        throw new RuntimeException('Invalid database');
+    }
+    $redis->select($database);
+    if (!in_array($redis->ping(), [true, 'PONG', '+PONG'], true)) {
+        throw new RuntimeException('Invalid reply');
+    }
+    $redis->close();
+}
+
+// Requiring this file in parser tests does not run a probe.
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '0');
+    try {
+        probeData($argv[1] ?? '');
+        exit(0);
+    } catch (Throwable) {
+        exit(1); // Never print configuration, credentials or driver exceptions.
+    }
+}

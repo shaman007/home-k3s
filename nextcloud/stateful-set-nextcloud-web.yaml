@@ -22,12 +22,78 @@ spec:
       component: web
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: ed52e25aa41dd507677f3e9abda6ef7589b8885e4bd85aae5734e6435c58b8c9
       labels:
         app: nextcloud
         component: web
         app.kubernetes.io/component: web
     spec:
       # Avoid public SMTP hairpinning while retaining the mail certificate hostname.
+      initContainers:
+        - name: wait-for-sql
+          image: harbor.andreybondarenko.com/library/php:2026-11-09-022903
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - nextcloud-sql
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env: []
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
+            - &id001
+              name: nextcloud-lh
+              mountPath: /nextcloud
+              readOnly: true
+        - name: wait-for-valkey
+          image: harbor.andreybondarenko.com/library/php:2026-11-09-022903
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - nextcloud-valkey
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env: []
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
+            - *id001
       hostAliases:
         - ip: "192.168.30.210"
           hostnames:
@@ -97,6 +163,9 @@ spec:
         - name: nginx-cache
           emptyDir:
             sizeLimit: 500Mi
+        - name: startup-gate
+          configMap:
+            name: nextcloud-startup-gate
       containers:
         - name: php-nextcloud
           image: harbor.andreybondarenko.com/library/php:2026-11-09-022903

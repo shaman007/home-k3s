@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spotify-startup-gate
+  namespace: spotify
+data:
+  wait_service.sh: |
+    #!/bin/sh
+    # Bounded invocation; Kubernetes retries failed init containers. Never log driver output.
+    set -eu
+    mode=${1:-}
+    case "$mode" in
+      postgres|valkey|nextcloud-sql|nextcloud-valkey|wordpress-sql|wordpress-valkey|ferretdb|spotify) ;;
+      *) exit 2 ;;
+    esac
+    monotonic() { read -r seconds rest < /proc/uptime; printf '%s' "${seconds%%.*}"; }
+    budget=${STARTUP_WAIT_SECONDS:-300}
+    case "$budget" in ''|*[!0-9]*) exit 2 ;; esac
+    [ "$budget" -ge 1 ] && [ "$budget" -le 300 ] || exit 2
+    started=$(monotonic)
+    probe() {
+      case "$mode" in
+        postgres)
+          export HOME=/tmp PGCONNECT_TIMEOUT=4 PGOPTIONS='-c default_transaction_read_only=on -c statement_timeout=4000'
+          result=$(timeout -s TERM -k 1 5 psql -X -w -tA -c 'SELECT 1' 2>/dev/null) || return 1
+          [ "$result" = 1 ] ;;
+        valkey)
+          result=$(timeout -s TERM -k 1 5 valkey-cli --raw -h "$VALKEY_HOST" -p "${VALKEY_PORT:-6379}" PING 2>/dev/null) || return 1
+          [ "$result" = PONG ] ;;
+        nextcloud-*|wordpress-*) timeout -s TERM -k 1 5 php /startup-gate/probe_data.php "$mode" >/dev/null 2>&1 ;;
+        ferretdb|spotify) timeout -s TERM -k 1 5 node /startup-gate/probe_http.cjs "$mode" >/dev/null 2>&1 ;;
+      esac
+    }
+    while :; do
+      if probe; then
+        elapsed=$(( $(monotonic) - started ))
+        printf '{"stage":"%s","result":"ready","elapsed_seconds":%s}\n' "$mode" "$elapsed"
+        exit 0
+      fi
+      elapsed=$(( $(monotonic) - started ))
+      if [ "$elapsed" -ge "$budget" ]; then
+        printf '{"stage":"%s","result":"timeout","elapsed_seconds":%s}\n' "$mode" "$elapsed"
+        exit 1
+      fi
+      printf '{"stage":"%s","result":"waiting","elapsed_seconds":%s}\n' "$mode" "$elapsed"
+      remaining=$((budget - elapsed))
+      if [ "$remaining" -gt 5 ]; then remaining=5; fi
+      sleep "$remaining"
+      if [ "$(( $(monotonic) - started ))" -ge "$budget" ]; then
+        printf '{"stage":"%s","result":"timeout","elapsed_seconds":%s}\n' "$mode" "$(( $(monotonic) - started ))"
+        exit 1
+      fi
+    done
+  probe_http.cjs: |
+    'use strict';
+    // Fixed in-cluster, credential-free readiness endpoints. No redirects or body logs.
+    const http = require('node:http');
+    const endpoints = {
+      ferretdb: 'http://ferretdb.spotify.svc.cluster.local:8088/debug/readyz',
+      spotify: 'http://server.spotify.svc.cluster.local:8080/',
+    };
+    function probe(url) {
+      return new Promise((resolve) => {
+        const req = http.get(url, { agent: false }, (res) => {
+          res.resume();
+          clearTimeout(timer);
+          resolve(res.statusCode === 200);
+        });
+        const timer = setTimeout(() => req.destroy(), 4000);
+        req.on('error', () => { clearTimeout(timer); resolve(false); });
+      });
+    }
+    module.exports = { probe };
+    if (require.main === module) {
+      const url = endpoints[process.argv[2]];
+      if (!url) process.exit(1);
+      probe(url).then((ok) => process.exit(ok ? 0 : 1));
+    }

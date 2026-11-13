@@ -22,9 +22,15 @@ spec:
       app: keycloak
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: 1eec42040d69692dad4b3226b079da6781f9fe5edea62e2173293ea5d3439aad
       labels:
         app: keycloak
     spec:
+      volumes:
+        - name: startup-gate
+          configMap:
+            name: keycloak-startup-gate
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -32,30 +38,45 @@ spec:
       priorityClassName: homelab-essential
       initContainers:
         - name: wait-for-postgres
-          image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
+          image: harbor.andreybondarenko.com/dockerhub/postgres:18
           imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - postgres
           securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 65534
             runAsGroup: 65534
-            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
-          command:
-            - sh
-            - -c
-            - |
-              until nc -z keycloak-postgres.keycloak.svc.cluster.local 5432; do
-                echo "waiting for postgres"
-                sleep 2
-              done
+            seccompProfile:
+              type: RuntimeDefault
           resources:
             requests:
               cpu: 10m
               memory: 32Mi
             limits:
-              memory: 32Mi
+              memory: 128Mi
+          env:
+            - name: PGHOST
+              value: keycloak-postgres.keycloak.svc.cluster.local
+            - name: PGDATABASE
+              value: keycloak
+            - name: PGUSER
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-password
+                  key: password
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
       containers:
         - name: keycloak
           image: harbor.andreybondarenko.com/quay/keycloak/keycloak:26.8.2

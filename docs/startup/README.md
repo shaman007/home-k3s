@@ -1,13 +1,13 @@
 # Startup dependencies and readiness contract
 
-Status: **Dawarich pilot source prepared for GitOps rollout**, 2026-11-13.
-User authorized publishing the active pilot through ArgoCD; rollout verification
-is pending their push. No manual cluster writes, global startup controller,
-sync-wave changes or failure injection were performed.
+Status: **Dawarich pilot is in GitOps; five additional stacks prepared locally**, 2026-11-13.
+This package prepares Immich, Nextcloud, Keycloak, WordPress and YourSpotify.
+Mastodon gates are deferred: pinned chart 1.2.8 has no init/command extension;
+its pre/post migration hooks require a separate rendering design.
+No cluster changes or new global startup controller are part of this preparation.
 The machine-readable [graph](dependencies.yaml) records provider → consumer
-edges, criteria and source evidence. Its phases describe a possible partial
-order, not an enforced cluster-wide barrier. Scope is core bootstrap and five
-database-backed stacks: Dawarich, Immich, Mastodon, Nextcloud and Keycloak;
+edges, criteria and source evidence. Phases describe a partial order, not an
+enforced cluster-wide barrier. Scope is core bootstrap and these seven stacks;
 the remaining Applications are not audited exhaustively.
 
 A broader read-only structural inventory covered **149 live workloads in 51
@@ -90,10 +90,15 @@ must come from each application's actual configuration.
 | Mastodon | `mastodon-postgres:5432` | `valkey:6379` with auth | SeaweedFS media; OpenSearch search; Keycloak login |
 | Nextcloud | `mysql-nextcloud:3306` | `valkey:6379` | Collabora/antivirus/integrations need separate checks |
 | Keycloak | `keycloak-postgres:5432` | No separate Valkey dependency found | Required for SSO feature of consumers |
+| WordPress | `mysql-wordpress:3306` | `valkey:6379` | Existing PVC config supplies app credentials |
+| YourSpotify (`spotify`) | `ferretdb-postgres:5432` → `ferretdb:27017` | No Valkey | FerretDB → server → web; Spotify API/OAuth functional checks |
 
-These services and DB/cache manifests exist; readiness contracts outside the
-pilot still need protocol-level validation. In particular, an environment
-variable declaring an integration does not prove it is required for process boot.
+Read-only protocol checks for the new PHP gates passed against current Nextcloud
+and WordPress SQL/Valkey services. Nextcloud uses ACL user/password and a string
+port, both handled without executing config. YourSpotify's current FerretDB deep
+endpoint and server root returned HTTP 200; the pinned server bundle calls
+`connect().then(() => server.listen(...))`. These checks do not prove the future
+init containers have rolled out successfully.
 Photon, ML, search and SSO are separate feature edges, not unconditionally global
 startup gates. Whether a particular client performs blocking OIDC discovery
 during initialization needs a separate check before treating SSO as optional.
@@ -101,11 +106,9 @@ during initialization needs a separate check before treating SSO as optional.
 ## Remaining cycles and bootstrap exceptions
 
 * Ordinary Longhorn volume attachment does not require S3. S3 is needed for backup
-  restore. The observed-runtime recovery ring is Harbor images → SeaweedFS →
-  Longhorn backup restore → lost Harbor volumes → Harbor. On this observation,
-  live SeaweedFS still used Harbor images; commit `6f6ac885` breaks that image edge
-  in Git, but its runtime rollout was not observed here. See graph edge kinds
-  `observed-image`, `image`, and `recovery` rather than confusing desired and live state.
+  restore. SeaweedFS source now uses pinned upstream images, removing the Harbor
+  images → SeaweedFS → Longhorn restore → lost Harbor volumes recovery ring.
+  Upstream registry access or preloaded images is still needed on a cache miss.
 * SeaweedFS data is hostPath-backed, not a Longhorn PVC. Its storage must survive
   on its pinned node, and S3 credentials must have an independent recovery path.
 * Harbor's certificate remains ACME HTTP-01 via public Traefik. A valid persisted
@@ -197,3 +200,49 @@ Argo source does not provide an Application health customization for app-of-apps
 dependency waiting. Strict cluster-wide startup with no dependent Pods requires
 separate orchestration and reconciliation rules; this pilot intentionally does
 not pretend to install it.
+
+## Five-stack gate package (local preparation)
+
+| Consumer | Sequential startup checks | Readiness/migration ownership |
+| --- | --- | --- |
+| Immich server | existing prepare-library → PostgreSQL SELECT 1 → Valkey PING | Existing Immich entrypoint owns migrations; ML is not a gate |
+| Keycloak | PostgreSQL SELECT 1 replaces open-port loop | Existing Keycloak startup/ready/live endpoints retained |
+| Nextcloud web | MariaDB SELECT 1 → Valkey ACL PING | No `occ upgrade` or PHP bootstrap in gate |
+| WordPress PHP/nginx | MariaDB SELECT 1 → Valkey PING | No WordPress bootstrap or writes in gate |
+| YourSpotify | PostgreSQL → FerretDB deep ready → server HTTP 200 → web | Server retains its own authenticated Mongo connect; ongoing health is separate |
+
+`tools/bootstrap/prepare_application_gates.py --check` checks committed-source
+consistency. `--write-source` regenerates only local gate ConfigMaps, init
+containers, script checksum and FerretDB readiness; it makes no Kubernetes calls.
+Native clients use already pinned images from each stack; no package installation
+at startup. ConfigMaps contain scripts only. PostgreSQL passwords stay Secret
+refs. PHP gates read the existing PVC read-only and parse literal config with
+`token_get_all`; no include/eval, application bootstrap, credential output or
+persisted credential copies. Dynamic/unsupported config fails closed. Nextcloud
+ACL auth is honored. Nextcloud/WordPress SQL checks use read-only transactions.
+
+Each invocation has a 300-second retry budget, with operations limited to 5 seconds
+(plus at most one second to terminate); an in-flight operation can finish just
+after the budget. Kubernetes retries failed init containers;
+this is not a permanent 300-second cutoff for the Pod. Logs contain only fixed
+stage names, ready/waiting/timeout and elapsed duration. PHP/Node tests are required
+in CI, together with existing Ruby coverage; JavaScript is included in CodeQL.
+The FerretDB readiness change checks the backend; liveness remains TCP to avoid
+restarts on an upstream database outage. Its [deep endpoint contract](https://docs.ferretdb.io/v2.5/configuration/observability/)
+is distinct from liveness.
+
+These gates delay ordinary app containers, not Pod creation, scheduling, image
+pulls, PVC attachment or admission. They do not continuously stop an app after a
+later dependency outage and do not impose a barrier across Argo Applications.
+No global sync-wave or priority changes are added. The SQL check is not schema
+readiness; existing app entrypoints retain migrations. YourSpotify web gate waits
+only for its internal API, not external Spotify, ingress or SSO.
+
+Roll out one stack at a time after publishing and green CI. Observe init stage
+logs → app startup/migrations → readiness → functional request, then continue.
+Stateful/Recreate apps can have a brief outage. First Nextcloud/WordPress install
+without populated PVC config is outside this restart template's scope.
+Rollback: revert this package's workload changes (retain any later image/security
+updates), sync the previous workloads through Argo, then remove unused script
+ConfigMaps. No database/PVC/Secret changes need reverting; no data is deleted.
+Do not force restarts or failure injection on live databases for verification.

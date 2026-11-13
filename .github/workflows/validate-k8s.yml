@@ -51,11 +51,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install jsonschema regex -r tools/security/requirements.txt
 
-      - name: Install Ruby test runtime
+      - name: Install startup gate test runtimes
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ruby
+          sudo apt-get install -y --no-install-recommends ruby php-cli nodejs
           /usr/bin/ruby --version
+          /usr/bin/php --version
+          /usr/bin/node --version
+          /usr/bin/php -l tools/bootstrap/probe_data.php
+          /usr/bin/node --check tools/bootstrap/probe_http.cjs
+          /bin/sh -n tools/bootstrap/wait_service.sh
 
       - name: Validate Ruby syntax
         shell: bash
@@ -103,6 +108,7 @@ jobs:
           python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
           python tools/monitoring/generate_queue_exporters.py --check
           python tools/bootstrap/prepare_startup_gate.py --check
+          python tools/bootstrap/prepare_application_gates.py --check
 
       - name: Render Argo CD applications
         run: |

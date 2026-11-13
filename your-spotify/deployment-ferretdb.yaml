@@ -17,9 +17,55 @@ spec:
       app: ferretdb
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: 03554aa36669116e354d55a28174e6103f782628e8b1dfdefb99de5fabd4207d
       labels:
         app: ferretdb
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - postgres
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env:
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: ferretdb-credentials
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ferretdb-credentials
+                  key: password
+            - name: PGDATABASE
+              value: postgres
+            - name: PGHOST
+              value: ferretdb-postgres.spotify.svc.cluster.local
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
       priorityClassName: homelab-standard
       automountServiceAccountToken: false
       containers:
@@ -45,9 +91,11 @@ spec:
             periodSeconds: 5
             failureThreshold: 60
           readinessProbe:
-            tcpSocket:
-              port: mongodb
+            httpGet:
+              path: /debug/readyz
+              port: debug
             periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
             tcpSocket:
@@ -80,3 +128,6 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: startup-gate
+          configMap:
+            name: spotify-startup-gate

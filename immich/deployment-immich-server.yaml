@@ -20,6 +20,8 @@ spec:
       app: immich-server
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: 1eec42040d69692dad4b3226b079da6781f9fe5edea62e2173293ea5d3439aad
       labels:
         app: immich-server
         app.kubernetes.io/name: immich-server
@@ -42,21 +44,92 @@ spec:
           command:
             - sh
             - -c
-            - >-
-              find /data -path /data/lost+found -prune -o
-              \( ! -user 1000 -o ! -group 1000 \)
-              -exec chown 1000:1000 {} +
+            - find /data -path /data/lost+found -prune -o \( ! -user 1000 -o ! -group 1000 \) -exec chown 1000:1000 {}
+              +
           securityContext:
             runAsUser: 0
             runAsGroup: 0
             allowPrivilegeEscalation: false
             capabilities:
-              drop: [ALL]
-              add: [CHOWN]
+              drop:
+                - ALL
+              add:
+                - CHOWN
             readOnlyRootFilesystem: true
           volumeMounts:
             - name: library
               mountPath: /data
+        - name: wait-for-postgres
+          image: harbor.andreybondarenko.com/github/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - postgres
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env:
+            - name: PGHOST
+              value: immich-postgres
+            - name: PGDATABASE
+              value: immich
+            - name: PGUSER
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-env
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
+        - name: wait-for-valkey
+          image: harbor.andreybondarenko.com/dockerhub/valkey/valkey:9
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - valkey
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env:
+            - name: VALKEY_HOST
+              value: immich-valkey
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
       containers:
         - name: immich-server
           image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.4.1
@@ -140,3 +213,6 @@ spec:
             type: Directory
         - name: tmp
           emptyDir: {}
+        - name: startup-gate
+          configMap:
+            name: immich-startup-gate

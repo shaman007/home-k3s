@@ -189,11 +189,15 @@ class StartupGraphTests(unittest.TestCase):
         recovery = normal + [
             e for e in graph["edges"] if e["kind"] in {"recovery", "observed-image"}
         ]
-        self.assertFalse(
+        self.assertTrue(
             acyclic(recovery),
-            "Observed unrolled-out SeaweedFS recovery ring must remain visible",
+            "SeaweedFS upstream images break the Harbor recovery ring",
         )
-        self.assertTrue(acyclic([e for e in recovery if e["kind"] != "observed-image"]))
+        self.assertFalse(
+            any(
+                e["from"] == "harbor" and e["to"] == "seaweedfs" for e in graph["edges"]
+            )
+        )
 
 
 class StartupCandidateTests(unittest.TestCase):

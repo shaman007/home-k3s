@@ -19,10 +19,42 @@ spec:
       tier: backend
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: 03554aa36669116e354d55a28174e6103f782628e8b1dfdefb99de5fabd4207d
       labels:
         app: server
         tier: backend
     spec:
+      initContainers:
+        - name: wait-for-ferretdb
+          image: harbor.andreybondarenko.com/dockerhub/yooooomi/your_spotify_server:1.20.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_service.sh
+            - ferretdb
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env: []
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
       automountServiceAccountToken: false
       securityContext:
         fsGroup: 1000
@@ -108,3 +140,6 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: startup-gate
+          configMap:
+            name: spotify-startup-gate
