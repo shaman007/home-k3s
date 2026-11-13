@@ -1216,3 +1216,117 @@ tests:
   - eval_time: 31m
     alertname: UDMConsoleCertificateExpiring
     exp_alerts: []
+- name: isolated delivery error
+  interval: 1m
+  input_series:
+  - series: prometheus_notifications_errors_total{job="prometheus"}
+    values: 0 1+0x44
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: PrometheusNotificationFailures
+    exp_alerts: []
+- name: sustained delivery errors
+  interval: 1m
+  input_series:
+  - series: prometheus_notifications_errors_total{job="prometheus"}
+    values: 0+1x45
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: PrometheusNotificationFailures
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: critical
+        job: prometheus
+      exp_annotations:
+        summary: Prometheus alert delivery has sustained errors or drops.
+        description: 'Affected resource: map[job:prometheus]; observed value: 5. See
+          runbook for checks and thresholds.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+- name: sustained delivery drops
+  interval: 1m
+  input_series:
+  - series: prometheus_notifications_dropped_total{job="prometheus"}
+    values: 0+1x45
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: PrometheusNotificationFailures
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: critical
+        job: prometheus
+      exp_annotations:
+        summary: Prometheus alert delivery has sustained errors or drops.
+        description: 'Affected resource: map[job:prometheus]; observed value: 5. See
+          runbook for checks and thresholds.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+- name: coarse bucket below five seconds
+  interval: 1m
+  input_series:
+  - series: traefik_service_request_duration_seconds_count{service="web"}
+    values: 0+100x45
+  - series: traefik_service_request_duration_seconds_bucket{service="web",le="5.0"}
+    values: 0+100x45
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+- name: slow requests with low traffic
+  interval: 1m
+  input_series:
+  - series: traefik_service_request_duration_seconds_count{service="web"}
+    values: 0+1x45
+  - series: traefik_service_request_duration_seconds_bucket{service="web",le="5.0"}
+    values: 0+0x45
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+- name: exactly ten percent slow
+  interval: 1m
+  input_series:
+  - series: traefik_service_request_duration_seconds_count{service="web"}
+    values: 0+100x45
+  - series: traefik_service_request_duration_seconds_bucket{service="web",le="5.0"}
+    values: 0+90x45
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+- name: sustained slow ingress
+  interval: 1m
+  input_series:
+  - series: traefik_service_request_duration_seconds_count{service="web"}
+    values: 0+100x45
+  - series: traefik_service_request_duration_seconds_bucket{service="web",le="5.0"}
+    values: 0+80x45
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: TraefikHighLatency
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: TraefikHighLatency
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        service: web
+      exp_annotations:
+        summary: Over 10% of ingress requests exceed five seconds for thirty minutes
+          with at least 100 requests per ten minutes.
+        description: 'Affected service: web; fraction of requests slower than five
+          seconds: 0.2. Check application latency and long-lived requests; see runbook.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage

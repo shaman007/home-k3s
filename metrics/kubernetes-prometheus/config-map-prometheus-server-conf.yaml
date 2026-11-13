@@ -612,14 +612,14 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: PrometheusNotificationFailures
-        expr: increase(prometheus_notifications_errors_total[10m]) > 0 or increase(prometheus_notifications_dropped_total[10m]) > 0
-        for: 5m
+        expr: increase(prometheus_notifications_errors_total[5m]) >= 3 or increase(prometheus_notifications_dropped_total[5m]) >= 3
+        for: 15m
         labels:
           severity: mail
           priority: critical
           owner: homelab
         annotations:
-          summary: Prometheus cannot reliably deliver alerts.
+          summary: Prometheus alert delivery has sustained errors or drops.
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: AlertmanagerNotificationFailures
@@ -977,16 +977,15 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: TraefikHighLatency
-        expr: (histogram_quantile(0.95, sum by(le,service) (rate(traefik_service_request_duration_seconds_bucket[10m]))) > 3) and (sum by(service) (increase(traefik_service_request_duration_seconds_count[10m]))
-          >= 100)
-        for: 15m
+        expr: (round((sum by(service) (rate(traefik_service_request_duration_seconds_count[10m])) - sum by(service) (rate(traefik_service_request_duration_seconds_bucket{le="5.0"}[10m]))) / sum by(service) (rate(traefik_service_request_duration_seconds_count[10m])), 0.000001) > 0.10) and (sum by(service) (increase(traefik_service_request_duration_seconds_count[10m])) >= 100)
+        for: 30m
         labels:
           severity: mail
           priority: warning
           owner: homelab
         annotations:
-          summary: Ingress p95 latency exceeds three seconds with at least 100 requests per ten minutes.
-          description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
+          summary: Over 10% of ingress requests exceed five seconds for thirty minutes with at least 100 requests per ten minutes.
+          description: 'Affected service: {{ $labels.service }}; fraction of requests slower than five seconds: {{ $value }}. Check application latency and long-lived requests; see runbook.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: PrometheusRuleFailures
         expr: increase(prometheus_rule_evaluation_failures_total[10m]) > 0
