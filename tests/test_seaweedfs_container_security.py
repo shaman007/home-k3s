@@ -1,5 +1,6 @@
 """Verify SeaweedFS container security contexts and required writable paths."""
 
+import json
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,7 @@ MANIFEST = ROOT / "seaweedfs/deployment-seaweedfs-s3.yaml"
 
 class SeaweedFSContainerSecurityTest(unittest.TestCase):
     """Require restricted containers and scoped writable storage paths."""
+
     @classmethod
     def setUpClass(cls):
         deployment = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
@@ -49,9 +51,35 @@ class SeaweedFSContainerSecurityTest(unittest.TestCase):
             with self.subTest(container=container["name"]):
                 self.assertRegex(
                     container["image"],
-                    "^" + repository.replace(".", r"\.") + r":[^@\s]+@sha256:[0-9a-f]{64}$",
+                    "^"
+                    + repository.replace(".", r"\.")
+                    + r":[^@\s]+@sha256:[0-9a-f]{64}$",
                 )
-        self.assertEqual(1, len({container["image"] for container in self.containers.values()}))
+        self.assertEqual(
+            1, len({container["image"] for container in self.containers.values()})
+        )
+
+    def test_permission_init_audit_exceptions_follow_the_reviewed_repository(self):
+        """Catch a registry move before expensive CEL shards reject the real workload."""
+        catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
+        entry = next(
+            item
+            for item in catalog["entries"]
+            if item["namespace"] == "seaweedfs" and item["name"] == "seaweedfs-s3"
+        )
+        init = self.pod_spec["initContainers"][0]
+        expected_repository = init["image"].split("@")[0].rsplit(":", 1)[0]
+        for policy in ("require-run-as-nonroot", "require-drop-all-capabilities"):
+            approved = entry["policies"][policy]["initContainers"][init["name"]]
+            self.assertEqual(
+                approved["image"].split("@")[0].rsplit(":", 1)[0],
+                expected_repository,
+                policy,
+            )
+        self.assertEqual(
+            entry["requiredGuards"]["initContainers"][init["name"]]["capabilities"],
+            init["securityContext"]["capabilities"],
+        )
 
     def test_only_storage_services_mount_data(self):
         """Verify only storage services mount data."""

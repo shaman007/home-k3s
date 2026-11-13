@@ -1,9 +1,10 @@
 """Keep callback recovery scoped to the protected hosts and safe homepage links."""
-from html.parser import HTMLParser
+
 import json
-from pathlib import Path
 import re
 import unittest
+from html.parser import HTMLParser
+from pathlib import Path
 from urllib.parse import urljoin
 
 import yaml
@@ -13,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class PageParser(HTMLParser):
     """Collect navigation and active content from the recovery page."""
+
     def __init__(self):
         super().__init__()
         self.links = []
@@ -29,11 +31,13 @@ class PageParser(HTMLParser):
 
 class OidcCallbackErrorsTest(unittest.TestCase):
     """Verify recovery cannot change ordinary application or authentication routes."""
+
     @classmethod
     def setUpClass(cls):
         cls.values = yaml.safe_load((ROOT / "traefik-private/values.yaml").read_text())
         cls.objects = {
-            o["kind"]: o for o in cls.values["extraObjects"]
+            o["kind"]: o
+            for o in cls.values["extraObjects"]
             if o["metadata"]["name"] == "oidc-callback-errors"
         }
 
@@ -44,9 +48,15 @@ class OidcCallbackErrorsTest(unittest.TestCase):
         self.assertEqual(["websecure"], spec["entryPoints"])
         self.assertEqual(1, len(spec["routes"]))
         route = spec["routes"][0]
-        client = json.loads((ROOT / "keycloak/config/traefik-admin.client.json").read_text())
+        client = json.loads(
+            (ROOT / "keycloak/config/traefik-admin.client.json").read_text()
+        )
         hosts = {u.split("/")[2] for u in client["redirectUris"]}
-        expected = "(" + " || ".join(f"Host(`{h}`)" for h in sorted(hosts)) + ") && Path(`/oidc/callback`)"
+        expected = (
+            "("
+            + " || ".join(f"Host(`{h}`)" for h in sorted(hosts))
+            + ") && Path(`/oidc/callback`)"
+        )
         self.assertEqual(expected, route["match"])
         self.assertGreater(route["priority"], 100)
         self.assertEqual(
@@ -59,11 +69,25 @@ class OidcCallbackErrorsTest(unittest.TestCase):
         self.assertEqual([], errors["errorRequestHeaders"])
         self.assertNotIn("statusRewrites", errors)
         # Existing application ingress chains stay unchanged.
-        for path in [*ROOT.glob("metrics/ingress-*.yaml"), *ROOT.glob("longhorn/ingress-*.yaml")]:
-            doc = next((d for d in yaml.safe_load_all(path.read_text()) if d and d["kind"] == "Ingress"), None)
+        for path in [
+            *ROOT.glob("metrics/ingress-*.yaml"),
+            *ROOT.glob("longhorn/ingress-*.yaml"),
+        ]:
+            doc = next(
+                (
+                    d
+                    for d in yaml.safe_load_all(path.read_text())
+                    if d and d["kind"] == "Ingress"
+                ),
+                None,
+            )
             if doc is None:
                 continue
-            chain = doc.get("metadata", {}).get("annotations", {}).get("traefik.ingress.kubernetes.io/router.middlewares", "")
+            chain = (
+                doc.get("metadata", {})
+                .get("annotations", {})
+                .get("traefik.ingress.kubernetes.io/router.middlewares", "")
+            )
             self.assertNotIn("oidc-callback-errors", chain)
 
     def test_page_returns_to_current_origin_without_callback_query(self):
@@ -76,7 +100,13 @@ class OidcCallbackErrorsTest(unittest.TestCase):
         self.assertIn("Открыть главную", page)
         route = self.objects["IngressRoute"]["spec"]["routes"][0]
         for host in re.findall(r"Host\(`([^`]+)`\)", route["match"]):
-            self.assertEqual(f"https://{host}/", urljoin(f"https://{host}/oidc/callback?code=expired&state=old", parser.links[0]))
+            self.assertEqual(
+                f"https://{host}/",
+                urljoin(
+                    f"https://{host}/oidc/callback?code=expired&state=old",
+                    parser.links[0],
+                ),
+            )
         nginx = self.objects["ConfigMap"]["data"]["nginx.conf"]
         self.assertIn('Cache-Control "no-store"', nginx)
         self.assertIn('Referrer-Policy "no-referrer"', nginx)
@@ -85,10 +115,15 @@ class OidcCallbackErrorsTest(unittest.TestCase):
     def test_resources_fit_namespace_limit_range(self):
         """Catch admission rejection before callback page pods are deployed."""
         limits = next(
-            d for d in yaml.safe_load_all((ROOT / "namespaces/limit-ranges.yaml").read_text())
+            d
+            for d in yaml.safe_load_all(
+                (ROOT / "namespaces/limit-ranges.yaml").read_text()
+            )
             if d and d["metadata"].get("namespace") == "traefik"
         )["spec"]["limits"]
-        container = self.objects["Deployment"]["spec"]["template"]["spec"]["containers"][0]
+        container = self.objects["Deployment"]["spec"]["template"]["spec"][
+            "containers"
+        ][0]
         resources = container["resources"]
         # This workload and the namespace contract use Mi memory and m CPU units.
         for entry in limits:
@@ -117,5 +152,9 @@ class OidcCallbackErrorsTest(unittest.TestCase):
         self.assertTrue(container["securityContext"]["runAsNonRoot"])
         self.assertTrue(container["securityContext"]["readOnlyRootFilesystem"])
         self.assertEqual("/healthz", container["readinessProbe"]["httpGet"]["path"])
-        app = yaml.safe_load((ROOT / "argocd/application-traefik-private.yaml").read_text())
-        self.assertEqual(self.values, yaml.safe_load(app["spec"]["source"]["helm"]["values"]))
+        app = yaml.safe_load(
+            (ROOT / "argocd/application-traefik-private.yaml").read_text()
+        )
+        self.assertEqual(
+            self.values, yaml.safe_load(app["spec"]["source"]["helm"]["values"])
+        )

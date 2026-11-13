@@ -1879,7 +1879,7 @@
           "containers": {},
           "initContainers": {
             "prepare-data-and-tmp": {
-              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38"
+              "image": "docker.io/library/busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4"
             }
           }
         },
@@ -1887,7 +1887,7 @@
           "containers": {},
           "initContainers": {
             "prepare-data-and-tmp": {
-              "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+              "image": "docker.io/library/busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4",
               "capabilities": [
                 "CHOWN",
                 "DAC_OVERRIDE"
@@ -1907,7 +1907,7 @@
         "containers": [
           {
             "name": "master",
-            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "image": "docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -1923,7 +1923,7 @@
           },
           {
             "name": "volume",
-            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "image": "docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -1939,7 +1939,7 @@
           },
           {
             "name": "filer",
-            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "image": "docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -1955,7 +1955,7 @@
           },
           {
             "name": "s3",
-            "image": "harbor.andreybondarenko.com/dockerhub/chrislusf/seaweedfs:4.52",
+            "image": "docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -1973,7 +1973,7 @@
         "initContainers": [
           {
             "name": "prepare-data-and-tmp",
-            "image": "harbor.andreybondarenko.com/dockerhub/busybox:1.38",
+            "image": "docker.io/library/busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4",
             "securityContext": {
               "allowPrivilegeEscalation": false,
               "capabilities": {
@@ -2023,7 +2023,8 @@
           "type": "RuntimeDefault"
         }
       },
-      "guardReview": "docs/exception-guard-contract-review.md"
+      "guardReview": "docs/exception-guard-contract-review.md",
+      "reviewedOn": "2026-11-13"
     },
     {
       "namespace": "hister",

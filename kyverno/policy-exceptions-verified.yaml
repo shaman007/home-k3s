@@ -1720,7 +1720,7 @@ spec:
   properties:
     reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
     evidence: docs/non-root-audit.md#retained-permission-init-containers
-    reviewed-on: '2026-11-03'
+    reviewed-on: '2026-11-13'
     review-trigger: repository/guard/startup/chart or ownership change
     image-scope: exact registry/repository; tags and sha256 digests may change
     approved-init-capabilities: '{"prepare-data-and-tmp": ["CHOWN", "DAC_OVERRIDE"]}'
@@ -1741,7 +1741,7 @@ spec:
       \ (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
       \ cap == \"NET_BIND_SERVICE\")) || false) &&\n  p.spec.?initContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
       \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || ((c.name == \"prepare-data-and-tmp\"\
-      \ && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      \ && c.image.matches(\"^docker\\\\.io/library/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
       ) && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
       \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
       \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
@@ -1749,20 +1749,19 @@ spec:
       \ &&\n  p.spec.?ephemeralContainers.orValue([]).all(c, (\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([])\
       \ && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap == \"NET_BIND_SERVICE\")) || false) &&\n  (p.spec.?initContainers.orValue([]).exists(c,\
       \ !(\"ALL\" in c.?securityContext.?capabilities.?drop.orValue([]) && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
-      \ cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-data-and-tmp\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\
-      \\.com/dockerhub/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\") && c.?securityContext.?privileged.orValue(false)\
-      \ == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true) == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1))\
-      \ == 0 && c.?securityContext.?capabilities.?drop.orValue([]) == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size()\
-      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
-      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([])))))) &&\n  p.spec.?initContainers.orValue([]).exists(c,\
-      \ c.name == \"prepare-data-and-tmp\" && c.?securityContext.?allowPrivilegeEscalation.orValue(null) == false && c.?securityContext.?capabilities.?add.orValue([]).size()\
-      \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\
-      , \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([])) && c.?securityContext.?capabilities.?drop.orValue([]).size()\
-      \ == 1 && c.?securityContext.?capabilities.?drop.orValue([]).all(cap, cap in [\"ALL\"]) && [\"ALL\"].all(cap, cap in\
-      \ c.?securityContext.?capabilities.?drop.orValue([])) && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?readOnlyRootFilesystem.orValue(null)\
-      \ == true && c.?securityContext.?runAsGroup.orValue(p.spec.?securityContext.?runAsGroup.orValue(null)) == 0 && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(null))\
-      \ == 0 && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null)) == {\"type\"\
-      : \"RuntimeDefault\"}) &&\n  p.spec.?securityContext.?seccompProfile.orValue(null) == {\"type\": \"RuntimeDefault\"\
+      \ cap == \"NET_BIND_SERVICE\")) && ((c.name == \"prepare-data-and-tmp\" && c.image.matches(\"^docker\\\\.io/library/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      ) && c.?securityContext.?privileged.orValue(false) == false && c.?securityContext.?allowPrivilegeEscalation.orValue(true)\
+      \ == false && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(-1)) == 0 && c.?securityContext.?capabilities.?drop.orValue([])\
+      \ == [\"ALL\"] && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\", \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))))))\
+      \ &&\n  p.spec.?initContainers.orValue([]).exists(c, c.name == \"prepare-data-and-tmp\" && c.?securityContext.?allowPrivilegeEscalation.orValue(null)\
+      \ == false && c.?securityContext.?capabilities.?add.orValue([]).size() == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap,\
+      \ cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\", \"DAC_OVERRIDE\"].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))\
+      \ && c.?securityContext.?capabilities.?drop.orValue([]).size() == 1 && c.?securityContext.?capabilities.?drop.orValue([]).all(cap,\
+      \ cap in [\"ALL\"]) && [\"ALL\"].all(cap, cap in c.?securityContext.?capabilities.?drop.orValue([])) && c.?securityContext.?privileged.orValue(false)\
+      \ == false && c.?securityContext.?readOnlyRootFilesystem.orValue(null) == true && c.?securityContext.?runAsGroup.orValue(p.spec.?securityContext.?runAsGroup.orValue(null))\
+      \ == 0 && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(null)) == 0 && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null))\
+      \ == {\"type\": \"RuntimeDefault\"}) &&\n  p.spec.?securityContext.?seccompProfile.orValue(null) == {\"type\": \"RuntimeDefault\"\
       }\n)"
 ---
 apiVersion: policies.kyverno.io/v1
@@ -1779,7 +1778,7 @@ spec:
   properties:
     reason: Existing init container prepares persistent-directory ownership; application containers must remain non-root.
     evidence: docs/non-root-audit.md#retained-permission-init-containers
-    reviewed-on: '2026-11-03'
+    reviewed-on: '2026-11-13'
     review-trigger: repository/guard/startup/chart or ownership change
     image-scope: exact registry/repository; tags and sha256 digests may change
   matchConditions:
@@ -1798,11 +1797,11 @@ spec:
       app\"] == \"seaweedfs-s3\" &&\n  p.spec.?serviceAccountName.orValue(\"default\") == \"default\" &&\n  p.spec.?containers.orValue([]).all(c,\
       \ (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) || false)\
       \ &&\n  p.spec.?initContainers.orValue([]).all(c, (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
-      \ == true) || ((c.name == \"prepare-data-and-tmp\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      \ == true) || ((c.name == \"prepare-data-and-tmp\" && c.image.matches(\"^docker\\\\.io/library/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
       ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
       \ (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) || false)\
       \ &&\n  (p.spec.?initContainers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
-      \ == true) && ((c.name == \"prepare-data-and-tmp\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
+      \ == true) && ((c.name == \"prepare-data-and-tmp\" && c.image.matches(\"^docker\\\\.io/library/busybox(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
       ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0)))) &&\n  p.spec.?initContainers.orValue([]).exists(c,\
       \ c.name == \"prepare-data-and-tmp\" && c.?securityContext.?allowPrivilegeEscalation.orValue(null) == false && c.?securityContext.?capabilities.?add.orValue([]).size()\
       \ == 2 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in [\"CHOWN\", \"DAC_OVERRIDE\"]) && [\"CHOWN\"\

@@ -3,11 +3,16 @@
 import importlib.util
 import json
 import os
+import secrets
 import shutil
-import subprocess
+
+# Only the reviewed test runner below may launch interpreters.
+import subprocess  # nosec B404
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -25,8 +30,34 @@ inventory = importlib.util.module_from_spec(inventory_spec)
 inventory_spec.loader.exec_module(inventory)
 
 
+def run_fixture(command, **kwargs):
+    """Launch only trusted test interpreters with argument lists and no shell."""
+    allowed = {Path(sys.executable).resolve(), Path("/usr/bin/ruby").resolve()}
+    options = {"capture_output", "text", "check", "timeout", "env"}
+    if (
+        not command
+        or Path(command[0]).resolve() not in allowed
+        or set(kwargs) - options
+    ):
+        raise ValueError("Only fixed test interpreters without a shell are allowed")
+    # All scripts/options are defined by these tests; paths use isolated fixtures.
+    return subprocess.run(command, check=kwargs.pop("check", False), **kwargs)  # nosec B603
+
+
 class StartupInventoryTests(unittest.TestCase):
     """Inventory structural dependencies without exporting secret-bearing content."""
+
+    def test_fixture_runner_rejects_shell_and_interpreter_overrides(self):
+        """The reviewed subprocess boundary cannot invoke an unapproved executable."""
+        for command, options in (
+            (["/bin/sh", "-c", "exit 0"], {}),
+            ([sys.executable, "--version"], {"shell": True}),
+            ([sys.executable, "--version"], {"executable": "/bin/sh"}),
+        ):
+            with patch.object(subprocess, "run") as run:
+                with self.assertRaises(ValueError):
+                    run_fixture(command, **options)
+                run.assert_not_called()
 
     def test_references_and_service_hints_never_export_raw_values(self):
         """Resolve a literal database host while keeping opaque references opaque."""
@@ -244,25 +275,25 @@ class StartupCandidateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "candidate.yaml"
             command = [
-                shutil.which("python3"),
+                sys.executable,
                 str(ROOT / "tools/bootstrap/prepare_startup_gate.py"),
                 "--output",
                 str(output),
             ]
-            result = subprocess.run(
-                command, capture_output=True, text=True, check=False
-            )
+            result = run_fixture(command, capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stderr)
             docs = list(yaml.safe_load_all(output.read_text()))
             self.assertEqual([d["kind"] for d in docs], ["ConfigMap", "Deployment"])
             existing = output.read_bytes()
             self.assertNotEqual(
-                subprocess.run(command, capture_output=True, check=False).returncode, 0
+                run_fixture(command, capture_output=True, check=False).returncode,
+                0,
             )
             self.assertEqual(output.read_bytes(), existing)
             command[-1] = str(ROOT / "dawarich/not-a-real-gate.yaml")
             self.assertNotEqual(
-                subprocess.run(command, capture_output=True, check=False).returncode, 0
+                run_fixture(command, capture_output=True, check=False).returncode,
+                0,
             )
             self.assertFalse(Path(command[-1]).exists())
 
@@ -289,7 +320,7 @@ module PG
   end
   def self.connect(**options)
     raise 'PRIVATE_AUTH_PASSWORD' if ENV['TEST_AUTH'] == 'fail'
-    raise 'PRIVATE_BAD_OPTIONS' unless options[:password] == 'PRIVATE_PASSWORD' && options[:options].include?('default_transaction_read_only=on')
+    raise 'PRIVATE_BAD_OPTIONS' unless options[:password] == ENV.fetch('TEST_EXPECTED_PASSWORD') && options[:options].include?('default_transaction_read_only=on')
     Connection.new
   end
 end
@@ -329,6 +360,7 @@ end
             (folder / "pg.rb").write_text(pg)
             (folder / "redis.rb").write_text(redis)
             trace = folder / "trace"
+            fixture_password = secrets.token_urlsafe(16)
             env = {
                 **os.environ,
                 "RUBYLIB": directory,
@@ -336,7 +368,8 @@ end
                 "DATABASE_HOST": "fixture",
                 "DATABASE_PORT": "5432",
                 "DATABASE_USERNAME": "fixture",
-                "DATABASE_PASSWORD": "PRIVATE_PASSWORD",
+                "DATABASE_PASSWORD": fixture_password,
+                "TEST_EXPECTED_PASSWORD": fixture_password,
                 "DATABASE_NAME": "fixture",
                 "REDIS_URL": "redis://fixture",
             }
@@ -346,8 +379,8 @@ end
                 f"\nexit StartupGate.wait({json.dumps(mode)}, "
                 "budget: 0.08, interval: 0.005, attempt_timeout: 0.01)"
             )
-            result = subprocess.run(
-                [shutil.which("ruby"), "-e", code],
+            result = run_fixture(
+                ["/usr/bin/ruby", "-e", code],
                 env=env,
                 capture_output=True,
                 text=True,
@@ -355,6 +388,7 @@ end
                 check=False,
             )
             self.assertNotIn("PRIVATE", result.stdout + result.stderr)
+            self.assertNotIn(fixture_password, result.stdout + result.stderr)
             self.assertEqual(result.stderr, "")
             events = [json.loads(line) for line in result.stdout.splitlines()]
             self.assertTrue(events)

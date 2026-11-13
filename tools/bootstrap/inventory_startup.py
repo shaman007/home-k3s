@@ -20,10 +20,11 @@ def host_hint(entry):
         return None
     try:
         host = urlsplit(value if "://" in value else "//" + value).hostname
-        if not host or host in {"localhost", "0.0.0.0", "::"}:
+        if not host or host == "localhost":
             return None
         try:
-            if ipaddress.ip_address(host).is_loopback:
+            address = ipaddress.ip_address(host)
+            if address.is_loopback or address.is_unspecified:
                 return None
         except ValueError:
             pass
