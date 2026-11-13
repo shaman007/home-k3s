@@ -1,11 +1,12 @@
 # Native Mastodon: inactive preparation
 
-Status: local candidate, 2026-11-13. No cluster changes, migrations or source
-switch have been executed. Publishing this package alone does not activate it:
-`argocd/application-mastodon.yaml` still uses official chart1.2.8;
-`mastodon-custom` has `recurse:false`. The native files are in `mastodon/native/`.
-The Application proposal beside this document is deliberately outside `argocd/`
-and has no automated sync, Replace or prune. Activation is a separate change.
+Status: source-switch preparation, 2026-11-13. Native preparation commit ef1dfcd3
+passed CI/Code Scanning. The next Git revision changes `argocd/application-mastodon.yaml`
+to `mastodon/native` with **manual sync**, no Replace or prune. Publication changes
+the Application definition, but does not itself authorize or trigger native Pod
+creation. Actual execution is tracked separately; do not infer completion from this
+file. `mastodon-custom` retains `recurse:false` and external infrastructure ownership.
+The adjacent Application proposal remains a reference for that manual source.
 
 ## Startup and migration contract
 
@@ -109,16 +110,12 @@ native files; `--output /tmp/unique-directory` emits a private CI scope. No Helm
 cluster call is made by this tool. The native manifests are canonical, not a
 runtime chart dependency; legacy values remain only for rollback/comparison.
 
-CI checks Ruby syntax and unit failure paths, then renders the still-active chart
-and compares original app commands, env/Secret refs, queues, probes, resources,
-Services and selectors against the native candidate. Only the intended startup,
-Recreate/token and digest changes may differ. It validates native schemas and
-resource policy separately, retaining current Helm coverage. After cutover, retire
-this one-time chart comparison explicitly and update the preparation-only test
-that asserts the Helm source is still active; retain ownership/integration tests.
-Do not silently compare native to itself.
-A Renovate change to the old image/chart during preparation requires rebasing and
-reviewing the candidate, rather than disabling parity checks.
+CI checks Ruby syntax/unit failure paths and renders the native source. The source
+switch retires only the one-time automatic Helm parity invocation (which passed
+for ef1dfcd3), avoiding a meaningless native-to-itself comparison. The comparison
+tool remains available for an explicit rollback review; ownership/integration,
+schema and resource regression tests remain. A source-policy test now requires
+native Git source with manual sync and rejects Replace/prune automation.
 
 Tests cover PG auth/Redis failure, missing post-migrations, held writer locks,
 missing/empty schemas, only one migration owner, no-op current schema, child errors,
@@ -169,13 +166,15 @@ production migration or database outage is injected.
 The repository prohibits kubectl apply and git push by the agent. This document
 specifies operations/evidence, not authorization to execute maintenance. No blanket
 source switch, scale, restart, backup write or database operation is authorized by
-local preparation. Ordinary publication of this package keeps Helm active.
+local preparation. Publication of the source-switch changes the definition only; manual sync remains required.
 
 ## Rollback
 
 Before actual schema changes (including the expected no-op first cutover), pause
 both app controllers, suspend/drain writers, stop native app processes and restore
 the previous Helm+values source1.2.8 under the same app name with prune disabled.
+The rollback Git change must also restore the Helm repository in the applications
+AppProject source allowlist (removed when switching to the Git-only native source).
 Reconfirm that legacy image tags still resolve to the recorded running digests;
 otherwise prepare reviewed pinned overrides. Restore the known replica counts,
 CronJob flags and controller settings after the old workloads and functional

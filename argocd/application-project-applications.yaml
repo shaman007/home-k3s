@@ -18,7 +18,6 @@ spec:
     - https://collaboraonline.github.io/online/
     - https://github.com/shaman007/home-k3s.git
     - https://helm.goharbor.io
-    - https://mastodon.github.io/helm-charts
   destinations:
     - namespace: firefox-sync
       server: https://kubernetes.default.svc

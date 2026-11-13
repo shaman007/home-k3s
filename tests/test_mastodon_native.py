@@ -260,11 +260,22 @@ class MastodonStartupRuntimeTests(unittest.TestCase):
 class MastodonNativeSourceTests(unittest.TestCase):
     """Keep native preparation inactive, scope credentials and preserve service contracts."""
 
-    def test_active_argo_and_custom_owner_do_not_activate_candidate(self):
-        """Ordinary publication of this package cannot replace the running Helm application."""
+    def test_native_source_requires_manual_sync_and_custom_owner_keeps_infrastructure(
+        self,
+    ):
+        """The source switch cannot launch migration Pods without an authorized manual sync."""
         app = yaml.safe_load((ROOT / "argocd/application-mastodon.yaml").read_text())
-        self.assertEqual(app["spec"]["sources"][0]["chart"], "mastodon")
-        self.assertEqual(app["spec"]["sources"][0]["targetRevision"], "1.2.8")
+        self.assertNotIn("sources", app["spec"])
+        self.assertEqual(app["spec"]["source"]["path"], "mastodon/native")
+        self.assertEqual(
+            app["spec"]["source"]["repoURL"],
+            "https://github.com/shaman007/home-k3s.git",
+        )
+        self.assertNotIn("automated", app["spec"]["syncPolicy"])
+        self.assertNotIn(
+            "Replace=true", app["spec"]["syncPolicy"].get("syncOptions", [])
+        )
+        self.assertNotIn("Prune=true", app["spec"]["syncPolicy"].get("syncOptions", []))
         custom = yaml.safe_load(
             (ROOT / "argocd/application-mastodon-custom.yaml").read_text()
         )

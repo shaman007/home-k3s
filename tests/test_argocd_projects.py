@@ -3,11 +3,10 @@
 import importlib.util
 import sys
 import tempfile
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 ARGOCD = ROOT / "argocd"
@@ -129,7 +128,8 @@ PROJECT_MEMBERS = {
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
-MANUAL_SYNC_APPLICATIONS = set()
+# Temporary native Mastodon source transition; restore automation after acceptance.
+MANUAL_SYNC_APPLICATIONS = {"mastodon"}
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy",
