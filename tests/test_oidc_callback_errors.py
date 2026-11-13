@@ -82,6 +82,29 @@ class OidcCallbackErrorsTest(unittest.TestCase):
         self.assertIn('Referrer-Policy "no-referrer"', nginx)
         self.assertIn("location / { return 404; }", nginx)
 
+    def test_resources_fit_namespace_limit_range(self):
+        """Catch admission rejection before callback page pods are deployed."""
+        limits = next(
+            d for d in yaml.safe_load_all((ROOT / "namespaces/limit-ranges.yaml").read_text())
+            if d and d["metadata"].get("namespace") == "traefik"
+        )["spec"]["limits"]
+        container = self.objects["Deployment"]["spec"]["template"]["spec"]["containers"][0]
+        resources = container["resources"]
+        # This workload and the namespace contract use Mi memory and m CPU units.
+        for entry in limits:
+            if entry["type"] != "Container":
+                continue
+            minimum = entry["min"]
+            for section in ("requests", "limits"):
+                self.assertGreaterEqual(
+                    int(resources[section]["memory"].removesuffix("Mi")),
+                    int(minimum["memory"].removesuffix("Mi")),
+                )
+            self.assertGreaterEqual(
+                int(resources["requests"]["cpu"].removesuffix("m")),
+                int(minimum["cpu"].removesuffix("m")),
+            )
+
     def test_error_service_wiring_and_port(self):
         """The replacement page resolves to a ready, non-root static HTTP backend."""
         errors = self.objects["Middleware"]["spec"]["errors"]
