@@ -54,11 +54,6 @@ class LegacyIngressRetirementTest(unittest.TestCase):
         script = (ROOT / "vault/configure-pki-acme.sh").read_text()
         self.assertNotIn("vault write", script)
         self.assertIn("exit 1", script)
-        job = yaml.safe_load((ROOT / "openbao/cron-job-vault-pki-renewer.yaml").read_text())
-        self.assertTrue(job["spec"]["suspend"])
-        self.assertEqual(
-            [], yaml.safe_load((ROOT / "openbao/role-vault-pki-renewer.yaml").read_text())["rules"]
-        )
 
 
 if __name__ == "__main__":

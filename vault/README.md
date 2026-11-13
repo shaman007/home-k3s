@@ -8,7 +8,7 @@ OpenBao uses the cert-manager Certificate `openbao/openbao-server-letsencrypt-tl
 
 Both API listeners automatically reload the projected certificate every 30 seconds. A production renewal to revision 2 was verified on all three servers without pod restarts on 2026-11-05. Raft retains its intrinsic transport security on port 8201.
 
-The old backend leaf certificate was revoked, its private key was removed from `openbao-server-tls`, and the dedicated `pki-root/roles/openbao-server`, Kubernetes auth role `vault-pki-renewer`, and matching ACL policy were deleted. The empty Secret and suspended renewer are retained as GitOps tombstones. The renewer source has no credentials, token mounts, or RBAC permissions; its ServiceAccount disables token automount.
+The old backend leaf certificate was revoked, its private key was removed from `openbao-server-tls`, and the dedicated `pki-root/roles/openbao-server`, Kubernetes auth role `vault-pki-renewer`, and matching ACL policy were deleted. The empty Secret remains as a GitOps tombstone. The retired renewer CronJob, ServiceAccount, empty Roles and RoleBindings across namespaces, and its dedicated API egress policy have been removed from GitOps.
 
 Do not recreate the retired backend issuance role or restore the old private key. Recovery requires the verified unseal material; the old shell `VAULT_UNSEAL` value was rejected during this migration.
 

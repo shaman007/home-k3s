@@ -109,7 +109,6 @@ class OpenBaoMigrationTest(unittest.TestCase):
         self.assertEqual({"secretName": "openbao-internal-root-ca"}, ca["spec"]["ca"])
         root = next(x for x in pki if x["kind"] == "Certificate" and x["spec"].get("isCA"))
         self.assertEqual("openbao-root-bootstrap", root["spec"]["issuerRef"]["name"])
-        self.assertTrue(load_yaml("openbao/cron-job-vault-pki-renewer.yaml")["spec"]["suspend"])
 
     def test_ingress_bridge_uses_public_sni_transport(self):
         """Verify ingress bridge uses public SNI transport."""
@@ -156,35 +155,17 @@ class OpenBaoMigrationTest(unittest.TestCase):
         """Verify retired backend issuer cannot be recreated by bootstrap."""
         script = (ROOT / "vault/configure-pki-acme.sh").read_text(encoding="utf-8")
         policy = (ROOT / "vault/policy-vault-pki-renewer.hcl").read_text(encoding="utf-8")
-        renewer = load_yaml("openbao/cron-job-vault-pki-renewer.yaml")
         self.assertNotIn("vault write pki-root/roles/openbao-server", script)
         self.assertNotIn('path "pki-root/issue/openbao-server"', policy)
-        self.assertTrue(renewer["spec"]["suspend"])
-        pod = renewer["spec"]["jobTemplate"]["spec"]["template"]["spec"]
-        self.assertFalse(pod["automountServiceAccountToken"])
-        self.assertNotIn("volumes", pod)
-        self.assertNotIn("env", pod["containers"][0])
-        self.assertEqual([], load_yaml("openbao/role-vault-pki-renewer.yaml")["rules"])
-        self.assertFalse(
-            load_yaml("openbao/service-account-vault-pki-renewer.yaml")[
-                "automountServiceAccountToken"
-            ]
-        )
+        for folder in ROOT.iterdir():
+            if folder.is_dir() and folder.name not in ("docs", ".git", "tests"):
+                for manifest in folder.glob("*.yaml"):
+                    with self.subTest(manifest=manifest):
+                        self.assertNotIn("vault-pki-renewer", manifest.read_text())
         self.assertNotIn("vault write", script)
 
-    def test_tls_bootstrap_rbac_precedes_certificate_wait(self):
-        """Verify TLS bootstrap RBAC precedes certificate wait."""
-        for path in (
-            "openbao/role-vault-pki-renewer.yaml",
-            "openbao/role-binding-vault-pki-renewer.yaml",
-        ):
-            with self.subTest(path=path):
-                resource = load_yaml(path)
-                self.assertEqual(
-                    "-2",
-                    resource["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"],
-                )
-
+    def test_tls_certificate_and_ingress_share_sync_wave(self):
+        """Keep certificate and ingress in the expected sync wave."""
         certificate = load_yaml("openbao/certificate-openbao-ingress-letsencrypt-internal-tls.yaml")
         ingress = load_yaml("openbao/ingress-openbao-ingress-letsencrypt.yaml")
         self.assertEqual(
@@ -205,7 +186,7 @@ class OpenBaoMigrationTest(unittest.TestCase):
                 ).read_text(encoding="utf-8")
             )
         )
-        self.assertEqual(2, len(policies))
+        self.assertEqual(1, len(policies))
         for policy in policies:
             self.assertEqual("CiliumNetworkPolicy", policy["kind"])
             self.assertEqual(["kube-apiserver"], policy["spec"]["egress"][0]["toEntities"])
