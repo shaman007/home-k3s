@@ -111,6 +111,11 @@ jobs:
           python tools/bootstrap/prepare_startup_gate.py --check
           python tools/bootstrap/prepare_application_gates.py --check
 
+      - name: Validate inactive CronJob dependency candidate
+        run: |
+          python tools/bootstrap/prepare_cron_gate.py > "${RUNNER_TEMP}/logs-check-dependency-candidate.yaml"
+          kubeconform -strict -summary -kubernetes-version 1.37.1 "${RUNNER_TEMP}/logs-check-dependency-candidate.yaml"
+
       - name: Render Argo CD applications
         run: |
           python tools/ci/render_applications.py --output "${RUNNER_TEMP}/rendered-applications"

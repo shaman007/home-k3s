@@ -105,6 +105,17 @@ during initialization needs a separate check before treating SSO as optional.
 
 ## Remaining cycles and bootstrap exceptions
 
+The recorded base graph omits a conditional **public S3 route / GeoIP-volume
+recovery ring**. `recovery_scenarios` now records it separately: the current
+Longhorn S3 endpoint requires public Traefik, while restoring Traefik's lost
+GeoIP PVC through that endpoint requires the route itself. The
+[direct internal S3 proposal](../migrations/longhorn-internal-s3/README.md) removes
+those public-route edges; it is prepared, not deployed. Existing-volume restart
+does not imply this recovery scenario.
+
+The [per-Job dependency gate](cronjobs/README.md) is also an inactive proposal.
+It does not suspend CronJobs or alter their schedules.
+
 * Ordinary Longhorn volume attachment does not require S3. S3 is needed for backup
   restore. SeaweedFS source now uses pinned upstream images, removing the Harbor
   images → SeaweedFS → Longhorn restore → lost Harbor volumes recovery ring.

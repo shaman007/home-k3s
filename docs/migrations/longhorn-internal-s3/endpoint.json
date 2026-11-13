@@ -1,0 +1,8 @@
+{
+  "namespace": "longhorn-system",
+  "secret": "longhorn-backup-s3",
+  "key": "AWS_ENDPOINTS",
+  "old_endpoint": "https://s3.andreybondarenko.com",
+  "new_endpoint": "http://s3.seaweedfs.svc.cluster.local:8333",
+  "backup_target_url": "s3://backup@us-east-1/"
+}

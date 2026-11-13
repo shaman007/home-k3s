@@ -27,6 +27,8 @@ Keep Docker usage scoped to diagnostics/read-only operations. General Git and Do
 
 ## GitOps working conventions
 
+- Before authorized live maintenance, create time-limited Alertmanager silences only for the alerts and resource labels affected by that work. Record the reason, expiry and silence IDs; remove them after verification or rollback. Renew only while work continues. Do not disable alert rules, silence unrelated resources or hide unexpected failures. Local preparation/read-only diagnosis does not require a silence. Creating and removing these narrowly scoped maintenance silences is included in authorization for the live maintenance itself.
+
 - For repeatable Argo CD, backup-freshness and maintenance-baseline checks, run `python3 tools/ops/verify.py` with one subcommand: `argocd`, `backups` or `baseline`, following `docs/operational-procedures.md`. These read-only reports do not prove application functionality, recoverability or readiness to upgrade; respect their exit codes and stated scope.
 - This repository is a GitOps-based Kubernetes home-lab. Prefer inspecting the app-specific manifest in its folder and the matching Argo CD application manifest before suggesting changes.
 - When troubleshooting a deployment, inspect the manifest, related ConfigMaps/Secrets, persistent volumes, and pod logs/events before proposing a fix. Do not print or persist secret values.
