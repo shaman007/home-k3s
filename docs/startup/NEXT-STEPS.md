@@ -39,7 +39,7 @@ tracked generators and tests are the reproducible source.
 | 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match, controller polls and small GeoIP-PVC full backup passed | Next scheduled backup and separately authorized isolated restore remain pending |
 | 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Accept internal HTTP; historical queries, ingestion and object reads after rolling Loki |
 | 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Verify source type is S3, actual ESO rendering and signed access; separately authorize sequential client rollouts, including shared Prometheus Pod |
-| 4 | `mail` | Valkey + Unbound + ClamAV → Rspamd → Postfix; independent Dovecot provides SASL/LMTP | Superseded by [complete mail package](mail/README.md): approved tempfail/AV soft-reject policy and staged SMTP window; not deployed |
+| 4 | `mail` | Valkey + Unbound + ClamAV → Rspamd → Postfix; independent Dovecot provides SASL/LMTP | Superseded by [complete mail package](mail/README.md): deployed by 32517070 with tempfail/AV soft-reject policy; isolated SMTP failure tests pending |
 | 5 | `mail-training` | Wait up to 300 seconds for Rspamd HTTP200, then existing trainer; otherwise skip before starting private Dovecot/reading mail | Review one-hour deadline; observe next scheduled training without injecting mail or cancelling an active Job |
 | 6 | `nextcloud-cron` + report gates | Native SQL/ACL-Valkey/maintenance checks for cron; Loki/Ollama API checks for three reports | Check stale-report detection, runtime limits and actual mounted-PVC permissions; no skipped run counted as useful completion |
 | 7 | `karakeep` | s6 workers wait for Chrome and Meilisearch; no Pod init wait for same-Pod Chrome | Accept gating the entire worker service, not only crawler/search; validate s6 mount/startup and signal behavior in isolation first |
@@ -118,8 +118,9 @@ wait is removed from Valkey; Dovecot has no Valkey dependency.
 The user explicitly selected temporary deferral without bypassing failed
 filters. The prepared source therefore changes Postfix to milter tempfail and
 adds Rspamd soft reject on CLAM_VIRUS_FAIL, preserving actual-virus reject.
-These mail changes are not deployed; use the two-stage rollout in the linked
-package, not the old fail-open policy described by the historical proposal.
+The user chose automatic rollout for 32517070; these settings are now active.
+See its execution record. The local diagnostic-loop fix is not yet deployed;
+the reference staged plan remains available for later provider transitions.
 
 The trainer uses its existing curl and image, does not follow redirects or use
 environment proxies, and requires HTTP200 from the existing Rspamd ping endpoint.
@@ -212,7 +213,8 @@ uncommitted extensions, and none of these checks substitutes for live acceptance
 ## Mail package follow-up
 
 The canonical [mail startup/readiness package](mail/README.md) supersedes the
-narrow historical Valkey-only proposal above. It is locally prepared, not deployed.
+narrow historical Valkey-only proposal above. The baseline was deployed by 32517070; see its execution record and the local
+diagnostic-loop follow-up.
 The controlled rollout must account for single-replica Recreate and ConfigMap
 Reloader; publishing all changes without the planned SMTP window is not the
 acceptance procedure.

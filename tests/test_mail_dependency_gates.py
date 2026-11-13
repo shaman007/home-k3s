@@ -225,6 +225,23 @@ class MailGateTests(unittest.TestCase):
         events = [json.loads(line) for line in result.stdout.splitlines()]
         self.assertEqual([e["result"] for e in events], ["unavailable", "ready"])
 
+    def test_failed_check_and_expired_wait_return_one_without_perl_errors(self):
+        """A do-BLOCK is not a Perl loop: real failure paths must return cleanly."""
+        for mode in ("--check", "--wait"):
+            code = (
+                'my $time=0; no warnings "redefine"; '
+                "local *MailDependencies::now=sub{return $time}; "
+                "local *MailDependencies::pause=sub{$time+=$_[0]}; "
+                "local *MailDependencies::probe=sub{return 0}; "
+                'exit MailDependencies::main($ARGV[1],"rspamd-ready");'
+            )
+            result = self.perl(code, mode)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertEqual(result.stderr, b"")
+            events = [json.loads(line) for line in result.stdout.splitlines()]
+            self.assertTrue(events)
+            self.assertTrue(all(e["result"] == "unavailable" for e in events))
+
     def test_canonical_graph_policy_and_data_preservation(self):
         """Dovecot stays independent; startup/readiness must not alter local liveness."""
         docs = GEN.documents()

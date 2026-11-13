@@ -75,7 +75,7 @@ spec:
             sizeLimit: 500Mi
         - name: mail-startup
           configMap:
-            name: mail-startup-e07d94c90561
+            name: mail-startup-a7a2479604c9
       initContainers:
         - name: init-postfix-queue-perms
           image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903

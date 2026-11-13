@@ -146,7 +146,7 @@ spec:
           emptyDir: {}
         - name: mail-startup
           configMap:
-            name: mail-startup-e07d94c90561
+            name: mail-startup-a7a2479604c9
         - name: force-actions-cf
           configMap:
             name: rspamd-cf

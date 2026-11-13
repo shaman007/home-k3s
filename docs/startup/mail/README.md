@@ -1,7 +1,9 @@
 # Mail startup, readiness and failure policy
 
-Status: local source changes prepared, **not deployed**. Existing mail processes,
-queue, mailboxes, TLS, credentials and entrypoints were not changed live.
+Status: **32517070 deployed automatically and verified**. The user selected
+automatic rollout without the planned SMTP stop. See the [execution record](EXECUTION.md).
+A local diagnostic-loop follow-up is prepared, not yet published; queue/mailbox
+mounts, TLS, credentials and application entrypoints remain unchanged.
 
 ## Verified dependency graph
 
@@ -80,11 +82,10 @@ milter/antivirus policies address different parts of that behavior. See primary
 [Rspamd antivirus](https://docs.rspamd.com/modules/antivirus/) and
 [force actions](https://docs.rspamd.com/modules/force_actions/).
 
-Native Rspamd UCL parsing accepted the new force_actions rule via batch Lua
-stdin. Full `rspamadm configtest -c /dev/stdin` is not supported (UCL attempts
-mmap); no temporary configuration was written into the running Pod to bypass
-this. Full configtest and an isolated SMTP failure matrix remain rollout gates,
-not completed runtime fault-injection evidence.
+Native Rspamd UCL parsing accepted the rule during preparation. Full configtest
+through stdin was unsupported because of mmap; after rollout, the actual mounted
+config passed native `rspamadm configtest -s`. Isolated SMTP failure injection
+and authenticated delivery remain unverified; no production provider was stopped.
 
 ## Local validation and source regeneration
 
@@ -102,7 +103,7 @@ cover PONG, NOAUTH, truncated replies and hung reads for Valkey and ClamAV. CI
 checks canonical sources, Perl syntax, fake wire-protocol failures and recovery.
 Immutable content-addressed script ConfigMaps must remain while referenced.
 
-## Staged rollout — requires live authorization
+## Reference staged rollout — not used for 32517070
 
 Do not publish the entire active-source package and assume a zero-downtime
 upgrade: mail uses single-replica Recreate deployments; removing the Valkey init

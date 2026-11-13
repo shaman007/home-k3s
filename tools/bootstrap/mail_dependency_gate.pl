@@ -147,7 +147,7 @@ sub main {
     return 2 unless eval { my @t = targets($profile); scalar @t; };
     my $budget = $mode eq '--wait' ? 300 : 8;
     my $deadline = now() + $budget;
-    do {
+    while (now() < $deadline) {
         if (check_group($profile, $deadline)) {
             printf '{"event":"mail_dependencies","profile":"%s","result":"ready"}' . "\n", $profile;
             return 0;
@@ -155,7 +155,7 @@ sub main {
         last if $mode eq '--check' || now() >= $deadline;
         my $left = $deadline - now();
         pause($left < 5 ? $left : 5) if $left > 0;
-    } while (now() < $deadline);
+    }
     return 1;
 }
 $| = 1;

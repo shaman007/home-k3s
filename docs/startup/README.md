@@ -7,8 +7,9 @@ The [coverage audit](COVERAGE.md) distinguishes detailed stack checks from the
 broader structural census. The [native Mastodon plan](mastodon-native/README.md)
 records its offline backup/restore validation and controlled source transition.
 The [next-steps package index](NEXT-STEPS.md) contains Karakeep/observability and historical staged proposals.
-The [mail package](mail/README.md) now prepares the complete acyclic mail branch,
-including failure policy, without applying it. Per-Job gates are deployed; their
+The [mail package](mail/README.md) was deployed automatically by `32517070`;
+its [execution record](mail/EXECUTION.md) records startup order, active failure
+policy and the local diagnostic-loop follow-up. Per-Job gates are deployed; their
 [runtime record](cronjobs/EXECUTION.md) distinguishes skips from completed work.
 The machine-readable [graph](dependencies.yaml) records provider → consumer
 edges, readiness criteria and source evidence. Phases describe a partial order;

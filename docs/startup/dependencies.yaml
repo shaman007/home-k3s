@@ -5,7 +5,7 @@ scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 prepared_packages:
   mail:
-    status: source-ready; not deployed
+    status: 32517070 deployed; startup/readiness and active filter policy verified; local diagnostic-loop fix pending
     provider: Valkey RESP, Unbound DNS, ClamAV PING, independent Dovecot LMTP/SASL
     consumer: Rspamd init/readiness then Postfix init/readiness; milter tempfail and AV soft reject
   mail-training:
@@ -1260,19 +1260,19 @@ edges:
 - from: mail-valkey
   to: mail-rspamd
   kind: startup
-  when: prepared_mail_gates
+  when: mail_gates_installed
 - from: mail-dns
   to: mail-rspamd
   kind: startup
-  when: prepared_mail_gates
+  when: mail_gates_installed
 - from: mail-clamav
   to: mail-rspamd
   kind: startup
-  when: prepared_mail_gates
+  when: mail_gates_installed
 - from: mail-rspamd
   to: mail-postfix
   kind: startup
-  when: prepared_mail_gates
+  when: mail_gates_installed
 - from: mail-dovecot
   to: mail-postfix
   kind: startup
