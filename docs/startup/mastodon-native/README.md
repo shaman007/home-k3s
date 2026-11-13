@@ -1,12 +1,27 @@
 # Native Mastodon: inactive preparation
 
-Status: source-switch preparation, 2026-11-13. Native preparation commit ef1dfcd3
-passed CI/Code Scanning. The next Git revision changes `argocd/application-mastodon.yaml`
-to `mastodon/native` with **manual sync**, no Replace or prune. Publication changes
-the Application definition, but does not itself authorize or trigger native Pod
-creation. Actual execution is tracked separately; do not infer completion from this
-file. `mastodon-custom` retains `recurse:false` and external infrastructure ownership.
-The adjacent Application proposal remains a reference for that manual source.
+Status: native cutover completed, 2026-11-13. Source-switch commit f4a35a57 passed
+all CI and Code Scanning and was manually synced without prune/force. Native
+Deployments are active; the initial migration owner reported `already_applied`
+(no db:migrate child and no schema changes). The following Git revision restores
+normal auto-sync/self-heal; it does not change native Pod templates. No Replace or
+prune is enabled. `mastodon-custom` retains external infrastructure ownership.
+The adjacent manual Application remains a reference for a controlled future
+transition, not the final steady-state policy.
+
+The user-requested bookmarked-media-sync Job completed successfully before
+shutdown. All three app Deployments were stopped before the final encrypted
+logical backup. Age authentication and archive catalog checks succeeded; full
+pg_restore in an isolated RAM-only PostgreSQL succeeded and counts of five
+control tables matched the stopped source. The temporary restore Pod was removed;
+production PostgreSQL/Valkey and their PVCs were never stopped/restored/rewritten.
+An earlier live snapshot was discarded/replaced and was not used for the cutover.
+
+Read-only post-cutover acceptance: web/API, streaming, login page, OIDC discovery,
+existing public media HEAD and both Prometheus exporters returned HTTP200;
+Sidekiq heartbeat was current, queues empty, all app init exits0 and restarts0.
+Both CronJob suspend flags were restored to false and companion reconciliation
+resumed. This does not claim authenticated SSO completion or a test federated post.
 
 ## Startup and migration contract
 
@@ -115,7 +130,7 @@ switch retires only the one-time automatic Helm parity invocation (which passed
 for ef1dfcd3), avoiding a meaningless native-to-itself comparison. The comparison
 tool remains available for an explicit rollback review; ownership/integration,
 schema and resource regression tests remain. A source-policy test now requires
-native Git source with manual sync and rejects Replace/prune automation.
+native Git source with self-heal after acceptance and rejects Replace/prune automation.
 
 Tests cover PG auth/Redis failure, missing post-migrations, held writer locks,
 missing/empty schemas, only one migration owner, no-op current schema, child errors,

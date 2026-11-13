@@ -263,7 +263,7 @@ class MastodonNativeSourceTests(unittest.TestCase):
     def test_native_source_requires_manual_sync_and_custom_owner_keeps_infrastructure(
         self,
     ):
-        """The source switch cannot launch migration Pods without an authorized manual sync."""
+        """Accepted native source regains normal automation while preserving scoped owners."""
         app = yaml.safe_load((ROOT / "argocd/application-mastodon.yaml").read_text())
         self.assertNotIn("sources", app["spec"])
         self.assertEqual(app["spec"]["source"]["path"], "mastodon/native")
@@ -271,7 +271,10 @@ class MastodonNativeSourceTests(unittest.TestCase):
             app["spec"]["source"]["repoURL"],
             "https://github.com/shaman007/home-k3s.git",
         )
-        self.assertNotIn("automated", app["spec"]["syncPolicy"])
+        automated = app["spec"]["syncPolicy"]["automated"]
+        self.assertTrue(automated["selfHeal"])
+        self.assertFalse(automated.get("prune", False))
+        self.assertIsNot(automated.get("enabled", True), False)
         self.assertNotIn(
             "Replace=true", app["spec"]["syncPolicy"].get("syncOptions", [])
         )

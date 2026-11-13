@@ -128,8 +128,7 @@ PROJECT_MEMBERS = {
 }
 
 SELF_HEAL_EXEMPT_APPLICATIONS = {"lenka"}
-# Temporary native Mastodon source transition; restore automation after acceptance.
-MANUAL_SYNC_APPLICATIONS = {"mastodon"}
+MANUAL_SYNC_APPLICATIONS = set()
 
 PRUNE_REQUIRED_APPLICATIONS = {
     "alloy",

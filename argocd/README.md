@@ -12,8 +12,8 @@ Here we have some of services managed by the Argocd. If something is not here, t
 
 ## Mastodon
 
-* `application-mastodon.yaml` manages `mastodon/native` with temporary manual sync
-  for the controlled Helm-to-native transition; there is no Replace or prune.
+* `application-mastodon.yaml` manages `mastodon/native` with auto-sync/self-heal
+  after the controlled cutover; there is no Replace or automatic prune.
 * `application-mastodon-custom.yaml` manages the local companion manifests:
   ExternalSecrets, Postgres, ingress, network policies, and the bookmarked media
   sync job.

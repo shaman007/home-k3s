@@ -1,7 +1,7 @@
 format_version: 1
 observed_date: '2026-11-13'
-scope: Core bootstrap plus Dawarich, Immich, Mastodon (native candidate inactive), Nextcloud, Keycloak, WordPress
-  and YourSpotify, Bitwarden and Firefox Sync (local gates prepared)
+scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud, Keycloak, WordPress and YourSpotify,
+  Bitwarden and Firefox Sync (local gates prepared)
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 nodes:
   kubernetes:
@@ -167,10 +167,10 @@ nodes:
   mastodon:
     phase: 4
     ready: Application health after its own schema migrations; worker heartbeat/queue connectivity separately. Specific
-      readiness endpoint must be validated per app. Inactive native manifests are prepared separately; chart remains
-      active until controlled source switch.
+      readiness endpoint must be validated per app. Native manifests active since 2026-11-13; legacy chart retained
+      for rollback review.
     sources:
-    - mastodon/mastodon-values.yaml
+    - mastodon/native
   mastodon-valkey:
     phase: 3
     ready: 'valkey:6379 in mastodon: protocol PING returns PONG, with configured authentication; persistence loaded.'
@@ -347,38 +347,39 @@ nodes:
     - tools/bootstrap/prepare_application_gates.py
   mastodon-native-dependencies:
     phase: 4
-    ready: Read-only app SQL SELECT 1 and authenticated Valkey PING; init retry budgets apply. Planned/inactive
-      until authorized transition.
+    ready: Read-only app SQL SELECT 1 and authenticated Valkey PING; init retry budgets apply. Active after controlled
+      2026-11-13 cutover; initial migration state already applied.
     sources:
     - mastodon/native/deployment-mastodon-web.yaml
   mastodon-native-migrations:
     phase: 4
     ready: Only web init holds exclusive advisory lock and runs full db:migrate if required; existing production
-      schema required. Current-image no-op if all migration IDs present. Planned/inactive until authorized transition.
+      schema required. Current-image no-op if all migration IDs present. Active after controlled 2026-11-13 cutover;
+      initial migration state already applied.
     sources:
     - tools/bootstrap/mastodon_startup.rb
   mastodon-native-schema:
     phase: 4
     ready: All db/migrate and db/post_migrate IDs from pinned web image recorded; consumers acquire shared coordinator
-      lock before checking. Planned/inactive until authorized transition.
+      lock before checking. Active after controlled 2026-11-13 cutover; initial migration state already applied.
     sources:
     - tools/bootstrap/mastodon_startup.rb
   mastodon-native-web:
     phase: 5
     ready: Dependency/schema init passes then original Puma command; app /health probe and functional checks at
-      rollout. Planned/inactive until authorized transition.
+      rollout. Active after controlled 2026-11-13 cutover; initial migration state already applied.
     sources:
     - mastodon/native/deployment-mastodon-web.yaml
   mastodon-native-sidekiq:
     phase: 5
     ready: Dependency/schema init passes then original weighted Sidekiq queues; verify worker heartbeat separately.
-      Planned/inactive until authorized transition.
+      Active after controlled 2026-11-13 cutover; initial migration state already applied.
     sources:
     - mastodon/native/deployment-mastodon-sidekiq-all-queues.yaml
   mastodon-native-streaming:
     phase: 5
-    ready: Ruby image schema init passes before original Node streaming container and health probes. Planned/inactive
-      until authorized transition.
+    ready: Ruby image schema init passes before original Node streaming container and health probes. Active after
+      controlled 2026-11-13 cutover; initial migration state already applied.
     sources:
     - mastodon/native/deployment-mastodon-streaming.yaml
 edges:
@@ -1140,29 +1141,29 @@ edges:
   when: SQL_gates_installed
 - from: mastodon-db
   to: mastodon-native-dependencies
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup
 - from: mastodon-valkey
   to: mastodon-native-dependencies
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup
 - from: mastodon-native-dependencies
   to: mastodon-native-migrations
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup
 - from: mastodon-native-migrations
   to: mastodon-native-schema
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup
 - from: mastodon-native-schema
   to: mastodon-native-web
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup
 - from: mastodon-native-schema
   to: mastodon-native-sidekiq
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup
 - from: mastodon-native-schema
   to: mastodon-native-streaming
-  kind: planned-startup
-  when: native_candidate_activated_after_maintenance
+  kind: startup
+  when: native_manifest_startup

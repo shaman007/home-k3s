@@ -3,8 +3,9 @@
 Observed 2026-11-13. This is a structural census of **149 continuous workloads and
 31 CronJobs in 54 namespaces**, followed by detailed checks of the candidates
 below. It is not an assertion that every opaque Secret, chart, script and application
-entrypoint has been semantically audited. All live actions in this preparation
-were read-only; the new manifests have not been deployed.
+entrypoint has been semantically audited. The original census/preparation
+was read-only; rollout status below is updated only after separately authorized
+execution. Mastodon native cutover is now recorded as completed.
 
 Reproduce the sanitized census (does not read Kubernetes Secret objects):
 
@@ -52,7 +53,7 @@ contain only fixed stage/result/duration. Each init name identifies the schema.
 
 | Stack | Source-grounded dependency | Correct next step |
 | --- | --- | --- |
-| Mastodon | PostgreSQL + Valkey, pre/post-upgrade migration hooks; chart1.2.8 has no init/command extension | Native candidate now prepared with a web-init migration owner and schema gates; active chart remains unchanged pending maintenance transition. |
+| Mastodon | PostgreSQL + Valkey, pre/post-upgrade migration hooks; chart1.2.8 has no init/command extension | Native cutover completed with web-init migration owner and schema gates; initial schema was already applied. Legacy chart is retained only for rollback review. |
 | Karakeep | Local SQLite (`/data/db.db` present), separate Meilisearch; Chrome in same Pod; Ollama and OIDC integrations | Check search indexing/worker retry semantics separately. An init waiting for same-Pod Chrome deadlocks, because ordinary containers start after all init containers. Gate Chrome-dependent worker entry only if required, not the entire Pod. |
 | Mail | Valkey → Rspamd state/greylisting; Unbound → DNS consumers; Postfix → Rspamd milter and Dovecot LMTP | Separate mail readiness/failure-policy work. `mail/config-map-main-cf.yaml` currently has `milter_default_action=accept`; a startup-only check cannot prevent filtering bypass after a later Rspamd outage. Do not silently change accept/reject or delivery policy. |
 | Matrix/Synapse | SQLite `/data/homeserver.db`; nginx serves well-known discovery | No external SQL gate. Nginx contains stale upstream `matrix:6167`, but Service exposes8448→6167. Live requests from nginx:6167 fails,8448/health=200. Public `/_matrix/client/versions`=200 because ingress routes API directly to Service8448. Fix/remove stale unused proxy separately; no current public API outage inferred. |
@@ -103,7 +104,7 @@ workloads, declared images and object references; it is not proof of independenc
 | loki | 5 / 0 | Infrastructure | Observability; datasource readiness distinct from global app startup. |
 | longhorn-system | 10 / 15 | Infrastructure | Storage/CSI; structural review only. |
 | mail | 5 / 1 | App | Valkey->Rspamd, Unbound, Postfix/Dovecot. Audit failure/retry behavior separately; do not gate whole SMTP on feature dependencies. |
-| mastodon | 5 / 2 | App | Native candidate prepared inactive; see mastodon-native/README.md. |
+| mastodon | 5 / 2 | App | Native active with PostgreSQL/Valkey and schema gates; see mastodon-native/README.md. |
 | matrix | 2 / 0 | App | SQLite; public API goes directly to Service8448. Nginx unused API proxy uses wrong6167. |
 | mempalace | 1 / 0 | App | Structural review only. |
 | metallb-system | 4 / 0 | Infrastructure | Load balancing; structural review only. |

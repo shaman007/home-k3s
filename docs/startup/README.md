@@ -1,18 +1,14 @@
 # Startup dependencies and readiness contract
 
-Status: **Dawarich pilot is in GitOps; five additional stacks prepared locally**, 2026-11-13.
-This package prepares Immich, Nextcloud, Keycloak, WordPress and YourSpotify.
-Mastodon gates are deferred: pinned chart 1.2.8 has no init/command extension;
-its pre/post migration hooks require a separate rendering design.
-No cluster changes or new global startup controller are part of this preparation.
+Status: **application startup gates deployed; Mastodon native cutover completed**, 2026-11-13.
+Source now covers Dawarich, Immich, Nextcloud, Keycloak, WordPress, YourSpotify,
+Bitwarden, Firefox Sync and native Mastodon, plus core bootstrap dependencies.
+The [coverage audit](COVERAGE.md) distinguishes detailed stack checks from the
+broader structural census. The [native Mastodon plan](mastodon-native/README.md)
+records its offline backup/restore validation and controlled source transition.
 The machine-readable [graph](dependencies.yaml) records provider → consumer
-edges, criteria and source evidence. Phases describe a partial order, not an
-enforced cluster-wide barrier. Scope is core bootstrap and these seven stacks;
-the remaining Applications are not audited exhaustively.
-
-The [follow-up coverage audit](COVERAGE.md) adds locally prepared Bitwarden and
-Firefox Sync gates and a census including scheduled consumers. Mastodon remains
-separate.
+edges, readiness criteria and source evidence. Phases describe a partial order;
+there is no global startup controller or cluster-wide sync barrier.
 
 A broader read-only structural inventory covered **149 live workloads in 51
 namespaces and 51 ExternalSecrets**. It records required Secret/ConfigMap/PVC
@@ -259,10 +255,11 @@ replica. This checks dependency availability, not completion of a particular new
 ReplicaSet or cross-Application rollout ordering. A successful warm rollout is
 not evidence of a full cluster cold boot.
 
-## Mastodon native candidate
+## Mastodon native deployment
 
-The separately prepared [native package and transition plan](mastodon-native/README.md)
-replaces the prior chart-extension deferral. It remains inactive: normal publication
-keeps chart1.2.8. Its web init owns full migrations; web/Sidekiq/streaming check both
-ordinary and post-migration IDs under a PostgreSQL advisory-lock barrier. Activation
-and every future version update require the documented maintenance window.
+The [native package and transition/rollback plan](mastodon-native/README.md)
+was activated on 2026-11-13 after the requested background Job completed and an
+offline encrypted backup passed isolated restore validation. Web init owns full
+migrations; web/Sidekiq/streaming check both ordinary and post-migration IDs under
+a PostgreSQL advisory-lock barrier. Initial adoption was a no-op for the schema.
+Future pending migrations and version changes still require a maintenance window.
