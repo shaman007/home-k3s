@@ -1,6 +1,8 @@
 # Observability recovery dependencies
 
-Read-only runtime/source audit on 2026-11-14. No monitoring resources changed.
+Initial read-only audit on 2026-11-14, followed by the explicitly authorized
+[executed internal-S3 transition](EXECUTION.md). Runtime is now on internal S3;
+matching source changes await publication and two Argo maintenance pauses remain.
 The user treats Loki/Thanos/Grafana as optional to the functioning cluster.
 Do not add application startup gates on any of them.
 
@@ -45,8 +47,8 @@ Loki is a single binary with independent chunks/results Memcached caches,
 gateway and canaries. It has no init wait or liveness probe for external services.
 Cache addresses are configured clients, not mutual startup gates. Real cold
 outage/retry behavior remains to be exercised in isolated exact-image tests.
-Loki's live ConfigMap still uses `https://s3.andreybondarenko.com`, retaining
-public DNS/TLS/Traefik dependencies. The prepared route bypasses these via
+Loki's pre-cutover ConfigMap used `https://s3.andreybondarenko.com`. The active
+route now bypasses those public DNS/TLS/Traefik dependencies via
 `s3.seaweedfs.svc.cluster.local:8333`; bucket/schema/credentials/retention stay intact.
 
 Thanos Querier connects to sidecar and store gateway; it does not access S3 or
@@ -73,14 +75,12 @@ contains later client endpoint changes.
    Argo filename allowlist: the generator now includes its new policy filename.
    Loki and SeaweedFS selectors already discover the corresponding policy files.
    No endpoint should switch before actual policy-path verification.
-3. Move Loki to internal S3 separately. Verify ingestion, a historical query and
-   object access. Preserve WAL/PVC and existing public-route permissions for rollback.
-4. Validate existing Thanos S3 source schema without printing credentials. Its
-   ESO candidate transforms only endpoint/insecure, retaining the OpenBao source.
-   Verify template reconciliation and client reload semantics before sequential
-   client acceptance. The sidecar shares Prometheus; avoid an incidental collector
-   restart while switching store/compactor. Shared-secret projection can reach
-   all clients, so a strict barrier may require per-client target Secrets first.
+3. Loki internal S3 is active and accepted: historical/fresh queries and signed
+   object reads passed; old route permissions and WAL/PVC retained for rollback.
+4. Thanos store/compactor now have separately derived internal-S3 ESO targets;
+   the original target switched only for sidecar last. Actual ESO semantic checks,
+   individual readiness and historical queries passed. Only sidecar restarted;
+   Prometheus process was preserved. Next natural block upload remains to verify.
 5. Optional Grafana improvement: add a separately named direct Prometheus
    datasource for recent metrics when Querier is down. Keep existing datasource
    UID/default and dashboards intact. This does not automatically fail over

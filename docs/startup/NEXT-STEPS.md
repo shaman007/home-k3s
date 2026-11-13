@@ -37,8 +37,8 @@ tracked generators and tests are the reproducible source.
 | Order | Package | Prepared behavior | Required decision/acceptance before deployment |
 | --- | --- | --- | --- |
 | 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match, controller polls and small GeoIP-PVC full backup passed | Next scheduled backup and separately authorized isolated restore remain pending |
-| 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Accept internal HTTP; historical queries, ingestion and object reads after rolling Loki |
-| 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Verify source type is S3, actual ESO rendering and signed access; separately authorize sequential client rollouts, including shared Prometheus Pod |
+| 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Active and accepted; publish matching sources and remove maintenance pause |
+| 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Active and accepted with isolated targets; Prometheus preserved; next natural upload pending |
 | 4 | `mail` | Valkey + Unbound + ClamAV → Rspamd → Postfix; independent Dovecot provides SASL/LMTP | Superseded by [complete mail package](mail/README.md): deployed by 32517070 with tempfail/AV soft-reject policy; isolated SMTP failure tests pending |
 | 5 | `mail-training` | Wait up to 300 seconds for Rspamd HTTP200, then existing trainer; otherwise skip before starting private Dovecot/reading mail | Review one-hour deadline; observe next scheduled training without injecting mail or cancelling an active Job |
 | 6 | `nextcloud-cron` + report gates | Native SQL/ACL-Valkey/maintenance checks for cron; Loki/Ollama API checks for three reports | Check stale-report detection, runtime limits and actual mounted-PVC permissions; no skipped run counted as useful completion |
@@ -52,64 +52,26 @@ on `kubectl apply` still applies.
 
 ## Observability details
 
-Current runtime graph, optional-feature boundaries and staged plan:
-[Observability recovery audit](observability/README.md). Monitoring is not an
-application startup prerequisite; do not add reciprocal Loki/Thanos/Grafana gates.
+The [runtime graph](observability/README.md) separates storage prerequisites from
+optional query/delivery links. No application startup gate on Grafana/Loki/Thanos
+was introduced. Stage-one policies were published and verified at `02452391`.
 
-Loki currently uses public S3 through Traefik. The candidate changes exactly
-`loki.storage.s3.endpoint` and `insecure`, retaining all other values and the
-existing Secret references. New egress and SeaweedFS ingress rules permit only
-selected Loki/Thanos Pods to TCP8333. Existing public-route policy remains during
-transition for straightforward rollback; the configured client has no fallback
-endpoint. NetworkPolicy source IP behavior must be checked from actual clients.
+The [executed transition](observability/EXECUTION.md) moved Loki, store gateway,
+compactor, then sidecar to direct SeaweedFS S3. Store/compactor have independent
+ESO targets; the original shared target switched for sidecar only after those
+clients were accepted. Actual ESO output changed only endpoint/insecure and kept
+all credentials/other fields, with the original OpenBao source unchanged.
 
-Promotion order is explicit because these files belong to different Argo apps:
-publish/deploy **only the three new NetworkPolicies first**, verify the direct
-path from current client namespaces/Pod labels, then promote Loki's values and
-accept it before touching the Thanos ExternalSecret. An app-of-apps sync does not
-provide a cross-Application readiness barrier. Do not copy the entire candidate
-tree into active sources and assume apply ordering will make it safe.
+Only the sidecar process restarted in the shared Pod; Prometheus containerID,
+start time and zero restarts were preserved, while sample counters increased.
+Historical/fresh Loki reads and a four-day Thanos query passed. A new sidecar
+block upload did not occur in the window and remains a natural follow-up check.
 
-Thanos `monitoring/thanos-objstore-secret` is ESO-owned. Do **not** patch its data
-directly: ESO would overwrite that change. The candidate keeps remote property
-`monitoring/objstore.yml`, renames the intermediate fetched key to `source`, and
-uses v2 `fromYaml`/`set`/`toYaml` to preserve the complete config while changing
-the S3 endpoint and HTTP flag. `mergePolicy: Replace` exports only `objstore.yml`,
-not the intermediate raw key. No source credentials are read, saved or rewritten
-by this preparation. A synthetic fixture is rendered by real Helm Go/Sprig to
-check semantic credential preservation, including quoting/newlines and unrelated
-options. **This is not a live ESO engine test.** Confirm current source type S3
-and schema before enabling; malformed/mismatched source is a stop condition.
-
-ESO documents the v2 functions and missing-key behavior in its
-[official templating guide](https://external-secrets.io/latest/guides/templating/).
-Its `fail` helper is unavailable, so the candidate does not use Helm-only `fail`
-or `required` functions. Real reconciliation must be observed before rolling
-clients. A non-S3 or non-mapping source is deliberately rejected using a fixed
-`mustFromJson` error (ESO lacks `fail`), so it cannot silently publish a malformed
-replacement config. The Go/Sprig test includes those rejection cases. Never print
-rendered Secret data or template debug values.
-
-Thanos clients do not gain a new mandatory startup gate. Prometheus must continue
-collecting when S3 is unavailable. Updating a mounted config does not demonstrate
-the running client has reloaded it: verify store gateway, compactor and sidecar
-individually. Sidecar shares `prometheus-deployment`; a restart interrupts local
-monitoring and needs an explicit maintenance window. Do not automatically restart
-all three or add Reloader triggers that defeat staged acceptance. Querier does not
-read S3 directly and gets no S3 policy/dependency.
-
-The objstore Secret is shared by all three clients: its projection can update
-all mounted files, even without a rollout. Verify each binary's reload behavior
-and any existing Reloader/watch annotations before promoting that template. The
-proposal does not promise a per-client switch barrier for a shared live Secret.
-If that is required, prepare per-client config Secrets first in a separate step.
-
-Rollback Loki by restoring its two transport values; rollback Thanos by restoring
-the original ExternalSecret source mapping/template, waiting for the old target
-Secret to reconcile, and rolling only clients already switched. Keep credentials,
-bucket contents, local TSDB/WAL and index/data PVCs. Remove new policy permissions
-only after all consumers use the old route and acceptance succeeds. The public
-route remains usable unless the original underlying DR failure is still present.
+Source changes await publication. Only `loki` and `thanos` have temporary
+skip-reconcile annotations; remove them after desired Git matches live. All
+created maintenance silences were explicitly expired. Rollback order and
+non-secret scratch evidence are documented in the execution record. Keep all
+S3 objects, TSDB/WAL and PVCs; the old public route remains available for rollback.
 
 ## Mail details
 

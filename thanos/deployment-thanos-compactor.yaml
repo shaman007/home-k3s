@@ -101,7 +101,7 @@ spec:
       volumes:
         - name: objstoreyml
           secret:
-            secretName: thanos-objstore-secret
+            secretName: thanos-compactor-objstore-internal
         - name: data
           persistentVolumeClaim:
             claimName: compactor-lh

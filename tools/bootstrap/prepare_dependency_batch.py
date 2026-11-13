@@ -241,9 +241,19 @@ def observability():
     # override inside ESO without ever exporting or rewriting OpenBao values.
     if (
         len(thanos["spec"]["data"]) != 1
-        or thanos["spec"]["data"][0]["secretKey"] != "objstore.yml"
+        or thanos["spec"]["data"][0]["secretKey"] not in ("objstore.yml", "source")
     ):
         raise ValueError("Review changed Thanos source Secret schema")
+    expected_template = {
+        "engineVersion": "v2",
+        "mergePolicy": "Replace",
+        "data": {"objstore.yml": THANOS_TEMPLATE},
+    }
+    if (
+        thanos["spec"]["data"][0]["secretKey"] == "source"
+        and thanos["spec"]["target"].get("template") != expected_template
+    ):
+        raise ValueError("Review changed Thanos endpoint transformation template")
     thanos["spec"]["data"][0]["secretKey"] = "source"
     thanos["spec"]["target"]["template"] = {
         "engineVersion": "v2",

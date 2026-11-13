@@ -110,10 +110,10 @@ spec:
               ruler: loki
               admin: loki
             s3:
-              endpoint: "https://s3.andreybondarenko.com"
+              endpoint: "http://s3.seaweedfs.svc.cluster.local:8333"
               accessKeyId: ""
               secretAccessKey: ""
-              insecure: false
+              insecure: true
               s3ForcePathStyle: true
 
           schemaConfig:

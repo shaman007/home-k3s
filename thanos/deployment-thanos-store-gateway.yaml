@@ -99,7 +99,7 @@ spec:
       volumes:
         - name: objstoreyml
           secret:
-            secretName: thanos-objstore-secret
+            secretName: thanos-store-objstore-internal
         - name: data
           persistentVolumeClaim:
             claimName: storagegw-lh

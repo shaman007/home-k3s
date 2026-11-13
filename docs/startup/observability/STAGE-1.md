@@ -1,8 +1,9 @@
 # Stage 1: internal S3 network permissions only
 
-Four stage-one source files are prepared in their normal Argo paths, not yet
-committed/published. No policy has been applied by this work, and no storage
-endpoint, credential, bucket, retention, Pod template or priority changes here.
+Stage-one policies were published as `02452391` and verified Synced/Healthy in
+all three owning Argo Applications. Signed access and the separately authorized
+client cutover are recorded in [EXECUTION.md](EXECUTION.md). This first-stage
+commit itself changed no endpoint, credential, bucket, retention or Pod template.
 
 ## Review scope
 
