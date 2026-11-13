@@ -5,16 +5,17 @@ Production images and Git configuration are used with a temporary TLS identity,
 fixture-only user and local auth backend. No production secrets or data mounts.
 """
 
-from contextlib import ExitStack
-from pathlib import Path
-import imaplib
 import base64
+import imaplib
+import re
 import socket
 import ssl
 import tempfile
 import time
-import yaml
+from contextlib import ExitStack
+from pathlib import Path
 
+import yaml
 from probe_commands import run_command
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +34,9 @@ CAPS = [
 
 def run(args):
     """Run the probe command and fail when its expected execution does not succeed."""
-    return run_command(args, check=True, capture_output=True, text=True, timeout=90).stdout.strip()
+    return run_command(
+        args, check=True, capture_output=True, text=True, timeout=90
+    ).stdout.strip()
 
 
 def command(name):
@@ -101,7 +104,9 @@ def create_certificate(d):
 
 def start_dovecot(d):
     """Validate the reviewed daemon and mount only disposable configuration and storage."""
-    config = yaml.safe_load((ROOT / "mail/config-map-dovecot-cf.yaml").read_text())["data"]
+    config = yaml.safe_load((ROOT / "mail/config-map-dovecot-cf.yaml").read_text())[
+        "data"
+    ]
     args, container = command("dovecot")
     args += [
         "-p",
@@ -132,7 +137,9 @@ def start_dovecot(d):
                 "90-sieve",
             ]
         },
-        "mastodon-registration-bounces.sieve": ("sieve-before/mastodon-registration-bounces.sieve"),
+        "mastodon-registration-bounces.sieve": (
+            "sieve-before/mastodon-registration-bounces.sieve"
+        ),
     }
     for key, destination in mapping.items():
         p = d / key
@@ -152,7 +159,9 @@ def start_dovecot(d):
 
 def check_imap(dovecot, context):
     """Verify TLS, fixture login, read-only INBOX selection and NOOP."""
-    client = imaplib.IMAP4_SSL("127.0.0.1", port(dovecot, 993), ssl_context=context, timeout=3)
+    client = imaplib.IMAP4_SSL(
+        "127.0.0.1", port(dovecot, 993), ssl_context=context, timeout=3
+    )
     try:
         if not client.login("guard", "disposable-guard-password")[0] == "OK":
             raise AssertionError
@@ -164,9 +173,14 @@ def check_imap(dovecot, context):
         client.logout()
 
 
-def start_postfix(d, dovecot, volumes):
+def start_postfix(d, dovecot, volumes, *, milter=None, fixture_domain=None):
     """Validate chroot assumptions and start Postfix while retaining volume cleanup ownership."""
     config = yaml.safe_load((ROOT / "mail/config-map-main-cf.yaml").read_text())["data"]
+    if milter not in (None, "127.0.0.1:11332") or fixture_domain not in (
+        None,
+        "guard.invalid",
+    ):
+        raise ValueError("Only isolated fixture endpoints/domains are allowed")
     services = [
         line.split()
         for line in config["master"].splitlines()
@@ -177,10 +191,12 @@ def start_postfix(d, dovecot, volumes):
         for row in services
         if len(row) >= 8 and row[1] in ["inet", "unix", "unix-dgram", "fifo", "pass"]
     ]
-    if not (services and all((row[4] == "n" for row in services))):
+    if not (services and all(row[4] == "n" for row in services)):
         raise AssertionError("Review SYS_CHROOT if enabling Postfix chroot")
     args, container = command("postfix")
     args += ["--network=container:" + dovecot]
+    if fixture_domain:
+        args += ["--tmpfs", "/var/log:rw,mode=0755"]
     # Named volumes are seeded from the image, like an initialized queue PVC.
     for destination in ["/var/spool/postfix", "/var/lib/postfix"]:
         volume = run(["podman", "volume", "create"])
@@ -194,9 +210,32 @@ def start_postfix(d, dovecot, volumes):
     ]:
         value = config[key]
         if key == "config":
-            value = value.replace("dovecot-sasl.mail.svc.cluster.local:1234", "127.0.0.1:1234")
-            # No production dependency calls; only EHLO/STARTTLS/NOOP/QUIT.
-            value += "\nsmtpd_milters =\nnon_smtpd_milters =\n"
+            value = value.replace(
+                "dovecot-sasl.mail.svc.cluster.local:1234", "127.0.0.1:1234"
+            )
+            # Default capability probe disables milters; integration uses loopback only.
+            endpoint = "inet:" + milter if milter else ""
+            overrides = {"smtpd_milters": endpoint, "non_smtpd_milters": endpoint}
+            if fixture_domain:
+                value = value.replace(
+                    "dovecot-lmtp.mail.svc.cluster.local:24", "127.0.0.1:24"
+                )
+                overrides.update(
+                    mydomain=fixture_domain,
+                    myorigin=fixture_domain,
+                    mydestination="localhost " + fixture_domain,
+                    maillog_file="/var/log/fixture.log",
+                )
+            if fixture_domain:
+                value += "\ndefault_transport = error:Nonlocal delivery disabled in fixture\n"
+            for name, setting in overrides.items():
+                value = re.sub(
+                    r"(?m)^" + re.escape(name) + r"\s*=.*$",
+                    name + " = " + setting,
+                    value,
+                )
+        elif key == "virtual" and fixture_domain:
+            value = f"@{fixture_domain} guard\n"
         p = d / ("postfix-" + key)
         p.write_text(value)
         p.chmod(0o644)
@@ -208,8 +247,10 @@ def start_postfix(d, dovecot, volumes):
         "/usr/bin/sh",
         container["image"],
         "-ec",
-        "chown 100:102 /var/lib/postfix && chmod 755 /var/lib/postfix; "
-        "exec dumb-init -- /etc/service/run",
+        (
+            "chown 100:102 /var/lib/postfix && chmod 755 /var/lib/postfix; "
+            "exec dumb-init -- /etc/service/run"
+        ),
     ]
     postfix = run(args)
     return postfix
@@ -277,7 +318,10 @@ def main():
             create_certificate(d)
             dovecot = start_dovecot(d)
             containers.append(dovecot)
-            if not run(["podman", "exec", dovecot, "stat", "-c", "%a", "/tmp"]) == "1777":
+            if (
+                not run(["podman", "exec", dovecot, "stat", "-c", "%a", "/tmp"])
+                == "1777"
+            ):
                 raise AssertionError
             context = ssl.create_default_context(cafile=str(d / "tls.crt"))
 
@@ -302,7 +346,10 @@ def main():
             reload_daemons(dovecot, postfix)
             retry(lambda: check_imap(dovecot, context))
             retry(lambda: check_smtp(dovecot, context))
-            print("Both daemons reloaded successfully; protocol checks passed again", flush=True)
+            print(
+                "Both daemons reloaded successfully; protocol checks passed again",
+                flush=True,
+            )
         except Exception:
             for cid in containers:
                 result = run_command(

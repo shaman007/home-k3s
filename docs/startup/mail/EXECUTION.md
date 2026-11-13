@@ -65,3 +65,51 @@ The approved local follow-up references `mail-startup-a7a2479604c9`, retaining
 contracts, and render/schema/resource checks (178 valid, 10 CRDs skipped, 0 errors;
 12 containers checked). It is committed separately for publication, not applied
 by a manual patch.
+
+## Functional verification — 5a06a5da, 2026-11-13
+
+Argo `mail` is Synced/Healthy at 5a06a5da with auto-sync/prune/self-heal.
+All running mail containers have zero restarts. The corrected readiness script
+is deployed; no manual cluster patch or service stop was needed.
+
+A uniquely tagged synthetic inbound message was sent with `swaks` over verified
+public SMTP STARTTLS. The first attempt received the configured greylisting
+451; the same message was retried after five minutes and accepted as AE58628.
+Postfix logged successful LMTP delivery, Dovecot saved it, and a doveadm search
+for only its unique Message-ID confirmed it in the final local user's mailbox.
+No existing messages were read or deleted. The test message remains in the
+mailbox. One additional synthetic fixture message also reached the same own
+catch-all during development because the fixture retained production myorigin;
+the harness now rewrites myorigin and blocks all nonlocal delivery explicitly.
+
+Run the opt-in isolated test with:
+
+```sh
+python3 tools/security/test_mail_runtime.py
+```
+
+Requires Podman, OpenSSL, swaks, Python/PyYAML and access to the declared images.
+It uses fresh fixture storage, a synthetic password/TLS key, local backend
+addresses and a tiny harmless EICAR-only database, never production Secrets or
+mail storage. Only loopback IMAP/submission ports are published. It starts and
+removes its own containers/volumes; it does not stop production dependencies.
+Internet access remains available for normal DNS/Rspamd maps.
+
+Verified against the declared images and Git filter configuration:
+
+| Scenario | Observed result |
+| --- | --- |
+| Healthy, authenticated SMTP | 250 queued; same Message-ID found through authenticated TLS IMAP |
+| EICAR attachment | 554 antivirus rejection; absent from fixture mailbox |
+| ClamAV stopped, fresh attachment | 451 temporary rejection; absent from mailbox |
+| ClamAV restarted | 250 and IMAP delivery |
+| Rspamd stopped | 454 temporary rejection; absent from mailbox |
+| Rspamd restarted | 250 and IMAP delivery |
+
+Scope: failure injection was local, not a production network/readiness outage.
+Production SMTP AUTH was not tested with a real user's password; fixture AUTH
+uses the production Dovecot/Postfix configuration with disposable credentials.
+Short text without a scan-eligible MIME part may not invoke ClamAV at all;
+ClamAV unavailability is therefore not itself a rejection trigger for every
+message. No policy relaxation was made. The scanner-down test uses a unique
+attachment to exercise a real scan rather than a cached/omitted scan.
