@@ -1,9 +1,11 @@
-"""Generate native-client startup gates for five stacks; never contact Kubernetes."""
+"""Generate native-client startup gates for application stacks; never contact Kubernetes."""
 
 import argparse
 import copy
 import hashlib
+import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -27,7 +29,7 @@ class SourceDumper(yaml.SafeDumper):
 
 
 SourceDumper.add_representer(str, SourceDumper.represent_string)
-SCRIPTS = ("wait_service.sh", "probe_data.php", "probe_http.cjs")
+SCRIPTS = ("wait_service.sh", "probe_data.php", "probe_http.cjs", "wait_mysql.sh")
 MOUNT = {"name": "startup-gate", "mountPath": "/startup-gate", "readOnly": True}
 SECURITY = {
     "allowPrivilegeEscalation": False,
@@ -61,7 +63,9 @@ def renamed(environment, mapping):
     for source, target in mapping.items():
         entry = copy.deepcopy(next(e for e in environment if e["name"] == source))
         entry["name"] = target
-        if target == "PGPASSWORD" and "secretKeyRef" not in entry.get("valueFrom", {}):
+        if target in {"PGPASSWORD", "MYSQL_PWD"} and "secretKeyRef" not in entry.get(
+            "valueFrom", {}
+        ):
             raise ValueError("Password must remain a Secret reference")
         result.append(entry)
     return result
@@ -78,7 +82,12 @@ def gate(name, image, mode, env=None, mounts=None):
         "name": name,
         "image": image,
         "imagePullPolicy": "IfNotPresent",
-        "command": ["/bin/sh", "/startup-gate/wait_service.sh", mode],
+        "command": [
+            "/bin/sh",
+            "/startup-gate/"
+            + ("wait_mysql.sh" if mode == "mysql" else "wait_service.sh"),
+            mode,
+        ],
         "securityContext": security,
         "resources": {
             "requests": {
@@ -120,6 +129,55 @@ def attach_php_stacks(attach):
         )
 
 
+def attach_remaining_sql_stacks(attach):
+    """Gate Bitwarden and both Firefox databases without evaluating connection URLs."""
+    path = "bitwarden/deployment-bitwarden.yaml"
+    app = container(path, "bitwarden")
+    pg = container("bitwarden/stateful-set-bitwarden-postgres.yaml", "postgres")
+    env = renamed(
+        app["env"],
+        {
+            "BW_DB_SERVER": "PGHOST",
+            "BW_DB_DATABASE": "PGDATABASE",
+            "BW_DB_USERNAME": "PGUSER",
+            "BW_DB_PASSWORD": "PGPASSWORD",  # nosec B105
+        },
+    )
+    attach(path, [gate("wait-for-postgres", pg["image"], "postgres", env)])
+
+    path = "firefox-sync/deployment-firefox-sync.yaml"
+    app = container(path, "syncserver")
+    database = container("firefox-sync/deployment-mariadb.yaml", "mariadb")
+    db_environment = {entry["name"]: entry for entry in database["env"]}
+    endpoints = {entry["name"]: entry for entry in app["env"]}
+    gates = []
+    for name in ["syncstorage", "tokenserver"]:
+        endpoint = endpoints["SYNC_" + name.upper() + "__DATABASE_URL"]
+        url = urlsplit(endpoint["value"])
+        if url.scheme != "mysql" or not url.hostname or url.query or url.fragment:
+            raise ValueError("Review changed Firefox Sync database endpoint")
+        if (
+            url.password != "$(MYSQL_PASSWORD)"  # nosec B105
+            or url.username != db_environment["MARIADB_USER"]["value"]
+            or url.path != "/" + name
+        ):
+            raise ValueError("Review changed Firefox Sync database credentials")
+        if not re.fullmatch(r"[a-zA-Z0-9._-]+", url.hostname):
+            raise ValueError("Review changed Firefox Sync database hostname")
+        env = renamed(app["env"], {"MYSQL_PASSWORD": "MYSQL_PWD"})  # nosec B105
+        # Use application credentials, not the MariaDB root/admin Secret.
+        if env[0]["valueFrom"] != db_environment["MARIADB_PASSWORD"]["valueFrom"]:
+            raise ValueError("Firefox app and database credential references differ")
+        env += [
+            {"name": "MYSQL_HOST", "value": url.hostname},
+            {"name": "MYSQL_PORT", "value": str(url.port or 3306)},
+            {"name": "MYSQL_USER", "value": url.username},
+            {"name": "MYSQL_DATABASE", "value": name},
+        ]
+        gates.append(gate("wait-for-" + name, database["image"], "mysql", env))
+    attach(path, gates)
+
+
 def candidates():
     """Return exact source candidates; app entrypoints and migrations remain untouched."""
     scripts = {name: (ROOT / "tools/bootstrap" / name).read_text() for name in SCRIPTS}
@@ -132,6 +190,8 @@ def candidates():
         pod = document["spec"]["template"]["spec"]
         config_name = namespace + "-startup-gate"
         selected = {"wait_service.sh": scripts["wait_service.sh"]}
+        if namespace == "firefox-sync":
+            selected = {"wait_mysql.sh": scripts["wait_mysql.sh"]}
         if namespace in {"nextcloud", "wordpress"}:
             selected["probe_data.php"] = scripts["probe_data.php"]
         if namespace == "spotify":
@@ -199,6 +259,7 @@ def candidates():
     attach(path, [gate("wait-for-postgres", pg["image"], "postgres", env)])
 
     attach_php_stacks(attach)
+    attach_remaining_sql_stacks(attach)
 
     pg = container("your-spotify/stateful-set-ferretdb-postgres.yaml", "postgres")
     env = renamed(

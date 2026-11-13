@@ -10,6 +10,10 @@ edges, criteria and source evidence. Phases describe a partial order, not an
 enforced cluster-wide barrier. Scope is core bootstrap and these seven stacks;
 the remaining Applications are not audited exhaustively.
 
+The [follow-up coverage audit](COVERAGE.md) adds locally prepared Bitwarden and
+Firefox Sync gates and a census including scheduled consumers. Mastodon remains
+separate.
+
 A broader read-only structural inventory covered **149 live workloads in 51
 namespaces and 51 ExternalSecrets**. It records required Secret/ConfigMap/PVC
 references, image origins, and literal service-host hints resolved through actual

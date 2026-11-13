@@ -1,6 +1,7 @@
 format_version: 1
 observed_date: '2026-11-13'
-scope: Core bootstrap plus Dawarich, Immich, Mastodon (gates deferred), Nextcloud, Keycloak, WordPress and YourSpotify
+scope: Core bootstrap plus Dawarich, Immich, Mastodon (gates deferred), Nextcloud, Keycloak, WordPress and YourSpotify,
+  Bitwarden and Firefox Sync (local gates prepared)
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 nodes:
   kubernetes:
@@ -309,6 +310,40 @@ nodes:
       dependencies, not gates.
     sources:
     - your-spotify/deployment-web.yaml
+  bitwarden-secrets:
+    phase: 3
+    ready: Only required existing app/DB Secret keys present; ESO/OpenBao needed when missing.
+    sources:
+    - bitwarden
+  bitwarden-db:
+    phase: 3
+    ready: Authenticated read-only SELECT 1 against bw as app user; no merely open port.
+    sources:
+    - bitwarden/stateful-set-bitwarden-postgres.yaml
+  bitwarden:
+    phase: 4
+    ready: SQL gates finish before original entrypoint; existing app owns migrations; functional login/sync verified
+      after rollout.
+    sources:
+    - bitwarden/deployment-bitwarden.yaml
+    - tools/bootstrap/prepare_application_gates.py
+  firefox-sync-secrets:
+    phase: 3
+    ready: Only required existing app/DB Secret keys present; ESO/OpenBao needed when missing.
+    sources:
+    - firefox-sync
+  firefox-sync-db:
+    phase: 3
+    ready: Authenticated read-only SELECT 1 succeeds against BOTH syncstorage and tokenserver as app user.
+    sources:
+    - firefox-sync/deployment-mariadb.yaml
+  firefox-sync:
+    phase: 4
+    ready: SQL gates finish before original entrypoint; existing app owns migrations; functional login/sync verified
+      after rollout.
+    sources:
+    - firefox-sync/deployment-firefox-sync.yaml
+    - tools/bootstrap/prepare_application_gates.py
 edges:
 - from: kubernetes
   to: cilium
@@ -966,3 +1001,103 @@ edges:
   to: spotify-web
   kind: startup
   when: always
+- from: openbao
+  to: bitwarden-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: eso
+  to: bitwarden-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: cilium
+  to: bitwarden-db
+  kind: startup
+  when: always
+- from: coredns
+  to: bitwarden-db
+  kind: startup
+  when: always
+- from: longhorn
+  to: bitwarden-db
+  kind: startup
+  when: always
+- from: harbor
+  to: bitwarden-db
+  kind: image
+  when: image_cache_miss
+- from: bitwarden-secrets
+  to: bitwarden-db
+  kind: startup
+  when: required_app_or_DB_credentials
+- from: cilium
+  to: bitwarden
+  kind: startup
+  when: always
+- from: coredns
+  to: bitwarden
+  kind: startup
+  when: always
+- from: longhorn
+  to: bitwarden
+  kind: startup
+  when: always
+- from: harbor
+  to: bitwarden
+  kind: image
+  when: image_cache_miss
+- from: bitwarden-secrets
+  to: bitwarden
+  kind: startup
+  when: required_app_or_DB_credentials
+- from: bitwarden-db
+  to: bitwarden
+  kind: startup
+  when: SQL_gates_installed
+- from: openbao
+  to: firefox-sync-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: eso
+  to: firefox-sync-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: cilium
+  to: firefox-sync-db
+  kind: startup
+  when: always
+- from: coredns
+  to: firefox-sync-db
+  kind: startup
+  when: always
+- from: longhorn
+  to: firefox-sync-db
+  kind: startup
+  when: always
+- from: harbor
+  to: firefox-sync-db
+  kind: image
+  when: image_cache_miss
+- from: firefox-sync-secrets
+  to: firefox-sync-db
+  kind: startup
+  when: required_app_or_DB_credentials
+- from: cilium
+  to: firefox-sync
+  kind: startup
+  when: always
+- from: coredns
+  to: firefox-sync
+  kind: startup
+  when: always
+- from: harbor
+  to: firefox-sync
+  kind: image
+  when: image_cache_miss
+- from: firefox-sync-secrets
+  to: firefox-sync
+  kind: startup
+  when: required_app_or_DB_credentials
+- from: firefox-sync-db
+  to: firefox-sync
+  kind: startup
+  when: SQL_gates_installed

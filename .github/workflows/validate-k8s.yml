@@ -61,6 +61,7 @@ jobs:
           /usr/bin/php -l tools/bootstrap/probe_data.php
           /usr/bin/node --check tools/bootstrap/probe_http.cjs
           /bin/sh -n tools/bootstrap/wait_service.sh
+          /bin/sh -n tools/bootstrap/wait_mysql.sh
 
       - name: Validate Ruby syntax
         shell: bash

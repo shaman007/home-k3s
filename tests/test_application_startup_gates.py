@@ -10,6 +10,7 @@ import subprocess  # nosec B404
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -141,7 +142,8 @@ class NativeClientTests(unittest.TestCase):
                 VALKEY_HOST="fixture.invalid",
             )
             env.update(environment)
-            return run_native("sh", [str(BOOT / "wait_service.sh"), mode], env=env)
+            script = "wait_mysql.sh" if mode == "mysql" else "wait_service.sh"
+            return run_native("sh", [str(BOOT / script), mode], env=env)
 
     def test_sql_success_and_bad_auth_are_distinct_and_sanitized(self):
         """Sql success and bad auth are distinct and sanitized."""
@@ -177,6 +179,22 @@ class NativeClientTests(unittest.TestCase):
         self.assertEqual(stuck.returncode, 1)
         self.assertIn("timeout", stuck.stdout)
 
+    def test_mysql_requires_success_and_exact_sql_result(self):
+        """An auth/SQL error cannot open either Firefox database gate."""
+        environment = {
+            "MYSQL_HOST": "fixture.invalid",
+            "MYSQL_USER": "fixture",
+            "MYSQL_DATABASE": "fixture",
+        }
+        for body, expected in [
+            ("echo 1\n", 0),
+            ("echo 1; echo PRIVATE_DRIVER_ERROR >&2; exit 1\n", 1),
+            ("echo '1 extra'\n", 1),
+        ]:
+            result = self.shell_probe("mariadb", body, "mysql", **environment)
+            self.assertEqual(result.returncode, expected, result.stderr)
+            self.assertNotIn("PRIVATE_DRIVER_ERROR", result.stdout + result.stderr)
+
     def test_http_requires_200_without_redirect(self):
         """Http requires 200 without redirect."""
         source = """const http=require('node:http');
@@ -210,6 +228,14 @@ class ApplicationSourceTests(unittest.TestCase):
     def test_existing_preparation_and_dependency_order(self):
         """Existing preparation and dependency order."""
         expected = {
+            "bitwarden/deployment-bitwarden.yaml": [
+                "prepare-permissions",
+                "wait-for-postgres",
+            ],
+            "firefox-sync/deployment-firefox-sync.yaml": [
+                "wait-for-syncstorage",
+                "wait-for-tokenserver",
+            ],
             "immich/deployment-immich-server.yaml": [
                 "prepare-library",
                 "wait-for-postgres",
@@ -238,7 +264,7 @@ class ApplicationSourceTests(unittest.TestCase):
                 self.assertFalse(gate["securityContext"]["allowPrivilegeEscalation"])
                 self.assertTrue(gate["securityContext"]["readOnlyRootFilesystem"])
                 for env in gate["env"]:
-                    if env["name"] == "PGPASSWORD":
+                    if env["name"] in {"PGPASSWORD", "MYSQL_PWD"}:
                         self.assertIn("secretKeyRef", env["valueFrom"])
                 for mount in gate["volumeMounts"]:
                     self.assertTrue(mount["readOnly"])
@@ -264,7 +290,44 @@ class ApplicationSourceTests(unittest.TestCase):
                     continue
                 request = gate["resources"]["requests"]["memory"]
                 self.assertTrue(request.endswith("Mi"))
-                self.assertGreaterEqual(int(request[:-2]), ranges[namespace], relative)
+                self.assertGreaterEqual(
+                    int(request[:-2]), ranges.get(namespace, 0), relative
+                )
+
+    def test_firefox_checks_both_databases_without_exporting_url_credentials(self):
+        """Two schemas use the app password ref; no root credential or URL is copied."""
+        document = GATES.candidates()["firefox-sync/deployment-firefox-sync.yaml"]
+        gates = document["spec"]["template"]["spec"]["initContainers"]
+        databases = []
+        for gate in gates:
+            env = {entry["name"]: entry for entry in gate["env"]}
+            databases.append(env["MYSQL_DATABASE"]["value"])
+            self.assertEqual(
+                env["MYSQL_PWD"]["valueFrom"]["secretKeyRef"],
+                {"name": "firefox-sync-env", "key": "MYSQL_PASSWORD"},
+            )
+            self.assertFalse(any("URL" in name or "ROOT" in name for name in env))
+        self.assertEqual(databases, ["syncstorage", "tokenserver"])
+
+    def test_changed_firefox_connection_contract_requires_review(self):
+        """Do not silently copy an embedded password or gate the wrong database."""
+        original = GATES.container
+
+        def changed_container(path, name):
+            result = original(path, name)
+            if name == "syncserver":
+                entry = next(
+                    e
+                    for e in result["env"]
+                    if e["name"] == "SYNC_TOKENSERVER__DATABASE_URL"
+                )
+                entry["value"] = "mysql://sync:PRIVATE_PASSWORD@mysql:3306/tokenserver"
+            return result
+
+        with patch.object(GATES, "container", side_effect=changed_container):
+            with self.assertRaises(ValueError) as error:
+                GATES.candidates()
+            self.assertNotIn("PRIVATE_PASSWORD", str(error.exception))
 
     def test_mastodon_stays_out_of_package(self):
         """Mastodon stays out of package."""

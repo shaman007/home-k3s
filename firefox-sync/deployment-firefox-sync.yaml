@@ -12,9 +12,96 @@ spec:
       app: firefox-sync
   template:
     metadata:
+      annotations:
+        checksum/application-startup-gate: c85f4b29936f3f4fbcded933f7b1ddf0a0cf1bb404bfcb77410ff314bcc38bdb
       labels:
         app: firefox-sync
     spec:
+      initContainers:
+        - name: wait-for-syncstorage
+          image: harbor.andreybondarenko.com/dockerhub/mariadb:13.0.2@sha256:54f493ea0d60b621a5bff84e5b20100f8b86b6efa6b79158e04756c5194a5e4d
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_mysql.sh
+            - mysql
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env:
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: firefox-sync-env
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_HOST
+              value: mysql
+            - name: MYSQL_PORT
+              value: '3306'
+            - name: MYSQL_USER
+              value: sync
+            - name: MYSQL_DATABASE
+              value: syncstorage
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
+        - name: wait-for-tokenserver
+          image: harbor.andreybondarenko.com/dockerhub/mariadb:13.0.2@sha256:54f493ea0d60b621a5bff84e5b20100f8b86b6efa6b79158e04756c5194a5e4d
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - /startup-gate/wait_mysql.sh
+            - mysql
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          env:
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: firefox-sync-env
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_HOST
+              value: mysql
+            - name: MYSQL_PORT
+              value: '3306'
+            - name: MYSQL_USER
+              value: sync
+            - name: MYSQL_DATABASE
+              value: tokenserver
+          volumeMounts:
+            - name: startup-gate
+              mountPath: /startup-gate
+              readOnly: true
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       nodeSelector:
@@ -143,5 +230,8 @@ spec:
           tcpSocket:
             port: metrics
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: startup-gate
+          configMap:
+            name: firefox-sync-startup-gate

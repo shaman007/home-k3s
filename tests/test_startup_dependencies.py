@@ -150,6 +150,79 @@ class StartupInventoryTests(unittest.TestCase):
         self.assertEqual(row["literal_host_hints"], ["db.pilot.svc"])
         self.assertEqual(row["service_hints"][0]["providers"], ["StatefulSet/db"])
 
+    def test_nested_urls_server_and_endpoint_fields_are_not_missed(self):
+        """Bitwarden/Firefox/Mongo/Meili names resolve without exposing URL credentials."""
+        for name in [
+            "BW_DB_SERVER",
+            "SYNC_SYNCSTORAGE__DATABASE_URL",
+            "SYNC_TOKENSERVER__DATABASE_URL",
+            "MONGO_ENDPOINT",
+            "MEILI_ADDR",
+        ]:
+            host = inventory.host_hint(
+                {
+                    "name": name,
+                    "value": "mysql://user:PRIVATE_MARKER@db.pilot.svc/database?key=PRIVATE_MARKER",
+                }
+            )
+            self.assertEqual(host, "db.pilot.svc")
+        for name in ["API_TOKEN_URL", "DATABASE_PASSWORD_ENDPOINT", "SECRET_SERVER"]:
+            self.assertIsNone(
+                inventory.host_hint({"name": name, "value": "PRIVATE_MARKER"})
+            )
+        service = {("pilot", "db"): {"spec": {"selector": {"app": "db"}}}}
+        self.assertEqual(
+            inventory.service_hints({"db.pilot.example.com"}, "pilot", service, []), []
+        )
+
+    def test_scheduled_jobs_are_inventoried_but_not_service_backends(self):
+        """Cron prerequisites are visible without implying reboot-time process barriers."""
+        job = {
+            "kind": "CronJob",
+            "metadata": {"name": "job", "namespace": "pilot"},
+            "spec": {
+                "jobTemplate": {
+                    "spec": {
+                        "template": {
+                            "metadata": {"labels": {"app": "job"}},
+                            "spec": {
+                                "containers": [
+                                    {
+                                        "name": "job",
+                                        "image": "registry.invalid/job:v1",
+                                        "env": [
+                                            {"name": "BW_DB_SERVER", "value": "db"},
+                                            {
+                                                "name": "PASSWORD",
+                                                "valueFrom": {
+                                                    "secretKeyRef": {
+                                                        "name": "job-secret",
+                                                        "key": "password",
+                                                    }
+                                                },
+                                            },
+                                        ],
+                                    }
+                                ]
+                            },
+                        }
+                    }
+                }
+            },
+        }
+        service = {
+            "kind": "Service",
+            "metadata": {"name": "db", "namespace": "pilot"},
+            "spec": {"selector": {"app": "job"}},
+        }
+        report = inventory.project({"items": [job, service]})
+        row = report["workloads"][0]
+        self.assertEqual(row["kind"], "CronJob")
+        self.assertEqual(row["required_secrets"], ["job-secret"])
+        self.assertEqual(
+            row["service_hints"], [{"service": "pilot/db", "providers": []}]
+        )
+
 
 class StartupGraphTests(unittest.TestCase):
     """Keep source evidence and conditional recovery edges explicit."""

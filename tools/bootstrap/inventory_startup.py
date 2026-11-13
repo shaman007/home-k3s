@@ -5,14 +5,17 @@ import json
 import sys
 from urllib.parse import urlsplit
 
-WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet"}
+WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet", "CronJob"}
 
 
 def host_hint(entry):
     """Return only a hostname, never URL credentials, paths, queries or raw values."""
     name = entry["name"]
-    if not (
-        name.endswith(("HOST", "HOSTNAME")) or name in {"DATABASE_URL", "REDIS_URL"}
+    sensitive_name = bool(
+        set(name.split("_")) & {"PASSWORD", "SECRET", "TOKEN", "KEY", "CREDENTIAL"}
+    )
+    if sensitive_name or not name.endswith(
+        ("HOST", "HOSTNAME", "SERVER", "URL", "ADDR", "ADDRESS", "ENDPOINT")
     ):
         return None
     value = entry.get("value", "")
@@ -74,11 +77,20 @@ def pod_references(pod):
     return secrets, configs, pvcs, hints, images
 
 
+def workload_template(workload):
+    """Keep scheduled prerequisites visible without treating a CronJob as a Service backend."""
+    if workload["kind"] == "CronJob":
+        return workload["spec"]["jobTemplate"]["spec"]["template"]
+    return workload["spec"]["template"]
+
+
 def service_hints(hints, namespace, services, workloads):
     """Resolve declared service host hints through namespace-scoped selectors."""
     resolved = []
     for host in sorted(hints):
         parts = host.split(".")
+        if len(parts) > 2 and parts[2:] not in (["svc"], ["svc", "cluster", "local"]):
+            continue  # External FQDNs must not impersonate a Kubernetes Service.
         service_namespace = parts[1] if len(parts) > 1 else namespace
         service = services.get((service_namespace, parts[0]))
         if service is None or not service["spec"].get("selector"):
@@ -86,9 +98,10 @@ def service_hints(hints, namespace, services, workloads):
         providers = [
             f"{item['kind']}/{item['metadata']['name']}"
             for item in workloads
-            if item["metadata"]["namespace"] == service_namespace
+            if item["kind"] != "CronJob"
+            and item["metadata"]["namespace"] == service_namespace
             and all(
-                item["spec"]["template"]["metadata"].get("labels", {}).get(key) == value
+                workload_template(item)["metadata"].get("labels", {}).get(key) == value
                 for key, value in service["spec"]["selector"].items()
             )
         ]
@@ -110,7 +123,7 @@ def project(document):
     report = []
     for workload in workloads:
         namespace = workload["metadata"]["namespace"]
-        pod = workload["spec"]["template"]["spec"]
+        pod = workload_template(workload)["spec"]
         secrets, configs, pvcs, hints, images = pod_references(pod)
         resolved = service_hints(hints, namespace, services, workloads)
         report.append(
