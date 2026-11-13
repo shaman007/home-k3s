@@ -108,3 +108,26 @@ Python lint and shell syntax passed. The three affected Argo sources rendered
 successfully with their dependency ConfigMaps; schema validation found 58 valid
 ordinary Kubernetes resources, with 19 CRDs skipped, and no errors. Resource
 policy checked 11 containers with no errors.
+
+## Publication follow-up: 37c98bdd
+
+Argo adopted the fixed report ConfigMaps and scheduled media CronJob now refers
+to `bookmarked-media-sync-dependencies-4c425ff40291`. Mastodon orphan warnings
+cleared. The two remaining monitoring orphans were exactly the successful
+`verify-gate-skip-retry` Job and its Pod; the user explicitly authorized deleting
+that diagnostic Job, and core-mode resource inspection confirmed no remaining
+orphans for logs-check. Nextcloud retains its pre-existing retired PKI Role/
+RoleBinding drift; no working resources were deleted.
+
+CI follow-up: 37c98bdd CodeQL, Codacy Security Scan and pre-commit passed, but
+Validate Kubernetes failed in the media shell fixture: replacing /work after
+injecting a GitHub checkout path corrupted that host path. The isolated fix
+reorders substitutions and always simulates a checkout path containing /work.
+Positive/auth-denial cases use a 5-second fixture budget to avoid the sub-second
+boundary of the production integer clock; the outage fixture remains bounded
+at 1 second. This is a test-only correction, separate from the mail package.
+
+The test-only CI correction passed all 739 baseline tests (21 skipped) from an
+isolated checkout under a /work path, with mail changes excluded. Read-only Git
+context was supplied for the three inventory tests that require repository
+metadata; neither the source index nor refs were changed by validation.

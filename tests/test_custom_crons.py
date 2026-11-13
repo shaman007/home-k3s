@@ -137,13 +137,16 @@ class CustomCronTests(unittest.TestCase):
                 executable = root / name
                 executable.write_text("#!/bin/sh\n" + body + "\n")
                 executable.chmod(0o755)
+            # Reproduce GitHub's /home/runner/work/... shape even on other hosts.
+            helper = root / "checkout/work/home-k3s/tools/bootstrap/mastodon_startup.rb"
+            helper.parent.mkdir(parents=True)
+            helper.write_text((BOOT / "mastodon_startup.rb").read_text())
             script = (BOOT / "bookmarked_job_gate.sh").read_text()
-            script = script.replace(
-                "/cron-gate/mastodon_startup.rb", str(BOOT / "mastodon_startup.rb")
-            )
+            # Replace container paths before inserting host paths containing /work.
             script = script.replace("/work", str(root / "work")).replace(
                 "/scripts/fetch-bookmarked-media.sh", str(root / "fetch")
             )
+            script = script.replace("/cron-gate/mastodon_startup.rb", str(helper))
             for pod, http, expected in (
                 ("", "503", 0),
                 ("ready-pod", "200", 7),
@@ -151,12 +154,14 @@ class CustomCronTests(unittest.TestCase):
             ):
                 work = root / "export-started"
                 work.unlink(missing_ok=True)
+                marker = root / "work/.dependencies-skipped"
+                marker.unlink(missing_ok=True)
                 result = subprocess.run(  # nosec B603
                     ["/bin/sh", "-c", script],
                     env={
                         **os.environ,
                         "PATH": directory + ":" + os.environ["PATH"],
-                        "STARTUP_WAIT_SECONDS": "1",
+                        "STARTUP_WAIT_SECONDS": "1" if not pod else "5",
                         "FIXTURE_POD": pod,
                         "FIXTURE_HTTP": http,
                         "FIXTURE_WORK": str(work),
@@ -170,8 +175,7 @@ class CustomCronTests(unittest.TestCase):
                 self.assertEqual(result.returncode, expected, result.stderr)
                 self.assertEqual(work.exists(), expected == 7)
                 self.assertNotIn(b"fixture-key", result.stdout + result.stderr)
-                if not pod:
-                    self.assertTrue((root / "work/.dependencies-skipped").exists())
+                self.assertEqual(marker.exists(), not bool(pod))
 
     def test_spam_gate_blocks_work_and_preserves_work_failure(self):
         """Execute the shell barrier with fake local Ruby/rails, no cluster calls."""
