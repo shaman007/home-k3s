@@ -26,7 +26,7 @@ prepared_packages:
     consumer: Loki and Thanos S3 clients; not a Prometheus startup gate
 recovery_scenarios:
   current_public_s3_geoip_loss:
-    status: observed configuration; conditional on restoring the public Traefik GeoIP PVC
+    status: historical pre-cutover route; also describes rollback dependency on GeoIP PVC restore
     endpoint: https://s3.andreybondarenko.com
     extra_edges:
     - from: public-ingress
@@ -38,7 +38,7 @@ recovery_scenarios:
     - seaweedfs/ingress-andreybondarenko-ingress.yaml
     - docs/migrations/longhorn-internal-s3/README.md
   prepared_direct_s3:
-    status: inactive proposal; signed access and isolated restore pending
+    status: active for Longhorn; signed reads and target poll verified; new backup/isolated restore pending
     endpoint: http://s3.seaweedfs.svc.cluster.local:8333
     extra_edges: []
     evidence:

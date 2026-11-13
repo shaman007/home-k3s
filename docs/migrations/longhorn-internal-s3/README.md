@@ -1,14 +1,16 @@
 # Direct Longhorn backup-store endpoint
 
-Status: preparation only, 2026-11-13. No live configuration changed.
+Status: **direct endpoint active**, 2026-11-13. The separately authorized
+endpoint-only cutover and signed acceptance are recorded in [EXECUTION.md](EXECUTION.md).
+No backup was created/deleted and no restore or rollout was performed.
 
 The live default BackupTarget is `s3://backup@us-east-1/`, using Secret
-`longhorn-system/longhorn-backup-s3`. Its `AWS_ENDPOINTS` currently points to
+`longhorn-system/longhorn-backup-s3`. Its `AWS_ENDPOINTS` previously pointed to
 `https://s3.andreybondarenko.com`. That public route requires Traefik, whose
 `traefik-geoip-rwx` PVC is on Longhorn. Restoring that PVC through the same
 route can block recovery.
 
-Use the existing ClusterIP Service directly:
+It now uses the existing ClusterIP Service directly:
 
 ```text
 Longhorn manager / backup engine → CoreDNS + Cilium
@@ -60,6 +62,10 @@ does not turn an HTTP endpoint into TLS.
 
 ## Transition after separate live authorization
 
+Steps 1–5 below were completed for the endpoint-only transition. Step 6 requires
+separate authorization; it was not included in the executed scope. This remains
+the reusable transition/rollback procedure, not an instruction to reapply a patch.
+
 1. Confirm Git/CI, Argo health, Longhorn volumes and the default target. Record
    numeric backup-volume/object counts and freshness; do not persist raw Secret
    manifests. Defer while backup/restore operations are active. Record the
@@ -105,8 +111,9 @@ does not turn an HTTP endpoint into TLS.
    maintenance silences. Restore any scheduling settings explicitly changed by a
    separately approved maintenance plan.
 
-Steps3,5,6 are pending live acceptance, not claims made by local tests. Full cold
-boot and full disaster recovery are also untested. A warm image cache is not
+Signed read/list, target reconciliation and direct controller traffic are verified.
+Step 6, the next scheduled backup, full cold boot and full disaster recovery remain
+untested. A warm image cache is not
 proof of upstream registry availability.
 
 ## Rollback
@@ -135,8 +142,6 @@ Tests exercise conditional patch/rollback, credential preservation with syntheti
 data, existing Service/policy consistency and the inactive per-Job gate. No live
 Secret update, backup, restore, rollout or failure injection occurs.
 
-Read-only preparation also confirmed that the live endpoint exactly matches the
-forward patch precondition. All three current Longhorn manager Pods resolve the
-direct Service and receive HTTP403 for an unsigned backup-bucket list request.
-This verifies reachability and rejection of anonymous access only; signed access
-and the backup-engine/instance-manager paths remain acceptance checks.
+Initial unsigned403 checks established only reachability. The subsequent signed
+acceptance covered all managers and instance-managers and a complete metadata
+catalogue comparison; see the execution record for scope and remaining limits.

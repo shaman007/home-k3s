@@ -108,13 +108,13 @@ during initialization needs a separate check before treating SSO as optional.
 
 ## Remaining cycles and bootstrap exceptions
 
-The recorded base graph omits a conditional **public S3 route / GeoIP-volume
-recovery ring**. `recovery_scenarios` now records it separately: the current
-Longhorn S3 endpoint requires public Traefik, while restoring Traefik's lost
-GeoIP PVC through that endpoint requires the route itself. The
-[direct internal S3 proposal](../migrations/longhorn-internal-s3/README.md) removes
-those public-route edges; it is prepared, not deployed. Existing-volume restart
-does not imply this recovery scenario.
+The former conditional **public S3 route / GeoIP-volume recovery ring** is
+recorded separately in `recovery_scenarios`. Longhorn now uses the
+[direct internal S3 route](../migrations/longhorn-internal-s3/EXECUTION.md), removing
+those public-route edges for backup-store access. Signed reads and controller
+polls passed; a new backup and isolated restore remain pending. The historical
+public route describes rollback risk. Existing-volume restart does not imply
+this recovery scenario.
 
 The [per-Job dependency gate](cronjobs/README.md) is also an inactive proposal.
 It does not suspend CronJobs or alter their schedules.

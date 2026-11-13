@@ -5,9 +5,15 @@ silence, Job cancellation or data change.** The reported unexpected reboot was
 the workstation, not the Kubernetes cluster. Existing Longhorn and
 report-gate preparation is retained and extended here.
 
-The initial Longhorn/report-gate foundation is now present in repository HEAD
-as `b25a12b9`. No Git mutation was performed by this preparation; the extensions
-described here remain uncommitted. Do not revert or overwrite that foundation.
+The initial Longhorn/report-gate foundation is in `b25a12b9`; the preparation
+extensions were subsequently committed and published as `69bc19bc`. Those commits
+do not activate the candidate packages. Do not overwrite newer source changes
+when promoting a generated candidate.
+
+Subsequent update: the Longhorn endpoint-only cutover was separately authorized
+and completed; see [the execution record](../migrations/longhorn-internal-s3/EXECUTION.md).
+All other candidate packages remain inactive. New backup/restore testing is not
+included in that completed authorization.
 
 ## Review artifacts and reproduction
 
@@ -30,7 +36,7 @@ tracked generators and tests are the reproducible source.
 
 | Order | Package | Prepared behavior | Required decision/acceptance before deployment |
 | --- | --- | --- | --- |
-| 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Conditional endpoint-only Secret patch and inverse patch; existing Service/policy | Accept cluster-only HTTP; signed existing-bucket read/list; engine paths; disposable backup and isolated restore |
+| 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match and controller polls passed | Next scheduled backup plus separately authorized disposable backup and isolated restore remain pending |
 | 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Accept internal HTTP; historical queries, ingestion and object reads after rolling Loki |
 | 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Verify source type is S3, actual ESO rendering and signed access; separately authorize sequential client rollouts, including shared Prometheus Pod |
 | 4 | `mail` | Existing permissions init → exact Valkey PONG → Rspamd; remove old Redis-shutdown wait from Valkey | Confirm legacy Redis absent; accept Rspamd remaining unavailable while Valkey is down; maintain explicit existing Postfix fail-open policy |
