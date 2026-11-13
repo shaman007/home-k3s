@@ -5,7 +5,6 @@ import os
 import shutil
 import subprocess  # nosec B404
 import tempfile
-import time
 import unittest
 from pathlib import Path
 
@@ -43,28 +42,6 @@ class NativeDependencyTests(unittest.TestCase):
                 STARTUP_WAIT_SECONDS=str(budget),
             )
             return native("sh", [str(BOOT / script), *arguments], env=env)
-
-    def test_mail_protocol_requires_exact_pong_and_success_status(self):
-        """A listening socket or authentication error is not Valkey readiness."""
-        ready = self.shell_fixture(
-            "mail_valkey_gate.sh", "valkey-cli", "echo PONG\nexit 0\n", budget=5
-        )
-        self.assertEqual(ready.returncode, 0, ready.stderr)
-        self.assertEqual(json.loads(ready.stdout)["result"], "ready")
-        for body in ("echo NOAUTH-synthetic\nexit 0\n", "echo PONG\nexit 1\n"):
-            failed = self.shell_fixture("mail_valkey_gate.sh", "valkey-cli", body)
-            self.assertEqual(failed.returncode, 1)
-            self.assertNotIn("NOAUTH", failed.stdout + failed.stderr)
-            self.assertNotIn("PONG", failed.stdout + failed.stderr)
-
-    def test_hung_mail_probe_is_killed(self):
-        """The external timeout bounds an unresponsive native client."""
-        started = time.monotonic()
-        result = self.shell_fixture(
-            "mail_valkey_gate.sh", "valkey-cli", "exec sleep 20\n"
-        )
-        self.assertEqual(result.returncode, 1)
-        self.assertLess(time.monotonic() - started, 4)
 
     def test_nextcloud_skip_never_calls_cron_and_hides_probe_output(self):
         """The skip is in the main wrapper, not a successful init releasing work."""

@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,11 +8,12 @@ metadata:
     tier: mail
     app.kubernetes.io/name: postfix
     app.kubernetes.io/instance: postfix
-    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/version: latest
     app.kubernetes.io/managed-by: argoCD
   annotations:
-    configmap.reloader.stakater.com/auto: "true"
-    secret.reloader.stakater.com/reload: "mail-tls"
+    configmap.reloader.stakater.com/auto: 'true'
+    secret.reloader.stakater.com/reload: mail-tls
+    argocd.argoproj.io/sync-wave: '1'
 spec:
   replicas: 1
   strategy:
@@ -73,6 +73,9 @@ spec:
         - name: queue
           emptyDir:
             sizeLimit: 500Mi
+        - name: mail-startup
+          configMap:
+            name: mail-startup-e07d94c90561
       initContainers:
         - name: init-postfix-queue-perms
           image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
@@ -95,6 +98,41 @@ spec:
               add:
                 - CHOWN
                 - FOWNER
+        - name: wait-for-mail-dependencies
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
+          imagePullPolicy: IfNotPresent
+          command:
+            - timeout
+            - -s
+            - TERM
+            - -k
+            - '1'
+            - '305'
+            - perl
+            - /mail-startup/mail_dependency_gate.pl
+            - --wait
+            - postfix-dependencies
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 11333
+            runAsGroup: 11333
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: mail-startup
+              mountPath: /mail-startup
+              readOnly: true
       containers:
         - name: postfix-mail
           image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
@@ -105,11 +143,12 @@ spec:
             exec:
               command:
                 - /usr/bin/sh
-                - -lc
-                - postfix status >/dev/null 2>&1
+                - -ec
+                - postfix status >/dev/null 2>&1; exec timeout -s TERM -k 1 8 perl /mail-startup/mail_dependency_gate.pl
+                  --check postfix-dependencies
             periodSeconds: 10
-            timeoutSeconds: 1
-            failureThreshold: 3
+            timeoutSeconds: 10
+            failureThreshold: 1
           livenessProbe:
             exec:
               command:
@@ -123,7 +162,7 @@ spec:
             - name: mail-lh
               mountPath: /var/mail
             - name: mail-certs
-              mountPath: "/var/certs"
+              mountPath: /var/certs
             - name: main-cf
               mountPath: /etc/postfix/main.cf
               subPath: main.cf
@@ -140,6 +179,9 @@ spec:
               mountPath: /var/lib/postfix
             - name: spool
               mountPath: /var/spool/postfix
+            - name: mail-startup
+              mountPath: /mail-startup
+              readOnly: true
           securityContext:
             capabilities:
               drop:
@@ -157,13 +199,15 @@ spec:
             readOnlyRootFilesystem: true
           resources:
             requests:
-              cpu: "20m"
-              memory: "64Mi"
+              cpu: 20m
+              memory: 64Mi
             limits:
-              memory: "128Mi"
+              memory: 128Mi
         - name: queue-exporter
           image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
-          command: [perl, /collector/postfix-queue-exporter.pl]
+          command:
+            - perl
+            - /collector/postfix-queue-exporter.pl
           ports:
             - name: queue-metrics
               containerPort: 9154
@@ -174,14 +218,22 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
-              drop: [ALL]
+              drop:
+                - ALL
           resources:
-            requests: {cpu: 10m, memory: 32Mi}
-            limits: {memory: 64Mi}
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
           readinessProbe:
-            httpGet: {path: /healthz, port: queue-metrics}
+            httpGet:
+              path: /healthz
+              port: queue-metrics
           livenessProbe:
-            httpGet: {path: /healthz, port: queue-metrics}
+            httpGet:
+              path: /healthz
+              port: queue-metrics
           volumeMounts:
             - name: queue-exporter
               mountPath: /collector

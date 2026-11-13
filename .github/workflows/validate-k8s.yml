@@ -64,7 +64,6 @@ jobs:
           /usr/bin/node --check tools/bootstrap/karakeep_worker_gate.cjs
           /bin/sh -n tools/bootstrap/wait_service.sh
           /bin/sh -n tools/bootstrap/wait_mysql.sh
-          /bin/sh -n tools/bootstrap/mail_valkey_gate.sh
           /bin/sh -n tools/bootstrap/mail_training_gate.sh
           /bin/sh -n tools/bootstrap/nextcloud_job_gate.sh
 
@@ -113,6 +112,8 @@ jobs:
         run: |
           python tools/networkpolicy/generate_common_networkpolicies.py --check tools/networkpolicy/common-policies
           python tools/monitoring/generate_queue_exporters.py --check
+          python tools/bootstrap/prepare_mail_gates.py
+          perl -c tools/bootstrap/mail_dependency_gate.pl
           python tools/bootstrap/prepare_custom_crons.py
           sh -n tools/bootstrap/bookmarked_job_gate.sh
           sh -n tools/bootstrap/mastodon_spam_job_gate.sh

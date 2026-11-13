@@ -105,43 +105,38 @@ class DependencyBatchTests(unittest.TestCase):
         graph = document("docs/startup/dependencies.yaml")
         self.assertEqual(set(graph["prepared_packages"]), set(BATCH.PACKAGES))
 
-    def test_mail_preserves_postfix_policy_and_all_main_containers(self):
-        """Only add the protocol gate and remove the obsolete transition init."""
+    def test_mail_preserves_data_and_uses_approved_filter_policy(self):
+        """Active mail package is canonical, bounded and never revives old Redis."""
         result = BATCH.mail()
-        self.assertEqual(
-            set(result),
-            {
-                "mail/deployment-rspamd.yaml",
-                "mail/stateful-set-valkey.yaml",
-                "mail/config-map-rspamd-startup.yaml",
-            },
-        )
-        original = document("mail/deployment-rspamd.yaml")
-        changed = result["mail/deployment-rspamd.yaml"]
-        before = original["spec"]["template"]["spec"]
-        after = changed["spec"]["template"]["spec"]
-        self.assertEqual(after["containers"], before["containers"])
-        self.assertEqual(after["initContainers"][:-1], before["initContainers"])
-        self.assertEqual(after["initContainers"][-1]["name"], "wait-for-valkey")
-        self.assertIn(
-            "milter_default_action = accept",
-            (ROOT / "mail/config-map-main-cf.yaml").read_text(),
-        )
-        statefulset = next(
-            doc
-            for doc in result["mail/stateful-set-valkey.yaml"]
-            if doc["kind"] == "StatefulSet"
-        )
-        self.assertNotIn("initContainers", statefulset["spec"]["template"]["spec"])
-        old = next(
-            doc
-            for doc in yaml.safe_load_all(
-                (ROOT / "mail/stateful-set-valkey.yaml").read_text()
+        for path, documents in result.items():
+            expected = documents if isinstance(documents, list) else [documents]
+            self.assertEqual(
+                list(yaml.safe_load_all((ROOT / path).read_text())), expected
             )
-            if doc["kind"] == "StatefulSet"
+        for app in ("rspamd", "postfix"):
+            pod = result[f"mail/deployment-{app}.yaml"]["spec"]["template"]["spec"]
+            self.assertEqual(
+                pod["initContainers"][-1]["name"], "wait-for-mail-dependencies"
+            )
+            self.assertEqual(
+                pod["initContainers"][-1]["command"][-2:],
+                ["--wait", app + "-dependencies"],
+            )
+        self.assertIn(
+            "milter_default_action = tempfail",
+            result["mail/config-map-main-cf.yaml"]["data"]["config"],
         )
-        old["spec"]["template"]["spec"].pop("initContainers")
-        self.assertEqual(old, statefulset)
+        self.assertIn(
+            'expression = "CLAM_VIRUS_FAIL"',
+            result["mail/config-map-rspamd-cf.yaml"]["data"]["force_actions"],
+        )
+        provider = next(
+            d
+            for d in result["mail/stateful-set-valkey.yaml"]
+            if d["kind"] == "StatefulSet"
+        )
+        self.assertNotIn("initContainers", provider["spec"]["template"]["spec"])
+        self.assertNotIn("mail/deployment-dovecot.yaml", result)
 
     def test_nextcloud_cron_preserves_image_pvc_schedule_and_limits(self):
         """Replace blind sleep, retaining the exact original PHP cron work."""
@@ -202,7 +197,9 @@ class DependencyBatchTests(unittest.TestCase):
             configmaps = {
                 doc["metadata"]["name"]: doc
                 for doc in package.values()
-                if isinstance(doc, dict) and doc["kind"] == "ConfigMap"
+                if isinstance(doc, dict)
+                and doc["kind"] == "ConfigMap"
+                and doc.get("immutable")
             }
             for name, cm in configmaps.items():
                 digest = hashlib.sha256(

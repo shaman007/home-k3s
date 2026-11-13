@@ -5,15 +5,15 @@ scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 prepared_packages:
   mail:
-    status: inactive
-    provider: mail Valkey
-    consumer: Rspamd init
+    status: source-ready; not deployed
+    provider: Valkey RESP, Unbound DNS, ClamAV PING, independent Dovecot LMTP/SASL
+    consumer: Rspamd init/readiness then Postfix init/readiness; milter tempfail and AV soft reject
   mail-training:
-    status: inactive
+    status: deployed; scheduled ready and completion verified
     provider: Rspamd ping
     consumer: spam trainer main command
   nextcloud-cron:
-    status: inactive
+    status: deployed; scheduled ready and completion verified
     provider: SQL and ACL Valkey plus web maintenance/schema status
     consumer: Nextcloud cron main command
   karakeep:
@@ -424,6 +424,54 @@ nodes:
       controlled 2026-11-13 cutover; initial migration state already applied.
     sources:
     - mastodon/native/deployment-mastodon-streaming.yaml
+  mail-dovecot:
+    phase: 2
+    ready: Local passwd-file/static userdb, mail PVC and existing TLS Secret; IMAP/LMTP/SASL. No Valkey dependency.
+    sources:
+    - mail/deployment-dovecot.yaml
+    - mail/config-map-dovecot-cf.yaml
+  mail-valkey:
+    phase: 2
+    ready: Unauthenticated RESP PING returns PONG with current isolated backend configuration; no retired Redis
+      wait.
+    sources:
+    - mail/stateful-set-valkey.yaml
+  mail-dns:
+    phase: 2
+    ready: Unbound answers localhost A via DNS protocol without requiring an Internet lookup.
+    sources:
+    - mail/deployment-unbound.yaml
+    - mail/config-map-unbound.yaml
+  mail-clamav:
+    phase: 2
+    ready: clamd returns NUL-terminated PONG after startup/database loading; freshclam remains independent.
+    sources:
+    - clamav/deployment-clamav.yaml
+    - clamav/config-map-clamav.yaml
+  mail-rspamd:
+    phase: 3
+    ready: Startup waits for Valkey, Unbound, ClamAV; readiness also checks local HTTP ping and milter negotiation;
+      liveness stays local.
+    sources:
+    - mail/deployment-rspamd.yaml
+    - mail/config-map-rspamd-cf.yaml
+    - tools/bootstrap/mail_dependency_gate.pl
+  mail-postfix:
+    phase: 4
+    ready: Milter negotiation, Dovecot LMTP greeting/QUIT and SASL VERSION/MECH/DONE; local postfix status. No mail
+      or user authentication in probes.
+    sources:
+    - mail/deployment-postfix.yaml
+    - mail/config-map-main-cf.yaml
+    - tools/bootstrap/mail_dependency_gate.pl
+  mail-secrets:
+    phase: 1
+    ready: Required existing mail-tls/passwd/controller/DKIM Secrets present; ESO/OpenBao only when missing, never
+      a mandatory fresh refresh.
+    sources:
+    - mail/deployment-dovecot.yaml
+    - mail/deployment-rspamd.yaml
+    - mail/deployment-postfix.yaml
 edges:
 - from: kubernetes
   to: cilium
@@ -1209,3 +1257,91 @@ edges:
   to: mastodon-native-streaming
   kind: startup
   when: native_manifest_startup
+- from: mail-valkey
+  to: mail-rspamd
+  kind: startup
+  when: prepared_mail_gates
+- from: mail-dns
+  to: mail-rspamd
+  kind: startup
+  when: prepared_mail_gates
+- from: mail-clamav
+  to: mail-rspamd
+  kind: startup
+  when: prepared_mail_gates
+- from: mail-rspamd
+  to: mail-postfix
+  kind: startup
+  when: prepared_mail_gates
+- from: mail-dovecot
+  to: mail-postfix
+  kind: startup
+  when: SASL_and_LMTP
+- from: coredns
+  to: mail-rspamd
+  kind: startup
+  when: internal_service_names
+- from: coredns
+  to: mail-postfix
+  kind: startup
+  when: internal_service_names
+- from: longhorn
+  to: mail-valkey
+  kind: startup
+  when: PVC_mount
+- from: longhorn
+  to: mail-dovecot
+  kind: startup
+  when: mail_PVC_mount
+- from: longhorn
+  to: mail-rspamd
+  kind: startup
+  when: Rspamd_and_shared_mail_PVC_mount
+- from: longhorn
+  to: mail-postfix
+  kind: startup
+  when: persistent_queue_and_mail_PVC_mount
+- from: longhorn
+  to: mail-clamav
+  kind: startup
+  when: signatures_PVC_mount
+- from: mail-secrets
+  to: mail-dovecot
+  kind: startup
+  when: required_Secrets_present
+- from: mail-secrets
+  to: mail-rspamd
+  kind: startup
+  when: required_Secrets_present
+- from: mail-secrets
+  to: mail-postfix
+  kind: startup
+  when: required_Secrets_present
+- from: eso
+  to: mail-secrets
+  kind: startup
+  when: required_target_Secrets_missing
+- from: harbor
+  to: mail-dovecot
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: mail-valkey
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: mail-dns
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: mail-clamav
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: mail-rspamd
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: mail-postfix
+  kind: image
+  when: image_cache_miss

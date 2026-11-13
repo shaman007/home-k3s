@@ -4,6 +4,7 @@
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -46,79 +47,13 @@ def script(name):
 
 
 def mail():
-    """Rspamd waits for its independent Valkey; remove the retired Redis wait."""
-    rspamd = read("mail/deployment-rspamd.yaml")
-    pod = rspamd["spec"]["template"]["spec"]
-    valkey_documents = list(
-        yaml.safe_load_all((ROOT / "mail/stateful-set-valkey.yaml").read_text())
+    """Render the active canonical mail package; never resurrect retired Redis waits."""
+    spec = importlib.util.spec_from_file_location(
+        "mail_gates", BOOT / "prepare_mail_gates.py"
     )
-    valkey = next(doc for doc in valkey_documents if doc["kind"] == "StatefulSet")
-    valkey_pod = valkey["spec"]["template"]["spec"]
-    legacy = [
-        c
-        for c in valkey_pod.get("initContainers", [])
-        if c["name"] == "wait-for-redis-shutdown"
-    ]
-    if len(legacy) != 1 or "redis.mail.svc.cluster.local" not in str(legacy):
-        raise ValueError("Review changed legacy Redis transition before removal")
-    valkey_pod["initContainers"] = [
-        c for c in valkey_pod["initContainers"] if c not in legacy
-    ]
-    if not valkey_pod["initContainers"]:
-        del valkey_pod["initContainers"]
-    provider = next(c for c in valkey_pod["containers"] if c["name"] == "valkey")
-    if provider.get("args") != [
-        "--appendonly",
-        "yes",
-        "--save",
-        "60",
-        "1",
-    ] or provider.get("envFrom"):
-        raise ValueError("Review changed mail Valkey authentication/startup contract")
-    image = provider["image"]
-    cm = config_map(
-        "rspamd-startup",
-        "mail",
-        {
-            "mail_valkey_gate.sh": script("mail_valkey_gate.sh"),
-        },
-    )
-    if any(c["name"] == "wait-for-valkey" for c in pod.get("initContainers", [])):
-        raise ValueError(
-            "Gate already present; review source rather than duplicating it"
-        )
-    pod.setdefault("initContainers", []).append(
-        {
-            "name": "wait-for-valkey",
-            "image": image,
-            "imagePullPolicy": "IfNotPresent",
-            "command": ["/bin/sh", "/mail-startup/mail_valkey_gate.sh"],
-            "securityContext": {
-                "runAsNonRoot": True,
-                "runAsUser": 1000,
-                "runAsGroup": 1000,
-                "allowPrivilegeEscalation": False,
-                "readOnlyRootFilesystem": True,
-                "capabilities": {"drop": ["ALL"]},
-                "seccompProfile": {"type": "RuntimeDefault"},
-            },
-            "resources": {
-                "requests": {"cpu": "10m", "memory": "64Mi"},
-                "limits": {"memory": "128Mi"},
-            },
-            "volumeMounts": [
-                {"name": "mail-startup", "mountPath": "/mail-startup", "readOnly": True}
-            ],
-        }
-    )
-    pod.setdefault("volumes", []).append(
-        {"name": "mail-startup", "configMap": {"name": cm["metadata"]["name"]}}
-    )
-    return {
-        "mail/deployment-rspamd.yaml": rspamd,
-        "mail/stateful-set-valkey.yaml": valkey_documents,
-        "mail/config-map-rspamd-startup.yaml": cm,
-    }
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.documents()
 
 
 def nextcloud_cron():

@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,10 +8,10 @@ metadata:
     tier: mail
     app.kubernetes.io/name: rspamd
     app.kubernetes.io/instance: rspamd
-    app.kubernetes.io/version: "4.0.0"
+    app.kubernetes.io/version: 4.0.0
     app.kubernetes.io/managed-by: argoCD
   annotations:
-    configmap.reloader.stakater.com/auto: "true"
+    configmap.reloader.stakater.com/auto: 'true'
 spec:
   replicas: 1
   strategy:
@@ -145,27 +144,44 @@ spec:
             claimName: rspamd-local
         - name: logs
           emptyDir: {}
+        - name: mail-startup
+          configMap:
+            name: mail-startup-e07d94c90561
+        - name: force-actions-cf
+          configMap:
+            name: rspamd-cf
+            items:
+              - key: force_actions
+                path: force_actions.conf
       containers:
         - name: rspamd
           image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.3
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              cpu: "50m"
-              memory: "576Mi"
+              cpu: 50m
+              memory: 576Mi
             limits:
-              memory: "768Mi"
+              memory: 768Mi
           ports:
             - containerPort: 11333
             - containerPort: 11334
           readinessProbe:
-            httpGet:
-              path: /ping
-              port: 11334
-              scheme: HTTP
+            exec:
+              command:
+                - timeout
+                - -s
+                - TERM
+                - -k
+                - '1'
+                - '8'
+                - perl
+                - /mail-startup/mail_dependency_gate.pl
+                - --check
+                - rspamd-ready
             periodSeconds: 10
-            timeoutSeconds: 1
-            failureThreshold: 3
+            timeoutSeconds: 10
+            failureThreshold: 1
           livenessProbe:
             httpGet:
               path: /ping
@@ -244,11 +260,21 @@ spec:
             - name: settings-cf
               mountPath: /etc/rspamd/local.d/settings.conf
               subPath: settings.conf
+            - name: mail-startup
+              mountPath: /mail-startup
+              readOnly: true
+            - name: force-actions-cf
+              mountPath: /etc/rspamd/local.d/force_actions.conf
+              subPath: force_actions.conf
+              readOnly: true
       initContainers:
         - name: fix-perms
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
           imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "chown -R 11333:11333 /var/lib/rspamd && chmod 755 /var/lib/rspamd"]
+          command:
+            - sh
+            - -c
+            - chown -R 11333:11333 /var/lib/rspamd && chmod 755 /var/lib/rspamd
           securityContext:
             runAsUser: 0
             runAsGroup: 0
@@ -269,5 +295,40 @@ spec:
               memory: 32Mi
             limits:
               memory: 32Mi
+        - name: wait-for-mail-dependencies
+          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.3
+          imagePullPolicy: IfNotPresent
+          command:
+            - timeout
+            - -s
+            - TERM
+            - -k
+            - '1'
+            - '305'
+            - perl
+            - /mail-startup/mail_dependency_gate.pl
+            - --wait
+            - rspamd-dependencies
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 11333
+            runAsGroup: 11333
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: mail-startup
+              mountPath: /mail-startup
+              readOnly: true
       nodeSelector:
         kubernetes.io/hostname: w386

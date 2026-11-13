@@ -1,0 +1,171 @@
+apiVersion: v1
+kind: ConfigMap
+immutable: true
+metadata:
+  name: mail-startup-e07d94c90561
+  namespace: mail
+data:
+  mail_dependency_gate.pl: |
+    #!/usr/bin/env perl
+    # Read-only protocol probes. Never authenticate users, scan mail or log replies.
+    package MailDependencies;
+    use strict;
+    use warnings;
+    use IO::Socket::INET;
+
+    sub now {
+        open my $file, '<', '/proc/uptime' or die "clock\n";
+        my ($seconds) = split / /, scalar <$file>;
+        close $file;
+        return 0 + $seconds;
+    }
+    sub pause { select undef, undef, undef, $_[0]; }
+    sub write_all {
+        my ($socket, $data) = @_;
+        while (length $data) {
+            my $n = syswrite($socket, $data);
+            die "write\n" unless defined($n) && $n > 0;
+            substr($data, 0, $n, '');
+        }
+    }
+    sub exact {
+        my ($socket, $size) = @_;
+        die "size\n" if $size < 1 || $size > 4096;
+        my $data = '';
+        while (length($data) < $size) {
+            my $n = sysread($socket, my $chunk, $size - length($data));
+            die "read\n" unless defined($n) && $n > 0;
+            $data .= $chunk;
+        }
+        return $data;
+    }
+    sub line {
+        my ($socket) = @_;
+        my $data = '';
+        while (length($data) < 1024) {
+            $data .= exact($socket, 1);
+            return $data if $data =~ /\n\z/;
+        }
+        die "line\n";
+    }
+    sub protocol {
+        my ($socket, $kind) = @_;
+        if ($kind eq 'valkey') {
+            write_all($socket, "*1\r\n\$4\r\nPING\r\n");
+            return exact($socket, 7) eq "+PONG\r\n";
+        }
+        if ($kind eq 'clamav') {
+            write_all($socket, "zPING\0");
+            return exact($socket, 5) eq "PONG\0";
+        }
+        if ($kind eq 'dns') {
+            my $question = "\x09localhost\0" . pack('nn', 1, 1);
+            my $query = pack('n6', 0x7139, 0x0100, 1, 0, 0, 0) . $question;
+            write_all($socket, pack('n', length($query)) . $query);
+            my $size = unpack('n', exact($socket, 2));
+            my $reply = exact($socket, $size);
+            return 0 if length($reply) < 12 + length($question);
+            my ($id, $flags, $questions, $answers) = unpack('n4', $reply);
+            return $id == 0x7139 && ($flags & 0x8000) && !($flags & 0x7a0f)
+                && $questions == 1 && $answers > 0 && substr($reply, 12, length($question)) eq $question;
+        }
+        if ($kind eq 'milter') {
+            write_all($socket, pack('N', 13) . 'O' . pack('N3', 6, 0, 0));
+            my $size = unpack('N', exact($socket, 4));
+            return 0 unless $size == 13;
+            my $reply = exact($socket, $size);
+            my $version = unpack('N', substr($reply, 1, 4));
+            write_all($socket, pack('N', 1) . 'Q');
+            return substr($reply, 0, 1) eq 'O' && $version >= 2 && $version <= 6;
+        }
+        if ($kind eq 'lmtp') {
+            return 0 unless line($socket) =~ /\A220[ -]/;
+            write_all($socket, "QUIT\r\n");
+            return line($socket) =~ /\A221 / ? 1 : 0;
+        }
+        if ($kind eq 'sasl') {
+            write_all($socket, "VERSION\t1\t2\nCPID\t$$\n");
+            my $reply = '';
+            for (1..32) {
+                my $part = line($socket);
+                $reply .= $part;
+                last if $part eq "DONE\n";
+            }
+            return $reply =~ /^VERSION\t1\t\d+\n/m && $reply =~ /^MECH\tPLAIN(?:\t|\n)/m
+                && $reply =~ /^DONE\n/m ? 1 : 0;
+        }
+        if ($kind eq 'http') {
+            write_all($socket, "GET /ping HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n");
+            return line($socket) =~ m{\AHTTP/1\.[01] 200(?: |\r)} ? 1 : 0;
+        }
+        die "kind\n";
+    }
+    sub probe {
+        my ($kind, $host, $port, $seconds) = @_;
+        my ($socket, $ok);
+        {
+            local $SIG{ALRM} = sub { die "deadline\n"; };
+            $ok = eval {
+                alarm($seconds);
+                $socket = IO::Socket::INET->new(PeerAddr=>$host, PeerPort=>$port,
+                    Proto=>'tcp', Timeout=>$seconds) or die "connect\n";
+                my $result = protocol($socket, $kind);
+                alarm(0);
+                $result;
+            };
+            alarm(0);
+        }
+        close($socket) if $socket;
+        return $ok ? 1 : 0;
+    }
+    sub targets {
+        my ($profile) = @_;
+        my @providers = (
+            ['valkey', 'valkey.mail.svc.cluster.local', 6379],
+            ['dns', 'unbound.mail.svc.cluster.local', 53],
+            ['clamav', 'clamav.clamav.svc.cluster.local', 3200]);
+        return @providers if $profile eq 'rspamd-dependencies';
+        return (@providers, ['http', '127.0.0.1', 11334], ['milter', '127.0.0.1', 11332])
+            if $profile eq 'rspamd-ready';
+        return (['milter', 'rspamd.mail.svc.cluster.local', 11332],
+            ['lmtp', 'dovecot-lmtp.mail.svc.cluster.local', 24],
+            ['sasl', 'dovecot-sasl.mail.svc.cluster.local', 1234]) if $profile eq 'postfix-dependencies';
+        die "profile\n";
+    }
+    sub check_group {
+        my ($profile, $deadline, $check, $clock) = @_;
+        $check ||= \&probe;
+        $clock ||= \&now;
+        for my $target (targets($profile)) {
+            my $left = $deadline - $clock->();
+            return 0 unless $left > 0;
+            return 0 if $left < 1;
+            my $seconds = 1;
+            unless ($check->(@$target, $seconds)) {
+                printf '{"event":"mail_dependencies","profile":"%s","stage":"%s","result":"unavailable"}' . "\n", $profile, $target->[0];
+                return 0;
+            }
+        }
+        return $clock->() <= $deadline ? 1 : 0;
+    }
+    sub main {
+        return 2 unless @_ == 2;
+        my ($mode, $profile) = @_;
+        return 2 unless defined($profile) && defined($mode) && ($mode eq '--wait' || $mode eq '--check');
+        return 2 unless eval { my @t = targets($profile); scalar @t; };
+        my $budget = $mode eq '--wait' ? 300 : 8;
+        my $deadline = now() + $budget;
+        do {
+            if (check_group($profile, $deadline)) {
+                printf '{"event":"mail_dependencies","profile":"%s","result":"ready"}' . "\n", $profile;
+                return 0;
+            }
+            last if $mode eq '--check' || now() >= $deadline;
+            my $left = $deadline - now();
+            pause($left < 5 ? $left : 5) if $left > 0;
+        } while (now() < $deadline);
+        return 1;
+    }
+    $| = 1;
+    exit main(@ARGV) unless caller;
+    1;

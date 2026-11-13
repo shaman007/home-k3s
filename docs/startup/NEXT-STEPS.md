@@ -39,7 +39,7 @@ tracked generators and tests are the reproducible source.
 | 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match, controller polls and small GeoIP-PVC full backup passed | Next scheduled backup and separately authorized isolated restore remain pending |
 | 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Accept internal HTTP; historical queries, ingestion and object reads after rolling Loki |
 | 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Verify source type is S3, actual ESO rendering and signed access; separately authorize sequential client rollouts, including shared Prometheus Pod |
-| 4 | `mail` | Existing permissions init → exact Valkey PONG → Rspamd; remove old Redis-shutdown wait from Valkey | Confirm legacy Redis absent; accept Rspamd remaining unavailable while Valkey is down; maintain explicit existing Postfix fail-open policy |
+| 4 | `mail` | Valkey + Unbound + ClamAV → Rspamd → Postfix; independent Dovecot provides SASL/LMTP | Superseded by [complete mail package](mail/README.md): approved tempfail/AV soft-reject policy and staged SMTP window; not deployed |
 | 5 | `mail-training` | Wait up to 300 seconds for Rspamd HTTP200, then existing trainer; otherwise skip before starting private Dovecot/reading mail | Review one-hour deadline; observe next scheduled training without injecting mail or cancelling an active Job |
 | 6 | `nextcloud-cron` + report gates | Native SQL/ACL-Valkey/maintenance checks for cron; Loki/Ollama API checks for three reports | Check stale-report detection, runtime limits and actual mounted-PVC permissions; no skipped run counted as useful completion |
 | 7 | `karakeep` | s6 workers wait for Chrome and Meilisearch; no Pod init wait for same-Pod Chrome | Accept gating the entire worker service, not only crawler/search; validate s6 mount/startup and signal behavior in isolation first |
@@ -109,18 +109,17 @@ route remains usable unless the original underlying DR failure is still present.
 
 ## Mail details
 
-The Valkey candidate removes **only** `wait-for-redis-shutdown`; all main
-containers, volumes, Service and persistence args remain. Rspamd uses the already
-required Valkey image as its native CLI init, not a new bootstrap image. The
-current image contains `valkey-cli`, `timeout` and `sh`; the gate requires exact
-PONG plus exit0 and suppresses driver output. Each invocation is bounded to 300 seconds
-plus process termination overhead; Kubernetes can retry failed init indefinitely.
+The canonical [mail package](mail/README.md) replaces the earlier Valkey-only
+proposal. It uses native Perl from each existing application image, with
+protocol-level checks, consumer init and dependency-aware readiness. Local
+liveness and all data/Secret mounts remain unchanged. The obsolete Redis shutdown
+wait is removed from Valkey; Dovecot has no Valkey dependency.
 
-Postfix/Dovecot/Unbound entrypoints and configuration remain unchanged. In
-particular `milter_default_action=accept` is a Postfix setting and is not changed
-to reject/defer. A startup-only Valkey check does not prevent filtering bypass on
-later Rspamd failure. That ongoing mail acceptance/delivery policy needs a separate
-explicit decision; do not silently harden it while deploying a gate.
+The user explicitly selected temporary deferral without bypassing failed
+filters. The prepared source therefore changes Postfix to milter tempfail and
+adds Rspamd soft reject on CLAM_VIRUS_FAIL, preserving actual-virus reject.
+These mail changes are not deployed; use the two-stage rollout in the linked
+package, not the old fail-open policy described by the historical proposal.
 
 The trainer uses its existing curl and image, does not follow redirects or use
 environment proxies, and requires HTTP200 from the existing Rspamd ping endpoint.
@@ -128,7 +127,8 @@ This is availability, not proof that a learning request is authorized. Its origi
 training script continues to check actual operations before deleting learned
 messages. No messages were read, submitted, learned or deleted during preparation.
 
-Roll back through Git to the original Rspamd/Valkey/trainer commands and mounts;
+Use the mail package rollback plan; do not silently restore fail-open or the
+retired Redis wait. For CronJob rollback restore the original trainer command;
 leave all mail/queue/Valkey PVCs and Secrets intact. Old script ConfigMaps are
 removed only after no referenced Pod/Job remains. Never cancel a running training
 or bookmark-sync Job as part of this transition without separate authorization.
@@ -208,3 +208,11 @@ containers with tracked namespace defaults and no new errors. Pinned Loki
 chart 7.6.0 was rendered locally and both common/ruler S3 configurations resolve
 to the direct HTTP endpoint. No published CI/Code Scanning run exists for these
 uncommitted extensions, and none of these checks substitutes for live acceptance.
+
+## Mail package follow-up
+
+The canonical [mail startup/readiness package](mail/README.md) supersedes the
+narrow historical Valkey-only proposal above. It is locally prepared, not deployed.
+The controlled rollout must account for single-replica Recreate and ConfigMap
+Reloader; publishing all changes without the planned SMTP window is not the
+acceptance procedure.
