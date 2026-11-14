@@ -155,7 +155,7 @@ spec:
                 path: force_actions.conf
       containers:
         - name: rspamd
-          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.3
+          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.3.0
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -296,7 +296,7 @@ spec:
             limits:
               memory: 32Mi
         - name: wait-for-mail-dependencies
-          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.2.3
+          image: harbor.andreybondarenko.com/github/rspamd/rspamd-docker:4.3.0
           imagePullPolicy: IfNotPresent
           command:
             - timeout
