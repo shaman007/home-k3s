@@ -38,13 +38,14 @@ recovery_scenarios:
     - seaweedfs/ingress-andreybondarenko-ingress.yaml
     - docs/migrations/longhorn-internal-s3/README.md
   prepared_direct_s3:
-    status: active for Longhorn; signed reads, target polls and small-PVC full backup passed; isolated restore pending
+    status: active for Longhorn; signed reads, target polls, small-PVC full backup and isolated new-PVC restore/hash comparison passed
     endpoint: http://s3.seaweedfs.svc.cluster.local:8333
     extra_edges: []
     evidence:
     - seaweedfs/service-s3.yaml
     - seaweedfs/network-policy-seaweedfs-allow-ingress-from-longhorn.yaml
     - docs/migrations/longhorn-internal-s3/endpoint.json
+    - docs/migrations/longhorn-internal-s3/RESTORE-VERIFICATION.md
 nodes:
   kubernetes:
     phase: 0

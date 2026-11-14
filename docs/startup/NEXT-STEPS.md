@@ -36,7 +36,7 @@ tracked generators and tests are the reproducible source.
 
 | Order | Package | Prepared behavior | Required decision/acceptance before deployment |
 | --- | --- | --- | --- |
-| 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match, controller polls and small GeoIP-PVC full backup passed | Next scheduled backup and separately authorized isolated restore remain pending |
+| 1 | [Longhorn direct S3](../migrations/longhorn-internal-s3/README.md) | Endpoint active; signed reads, full metadata match, controller polls and small GeoIP-PVC full backup passed | Isolated GeoIP restore to new PVC/hash comparison passed; full cold bootstrap remains untested |
 | 2 | `observability`: Loki | Direct S3 Service; narrowly scoped bidirectional policies; same bucket/schema/retention | Active and accepted; publish matching sources and remove maintenance pause |
 | 3 | `observability`: Thanos | ESO template overrides only endpoint/insecure in the existing S3 config; original OpenBao source retained | Active and accepted with isolated targets; Prometheus preserved; next natural upload pending |
 | 4 | `mail` | Valkey + Unbound + ClamAV → Rspamd → Postfix; independent Dovecot provides SASL/LMTP | Superseded by [complete mail package](mail/README.md): deployed by 32517070 with tempfail/AV soft-reject policy; isolated SMTP failure tests pending |

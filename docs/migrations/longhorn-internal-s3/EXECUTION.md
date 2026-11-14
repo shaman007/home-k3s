@@ -107,3 +107,15 @@ This proves a completed new backup after switching to the internal endpoint;
 it does not replace an isolated restore/data comparison. The earlier Hubble
 observation proves the controller's direct route; no packet-level claim is made
 for this individual backup upload.
+
+## Subsequent isolated restore validation — 2026-11-14
+
+The user authorized restoring the small GeoIP backup to a new PVC. Completed:
+[isolated restore/data verification](RESTORE-VERIFICATION.md). New 1Gi RWO PVC
+`restore-verification/geoip-restore-20261114` recovered from the internal S3 target;
+read-only file size/SHA-256 matched the unchanged source, both replicas healthy
+while attached, reader exit0, then clean detach. Source Traefik stayed Ready with
+zero restarts. Test resources are retained, readiness silence explicitly expired.
+No source data or backup was overwritten/deleted. This supersedes the earlier
+isolated-restore-pending note; full cold-boot/independent credential recovery
+remains untested.
