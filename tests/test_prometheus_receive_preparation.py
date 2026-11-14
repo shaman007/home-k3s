@@ -23,6 +23,20 @@ SPEC.loader.exec_module(PLAN)
 class ReceivePreparationTests(unittest.TestCase):
     """Preparation cannot silently activate, rewrite identities or share live RWO data."""
 
+    def test_namespace_quota_reserves_receive_storage(self):
+        """Free Longhorn space alone does not permit PVC admission under a quota."""
+        quota = next(
+            obj for obj in yaml.safe_load_all(
+                (ROOT / "namespaces/resource-quotas.yaml").read_text()
+            )
+            if obj and obj["metadata"].get("namespace") == "monitoring"
+        )
+        claim = PLAN.receive_statefulset()["spec"]["volumeClaimTemplates"][0]
+        storage = claim["spec"]["resources"]["requests"]["storage"]
+        budget = quota["spec"]["hard"]["requests.storage"]
+        self.assertTrue(storage.endswith("Gi") and budget.endswith("Gi"))
+        self.assertGreaterEqual(int(budget[:-2]), 260 + int(storage[:-2]))
+
     def test_stage_one_sources_match_reviewed_generator(self):
         """Publication deploys only the reviewed receiver/policy phase, not dual write."""
         for path, objects in PLAN.infrastructure().items():

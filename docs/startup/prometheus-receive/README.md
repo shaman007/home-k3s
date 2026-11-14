@@ -61,6 +61,13 @@ Do not publish all stages as one atomic transition.
 
 ### 1. Infrastructure and admission
 
+The first published rollout (`e8125250`) hit namespace storage admission:
+monitoring used 219Gi of its 260Gi quota, leaving less than Receive's 64Gi claim.
+The prepared correction raises only monitoring's storage quota to 324Gi,
+preserving the old budget plus the independent claim. No existing PVC is resized.
+Publish this correction before continuing acceptance; check ResourceQuota usage
+as well as Longhorn capacity. Prometheus remains on its unchanged sidecar Pod.
+
 New singleton Receive uses the existing declared Thanos version, namespace
 `monitoring`, 2Gi memory request /6Gi limit, 100m CPU request, new 64Gi Longhorn
 claim, three-day local retention and two-hour blocks. The new claim survives

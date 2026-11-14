@@ -416,7 +416,8 @@ spec:
     secrets: "80"
     configmaps: "80"
     persistentvolumeclaims: "8"
-    requests.storage: 260Gi
+    # Preserve the previous storage budget plus Receive's independent 64Gi PVC.
+    requests.storage: 324Gi
 ---
 apiVersion: v1
 kind: ResourceQuota
