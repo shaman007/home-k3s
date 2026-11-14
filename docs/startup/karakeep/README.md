@@ -1,7 +1,7 @@
 # Karakeep startup and separate Chrome
 
-Prepared locally; **not deployed**. The user accepted waiting before the whole
-worker pool and requested a separate Chrome Pod where compatible.
+Deployed and verified on 2026-11-14. The whole worker pool waits for Chrome and
+Meilisearch; Chrome runs in a separate Pod.
 
 ## Dependencies and readiness
 
@@ -59,8 +59,8 @@ this gate does not continuously stop already-running workers.
 Requires Podman, Python/PyYAML and existing registry access to the declared
 images. These opt-in integration scripts create/remove only their own local
 containers, temporary files and network. They never use production Secrets/data.
-Real cluster DNS, policy enforcement, new browser volume ownership and a real
-bookmark crawl must still be verified after deployment.
+Cluster DNS, policy reachability, browser temporary paths and a real synthetic
+bookmark crawl were verified after deployment (see runtime acceptance below).
 
 ## Transition
 
@@ -104,5 +104,31 @@ check passed; the initial fake-provider test did not reproduce this restriction.
 The gate now sets `Host: localhost` only for CDP discovery using Node http.get.
 Both the HTTP regression and full s6 fake provider enforce this restriction.
 A read-only request using the same HTTP API confirmed valid debugger JSON over
-the real Service. The fixed immutable ConfigMap and Deployment reference are
-prepared for a new GitOps rollout; manual cluster state was not changed.
+the real Service. The fixed immutable ConfigMap and Deployment reference were published and
+reconciled; live worker gate release was verified.
+
+## Runtime recovery acceptance — 2026-11-14
+
+* Restarted only the separate Chrome Pod. The existing application worker
+  reconnected to the replacement through CDP in approximately ten seconds, after
+  two transient connection errors. The Karakeep Pod and worker process did not
+  restart. An application-owned established socket confirmed the new backend.
+* Recreated only `meilisearch-0`, retaining `meili-data`. It became Ready on a
+  different node; all 396 bookmark documents and 394 vector documents survived.
+  Karakeep web/health stayed available and its worker process did not restart.
+* After both recoveries, a synthetic public-page bookmark completed remote
+  Chrome crawling, reader content, PDF/screenshot capture and full-page archive
+  attachment, AI summary/tags, embedding and indexing. Its unique title appeared
+  in the authenticated user search as well as a read-only Meilisearch query.
+  Attachment links and capture logs were checked; downloaded file integrity was
+  not independently tested.
+* Deleted only that synthetic bookmark through the normal UI with explicit user
+  confirmation. Search became empty, its index document returned 404, and index
+  counts returned to 396/394. Existing bookmarks were not changed.
+* Removed the narrowly scoped maintenance silences. Final Argo report passed
+  95/95 applications; the Prometheus alert inventory was empty.
+
+These checks establish recovery and processing of new work after dependency
+replacement. They do not establish retry semantics for a job interrupted during
+its crawl/index write, prolonged simultaneous outages, or Ollama/SSO failure.
+The startup gate remains a startup check, not continuous worker suspension.
