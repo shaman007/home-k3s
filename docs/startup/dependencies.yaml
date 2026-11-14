@@ -5,7 +5,7 @@ scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 planned_transitions:
   prometheus_receive:
-    status: infrastructure source prepared locally; dual-write/cutover inactive; user selected full separate Receive; no live transition
+    status: infrastructure published; dual-write active live with sidecar retained; stage2 source publication pending; cutover inactive
     evidence:
     - docs/startup/prometheus-receive/README.md
     - tools/bootstrap/prepare_prometheus_receive.py
@@ -27,7 +27,7 @@ planned_transitions:
     - from: receive
       to: thanos-query
       kind: feature
-    acceptance: local exact-image missing-token/receiver outage and dedup passed; real Receive S3 upload and history cutover not yet tested
+    acceptance: local failure fixtures passed; real signed internal S3 read/list, remote_write delivery and Query dedup passed; natural Receive block upload and history cutover pending
 prepared_packages:
   mail:
     status: deployed including diagnostic-loop fix; production inbound delivery and isolated filter failure/recovery verified

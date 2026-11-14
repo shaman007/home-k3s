@@ -1,11 +1,35 @@
 # Prometheus independent of Thanos: staged Receive migration
 
-2026-11-14. **Local preparation and disposable fixtures only.** No live rollout,
-Secret/PVC deletion, alert silence or TSDB export. The user selected full
+2026-11-14. **Dual-write enabled live; publication of stage2 pending.** The user selected full
 separation through Thanos Receive rather than publishing unready Prometheus
 Service endpoints. Infrastructure-stage files are prepared in active Git source
-paths but are not yet committed/published/applied. Prometheus still runs the
-unchanged shared sidecar Pod; dual-write/cutover remain inactive candidates.
+paths and were published through `17b9bd76`, including the storage-quota fix.
+Prometheus still runs with its sidecar. Stage2 sources now match the live
+remote_write/Receive scrape/extra alerts and Query endpoint changes; cutover
+remains inactive. No Secret/PVC deletion or TSDB export was performed.
+
+## Current transition state
+
+On 2026-11-14 the user authorized dual-write activation. Only Argo applications
+`kubernetes-prometheus` and `thanos` have temporary `skip-reconcile=true` until
+the stage2 source diff is published. Their auto-sync/self-heal specifications
+are preserved. Remove these annotations after verifying the published revision;
+do not remove the sidecar during this publication step.
+
+The ConfigMap update triggered the expected Recreate restart through Reloader;
+Prometheus and its sidecar recovered together, Query recovered with both store
+paths, and Receive was not restarted. Initial live checks: over2million samples
+sent, failed samples0, Receive scrape up1, delivery lag about23seconds. Query
+returns two copies of Prometheus's `up` with `dedup=false` and one with dedup,
+and a replica selector confirms fresh data from `thanos-receive-0`. Signed
+list/read from Receive to internal S3 passed in the infrastructure stage.
+
+These checks do not establish the natural Receive block upload or historical
+continuity required below. Keep dual-write and sidecar while observing memory,
+queue progress, the first natural two-hour block cycle and Store Gateway reads.
+Initial working-set readings were about4863Mi for Prometheus (limit6400Mi) and
+3436Mi for Receive (limit6Gi); these are early observations, not steady-state
+sizing guarantees. No receiver outage or real Secret deletion was injected.
 
 ## Intended graph
 

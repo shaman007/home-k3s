@@ -1494,6 +1494,23 @@ data:
           summary: Immich queue {{ $labels.queue }} retains failed jobs.
           description: This is a retained failure count, not a rate of new failures. Review the Immich admin job view; do not automatically retry or delete jobs.
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+    - name: remote-write-recovery
+      rules:
+      - alert: PrometheusRemoteWriteLag
+        expr: time() - prometheus_remote_storage_queue_highest_sent_timestamp_seconds{remote_name="thanos-receive"} > 300
+        for: 10m
+        labels: {severity: mail, owner: homelab, priority: warning}
+        annotations:
+          summary: Prometheus remote write is falling behind.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/startup/prometheus-receive/README.md#limits-and-rollback
+          description: Local scraping remains independent; investigate Receive and drain the WAL before its replay window is lost.
+      - alert: PrometheusRemoteWriteDroppedSamples
+        expr: increase(prometheus_remote_storage_samples_dropped_total{remote_name="thanos-receive"}[5m]) > 0
+        labels: {severity: mail, owner: homelab, priority: critical}
+        annotations:
+          summary: Prometheus remote write dropped samples.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/startup/prometheus-receive/README.md#limits-and-rollback
+          description: Investigate ingestion failure and assess recovery from retained local blocks; do not reset TSDB.
   prometheus.yaml: |-
     global:
       scrape_interval: 5s
@@ -2474,3 +2491,21 @@ data:
         static_configs:
         - targets:
           - immich-valkey.immich.svc.cluster.local:9121
+      - job_name: thanos-receive
+        scrape_interval: 30s
+        static_configs:
+        - targets:
+          - thanos-receive.monitoring.svc.cluster.local:10902
+
+    remote_write:
+    - name: thanos-receive
+      url: http://thanos-receive.monitoring.svc.cluster.local:19291/api/v1/receive
+      headers:
+        THANOS-TENANT: prometheus
+      remote_timeout: 30s
+      queue_config:
+        min_shards: 1
+        max_shards: 4
+        capacity: 10000
+        max_samples_per_send: 2000
+        retry_on_http_429: true

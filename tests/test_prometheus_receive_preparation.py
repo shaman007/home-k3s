@@ -199,7 +199,12 @@ class ReceivePreparationTests(unittest.TestCase):
         old = alerts(PLAN.read(PLAN.CONFIG))
         new = alerts(PLAN.candidate("cutover")[PLAN.CONFIG][0])
         self.assertFalse(old - new)
-        self.assertEqual(sum((new - old).values()), 2)
+        expected = {
+            "PrometheusRemoteWriteLag", "PrometheusRemoteWriteDroppedSamples"
+        }
+        existing_names = {json.loads(rule)["alert"] for rule in old}
+        added_names = {json.loads(rule)["alert"] for rule in new - old}
+        self.assertEqual(added_names, expected - existing_names)
 
     def test_regeneration_after_infrastructure_and_dual_write_is_safe(self):
         """Each stage can be regenerated from a tree where the prior stage is promoted."""
