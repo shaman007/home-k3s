@@ -4,6 +4,14 @@ scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud
   Bitwarden and Firefox Sync (deployed gates); mail, custom CronJobs, Karakeep and internal-S3 observability deployed
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 planned_transitions:
+  godaddy_webhook_ghcr:
+    status: local preparation only; manual publishing workflow and inactive image/signature-policy candidates; no published GHCR digest or cluster change
+    image: ghcr.io/shaman007/godaddy-webhook
+    evidence:
+    - .github/workflows/publish-godaddy-webhook.yml
+    - tools/godaddy-webhook/prepare_independent.py
+    - tools/godaddy-webhook/INDEPENDENT-IMAGE.md
+    acceptance: public anonymous layer pull, new digest and exact workflow signature, isolated runtime/TLS checks, staged DNS01 canary; only then promote chart/policies and update bootstrap image lock/bundle
   prometheus_receive:
     status: cutover active live; Prometheus has no sidecar or S3 mount and three optional scrape tokens; source publication pending
     evidence:

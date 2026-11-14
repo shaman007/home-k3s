@@ -1,0 +1,63 @@
+name: Publish independent GoDaddy webhook
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: publish-godaddy-webhook
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'shaman007/home-k3s' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    env:
+      IMAGE: ghcr.io/shaman007/godaddy-webhook
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+        with:
+          cosign-release: v3.1.4
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends podman
+      - name: Test exact source and build linux/amd64
+        run: |
+          podman run --rm --platform linux/amd64 \
+            -v "$GITHUB_WORKSPACE/tools/godaddy-webhook:/src:ro" -w /src \
+            docker.io/library/golang:1.27.4 go test -mod=readonly -race ./...
+          podman build --platform linux/amd64 --pull=always \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            -t "$IMAGE:sha-$GITHUB_SHA" tools/godaddy-webhook
+      - name: Publish and sign immutable digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REGISTRY_AUTH_FILE: ${{ runner.temp }}/godaddy-registry-auth.json
+          DOCKER_CONFIG: ${{ runner.temp }}/godaddy-docker-auth
+        run: |
+          set -euo pipefail
+          mkdir -p "$DOCKER_CONFIG"
+          trap 'rm -f "$REGISTRY_AUTH_FILE"; rm -rf "$DOCKER_CONFIG"' EXIT
+          printf '%s' "$GH_TOKEN" | podman login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          cp "$REGISTRY_AUTH_FILE" "$DOCKER_CONFIG/config.json"
+          unset GH_TOKEN
+          podman push --digestfile "$RUNNER_TEMP/godaddy.digest" "$IMAGE:sha-$GITHUB_SHA"
+          digest=$(cat "$RUNNER_TEMP/godaddy.digest")
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          cosign sign --yes "$IMAGE@$digest"
+          cosign verify --certificate-identity \
+            'https://github.com/shaman007/home-k3s/.github/workflows/publish-godaddy-webhook.yml@refs/heads/main' \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com "$IMAGE@$digest"
+          printf 'Image: %s@%s\n\nSource: %s\n\nMake the GHCR package public and verify anonymous pull before cutover.\n' \
+            "$IMAGE" "$digest" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

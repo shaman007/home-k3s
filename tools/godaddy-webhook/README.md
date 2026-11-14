@@ -1,8 +1,8 @@
 # GoDaddy v3 cert-manager solver
 
-Staging solver deployed and validated on 2026-11-05. Production and backend
-cutover remain outstanding; see `docs/migrations/letsencrypt-internal/STAGING.md`
-from the repository root.
+Staging solver was validated on 2026-11-05. Harbor production DNS-01 was
+subsequently accepted on 2026-11-14; see `docs/migrations/harbor-dns01/README.md`
+from the repository root. This is the existing custom GoDaddy v3 solver.
 
 Uses cert-manager's authenticated aggregated webhook server and GoDaddy's v3 DNS
 API with a PAT mounted at `/var/run/godaddy/token`. Solver group is
@@ -30,9 +30,13 @@ CGO_ENABLED=0 go build -trimpath -o /tmp/godaddy-webhook .
 ```
 
 The chart includes webhook TLS/APIService/RBAC, External Secrets integration,
-staging issuer and canary. It is outside Argo application paths; staging is installed as Helm release
-`godaddy-webhook`. Image delivery, scoped OpenBao auth and live staging issuance,
-renewal and cleanup after restart have been verified. Production issuance and
-consumer cutover are still pending. Production issuance is
-disabled by default.
+staging issuer and canary. The chart is managed by Argo application
+`godaddy-webhook` with production enabled; chart defaults keep production
+disabled for isolated rendering. Image delivery, scoped OpenBao auth, staging
+issuance/renewal/cleanup and Harbor production cutover have been verified.
 No real GoDaddy writes are performed by the unit tests.
+
+## Independent image preparation
+
+See [GHCR publication, cutover and rollback](INDEPENDENT-IMAGE.md). This is an
+inactive preparation package; current chart/Argo sources retain the Harbor image.

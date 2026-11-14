@@ -1,0 +1,36 @@
+name: Test GoDaddy webhook
+
+on:
+  pull_request:
+    paths:
+      - tools/godaddy-webhook/**
+      - .github/workflows/test-godaddy-webhook.yml
+      - .github/workflows/publish-godaddy-webhook.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/godaddy-webhook/**
+      - .github/workflows/test-godaddy-webhook.yml
+      - .github/workflows/publish-godaddy-webhook.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: docker.io/library/golang:1.27.4
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Test and compile solver
+        working-directory: tools/godaddy-webhook
+        run: |
+          go test -mod=readonly -race ./...
+          CGO_ENABLED=0 go build -mod=readonly -trimpath -o /tmp/godaddy-webhook .
+      - name: Check Go vulnerabilities
+        working-directory: tools/godaddy-webhook
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
