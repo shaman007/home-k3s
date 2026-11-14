@@ -130,6 +130,15 @@ jobs:
           # Exact ESO reconciliation remains a separately authorized runtime acceptance gate.
           kubeconform -strict -summary -kubernetes-version 1.37.1 -skip Application,ExternalSecret -ignore-filename-pattern 'index[.]json$' "${RUNNER_TEMP}/dependency-candidates"
 
+      - name: Validate inactive Prometheus Receive stages
+        run: |
+          for stage in infrastructure dual-write cutover; do
+            output="${RUNNER_TEMP}/prometheus-receive-${stage}"
+            python tools/bootstrap/prepare_prometheus_receive.py --stage "$stage" --output "$output"
+            kubeconform -strict -summary -kubernetes-version 1.37.1 -skip Application,ExternalSecret "$output/argocd" "$output/metrics" "$output/seaweedfs" "$output/thanos"
+            python tools/ci/check_container_resources.py --rendered "$output/validation"
+          done
+
       - name: Render Argo CD applications
         run: |
           python tools/ci/render_applications.py --output "${RUNNER_TEMP}/rendered-applications"

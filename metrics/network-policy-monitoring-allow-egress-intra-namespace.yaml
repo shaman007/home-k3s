@@ -6,17 +6,18 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - key: app
-        operator: NotIn
-        values:
-          - prometheus-server
-          - thanos-querier
-          - thanos-store-gateway
-          - thanos-compactor
+    - key: app
+      operator: NotIn
+      values:
+      - prometheus-server
+      - thanos-querier
+      - thanos-store-gateway
+      - thanos-compactor
+      - thanos-receive
   policyTypes:
-    - Egress
+  - Egress
   egress:
-    - to:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: monitoring
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring

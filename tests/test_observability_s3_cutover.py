@@ -57,14 +57,23 @@ class ObservabilityS3IsolationTests(unittest.TestCase):
             },
         )
 
-    def test_sidecar_keeps_existing_shared_mount_and_prometheus_stays_ungated(self):
-        """Final sidecar config activation must not require changing the Prometheus Pod."""
+    def test_prometheus_keeps_current_phase_storage_contract(self):
+        """Preserve the legacy sidecar until cutover, then require true separation."""
         pod = read(
             "metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml"
         )["spec"]["template"]["spec"]
-        volume = next(v for v in pod["volumes"] if v["name"] == "objstoreyml")
-        self.assertEqual(volume["secret"]["secretName"], "thanos-objstore-secret")
         self.assertEqual([c["name"] for c in pod["initContainers"]], ["fix-perms"])
         prometheus = next(c for c in pod["containers"] if c["name"] == "prometheus")
         self.assertNotIn("command", prometheus)
         self.assertNotIn("objstoreyml", {m["name"] for m in prometheus["volumeMounts"]})
+        if any(c["name"] == "thanos" for c in pod["containers"]):
+            volume = next(v for v in pod["volumes"] if v["name"] == "objstoreyml")
+            self.assertEqual(volume["secret"]["secretName"], "thanos-objstore-secret")
+        else:
+            self.assertEqual([c["name"] for c in pod["containers"]], ["prometheus"])
+            self.assertFalse(any(v["name"] == "objstoreyml" for v in pod["volumes"]))
+            self.assertTrue(
+                all(
+                    v["secret"].get("optional") for v in pod["volumes"] if "secret" in v
+                )
+            )

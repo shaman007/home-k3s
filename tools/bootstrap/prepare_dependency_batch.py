@@ -283,6 +283,9 @@ def observability():
             }
         ]
     }
+    # Preserve the separately staged Receive client when regenerating the old S3 package.
+    if (ROOT / "thanos/stateful-set-thanos-receive.yaml").exists():
+        selector["matchExpressions"][0]["values"].append("thanos-receive")
     loki_selector = {
         "matchLabels": {
             "app.kubernetes.io/component": "single-binary",

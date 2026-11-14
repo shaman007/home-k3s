@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-receive-ingress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: thanos-receive
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus-server
+    ports:
+    - protocol: TCP
+      port: 19291
+    - protocol: TCP
+      port: 10902
+  - from:
+    - podSelector:
+        matchLabels:
+          app: thanos-querier
+    ports:
+    - protocol: TCP
+      port: 10901
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-prometheus-receive
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus-server
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: thanos-receive
+    ports:
+    - protocol: TCP
+      port: 19291
+    - protocol: TCP
+      port: 10902
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitoring-receive-s3
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: thanos-receive
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: seaweedfs
+      podSelector:
+        matchLabels:
+          app: seaweedfs-s3
+    ports:
+    - protocol: TCP
+      port: 8333

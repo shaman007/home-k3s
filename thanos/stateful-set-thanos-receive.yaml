@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-receive
+  namespace: monitoring
+  labels:
+    app: thanos-receive
+    app.kubernetes.io/name: thanos-receive
+    app.kubernetes.io/instance: thanos-receive
+    app.kubernetes.io/managed-by: argoCD
+spec:
+  replicas: 1
+  serviceName: thanos-receive-headless
+  selector:
+    matchLabels:
+      app: thanos-receive
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  template:
+    metadata:
+      labels:
+        app: thanos-receive
+        thanos-store-api: 'true'
+    spec:
+      automountServiceAccountToken: false
+      priorityClassName: homelab-standard
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: thanos
+        image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.5
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        args:
+        - receive
+        - --log.level=info
+        - --tsdb.path=/data
+        - --tsdb.retention=3d
+        - --tsdb.min-block-duration=2h
+        - --tsdb.max-block-duration=2h
+        - --receive.replication-factor=1
+        - --receive.default-tenant-id=prometheus
+        - --receive.tenant-label-name=cluster
+        - --label=replica="$(POD_NAME)"
+        - --remote-write.address=0.0.0.0:19291
+        - --http-address=0.0.0.0:10902
+        - --grpc-address=0.0.0.0:10901
+        - --objstore.config-file=/etc/thanos/objstore.yml
+        ports:
+        - name: remote-write
+          containerPort: 19291
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        startupProbe:
+          httpGet:
+            port: http
+            path: /-/ready
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 120
+        readinessProbe:
+          httpGet:
+            port: http
+            path: /-/ready
+          periodSeconds: 10
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            port: http
+            path: /-/healthy
+          periodSeconds: 30
+          timeoutSeconds: 2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 2Gi
+          limits:
+            memory: 6Gi
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: objstore
+          mountPath: /etc/thanos
+          readOnly: true
+      volumes:
+      - name: objstore
+        secret:
+          secretName: thanos-receive-objstore-internal
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        storage.k8s.io/name: longhorn
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 64Gi

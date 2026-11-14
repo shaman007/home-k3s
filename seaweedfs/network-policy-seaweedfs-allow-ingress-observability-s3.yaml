@@ -22,6 +22,7 @@ spec:
           - prometheus-server
           - thanos-store-gateway
           - thanos-compactor
+          - thanos-receive
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: loki

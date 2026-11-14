@@ -12,6 +12,7 @@ spec:
       - prometheus-server
       - thanos-store-gateway
       - thanos-compactor
+      - thanos-receive
   policyTypes:
   - Egress
   egress:

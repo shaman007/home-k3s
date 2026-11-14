@@ -3,6 +3,31 @@ observed_date: '2026-11-14'
 scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud, Keycloak, WordPress and YourSpotify,
   Bitwarden and Firefox Sync (deployed gates); mail, custom CronJobs, Karakeep and internal-S3 observability deployed
 direction: provider -> consumer; phase is descriptive, not installed orchestration
+planned_transitions:
+  prometheus_receive:
+    status: infrastructure source prepared locally; dual-write/cutover inactive; user selected full separate Receive; no live transition
+    evidence:
+    - docs/startup/prometheus-receive/README.md
+    - tools/bootstrap/prepare_prometheus_receive.py
+    - tools/security/test_prometheus_receive.py
+    stages:
+    - independent Receive PVC, ESO and scoped networking
+    - remote_write with old sidecar retained until history/upload acceptance
+    - remove sidecar/S3 mounts, make three app scrape Secrets optional
+    edges:
+    - from: prometheus-local
+      to: receive
+      kind: asynchronous-delivery
+    - from: receive-local-pvc
+      to: receive
+      kind: startup
+    - from: seaweedfs
+      to: receive
+      kind: upload-dependency-only
+    - from: receive
+      to: thanos-query
+      kind: feature
+    acceptance: local exact-image missing-token/receiver outage and dedup passed; real Receive S3 upload and history cutover not yet tested
 prepared_packages:
   mail:
     status: deployed including diagnostic-loop fix; production inbound delivery and isolated filter failure/recovery verified
@@ -21,7 +46,7 @@ prepared_packages:
     provider: independent Chrome Service and Meilisearch
     consumer: s6 workers only; never Pod init
   observability:
-    status: 02ea6103 published and reconciled; internal S3 active; natural sidecar upload still unverified (uploads 0, failures 0); no global waits
+    status: 02ea6103 published and reconciled; internal S3 active; natural sidecar upload verified (5 uploads, 0 failures); no global waits
     provider: direct SeaweedFS Service
     consumer: Loki and Thanos S3 clients; not a Prometheus startup gate
 recovery_scenarios:

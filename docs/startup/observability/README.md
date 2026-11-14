@@ -116,3 +116,15 @@ only clients actually switched. Keep bucket objects, retention, Secrets, all
 PVCs and WAL/TSDB. Remove direct-route permissions only after the old route is
 verified. Do not delete data or run competing TSDB writers. Public-route rollback
 still depends on the original ingress/storage being available.
+
+## Prometheus/Receive separation proposal — 2026-11-14
+
+The user selected full separation using standalone Thanos Receive and asynchronous
+remote_write. The [inactive staged package](../prometheus-receive/README.md) keeps
+all current workloads unchanged until its separate infrastructure/dual-write/
+cutover acceptance. It uses a new retained RWO claim rather than sharing the
+Prometheus TSDB across Pods; Prometheus retains normal Service readiness.
+Local exact-image outage/auth/dedup tests passed. Current sidecar natural uploads
+are now observed (counter5, failures0;36 recorded blocks); future Receive upload
+and migration history checks remain mandatory. Do not remove the sidecar merely
+because the new receiver answers Ready.
