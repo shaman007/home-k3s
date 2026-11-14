@@ -1,20 +1,76 @@
 # Prometheus independent of Thanos: staged Receive migration
 
-2026-11-14. **Dual-write enabled live; publication of stage2 pending.** The user selected full
+2026-11-14. **Dual-write published; Receive memory/GC correction active live.** The user selected full
 separation through Thanos Receive rather than publishing unready Prometheus
 Service endpoints. Infrastructure-stage files are prepared in active Git source
 paths and were published through `17b9bd76`, including the storage-quota fix.
-Prometheus still runs with its sidecar. Stage2 sources now match the live
+Prometheus still runs with its sidecar. Stage2 was published as `92b02ad5`; sources match the live
 remote_write/Receive scrape/extra alerts and Query endpoint changes; cutover
 remains inactive. No Secret/PVC deletion or TSDB export was performed.
 
 ## Current transition state
 
 On 2026-11-14 the user authorized dual-write activation. Only Argo applications
-`kubernetes-prometheus` and `thanos` have temporary `skip-reconcile=true` until
-the stage2 source diff is published. Their auto-sync/self-heal specifications
-are preserved. Remove these annotations after verifying the published revision;
-do not remove the sidecar during this publication step.
+`kubernetes-prometheus` and `thanos` were paused until stage2 publication, then
+resumed on `92b02ad5`. Refresh Git/cache and verify the desired revision before
+resuming a paused app: unpausing against an old cached revision briefly reverted
+dual-write and caused extra Prometheus/Query restarts before hard refresh repaired
+the desired state. Auto-sync/self-heal specifications remain preserved.
+
+The subsequent memory/GC correction temporarily pauses **only `thanos`** until
+its source diff is published. Prometheus remains unpaused and its sidecar stays.
+The old Receive hit OOM at its first block write with a 6 Gi cgroup limit and no Go
+memory limit; no complete block existed and upload/failure counters both stayed 0.
+Successful S3 read/list alone therefore did not prove the upload path worked.
+New Receive reserves 6 Gi, limits 8 Gi and enables automatic Go memory limiting at
+ratio 0.7 (observed `go_gc_gomemlimit_bytes=6012954214`, about 5.6 Gi). The remaining
+container budget accommodates mmap and compaction overhead outside Go accounting;
+this is a soft Go target, not a guarantee against cgroup OOM. No TSDB/PVC reset,
+data deletion or forced compaction is part of recovery. The retained WAL replayed
+successfully on the same PVC. Both generator and deployed source carry this fix.
+
+### Memory/GC recovery acceptance, 2026-11-14
+
+The replacement Receive replayed its WAL and became ready at 16:28 UTC. Its first
+natural compaction ran at 18:39:05 UTC: in this version the first timer waits for
+the two-hour interval **plus** the logged initial delay, not just that delay.
+No forced compaction, TSDB rewrite or shortened block duration was used.
+
+It created and uploaded three blocks, each written in 18–21 seconds:
+
+| Block ULID | Sample range (UTC) | Samples |
+| --- | --- | ---: |
+| `01M7DNP8ET78X7APYTQYDKCDV1` | 10:23–12:00 | 488347240 |
+| `01M7DNTHT887GRDHBTCY1HH05X` | 12:00–14:00 | 605759871 |
+| `01M7DNZ5NTSRA7M8AZKGCN7R7B` | 14:00–16:00 | 605826244 |
+
+Shipper bookkeeping and actual internal-S3 metadata agree. Signed metadata GETs
+from the Receive Pod matched local ULID/time bounds/stats and the expected
+`source=receive`, `cluster=prometheus`, `replica=thanos-receive-0`. The first 4096
+bytes of each block's index and first chunk also matched local hashes. That
+bounded data comparison used a loopback-only port-forward and an HTTP 206-capable
+client: BusyBox wget in the Receive image rejects correct partial-content
+responses. No credentials or block payload were persisted.
+
+At 18:51:27 UTC the unchanged Store Gateway's normal 15-minute sync loaded all
+three ULIDs. Query returned `up{job="prometheus",replica="thanos-receive-0"}=1`
+at 11:00 UTC with `dedup=false` and `storeMatch[]` restricted to only
+`thanos-store-gateway.monitoring.svc.cluster.local:10901`. A nonexistent-address
+control returned an empty result, confirming the store filter was effective;
+neither request produced warnings. This proves a historical sample from the
+uploaded Receive block is readable through S3/Store Gateway; it is not a full
+history-boundary audit or permission to remove the sidecar.
+
+Receive completed three compactions/uploads with failed counters 0, restart
+count 0 and cgroup `oom=0`, `oom_kill=0`. RSS dropped to roughly 4.4 Gi as old head
+data was compacted. Cgroup usage/peak include page cache and can reach the 8 Gi
+ceiling with reclaim events; they are not equivalent to RSS or evidence of OOM.
+Prometheus and its sidecar retained the same Pod throughout this memory fix.
+All three Receive-only maintenance silences were explicitly expired after
+readiness recovered. The source correction still needs publication before
+resuming `thanos`; verify fresh Git/cache before removing its pause.
+
+### Initial dual-write acceptance, before the memory correction
 
 The ConfigMap update triggered the expected Recreate restart through Reloader;
 Prometheus and its sidecar recovered together, Query recovered with both store
@@ -24,9 +80,9 @@ returns two copies of Prometheus's `up` with `dedup=false` and one with dedup,
 and a replica selector confirms fresh data from `thanos-receive-0`. Signed
 list/read from Receive to internal S3 passed in the infrastructure stage.
 
-These checks do not establish the natural Receive block upload or historical
-continuity required below. Keep dual-write and sidecar while observing memory,
-queue progress, the first natural two-hour block cycle and Store Gateway reads.
+Those initial checks did not establish the natural Receive block upload; the
+memory/GC recovery acceptance above now proves that path. Keep dual-write and
+sidecar while checking full historical continuity and Store Gateway reads.
 Initial working-set readings were about4863Mi for Prometheus (limit6400Mi) and
 3436Mi for Receive (limit6Gi); these are early observations, not steady-state
 sizing guarantees. No receiver outage or real Secret deletion was injected.
@@ -93,7 +149,7 @@ Publish this correction before continuing acceptance; check ResourceQuota usage
 as well as Longhorn capacity. Prometheus remains on its unchanged sidecar Pod.
 
 New singleton Receive uses the existing declared Thanos version, namespace
-`monitoring`, 2Gi memory request /6Gi limit, 100m CPU request, new 64Gi Longhorn
+`monitoring`, 6Gi memory request /8Gi limit, 100m CPU request, new 64Gi Longhorn
 claim, three-day local retention and two-hour blocks. The new claim survives
 StatefulSet deletion/scale-down. Current StorageClass uses two replicas (roughly128Gi scheduled logical capacity
 for the new64Gi claim); recheck disk headroom and node allocatable capacity before

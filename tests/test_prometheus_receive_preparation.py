@@ -78,6 +78,14 @@ class ReceivePreparationTests(unittest.TestCase):
         )
         self.assertEqual(container["securityContext"]["capabilities"]["drop"], ["ALL"])
 
+    def test_receive_reserves_memory_for_compaction_outside_go_heap(self):
+        """The observed head fits, with GC and room for mmap/compaction peaks."""
+        container = PLAN.receive_statefulset()["spec"]["template"]["spec"]["containers"][0]
+        self.assertIn("--enable-auto-gomemlimit", container["args"])
+        self.assertIn("--auto-gomemlimit.ratio=0.7", container["args"])
+        self.assertEqual(container["resources"]["requests"]["memory"], "6Gi")
+        self.assertEqual(container["resources"]["limits"]["memory"], "8Gi")
+
     def test_dual_write_preserves_sidecar_and_all_old_rules(self):
         """A published first config change must not retire the historical data source."""
         stage = PLAN.candidate("dual-write")

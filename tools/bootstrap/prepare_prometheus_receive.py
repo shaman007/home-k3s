@@ -110,6 +110,8 @@ def receive_statefulset():
                             "args": [
                                 "receive",
                                 "--log.level=info",
+                                "--enable-auto-gomemlimit",
+                                "--auto-gomemlimit.ratio=0.7",
                                 "--tsdb.path=/data",
                                 "--tsdb.retention=3d",
                                 "--tsdb.min-block-duration=2h",
@@ -145,8 +147,8 @@ def receive_statefulset():
                                 "timeoutSeconds": 2,
                             },
                             "resources": {
-                                "requests": {"cpu": "100m", "memory": "2Gi"},
-                                "limits": {"memory": "6Gi"},
+                                "requests": {"cpu": "100m", "memory": "6Gi"},
+                                "limits": {"memory": "8Gi"},
                             },
                             "volumeMounts": [
                                 {"name": "data", "mountPath": "/data"},
