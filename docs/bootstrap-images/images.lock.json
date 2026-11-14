@@ -1,0 +1,463 @@
+{
+  "format_version": 1,
+  "observed_date": "2026-11-14",
+  "nodes": [
+    "192.168.30.100",
+    "192.168.30.209",
+    "192.168.30.242"
+  ],
+  "images": [
+    {
+      "namespace": "cri",
+      "reference": "docker.io/chrislusf/seaweedfs:4.53@sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0",
+      "digest": "sha256:ccad23e18639c8b98cee17e7100b95830a06077b56d8e5b006d6dcf8ec5e94a0",
+      "consumers": [
+        "seaweedfs/master",
+        "seaweedfs/volume",
+        "seaweedfs/filer",
+        "seaweedfs/s3"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/harbor-core:v2.15.4",
+      "digest": "sha256:7d2ba5304a729887cdec7cb222a82b500278423de230ae5150c386a6c332b112",
+      "consumers": [
+        "harbor/core"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/harbor-db:v2.15.4",
+      "digest": "sha256:a32d51e636d76303e086a7c5251a2c8415c6f165b2f87bafa914efd866c5403f",
+      "consumers": [
+        "harbor/database",
+        "harbor/data-permissions-ensurer"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/harbor-exporter:v2.15.4",
+      "digest": "sha256:9ffede33dc519b4be035596a72f00f354754a22a3769077731f81ee7d6852f4f",
+      "consumers": [
+        "harbor/exporter"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/harbor-jobservice:v2.15.4",
+      "digest": "sha256:f143578ef30e2be5c48873298257ed0fca31545025958c534e536a06765d2b82",
+      "consumers": [
+        "harbor/jobservice"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/harbor-portal:v2.15.4",
+      "digest": "sha256:01edf478505b21dba23a83c095f6ecac0c1e705690093edbab41e9a4d6754a75",
+      "consumers": [
+        "harbor/portal"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/harbor-registryctl:v2.15.4",
+      "digest": "sha256:30bd1ace4e3bb390d75b84673f98ddb4a69fcc6d116932ea764391df01943fb7",
+      "consumers": [
+        "harbor/registryctl"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/nginx-photon:v2.15.4",
+      "digest": "sha256:7eff0287d5ad0f35754e162c8481ced04bbde107153ce586cefb15ee74fa1311",
+      "consumers": [
+        "harbor/nginx"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/registry-photon:v2.15.4",
+      "digest": "sha256:dc0cb388a6445c69c8a0c406679290d2991c9698833d9e6e86a23bdfaf2f83c3",
+      "consumers": [
+        "harbor/registry"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/trivy-adapter-photon:v2.15.4",
+      "digest": "sha256:813ca81b4a4ea0f44f5fa81cca2645eeb58d4b1f6c66b428df9d506174bb71d9",
+      "consumers": [
+        "harbor/trivy"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/goharbor/valkey-photon:v2.15.4",
+      "digest": "sha256:bb022e8f236f56f53cee7bb1f609595e497da67d829048e0af2284f97e6eb54f",
+      "consumers": [
+        "harbor/redis"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/library/busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4",
+      "digest": "sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4",
+      "consumers": [
+        "seaweedfs/prepare-data-and-tmp",
+        "harbor/wait-for-core"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/csi-attacher:v4.13.0",
+      "digest": "sha256:fef34c2d823b78da7d6c29fdf0f80d236293b0ac06944d14e8c366add880a4c8",
+      "consumers": [
+        "longhorn-system/csi-attacher"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/csi-node-driver-registrar:v2.18.0",
+      "digest": "sha256:085f63e62fea391734f5668d9cbb20ac8788a8e7faea83ce2c994f0cc1834fce",
+      "consumers": [
+        "longhorn-system/node-driver-registrar"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/csi-provisioner:v6.3.0",
+      "digest": "sha256:2d2694540109d2e8887f62a0bc711aca8d3033e52dddf1c39bb5c65600d9c5af",
+      "consumers": [
+        "longhorn-system/csi-provisioner"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/csi-resizer:v2.2.1",
+      "digest": "sha256:63d0aef25114d4a682b25afa6d9623a3cfcc19aca910269124408476bbe2c6fd",
+      "consumers": [
+        "longhorn-system/csi-resizer"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/csi-snapshotter:v8.6.0",
+      "digest": "sha256:2bca9ac55170efa61dc50e5cc8d9550373db2e3e5161d82d3fdaac5c25150360",
+      "consumers": [
+        "longhorn-system/csi-snapshotter"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/livenessprobe:v2.20.0",
+      "digest": "sha256:d1199b77452bfc11cfc62feb8a266758fe8d72953e97faac8065941e3767f1a3",
+      "consumers": [
+        "longhorn-system/longhorn-liveness-probe"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/longhorn-engine:v1.13.0",
+      "digest": "sha256:b0cc5090889d57705acd69c5106492992e84560170ac3bec4a1cc8dd3fe83ca6",
+      "consumers": [
+        "longhorn-system/engine-image-ei-2f3240cb"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/longhorn-instance-manager:v1.13.0",
+      "digest": "sha256:fc9e1c15e81988b04c146866ce7010b6df3a70f88302809bf53e19b27d1658a3",
+      "consumers": [
+        "longhorn-system/instance-manager"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/longhorn-manager:v1.13.0",
+      "digest": "sha256:7372f3c59239e9a67c0017b3af32fabdf08c4dcc0631140161da9a47e3b142f0",
+      "consumers": [
+        "longhorn-system/longhorn-csi-plugin",
+        "longhorn-system/longhorn-driver-deployer",
+        "longhorn-system/wait-longhorn-manager",
+        "longhorn-system/longhorn-global-manager",
+        "longhorn-system/longhorn-manager",
+        "longhorn-system/snapshot-daily-retain1",
+        "longhorn-system/trim-15min",
+        "longhorn-system/trim-daily-a",
+        "longhorn-system/trim-daily-b",
+        "longhorn-system/trim-hourly"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+      "digest": "sha256:53950f78b7af38b8a943c298cd3020622191a4661a13036f69d83c154cc8690d",
+      "consumers": [
+        "longhorn-system/pre-pull-share-manager-image",
+        "longhorn-system/share-manager"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/longhornio/longhorn-ui:v1.13.0",
+      "digest": "sha256:f22fb0254ae50195c1635ce428dfae26375956b3d7bd39640fae8fe33a236023",
+      "consumers": [
+        "longhorn-system/longhorn-ui"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "docker.io/traefik:v3.7.18",
+      "digest": "sha256:9c437ac4f09ce6f4980a8544902d3475fdf70a1a7c578729581d2535dfa7d635",
+      "consumers": [
+        "traefik/traefik-registry"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "ghcr.io/dexidp/dex:v2.46.0",
+      "digest": "sha256:933fcd3f523338c847b88ef84a7145fb2fcb7b9917f08418612afeaaa2001777",
+      "consumers": [
+        "argocd/dex"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "ghcr.io/external-secrets/external-secrets:v2.15.0",
+      "digest": "sha256:6888f243e5f8f7592c6d7fae2a5547c9e33531441b47b53807b9093b25a00e31",
+      "consumers": [
+        "external-secrets/external-secrets",
+        "external-secrets/cert-controller",
+        "external-secrets/webhook"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "ghcr.io/stakater/reloader:v1.4.24",
+      "digest": "sha256:3ab43d3eb96c59798644bf826b0444a846c0197d22ab4b6c101c4da3e1d6ef23",
+      "consumers": [
+        "argocd/reloader-reloader"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "harbor.andreybondarenko.com/library/godaddy-webhook@sha256:b848a323861e2491fe4686603a07dc2a5d1173464128860c161f9707575dc62a",
+      "digest": "sha256:b848a323861e2491fe4686603a07dc2a5d1173464128860c161f9707575dc62a",
+      "consumers": [
+        "cert-manager/solver"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "public.ecr.aws/docker/library/redis:8.10.1-alpine",
+      "digest": "sha256:ef216d85ec44f4fdf7c0e6df2d1757a4734ed32fbb278cabd3181b5a27353b79",
+      "consumers": [
+        "argocd/redis"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/argoproj/argocd:v3.6.1",
+      "digest": "sha256:296e3d74f449b2ce45265613fcb68c18ed7366488360c8ea32f5f2a93d2e5c54",
+      "consumers": [
+        "argocd/argocd-application-controller",
+        "argocd/argocd-applicationset-controller",
+        "argocd/copyutil",
+        "argocd/argocd-notifications-controller",
+        "argocd/secret-init",
+        "argocd/argocd-repo-server",
+        "argocd/argocd-server"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/cilium/cilium-envoy:v1.39.5-1792733054-8c73b2816bc8239e27f1fd53b271884688137459@sha256:547ab45f6092f681d9f54f3be9fa8fb1e705c9c5dc2df388efe3a52aa6965629",
+      "digest": "sha256:547ab45f6092f681d9f54f3be9fa8fb1e705c9c5dc2df388efe3a52aa6965629",
+      "consumers": [
+        "kube-system/cilium-envoy"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/cilium/cilium:v1.20.4@sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e",
+      "digest": "sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e",
+      "consumers": [
+        "kube-system/cilium-agent",
+        "kube-system/config",
+        "kube-system/apply-sysctl-overwrites",
+        "kube-system/mount-bpf-fs",
+        "kube-system/clean-cilium-state",
+        "kube-system/install-cni-binaries"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/cilium/hubble-relay:v1.20.4@sha256:cb23408209697ed30d2bc462e1f01eb622ea4423a891458f78bc88d7255bbfc1",
+      "digest": "sha256:cb23408209697ed30d2bc462e1f01eb622ea4423a891458f78bc88d7255bbfc1",
+      "consumers": [
+        "kube-system/hubble-relay"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/cilium/hubble-ui-backend:v0.13.6@sha256:83b3fc763f3d49948c306bf49b08277383e195904b9ca5c0c0022b2112628787",
+      "digest": "sha256:83b3fc763f3d49948c306bf49b08277383e195904b9ca5c0c0022b2112628787",
+      "consumers": [
+        "kube-system/backend"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/cilium/hubble-ui:v0.13.6@sha256:049a80a03585c043d0c3121bdc518c72b0fd42bae07e4bcce0fdb8f1e88041d0",
+      "digest": "sha256:049a80a03585c043d0c3121bdc518c72b0fd42bae07e4bcce0fdb8f1e88041d0",
+      "consumers": [
+        "kube-system/frontend"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/cilium/operator-generic:v1.20.4@sha256:7a7a3489dc66ad67e420d285c8a8d2e169b0957ad15e120f593d27081bf38d82",
+      "digest": "sha256:7a7a3489dc66ad67e420d285c8a8d2e169b0957ad15e120f593d27081bf38d82",
+      "consumers": [
+        "kube-system/cilium-operator"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/frrouting/frr:10.6.2",
+      "digest": "sha256:89e5e1ec8b17c5dffaf57dbac58a29ebeb3731a84e5bc09dad1662adff2ba7f5",
+      "consumers": [
+        "metallb-system/frr",
+        "metallb-system/reloader",
+        "metallb-system/frr-metrics",
+        "metallb-system/frr-status",
+        "metallb-system/cp-frr-files"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/jetstack/cert-manager-cainjector:v1.21.3",
+      "digest": "sha256:083d0e906f8eb44e255fe4ff817ae54e49f9ed82e22f1011bb4e9e4f4b8a641f",
+      "consumers": [
+        "cert-manager/cert-manager-cainjector"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/jetstack/cert-manager-controller:v1.21.3",
+      "digest": "sha256:9f4f96a33c7774cef24466fcd85031997531a03a8d117f151126baa8d1290dcc",
+      "consumers": [
+        "cert-manager/cert-manager-controller"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/jetstack/cert-manager-webhook:v1.21.3",
+      "digest": "sha256:055ac8e9de6a0ba6763794838fe38944acc650f68ebe1b01dd8be079e580f458",
+      "consumers": [
+        "cert-manager/cert-manager-webhook"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/metallb/controller:v0.16.2",
+      "digest": "sha256:34a6f107f29c4fc6e9d084a7f3bdb781aae7b5ee2b534195a2775ab68c09c503",
+      "consumers": [
+        "metallb-system/controller"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/metallb/frr-k8s:v0.0.27",
+      "digest": "sha256:de862b74a3a314eb76c8fb4cabc9d2c55cca51002cd022704c32df717f9366b7",
+      "consumers": [
+        "metallb-system/controller",
+        "metallb-system/cp-reloader",
+        "metallb-system/cp-metrics",
+        "metallb-system/cp-frr-status",
+        "metallb-system/frr-k8s-statuscleaner"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/metallb/speaker:v0.16.2",
+      "digest": "sha256:01666518b091a6651d68891c802db84b2219495d7e0e41c2e61c46f9976be231",
+      "consumers": [
+        "metallb-system/speaker"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "quay.io/openbao/openbao:2.7.2",
+      "digest": "sha256:5046911075e137e154ce49ab051502f4ec7cf367d484ae4a4dce665d9b90561f",
+      "consumers": [
+        "openbao/openbao"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "registry.k8s.io/coredns/coredns:v1.14.7",
+      "digest": "sha256:7efd3c635b03efd68c4e8398fc45f0d993d0e9ab016f72c1cefb0fd6d01aa286",
+      "consumers": [
+        "kube-system/coredns"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "registry.k8s.io/kube-apiserver:v1.37.1",
+      "digest": "sha256:e190f914a6cc21cab9268485d1ae7282fdeab1315ac64b668aa42d732fd1061d",
+      "consumers": [
+        "kube-system/kube-apiserver"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "registry.k8s.io/kube-controller-manager:v1.37.1",
+      "digest": "sha256:d470c1b85aebb466e971c06239cc6a31a4ac337a78600cef80375a79a1be1641",
+      "consumers": [
+        "kube-system/kube-controller-manager"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "registry.k8s.io/kube-scheduler:v1.37.1",
+      "digest": "sha256:b6e2474a6c20309f0df1e7337364281fda95c6a0722259ba7f032a1e177d3f29",
+      "consumers": [
+        "kube-system/kube-scheduler"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "registry.k8s.io/metrics-server/metrics-server:v0.9.0",
+      "digest": "sha256:d9862115e7c7881280d3d75ca26bda8ffc0fc213315979575bf23ce9826205c0",
+      "consumers": [
+        "kube-system/metrics-server"
+      ]
+    },
+    {
+      "namespace": "system",
+      "reference": "ghcr.io/siderolabs/kubelet:v1.37.1",
+      "digest": "sha256:3777bdaaa352e1f425dff9d8868a970923c66d0629bad16f935c41018a83d9d8",
+      "consumers": [
+        "talos-system"
+      ]
+    },
+    {
+      "namespace": "system",
+      "reference": "registry.k8s.io/etcd:v3.7.3",
+      "digest": "sha256:0d27b9478551f431f82d1e0ddb6c87ad07ebae8b904c637f3a99213349523910",
+      "consumers": [
+        "talos-system"
+      ]
+    },
+    {
+      "namespace": "cri",
+      "reference": "registry.k8s.io/pause:3.10.2",
+      "digest": "sha256:f548e0e8e3dc1896ca956272154dde3314e8cc4fde0a57577ee9fa1c63f5baf4",
+      "consumers": [
+        "pod-sandbox"
+      ]
+    }
+  ]
+}

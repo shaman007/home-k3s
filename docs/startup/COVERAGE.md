@@ -1,5 +1,10 @@
 # Remaining startup dependency coverage
 
+Updated 2026-11-14: [current audit](AUDIT-2026-11-14.md) supersedes historical
+preparation/functional-pending statuses below. Fresh structural census: 150
+continuous workloads, 30 CronJobs, 54 namespaces, 53 ExternalSecrets. No complete
+cluster cold boot or optional-provider outage rehearsal is claimed.
+
 Observed 2026-11-13. This is a structural census of **149 continuous workloads and
 31 CronJobs in 54 namespaces**, followed by detailed checks of the candidates
 below. It is not an assertion that every opaque Secret, chart, script and application
@@ -54,8 +59,8 @@ contain only fixed stage/result/duration. Each init name identifies the schema.
 | Stack | Source-grounded dependency | Correct next step |
 | --- | --- | --- |
 | Mastodon | PostgreSQL + Valkey, pre/post-upgrade migration hooks; chart1.2.8 has no init/command extension | Native cutover completed with web-init migration owner and schema gates; initial schema was already applied. Legacy chart is retained only for rollback review. |
-| Karakeep | Local SQLite (`/data/db.db` present), separate Meilisearch; Chrome in same Pod; Ollama and OIDC integrations | Check search indexing/worker retry semantics separately. An init waiting for same-Pod Chrome deadlocks, because ordinary containers start after all init containers. Gate Chrome-dependent worker entry only if required, not the entire Pod. |
-| Mail | Valkey → Rspamd state/greylisting; Unbound → DNS consumers; Postfix → Rspamd milter and Dovecot LMTP | Separate mail readiness/failure-policy work. `mail/config-map-main-cf.yaml` currently has `milter_default_action=accept`; a startup-only check cannot prevent filtering bypass after a later Rspamd outage. Do not silently change accept/reject or delivery policy. |
+| Karakeep | Local SQLite (`/data/db.db` present), separate Meilisearch; independent Chrome Pod and all-worker Chrome/Meili gate; Ollama and OIDC integrations | Check search indexing/worker retry semantics separately. An init waiting for same-Pod Chrome deadlocks, because ordinary containers start after all init containers. Gate Chrome-dependent worker entry only if required, not the entire Pod. |
+| Mail | Valkey → Rspamd state/greylisting; Unbound → DNS consumers; Postfix → Rspamd milter and Dovecot LMTP | Deployed protocol-level startup/readiness and milter tempfail/AV soft reject; synthetic inbound delivery and isolated filter failure/recovery passed. No production outage injection. |
 | Matrix/Synapse | SQLite `/data/homeserver.db`; nginx serves well-known discovery | No external SQL gate. Nginx contains stale upstream `matrix:6167`, but Service exposes8448→6167. Live requests from nginx:6167 fails,8448/health=200. Public `/_matrix/client/versions`=200 because ingress routes API directly to Service8448. Fix/remove stale unused proxy separately; no current public API outage inferred. |
 | Open WebUI | Local data PVC; Ollama, SearxNG, ComfyUI, terminal integrations | Preserve UI startup and test each feature's unavailable-provider behavior; no global model/server barrier from configuration presence alone. |
 | Immich ML | ML is separate HTTP service; manifest copies DB/Redis envs, but current ML config module has no such settings | Do not infer an ML SQL dependency solely from copied envs. Server is already gated; ML availability is a feature check. |
@@ -96,14 +101,14 @@ workloads, declared images and object references; it is not proof of independenc
 | i2pd | 1 / 0 | Infrastructure | Network; structural review only. |
 | image-builder | 0 / 1 | Scheduled Job | Podman builder; structural review only. |
 | immich | 4 / 0 | App | Active gate (server). |
-| karakeep | 3 / 0 | App | Prepared: separate Chrome Service + Meilisearch gate only s6 workers; migrations/UI independent. Local CDP/DOM and s6 checks passed; not deployed. |
+| karakeep | 3 / 0 | App | Deployed separate Chrome + Meili workers gate; live gate/CDP verified; migrations/UI independent. |
 | keycloak | 2 / 1 | App | Active gate. |
 | kube-system | 9 / 0 | Infrastructure | Core K8s components; structural review only. |
 | kyverno | 2 / 0 | Infrastructure | Policy engine; structural review only. |
 | lenka | 1 / 0 | Sandbox provider | Sandbox MySQL provider; no app consumer in inventory. |
 | loki | 5 / 0 | Infrastructure | Observability; datasource readiness distinct from global app startup. |
 | longhorn-system | 10 / 15 | Infrastructure | Storage/CSI; structural review only. |
-| mail | 5 / 1 | App | Valkey->Rspamd, Unbound, Postfix/Dovecot. Audit failure/retry behavior separately; do not gate whole SMTP on feature dependencies. |
+| mail | 5 / 1 | App | Valkey->Rspamd, Unbound, Postfix/Dovecot. Deployed dependency readiness and temporary filter rejection; production delivery and isolated failures passed. |
 | mastodon | 5 / 2 | App | Native active with PostgreSQL/Valkey and schema gates; see mastodon-native/README.md. |
 | matrix | 2 / 0 | App | SQLite; public API goes directly to Service8448. Nginx unused API proxy uses wrong6167. |
 | mempalace | 1 / 0 | App | Structural review only. |
@@ -116,7 +121,7 @@ workloads, declared images and object references; it is not proof of independenc
 | ooni | 0 / 2 | Scheduled Job | Network measurement; structural review only. |
 | open-terminal | 1 / 0 | App | Structural review only. |
 | open-webui | 1 / 0 | App | Local SQLite PVC. Ollama/search/ComfyUI/terminal integrations not unconditional boot. |
-| openbao | 1 / 1 | Infrastructure | Secrets/Vault; structural review only. |
+| openbao | 1 / 0 | Infrastructure | Secrets/Vault; structural review only. |
 | opensearch | 1 / 0 | Infrastructure | Search/Logging; structural review only. |
 | plex | 1 / 0 | App | Structural review only. |
 | ripe-atlas | 1 / 0 | Infrastructure | Network measurement; structural review only. |

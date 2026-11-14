@@ -1,4 +1,11 @@
-# Prepared dependency packages
+# Prepared dependency packages (historical transition index)
+
+**2026-11-14: superseded status:** these packages have been deployed and verified
+within the limits recorded in the [current audit](AUDIT-2026-11-14.md). Longhorn
+restore passed, monitoring GitOps pauses are removed, Karakeep workers released,
+mail failure fixtures passed, custom CronJobs ran, and retired PKI/ConfigMap drift
+was cleaned. The preparation narrative below is retained as historical evidence;
+it is not the current outstanding-work list.
 
 2026-11-13. **Local preparation only; no commit, push, live patch, rollout,
 silence, Job cancellation or data change.** The reported unexpected reboot was

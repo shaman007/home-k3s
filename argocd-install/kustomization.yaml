@@ -58,3 +58,107 @@ patches:
       kind: ConfigMap
       metadata:
         name: argocd-rbac-cm
+  - target:
+      kind: StatefulSet
+      name: argocd-application-controller
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: argocd-application-controller
+      spec:
+        template:
+          spec:
+            containers:
+            - name: argocd-application-controller
+              imagePullPolicy: IfNotPresent
+  - target:
+      kind: Deployment
+      name: argocd-applicationset-controller
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-applicationset-controller
+      spec:
+        template:
+          spec:
+            containers:
+            - name: argocd-applicationset-controller
+              imagePullPolicy: IfNotPresent
+  - target:
+      kind: Deployment
+      name: argocd-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-server
+      spec:
+        template:
+          spec:
+            containers:
+            - name: argocd-server
+              imagePullPolicy: IfNotPresent
+  - target:
+      kind: Deployment
+      name: argocd-repo-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-repo-server
+      spec:
+        template:
+          spec:
+            containers:
+            - name: argocd-repo-server
+              imagePullPolicy: IfNotPresent
+            initContainers:
+            - name: copyutil
+              imagePullPolicy: IfNotPresent
+  - target:
+      kind: Deployment
+      name: argocd-notifications-controller
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-notifications-controller
+      spec:
+        template:
+          spec:
+            containers:
+            - name: argocd-notifications-controller
+              imagePullPolicy: IfNotPresent
+  - target:
+      kind: Deployment
+      name: argocd-dex-server
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-dex-server
+      spec:
+        template:
+          spec:
+            containers:
+            - name: dex
+              imagePullPolicy: IfNotPresent
+            initContainers:
+            - name: copyutil
+              imagePullPolicy: IfNotPresent
+  - target:
+      kind: Deployment
+      name: argocd-redis
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-redis
+      spec:
+        template:
+          spec:
+            containers:
+            - name: redis
+              imagePullPolicy: IfNotPresent

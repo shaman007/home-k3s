@@ -1,11 +1,11 @@
 format_version: 1
-observed_date: '2026-11-13'
+observed_date: '2026-11-14'
 scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud, Keycloak, WordPress and YourSpotify,
-  Bitwarden and Firefox Sync (deployed gates); additional inactive packages listed separately
+  Bitwarden and Firefox Sync (deployed gates); mail, custom CronJobs, Karakeep and internal-S3 observability deployed
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 prepared_packages:
   mail:
-    status: 32517070 deployed; startup/readiness and active filter policy verified; local diagnostic-loop fix pending
+    status: deployed including diagnostic-loop fix; production inbound delivery and isolated filter failure/recovery verified
     provider: Valkey RESP, Unbound DNS, ClamAV PING, independent Dovecot LMTP/SASL
     consumer: Rspamd init/readiness then Postfix init/readiness; milter tempfail and AV soft reject
   mail-training:
@@ -17,14 +17,22 @@ prepared_packages:
     provider: SQL and ACL Valkey plus web maintenance/schema status
     consumer: Nextcloud cron main command
   karakeep:
-    status: prepared; all-worker gate accepted; separate Chrome CDP and s6 tested locally; not deployed
+    status: cdb00d1b deployed; worker gate released; remote Chrome connection and Meili/web checks passed
     provider: independent Chrome Service and Meilisearch
     consumer: s6 workers only; never Pod init
   observability:
-    status: internal S3 active for Loki and staged Thanos; source changes await publication; next sidecar upload pending; no global waits
+    status: 02ea6103 published and reconciled; internal S3 active; natural sidecar upload still unverified (uploads 0, failures 0); no global waits
     provider: direct SeaweedFS Service
     consumer: Loki and Thanos S3 clients; not a Prometheus startup gate
 recovery_scenarios:
+  harbor_dns01_without_independent_images:
+    status: conditional failure if Harbor TLS is unavailable AND solver cache/bundle recovery is unavailable; normal valid-TLS restart is different
+    extra_edges:
+    - from: harbor
+      to: harbor-dns01-webhook
+    evidence:
+    - tools/godaddy-webhook/chart/values.yaml
+    - docs/bootstrap-images/README.md
   current_public_s3_geoip_loss:
     status: historical pre-cutover route; also describes rollback dependency on GeoIP PVC restore
     endpoint: https://s3.andreybondarenko.com
@@ -52,6 +60,18 @@ nodes:
     ready: API reachable; etcd quorum and schedulable node(s). This is a bootstrap prerequisite, not an app Job.
     sources:
     - argocd/application-cilium.yaml
+  bootstrap-image-bundle:
+    phase: 0
+    ready: Independent flat OCI bundle checksums verified; exact references/digests also preloaded on all three nodes. Containerd GC remains possible; permanent Talos media cache not enabled.
+    sources:
+    - docs/bootstrap-images/images.lock.json
+    - docs/bootstrap-images/README.md
+  harbor-dns01-webhook:
+    phase: 2
+    ready: Existing GoDaddy webhook Ready with its serving TLS and PAT Secret; exact Harbor challenge CNAME followed; production Certificate issuance verified separately.
+    sources:
+    - cert-manager/cluster-issuer-letsencrypt-harbor-dns01.yaml
+    - docs/migrations/harbor-dns01/README.md
   node-dns:
     phase: 0
     ready: Node/containerd DNS resolves Harbor to .212 without public AAAA; upstream registry names resolve. UDM
@@ -284,8 +304,7 @@ nodes:
     - cert-manager/cluster-issuer-letsencrypt-prod.yaml
   harbor-tls:
     phase: 2
-    ready: Existing harbor/harbor-tls Secret has a valid certificate/key for Harbor hostname; a root/leaf recovery
-      path exists if expired or lost.
+    ready: Existing harbor/harbor-tls Secret valid for Harbor hostname; production DNS01 revision3 verified; missing/expired leaf requires GoDaddy/CNAME Follow and independent webhook-image recovery.
     sources:
     - harbor/certificate-harbor-tls.yaml
   dawarich-schema:
@@ -366,8 +385,7 @@ nodes:
     - bitwarden/stateful-set-bitwarden-postgres.yaml
   bitwarden:
     phase: 4
-    ready: SQL gates finish before original entrypoint; existing app owns migrations; functional login/sync verified
-      after rollout.
+    ready: SQL gates finish before original entrypoint; existing app owns migrations; functional login/sync requires separate user-authorized verification after rollout.
     sources:
     - bitwarden/deployment-bitwarden.yaml
     - tools/bootstrap/prepare_application_gates.py
@@ -383,8 +401,7 @@ nodes:
     - firefox-sync/deployment-mariadb.yaml
   firefox-sync:
     phase: 4
-    ready: SQL gates finish before original entrypoint; existing app owns migrations; functional login/sync verified
-      after rollout.
+    ready: SQL gates finish before original entrypoint; existing app owns migrations; functional login/sync requires separate user-authorized verification after rollout.
     sources:
     - firefox-sync/deployment-firefox-sync.yaml
     - tools/bootstrap/prepare_application_gates.py
@@ -473,6 +490,81 @@ nodes:
     - mail/deployment-dovecot.yaml
     - mail/deployment-rspamd.yaml
     - mail/deployment-postfix.yaml
+  seaweedfs-local-state:
+    phase: 1
+    ready: Pinned node talos-d4h-k5m and its hostPath /var/mnt/storage/k8s/seaweedfs storage available; recover S3 identity config independently
+      if lost. No automatic ESO edge established.
+    sources:
+    - seaweedfs/deployment-seaweedfs-s3.yaml
+  karakeep-chrome:
+    phase: 3
+    ready: Independent Chrome Service exposes valid CDP discovery with Host localhost; actual remote client connection
+      works.
+    sources:
+    - karakeep/deployment-chrome.yaml
+  karakeep-search:
+    phase: 3
+    ready: Meilisearch health reports available; index content and search functionality are separate checks.
+    sources:
+    - karakeep/deployment-karakeep.yaml
+  karakeep-web:
+    phase: 4
+    ready: SQLite PVC mounted; original migrations and web start independently of Chrome/Meili gate.
+    sources:
+    - karakeep/deployment-karakeep.yaml
+  karakeep-workers:
+    phase: 5
+    ready: s6 worker runner checks CDP and Meili, then execs original worker process; startup-only, not continuous
+      provider-loss suspension.
+    sources:
+    - karakeep/config-map-worker-startup.yaml
+  observability-secrets:
+    phase: 2
+    ready: Required S3, OAuth and scrape-token Secrets already present; ESO/OpenBao needed for missing targets. Do
+      not export payloads.
+    sources:
+    - metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml
+    - metrics/external-secret-thanos-objstore-secret.yaml
+  prometheus-pod:
+    phase: 4
+    ready: Local TSDB/WAL replay completes; Prometheus ready; mandatory sidecar objstore and scrape-token Secret mounts
+      exist. Service additionally requires all ordinary containers ready.
+    sources:
+    - metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml
+    - metrics/kubernetes-prometheus/service-prometheus-service.yaml
+  loki:
+    phase: 4
+    ready: Internal S3 signed access, /ready, fresh ingestion and historical query; cache/client outage recovery remains
+      untested.
+    sources:
+    - docs/startup/observability/EXECUTION.md
+  thanos-sidecar:
+    phase: 5
+    ready: Local Prometheus API and readable TSDB; gRPC ready; eventual natural block upload must succeed (not yet
+      observed). Same Pod; not a provider of Prometheus process startup.
+    sources:
+    - metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml
+  thanos-store:
+    phase: 4
+    ready: Own ESO S3 config, internal S3 access, readiness and historical StoreAPI queries.
+    sources:
+    - docs/startup/observability/EXECUTION.md
+  thanos-compactor:
+    phase: 4
+    ready: Own ESO S3 config and direct S3 operations; no requirement for Query/Grafana.
+    sources:
+    - docs/startup/observability/EXECUTION.md
+  thanos-query:
+    phase: 5
+    ready: Query HTTP API works; available StoreAPI backends determine data coverage; missing backends are partial
+      availability, not a hard startup barrier.
+    sources:
+    - docs/startup/observability/README.md
+  grafana:
+    phase: 5
+    ready: Local SQLite health; login and datasource queries checked separately. No startup wait for Loki/Thanos/Keycloak.
+    sources:
+    - docs/startup/observability/README.md
 edges:
 - from: kubernetes
   to: cilium
@@ -930,10 +1022,6 @@ edges:
   to: harbor-tls
   kind: issuance
   when: certificate_missing_or_needs_renewal
-- from: public-ingress
-  to: harbor-tls
-  kind: issuance
-  when: HTTP01_certificate_missing_or_needs_renewal
 - from: harbor-tls
   to: registry-ingress
   kind: access
@@ -974,10 +1062,6 @@ edges:
   to: dawarich-worker
   kind: startup
   when: pilot_local_web_barrier_installed
-- from: dawarich-db
-  to: dawarich-worker
-  kind: observed-startup
-  when: current_worker_checks_SQL_login_only
 - from: eso
   to: wordpress-secrets
   kind: materialization
@@ -1346,3 +1430,159 @@ edges:
   to: mail-postfix
   kind: image
   when: image_cache_miss
+- from: seaweedfs-local-state
+  to: seaweedfs
+  kind: startup
+  when: always
+- from: harbor
+  to: karakeep-chrome
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: karakeep-search
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: karakeep-web
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: prometheus-pod
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: loki
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: thanos-sidecar
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: thanos-store
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: thanos-compactor
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: thanos-query
+  kind: image
+  when: image_cache_miss
+- from: harbor
+  to: grafana
+  kind: image
+  when: image_cache_miss
+- from: longhorn
+  to: karakeep-web
+  kind: startup
+  when: SQLite_PVC_mount
+- from: longhorn
+  to: karakeep-search
+  kind: startup
+  when: index_PVC_mount
+- from: karakeep-web
+  to: karakeep-workers
+  kind: startup
+  when: worker_service_start
+- from: karakeep-chrome
+  to: karakeep-workers
+  kind: startup
+  when: worker_service_start
+- from: karakeep-search
+  to: karakeep-workers
+  kind: startup
+  when: worker_service_start
+- from: openbao
+  to: observability-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: eso
+  to: observability-secrets
+  kind: materialization
+  when: required_target_secret_missing
+- from: observability-secrets
+  to: prometheus-pod
+  kind: startup
+  when: mandatory_Secret_mounts_present
+- from: observability-secrets
+  to: loki
+  kind: startup
+  when: mandatory_Secret_mounts_present
+- from: observability-secrets
+  to: thanos-store
+  kind: startup
+  when: mandatory_Secret_mounts_present
+- from: observability-secrets
+  to: thanos-compactor
+  kind: startup
+  when: mandatory_Secret_mounts_present
+- from: longhorn
+  to: prometheus-pod
+  kind: startup
+  when: PVC_mount
+- from: longhorn
+  to: loki
+  kind: startup
+  when: PVC_mount
+- from: longhorn
+  to: grafana
+  kind: startup
+  when: PVC_mount
+- from: seaweedfs
+  to: loki
+  kind: startup
+  when: object_store_operations
+- from: seaweedfs
+  to: thanos-store
+  kind: startup
+  when: object_store_operations
+- from: seaweedfs
+  to: thanos-compactor
+  kind: startup
+  when: object_store_operations
+- from: prometheus-pod
+  to: thanos-sidecar
+  kind: startup
+  when: local_API_and_TSDB_available
+- from: seaweedfs
+  to: thanos-sidecar
+  kind: feature
+  when: block_upload
+- from: thanos-store
+  to: thanos-query
+  kind: feature
+  when: query_data_coverage
+- from: thanos-sidecar
+  to: thanos-query
+  kind: feature
+  when: query_data_coverage
+- from: loki
+  to: grafana
+  kind: feature
+  when: logs_metrics_or_SSO
+- from: thanos-query
+  to: grafana
+  kind: feature
+  when: logs_metrics_or_SSO
+- from: keycloak
+  to: grafana
+  kind: feature
+  when: logs_metrics_or_SSO
+- from: bootstrap-image-bundle
+  to: harbor-dns01-webhook
+  kind: image
+  when: webhook_image_cache_miss_and_Harbor_unavailable
+- from: harbor-dns01-webhook
+  to: harbor-tls
+  kind: issuance
+  when: certificate_missing_or_needs_renewal_DNS01
+- from: eso
+  to: harbor-dns01-webhook
+  kind: materialization
+  when: GoDaddy_PAT_Secret_missing
+- from: openbao
+  to: harbor-dns01-webhook
+  kind: materialization
+  when: GoDaddy_PAT_Secret_missing

@@ -1,0 +1,7 @@
+{
+  "zone": "andreybondarenko.com",
+  "type": "CNAME",
+  "name": "_acme-challenge.harbor",
+  "data": "_acme-challenge.harbor.int.andreybondarenko.com",
+  "ttl": 600
+}

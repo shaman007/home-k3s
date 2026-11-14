@@ -1,10 +1,10 @@
 """Verify certificate migration manifests and the retained cert-manager integration."""
 
-from pathlib import Path
 import unittest
+from pathlib import Path
+from typing import ClassVar
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,7 +22,7 @@ def load_yaml_documents(path: str) -> list[dict]:
 
 class CertManagerMigrationTest(unittest.TestCase):
     """Require production certificates and cert-manager secrets on migrated routes."""
-    PRODUCTION_CERTIFICATES = {
+    PRODUCTION_CERTIFICATES: ClassVar[dict] = {
         "bitwarden/certificate-bitwarden-tls.yaml": (
             "bitwarden", "bitwarden-tls", ["bitwarden.andreybondarenko.com"]
         ),
@@ -86,7 +86,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         ),
     }
 
-    NAMESPACES_REQUIRING_SOLVER_POLICY = {
+    NAMESPACES_REQUIRING_SOLVER_POLICY: ClassVar[dict] = {
         "bitwarden": "bitwarden",
         "convertx": "convertx",
         "harbor": "harbor",
@@ -107,7 +107,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         "year": "year",
     }
 
-    CUTOVER_INGRESSES = {
+    CUTOVER_INGRESSES: ClassVar[dict] = {
         "bitwarden/ingress-andreybondarenko-ingress.yaml": (
             "bitwarden.andreybondarenko.com", "bitwarden-tls"
         ),
@@ -176,7 +176,7 @@ class CertManagerMigrationTest(unittest.TestCase):
         ),
     }
 
-    CUTOVER_INGRESS_ROUTES = {
+    CUTOVER_INGRESS_ROUTES: ClassVar[dict] = {
         "bitwarden/ingress-route-sensitive-throttle.yaml": (
             "sensitive-path-throttle", "bitwarden-tls"
         ),
@@ -235,7 +235,10 @@ class CertManagerMigrationTest(unittest.TestCase):
                 )
                 self.assertEqual(certificate["spec"]["secretName"], secret_name)
                 self.assertEqual(certificate["spec"]["dnsNames"], dns_names)
-                self.assertEqual(certificate["spec"]["issuerRef"], issuer_ref)
+                expected_issuer = dict(issuer_ref)
+                if path == "harbor/certificate-harbor-tls.yaml":
+                    expected_issuer["name"] = "letsencrypt-harbor-dns01"
+                self.assertEqual(certificate["spec"]["issuerRef"], expected_issuer)
 
     def test_cutover_routes_use_cert_manager_secrets(self):
         """Verify cutover routes use cert manager secrets."""

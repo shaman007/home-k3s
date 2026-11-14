@@ -2,7 +2,8 @@
 
 Initial read-only audit on 2026-11-14, followed by the explicitly authorized
 [executed internal-S3 transition](EXECUTION.md). Runtime is now on internal S3;
-matching source changes await publication and two Argo maintenance pauses remain.
+matching source `02ea6103` was published, reconciliation restored and current
+Argo baseline is Healthy/Synced. See the [current audit](../AUDIT-2026-11-14.md).
 The user treats Loki/Thanos/Grafana as optional to the functioning cluster.
 Do not add application startup gates on any of them.
 

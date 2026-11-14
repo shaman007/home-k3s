@@ -13,4 +13,4 @@ spec:
   issuerRef:
     group: cert-manager.io
     kind: ClusterIssuer
-    name: letsencrypt-prod
+    name: letsencrypt-harbor-dns01

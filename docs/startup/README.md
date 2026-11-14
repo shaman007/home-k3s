@@ -1,6 +1,8 @@
 # Startup dependencies and readiness contract
 
-Status: **application startup gates deployed; Mastodon native cutover completed**, 2026-11-13.
+Status: **application, mail, CronJob and Karakeep gates deployed; internal S3 cutovers and isolated restore verified**, 2026-11-14.
+See the [current audit and remaining checks](AUDIT-2026-11-14.md) for the authoritative
+post-cutover status and limits; earlier preparation details below are historical.
 Source now covers Dawarich, Immich, Nextcloud, Keycloak, WordPress, YourSpotify,
 Bitwarden, Firefox Sync and native Mastodon, plus core bootstrap dependencies.
 The [coverage audit](COVERAGE.md) distinguishes detailed stack checks from the
@@ -114,11 +116,11 @@ The former conditional **public S3 route / GeoIP-volume recovery ring** is
 recorded separately in `recovery_scenarios`. Longhorn now uses the
 [direct internal S3 route](../migrations/longhorn-internal-s3/EXECUTION.md), removing
 those public-route edges for backup-store access. Signed reads, controller polls
-and a small GeoIP-PVC full backup passed; isolated restore remains pending. The historical
+and a small GeoIP-PVC full backup and isolated new-PVC restore/hash comparison passed. The historical
 public route describes rollback risk. Existing-volume restart does not imply
 this recovery scenario.
 
-The [per-Job dependency gate](cronjobs/README.md) is also an inactive proposal.
+The [per-Job dependency gate](cronjobs/README.md) is deployed and runtime-verified.
 It does not suspend CronJobs or alter their schedules.
 
 * Ordinary Longhorn volume attachment does not require S3. S3 is needed for backup
@@ -127,9 +129,13 @@ It does not suspend CronJobs or alter their schedules.
   Upstream registry access or preloaded images is still needed on a cache miss.
 * SeaweedFS data is hostPath-backed, not a Longhorn PVC. Its storage must survive
   on its pinned node, and S3 credentials must have an independent recovery path.
-* Harbor's certificate remains ACME HTTP-01 via public Traefik. A valid persisted
-  `harbor-tls` Secret supports normal boot; missing/expired TLS requires the
-  public challenge path. The local OpenBao CA does not need GoDaddy or Harbor.
+* Harbor's certificate now uses exact-host DNS-01 via GoDaddy/CNAME Follow.
+  A valid persisted `harbor-tls` Secret supports normal boot; missing/expired TLS
+  needs cert-manager, the webhook, credentials and public DNS/ACME, not public
+  Traefik. See the [transition](../migrations/harbor-dns01/README.md). The local
+  OpenBao CA does not need GoDaddy or Harbor.
+  The solver image is still Harbor-backed: cache loss plus unavailable Harbor TLS
+  requires the [independent bootstrap image bundle](../bootstrap-images/README.md).
 * GoDaddy webhook, snapshot-controller, reporting and housekeeping images in
   Harbor are not prerequisites for local CA signing or existing-volume attach.
 * Kyverno resource checks currently use audit/fail-open behavior; do not turn
