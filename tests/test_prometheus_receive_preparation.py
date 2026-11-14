@@ -23,6 +23,30 @@ SPEC.loader.exec_module(PLAN)
 class ReceivePreparationTests(unittest.TestCase):
     """Preparation cannot silently activate, rewrite identities or share live RWO data."""
 
+    def test_active_prometheus_has_only_local_startup_requirements(self):
+        """The published workload must not regain a sidecar or mandatory scrape tokens."""
+        pod = PLAN.read(PLAN.PROM)["spec"]["template"]["spec"]
+        self.assertEqual([c["name"] for c in pod["containers"]], ["prometheus"])
+        volumes = {v["name"]: v for v in pod["volumes"]}
+        self.assertNotIn("objstoreyml", volumes)
+        self.assertNotIn("prometheus-config-shared", volumes)
+        self.assertEqual({n for n, v in volumes.items() if "secret" in v}, PLAN.OPTIONAL)
+        for name in PLAN.OPTIONAL:
+            self.assertIs(volumes[name]["secret"].get("optional"), True)
+
+    def test_active_query_and_scrapes_retire_only_the_old_sidecar(self):
+        """The independently stored receive path replaces the retired scrape expectation."""
+        cm = PLAN.read(PLAN.CONFIG)
+        config = yaml.safe_load(cm["data"]["prometheus.yaml"])
+        self.assertEqual(config["remote_write"], [PLAN.remote_write()])
+        jobs = {job["job_name"] for job in config["scrape_configs"]}
+        self.assertIn("thanos-receive", jobs)
+        self.assertNotIn("thanos-sidecar", jobs)
+        args = PLAN.read(PLAN.QUERIER)["spec"]["template"]["spec"]["containers"][0]["args"]
+        self.assertNotIn("--endpoint=thanos-sidecar.monitoring.svc.cluster.local:10901", args)
+        self.assertIn("--endpoint=thanos-receive.monitoring.svc.cluster.local:10901", args)
+        self.assertIn("--endpoint=thanos-store-gateway.monitoring.svc.cluster.local:10901", args)
+
     def test_namespace_quota_reserves_receive_storage(self):
         """Free Longhorn space alone does not permit PVC admission under a quota."""
         quota = next(

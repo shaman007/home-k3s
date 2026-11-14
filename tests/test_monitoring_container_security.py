@@ -1,10 +1,9 @@
 """Check reviewed security contexts and writable storage for monitoring containers."""
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -40,8 +39,9 @@ class MonitoringContainerSecurityTest(unittest.TestCase):
             ),
             (
                 "metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml",
-                (("prometheus", 65534), ("thanos", 65534)),
+                (("prometheus", 65534),),
             ),
+            ("thanos/stateful-set-thanos-receive.yaml", (("thanos", 1001),)),
             ("thanos/deployment-thanos-querier.yaml", (("thanos", 1001),)),
             ("thanos/deployment-thanos-compactor.yaml", (("thanos", 1001),)),
             ("thanos/deployment-thanos-store-gateway.yaml", (("thanos", 1001),)),
@@ -71,6 +71,7 @@ class MonitoringContainerSecurityTest(unittest.TestCase):
             ),
             ("thanos/deployment-thanos-compactor.yaml", "thanos", "/data/"),
             ("thanos/deployment-thanos-store-gateway.yaml", "thanos", "/data/"),
+            ("thanos/stateful-set-thanos-receive.yaml", "thanos", "/data"),
         )
 
         for path, container_name, state_path in workloads:
@@ -108,6 +109,7 @@ class MonitoringContainerSecurityTest(unittest.TestCase):
             "thanos/deployment-thanos-querier.yaml",
             "thanos/deployment-thanos-compactor.yaml",
             "thanos/deployment-thanos-store-gateway.yaml",
+            "thanos/stateful-set-thanos-receive.yaml",
         )
 
         for path in false_paths:

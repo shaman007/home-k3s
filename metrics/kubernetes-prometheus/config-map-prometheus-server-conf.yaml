@@ -326,9 +326,9 @@ data:
         labels:
           job: alertmanager
       - record: homelab_expected_scrape_job
-        expr: label_replace(vector(1), "job", "thanos-sidecar", "", "")
+        expr: label_replace(vector(1), "job", "thanos-receive", "", "")
         labels:
-          job: thanos-sidecar
+          job: thanos-receive
       - record: homelab_expected_scrape_job
         expr: label_replace(vector(1), "job", "immich", "", "")
         labels:
@@ -1866,35 +1866,6 @@ data:
           - __meta_kubernetes_pod_container_port_number
           action: keep
           regex: '9093'
-        - source_labels:
-          - __meta_kubernetes_namespace
-          target_label: kubernetes_namespace
-        - source_labels:
-          - __meta_kubernetes_pod_name
-          target_label: pod
-        - source_labels:
-          - __meta_kubernetes_pod_node_name
-          target_label: node
-      - job_name: thanos-sidecar
-        scrape_interval: 45s
-        scrape_timeout: 15s
-        kubernetes_sd_configs:
-        - role: pod
-          namespaces:
-            names:
-            - monitoring
-        relabel_configs:
-        - source_labels: [__meta_kubernetes_pod_label_app]
-          action: keep
-          regex: prometheus-server
-        - source_labels:
-          - __meta_kubernetes_pod_phase
-          action: keep
-          regex: Running
-        - source_labels:
-          - __meta_kubernetes_pod_container_port_number
-          action: keep
-          regex: '10902'
         - source_labels:
           - __meta_kubernetes_namespace
           target_label: kubernetes_namespace

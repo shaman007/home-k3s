@@ -5,7 +5,7 @@ scope: Core bootstrap plus Dawarich, Immich, Mastodon (native active), Nextcloud
 direction: provider -> consumer; phase is descriptive, not installed orchestration
 planned_transitions:
   prometheus_receive:
-    status: dual-write published as 92b02ad5; sidecar retained; Receive memory/GC correction active live pending publication; cutover inactive
+    status: cutover active live; Prometheus has no sidecar or S3 mount and three optional scrape tokens; source publication pending
     evidence:
     - docs/startup/prometheus-receive/README.md
     - tools/bootstrap/prepare_prometheus_receive.py
@@ -27,7 +27,7 @@ planned_transitions:
     - from: receive
       to: thanos-query
       kind: feature
-    acceptance: local failure fixtures, signed internal S3 access, remote_write and Query dedup passed; memory/GC fix produced three natural blocks verified in S3 without OOM and a historical read restricted to Store Gateway; full history continuity and cutover pending
+    acceptance: all 36 legacy closed blocks accounted for in S3; 340350 sampled historical/transition points matched before cutover; post-cutover boundary and steady data match; user explicitly accepted the final shutdown scrape tail remaining local only
 prepared_packages:
   mail:
     status: deployed including diagnostic-loop fix; production inbound delivery and isolated filter failure/recovery verified
@@ -545,15 +545,15 @@ nodes:
     - karakeep/config-map-worker-startup.yaml
   observability-secrets:
     phase: 2
-    ready: Required S3, OAuth and scrape-token Secrets already present; ESO/OpenBao needed for missing targets. Do
-      not export payloads.
+    ready: S3/OAuth Secrets remain mandatory for their consumers. Three Prometheus scrape-token projections are optional;
+      missing tokens affect only authenticated scrapes. ESO/OpenBao materializes missing targets; do not export payloads.
     sources:
     - metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml
-    - metrics/external-secret-thanos-objstore-secret.yaml
+    - thanos/external-secret-thanos-receive-objstore-internal.yaml
   prometheus-pod:
     phase: 4
-    ready: Local TSDB/WAL replay completes; Prometheus ready; mandatory sidecar objstore and scrape-token Secret mounts
-      exist. Service additionally requires all ordinary containers ready.
+    ready: Local TSDB/WAL replay completes and the sole Prometheus container is ready. ConfigMap, CA and API identity remain
+      required; Receive/S3 and the three optional scrape tokens are not startup/readiness dependencies.
     sources:
     - metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml
     - metrics/kubernetes-prometheus/service-prometheus-service.yaml
@@ -563,12 +563,13 @@ nodes:
       untested.
     sources:
     - docs/startup/observability/EXECUTION.md
-  thanos-sidecar:
-    phase: 5
-    ready: Local Prometheus API and readable TSDB; gRPC ready; eventual natural block upload must succeed (not yet
-      observed). Same Pod; not a provider of Prometheus process startup.
+  thanos-receive:
+    phase: 4
+    ready: Own retained PVC and ESO S3 config; WAL replay, HTTP/gRPC readiness and remote_write ingestion. S3 failure affects
+      upload; Prometheus and Query are not Receive startup providers. Natural compaction/upload and Store Gateway read verified.
     sources:
-    - metrics/kubernetes-prometheus/deployment-prometheus-deployment.yaml
+    - thanos/stateful-set-thanos-receive.yaml
+    - thanos/external-secret-thanos-receive-objstore-internal.yaml
   thanos-store:
     phase: 4
     ready: Own ESO S3 config, internal S3 access, readiness and historical StoreAPI queries.
@@ -1480,7 +1481,7 @@ edges:
   kind: image
   when: image_cache_miss
 - from: harbor
-  to: thanos-sidecar
+  to: thanos-receive
   kind: image
   when: image_cache_miss
 - from: harbor
@@ -1529,8 +1530,12 @@ edges:
   when: required_target_secret_missing
 - from: observability-secrets
   to: prometheus-pod
+  kind: feature
+  when: individual_authenticated_scrape_credentials
+- from: observability-secrets
+  to: thanos-receive
   kind: startup
-  when: mandatory_Secret_mounts_present
+  when: receiver_S3_config_Secret_present
 - from: observability-secrets
   to: loki
   kind: startup
@@ -1547,6 +1552,10 @@ edges:
   to: prometheus-pod
   kind: startup
   when: PVC_mount
+- from: longhorn
+  to: thanos-receive
+  kind: startup
+  when: own_PVC_mount
 - from: longhorn
   to: loki
   kind: startup
@@ -1568,18 +1577,18 @@ edges:
   kind: startup
   when: object_store_operations
 - from: prometheus-pod
-  to: thanos-sidecar
-  kind: startup
-  when: local_API_and_TSDB_available
+  to: thanos-receive
+  kind: feature
+  when: asynchronous_remote_write
 - from: seaweedfs
-  to: thanos-sidecar
+  to: thanos-receive
   kind: feature
   when: block_upload
 - from: thanos-store
   to: thanos-query
   kind: feature
   when: query_data_coverage
-- from: thanos-sidecar
+- from: thanos-receive
   to: thanos-query
   kind: feature
   when: query_data_coverage

@@ -44,7 +44,6 @@ spec:
             - --log.level=info
             - --query.replica-label=replica
             - --endpoint=thanos-store-gateway.monitoring.svc.cluster.local:10901
-            - --endpoint=thanos-sidecar.monitoring.svc.cluster.local:10901
             - --query.auto-downsampling
             - --endpoint=thanos-receive.monitoring.svc.cluster.local:10901
           ports:

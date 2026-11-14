@@ -86,8 +86,6 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
-            - name: prometheus-config-shared
-              mountPath: /etc/prometheus-shared/
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -103,63 +101,6 @@ spec:
               memory: 4864Mi
             limits:
               memory: 6400Mi
-        - name: thanos
-          image: harbor.andreybondarenko.com/quay/thanos/thanos:v0.42.5
-          imagePullPolicy: IfNotPresent
-          args:
-            - "sidecar"
-            - "--tsdb.path=/prometheus"
-            - "--prometheus.url=http://127.0.0.1:9090"
-            - "--objstore.config-file=/etc/thanos/objstore.yml"
-          ports:
-            - name: http-sidecar
-              containerPort: 10902
-            - name: grpc
-              containerPort: 10901
-          startupProbe:
-            tcpSocket:
-              port: grpc
-            periodSeconds: 10
-            timeoutSeconds: 2
-            failureThreshold: 120
-          readinessProbe:
-            tcpSocket:
-              port: grpc
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 1
-            failureThreshold: 6
-          livenessProbe:
-            tcpSocket:
-              port: grpc
-            initialDelaySeconds: 15
-            periodSeconds: 30
-            timeoutSeconds: 1
-            failureThreshold: 3
-          volumeMounts:
-            - name: prometheus-config-volume
-              mountPath: /etc/prometheus/
-            - name: prometheus-storage-volume
-              mountPath: /prometheus/
-            - name: prometheus-config-shared
-              mountPath: /etc/prometheus-shared/
-            - name: objstoreyml
-              mountPath: /etc/thanos/
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 65534
-            runAsGroup: 65534
-          resources:
-            requests:
-              cpu: 30m
-              memory: 512Mi
-            limits:
-              memory: 1836Mi
       initContainers:
         - name: fix-perms
           image: harbor.andreybondarenko.com/dockerhub/busybox:1.38
@@ -190,12 +131,15 @@ spec:
         - name: spotify-metrics-token
           secret:
             secretName: prometheus-spotify-metrics
+            optional: true
         - name: hister-metrics-token
           secret:
             secretName: prometheus-hister-metrics
+            optional: true
         - name: meilisearch-metrics-token
           secret:
             secretName: prometheus-meilisearch-metrics
+            optional: true
         - name: prometheus-config-volume
           configMap:
             defaultMode: 420
@@ -203,9 +147,3 @@ spec:
         - name: prometheus-storage-volume
           persistentVolumeClaim:
             claimName: prometheus-lh
-        - name: prometheus-config-shared
-          emptyDir:
-            sizeLimit: 10Mi
-        - name: objstoreyml
-          secret:
-            secretName: thanos-objstore-secret

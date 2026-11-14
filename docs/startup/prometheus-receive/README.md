@@ -1,14 +1,82 @@
 # Prometheus independent of Thanos: staged Receive migration
 
-2026-11-14. **Dual-write published; Receive memory/GC correction active live.** The user selected full
+2026-11-14. **Cutover active live; source publication pending.** The user selected full
 separation through Thanos Receive rather than publishing unready Prometheus
 Service endpoints. Infrastructure-stage files are prepared in active Git source
 paths and were published through `17b9bd76`, including the storage-quota fix.
-Prometheus still runs with its sidecar. Stage2 was published as `92b02ad5`; sources match the live
-remote_write/Receive scrape/extra alerts and Query endpoint changes; cutover
-remains inactive. No Secret/PVC deletion or TSDB export was performed.
+Dual-write was published as `92b02ad5`, and Receive memory/GC recovery as
+`a09bd3e2`. Prometheus now runs alone; Query uses Receive and Store Gateway.
+The three scrape-token projections are optional; S3 and shared sidecar mounts
+are absent. No Secret/PVC deletion, production failure injection or TSDB rewrite
+was performed. The accepted shutdown-tail exception below is explicit.
 
 ## Current transition state
+
+Only `kubernetes-prometheus` and `thanos` have temporary `skip-reconcile=true`
+until this cutover diff is published. Their original auto-sync/self-heal
+specifications are preserved. Refresh Git/cache and verify the new revision
+before resuming; do not let an old cached revision restore the sidecar.
+The original ConfigMap Reloader annotation was temporarily removed for the
+single controlled Recreate and restored after readiness recovered.
+
+### History acceptance before removing the sidecar
+
+All 36 closed local Prometheus blocks were in shipper bookkeeping. Signed S3
+metadata checks found 13 originals and raw compaction descendants for the other
+23, with each original ULID in `compaction.sources` and its full time bounds
+covered. No unshipped closed legacy block was left behind. After cutover, new
+local Prometheus ULIDs are not uploaded by this old shipper; Receive generates
+its own blocks, so this legacy ULID test is a pre-cutover gate only.
+
+Across `up`, idle CPU counters and Running Pod state, 18 sampled comparisons
+covered 340350 points with no missing/extra series or value differences before
+cutover. They checked the locally retained 72 hours against Store Gateway at
+15-minute steps, the initial Receive boundary at 10:23:10.872 UTC at 30-second
+steps, and the full Receive overlap/current path at 5-minute steps. The union of
+only Store Gateway and Receive was compared without using the sidecar. The
+leading retention/lookback edge was handled explicitly: S3 could still supply
+an older ClamAV scrape that was already outside the local TSDB.
+
+Store Gateway-only reads also returned the oldest raw archive, a week-old
+sample and the oldest archived downsampled data (2024-11-07, one-hour resolution).
+This is complete block-lineage coverage plus sampled query equivalence, not an
+exhaustive byte/sample audit of every historical metric.
+
+### Live cutover and explicitly accepted shutdown tail
+
+The user authorized removal after the history checks. The live rollout removed
+only the sidecar, its S3/shared mounts and Query endpoint/scrape expectation;
+the three application token volumes became optional. Prometheus args, image,
+resources, TSDB/PVC, security context, API identity, ordinary Service readiness,
+startup/readiness/liveness probes and all 189 rules were preserved. Scrape auth
+configuration was preserved; missing tokens cause scrape errors, never an
+unauthenticated fallback. Existing sidecar Service/ESO targets remain tracked
+rollback artifacts; they were not deleted.
+
+Prometheus stopped gracefully at 20:39:42 UTC and the replacement became ready
+at 20:40:45 UTC. Query also completed its single Recreate; Receive did not
+restart. Hister, Spotify, Meilisearch and Receive scrapes were healthy afterward.
+The local exact-image no-uplink fixture additionally verified startup without
+Receive/all three tokens, token appearance/rotation/removal and Receive recovery
+without restarting Prometheus. No production Secret was removed to test this.
+
+Post-cutover raw comparison found a final shutdown tail present locally but not
+in Receive: confirmed 1879 samples from the last w386 node-exporter scrape at
+20:39:41.441 UTC, plus a final Pod-scrape portion. Loki confirmed clean graceful
+shutdown and remote-storage stop, with no forced kill. This tail affected a few
+lookback evaluations around the restart; no pre-existing archive was removed.
+**The user explicitly chose to leave the cutover with this short shutdown gap.**
+No automatic replay, S3 rewrite or temporary restoration of the sidecar followed.
+This approval applies to this measured exception, not arbitrary future loss.
+
+After the accepted tail's five-minute lookback expired, fresh and transition
+boundary comparisons through the actual default Query matched local Prometheus.
+The oldest archived baseline remained unchanged. Receive continued asynchronous
+delivery and natural block uploads. All three maintenance silences were expired;
+rollback snapshots and the detailed read-only audit are temporary local
+diagnostics, while this file records the durable evidence and limitation.
+
+### Earlier dual-write and memory recovery
 
 On 2026-11-14 the user authorized dual-write activation. Only Argo applications
 `kubernetes-prometheus` and `thanos` were paused until stage2 publication, then
@@ -17,8 +85,8 @@ resuming a paused app: unpausing against an old cached revision briefly reverted
 dual-write and caused extra Prometheus/Query restarts before hard refresh repaired
 the desired state. Auto-sync/self-heal specifications remain preserved.
 
-The subsequent memory/GC correction temporarily pauses **only `thanos`** until
-its source diff is published. Prometheus remains unpaused and its sidecar stays.
+The subsequent memory/GC correction temporarily paused only `thanos`, then was
+published as `a09bd3e2` and resumed before the current cutover.
 The old Receive hit OOM at its first block write with a 6 Gi cgroup limit and no Go
 memory limit; no complete block existed and upload/failure counters both stayed 0.
 Successful S3 read/list alone therefore did not prove the upload path worked.
@@ -67,8 +135,8 @@ data was compacted. Cgroup usage/peak include page cache and can reach the 8 Gi
 ceiling with reclaim events; they are not equivalent to RSS or evidence of OOM.
 Prometheus and its sidecar retained the same Pod throughout this memory fix.
 All three Receive-only maintenance silences were explicitly expired after
-readiness recovered. The source correction still needs publication before
-resuming `thanos`; verify fresh Git/cache before removing its pause.
+readiness recovered. That memory correction was subsequently published; only
+the current cutover source publication and its two pauses remain pending.
 
 ### Initial dual-write acceptance, before the memory correction
 
@@ -263,6 +331,10 @@ Rollback by stage, preserving all volumes and object-store contents:
    job expectation together. Preserve all later image/security changes. Keep
    Receive and its TSDB, initially keep remote_write if needed for continuity;
    do not detach its data or roll back database/schema/object-store contents.
+   The published pre-cutover source is `a09bd3e2`; recover only these reviewed
+   fields from its Prometheus Deployment/ConfigMap and Query Deployment. Generating
+   an earlier stage from already-promoted cutover sources does not reconstruct
+   the removed sidecar, so it is not a rollback mechanism.
 4. Recheck Prometheus readiness, Query labels/coverage, queues and uploads; expire
    all maintenance silences and restore affected Argo reconciliation only after
    desired Git matches live. Never force PVC detach or run competing TSDB writers.
@@ -294,12 +366,11 @@ References: [Thanos Receive](https://thanos.io/tip/components/receive.md/),
 [pinned0.42.5 receiver implementation](https://github.com/thanos-io/thanos/blob/v0.42.5/cmd/thanos/receive.go),
 [Prometheus remote-write limitations](https://prometheus.io/docs/practices/remote_write/).
 
-### Prepared acceptance record
+### Initial preparation record (historical)
 
-All current Prometheus Deployment/ConfigMap/Service bytes remain unchanged in
-this working tree. Only infrastructure-stage runtime files and their network
-integration are prepared; no cluster resource was changed. Current Prometheus
-and Thanos Argo apps remain Healthy/Synced, and no live Receive StatefulSet exists.
+At initial preparation, Prometheus Deployment/ConfigMap/Service bytes were
+unchanged. Only infrastructure-stage runtime files and network integration were
+prepared, with no live writes and no Receive StatefulSet yet.
 The broad Argo verifier also observed an unrelated open-terminal/root-application
 rollout during this task; those applications were not modified here.
 
@@ -314,4 +385,4 @@ real declared-image promtool accepted all three configs and all187 baseline rule
 Actual active-source rendering of the five related applications passed resource
 checks (16 containers). CI performs equivalent inactive-stage validation and
 normal active-source rendering. Live S3 upload/admission/history acceptance
-remains pending, explicitly bounded by the transition gates above.
+was pending at that preparation checkpoint; subsequent live evidence is recorded above.
