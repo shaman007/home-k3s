@@ -15,7 +15,7 @@ data:
     #
     # Generate a JSONL manifest for media attached to bookmarked statuses.
     # Output: export/bookmarked_media_manifest.jsonl
-    # Set BOOKMARKED_MEDIA_LOOKBACK_DAYS to reduce the time window later.
+    # BOOKMARKED_MEDIA_LOOKBACK_DAYS defaults to the last 24 hours.
 
     require "fileutils"
     require "json"
@@ -24,7 +24,7 @@ data:
 
     S3_HOST   = "https://s3.andreybondarenko.com"
     S3_BUCKET = "mastodon" # path-style bucket as you described
-    LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "30"), 10)
+    LOOKBACK_DAYS = Integer(ENV.fetch("BOOKMARKED_MEDIA_LOOKBACK_DAYS", "1"), 10)
 
     # Exact, case-insensitive matches only; preserve tags absent from this list.
     # Keep in sync with bookmarked-media-strip-tags.txt.
@@ -182,7 +182,7 @@ data:
 
     kubectl exec -i -n mastodon "${pod_name}" -c mastodon-web -- sh -c "cat > ${remote_script_path}" < /scripts/list_bookmarked_media_s3.rb
 
-    kubectl exec -n mastodon "${pod_name}" -c mastodon-web -- sh -lc "rm -f ${remote_output_path}; BOOKMARKED_MEDIA_LOOKBACK_DAYS='${BOOKMARKED_MEDIA_LOOKBACK_DAYS:-30}' bundle exec rails runner ${remote_script_path}"
+    kubectl exec -n mastodon "${pod_name}" -c mastodon-web -- sh -lc "rm -f ${remote_output_path}; BOOKMARKED_MEDIA_LOOKBACK_DAYS='${BOOKMARKED_MEDIA_LOOKBACK_DAYS:-1}' bundle exec rails runner ${remote_script_path}"
 
     kubectl exec -n mastodon "${pod_name}" -c mastodon-web -- cat "${remote_output_path}" > "${export_file}"
 

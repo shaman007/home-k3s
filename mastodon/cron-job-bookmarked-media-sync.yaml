@@ -53,7 +53,7 @@ spec:
               '
             env:
             - name: BOOKMARKED_MEDIA_LOOKBACK_DAYS
-              value: '30'
+              value: '1'
             - name: BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS
               value: '3'
             - name: BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS
