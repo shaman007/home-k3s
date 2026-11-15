@@ -3,7 +3,7 @@ import asyncio
 import importlib.util
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'aiy-voice'))
@@ -14,6 +14,17 @@ SPEC.loader.exec_module(client)
 
 
 class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
+    async def test_each_press_sends_fresh_reminders_even_before_first_alert(self):
+        ws=AsyncMock(); resources=Mock()
+        resources.reminders.list.side_effect=[[],[{'id':'created-externally','acknowledged_today':False}]]
+        instance=client.Client(ws,resources)
+        await instance.start(); await instance.stop()
+        instance.busy=False
+        await instance.start(); await instance.stop()
+        starts=[call.args[0] for call in ws.send_json.call_args_list if call.args[0]['type']=='start']
+        self.assertEqual(starts[0]['reminders'],[])
+        self.assertEqual(starts[1]['reminders'][0]['id'],'created-externally')
+
     def test_origin_validation(self):
         for url in ['http://example.org', 'https://a:b@example.org', 'https://example.org/path', 'https://example.org?x=1']:
             with self.assertRaises(ValueError):

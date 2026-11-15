@@ -58,7 +58,10 @@ class Client:
             self.resources.engaged = True
         if self.audio:
             await self.audio.interrupt()
-        await self.ws.send_json({"type": "start"})
+        event = {"type": "start"}
+        if self.resources:
+            event["reminders"] = self.resources.reminders.list()
+        await self.ws.send_json(event)
         self.recording, self.count = True, 0
         self.status((64, 0, 0))
         self.deadline = asyncio.get_running_loop().call_later(

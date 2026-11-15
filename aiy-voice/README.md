@@ -260,3 +260,27 @@ with the backup after new user actions, because doing so loses later state.
 Backend activation still requires publication of the GitOps image-pin commit
 and a verified Argo rollout; a completed build or Pi update alone does not enable
 the new voice tools.
+
+### Live acceptance correction: fresh state on every press
+
+Physical testing confirmed two one-minute repeat slots without acknowledgement.
+It also exposed a false verbal confirmation: the voice session still remembered
+an empty list after a test task was added on the Pi, and no acknowledgement tool
+was called. The test task was disabled; verbal reassurance alone was not treated
+as successful completion.
+
+The client now includes the current enabled reminder metadata and today's flags
+in every `start` event. The backend validates and whitelists at most16 tasks,
+excludes cached audio/extra fields, and refreshes session instructions before
+committing the user's audio. Fresh state explicitly replaces stale conversation
+facts, including an old empty list. Task names remain data, not instructions.
+The model must call `acknowledge_reminder` for an unambiguous affirmative completion
+and report success only after its result. Ambiguous tasks still need clarification.
+
+Regressions cover state changes between presses, bounded metadata, and propagation
+through the actual gateway protocol.821 unit tests passed (16 expected skips).
+Two live API checks produced the correct acknowledgement call for «сделал»,
+including with stale «no reminders» conversation history; combined test usage was
+about$0.034472. The signed corrected image is recorded in `build-result.json`.
+The physical early-acknowledgement/silence test must be repeated after GitOps
+publication of this correction; the earlier failed test is not acceptance proof.
