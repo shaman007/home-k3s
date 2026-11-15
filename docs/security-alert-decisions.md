@@ -3328,3 +3328,32 @@ signature diverges, or redirect rejection changes. No source behavior, scanner
 configuration, verification gate or TLS setting is weakened. Genuine TLS alerts
 7615 and 7524 were fixed by the verified-client implementation and real scanning,
 not dismissed. No agent push occurred.
+
+
+### 2026-11-15: Resolve two unattributable Codacy duplicate-code recurrences
+
+Reviewed exact alerts 8473 (`tests/test_identity_registry_config_snapshots.py`)
+and 8476 (`tools/bootstrap/prepare_cold_start.py`), both
+`PyLintPython3_R0801`, against their latest main-branch analysis 2170624128
+at `c8b8c9046cbd78d21633dbf8ddf5731e6da5b09b`. The local checkout matches
+that revision and neither flagged file has local changes. Retrieved uploaded
+SARIF contains only “Similar lines in 2 files” at line one, with no paired
+source blocks, related locations or supplementary duplicate references.
+
+Local full-repository Pylint 4.1.3 similarity analysis reports 21 contextual
+duplicate blocks, none involving either flagged file. These are supporting
+evidence, not an assertion that local Pylint exactly matches Codacy. Its
+contextual diagnostics also demonstrate that line-one attribution can name the
+last analyzed module rather than either duplicated module. The earlier
+“Retire unattributable duplicate headers” decision documents the same adapter
+limitation and the inspected upstream parser. The prior import-header setting
+and bootstrap refactor did not resolve these reporter artifacts remotely.
+
+Dismissed these exact two recurrences as won't fix for unusable attribution,
+not as proof that the repository contains no duplication. Reopen when paired
+source blocks become available. Keep similarity checking enabled; do not
+filter SARIF, suppress either module or remove tests to hide the reports.
+No application, container or live-cluster changes are needed for this decision.
+
+Independent GitHub API reads confirm both dismissals and zero open code-scanning
+alerts. Documentation diff validation passes. No agent push occurred.
