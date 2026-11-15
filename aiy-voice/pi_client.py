@@ -174,6 +174,7 @@ async def main():
         await audio.play(pcm)
         await audio.finish()
     resources = LocalResources(os.environ.get("AIY_TIMER_DB", "/var/lib/aiy-voice/timers.sqlite3"), led, alarm)
+    await resources.volume.restore()
     scheduler = asyncio.create_task(resources.scheduler())
     try:
         async with aiohttp.ClientSession(trust_env=False) as http:

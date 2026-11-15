@@ -58,6 +58,9 @@ def render(image_tag=None):
                             "readOnlyRootFilesystem": True, "runAsUser": 0,
                             "seccompProfile": {"type": "RuntimeDefault"}},
     }
+    for init in pod["initContainers"]:
+        if init["name"] == "copy-cosign":
+            init["resources"]["limits"]["memory"] = "256Mi"
     build = pod["containers"][0]
     build["workingDir"] = "/workspace/context"
     build["env"].append({"name": "AIY_IMAGE", "value": image})

@@ -7,6 +7,10 @@ import uuid
 STARTED = time.monotonic()
 
 TOOLS = [
+    {'type': 'function', 'name': 'set_volume', 'description': 'Set speaker playback volume to an absolute percentage from 0 to 100. Persists on the appliance. This affects speech and timer sounds.',
+     'parameters': {'type': 'object', 'properties': {'level': {'type': 'number'}}, 'required': ['level'], 'additionalProperties': False}},
+    {'type': 'function', 'name': 'adjust_volume', 'description': 'Make the speaker quieter or louder by percentage points. For a little quieter use -10, a little louder +10. Level is clamped to 0–100.',
+     'parameters': {'type': 'object', 'properties': {'delta': {'type': 'number'}}, 'required': ['delta'], 'additionalProperties': False}},
     {'type': 'function', 'name': 'blink_light', 'description': 'Blink the built-in RGB button light on the speaker. Supported colors only, 1–30 seconds.',
      'parameters': {'type': 'object', 'properties': {'color': {'type': 'string', 'enum': ['red', 'green', 'blue', 'yellow', 'white', 'off']}, 'seconds': {'type': 'number'}}, 'required': ['color', 'seconds'], 'additionalProperties': False}},
     {'type': 'function', 'name': 'set_timer', 'description': 'Set a timer on the speaker. It rings locally even if network or backend is temporarily unavailable. Duration 1 second to 7 days.',
@@ -17,7 +21,7 @@ TOOLS = [
     {'type': 'function', 'name': 'device_status', 'description': 'Read speaker temperature, uptime, active timers and backend process clock/memory/uptime; no general filesystem or shell access.',
      'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}},
 ]
-ACTIONS = {'blink_light': 'blink', 'set_timer': 'set_timer', 'list_timers': 'list_timers',
+ACTIONS = {'set_volume': 'set_volume', 'adjust_volume': 'adjust_volume', 'blink_light': 'blink', 'set_timer': 'set_timer', 'list_timers': 'list_timers',
            'cancel_timer': 'cancel_timer', 'device_status': 'status'}
 
 

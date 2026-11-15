@@ -13,9 +13,9 @@ start a fresh conversation. It receives a curated profile and can search MemPala
 
 ## Deployment and recovery
 
-- Runtime image: `harbor.andreybondarenko.com/library/aiy-voice:src-0eebad117a7bf983@sha256:725440234ce96a90d171cc83462c44a858a3fbb4f4fa8c29de6d4f6bd99ccfac`.
-- Source archive SHA256: `0eebad117a7bf98389d896c22fb90f15ddd2e98a89e3497fc4e04e0648a0bd29`.
-- Builder Job `image-builder/aiy-voice-build-0eebad117a7bf983` completed;
+- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-32193503a39a4f6e@sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda`.
+- Source archive SHA256: `32193503a39a4f6e34b6d9982956851cf3759b1999cbfb4811d76466ec3cfe61`.
+- Builder Job `image-builder/aiy-voice-build-32193503a39a4f6e-r2` completed;
   Cosign sign and verification succeeded in the managed builder.
 - `prepare_build.py` renders a deterministic source ConfigMap and one-off Job
   using the established privileged Podman/Cosign builder. It does not contact
@@ -133,8 +133,8 @@ Usage snapshot at 2026-11-15T16:26:35.832865+00:00: $0.819531300 across 36 recor
 
 ## Local appliance resources
 
-Voice functions: `blink_light`, `set_timer`, `list_timers`, `cancel_timer`, and
-`device_status`. Only the built-in Voice Bonnet button RGB LED is exposed; no
+Voice functions: `blink_light`, `set_timer`, `list_timers`, `cancel_timer`,
+`device_status`, `set_volume`, and `adjust_volume`. Only the built-in Voice Bonnet button RGB LED is exposed; no
 arbitrary GPIO numbers, shell commands, paths, containers or infrastructure
 operations can be selected by the model. Blink effects last1–30seconds.
 Status includes Pi temperature/uptime and selected backend clock/process metrics.
@@ -157,3 +157,26 @@ The dotfiles installer now copies `local_resources.py` beside `pi_client.py`.
 GitOps adoption of the base release8ef156b7 was confirmed Synced/Healthy for
 `aiy-voice` and `traefik-network-policy`. The next release also sets SecretStore
 refreshInterval900 as required by CI runtime contracts.
+
+## Voice volume
+
+`set_volume(level)` sets0–100percent; `adjust_volume(delta)` applies relative
+percentage points. “Сделай тише” defaults to-10, “громче” to+10. `device_status`
+returns the actual mixer percentage. Only the Voice Bonnet Speaker control can
+be changed. Actual ALSA steps can round percentages (requested40 ->41%).
+The requested level persists in the Pi SQLite preferences table and is restored
+on each service start; it affects both speech and local alarms. The initial
+user-requested reduction changed raw25/39 (64%) to16/39 (41%). No privilege
+expansion or model-selected mixer/command names are involved.
+
+The voice-volume release is source archive
+`32193503a39a4f6e34b6d9982956851cf3759b1999cbfb4811d76466ec3cfe61`,
+image digest `sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda`.
+Its managed builder Job ended successfully and verified the Cosign signature.
+The first attempt hit an init-only Cosign128Mi memory limit before building;
+the verified retry uses256Mi for that one-off init, without changing shared
+CronJob settings. The Pi client and quiet volume are already installed;
+GitOps publication of the image-pin commit activates voice volume tools.
+CI now installs AIY dependencies alongside existing validation dependencies;
+its explicit ingress-class tests retain all private-route constraints and
+check AIY's exact device/admin source allowlist as a single scoped exception.

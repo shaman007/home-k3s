@@ -118,6 +118,13 @@ class IngressClassSeparationTest(unittest.TestCase):
                         )
                         self.assertEqual(["harbor.andreybondarenko.com"], hosts)
                         expected = "traefik-registry"
+                    if path.relative_to(ROOT).as_posix() == "aiy-voice/kubernetes/resources.yaml":
+                        self.assertEqual("aiy-voice", document["metadata"]["namespace"])
+                        self.assertEqual(["aiy-voice.int.andreybondarenko.com"], hosts)
+                        self.assertIn("aiy-voice-aiy-clients@kubernetescrd", document["metadata"]["annotations"]["traefik.ingress.kubernetes.io/router.middlewares"])
+                        middleware = next(item for item in yaml.safe_load_all(path.read_text()) if item.get("kind") == "Middleware")
+                        self.assertEqual(["192.168.1.179/32", "192.168.30.0/24", "192.168.4.0/24"], middleware["spec"]["ipAllowList"]["sourceRange"])
+                        expected = "traefik"
                     self.assertEqual(
                         expected, document["spec"].get("ingressClassName"), str(path)
                     )

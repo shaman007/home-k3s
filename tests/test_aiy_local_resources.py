@@ -116,3 +116,17 @@ class DeviceBridgeTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual((await ws.receive()).type, WSMsgType.BINARY)
                         self.assertEqual((await ws.receive_json())['type'], 'done')
                     self.assertEqual(app['ledger'].db.execute('SELECT count(*) FROM device_commands').fetchone()[0], 1)
+
+class VolumeTests(unittest.IsolatedAsyncioTestCase):
+    async def test_volume_is_bounded_relative_and_persistent(self):
+        from local_resources import Volume
+        db = sqlite3.connect(':memory:')
+        volume = Volume(db)
+        volume.mixer = AsyncMock(side_effect=['', 'Playback 16 [41%] [on]', 'Playback 16 [41%] [on]', '', 'Playback 12 [31%] [on]'])
+        self.assertEqual((await volume.set(40))['volume_percent'], 41)
+        self.assertEqual((await volume.adjust(-10))['volume_percent'], 31)
+        self.assertEqual(db.execute('SELECT value FROM preferences WHERE name="volume"').fetchone()[0], 31)
+        for invalid in [-1, 101, True, '40']:
+            with self.assertRaises(ValueError):
+                await volume.set(invalid)
+        db.close()

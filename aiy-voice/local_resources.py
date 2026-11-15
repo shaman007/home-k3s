@@ -63,6 +63,7 @@ class LocalResources:
     """Allowlisted appliance operations and a scheduler independent of the network."""
     def __init__(self, state_path, set_led, play_alarm):
         self.timers = TimerStore(state_path)
+        self.volume = Volume(self.timers.db)
         self.set_led = set_led
         self.play_alarm = play_alarm
         self.base = (0, 16, 0)
@@ -105,9 +106,13 @@ class LocalResources:
         if action == 'cancel_timer':
             self.timers.set_state(event.get('timer_id'), 'cancelled')
             return {'ok': True, 'timers': self.timers.active()}
+        if action == 'set_volume':
+            return await self.volume.set(event.get('level'))
+        if action == 'adjust_volume':
+            return await self.volume.adjust(event.get('delta'))
         if action == 'status':
             temp = Path('/sys/class/thermal/thermal_zone0/temp')
-            return {'uptime_seconds': float(Path('/proc/uptime').read_text().split()[0]),
+            return {'volume_percent': await self.volume.get(), 'uptime_seconds': float(Path('/proc/uptime').read_text().split()[0]),
                     'temperature_c': int(temp.read_text()) / 1000 if temp.exists() else None,
                     'timers': self.timers.active()}
         raise ValueError('Unsupported device operation')
@@ -157,3 +162,51 @@ class AudioOutput:
                 self.process = None
                 if code:
                     raise RuntimeError('ALSA playback failed')
+
+
+class Volume:
+    """Control only the Voice Bonnet speaker mixer; persist the requested level."""
+    def __init__(self, db):
+        self.db = db
+        db.execute('CREATE TABLE IF NOT EXISTS preferences (name TEXT PRIMARY KEY, value INTEGER)')
+        db.commit()
+
+    async def mixer(self, *arguments):
+        process = await asyncio.create_subprocess_exec(
+            '/usr/bin/amixer', '-c', 'aiyvoicebonnet', *arguments,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+        try:
+            output, _error = await asyncio.wait_for(process.communicate(), 5)
+        except TimeoutError:
+            process.kill()
+            await process.wait()
+            raise
+        if process.returncode:
+            raise OSError('Speaker mixer command failed')
+        return output.decode('ascii')
+
+    async def get(self):
+        import re
+        matches = re.findall(r'\[(\d+)%\]', await self.mixer('sget', 'Speaker'))
+        if not matches:
+            raise ValueError('Speaker mixer returned no level')
+        return int(matches[0])
+
+    async def set(self, level):
+        if isinstance(level, bool) or not isinstance(level, (int, float)) or not 0 <= level <= 100:
+            raise ValueError('Volume must be between 0 and 100 percent')
+        level = round(level)
+        await self.mixer('sset', 'Speaker', str(level) + '%')
+        self.db.execute('INSERT OR REPLACE INTO preferences VALUES (?, ?)', ('volume', level))
+        self.db.commit()
+        return {'ok': True, 'volume_percent': await self.get()}
+
+    async def adjust(self, delta):
+        if isinstance(delta, bool) or not isinstance(delta, (int, float)) or not -100 <= delta <= 100:
+            raise ValueError('Invalid volume adjustment')
+        return await self.set(max(0, min(100, await self.get() + delta)))
+
+    async def restore(self):
+        row = self.db.execute('SELECT value FROM preferences WHERE name=?', ('volume',)).fetchone()
+        if row:
+            await self.set(row[0])

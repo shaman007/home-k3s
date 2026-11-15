@@ -44,7 +44,7 @@ def session_config():
                   "output": {"format": {"type": "audio/pcm", "rate": RATE}, "voice": "marin"}},
     }}
     config["session"]["tools"].extend(TOOLS)
-    config["session"]["instructions"] += " Для лампочки используй blink_light, для таймеров set_timer/list_timers/cancel_timer, для состояния колонки device_status. Подтверждай действия только после успешного ответа инструмента. Если нужны существующие ID таймеров, сначала list_timers. Для простого таймера интернет не нужен."
+    config["session"]["instructions"] += " Для громкости используй set_volume или adjust_volume: «тише» означает уменьшить, «громче» — увеличить; без уточнения шаг 10 процентных пунктов. Не озвучивай технические идентификаторы. Для лампочки используй blink_light, для таймеров set_timer/list_timers/cancel_timer, для состояния колонки device_status. Подтверждай действия только после успешного ответа инструмента. Если нужны существующие ID таймеров, сначала list_timers. Для простого таймера интернет не нужен."
     return config
 
 
