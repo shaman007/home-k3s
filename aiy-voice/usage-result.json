@@ -1,0 +1,19 @@
+{
+  "as_of_utc": "2026-11-15T16:26:35.832865+00:00",
+  "calculated_total_usd": "0.819531300",
+  "billing_balance_verified": false,
+  "excluded": "Earlier onboarding Responses haiku: usage was not retained; exact cost unknown.",
+  "by_model": {
+    "gpt-realtime-2.1": {
+      "recorded_responses": 29,
+      "calculated_usd": "0.7011232",
+      "web_search_calls": 0
+    },
+    "gpt-6-luna": {
+      "recorded_responses": 7,
+      "calculated_usd": "0.118408100",
+      "web_search_calls": 11
+    }
+  },
+  "detail_source": "Authenticated /v1/usage endpoint and persistent SQLite ledger; raw per-response runtime records are not committed."
+}

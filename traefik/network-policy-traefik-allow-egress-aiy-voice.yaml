@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-allow-egress-aiy-voice
+  namespace: traefik
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: traefik-traefik
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: aiy-voice
+          podSelector:
+            matchLabels:
+              app: aiy-voice
+      ports:
+        - protocol: TCP
+          port: 8080

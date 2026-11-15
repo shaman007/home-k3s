@@ -14,6 +14,7 @@ CLUSTER = "https://kubernetes.default.svc"
 REPOSITORY = "https://github.com/shaman007/home-k3s.git"
 
 PROJECT_APPLICATIONS = {
+    "aiy-voice",
     "backup-rsync",
     "bastioncam",
     "bitwarden",

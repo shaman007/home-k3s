@@ -19,6 +19,8 @@ spec:
     - https://github.com/shaman007/home-k3s.git
     - https://helm.goharbor.io
   destinations:
+    - namespace: aiy-voice
+      server: https://kubernetes.default.svc
     - namespace: firefox-sync
       server: https://kubernetes.default.svc
     - server: https://kubernetes.default.svc

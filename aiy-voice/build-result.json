@@ -1,0 +1,34 @@
+{
+  "image": "harbor.andreybondarenko.com/library/aiy-voice:src-0eebad117a7bf983@sha256:725440234ce96a90d171cc83462c44a858a3fbb4f4fa8c29de6d4f6bd99ccfac",
+  "source_sha256": "0eebad117a7bf98389d896c22fb90f15ddd2e98a89e3497fc4e04e0648a0bd29",
+  "job": "image-builder/aiy-voice-build-0eebad117a7bf983",
+  "signature": "sign and verify succeeded in managed builder",
+  "deployed": true,
+  "previous_voice_version": {
+    "image": "harbor.andreybondarenko.com/library/aiy-voice:src-0e19d2087fedf6b8",
+    "digest": "sha256:b191012f9d5dd162817f696b33d5c939a1db789d433e000bf13a24ffab8bebc2",
+    "source_sha256": "0e19d2087fedf6b803c1842e078619fe0f527164c336dcb1da3237fdd87db55e",
+    "job": "image-builder/aiy-voice-build-0e19d2087fedf6b8",
+    "signature": "sign and verify succeeded in managed builder",
+    "deployed": true,
+    "previous_prototype": {
+      "image": "harbor.andreybondarenko.com/library/aiy-voice:src-89e4e483f7496011",
+      "digest": "sha256:f645c71f3759344b705214db2d05f2ea1e376d692b2e3c14f9d0936ebcec9d50",
+      "architecture": "amd64",
+      "source_archive_sha256": "ade429e14a3a3f3d77e3bd4a9d44b836a13d9f9891c60195237672b2c7e49357",
+      "job": "image-builder/aiy-voice-build-ade429e14a3a3f3d",
+      "completed_at": "2026-11-15T15:23:37Z",
+      "cosign_public_key_verification": "passed",
+      "independent_registry_inspection": "passed",
+      "isolated_image_runtime_checks": {
+        "network": "none",
+        "root_filesystem": "read-only",
+        "russian_speech_synthesis_and_recognition": "passed",
+        "codex_cli_version": "0.163.0",
+        "account_authentication": "not attempted"
+      },
+      "retry_note": "Initial build failed before publication because Debian already has group voice. Fixed explicit UID/GID creation; retained only the approved destination tag. The actual corrected source hash is recorded above and in the image label io.aiy.source.sha256.",
+      "voice_service_deployed": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "bound_service_account_names": [
+    "vault-auth"
+  ],
+  "bound_service_account_namespaces": [
+    "aiy-voice"
+  ],
+  "audience": "vault",
+  "token_policies": [
+    "aiy-voice-api"
+  ],
+  "token_ttl": "5m",
+  "token_max_ttl": "5m"
+}
