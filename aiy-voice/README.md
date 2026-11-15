@@ -299,3 +299,35 @@ as «сделал». A live Realtime check confirmed the exact acknowledgement a
 and a feminine reply after a synthetic successful tool result. The voice and
 reminder scheduler are unchanged; publication of the new image pin activates the
 wording change through GitOps.
+
+## Weekdays and stable random displacement
+
+The existing `create_daily_reminder` tool also accepts `weekdays` (Monday=0,
+Sunday=6) and `jitter_minutes` (0–10). A non-empty weekday set is required;
+all seven days means daily. Nominal slots remain on the start/repeat grid.
+Each slot, including the first, receives its own plus/minus displacement; with
+30minute repeats and10minute jitter, successive actual gaps can be10–50minutes.
+The first slot may precede the nominal start by10minutes. No slot starts at or
+after the exclusive end time. Repeat must exceed twice jitter to preserve order.
+
+The additive Pi `reminder_recurrence` table stores weekday masks, jitter and a
+random per-task seed. SHA256 of seed/date/slot deterministically selects each
+offset; polling, reconnects and restarts do not redraw it. The bounded in-memory
+slot cache avoids repeated hashing on the Pi Zero. Existing rows without a policy
+remain exact daily reminders. Recovery still emits only the latest overdue slot,
+not a backlog. Weekly completion applies only to the scheduled local weekday/date;
+the next occurrence is computed across quiet days and DST. Completion before the
+first displaced slot suppresses that day's whole task. Ambiguity requires task
+clarification; a fixed spoken password is not required. Full verbatim evidence and
+negative/future guards remain in force, with affirmative passive/adjective forms
+supported for free-form task identification.
+
+Runtime schedules, their speech and completion facts stay in the appliance's
+private SQLite state, never in Git. Back up that state before upgrades. Do not
+downgrade to an older engine while weekly/jitter policies remain enabled: an old
+engine ignores this additional policy table. Restore matching code and preserve
+the current database; disable affected tasks before any deliberate downgrade.
+828 CI-version unit tests (16 expected skips) and19 isolated Pi reminder tests
+passed, including weekdays, early weekly completion, jitter deadlines, stability,
+legacy state and recovery. Live API checks accepted the extended schema and
+identified free-form completions; unclear wording can still require clarification.

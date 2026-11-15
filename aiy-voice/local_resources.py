@@ -102,7 +102,8 @@ class LocalResources:
             audio = base64.b64decode(event.get('audio', ''), validate=True)
             return self.reminders.create(event['id'], event.get('text'), event.get('start_time'),
                                          event.get('end_time'), event.get('repeat_minutes'),
-                                         event.get('confirmation_phrase'), audio, event.get('first_date'))
+                                         event.get('confirmation_phrase'), audio, event.get('first_date'),
+                                         weekdays=event.get('weekdays'), jitter_minutes=event.get('jitter_minutes', 0))
         if action == 'list_daily_reminders':
             return {'reminders': self.reminders.list()}
         if action == 'acknowledge_reminder':

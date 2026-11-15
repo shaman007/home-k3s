@@ -83,6 +83,69 @@ class RemindersTests(unittest.TestCase):
         self.add();self.store.disable('fish',stamp=stamp('2026-11-16T12:00'))
         self.assertEqual(self.store.due(stamp('2026-11-17T10:00')),[])
 
+    def weekly(self, **extra):
+        return self.store.create('weekly','Проверь задачу','12:00','22:00',30,'сделал',b'\0\0',
+                                 first_date='2026-11-16',stamp=stamp('2026-11-15T23:00'),weekdays=[0],**extra)
+
+    def test_monday_only_and_early_completion_reopens_next_monday(self):
+        self.weekly(jitter_minutes=10)
+        result=self.store.acknowledge('сделал',reminder_id='weekly',stamp=stamp('2026-11-16T08:00'))
+        self.assertTrue(result['ok'])
+        self.assertTrue(result['reminder']['next_notification'].startswith('2026-11-23T'))
+        self.assertEqual(self.store.due(stamp('2026-11-16T14:00')),[])
+        for day in range(17,23):
+            self.assertEqual(self.store.due(stamp(f'2026-11-{day}T14:00')),[])
+            self.assertIn('error',self.store.acknowledge('сделал',reminder_id='weekly',stamp=stamp(f'2026-11-{day}T08:00')))
+        self.assertEqual(len(self.store.due(stamp('2026-11-23T14:00'))),1)
+
+    def test_offsets_stay_in_bounds_are_stable_and_include_first_slot(self):
+        self.weekly(jitter_minutes=10)
+        self.db.execute('UPDATE reminder_recurrence SET seed=? WHERE id=?',('test-early','weekly'));self.db.commit()
+        row=self.store.row('weekly');day=datetime.fromisoformat('2026-11-16').date()
+        slots=self.store.slots(row,day)
+        offsets=[(at-datetime.combine(day,datetime.min.time(),ZONE)).total_seconds()-(12*60+i*30)*60 for i,at in slots]
+        self.assertTrue(all(-600<=x<=600 for x in offsets))
+        self.assertLess(offsets[0],0)  # First alert really may precede the nominal start.
+        self.assertTrue(all(slots[i][1]<slots[i+1][1] for i in range(len(slots)-1)))
+        restarted=Reminders(self.db)
+        self.assertEqual(slots,restarted.slots(restarted.row('weekly'),day))
+        self.assertNotEqual(slots[0][1].time(),restarted.slots(row,datetime.fromisoformat('2026-11-23').date())[0][1].time())
+
+    def test_actual_jitter_deadline_not_nominal_grid_controls_delivery(self):
+        self.weekly(jitter_minutes=10)
+        row=self.store.row('weekly');first,second=self.store.slots(row,datetime.fromisoformat('2026-11-16').date())[:2]
+        self.assertEqual(self.store.due(first[1].timestamp()-0.01),[])
+        event=self.store.due(first[1].timestamp())[0];self.assertEqual(event['slot'],0);self.store.delivered(event)
+        self.assertEqual(self.store.due(second[1].timestamp()-0.01),[])
+        self.assertEqual(self.store.due(second[1].timestamp())[0]['slot'],1)
+        self.assertEqual(self.store.due(stamp('2026-11-16T22:00')),[])
+
+    def test_late_recovery_plays_only_latest_slot_with_jitter(self):
+        self.weekly(jitter_minutes=10)
+        events=self.store.due(stamp('2026-11-16T21:50'));self.assertEqual(len(events),1)
+        self.store.delivered(events[0])
+        self.assertEqual(Reminders(self.db).due(stamp('2026-11-16T21:51')),[])
+
+    def test_old_rows_keep_daily_exact_schedule_without_destructive_migration(self):
+        self.add();self.db.execute('DROP TABLE reminder_recurrence');self.db.commit()
+        restored=Reminders(self.db)
+        item=restored.describe('fish',stamp('2026-11-16T08:00'))
+        self.assertEqual(item['weekdays'],list(range(7)));self.assertEqual(item['jitter_minutes'],0)
+        self.assertEqual(len(restored.due(stamp('2026-11-17T10:00'))),1)
+
+    def test_free_form_affirmative_adjectives_and_past_verbs(self):
+        cases=[('pill','Прими таблетку','Таблетка принята'),('cats','Покорми кошек','Кошки сыты'),
+               ('tank','Обслужи аквариум','С аквариумом закончил'),('fish','Покорми рыбок','Рыбки уже накормлены')]
+        for identity,text,phrase in cases:
+            self.store.create(identity,text,'10:00','22:00',30,'сделал',b'\0\0',stamp=stamp('2026-11-16T08:00'))
+            self.assertTrue(self.store.acknowledge(phrase,reminder_id=identity,stamp=stamp('2026-11-16T08:00'))['ok'])
+        self.assertIn('error',self.store.acknowledge('Кошки не сыты',reminder_id='cats',stamp=stamp('2026-11-16T08:00')))
+
+    def test_invalid_recurrence_parameters(self):
+        for args in [{'weekdays':[]},{'weekdays':[True]},{'weekdays':[7]},{'jitter_minutes':11},{'jitter_minutes':-1}]:
+            with self.assertRaises(ValueError):
+                self.store.create('bad','Проверь задачу','10:00','22:00',30,'сделал',b'\0\0',stamp=stamp('2026-11-16T08:00'),**args)
+
 
 class PlaybackTests(unittest.IsolatedAsyncioTestCase):
     async def test_reminders_wait_for_conversation_and_play_offline(self):

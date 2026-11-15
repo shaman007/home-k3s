@@ -8,12 +8,14 @@ STARTED = time.monotonic()
 
 TOOLS = [
     {'type': 'function', 'name': 'create_daily_reminder',
-     'description': 'Create an independent daily spoken reminder on the Pi, repeating until explicitly confirmed for today. Default quiet hours start22:00; default repeat30min. Use a short representative affirmative completion phrase; semantic equivalents are accepted for the identified task. Each reminder has independent acknowledgement. Do not create schedules merely mentioned as examples. First_date null means today if before start, otherwise tomorrow. Reminder speech is synthesized once and cached locally.',
+     'description': 'Create an independent recurring spoken reminder on the Pi, repeating until explicitly confirmed for today. Default quiet hours start22:00; default repeat30min and independent per-slot jitter plus/minus10min, including first alert. Use weekdays for weekly schedules (Monday=0). Repeat interval must exceed twice jitter. Use a short representative affirmative completion phrase; semantic equivalents are accepted for the identified task. Each reminder has independent acknowledgement. Do not create schedules merely mentioned as examples. First_date null means today if before start, otherwise tomorrow. Reminder speech is synthesized once and cached locally.',
      'parameters': {'type': 'object', 'properties': {'text': {'type': 'string'}, 'start_time': {'type': 'string', 'description': 'HH:MM Europe/Prague'},
        'end_time': {'type': 'string', 'description': 'Exclusive HH:MM, normally22:00'}, 'repeat_minutes': {'type': 'integer'},
-       'confirmation_phrase': {'type': 'string', 'description': 'Explicit user-chosen affirmative completion statement'},
+       'confirmation_phrase': {'type': 'string', 'description': 'Representative completion statement; user may confirm in free form by naming the task'},
+       'weekdays': {'type': 'array', 'minItems': 1, 'maxItems': 7, 'uniqueItems': True, 'items': {'type': 'integer', 'minimum': 0, 'maximum': 6}, 'description': 'Active weekdays, Monday=0; all seven for daily'},
+       'jitter_minutes': {'type': 'integer', 'minimum': 0, 'maximum': 10, 'description': 'Independent plus/minus displacement of each nominal slot, including first; default10'},
        'first_date': {'type': ['string', 'null'], 'description': 'YYYY-MM-DD or null for next scheduled start'}},
-       'required': ['text', 'start_time', 'end_time', 'repeat_minutes', 'confirmation_phrase', 'first_date'], 'additionalProperties': False}},
+       'required': ['text', 'start_time', 'end_time', 'repeat_minutes', 'confirmation_phrase', 'first_date', 'weekdays', 'jitter_minutes'], 'additionalProperties': False}},
     {'type': 'function', 'name': 'list_daily_reminders', 'description': 'List independent daily reminders, next alert, confirmation phrase and today acknowledgement.',
      'parameters': {'type': 'object', 'properties': {}, 'additionalProperties': False}},
     {'type': 'function', 'name': 'acknowledge_reminder',
