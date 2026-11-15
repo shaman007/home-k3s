@@ -24,6 +24,7 @@ class TimerTests(unittest.IsolatedAsyncioTestCase):
             store.db.close()
             store = TimerStore(path)
             self.assertEqual(store.active()[0]['due'], 110)
+            self.assertEqual(store.active()[0]['remaining_seconds'], 0)
             store.set_state('one', 'cancelled')
             self.assertEqual(store.active(), [])
             store.db.close()

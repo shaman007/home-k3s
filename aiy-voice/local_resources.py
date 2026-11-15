@@ -37,7 +37,9 @@ class TimerStore:
                 for row in self.db.execute('SELECT * FROM timers ORDER BY due')]
 
     def active(self):
-        return [item for item in self.list_all() if item['state'] in ('pending', 'ringing')]
+        now = time.time()
+        return [dict(item, remaining_seconds=max(0, round(item['due'] - now, 1)))
+                for item in self.list_all() if item['state'] in ('pending', 'ringing')]
 
     def set_state(self, timer_id, state):
         if state not in ('ringing', 'done', 'cancelled'):
