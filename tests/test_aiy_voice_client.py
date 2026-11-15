@@ -5,6 +5,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'aiy-voice'))
+
 SPEC = importlib.util.spec_from_file_location('voice_client', Path(__file__).resolve().parents[1] / 'aiy-voice/pi_client.py')
 client = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(client)

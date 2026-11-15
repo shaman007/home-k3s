@@ -8,6 +8,7 @@ import time
 from urllib.parse import urlsplit
 
 import aiohttp
+from local_resources import LocalResources, AudioOutput
 
 RATE = 24000
 DEVICE = "plughw:CARD=aiyvoicebonnet,DEV=0"
@@ -32,15 +33,22 @@ def voice_url(origin):
 
 class Client:
     """Keep capture warm, stream button-held samples, play replies as they arrive."""
-    def __init__(self, websocket):
+    def __init__(self, websocket, resources=None, audio=None):
         self.ws = websocket
         self.recording = False
         self.busy = False
         self.count = 0
-        self.player = None
+        self.resources = resources
+        self.audio = audio
         self.released = None
         self.first_audio = None
         self.deadline = None
+
+    def status(self, rgb):
+        if self.resources:
+            self.resources.status(rgb)
+        else:
+            led(rgb)
 
     async def start(self):
         """Start a turn only when the preceding reply has finished playing."""
@@ -48,7 +56,7 @@ class Client:
             return
         await self.ws.send_json({"type": "start"})
         self.recording, self.count = True, 0
-        led((64, 0, 0))
+        self.status((64, 0, 0))
         self.deadline = asyncio.get_running_loop().call_later(
             30, lambda: asyncio.create_task(self.stop()))
 
@@ -60,7 +68,7 @@ class Client:
         self.deadline.cancel()
         self.released, self.first_audio = time.monotonic(), None
         await self.ws.send_json({"type": "stop"})
-        led((32, 16, 0))
+        self.status((32, 16, 0))
 
     async def capture(self, source):
         """Discard idle audio immediately; there is no retained idle pre-roll."""
@@ -86,27 +94,23 @@ class Client:
         """Start ALSA at the first chunk instead of waiting for a complete reply."""
         async for message in self.ws:
             if message.type == aiohttp.WSMsgType.BINARY:
-                if self.player is None:
-                    self.player = await asyncio.create_subprocess_exec(
-                        "/usr/bin/aplay", "-q", "-D", DEVICE, "-t", "raw", "-f", "S16_LE",
-                        "-r", str(RATE), "-c", "1", "-B", "100000", "-F", "20000",
-                        stdin=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+                if self.first_audio is None:
                     self.first_audio = time.monotonic()
-                    led((0, 0, 64))
+                    self.status((0, 0, 64))
                     LOG.info("first_audio_ms=%d", (self.first_audio - self.released) * 1000)
-                self.player.stdin.write(message.data)
-                await self.player.stdin.drain()
+                await self.audio.play(message.data)
             elif message.type == aiohttp.WSMsgType.TEXT:
                 event = json.loads(message.data)
                 if event["type"] == "done":
-                    if self.player:
-                        self.player.stdin.close()
-                        await self.player.wait()
-                        if self.player.returncode:
-                            raise RuntimeError("Speaker playback failed")
-                        self.player = None
+                    await self.audio.finish()
                     self.busy = False
-                    led((0, 16, 0))
+                    self.status((0, 16, 0))
+                elif event["type"] == "device_command":
+                    try:
+                        result = await self.resources.command(event)
+                    except (ValueError, KeyError, OSError) as exc:
+                        result = {"error": type(exc).__name__}
+                    await self.ws.send_json({"type": "device_ack", "id": event.get("id"), "result": result})
                 elif event["type"] == "error":
                     raise RuntimeError("Voice backend failed")
             else:
@@ -114,7 +118,7 @@ class Client:
         raise RuntimeError("Voice connection closed")
 
 
-async def connection(http):
+async def connection(http, resources, audio):
     """Connect before enabling the button, with automatic cleanup on any failure."""
     url = voice_url(os.environ["AIY_BACKEND_URL"])
     token = os.environ["AIY_BEARER_TOKEN"]
@@ -127,7 +131,7 @@ async def connection(http):
             message = await ws.receive_json()
         if message.get("type") != "ready" or message.get("rate") != RATE:
             raise RuntimeError("Backend not ready")
-        client = Client(ws)
+        client = Client(ws, resources, audio)
         try:
             capture = await asyncio.create_subprocess_exec(
                 "/usr/bin/arecord", "-q", "-D", DEVICE, "-f", "S16_LE", "-r", str(RATE),
@@ -141,7 +145,7 @@ async def connection(http):
                 "--bias", "pull-up", "--edges", "both", "--debounce-period", "30ms", "23",
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
             processes.append(button)
-            led((0, 16, 0))
+            resources.status((0, 16, 0))
             LOG.info("ready model=%s", message.get("model"))
             tasks = [asyncio.create_task(client.capture(capture.stdout)),
                      asyncio.create_task(client.buttons(button.stdout)),
@@ -155,9 +159,7 @@ async def connection(http):
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
-            if client.player and client.player.returncode is None:
-                client.player.kill()
-                await client.player.wait()
+            await audio.finish()
             for process in processes:
                 if process.returncode is None:
                     process.terminate()
@@ -167,14 +169,28 @@ async def connection(http):
 async def main():
     """Reconnect after network loss; the service also starts automatically at boot."""
     logging.basicConfig(level=logging.INFO)
-    async with aiohttp.ClientSession(trust_env=False) as http:
-        while True:
-            try:
-                await connection(http)
-            except (OSError, RuntimeError, ValueError, TimeoutError, aiohttp.ClientError) as exc:
-                LOG.warning("connection_failed kind=%s", type(exc).__name__)
-                led((64, 0, 0))
-                await asyncio.sleep(5)
+    audio = AudioOutput(DEVICE)
+    async def alarm(pcm):
+        await audio.play(pcm)
+        await audio.finish()
+    resources = LocalResources(os.environ.get("AIY_TIMER_DB", "/var/lib/aiy-voice/timers.sqlite3"), led, alarm)
+    scheduler = asyncio.create_task(resources.scheduler())
+    try:
+        async with aiohttp.ClientSession(trust_env=False) as http:
+            while True:
+                if scheduler.done():
+                    scheduler.result()
+                try:
+                    await connection(http, resources, audio)
+                except (OSError, RuntimeError, ValueError, TimeoutError, aiohttp.ClientError) as exc:
+                    LOG.warning("connection_failed kind=%s", type(exc).__name__)
+                    resources.status((64, 0, 0))
+                    await asyncio.sleep(5)
+    finally:
+        scheduler.cancel()
+        await asyncio.gather(scheduler, return_exceptions=True)
+        await resources.close()
+        await audio.finish()
 
 
 if __name__ == "__main__":

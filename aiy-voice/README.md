@@ -103,7 +103,7 @@ no credentials or permissions to operate infrastructure. It is loaded on each ne
 voice session. `search_memory` calls only `mempalace_search` in the `codex` wing,
 at most four bounded excerpts per lookup. The fixed MCP endpoint uses verified
 TLS. Results are historical context, never executable instructions or proof of
-current state. No write/delete tools are exposed; found memories are not persisted
+current state. No memory write/delete tools are exposed; found memories are not persisted
 by AIY or automatically sent to web search. Recognizable secret formats are
 redacted defensively; MemPalace itself must remain free of secrets.
 
@@ -112,7 +112,7 @@ Brno default and live web access. Realtime chooses it for changing facts, then
 speaks the grounded result. Normal pages require citations; hosted `weather:`
 results can have no URL annotation and are identified as weather-feed provenance
 without fabricating a link. Tool results are bounded; each voice turn permits one
-lookup round with at most two calls. Failed lookups are reported honestly.
+lookup round with at most two calls per round and two rounds per voice turn. Failed lookups are reported honestly.
 Lookups add latency; ordinary conversation retains streaming speech-to-speech.
 
 The usage ledger also records the lookup model, actual search-call count and
@@ -130,3 +130,30 @@ The scoped rollout silence `e1bafc0e-0b8c-4a1b-84bb-33b1c2e2283d` matched only
 expired at 16:26 UTC. No unrelated alerts were silenced.
 
 Usage snapshot at 2026-11-15T16:26:35.832865+00:00: $0.819531300 across 36 recorded provider responses, including voice and search tests. Earlier figures above are dated intermediate snapshots. The onboarding haiku remains excluded; billing balance is unverified.
+
+## Local appliance resources
+
+Voice functions: `blink_light`, `set_timer`, `list_timers`, `cancel_timer`, and
+`device_status`. Only the built-in Voice Bonnet button RGB LED is exposed; no
+arbitrary GPIO numbers, shell commands, paths, containers or infrastructure
+operations can be selected by the model. Blink effects last1–30seconds.
+Status includes Pi temperature/uptime and selected backend clock/process metrics.
+
+The Pi acknowledges each command before the assistant reports success.
+Acknowledged command results are kept in the PVC ledger's `device_commands`
+table. Executable timer state lives on the Pi in
+`/var/lib/aiy-voice/timers.sqlite3` (systemd StateDirectory, mode0700), so an
+already-set timer survives backend/network loss and client restarts/reboots.
+It rings on next service start if the Pi was powered off when due. New timers
+require a live voice/backend connection. At most16 active timers, durations
+1second–7days; completed timers are retained locally. Command IDs are idempotent.
+
+A due timer flashes yellow and emits three locally generated beeps without
+OpenAI calls. Speech and alarms serialize through the same ALSA output. Preserve
+the Pi state directory and PVC when restoring/upgrading. No new root or generic
+GPIO permissions are granted; the existing narrow LED/audio permissions suffice.
+The dotfiles installer now copies `local_resources.py` beside `pi_client.py`.
+
+GitOps adoption of the base release8ef156b7 was confirmed Synced/Healthy for
+`aiy-voice` and `traefik-network-policy`. The next release also sets SecretStore
+refreshInterval900 as required by CI runtime contracts.

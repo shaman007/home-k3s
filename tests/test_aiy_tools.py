@@ -56,7 +56,7 @@ class ToolTests(unittest.IsolatedAsyncioTestCase):
                         output = [{'type': 'function_call', 'name': 'search_web', 'call_id': 'call1', 'arguments': '{"query":"Brno weather today"}'}]
                         await ws.send_json({'type': 'response.done', 'response': {'id': 'tool1', 'status': 'completed', 'output': output, 'usage': {}}})
                     else:
-                        self.assertEqual(event['response']['tool_choice'], 'none')
+                        self.assertEqual(event['response']['tool_choice'], 'auto')
                         await ws.send_json({'type': 'response.output_audio.delta', 'delta': base64.b64encode(b'\x01\x02' * 100).decode()})
                         await ws.send_json({'type': 'response.done', 'response': {'id': 'voice1', 'status': 'completed', 'output': [], 'usage': {}}})
             return ws

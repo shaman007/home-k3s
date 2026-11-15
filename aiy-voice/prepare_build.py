@@ -15,7 +15,7 @@ import tarfile
 
 import yaml
 
-FILES = ("Dockerfile", "requirements.lock", "server.py", "web_search.py", "memory_search.py", "profile.txt", ".dockerignore")
+FILES = ("Dockerfile", "requirements.lock", "server.py", "web_search.py", "memory_search.py", "device_tools.py", "profile.txt", ".dockerignore")
 
 
 def render(image_tag=None):
