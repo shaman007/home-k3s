@@ -120,7 +120,7 @@ def start_dovecot(d):
         "--tmpfs",
         "/var/lib/dovecot:rw,mode=0755",
         "--tmpfs",
-        "/tmp:rw,mode=1777,size=256m",
+        "/tmp:rw,mode=1777,size=256m",  # nosec B108 # Private container tmpfs.
     ]
     mapping = {
         "config": "dovecot.conf",
@@ -202,6 +202,25 @@ def start_postfix(d, dovecot, volumes, *, milter=None, fixture_domain=None):
         volume = run(["podman", "volume", "create"])
         volumes.append(volume)
         args += ["-v", volume + ":" + destination]
+    bind_postfix_config(d, args, config, milter, fixture_domain)
+    for item in ["tls.key", "tls.crt"]:
+        bind(args, d / item, "/var/certs/" + item)
+    args += [
+        "--entrypoint",
+        "/usr/bin/sh",
+        container["image"],
+        "-ec",
+        (
+            "chown 100:102 /var/lib/postfix && chmod 755 /var/lib/postfix; "
+            "exec dumb-init -- /etc/service/run"
+        ),
+    ]
+    postfix = run(args)
+    return postfix
+
+
+def bind_postfix_config(d, args, config, milter, fixture_domain):
+    """Write and bind only disposable Postfix configuration with local endpoints."""
     for key, destination in [
         ("config", "main.cf"),
         ("master", "master.cf"),
@@ -240,20 +259,6 @@ def start_postfix(d, dovecot, volumes, *, milter=None, fixture_domain=None):
         p.write_text(value)
         p.chmod(0o644)
         bind(args, p, "/etc/postfix/" + destination)
-    for item in ["tls.key", "tls.crt"]:
-        bind(args, d / item, "/var/certs/" + item)
-    args += [
-        "--entrypoint",
-        "/usr/bin/sh",
-        container["image"],
-        "-ec",
-        (
-            "chown 100:102 /var/lib/postfix && chmod 755 /var/lib/postfix; "
-            "exec dumb-init -- /etc/service/run"
-        ),
-    ]
-    postfix = run(args)
-    return postfix
 
 
 def check_smtp(dovecot, context):
@@ -318,10 +323,11 @@ def main():
             create_certificate(d)
             dovecot = start_dovecot(d)
             containers.append(dovecot)
-            if (
-                not run(["podman", "exec", dovecot, "stat", "-c", "%a", "/tmp"])
-                == "1777"
-            ):
+            # Inspect container tmpfs permissions; no host temporary file is opened.
+            tmp_mode = run(
+                ["podman", "exec", dovecot, "stat", "-c", "%a", "/tmp"]  # nosec B108
+            )
+            if tmp_mode != "1777":
                 raise AssertionError
             context = ssl.create_default_context(cafile=str(d / "tls.crt"))
 

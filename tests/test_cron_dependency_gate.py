@@ -182,7 +182,8 @@ class CronDependencyTests(unittest.TestCase):
                 "s=importlib.util.spec_from_file_location('g',sys.argv[1]); "
                 "g=importlib.util.module_from_spec(s); s.loader.exec_module(g); "
                 "result=sys.argv[3]; g.wait=lambda *a,**k:result; "
-                "g.launch=lambda job:g.os.execv(sys.executable,[sys.executable,'-c','raise SystemExit(7)']); "
+                "g.launch=lambda job:g.os.execv(sys.executable,"
+                "[sys.executable,'-c','raise SystemExit(7)']); "
                 "sys.argv=['gate','--config',sys.argv[2],'--job','logs-check']; sys.exit(g.main())"
             )
             for result, expected in (("ready", 7), ("skipped", 0), ("unavailable", 75)):

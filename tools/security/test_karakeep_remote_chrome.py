@@ -42,7 +42,7 @@ def main():
                 "--read-only",
                 "--user=65534:65534",
                 "--tmpfs",
-                "/tmp:mode=1777",
+                "/tmp:mode=1777",  # nosec B108 # Private container tmpfs, not a host file.
                 "--shm-size=256m",
                 chrome_image,
                 "--disable-gpu",

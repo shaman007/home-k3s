@@ -57,8 +57,9 @@ def canonical(ref):
         "." not in first and ":" not in first and first != "localhost"
     ):
         ref = "docker.io/" + ref
-    if ref.startswith("docker.io/") and "/" not in ref[len("docker.io/") :]:
-        ref = "docker.io/library/" + ref[len("docker.io/") :]
+    registry, separator, repository = ref.partition("/")
+    if registry == "docker.io" and separator and "/" not in repository:
+        ref = "docker.io/library/" + repository
     return ref
 
 

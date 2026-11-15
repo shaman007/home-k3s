@@ -16,6 +16,7 @@ class SourceDumper(yaml.SafeDumper):
 
     def increase_indent(self, flow=False, indentless=False):
         """Keep list indentation consistent with the existing manifests."""
+        del indentless  # Deliberately force indented sequences for source formatting.
         return super().increase_indent(flow, False)
 
     def represent_string(self, value):
@@ -214,20 +215,25 @@ def documents():
     return result
 
 
-def main():
-    """Write only with an explicit local flag; default verifies canonical sources."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write-source", action="store_true")
-    args = parser.parse_args()
+def check_sources(write_source=False):
+    """Compare canonical documents or explicitly update their local Git sources."""
     for relative, document in documents().items():
         path = ROOT / relative
         docs = document if isinstance(document, list) else [document]
-        if args.write_source:
+        if write_source:
             path.write_text(
                 yaml.dump_all(docs, Dumper=SourceDumper, sort_keys=False, width=110)
             )
         elif not path.exists() or list(yaml.safe_load_all(path.read_text())) != docs:
             raise ValueError("Mail gate source differs: " + relative)
+
+
+def main():
+    """Write only with an explicit local flag; default verifies canonical sources."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--write-source", action="store_true")
+    args = parser.parse_args()
+    check_sources(args.write_source)
     print(
         "Mail gate sources updated"
         if args.write_source

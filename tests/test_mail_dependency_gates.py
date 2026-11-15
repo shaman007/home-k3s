@@ -203,7 +203,11 @@ class MailGateTests(unittest.TestCase):
 
     def test_global_budget_recovery_and_known_profiles_only(self):
         """No late probe/release past the monotonic budget, and no arbitrary targets."""
-        code = 'my $t=0; my $n=0; my $c=sub {$n++;$t+=1;return 1;}; exit(MailDependencies::check_group("rspamd-ready",2,$c,sub{$t}) || $n!=2 ? 1:0);'
+        code = (
+            'my $t=0; my $n=0; my $c=sub {$n++;$t+=1;return 1;}; '
+            'exit(MailDependencies::check_group("rspamd-ready",2,$c,sub{$t}) '
+            '|| $n!=2 ? 1:0);'
+        )
         result = self.perl(code)
         self.assertEqual(result.returncode, 0, result.stderr)
         result = self.perl(

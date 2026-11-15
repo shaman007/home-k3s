@@ -263,7 +263,7 @@ def start_unbound(d, dovecot):
         "--cap-add=NET_BIND_SERVICE",
         "--read-only",
         "--tmpfs",
-        "/tmp:rw,mode=1777",
+        "/tmp:rw,mode=1777",  # nosec B108 # Private container tmpfs, not a host file.
         "--entrypoint",
         "/opt/unbound/sbin/unbound",
     ]
@@ -308,7 +308,7 @@ def start_clamav(d, dovecot):
         "--tmpfs",
         "/run/clamav:rw,mode=0777",
         "--tmpfs",
-        "/tmp:rw,mode=1777",
+        "/tmp:rw,mode=1777",  # nosec B108 # Private container tmpfs, not a host file.
         "--tmpfs",
         "/var/log/clamav:rw,mode=0777",
         "--entrypoint",

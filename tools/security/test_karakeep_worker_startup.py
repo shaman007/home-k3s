@@ -2,6 +2,7 @@
 """Exercise the real Karakeep s6 startup on empty data and loopback-only fixtures."""
 
 import json
+import secrets
 import tempfile
 import time
 from pathlib import Path
@@ -83,7 +84,7 @@ http.createServer((req,res) => {
                 "-v",
                 str(fixture / "runtime") + ":/run:U,Z",
                 "--tmpfs",
-                "/tmp:rw,mode=1777",
+                "/tmp:rw,mode=1777",  # nosec B108 # Private container tmpfs, not a host file.
                 "-v",
                 str(fixture / "data") + ":/data:U,Z",
                 "--add-host=meilisearch.karakeep.svc.cluster.local:127.0.0.1",
@@ -97,7 +98,7 @@ http.createServer((req,res) => {
                 "DATA_DIR": "/data",
                 "BROWSER_WEB_URL": "http://chrome.karakeep.svc.cluster.local:9222",
                 "MEILI_ADDR": "http://meilisearch.karakeep.svc.cluster.local:7700",
-                "NEXTAUTH_SECRET": "disposable-fixture-only",
+                "NEXTAUTH_SECRET": secrets.token_urlsafe(32),
                 "NEXTAUTH_URL": "http://127.0.0.1:3000",
                 "DISABLE_SIGNUPS": "true",
             }.items():

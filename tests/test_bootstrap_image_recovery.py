@@ -91,6 +91,20 @@ class ImageRecoveryTests(unittest.TestCase):
             MOD.canonical("quay.io/a/b:v1@sha256:abc"), "quay.io/a/b@sha256:abc"
         )
 
+    def test_registry_normalization_matches_complete_registry_component(self):
+        """Docker Hub aliases must not rewrite embedded or lookalike registries."""
+        cases = {
+            "docker.io/busybox:1": "docker.io/library/busybox:1",
+            "docker.io/team/busybox:1": "docker.io/team/busybox:1",
+            "evil-docker.io/busybox:1": "evil-docker.io/busybox:1",
+            "docker.io.evil/busybox:1": "docker.io.evil/busybox:1",
+            "quay.io/docker.io/busybox:1": "quay.io/docker.io/busybox:1",
+            "localhost:5000/busybox:1": "localhost:5000/busybox:1",
+        }
+        for reference, expected in cases.items():
+            with self.subTest(reference=reference):
+                self.assertEqual(MOD.canonical(reference), expected)
+
     @patch.object(MOD, "user_executable", return_value="/usr/bin/talosctl")
     def test_check_never_pulls(self, _cli):
         """Verify check never pulls."""

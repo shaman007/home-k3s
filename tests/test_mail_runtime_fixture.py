@@ -68,7 +68,7 @@ class MailRuntimeFixtureTests(unittest.TestCase):
                 {"fixture_domain": "andreybondarenko.com"},
             ):
                 with self.assertRaises(ValueError):
-                    probe.start_postfix(Path("/tmp"), "fixture", [], **options)
+                    probe.start_postfix(Path("unused-fixture"), "fixture", [], **options)
             run.assert_not_called()
 
     def test_cleanup_skips_only_missing_owned_volumes(self):
