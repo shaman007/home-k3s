@@ -15,7 +15,7 @@ import tarfile
 
 import yaml
 
-FILES = ("Dockerfile", "requirements.lock", "server.py", "web_search.py", "memory_search.py", "device_tools.py", "profile.txt", ".dockerignore")
+FILES = ("Dockerfile", "requirements.lock", "server.py", "web_search.py", "memory_search.py", "device_tools.py", "home_assistant.py", "homeassistant_tools.json", "profile.txt", ".dockerignore")
 
 
 def render(image_tag=None):
@@ -25,6 +25,9 @@ def render(image_tag=None):
     with tarfile.open(fileobj=archive, mode="w") as target:
         for name in FILES:
             data = (root / name).read_bytes()
+            if name == "homeassistant_tools.json":
+                # Keep generated schema bundles stable across editor EOF normalization.
+                data = json.dumps(json.loads(data), ensure_ascii=False, indent=2).encode()
             entry = tarfile.TarInfo(name)
             entry.size = len(data)
             entry.mode = 0o644

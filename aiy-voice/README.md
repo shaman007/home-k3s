@@ -13,9 +13,9 @@ start a fresh conversation. It receives a curated profile and can search MemPala
 
 ## Deployment and recovery
 
-- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-32193503a39a4f6e@sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda`.
-- Source archive SHA256: `32193503a39a4f6e34b6d9982956851cf3759b1999cbfb4811d76466ec3cfe61`.
-- Builder Job `image-builder/aiy-voice-build-32193503a39a4f6e-r2` completed;
+- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7`.
+- Source archive SHA256: `a0828776d63799a738a13150429517c2c17d49e7a796e691a7d08fc18e7ae23d`.
+- Builder Job `image-builder/aiy-voice-build-a0828776d63799a7` completed;
   Cosign sign and verification succeeded in the managed builder.
 - `prepare_build.py` renders a deterministic source ConfigMap and one-off Job
   using the established privileged Podman/Cosign builder. It does not contact
@@ -180,3 +180,30 @@ GitOps publication of the image-pin commit activates voice volume tools.
 CI now installs AIY dependencies alongside existing validation dependencies;
 its explicit ingress-class tests retain all private-route constraints and
 check AIY's exact device/admin source allowlist as a single scoped exception.
+
+## Home Assistant over MCP
+
+`home_assistant.py` calls the existing verified HTTPS endpoint
+`https://ha.andreybondarenko.com/api/mcp/assist` with the official MCP SDK.
+Only the19 inspected Assist tools in `homeassistant_tools.json` are exposed to
+Realtime as `ha_*` functions. These operate on entities already exposed to Assist;
+no administrative configuration, generic service-call or arbitrary MCP tool API
+is exposed. The server must acknowledge an action before the assistant reports
+success. Tool results are data, never instructions. Local speaker volume and
+timers remain distinct from HA media-player volume and HA timers.
+
+The existing HOME_ASSISTANT_TOKEN was stored in OpenBao
+`kv/aiy-voice/homeassistant`, property `token`. ESO reads this dedicated path and
+projects only the environment reference into the backend; it never reaches the
+Pi or model context. The underlying existing token may be privileged; the bridge
+uses only the fixed Assist URL and tool allowlist. No HA configuration or exposure
+settings were changed. Scope reference:
+https://www.home-assistant.io/integrations/mcp_server/ .
+
+The CPU limit was removed to comply with the repository resource policy; CPU
+request50m and memory limit256Mi remain. Before publication, the full render of
+96Argo applications passed the296-container resource check,47-template restricted
+context check and complete structural schema validation.807 unit tests passed
+on the CI Python version (16 expected skips). The HA endpoint discovery and a
+read-only light-state query succeeded with the existing credential. No physical
+home-device actions were executed as part of that integration test.

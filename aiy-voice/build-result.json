@@ -1,49 +1,9 @@
 {
-  "image": "harbor.andreybondarenko.com/library/aiy-voice:src-32193503a39a4f6e@sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda",
-  "source_sha256": "32193503a39a4f6e34b6d9982956851cf3759b1999cbfb4811d76466ec3cfe61",
-  "job": "image-builder/aiy-voice-build-32193503a39a4f6e-r2",
-  "signature": "sign and verify succeeded in managed builder",
-  "deployed": false,
-  "retry_note": "First Job was OOMKilled in copy-cosign init at128Mi before building. Retry used256Mi for that init only; source archive and image tag unchanged. Generator now assigns256Mi to future one-off Cosign init containers.",
-  "previous_voice_version": {
-    "image": "harbor.andreybondarenko.com/library/aiy-voice:src-b3c5b747e343b851@sha256:c2470fa1c463cd8d1d4c191c73212ace3a18a33c76977c553b410916b160a7d8",
-    "source_sha256": "b3c5b747e343b851ed743b9dab8da1858cb1cb182cb58994941c83ac539d400f",
-    "job": "image-builder/aiy-voice-build-b3c5b747e343b851",
-    "signature": "sign and verify succeeded in managed builder",
-    "deployed": false,
-    "previous_voice_version": {
-      "image": "harbor.andreybondarenko.com/library/aiy-voice:src-0eebad117a7bf983@sha256:725440234ce96a90d171cc83462c44a858a3fbb4f4fa8c29de6d4f6bd99ccfac",
-      "source_sha256": "0eebad117a7bf98389d896c22fb90f15ddd2e98a89e3497fc4e04e0648a0bd29",
-      "job": "image-builder/aiy-voice-build-0eebad117a7bf983",
-      "signature": "sign and verify succeeded in managed builder",
-      "deployed": true,
-      "previous_voice_version": {
-        "image": "harbor.andreybondarenko.com/library/aiy-voice:src-0e19d2087fedf6b8",
-        "digest": "sha256:b191012f9d5dd162817f696b33d5c939a1db789d433e000bf13a24ffab8bebc2",
-        "source_sha256": "0e19d2087fedf6b803c1842e078619fe0f527164c336dcb1da3237fdd87db55e",
-        "job": "image-builder/aiy-voice-build-0e19d2087fedf6b8",
-        "signature": "sign and verify succeeded in managed builder",
-        "deployed": true,
-        "previous_prototype": {
-          "image": "harbor.andreybondarenko.com/library/aiy-voice:src-89e4e483f7496011",
-          "digest": "sha256:f645c71f3759344b705214db2d05f2ea1e376d692b2e3c14f9d0936ebcec9d50",
-          "architecture": "amd64",
-          "source_archive_sha256": "ade429e14a3a3f3d77e3bd4a9d44b836a13d9f9891c60195237672b2c7e49357",
-          "job": "image-builder/aiy-voice-build-ade429e14a3a3f3d",
-          "completed_at": "2026-11-15T15:23:37Z",
-          "cosign_public_key_verification": "passed",
-          "independent_registry_inspection": "passed",
-          "isolated_image_runtime_checks": {
-            "network": "none",
-            "root_filesystem": "read-only",
-            "russian_speech_synthesis_and_recognition": "passed",
-            "codex_cli_version": "0.163.0",
-            "account_authentication": "not attempted"
-          },
-          "retry_note": "Initial build failed before publication because Debian already has group voice. Fixed explicit UID/GID creation; retained only the approved destination tag. The actual corrected source hash is recorded above and in the image label io.aiy.source.sha256.",
-          "voice_service_deployed": false
-        }
-      }
-    }
-  }
+  "image": "harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7",
+  "source_sha256": "a0828776d63799a738a13150429517c2c17d49e7a796e691a7d08fc18e7ae23d",
+  "job": "image-builder/aiy-voice-build-a0828776d63799a7",
+  "cosign_public_key_verification": "passed in managed builder",
+  "registry_digest_and_source_label": "independently verified",
+  "previous_verified_image": "harbor.andreybondarenko.com/library/aiy-voice:src-32193503a39a4f6e@sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda",
+  "deployment_authority": "argocd/application-aiy-voice.yaml; build proof does not assert live deployment status"
 }

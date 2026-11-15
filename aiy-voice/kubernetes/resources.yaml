@@ -36,7 +36,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: voice
-        image: harbor.andreybondarenko.com/library/aiy-voice:src-32193503a39a4f6e@sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda
+        image: harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -57,12 +57,16 @@ spec:
             secretKeyRef:
               name: aiy-voice-auth
               key: MEMPALACE_MCP_HTTP_TOKEN
+        - name: HOME_ASSISTANT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: aiy-voice-auth
+              key: HOME_ASSISTANT_TOKEN
         resources:
           requests:
             cpu: 50m
             memory: 64Mi
           limits:
-            cpu: '1'
             memory: 256Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -241,6 +245,24 @@ spec:
     ports:
     - protocol: TCP
       port: 443
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/instance: traefik-traefik
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 8443
+  - to:
+    - ipBlock:
+        cidr: 192.168.30.210/32
+    ports:
+    - protocol: TCP
+      port: 443
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -319,3 +341,7 @@ spec:
     remoteRef:
       key: mempalace
       property: mcp_http_token
+  - secretKey: HOME_ASSISTANT_TOKEN
+    remoteRef:
+      key: aiy-voice/homeassistant
+      property: token
