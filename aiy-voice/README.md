@@ -284,3 +284,18 @@ including with stale «no reminders» conversation history; combined test usage 
 about$0.034472. The signed corrected image is recorded in `build-result.json`.
 The physical early-acknowledgement/silence test must be repeated after GitOps
 publication of this correction; the earlier failed test is not acceptance proof.
+
+The corrected early-voice test saved an actual acknowledgement at22:59:42 on
+2026-11-15 before the23:02 start. No playback was delivered at23:02 or23:03,
+and the neutral schedule was automatically disabled. A further careful physical
+repeat was requested; do not confuse instrumental evidence with a new listening
+confirmation. No user schedules were created.
+
+## Feminine self-reference
+
+The voice profile uses feminine Russian self-reference (for example «отметила»),
+while preserving the user's original gender and verbatim completion quote such
+as «сделал». A live Realtime check confirmed the exact acknowledgement arguments
+and a feminine reply after a synthetic successful tool result. The voice and
+reminder scheduler are unchanged; publication of the new image pin activates the
+wording change through GitOps.
