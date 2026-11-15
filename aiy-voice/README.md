@@ -207,3 +207,56 @@ context check and complete structural schema validation.807 unit tests passed
 on the CI Python version (16 expected skips). The HA endpoint discovery and a
 read-only light-state query succeeded with the existing credential. No physical
 home-device actions were executed as part of that integration test.
+
+## Daily reminders with completion for today
+
+`create_daily_reminder`, `list_daily_reminders`, `acknowledge_reminder` and
+`disable_daily_reminder` manage independent daily tasks on the Pi. No example
+schedules are installed automatically. Each task has a start time, exclusive end
+time (normally22:00), repeat interval (normally30minutes), and explicit completion
+phrase. Dates and day boundaries use Europe/Prague, including DST. Unless an
+explicit first date is supplied, creation after the start time begins tomorrow.
+
+Completion is a persisted `(reminder_id, local_date)` fact, independent of whether
+the first alert has sounded. An early affirmative statement closes that task for
+today; tomorrow it reopens. Other tasks remain pending. A repeated confirmation
+is idempotent. Ambiguous phrases require clarification, including when one of
+several matching tasks is already complete. Semantic equivalents can be passed
+with the identified task ID and the entire verbatim user statement; local guards
+reject questions, negations, future plans and non-today statements. These guards
+supplement the voice model's task identification; they are not a full language
+understanding engine. A button press alone never acknowledges a task. Permanent
+cancellation is a separate explicit operation.
+
+Short speech is generated once with the existing Realtime voice, checked against
+the requested text and cached as PCM in the Pi state database (maximum15seconds
+per task, maximum16 enabled tasks). Generation usage enters the existing cost
+ledger. Repeats play locally without new API requests, even when disconnected;
+creating or confirming reminders requires the voice/backend connection. Preserve
+the state directory during upgrades. Offline or powered-off periods produce no
+backlog burst: at most the current slot plays after recovery within the active
+window. At22:00 pending tasks wait until the next day's start.
+
+Reminders wait while a conversation is active. Pressing the button interrupts
+local reminder playback before microphone capture; interruption silences that
+slot but does not mark the task complete. The installer must copy `reminders.py`
+alongside `local_resources.py` and `pi_client.py`. Existing timers, volume settings
+and acknowledgements share the preserved SQLite database without destructive
+migration. New task behavior is covered by simulated-clock, restart, multiple-task,
+early-confirmation, quiet-hours, DST and playback tests; deployment/physical voice
+acceptance must be verified separately for each release.
+
+The reminder release archive is
+`713d3e318e62dc1dc038f028f49268e4762839de3542699e9989bac5f368a196`;
+the immutable image pin and managed-build verification are in `build-result.json`.
+The live API accepted all32 tools and generated a validated1.85second neutral
+phrase; its separately recorded test usage cost about$0.00294. This test used no
+real schedule. All12 reminder tests also passed on the Pi. Before installing
+the new client, its previous Python files and a consistent SQLite backup were
+saved under `/var/lib/aiy-voice/backup-713d3e318e62dc1d` (private directory).
+To roll back the client, restore those two Python files and restart its service;
+the additive reminder tables can remain. Do not replace the current SQLite database
+with the backup after new user actions, because doing so loses later state.
+Backend activation still requires publication of the GitOps image-pin commit
+and a verified Argo rollout; a completed build or Pi update alone does not enable
+the new voice tools.

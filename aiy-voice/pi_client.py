@@ -54,6 +54,10 @@ class Client:
         """Start a turn only when the preceding reply has finished playing."""
         if self.recording or self.busy:
             return
+        if self.resources:
+            self.resources.engaged = True
+        if self.audio:
+            await self.audio.interrupt()
         await self.ws.send_json({"type": "start"})
         self.recording, self.count = True, 0
         self.status((64, 0, 0))
@@ -104,6 +108,7 @@ class Client:
                 if event["type"] == "done":
                     await self.audio.finish()
                     self.busy = False
+                    self.resources.engaged = False
                     self.status((0, 16, 0))
                 elif event["type"] == "device_command":
                     try:
@@ -154,6 +159,7 @@ async def connection(http, resources, audio):
             for task in done:
                 task.result()
         finally:
+            resources.engaged = False
             if client.deadline:
                 client.deadline.cancel()
             for task in tasks:

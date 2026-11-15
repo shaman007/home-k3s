@@ -18,7 +18,7 @@ class VoiceTests(unittest.TestCase):
         self.assertIsNone(config['audio']['input']['turn_detection'])
         self.assertEqual(config['audio']['output']['format']['rate'], 24000)
         self.assertEqual(config['output_modalities'], ['audio'])
-        self.assertEqual({t['name'] for t in config['tools'] if not t['name'].startswith('ha_')}, {'search_web', 'search_memory', 'blink_light', 'set_timer', 'list_timers', 'cancel_timer', 'device_status', 'set_volume', 'adjust_volume'})
+        self.assertEqual({t['name'] for t in config['tools'] if not t['name'].startswith('ha_')}, {'search_web', 'search_memory', 'blink_light', 'set_timer', 'list_timers', 'cancel_timer', 'device_status', 'set_volume', 'adjust_volume', 'create_daily_reminder', 'list_daily_reminders', 'acknowledge_reminder', 'disable_daily_reminder'})
 
     def test_ledger_is_durable_and_deduplicated(self):
         with tempfile.TemporaryDirectory() as directory:

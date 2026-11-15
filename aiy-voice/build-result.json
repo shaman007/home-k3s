@@ -1,9 +1,9 @@
 {
-  "image": "harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7",
-  "source_sha256": "a0828776d63799a738a13150429517c2c17d49e7a796e691a7d08fc18e7ae23d",
-  "job": "image-builder/aiy-voice-build-a0828776d63799a7",
+  "image": "harbor.andreybondarenko.com/library/aiy-voice:src-713d3e318e62dc1d@sha256:31085e0a3d727ae1e1c100709e753578dc375a96bd52c9cb50deba88110e6d08",
+  "source_sha256": "713d3e318e62dc1dc038f028f49268e4762839de3542699e9989bac5f368a196",
+  "job": "image-builder/aiy-voice-build-713d3e318e62dc1d",
   "cosign_public_key_verification": "passed in managed builder",
   "registry_digest_and_source_label": "independently verified",
-  "previous_verified_image": "harbor.andreybondarenko.com/library/aiy-voice:src-32193503a39a4f6e@sha256:86ad5ffe786e625014b21b7ae7d8b391825c9cb1fc6aa54c079d1673c0494dda",
+  "previous_verified_image": "harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7",
   "deployment_authority": "argocd/application-aiy-voice.yaml; build proof does not assert live deployment status"
 }

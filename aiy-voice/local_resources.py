@@ -1,10 +1,13 @@
 """Pi-local persistent timers and bounded LED effects; no shell or generic GPIO RPC."""
 import asyncio
+import base64
 import math
 from pathlib import Path
 import sqlite3
 import struct
 import time
+
+from reminders import Reminders
 
 COLORS = {'red': (64, 0, 0), 'green': (0, 64, 0), 'blue': (0, 0, 64),
           'yellow': (64, 32, 0), 'white': (32, 32, 32), 'off': (0, 0, 0)}
@@ -64,11 +67,13 @@ class LocalResources:
     def __init__(self, state_path, set_led, play_alarm):
         self.timers = TimerStore(state_path)
         self.volume = Volume(self.timers.db)
+        self.reminders = Reminders(self.timers.db)
         self.set_led = set_led
         self.play_alarm = play_alarm
         self.base = (0, 16, 0)
         self.effect = None
         self.ringing = None
+        self.engaged = False
 
     def status(self, color):
         self.base = color
@@ -93,6 +98,17 @@ class LocalResources:
 
     async def command(self, event):
         action = event.get('action')
+        if action == 'create_daily_reminder':
+            audio = base64.b64decode(event.get('audio', ''), validate=True)
+            return self.reminders.create(event['id'], event.get('text'), event.get('start_time'),
+                                         event.get('end_time'), event.get('repeat_minutes'),
+                                         event.get('confirmation_phrase'), audio, event.get('first_date'))
+        if action == 'list_daily_reminders':
+            return {'reminders': self.reminders.list()}
+        if action == 'acknowledge_reminder':
+            return self.reminders.acknowledge(event.get('confirmation'), event.get('reminder_id'))
+        if action == 'disable_daily_reminder':
+            return self.reminders.disable(event.get('reminder_id'))
         if action == 'blink':
             color, seconds = event.get('color'), event.get('seconds')
             if color not in COLORS or isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or not 1 <= seconds <= 30:
@@ -114,12 +130,14 @@ class LocalResources:
             temp = Path('/sys/class/thermal/thermal_zone0/temp')
             return {'volume_percent': await self.volume.get(), 'uptime_seconds': float(Path('/proc/uptime').read_text().split()[0]),
                     'temperature_c': int(temp.read_text()) / 1000 if temp.exists() else None,
-                    'timers': self.timers.active()}
+                    'timers': self.timers.active(), 'reminders': self.reminders.list()}
         raise ValueError('Unsupported device operation')
 
     async def scheduler(self):
         while True:
             for timer in self.timers.active():
+                if self.engaged:
+                    break
                 if timer['due'] <= time.time() and timer['state'] in ('pending', 'ringing'):
                     self.timers.set_state(timer['id'], 'ringing')
                     self.ringing = timer['id']
@@ -127,6 +145,15 @@ class LocalResources:
                     await self.play_alarm(alarm_pcm())
                     self.timers.set_state(timer['id'], 'done')
                     self.ringing = None
+            for reminder in self.reminders.due():
+                if self.engaged:
+                    break
+                # A confirmation can arrive while an earlier reminder is playing.
+                if reminder['id'] not in {item['id'] for item in self.reminders.due()}:
+                    continue
+                self.start_effect(COLORS['yellow'], 6)
+                await self.play_alarm(reminder['audio'])
+                self.reminders.delivered(reminder)
             await asyncio.sleep(0.25)
 
     async def close(self):
@@ -142,6 +169,7 @@ class AudioOutput:
         self.device = device
         self.process = None
         self.lock = asyncio.Lock()
+        self.interrupted = None
 
     async def play(self, pcm):
         async with self.lock:
@@ -150,18 +178,36 @@ class AudioOutput:
                     '/usr/bin/aplay', '-q', '-D', self.device, '-t', 'raw', '-f', 'S16_LE',
                     '-r', '24000', '-c', '1', '-B', '100000', '-F', '20000',
                     stdin=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
-            self.process.stdin.write(pcm)
-            await self.process.stdin.drain()
+            process = self.process
+            try:
+                process.stdin.write(pcm)
+                await process.stdin.drain()
+            except (BrokenPipeError, ConnectionResetError):
+                if process is not self.interrupted:
+                    raise
 
     async def finish(self):
         async with self.lock:
             if self.process:
-                self.process.stdin.close()
-                await self.process.wait()
-                code = self.process.returncode
+                process = self.process
+                process.stdin.close()
+                await process.wait()
+                code = process.returncode
                 self.process = None
-                if code:
+                if code and process is not self.interrupted:
                     raise RuntimeError('ALSA playback failed')
+
+    async def interrupt(self):
+        """Stop an idle reminder/beep before capturing the user's confirmation."""
+        process = self.process
+        if process and process.returncode is None:
+            self.interrupted = process
+            process.terminate()
+            try:
+                await asyncio.wait_for(process.wait(), 2)
+            except TimeoutError:
+                process.kill()
+                await process.wait()
 
 
 class Volume:

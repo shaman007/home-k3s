@@ -15,7 +15,7 @@ import tarfile
 
 import yaml
 
-FILES = ("Dockerfile", "requirements.lock", "server.py", "web_search.py", "memory_search.py", "device_tools.py", "home_assistant.py", "homeassistant_tools.json", "profile.txt", ".dockerignore")
+FILES = ("Dockerfile", "requirements.lock", "server.py", "web_search.py", "memory_search.py", "device_tools.py", "reminder_speech.py", "home_assistant.py", "homeassistant_tools.json", "profile.txt", ".dockerignore")
 
 
 def render(image_tag=None):
