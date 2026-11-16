@@ -21,6 +21,30 @@ spec.loader.exec_module(contracts)
 class RuntimeContractDiagnosticsTest(unittest.TestCase):
     """Require manifest diagnostics to retain locations without exposing sensitive values."""
 
+    def test_fast_refresh_is_limited_to_the_voice_prompt_resource(self):
+        """Accept the intended prompt cadence without exempting credentials or other apps."""
+        path = Path("aiy-voice/kubernetes/resources.yaml")
+        document = {
+            "kind": "ExternalSecret",
+            "metadata": {"namespace": "aiy-voice", "name": "aiy-voice-prompts"},
+            "spec": {"refreshInterval": "1m"},
+        }
+        self.assertEqual(contracts.check_secret_refresh_intervals(path, 1, document), [])
+        for other_path, namespace, name in (
+            (Path("other.yaml"), "aiy-voice", "aiy-voice-prompts"),
+            (path, "other", "aiy-voice-prompts"),
+            (path, "aiy-voice", "aiy-voice-auth"),
+        ):
+            candidate = dict(document, metadata={"namespace": namespace, "name": name})
+            self.assertTrue(contracts.check_secret_refresh_intervals(other_path, 1, candidate))
+            candidate["spec"] = {"refreshInterval": "15m"}
+            self.assertEqual(
+                contracts.check_secret_refresh_intervals(other_path, 1, candidate), []
+            )
+        for interval in (None, "1s", "15m"):
+            candidate = dict(document, spec={"refreshInterval": interval})
+            self.assertTrue(contracts.check_secret_refresh_intervals(path, 1, candidate))
+
     def test_external_secret_errors_do_not_echo_manifest_values(self):
         """Verify external secret errors do not echo manifest values."""
         marker = "synthetic-sensitive-value-must-not-be-logged"

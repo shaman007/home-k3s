@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 import yaml
@@ -39,6 +39,11 @@ ALLOWED_HTTP_PROBE_PATHS = {
 }
 
 EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL = "15m"
+# Prompt edits must reach the next voice turn promptly; credential rotation keeps
+# the normal cadence. Scope by source, namespace and resource name, not namespace alone.
+EXTERNAL_SECRET_REFRESH_OVERRIDES = {
+    ("aiy-voice/kubernetes/resources.yaml", "aiy-voice", "aiy-voice-prompts"): "1m",
+}
 EXPECTED_SECRET_STORE_REFRESH_INTERVAL = 900
 
 
@@ -208,12 +213,17 @@ def check_secret_refresh_intervals(path: Path, document_index: int, document: di
     refresh_interval = spec.get("refreshInterval")
 
     if kind == "ExternalSecret":
-        if refresh_interval != EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL:
+        metadata = document.get("metadata", {})
+        expected_interval = EXTERNAL_SECRET_REFRESH_OVERRIDES.get(
+            (path.as_posix(), metadata.get("namespace"), metadata.get("name")),
+            EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL,
+        )
+        if refresh_interval != expected_interval:
             errors.append(
                 (
                     f"{path}: document {document_index}"
                     f", ExternalSecret should set spec.refreshInterval to "
-                    f"{EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL!r} instead of the debug cadence."
+                    f"{expected_interval!r} for this resource."
                 )
             )
         return errors
