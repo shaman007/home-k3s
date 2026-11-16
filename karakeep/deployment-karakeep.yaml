@@ -59,7 +59,7 @@ spec:
             - {name: run, mountPath: /run}
       containers:
         - name: web
-          image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.34.1
+          image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.35.0
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
