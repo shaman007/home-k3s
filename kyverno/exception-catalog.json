@@ -3172,13 +3172,16 @@
         "app": "postfix",
         "tier": "mail"
       },
-      "reason": "Postfix master manages separate users; init prepares queue ownership.",
+      "reason": "Postfix master manages separate users; init prepares queue ownership; the reviewed confirmation-expiry helper inspects the queue and invokes Postfix administrative tools.",
       "evidence": "docs/capability-exception-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
             "postfix-mail": {
               "image": "harbor.andreybondarenko.com/library/postfix:2026-11-02-095223"
+            },
+            "confirmation-expiry": {
+              "image": "harbor.andreybondarenko.com/library/postfix:2026-11-16-022913"
             }
           },
           "initContainers": {
@@ -3200,6 +3203,16 @@
                 "SETGID",
                 "SETUID",
                 "NET_BIND_SERVICE"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
+            },
+            "confirmation-expiry": {
+              "image": "harbor.andreybondarenko.com/library/postfix:2026-11-16-022913",
+              "capabilities": [
+                "DAC_OVERRIDE",
+                "SETUID",
+                "SETGID"
               ],
               "runAsUser": 0,
               "allowPrivilegeEscalation": false
@@ -3245,6 +3258,25 @@
               },
               "readOnlyRootFilesystem": true
             }
+          },
+          {
+            "name": "confirmation-expiry",
+            "image": "harbor.andreybondarenko.com/library/postfix:2026-11-16-022913",
+            "securityContext": {
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "DAC_OVERRIDE",
+                  "SETUID",
+                  "SETGID"
+                ]
+              }
+            }
           }
         ],
         "initContainers": [
@@ -3269,7 +3301,7 @@
           }
         ]
       },
-      "reviewedOn": "2026-11-04",
+      "reviewedOn": "2026-11-16",
       "requiredGuards": {
         "containers": {
           "postfix-mail": {
@@ -3290,6 +3322,25 @@
               ]
             },
             "readOnlyRootFilesystem": true,
+            "privileged": false,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "confirmation-expiry": {
+            "runAsUser": 0,
+            "allowPrivilegeEscalation": false,
+            "readOnlyRootFilesystem": true,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ],
+              "add": [
+                "DAC_OVERRIDE",
+                "SETUID",
+                "SETGID"
+              ]
+            },
             "privileged": false,
             "seccompProfile": {
               "type": "RuntimeDefault"

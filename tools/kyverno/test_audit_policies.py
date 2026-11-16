@@ -6,7 +6,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 
 import yaml
@@ -705,8 +705,8 @@ def main():
     if args.max_cases_per_shard < 1:
         parser.error("--max-cases-per-shard must be positive")
     version = subprocess.check_output([args.kyverno, "version"], text=True)
-    if "1.19.2" not in version:
-        raise SystemExit("Tests require the pinned Kyverno CLI 1.19.2")
+    if "1.20.0" not in version:
+        raise SystemExit("Tests require the pinned Kyverno CLI 1.20.0")
     policies, exceptions, catalog, actual = load_inputs(args.rendered)
     count = 0
     with tempfile.TemporaryDirectory(prefix="kyverno-audit-tests-") as temporary:

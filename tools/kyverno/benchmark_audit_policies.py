@@ -11,7 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import time
 
 import yaml
@@ -137,8 +137,8 @@ def main():
     if args.sample_every < 1 or args.gomaxprocs < 1:
         parser.error("Sampling interval and CPU budget must be positive")
     version = subprocess.check_output([args.kyverno, "version"], text=True)
-    if "1.19.2" not in version:
-        parser.error("Benchmark requires the pinned Kyverno CLI 1.19.2")
+    if "1.20.0" not in version:
+        parser.error("Benchmark requires the pinned Kyverno CLI 1.20.0")
     tests = {
         name: read_tests(path)
         for name, path in [("baseline", args.baseline), ("optimized", args.optimized)]

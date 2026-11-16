@@ -43,6 +43,11 @@ APPLICATION_CAPABILITIES = {
         0,
         False,
     ),
+    ("mail", "postfix", "confirmation-expiry"): (
+        {"DAC_OVERRIDE", "SETUID", "SETGID"},
+        0,
+        False,
+    ),
     ("mail", "dovecot", "dovecot-mail"): (
         {
             "CHOWN",
@@ -581,11 +586,20 @@ def expression(entry, policy):
         "object.spec.jobTemplate.spec.template : "
         "object.spec.template)"
     )
-    return (
+    condition = (
         f"object.metadata.namespace == {literal(entry['namespace'])} &&\n"
         f"{identity(entry)} &&\n"
         f"[{normalized}].exists(p,\n  " + " &&\n  ".join(terms) + "\n)"
     )
+    # These conditions already handle Pod/controller paths explicitly. Bind the
+    # original object so Kyverno 1.20 cannot autogen-rewrite those paths twice.
+    # Preserve JSON string literals when rebinding the CEL identifier.
+    condition = re.sub(
+        r'"(?:\\.|[^"\\])*"|\bobject\b',
+        lambda token: "workload" if token.group() == "object" else token.group(),
+        condition,
+    )
+    return "[object].exists(workload,\n" + condition + "\n)"
 
 
 def exception_name(entry, policy):

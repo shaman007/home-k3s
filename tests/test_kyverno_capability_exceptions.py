@@ -87,6 +87,26 @@ class ApplicationCapabilityExceptionScopeTests(unittest.TestCase):
             sum(e["spec"]["policyRefs"][0]["name"] == CAP for e in gen.generate(self.catalog)), 6
         )
 
+    def test_confirmation_helper_cannot_gain_unreviewed_privileges(self):
+        """Restrict the expiry helper to its exact Postfix identity and capability set."""
+        original = next(e for e in self.entries if e["name"] == "postfix")
+        for mutation in ("capability", "uid", "escalation", "image", "role"):
+            entry = copy.deepcopy(original)
+            rules = entry["policies"][CAP]["containers"]
+            rule = rules["confirmation-expiry"]
+            if mutation == "capability":
+                rule["capabilities"].append("SYS_ADMIN")
+            elif mutation == "uid":
+                rule["runAsUser"] = 100
+            elif mutation == "escalation":
+                rule["allowPrivilegeEscalation"] = True
+            elif mutation == "image":
+                rule["image"] = "registry.invalid/unapproved:1"
+            else:
+                rules["unapproved-helper"] = rules.pop("confirmation-expiry")
+            with self.subTest(mutation=mutation), self.assertRaises((AssertionError, KeyError)):
+                list(gen.generate({**self.catalog, "entries": [entry]}))
+
     def test_reject_changed_application_contracts(self):
         """Reject application exceptions after a reviewed security contract changes."""
         for original in self.entries:
@@ -173,7 +193,7 @@ class CompanionGuardContractTests(unittest.TestCase):
         """Verify reviewed scope and role counts."""
         self.assertEqual(len(self.entries), 53)
         self.assertEqual(
-            sum(len(v) for e in self.entries for v in e["requiredGuards"].values()), 73
+            sum(len(v) for e in self.entries for v in e["requiredGuards"].values()), 74
         )
         list(gen.generate({**self.catalog, "entries": self.entries}))
 
@@ -215,6 +235,20 @@ class CompanionGuardContractTests(unittest.TestCase):
 
 class ImageRepositoryScopeTests(unittest.TestCase):
     """Distinguish reviewed image repositories from substituted or implicit references."""
+
+    def test_controller_binding_preserves_literal_object_names(self):
+        """Keep explicit workload paths out of autogen without rewriting string values."""
+        catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
+        entry = copy.deepcopy(next(e for e in catalog["entries"] if e["name"] == "postfix"))
+        entry["namespace"] = "object"
+        entry["labels"]["app"] = "object.spec"
+        condition = gen.expression(entry, "require-run-as-nonroot")
+        self.assertTrue(condition.startswith("[object].exists(workload,"))
+        self.assertIn('workload.metadata.namespace == "object"', condition)
+        self.assertIn('p.metadata.labels["app"] == "object.spec"', condition)
+        self.assertIn("workload.spec.jobTemplate.spec.template", condition)
+        self.assertIn("workload.spec.template", condition)
+        self.assertNotIn("object.spec.template", condition)
 
     def test_tags_and_digests_do_not_change_repository(self):
         """Verify tags and digests do not change repository."""
