@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 immutable: true
 metadata:
-  name: karakeep-worker-startup-da912ba1d437
+  name: karakeep-worker-startup-1c7a45fe1530
   namespace: karakeep
 data:
   karakeep_worker_gate.cjs: |
@@ -92,4 +92,4 @@ data:
   run: |
     #!/command/with-contenv sh
     cd /app/apps/workers
-    exec node /worker-startup/karakeep_worker_gate.cjs
+    exec /etc/s6-overlay/scripts/drop-privileges node /worker-startup/karakeep_worker_gate.cjs

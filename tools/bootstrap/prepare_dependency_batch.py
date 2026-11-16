@@ -152,13 +152,18 @@ def karakeep():
         raise ValueError("Review changed Karakeep worker-provider addresses")
     pod = deployment["spec"]["template"]["spec"]
     web = next(c for c in pod["containers"] if c["name"] == "web")
-    if not web["image"].endswith("/karakeep:0.34.1"):
+    if not web["image"].endswith(("/karakeep:0.34.1", "/karakeep:0.35.0")):
         raise ValueError("Reinspect the new image's s6 worker runner before adoption")
     if "command" in web or "args" in web:
         raise ValueError("Review the existing entrypoint override")
+    # v0.35.0 wraps the worker with its upstream privilege reduction helper.
+    privilege_wrapper = (
+        "/etc/s6-overlay/scripts/drop-privileges "
+        if web["image"].endswith("/karakeep:0.35.0") else ""
+    )
     runner = (
         "#!/command/with-contenv sh\ncd /app/apps/workers\n"
-        "exec node /worker-startup/karakeep_worker_gate.cjs\n"
+        f"exec {privilege_wrapper}node /worker-startup/karakeep_worker_gate.cjs\n"
     )
     cm = config_map(
         "karakeep-worker-startup",

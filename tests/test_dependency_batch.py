@@ -9,6 +9,7 @@ import subprocess  # nosec B404
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -185,6 +186,28 @@ class DependencyBatchTests(unittest.TestCase):
         runner = proposed["karakeep/config-map-worker-startup.yaml"]["data"]["run"]
         self.assertTrue(runner.startswith("#!/command/with-contenv sh\n"))
         self.assertNotIn("svc-web", runner)
+
+    def test_karakeep_preserves_reviewed_version_privilege_contracts(self):
+        """New worker runners retain upstream hardening; unreviewed images fail closed."""
+        original_read = BATCH.read
+        for version in ("0.34.1", "0.35.0", "0.36.0"):
+            def read_version(path):
+                """Substitute only the image under review in the real deployment."""
+                value = original_read(path)
+                if path == "karakeep/deployment-karakeep.yaml":
+                    value["spec"]["template"]["spec"]["containers"][0]["image"] = (
+                        "harbor.andreybondarenko.com/github/karakeep-app/karakeep:" + version
+                    )
+                return value
+
+            with self.subTest(version=version), patch.object(BATCH, "read", read_version):
+                if version == "0.36.0":
+                    with self.assertRaisesRegex(ValueError, "Reinspect"):
+                        BATCH.karakeep()
+                    continue
+                runner = BATCH.karakeep()["karakeep/config-map-worker-startup.yaml"]["data"]["run"]
+                wrapper = "/etc/s6-overlay/scripts/drop-privileges " if version == "0.35.0" else ""
+                self.assertIn(f"exec {wrapper}node /worker-startup/karakeep_worker_gate.cjs", runner)
 
     def test_every_script_reference_resolves_to_versioned_candidate_configmap(self):
         """Older running Jobs must not adopt a changed probe script via projection."""

@@ -7,6 +7,10 @@ CoreDNS, Longhorn engine/CSI/share-manager, MetalLB/FRR, OpenBao/ESO,
 cert-manager + GoDaddy webhook, SeaweedFS core, Harbor and registry ingress,
 and ArgoCD. Optional monitoring jobs/media-cache are not S3 bootstrap providers.
 
+SeaweedFS was updated to 4.54 on 2026-11-16; its pinned digest was checked
+against the registry. Node cache presence and recovery bundles still require
+revalidation after publication.
+
 No Secret values are collected. Source versions and lock must be reviewed and
 updated together when infrastructure images change. The lock is an observed
 operational inventory, not a promise that mutable tags never change upstream.

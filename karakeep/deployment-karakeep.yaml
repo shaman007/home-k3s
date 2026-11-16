@@ -22,7 +22,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/karakeep-worker-startup: da912ba1d437c66329a1a41e1bc8cc6fc9b9263809d240fb7c5433570d82679c
+        checksum/karakeep-worker-startup: 1c7a45fe1530e55dd0a274d45a0e6a527ed43d1ee6b2fff97a27c5efc66bbc32
       labels:
         app: karakeep
     spec:
@@ -59,7 +59,7 @@ spec:
             - {name: run, mountPath: /run}
       containers:
         - name: web
-          image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.34.1
+          image: harbor.andreybondarenko.com/github/karakeep-app/karakeep:0.35.0
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -128,5 +128,5 @@ spec:
           emptyDir: {}
         - name: worker-startup
           configMap:
-            name: karakeep-worker-startup-da912ba1d437
+            name: karakeep-worker-startup-1c7a45fe1530
             defaultMode: 0555

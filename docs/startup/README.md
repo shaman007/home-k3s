@@ -285,3 +285,14 @@ offline encrypted backup passed isolated restore validation. Web init owns full
 migrations; web/Sidekiq/streaming check both ordinary and post-migration IDs under
 a PostgreSQL advisory-lock barrier. Initial adoption was a no-op for the schema.
 Future pending migrations and version changes still require a maintenance window.
+
+### Karakeep 0.35.0 worker runner review
+
+The [upstream runner](https://github.com/karakeep-app/karakeep/blob/v0.35.0/docker/root/etc/s6-overlay/s6-rc.d/svc-workers/run)
+still starts `node dist/index.js` from `/app/apps/workers`, now through
+`/etc/s6-overlay/scripts/drop-privileges`. The custom s6 runner preserves that
+wrapper around the dependency gate, whose exec hands the same privileges to the
+worker. The immutable ConfigMap name and Deployment checksum are regenerated
+together. The proposal generator supports the reviewed 0.34.1 and 0.35.0 runners
+and rejects other versions pending review. Local tests verify gate behavior and
+source consistency; the 0.35.0 container startup still needs deployment validation.
