@@ -340,6 +340,11 @@ class Reminders:
 
     def delivered(self, event):
         """Mark a reminder slot as delivered for the current day."""
+        # An interval may change while the old cached speech is still playing.
+        slots = dict(self.slots(self.row(event["id"]), date.fromisoformat(event["day"])))
+        current = slots.get(event["slot"])
+        if current is None or current.isoformat() != event["scheduled_for"]:
+            return
         self.db.execute(
             "UPDATE daily_reminders SET last_date=?, last_slot=? WHERE id=?",
             (event["day"], event["slot"], event["id"]),

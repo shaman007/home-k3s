@@ -30,6 +30,20 @@ class PersistenceTests(unittest.TestCase):
             self.assertEqual(notes[0]["text"], "Проверить фильтр")
             second.timers.db.close()
 
+    def test_old_playback_cannot_overwrite_new_grid(self):
+        """A speech completion after rescheduling cannot mark a different slot delivered."""
+        db = sqlite3.connect(":memory:")
+        store = Reminders(db)
+        now = 1794826800
+        store.create("task", ReminderSpec("Задача", "10:00", "22:00", 30, "сделал"),
+                     b"\x00\x00", first_date="2026-11-16", stamp=1794812400)
+        event = store.due(now)[0]
+        store.update_interval("task", 60, stamp=now)
+        state = store.row("task")["last_slot"]
+        store.delivered(event)
+        self.assertEqual(store.row("task")["last_slot"], state)
+        db.close()
+
     def test_interval_change_preserves_completion_and_does_not_replay(self):
         """Changing the grid skips elapsed slots and keeps acknowledgement rows."""
         with tempfile.TemporaryDirectory() as directory:

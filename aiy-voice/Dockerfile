@@ -1,4 +1,4 @@
-FROM python:3.15-slim-bookworm
+FROM python:3.12.16-slim-bookworm
 WORKDIR /app
 COPY requirements.lock .
 RUN pip install --no-cache-dir --require-hashes -r requirements.lock \

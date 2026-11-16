@@ -353,6 +353,13 @@ so an hourly nominal grid can produce actual gaps of40–80minutes.
 Both backend tool definitions and Pi `local_resources.py` / `reminders.py` must
 be updated together before these tools can work. The existing dotfiles installer
 already copies both Pi modules; no new packages or service configuration are
-required. These changes are prepared locally, not activated. All51 AIY tests passed, including two new persistence
-regressions and the19 existing reminder tests; a physical voice test and
-confirmation of the live hourly schedules remain necessary.
+required. On2026-11-16 the Pi modules were installed and all four enabled reminders were
+changed in place to60minutes; all six existing completion records were preserved,
+and SQLite integrity was verified. A coherent code/database backup is at
+`/var/lib/aiy-voice/backup-hourly-notes-20261116`. The Pi passed a save/reopen/read
+note test in an isolated temporary database; no production note was created.
+All52 AIY tests pass, including stale-playback protection during interval changes.
+The backend image pin is prepared for GitOps publication; live activation and
+physical voice acceptance remain pending. The Python base stays at the deployed
+3.12.16: the earlier unactivated3.15 base cannot build pinned aiohttp without gcc.
+Home Assistant's Shopping list is independent and is preserved.
