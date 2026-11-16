@@ -1,5 +1,5 @@
 name: Codacy scan attempt
-description: Run one bounded Codacy invocation without accepting incomplete results
+description: Run one bounded UTF-8 Codacy invocation without accepting incomplete results
 inputs:
   tool:
     description: Fixed scanner selected by the workflow matrix
@@ -10,13 +10,9 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Run Codacy scanner
-      uses: codacy/codacy-analysis-cli-action@562ee3e92b8e92df8b67e0a5ff8aa8e261919c08 # v4.4.7
-      with:
-        tool: ${{ inputs.tool }}
-        tool-timeout: 20minutes
-        fail-if-incomplete: true
-        output: ${{ inputs.output }}
-        format: sarif
-        gh-code-scanning-compat: true
-        max-allowed-issues: 2147483647
+    - name: Run Codacy scanner with UTF-8 JVM encoding
+      shell: bash
+      env:
+        CODACY_TOOL: ${{ inputs.tool }}
+        CODACY_OUTPUT: ${{ inputs.output }}
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
