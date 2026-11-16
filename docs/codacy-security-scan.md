@@ -170,3 +170,23 @@ Disposable Hister/Alloy probes share their offline ownership-initialization and
 process-guard checks. Cleanup ordering is covered without running containers.
 Hister's synthetic fixture access token has a local B105 annotation: it is
 intentionally public test data, never a production credential.
+
+## Container encoding and report conversion
+
+The scanner JVM receives `JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8` explicitly
+inside the digest-pinned CLI container. The upstream action's shell wrapper does
+not forward this host variable. Each workflow attempt has a 20-minute deadline;
+three attempts retain the 10/30-second backoff and incomplete-report cleanup.
+The job deadline is 70 minutes. The local action runs one attempt, and its exit
+trap removes its named scanner container.
+
+Codacy 7.9.25's SARIF formatter can still throw `MalformedInputException` while
+reading source for fingerprints, even with the UTF-8 property active. Use its
+JSON formatter and `tools/ci/codacy_json_to_sarif.py` for Python analyzers instead.
+OpenGrep, ShellCheck and Remark retain their existing native SARIF path. Conversion retains
+all issues, rule IDs, locations, severity and original issue fields as properties;
+it does not reread source or invent source fingerprints. Rule descriptions and
+analyzer versions are absent from Codacy's JSON output, so the converted report
+uses ID-only descriptors and omits analyzer versions. The existing uploader
+computes source fingerprints. File errors, unexpected result types, malformed
+JSON and Python parser errors fail the scan rather than discard findings.

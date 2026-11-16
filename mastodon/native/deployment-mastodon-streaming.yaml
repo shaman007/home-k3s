@@ -29,7 +29,7 @@ spec:
       annotations:
         rollme: '1'
         checksum/config-configmap: 078166d4ca0c98354f5687013569e5a1da02fa4e6bddcfdf13b8c451d0d4a661
-        checksum/mastodon-startup: 9a8599a3ce18057b2f4c7af15f39f693cef862f375a3cf359fcb8dcb816646bc
+        checksum/mastodon-startup: 0ecb89c27e219e03143846bfc8948858147525113a317e3b9e1d5b26ed3e0bc2
     spec:
       serviceAccountName: mastodon
       hostAliases:
@@ -143,7 +143,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
       - name: wait-for-data-services
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
@@ -188,7 +188,7 @@ spec:
           mountPath: /startup-gate
           readOnly: true
       - name: wait-for-schema
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
