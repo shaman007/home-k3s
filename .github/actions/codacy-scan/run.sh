@@ -8,6 +8,7 @@ case "$CODACY_TOOL" in
 esac
 [[ "$CODACY_OUTPUT" == "results-${CODACY_TOOL}.sarif" ]]
 : "${GITHUB_WORKSPACE:?}"
+commit_sha="$(/usr/bin/git rev-parse --verify HEAD)"
 scan_container="codacy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${CODACY_TOOL}"
 cleanup() {
   docker rm --force "$scan_container" >/dev/null 2>&1 || true
@@ -28,7 +29,7 @@ docker run --rm --name "$scan_container" \
   codacy/codacy-analysis-cli:7.9.25@sha256:339e0103e28804f9d76aff34503e505440e5d5b42f5dd70dae73b592ea87826a -- \
   analyze \
   --skip-commit-uuid-validation \
-  --commit-uuid "$(git rev-parse HEAD)" \
+  --commit-uuid "$commit_sha" \
   --directory "$GITHUB_WORKSPACE" \
   --tool "$CODACY_TOOL" \
   --tool-timeout 20minutes \
