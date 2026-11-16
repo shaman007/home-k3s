@@ -60,7 +60,8 @@ class CodacyRetryTests(unittest.TestCase):
             converter.write_text((ROOT / "tools/ci/codacy_json_to_sarif.py").read_text())
             for tool, exit_code in ((t, e) for t in ("bandit", "shellcheck") for e in (0, 7)):
                 with self.subTest(tool=tool, exit_code=exit_code):
-                    result = subprocess.run(
+                    # Fixed shell and repository script; argv contains no untrusted input.
+                    result = subprocess.run(  # nosec B603
                         ["/bin/bash", str(script)], cwd=ROOT,
                         env={**os.environ, "PATH": directory + ":/usr/bin:/bin",
                              "CODACY_TOOL": tool, "CODACY_OUTPUT": f"results-{tool}.sarif",
@@ -96,7 +97,8 @@ class CodacyRetryTests(unittest.TestCase):
                 sleep = root / "sleep"
                 sleep.write_text("#!/bin/sh\nexit 0\n")
                 sleep.chmod(0o755)
-                result = subprocess.run(
+                # Execute only the reviewed workflow fragment; test inputs stay in env.
+                result = subprocess.run(  # nosec B603
                     ["/bin/bash", "-e", "-o", "pipefail", "-c", step["run"]],
                     cwd=root,
                     env={
@@ -121,7 +123,8 @@ class CodacyRetryTests(unittest.TestCase):
             protected.write_text("retained")
             for output in (str(protected), "../results-bandit.sarif", "retained.sarif"):
                 with self.subTest(output=output):
-                    result = subprocess.run(
+                    # Reviewed cleanup code validates paths before any removal.
+                    result = subprocess.run(  # nosec B603
                         ["/bin/bash", "-e", "-o", "pipefail", "-c", cleanup],
                         cwd=directory,
                         env={**os.environ, "SCAN_OUTPUT": output},
