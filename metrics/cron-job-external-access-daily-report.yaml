@@ -39,7 +39,7 @@ spec:
               type: RuntimeDefault
           containers:
           - name: report
-            image: harbor.andreybondarenko.com/library/external-access-daily-report:2026-11-09-022903
+            image: harbor.andreybondarenko.com/library/external-access-daily-report:2026-11-16-022913
             imagePullPolicy: IfNotPresent
             securityContext:
               allowPrivilegeEscalation: false
