@@ -1,6 +1,7 @@
 """Appliance state survives process replacement and repeat changes preserve completion."""
 
 import asyncio
+import importlib
 import sqlite3
 import sys
 import tempfile
@@ -8,8 +9,9 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
-from local_resources import LocalResources
-from reminders import Reminders, ReminderSpec
+LocalResources = importlib.import_module("local_resources").LocalResources
+Reminders = importlib.import_module("reminders").Reminders
+ReminderSpec = importlib.import_module("reminders").ReminderSpec
 
 
 class PersistenceTests(unittest.TestCase):

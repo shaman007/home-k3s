@@ -147,21 +147,8 @@ class LocalResources:
     async def command(self, event):
         """Validate and dispatch only the allowlisted appliance operations."""
         action = event.get("action")
-        if action == "save_note":
-            text = event.get("text")
-            if not isinstance(text, str) or not 1 <= len(text.strip()) <= 4000:
-                raise ValueError("Invalid note")
-            if self.timers.db.execute("SELECT count(*) FROM voice_notes").fetchone()[0] >= 100:
-                raise ValueError("Note storage full")
-            self.timers.db.execute(
-                "INSERT OR IGNORE INTO voice_notes VALUES (?, ?, ?)",
-                (event["id"], text.strip(), time.time()),
-            )
-            self.timers.db.commit()
-            return {"ok": True, "note_id": event["id"]}
-        if action == "list_notes":
-            return {"notes": [dict(zip(("id", "text", "created"), row)) for row in
-                              self.timers.db.execute("SELECT * FROM voice_notes ORDER BY created")]}
+        if action in {"save_note", "list_notes"}:
+            return self._note_command(event)
         if action in {
             "update_reminder_interval",
             "create_daily_reminder",
@@ -183,10 +170,12 @@ class LocalResources:
             return {"ok": True}
         if action in {"set_timer", "list_timers", "cancel_timer"}:
             return self._timer_command(event)
-        if action == "set_volume":
-            return await self.volume.set(event.get("level"))
-        if action == "adjust_volume":
-            return await self.volume.adjust(event.get("delta"))
+        if action in {"set_volume", "adjust_volume"}:
+            operation, field = (
+                (self.volume.set, "level")
+                if action == "set_volume" else (self.volume.adjust, "delta")
+            )
+            return await operation(event.get(field))
         if action == "status":
             temp = Path("/sys/class/thermal/thermal_zone0/temp")
             return {
@@ -201,6 +190,30 @@ class LocalResources:
                 "reminders": self.reminders.list(),
             }
         raise ValueError("Unsupported device operation")
+
+    def _note_command(self, event):
+        """Save or retrieve explicit notes in the persistent appliance database."""
+        action = event["action"]
+        if action == "save_note":
+            text = event.get("text")
+            if not isinstance(text, str) or not 1 <= len(text.strip()) <= 4000:
+                raise ValueError("Invalid note")
+            if self.timers.db.execute("SELECT count(*) FROM voice_notes").fetchone()[0] >= 100:
+                raise ValueError("Note storage full")
+            self.timers.db.execute(
+                "INSERT OR IGNORE INTO voice_notes VALUES (?, ?, ?)",
+                (event["id"], text.strip(), time.time()),
+            )
+            self.timers.db.commit()
+            return {"ok": True, "note_id": event["id"]}
+        if action == "list_notes":
+            return {
+                "notes": [
+                    dict(zip(("id", "text", "created"), row))
+                    for row in self.timers.db.execute("SELECT * FROM voice_notes ORDER BY created")
+                ]
+            }
+        raise ValueError("Unsupported note operation")
 
     def _timer_command(self, event):
         """Apply an allowlisted timer operation and return its current state."""
@@ -218,7 +231,9 @@ class LocalResources:
         """Apply only the four reminder operations accepted by command()."""
         action = event["action"]
         if action == "update_reminder_interval":
-            return self.reminders.update_interval(event.get("reminder_id"), event.get("repeat_minutes"))
+            return self.reminders.update_interval(
+                event.get("reminder_id"), event.get("repeat_minutes")
+            )
         if action == "create_daily_reminder":
             audio = base64.b64decode(event.get("audio", ""), validate=True)
             return self.reminders.create(
