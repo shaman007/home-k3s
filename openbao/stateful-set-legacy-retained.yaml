@@ -1,0 +1,203 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: openbao
+  namespace: openbao
+  labels:
+    openbao-recovery-generation: legacy-20261116
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    openbao-recovery-reason: Retained sealed Raft data; never scale without explicit
+      recovery authorization
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 0
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: openbao
+      app.kubernetes.io/name: openbao
+      component: server
+  serviceName: openbao-internal
+  template:
+    metadata:
+      annotations:
+        openbao.hashicorp.com/config-checksum: a375f941b0ecd4e180fce85490aef14000502537e4df3f0a7ca66b71ff4781d0
+      labels:
+        app.kubernetes.io/instance: openbao
+        app.kubernetes.io/name: openbao
+        component: server
+        helm.sh/chart: openbao-0.30.7
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/instance: openbao
+                app.kubernetes.io/name: openbao
+                component: server
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - args:
+        - "cp /openbao/config/extraconfig-from-values.hcl /tmp/storageconfig.hcl;\n\
+          [ -n \"${HOST_IP}\" ] && sed -Ei \"s|HOST_IP|${HOST_IP?}|g\" /tmp/storageconfig.hcl;\n\
+          [ -n \"${POD_IP}\" ] && sed -Ei \"s|POD_IP|${POD_IP?}|g\" /tmp/storageconfig.hcl;\n\
+          [ -n \"${HOSTNAME}\" ] && sed -Ei \"s|HOSTNAME|${HOSTNAME?}|g\" /tmp/storageconfig.hcl;\n\
+          [ -n \"${API_ADDR}\" ] && sed -Ei \"s|API_ADDR|${API_ADDR?}|g\" /tmp/storageconfig.hcl;\n\
+          [ -n \"${TRANSIT_ADDR}\" ] && sed -Ei \"s|TRANSIT_ADDR|${TRANSIT_ADDR?}|g\"\
+          \ /tmp/storageconfig.hcl;\n[ -n \"${RAFT_ADDR}\" ] && sed -Ei \"s|RAFT_ADDR|${RAFT_ADDR?}|g\"\
+          \ /tmp/storageconfig.hcl;\n/usr/local/bin/docker-entrypoint.sh bao server\
+          \ -config=/tmp/storageconfig.hcl \n"
+        command:
+        - /bin/sh
+        - -ec
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: BAO_K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: BAO_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: BAO_ADDR
+          value: https://127.0.0.1:8200
+        - name: BAO_API_ADDR
+          value: https://openbao-api.int.andreybondarenko.com:8200
+        - name: SKIP_CHOWN
+          value: 'true'
+        - name: SKIP_SETCAP
+          value: 'true'
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: BAO_CLUSTER_ADDR
+          value: https://$(HOSTNAME).openbao-internal:8201
+        - name: BAO_RAFT_NODE_ID
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: HOME
+          value: /home/openbao
+        - name: BAO_CACERT
+          value: /openbao/userconfig/openbao-server-letsencrypt-tls/ca.crt
+        - name: BAO_TLS_SERVER_NAME
+          value: openbao-api.int.andreybondarenko.com
+        image: quay.io/openbao/openbao:2.7.2
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 5 && kill -SIGTERM $(pidof bao)
+        name: openbao
+        ports:
+        - containerPort: 8200
+          name: https
+          protocol: TCP
+        - containerPort: 8201
+          name: https-internal
+          protocol: TCP
+        - containerPort: 8202
+          name: https-rep
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - bao status -tls-skip-verify
+          failureThreshold: 2
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /openbao/data
+          name: data
+        - mountPath: /openbao/config
+          name: config
+        - mountPath: /openbao/userconfig/openbao-server-letsencrypt-tls
+          name: userconfig-openbao-server-letsencrypt-tls
+          readOnly: true
+        - mountPath: /home/openbao
+          name: home
+      dnsPolicy: ClusterFirst
+      priorityClassName: homelab-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: openbao
+      serviceAccountName: openbao
+      terminationGracePeriodSeconds: 10
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: openbao-config
+        name: config
+      - name: userconfig-openbao-server-letsencrypt-tls
+        secret:
+          defaultMode: 420
+          secretName: openbao-server-letsencrypt-tls
+      - emptyDir: {}
+        name: home
+  updateStrategy:
+    type: OnDelete
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        recurring-job.longhorn.io/backup-daily-retain31-c: enabled
+        recurring-job.longhorn.io/source: enabled
+        recurring-job.longhorn.io/trim-daily-c: enabled
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: longhorn
+      volumeMode: Filesystem
+    status:
+      phase: Pending

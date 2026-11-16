@@ -1,0 +1,29 @@
+{
+  "clientId": "openbao",
+  "redirectUris": [
+    "https://openbao.int.andreybondarenko.com/ui/vault/auth/oidc/oidc/callback",
+    "http://127.0.0.1:8250/oidc/callback",
+    "https://openbao.int.andreybondarenko.com/oidc/oidc/callback",
+    "http://localhost:8250/oidc/callback"
+  ],
+  "protocolMappers": [
+    {
+      "id": "0487d2bb-bd01-4683-8be1-e44924cf1bdd",
+      "name": "groups",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-group-membership-mapper",
+      "consentRequired": false,
+      "config": {
+        "full.path": "false",
+        "id.token.claim": "true",
+        "access.token.claim": "true",
+        "claim.name": "groups",
+        "multivalued": "true",
+        "userinfo.token.claim": "true"
+      }
+    }
+  ],
+  "publicClient": false,
+  "standardFlowEnabled": true,
+  "directAccessGrantsEnabled": false
+}

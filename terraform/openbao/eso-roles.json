@@ -1,0 +1,342 @@
+{
+  "external-secrets-aiy-voice": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "aiy-voice"
+    ],
+    "paths": [
+      "aiy-voice/device",
+      "aiy-voice/homeassistant",
+      "mempalace",
+      "openai/voicekit"
+    ]
+  },
+  "external-secrets-argocd": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "argocd"
+    ],
+    "paths": [
+      "argocd"
+    ]
+  },
+  "external-secrets-bitwarden": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "bitwarden"
+    ],
+    "paths": [
+      "bitwarden"
+    ]
+  },
+  "external-secrets-convertx": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "convertx"
+    ],
+    "paths": [
+      "convertx"
+    ]
+  },
+  "external-secrets-crowdsec": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "crowdsec"
+    ],
+    "paths": [
+      "crowdsec"
+    ]
+  },
+  "external-secrets-crowdsec-bouncer": {
+    "service_accounts": [
+      "crowdsec-bouncer-vault-auth"
+    ],
+    "namespaces": [
+      "traefik"
+    ],
+    "paths": [
+      "crowdsec-bouncer"
+    ]
+  },
+  "external-secrets-dawarich": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "dawarich"
+    ],
+    "paths": [
+      "dawarich"
+    ]
+  },
+  "external-secrets-db": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "bitwarden",
+      "dawarich",
+      "keycloak",
+      "mastodon",
+      "nextcloud",
+      "wordpress"
+    ],
+    "paths": [
+      "db"
+    ]
+  },
+  "external-secrets-firefox-sync": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "firefox-sync"
+    ],
+    "paths": [
+      "firefox-sync"
+    ]
+  },
+  "external-secrets-godaddy": {
+    "service_accounts": [
+      "godaddy-vault-auth"
+    ],
+    "namespaces": [
+      "cert-manager"
+    ],
+    "paths": [
+      "godaddy"
+    ]
+  },
+  "external-secrets-headlamp": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "headlamp"
+    ],
+    "paths": [
+      "headlamp"
+    ]
+  },
+  "external-secrets-hister": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "hister"
+    ],
+    "paths": [
+      "hister"
+    ]
+  },
+  "external-secrets-image-builder": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "image-builder"
+    ],
+    "paths": [
+      "harbor",
+      "image-signing"
+    ]
+  },
+  "external-secrets-immich": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "immich"
+    ],
+    "paths": [
+      "immich"
+    ]
+  },
+  "external-secrets-karakeep": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "karakeep"
+    ],
+    "paths": [
+      "karakeep"
+    ]
+  },
+  "external-secrets-keycloak": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "keycloak"
+    ],
+    "paths": [
+      "keyckoak"
+    ]
+  },
+  "external-secrets-loki": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "loki"
+    ],
+    "paths": [
+      "loki"
+    ]
+  },
+  "external-secrets-mail": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "mail"
+    ],
+    "paths": [
+      "mail"
+    ]
+  },
+  "external-secrets-mastodon": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "mastodon"
+    ],
+    "paths": [
+      "mastodon"
+    ]
+  },
+  "external-secrets-mempalace": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "mempalace"
+    ],
+    "paths": [
+      "mempalace"
+    ]
+  },
+  "external-secrets-minecraft": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "minecraft"
+    ],
+    "paths": [
+      "minecraft"
+    ]
+  },
+  "external-secrets-monitoring": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "monitoring"
+    ],
+    "paths": [
+      "monitoring",
+      "telegram"
+    ]
+  },
+  "external-secrets-open-terminal": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "open-terminal"
+    ],
+    "paths": [
+      "open-terminal"
+    ]
+  },
+  "external-secrets-open-webui": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "open-webui"
+    ],
+    "paths": [
+      "open-terminal"
+    ]
+  },
+  "external-secrets-redis": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "mastodon"
+    ],
+    "paths": [
+      "redis"
+    ]
+  },
+  "external-secrets-spotify": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "spotify"
+    ],
+    "paths": [
+      "spotify"
+    ]
+  },
+  "external-secrets-synapse": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "matrix"
+    ],
+    "paths": [
+      "synapse"
+    ]
+  },
+  "external-secrets-talos-backup": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "talos-backup"
+    ],
+    "paths": [
+      "talos-backup"
+    ]
+  },
+  "external-secrets-traefik-oidc": {
+    "service_accounts": [
+      "oidc-vault-auth"
+    ],
+    "namespaces": [
+      "traefik"
+    ],
+    "paths": [
+      "traefik-oidc"
+    ]
+  },
+  "external-secrets-unifi": {
+    "service_accounts": [
+      "vault-auth"
+    ],
+    "namespaces": [
+      "unifi"
+    ],
+    "paths": [
+      "unifi"
+    ]
+  }
+}

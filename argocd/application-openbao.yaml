@@ -26,11 +26,15 @@ spec:
         - name: server.ha.replicas
           value: "3"
       values: |
+        fullnameOverride: openbao-20261116
         global:
           tlsDisable: false
         injector:
           enabled: false
         server:
+          serviceAccount:
+            create: false
+            name: openbao
           statefulSet:
             securityContext:
               container:
@@ -39,6 +43,12 @@ spec:
                   drop:
                     - ALL
           priorityClassName: homelab-critical
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
           tolerations:
             - key: node-role.kubernetes.io/control-plane
               operator: Exists
@@ -77,7 +87,7 @@ spec:
             enabled: true
             replicas: 3
             apiAddr: "https://openbao-api.int.andreybondarenko.com:8200"
-            clusterAddr: "https://$(HOSTNAME).openbao-internal:8201"
+            clusterAddr: "https://$(HOSTNAME).openbao-20261116-internal:8201"
             raft:
               enabled: true
               setNodeId: true

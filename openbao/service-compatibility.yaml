@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao
+  namespace: openbao
+  annotations:
+    openbao-recovery-reason: Stable consumer endpoints retained across the new StatefulSet
+      generation
+spec:
+  ports:
+  - appProtocol: HTTPS
+    name: https
+    port: 8200
+    protocol: TCP
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    protocol: TCP
+    targetPort: 8201
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/name: openbao
+    component: server
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-active
+  namespace: openbao
+  annotations:
+    openbao-recovery-reason: Stable consumer endpoints retained across the new StatefulSet
+      generation
+spec:
+  ports:
+  - appProtocol: HTTPS
+    name: https
+    port: 8200
+    protocol: TCP
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    protocol: TCP
+    targetPort: 8201
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/name: openbao
+    component: server
+    openbao-active: 'true'
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-standby
+  namespace: openbao
+  annotations:
+    openbao-recovery-reason: Stable consumer endpoints retained across the new StatefulSet
+      generation
+spec:
+  ports:
+  - appProtocol: HTTPS
+    name: https
+    port: 8200
+    protocol: TCP
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    protocol: TCP
+    targetPort: 8201
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/name: openbao
+    component: server
+    openbao-active: 'false'
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openbao-internal
+  namespace: openbao
+  annotations:
+    openbao-recovery-reason: Stable consumer endpoints retained across the new StatefulSet
+      generation
+spec:
+  ports:
+  - appProtocol: HTTPS
+    name: https
+    port: 8200
+    protocol: TCP
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    protocol: TCP
+    targetPort: 8201
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/name: openbao
+    component: server
+  type: ClusterIP
+  clusterIP: None

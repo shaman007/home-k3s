@@ -529,7 +529,8 @@ spec:
     secrets: "40"
     configmaps: "40"
     persistentvolumeclaims: "6"
-    requests.storage: 30Gi
+    # Three retained legacy Raft claims plus three active recovery claims.
+    requests.storage: 60Gi
 ---
 apiVersion: v1
 kind: ResourceQuota
