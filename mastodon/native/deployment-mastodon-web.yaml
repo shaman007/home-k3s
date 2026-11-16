@@ -55,7 +55,7 @@ spec:
           capabilities:
             drop:
             - ALL
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         command:
         - bundle
@@ -191,7 +191,7 @@ spec:
         - '9394'
         command:
         - ./bin/prometheus_exporter
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         name: prometheus-exporter
         ports:
@@ -215,7 +215,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
       - name: wait-for-data-services
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
@@ -260,7 +260,7 @@ spec:
           mountPath: /startup-gate
           readOnly: true
       - name: migrate-schema
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
@@ -388,7 +388,7 @@ spec:
           mountPath: /startup-gate
           readOnly: true
       - name: wait-for-schema
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-09-022903@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
