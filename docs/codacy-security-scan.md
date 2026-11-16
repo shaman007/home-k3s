@@ -182,7 +182,8 @@ trap removes its named scanner container.
 
 Codacy 7.9.25's SARIF formatter can still throw `MalformedInputException` while
 reading source for fingerprints, even with the UTF-8 property active. Use its
-JSON formatter and `tools/ci/codacy_json_to_sarif.py` instead. Conversion retains
+JSON formatter and `tools/ci/codacy_json_to_sarif.py` for Python analyzers instead.
+OpenGrep, ShellCheck and Remark retain their existing native SARIF path. Conversion retains
 all issues, rule IDs, locations, severity and original issue fields as properties;
 it does not reread source or invent source fingerprints. Rule descriptions and
 analyzer versions are absent from Codacy's JSON output, so the converted report

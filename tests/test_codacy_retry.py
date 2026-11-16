@@ -58,12 +58,12 @@ class CodacyRetryTests(unittest.TestCase):
             converter = root / "tools/ci/codacy_json_to_sarif.py"
             converter.parent.mkdir(parents=True)
             converter.write_text((ROOT / "tools/ci/codacy_json_to_sarif.py").read_text())
-            for exit_code in (0, 7):
-                with self.subTest(exit_code=exit_code):
+            for tool, exit_code in ((t, e) for t in ("bandit", "shellcheck") for e in (0, 7)):
+                with self.subTest(tool=tool, exit_code=exit_code):
                     result = subprocess.run(
                         ["/bin/bash", str(script)], cwd=ROOT,
                         env={**os.environ, "PATH": directory + ":/usr/bin:/bin",
-                             "CODACY_TOOL": "bandit", "CODACY_OUTPUT": "results-bandit.sarif",
+                             "CODACY_TOOL": tool, "CODACY_OUTPUT": f"results-{tool}.sarif",
                              "GITHUB_WORKSPACE": directory, "GITHUB_RUN_ID": "123",
                              "GITHUB_RUN_ATTEMPT": "1", "SCAN_EXIT": str(exit_code),
                              "DOCKER_ARGS": str(root / "args"),
@@ -75,10 +75,11 @@ class CodacyRetryTests(unittest.TestCase):
                     self.assertIn("JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8", args)
                     self.assertIn("--fail-if-incomplete", args)
                     self.assertEqual(args[args.index("--tool-timeout") + 1], "20minutes")
-                    self.assertEqual(args[args.index("--format") + 1], "json")
+                    self.assertEqual(args[args.index("--format") + 1],
+                                     "json" if tool == "bandit" else "sarif")
                     self.assertIn("@sha256:", next(a for a in args if a.startswith("codacy/")))
                     self.assertEqual((root / "cleanup").read_text().splitlines(),
-                                     ["rm", "--force", "codacy-123-1-bandit"])
+                                     ["rm", "--force", f"codacy-123-1-{tool}"])
 
     def test_retry_removes_stale_report_and_preserves_other_files(self):
         """Execute each real retry shell fragment with a disposable stale scan report."""
