@@ -34,6 +34,8 @@ def convert(records, tool):
             location = next(iter(location.values()))
         line = location["line"]
         level, category = issue["level"], issue.get("category")
+        # Codacy serializes enum labels, not Scala identifiers Err/Warn.
+        level = {"Error": "Err", "Warning": "Warn"}.get(level, level)
         if (not isinstance(rule_id, str) or not rule_id or not isinstance(filename, str)
                 or not filename or PurePosixPath(filename).is_absolute()
                 or ".." in PurePosixPath(filename).parts or not isinstance(message, str)

@@ -58,3 +58,13 @@ class CodacyJsonTests(unittest.TestCase):
         result = CONVERTER.convert([record], "bandit")["runs"][0]["results"][0]
         self.assertEqual(result["ruleId"], "Bandit_B101")
         self.assertEqual(result["locations"][0]["physicalLocation"]["region"]["startLine"], 1)
+
+    def test_official_serialized_severity_labels(self):
+        for label, expected in (("Error", "error"), ("High", "error"),
+                                ("Warning", "warning"), ("Info", "note")):
+            with self.subTest(label=label):
+                record = self.issue()
+                record["Issue"]["level"] = label
+                result = CONVERTER.convert([record], "bandit")["runs"][0]["results"][0]
+                self.assertEqual(result["level"], expected)
+                self.assertEqual(result["properties"]["codacy.issue"]["level"], label)
