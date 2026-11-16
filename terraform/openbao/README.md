@@ -56,7 +56,7 @@ date. These paths deliberately do not claim to match historical KV mappings.
 `openbao-rebuilt-2026-11-16.snap.age` is the verified encrypted Raft snapshot
 after reconstruction. This is partial reconstruction, not recovery of the old complete OpenBao.
 Unmirrored KV values, old leases/tokens, private PKI CA keys, SSH signer keys,
-and desktop-only GitHub/mail/Harbor credentials require independent recovery
+and desktop-only credentials require independent recovery
 or explicit replacement. Do not create a replacement CA under an existing
 trust relationship without planning consumer trust migration. Current
 Let's Encrypt DNS01 uses the restored GoDaddy credential, not the old PKI CA.
@@ -86,7 +86,9 @@ silences after verification; renew only while this recovery remains active.
 - Kubernetes-auth can read its allowed GoDaddy path and is denied an unrelated
   Bitwarden path. Ordinary desktop OIDC login works with the desktop policy;
   Home Assistant, MemPalace and OpenAI consumer profiles fetch their restored
-  credentials. Desktop GitHub/mail/personal Harbor credentials remain absent.
+  credentials. Desktop GitHub and mail credentials were subsequently populated by the user
+  and verified through their consumer profiles. The unused personal Harbor KV
+  entry, desktop profile and ACL were removed at the user’s request.
 - All 46 existing Certificates Ready. A fresh Let's Encrypt staging certificate
   was issued through GoDaddy DNS01; temporary test resources were removed.
 - Rebuilt Raft snapshot decrypted identically and its internal SHA256SUMS passed.

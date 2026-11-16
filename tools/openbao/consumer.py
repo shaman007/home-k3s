@@ -187,8 +187,6 @@ def restore_kv(pod):
     """Restore known fields, then compare exact read-back only in memory."""
     material = decrypt(INITIAL)
     values, report = recover_kv(decrypt(MIRROR))
-    if values.get('harbor', {}).get('user') == 'shaman007':
-        values['desktop/harbor'] = {'value': values['harbor']['password']}
     with pod_connection(pod) as env:
         env['VAULT_TOKEN'] = material['root_token']
         for path, fields in sorted(values.items()):
