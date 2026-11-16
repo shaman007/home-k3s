@@ -25,9 +25,7 @@ class CodacyRetryTests(unittest.TestCase):
         self.assertTrue(all(step["with"] == attempts[0]["with"] for step in attempts))
         self.assertTrue(all(step["uses"] == attempts[0]["uses"] for step in attempts))
         scanner = ACTION["runs"]["steps"][0]
-        self.assertIs(scanner["with"]["fail-if-incomplete"], True)
-        self.assertEqual(scanner["with"]["format"], "sarif")
-        self.assertEqual(scanner["with"]["tool-timeout"], "20minutes")
+        self.assertEqual(scanner["shell"], "bash")
         self.assertNotIn("continue-on-error", scanner)
         self.assertTrue(all(step["timeout-minutes"] == 20 for step in attempts))
         self.assertGreater(WORKFLOW["jobs"]["codacy-security-scan"]["timeout-minutes"], 60)
@@ -36,6 +34,43 @@ class CodacyRetryTests(unittest.TestCase):
         self.assertFalse(attempts[2].get("continue-on-error", False))
         self.assertEqual(attempts[1]["if"], "steps.attempt_1.outcome == 'failure'")
         self.assertEqual(attempts[2]["if"], "steps.attempt_2.outcome == 'failure'")
+
+    def test_container_receives_utf8_and_failure_remains_fatal(self):
+        """Exercise real command construction and cleanup with a recording Docker stub."""
+        script = ROOT / ".github/actions/codacy-scan/run.sh"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            docker = root / "docker"
+            docker.write_text(
+                '#!/bin/bash\n'
+                'if [[ "$1" == run ]]; then\n'
+                '  printf "%s\\n" "$@" > "$DOCKER_ARGS"\n'
+                '  exit "$SCAN_EXIT"\n'
+                'fi\n'
+                'printf "%s\\n" "$@" > "$CLEANUP_ARGS"\n'
+            )
+            docker.chmod(0o755)
+            for exit_code in (0, 7):
+                with self.subTest(exit_code=exit_code):
+                    result = subprocess.run(
+                        ["/bin/bash", str(script)], cwd=ROOT,
+                        env={**os.environ, "PATH": directory + ":/usr/bin:/bin",
+                             "CODACY_TOOL": "bandit", "CODACY_OUTPUT": "results-bandit.sarif",
+                             "GITHUB_WORKSPACE": directory, "GITHUB_RUN_ID": "123",
+                             "GITHUB_RUN_ATTEMPT": "1", "SCAN_EXIT": str(exit_code),
+                             "DOCKER_ARGS": str(root / "args"),
+                             "CLEANUP_ARGS": str(root / "cleanup")},
+                        capture_output=True, text=True, timeout=5, check=False,
+                    )
+                    self.assertEqual(result.returncode, exit_code, result.stderr)
+                    args = (root / "args").read_text().splitlines()
+                    self.assertIn("JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8", args)
+                    self.assertIn("--fail-if-incomplete", args)
+                    self.assertEqual(args[args.index("--tool-timeout") + 1], "20minutes")
+                    self.assertEqual(args[args.index("--format") + 1], "sarif")
+                    self.assertIn("@sha256:", next(a for a in args if a.startswith("codacy/")))
+                    self.assertEqual((root / "cleanup").read_text().splitlines(),
+                                     ["rm", "--force", "codacy-123-1-bandit"])
 
     def test_retry_removes_stale_report_and_preserves_other_files(self):
         """Execute each real retry shell fragment with a disposable stale scan report."""
