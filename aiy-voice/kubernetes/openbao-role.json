@@ -7,8 +7,8 @@
   ],
   "audience": "vault",
   "token_policies": [
-    "aiy-voice-api"
+    "external-secrets-aiy-voice"
   ],
-  "token_ttl": "5m",
-  "token_max_ttl": "5m"
+  "token_ttl": "1h",
+  "token_max_ttl": "24h"
 }

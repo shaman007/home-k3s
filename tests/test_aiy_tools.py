@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from aiohttp import WSMsgType, web
 
-from aiy_gateway_fixture import gateway, provider_events
+from aiy_gateway_fixture import gateway, prompt_environment, provider_events
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 search_web = importlib.import_module("web_search").search_web
@@ -21,6 +21,12 @@ server = importlib.import_module("server")
 redact = importlib.import_module("memory_search").redact
 search_memory = importlib.import_module("memory_search").search_memory
 cost = importlib.import_module("usage_cost").cost
+
+
+
+def setUpModule():  # pylint: disable=invalid-name
+    """Supply only synthetic prompts to tests, never read production secrets."""
+    unittest.enterModuleContext(prompt_environment())
 
 
 class ToolTests(unittest.IsolatedAsyncioTestCase):

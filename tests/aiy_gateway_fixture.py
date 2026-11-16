@@ -12,6 +12,13 @@ from aiohttp import ClientSession, web
 from aiohttp.test_utils import TestClient, TestServer
 
 
+def prompt_environment():
+    """Use a clearly synthetic prompt bundle; production has no built-in fallback."""
+    return patch.dict(os.environ, {
+        "AIY_PROMPTS_FILE": str(Path(__file__).with_name("fixtures") / "aiy-prompts.json")
+    })
+
+
 @asynccontextmanager
 async def gateway(backend, provider):
     """Run a fake provider and gateway with disposable usage state and credentials."""

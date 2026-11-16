@@ -1,7 +1,7 @@
 [
   {
     "name": "assist_satellite__HassBroadcast",
-    "description": "Broadcast a message through the home",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -16,13 +16,13 @@
   },
   {
     "name": "homeassistant__GetLiveContext",
-    "description": "Provides real-time information about the CURRENT state, value, or mode of devices, sensors, entities, or areas. Use this tool for: 1. Answering questions about current conditions (e.g., 'Is the light on?'). 2. As the first step in conditional actions (e.g., 'If the weather is rainy, turn off sprinklers' requires checking the weather first). You may filter for devices by name, domain, and area, including combining those filters. Prefer filtering by domain when searching for multiple devices of the same type.",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
         "name": {
           "type": "string",
-          "description": "Filter entities by name or alias (case-insensitive)."
+          "description": ""
         },
         "domain": {
           "anyOf": [
@@ -36,18 +36,18 @@
               }
             }
           ],
-          "description": "Filter entities by domain (e.g. 'light', 'sensor'). Accepts a single domain or a list."
+          "description": ""
         },
         "area": {
           "type": "string",
-          "description": "Filter entities by area name or alias (case-insensitive)."
+          "description": ""
         }
       }
     }
   },
   {
     "name": "intent__HassTurnOn",
-    "description": "Turns on/opens/presses a device or entity. For locks, this performs a 'lock' action. Use for requests like 'turn on', 'activate', 'enable', or 'lock'.",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -100,7 +100,7 @@
   },
   {
     "name": "intent__HassTurnOff",
-    "description": "Turns off/closes a device or entity. For locks, this performs an 'unlock' action. Use for requests like 'turn off', 'deactivate', 'disable', or 'unlock'.",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -153,7 +153,7 @@
   },
   {
     "name": "intent__HassCancelAllTimers",
-    "description": "Cancels all timers",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -165,7 +165,7 @@
   },
   {
     "name": "light__HassLightSet",
-    "description": "Sets the brightness percentage or color of a light",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -198,14 +198,14 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 100,
-          "description": "The brightness percentage of the light between 0 and 100, where 0 is off and 100 is fully lit"
+          "description": ""
         }
       }
     }
   },
   {
     "name": "llm__GetDateTime",
-    "description": "Provides the current date and time.",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {}
@@ -213,7 +213,7 @@
   },
   {
     "name": "media_player__HassMediaUnpause",
-    "description": "Resumes a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -252,7 +252,7 @@
   },
   {
     "name": "media_player__HassMediaPause",
-    "description": "Pauses a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -291,7 +291,7 @@
   },
   {
     "name": "media_player__HassMediaNext",
-    "description": "Skips a media player to the next item",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -330,7 +330,7 @@
   },
   {
     "name": "media_player__HassMediaPrevious",
-    "description": "Replays the previous item for a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -369,7 +369,7 @@
   },
   {
     "name": "media_player__HassSetVolume",
-    "description": "Sets the volume percentage of a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -407,7 +407,7 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 100,
-          "description": "The volume percentage of the media player"
+          "description": ""
         }
       },
       "required": [
@@ -417,7 +417,7 @@
   },
   {
     "name": "media_player__HassSetVolumeRelative",
-    "description": "Increases or decreases the volume of a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -454,7 +454,7 @@
   },
   {
     "name": "media_player__HassMediaPlayerMute",
-    "description": "Mutes a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -489,14 +489,14 @@
           }
         },
         "is_volume_muted": {
-          "description": "Whether the media player should be muted or unmuted"
+          "description": ""
         }
       }
     }
   },
   {
     "name": "media_player__HassMediaPlayerUnmute",
-    "description": "Unmutes a media player",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -531,14 +531,14 @@
           }
         },
         "is_volume_muted": {
-          "description": "Whether the media player should be muted or unmuted"
+          "description": ""
         }
       }
     }
   },
   {
     "name": "todo__get_items",
-    "description": "Query a to-do list to find out what items are on it. Use this to answer questions like 'What's on my task list?' or 'Read my grocery list'. Filters items by status (needs_action, completed, all).",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -555,7 +555,7 @@
             "completed",
             "all"
           ],
-          "description": "Filter returned items by status, by default returns incomplete items",
+          "description": "",
           "default": "needs_action"
         }
       },
@@ -566,7 +566,7 @@
   },
   {
     "name": "todo__HassListAddItem",
-    "description": "Add item to a todo list",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -585,7 +585,7 @@
   },
   {
     "name": "todo__HassListCompleteItem",
-    "description": "Complete item on a todo list",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {
@@ -604,7 +604,7 @@
   },
   {
     "name": "todo__HassListRemoveItem",
-    "description": "Remove one or more items from a todo list",
+    "description": "",
     "schema": {
       "type": "object",
       "properties": {

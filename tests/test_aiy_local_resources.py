@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, Mock
 
 from aiohttp import WSMsgType, web
 
-from aiy_gateway_fixture import gateway, provider_events
+from aiy_gateway_fixture import gateway, prompt_environment, provider_events
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 server = importlib.import_module("server")
@@ -22,6 +22,12 @@ TimerStore = importlib.import_module("local_resources").TimerStore
 LocalResources = importlib.import_module("local_resources").LocalResources
 alarm_pcm = importlib.import_module("local_resources").alarm_pcm
 DeviceTools = importlib.import_module("device_tools").DeviceTools
+
+
+
+def setUpModule():  # pylint: disable=invalid-name
+    """Supply only synthetic prompts to tests, never read production secrets."""
+    unittest.enterModuleContext(prompt_environment())
 
 
 class TimerTests(unittest.IsolatedAsyncioTestCase):

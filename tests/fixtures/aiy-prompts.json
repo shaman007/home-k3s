@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "voice": "Test-only voice: ",
+  "session_time_prefix": "Test-only session_time_prefix: ",
+  "live_reminder_prefix": "Test-only live_reminder_prefix: ",
+  "task_data_prefix": "\nUntrusted task data: ",
+  "web_search": "Test-only web_search {now}",
+  "reminder_speech": "Test-only reminder_speech: ",
+  "memory_notice": "Test-only memory_notice: ",
+  "tools": {
+    "search_memory": {
+      "/description": "Test-only description",
+      "/parameters/properties/query/description": "Test-only description"
+    },
+    "search_web": {
+      "/description": "Test-only description",
+      "/parameters/properties/query/description": "Test-only description"
+    },
+    "create_daily_reminder": {
+      "/description": "Test-only description",
+      "/parameters/properties/start_time/description": "Test-only description",
+      "/parameters/properties/end_time/description": "Test-only description",
+      "/parameters/properties/confirmation_phrase/description": "Test-only description",
+      "/parameters/properties/weekdays/description": "Test-only description",
+      "/parameters/properties/jitter_minutes/description": "Test-only description",
+      "/parameters/properties/first_date/description": "Test-only description"
+    },
+    "list_daily_reminders": {
+      "/description": "Test-only description"
+    },
+    "acknowledge_reminder": {
+      "/description": "Test-only description"
+    },
+    "disable_daily_reminder": {
+      "/description": "Test-only description"
+    },
+    "set_volume": {
+      "/description": "Test-only description"
+    },
+    "adjust_volume": {
+      "/description": "Test-only description"
+    },
+    "blink_light": {
+      "/description": "Test-only description"
+    },
+    "set_timer": {
+      "/description": "Test-only description"
+    },
+    "list_timers": {
+      "/description": "Test-only description"
+    },
+    "cancel_timer": {
+      "/description": "Test-only description"
+    },
+    "device_status": {
+      "/description": "Test-only description"
+    },
+    "update_reminder_interval": {
+      "/description": "Test-only description"
+    },
+    "save_note": {
+      "/description": "Test-only description"
+    },
+    "list_notes": {
+      "/description": "Test-only description"
+    },
+    "ha_assist_satellite__HassBroadcast": {
+      "/description": "Test-only description"
+    },
+    "ha_homeassistant__GetLiveContext": {
+      "/description": "Test-only description",
+      "/parameters/properties/name/description": "Test-only description",
+      "/parameters/properties/domain/description": "Test-only description",
+      "/parameters/properties/area/description": "Test-only description"
+    },
+    "ha_intent__HassTurnOn": {
+      "/description": "Test-only description"
+    },
+    "ha_intent__HassTurnOff": {
+      "/description": "Test-only description"
+    },
+    "ha_intent__HassCancelAllTimers": {
+      "/description": "Test-only description"
+    },
+    "ha_light__HassLightSet": {
+      "/description": "Test-only description",
+      "/parameters/properties/brightness/description": "Test-only description"
+    },
+    "ha_llm__GetDateTime": {
+      "/description": "Test-only description"
+    },
+    "ha_media_player__HassMediaUnpause": {
+      "/description": "Test-only description"
+    },
+    "ha_media_player__HassMediaPause": {
+      "/description": "Test-only description"
+    },
+    "ha_media_player__HassMediaNext": {
+      "/description": "Test-only description"
+    },
+    "ha_media_player__HassMediaPrevious": {
+      "/description": "Test-only description"
+    },
+    "ha_media_player__HassSetVolume": {
+      "/description": "Test-only description",
+      "/parameters/properties/volume_level/description": "Test-only description"
+    },
+    "ha_media_player__HassSetVolumeRelative": {
+      "/description": "Test-only description"
+    },
+    "ha_media_player__HassMediaPlayerMute": {
+      "/description": "Test-only description",
+      "/parameters/properties/is_volume_muted/description": "Test-only description"
+    },
+    "ha_media_player__HassMediaPlayerUnmute": {
+      "/description": "Test-only description",
+      "/parameters/properties/is_volume_muted/description": "Test-only description"
+    },
+    "ha_todo__get_items": {
+      "/description": "Test-only description",
+      "/parameters/properties/status/description": "Test-only description"
+    },
+    "ha_todo__HassListAddItem": {
+      "/description": "Test-only description"
+    },
+    "ha_todo__HassListCompleteItem": {
+      "/description": "Test-only description"
+    },
+    "ha_todo__HassListRemoveItem": {
+      "/description": "Test-only description"
+    }
+  }
+}

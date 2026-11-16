@@ -36,7 +36,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: voice
-        image: harbor.andreybondarenko.com/library/aiy-voice:src-94b3495b530401c2@sha256:3df5d6317ae981be49d207f7a2e3bbaed5d0faecf500d1b2b33494cbd67c4b4a
+        image: harbor.andreybondarenko.com/library/aiy-voice:src-c972a0142cc3a573@sha256:1ef7148af66e47fe94fc8b69d54c716c149c86aac37f9d102776b50178f5f83a
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -97,6 +97,9 @@ spec:
           mountPath: /state
         - name: tmp
           mountPath: /tmp
+        - name: prompts
+          mountPath: /run/aiy-prompts
+          readOnly: true
       volumes:
       - name: state
         persistentVolumeClaim:
@@ -105,6 +108,13 @@ spec:
         emptyDir:
           medium: Memory
           sizeLimit: 16Mi
+      - name: prompts
+        secret:
+          secretName: aiy-voice-prompts
+          defaultMode: 0440
+          items:
+          - key: bundle
+            path: bundle.json
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -345,3 +355,24 @@ spec:
     remoteRef:
       key: aiy-voice/homeassistant
       property: token
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: aiy-voice-prompts
+  namespace: aiy-voice
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-secret-store
+    kind: SecretStore
+  target:
+    name: aiy-voice-prompts
+    creationPolicy: Owner
+  data:
+  - secretKey: bundle
+    remoteRef:
+      key: aiy-voice/prompts
+      property: bundle

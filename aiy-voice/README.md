@@ -34,7 +34,7 @@ start a fresh conversation. It receives a curated profile and can search MemPala
 - API key: OpenBao KV v2 `kv/openai/voicekit`, property `api_key`.
   Device token: `kv/aiy-voice/device`, property `bearer_token`.
   ESO role `external-secrets-aiy-voice` uses `vault-auth` in this namespace,
-  audience `vault`, and policy `aiy-voice-api`. It can read those two paths and the MemPalace credential at `kv/mempalace`. Only the fixed search function is exposed to the model; the underlying MemPalace bearer credential is not a separately scoped read-only server token.
+  audience `vault`, and policy `external-secrets-aiy-voice`. It can read those two paths and the MemPalace credential at `kv/mempalace`. Only the fixed search function is exposed to the model; the underlying MemPalace bearer credential is not a separately scoped read-only server token.
   Policy and role restore sources are beside the manifests.
 - ESO uses the existing verified internal OpenBao endpoint and CA bundle;
   it does not disable certificate verification. Secret values are never in Git.
@@ -97,10 +97,35 @@ restore and a reboot with the new voice service remain untested.
 
 ## Web search and memory
 
-`profile.txt` contains the user-approved short profile: Russian, informal address,
-Brno/Europe-Prague default, concise answers, and technical interests. It contains
-no credentials or permissions to operate infrastructure. It is loaded on each new
-voice session. `search_memory` calls only `mempalace_search` in the `codex` wing,
+Model-facing texts live only in OpenBao KV v2 `kv/aiy-voice/prompts`, field
+`bundle` (JSON, schema version 1). This includes the voice profile, time/snapshot
+labels, web lookup and reminder-speech instructions, memory notice, and all tool
+and parameter descriptions. `aiy-voice-prompts` ExternalSecret projects the bundle
+as `/run/aiy-prompts/bundle.json` through a read-only Secret volume (not `subPath`).
+No production texts are included in the source archive, image or test fixtures.
+Tool names, argument schemas, bounds and allowlists remain in code; bundle edits
+can change only existing description slots. Missing/invalid bundles fail startup
+and readiness with generic errors, without logging contents or using a fallback.
+
+To update texts, edit only the existing bundle through an authorized OpenBao
+consumer or UI; never print or commit it. Keep `version`, text keys, `{now}` in the
+web-search template, and the tool/path catalog intact. ESO refreshes every minute;
+Kubernetes Secret-volume projection adds its normal propagation delay. New voice
+sessions and subsequent search/speech calls reload the mounted bundle, without an
+image rebuild. An already connected voice session retains its original main
+profile and tool descriptions until reconnect; existing cached reminder audio
+is unchanged. Roll back wording using a retained OpenBao KV version through the
+same consumer. Back up/recover this KV path with OpenBao; Git alone cannot restore
+its contents. Runtime pod access remains a privileged way to read mounted texts.
+Earlier Git history/images may still contain historical texts; this migration
+does not rewrite history or delete registry artifacts.
+
+The existing ESO role uses policy `external-secrets-aiy-voice`; its restore ACL
+is `kubernetes/openbao-policy.hcl` and the role definition is
+`kubernetes/openbao-role.json`. Keep the existing credential paths and add only
+`read` for the prompt path. The application itself gets no OpenBao token.
+
+`search_memory` calls only `mempalace_search` in the `codex` wing,
 at most four bounded excerpts per lookup. The fixed MCP endpoint uses verified
 TLS. Results are historical context, never executable instructions or proof of
 current state. No memory write/delete tools are exposed; found memories are not persisted

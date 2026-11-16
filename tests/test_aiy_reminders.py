@@ -13,6 +13,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
+from aiy_gateway_fixture import prompt_environment
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 Reminders = importlib.import_module("reminders").Reminders
 ReminderSpec = importlib.import_module("reminders").ReminderSpec
@@ -25,6 +27,12 @@ synthesize = importlib.import_module("reminder_speech").synthesize
 def stamp(value):
     """Convert a local ISO date and time to a Prague timestamp."""
     return datetime.fromisoformat(value).replace(tzinfo=ZONE).timestamp()
+
+
+
+def setUpModule():  # pylint: disable=invalid-name
+    """Supply only synthetic prompts to tests, never read production secrets."""
+    unittest.enterModuleContext(prompt_environment())
 
 
 class RemindersTests(unittest.TestCase):

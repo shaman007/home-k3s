@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from aiohttp import WSMsgType, web
 
-from aiy_gateway_fixture import gateway
+from aiy_gateway_fixture import gateway, prompt_environment
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 
@@ -21,6 +21,12 @@ SPEC = importlib.util.spec_from_file_location(
 )
 server = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(server)
+
+
+
+def setUpModule():  # pylint: disable=invalid-name
+    """Supply only synthetic prompts to tests, never read production secrets."""
+    unittest.enterModuleContext(prompt_environment())
 
 
 class VoiceTests(unittest.TestCase):

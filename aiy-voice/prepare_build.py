@@ -27,7 +27,7 @@ FILES = (
     "reminder_speech.py",
     "home_assistant.py",
     "homeassistant_tools.json",
-    "profile.txt",
+    "prompts.py",
     ".dockerignore",
 )
 

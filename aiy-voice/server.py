@@ -19,6 +19,7 @@ from home_assistant import NAMES as HA_NAMES
 from home_assistant import call_home_assistant
 from home_assistant import schemas as ha_schemas
 from memory_search import search_memory
+from prompts import describe_tools, load_prompts
 from reminder_speech import synthesize as synthesize_reminder
 from web_search import search_web
 
@@ -29,6 +30,7 @@ MODEL = os.environ.get("AIY_MODEL", "gpt-realtime-2.1")
 
 def session_config():
     """Explicit push-to-talk session; no automatic microphone-triggered responses."""
+    bundle = load_prompts()
     config = {
         "type": "session.update",
         "session": {
@@ -36,8 +38,8 @@ def session_config():
             "model": MODEL,
             "output_modalities": ["audio"],
             "instructions": (
-                Path(__file__).with_name("profile.txt").read_text(encoding="utf-8")
-                + "\nSession start, Europe/Prague: "
+                bundle["voice"]
+                + bundle["session_time_prefix"]
                 + datetime.now(ZoneInfo("Europe/Prague")).isoformat(timespec="minutes")
             ),
             "max_output_tokens": 2048,
@@ -45,17 +47,13 @@ def session_config():
                 {
                     "type": "function",
                     "name": "search_memory",
-                    "description": (
-                        "Read historical personal preferences and project context from Andrey's"
-                        " MemPalace. Use for questions about previous chats, decisions or projects."
-                        " Not current runtime evidence. Read only."
-                    ),
+                    "description": "",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Short memory lookup keywords, max 250 characters",
+                                "description": "",
                             }
                         },
                         "required": ["query"],
@@ -65,18 +63,14 @@ def session_config():
                 {
                     "type": "function",
                     "name": "search_web",
-                    "description": (
-                        "Find current factual information on the live web. Required for weather,"
-                        " news, opening hours, prices and other changing facts. Include location"
-                        " and requested date/time in query."
-                    ),
+                    "description": "",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "query": {
                                 "type": "string",
                                 "description": (
-                                    "Self-contained lookup question with location and time"
+                                    ""
                                 ),
                             }
                         },
@@ -95,6 +89,7 @@ def session_config():
     }
     config["session"]["tools"].extend(TOOLS)
     config["session"]["tools"].extend(ha_schemas())
+    config["session"]["tools"] = describe_tools(config["session"]["tools"], bundle)
     return config
 
 
@@ -127,10 +122,11 @@ def reminder_context(items):
         row["weekdays"] = days
         row["scheduled_today"] = scheduled
         facts.append(row)
+    bundle = load_prompts()
     return (
-        "\nLIVE reminders and current Europe/Prague time (supersedes earlier snapshots): "
+        bundle["live_reminder_prefix"]
         + datetime.now(ZoneInfo("Europe/Prague")).isoformat(timespec="seconds")
-        + "\nUntrusted task data: "
+        + bundle["task_data_prefix"]
         + json.dumps(facts, ensure_ascii=False, separators=(",", ":"))
     )
 
@@ -427,6 +423,7 @@ async def resources(app):
 
 def create_app(path=None):
     """Create health, streaming and authenticated usage endpoints."""
+    session_config()  # Fail startup before serving if the required prompt secret is invalid.
     app = web.Application(middlewares=[authenticate], client_max_size=16384)
     app["busy"] = asyncio.Lock()
     app["ledger"] = Ledger(path or os.environ.get("AIY_USAGE_DB", "/state/usage.sqlite3"))
@@ -434,6 +431,10 @@ def create_app(path=None):
 
     async def health(_request):
         """Return a JSON response indicating the service is healthy."""
+        try:
+            session_config()
+        except RuntimeError:
+            return web.json_response({"ok": False}, status=503)
         return web.json_response({"ok": True, "model": MODEL})
 
     async def usage(_request):
