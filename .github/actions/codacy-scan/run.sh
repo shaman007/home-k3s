@@ -8,6 +8,12 @@ case "$CODACY_TOOL" in
 esac
 [[ "$CODACY_OUTPUT" == "results-${CODACY_TOOL}.sarif" ]]
 : "${GITHUB_WORKSPACE:?}"
+# Limit the JSON workaround to Python analyzers whose source-reading formatter
+# crashes. Other scanners retain their established native SARIF reporting.
+report_format=sarif
+case "$CODACY_TOOL" in
+  bandit|pylintpython3|prospector) report_format=json ;;
+esac
 commit_sha="$(/usr/bin/git rev-parse --verify HEAD)"
 scan_container="codacy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${CODACY_TOOL}"
 raw_output="$(mktemp /tmp/codacy-"${CODACY_TOOL}".XXXXXX.json)"
@@ -36,10 +42,14 @@ docker run --rm --name "$scan_container" \
   --tool "$CODACY_TOOL" \
   --tool-timeout 20minutes \
   --fail-if-incomplete \
-  --format json \
+  --format "$report_format" \
   --output "$raw_output" \
   --gh-code-scanning-compat \
   --max-allowed-issues 2147483647
 
-python3 "$GITHUB_WORKSPACE/tools/ci/codacy_json_to_sarif.py" \
-  "$raw_output" "$GITHUB_WORKSPACE/$CODACY_OUTPUT" "$CODACY_TOOL"
+if [[ "$report_format" == json ]]; then
+  python3 "$GITHUB_WORKSPACE/tools/ci/codacy_json_to_sarif.py" \
+    "$raw_output" "$GITHUB_WORKSPACE/$CODACY_OUTPUT" "$CODACY_TOOL"
+else
+  cp -- "$raw_output" "$GITHUB_WORKSPACE/$CODACY_OUTPUT"
+fi
