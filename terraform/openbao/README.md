@@ -63,18 +63,25 @@ Let's Encrypt DNS01 uses the restored GoDaddy credential, not the old PKI CA.
 
 ## GitOps handover
 
-The live `openbao` Application points to the new generation. The parent
-`argocd-applications` and `namespaces` Applications have `skip-reconcile=true`
-to prevent the unpublished Git configuration from undoing the new generation
-and its storage quota. Publish the reviewed source changes through the user's
-normal workflow, verify the remote revision contains them, then remove only
-these maintenance pause annotations and verify reconciliation. Do not unpause
-against the old source. This repository prohibits `git push` and `kubectl apply`.
+The recovery source was published as `3c04756d` and `17dfdd5e` and verified
+against GitHub `main`. Both maintenance `skip-reconcile` annotations were
+removed from `argocd-applications` and `namespaces` on 2026-11-16. These two
+Applications, `openbao` and `openbao-custom` are now Synced/Healthy.
 
-Verify all three Raft voters, test unseal after a follower restart, all 35
-SecretStores plus the ClusterSecretStore and 55 ExternalSecrets, a real OIDC
-login, and a fresh DNS01 certificate. Remove the recorded recovery Alertmanager
-silences after verification; renew only while this recovery remains active.
+The unused old discovery Role/RoleBinding, auth-delegator binding, old PDB and
+intermediate `openbao-20261116` ServiceAccount were removed after checking their
+replacements and live consumers. The original `openbao` ServiceAccount remains
+managed by `openbao-custom`. The old `openbao-config` ConfigMap is deliberately
+retained for the disabled legacy StatefulSet, with `Prune=false` and
+`IgnoreExtraneous`; its tracking remains with the chart Application. No old PVC,
+PV, Longhorn volume or replica data was deleted.
+
+The strict report is 95/96: only the pre-existing `image-builder` orphan warning
+remains. GitOps publication and a passing GitHub validation run are distinct;
+the retained old StatefulSet image reference was subsequently corrected locally
+to the Harbor proxy cache after CI detected a direct upstream image. See
+[the PVC audit](../../docs/pvc-maintenance-audit-2026-11-16.md) for actual backup
+coverage and the first-backup gap on the new OpenBao volumes.
 
 ## Verified outcome
 
@@ -95,12 +102,11 @@ silences after verification; renew only while this recovery remains active.
   New PVCs retain daily Longhorn backup labels; no faulted/degraded volumes.
 - Six recovery tests, Kubernetes manifest schema validation, OpenTofu validation
   and a subsequent no-change plan passed. Recovery silences were removed.
-- Strict Argo report remains 92/96: two deliberate maintenance pauses, retained
-  old OpenBao resources reported OutOfSync, and an existing image-builder orphan
-  warning. Publication and GitOps handover remain separate from runtime recovery.
+- Recovery GitOps pauses are removed; see the handover record above.
 
 The user considers the former PKI/SSH mounts unused; they were not recreated.
 Current ingress certificates and their Let's Encrypt flow do not need them.
-The new unseal material is currently in the encrypted initialization archive;
-it has not been copied into Bitwarden. Old Bitwarden unseal entries must not be
-mistaken for the new generation's key. Rotate exposed old credentials separately.
+The user confirmed saving the new unseal key and root token in Bitwarden.
+The matching encrypted initialization archive is also retained. Old unseal
+entries must not be mistaken for the new generation’s key. Rotation of exposed
+old credentials remains a separate task.
