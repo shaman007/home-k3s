@@ -44,7 +44,7 @@ tests:
   promql_expr_test:
   - expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and
       on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"}))
-      unless on(namespace,pod) kube_pod_deletion_timestamp
+      unless on(namespace,pod) kube_pod_deletion_timestamp unless on(namespace,pod) (kube_pod_status_phase{phase="Succeeded"} == 1)
     eval_time: 20m
     exp_samples:
     - labels: '{namespace="n",pod="p"}'
@@ -59,7 +59,7 @@ tests:
   promql_expr_test:
   - expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and
       on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"}))
-      unless on(namespace,pod) kube_pod_deletion_timestamp
+      unless on(namespace,pod) kube_pod_deletion_timestamp unless on(namespace,pod) (kube_pod_status_phase{phase="Succeeded"} == 1)
     eval_time: 20m
     exp_samples: []
 - name: KubePodNotReady
@@ -74,7 +74,7 @@ tests:
   promql_expr_test:
   - expr: (max by(namespace,pod) (kube_pod_status_ready{condition="true"} == 0) and
       on(namespace,pod) max by(namespace,pod) (kube_pod_owner{owner_kind!="Job"}))
-      unless on(namespace,pod) kube_pod_deletion_timestamp
+      unless on(namespace,pod) kube_pod_deletion_timestamp unless on(namespace,pod) (kube_pod_status_phase{phase="Succeeded"} == 1)
     eval_time: 20m
     exp_samples: []
 - name: ExpectedScrapeJobMissing
@@ -1679,3 +1679,101 @@ tests:
   - eval_time: 20m
     alertname: AlloyLogsDropped
     exp_alerts: []
+- interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_status_phase{namespace="n",pod="p",phase="Succeeded"}
+    values: 1+0x20
+  name: KubePodNotReady phase Succeeded=1
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubePodNotReady
+    exp_alerts: []
+- interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_status_phase{namespace="n",pod="p",phase="Succeeded"}
+    values: 0+0x20
+  name: KubePodNotReady phase Succeeded=0
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubePodNotReady
+    exp_alerts:
+    - exp_labels: &id001
+        alertname: KubePodNotReady
+        namespace: n
+        pod: p
+        severity: mail
+        owner: homelab
+        priority: warning
+      exp_annotations: &id002
+        summary: Pod has been in a non-ready state for more than 15 minutes.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
+        description: Inspect this resource and its recent events; see the linked runbook
+          before making changes.
+- interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_status_phase{namespace="n",pod="p",phase="Running"}
+    values: 1+0x20
+  name: KubePodNotReady phase Running=1
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubePodNotReady
+    exp_alerts:
+    - exp_labels: *id001
+      exp_annotations: *id002
+- interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_status_phase{namespace="n",pod="p",phase="Pending"}
+    values: 1+0x20
+  name: KubePodNotReady phase Pending=1
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubePodNotReady
+    exp_alerts:
+    - exp_labels: *id001
+      exp_annotations: *id002
+- interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_status_phase{namespace="n",pod="p",phase="Unknown"}
+    values: 1+0x20
+  name: KubePodNotReady phase Unknown=1
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubePodNotReady
+    exp_alerts:
+    - exp_labels: *id001
+      exp_annotations: *id002
+- interval: 1m
+  input_series:
+  - series: kube_pod_status_ready{namespace="n",pod="p",condition="true"}
+    values: 0+0x20
+  - series: kube_pod_owner{namespace="n",pod="p",owner_kind="ReplicaSet"}
+    values: 1+0x20
+  - series: kube_pod_status_phase{namespace="n",pod="p",phase="Failed"}
+    values: 1+0x20
+  name: KubePodNotReady phase Failed=1
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubePodNotReady
+    exp_alerts:
+    - exp_labels: *id001
+      exp_annotations: *id002

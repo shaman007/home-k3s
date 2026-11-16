@@ -116,3 +116,33 @@ application-consistent SQL restore. No database outage or restore drill was
 performed. Policies were also added to the owning manifests; source publication
 is a separate user action. The originally requested OpenBao immediate backups
 and alert-rule changes were cancelled before execution and remain unchanged.
+
+## KubePodNotReady correction
+
+A subsequent explicit user request authorized the alert-rule fix. The rule now
+excludes only `kube_pod_status_phase{phase="Succeeded"} == 1`, preserving existing
+Job/deletion exclusions and alerts for other non-ready states. Six new phase
+fixtures test the shipped rule, including Succeeded=0 and Failed/Unknown.
+Promtool 3.16.0 from the deployed image validated all 189 rules and passed both
+monitoring and queue rule fixtures.
+
+The live ConfigMap was patched only in `prometheus.rules`. The owning
+`kubernetes-prometheus` Argo Application is temporarily skip-reconcile until
+the matching source change is published, to prevent self-heal reverting it.
+The configured Reloader automatically restarts Prometheus on ConfigMap changes.
+After publishing, verify the remote rule matches, remove that maintenance pause,
+and verify reconciliation and active rule health. No alert silence was created.
+
+Once the published source contains the Succeeded filter, resume only this pause:
+
+```sh
+kubectl annotate application kubernetes-prometheus -n argocd argocd.argoproj.io/skip-reconcile-
+```
+
+Do not resume against the previous source revision: it would restore the false
+positive rule and trigger another ConfigMap reload/restart.
+
+Live verification completed at 2026-11-16 19:00 Europe/Prague: Prometheus Ready,
+rule health `ok`, zero KubePodNotReady alerts in both Prometheus and Alertmanager.
+The seven stale notifications expired normally; none were manually resolved
+or silenced. Only the intended Succeeded filter differed from prior live rules.
