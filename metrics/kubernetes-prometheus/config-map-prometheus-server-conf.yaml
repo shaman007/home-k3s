@@ -1522,9 +1522,21 @@ data:
     alerting:
       alertmanagers:
       - scheme: http
-        static_configs:
-        - targets:
-          - "alertmanager.monitoring.svc:9093"
+        # Send every alert to every ready replica; gossip does not replicate alerts.
+        kubernetes_sd_configs:
+        - role: endpoints
+          namespaces:
+            names: [monitoring]
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_service_name]
+          action: keep
+          regex: alertmanager
+        - source_labels: [__address__]
+          action: keep
+          regex: .+:9093
+        - source_labels: [__meta_kubernetes_endpoint_ready]
+          action: keep
+          regex: "true"
     scrape_configs:
       - job_name: hister
         scrape_interval: 45s
