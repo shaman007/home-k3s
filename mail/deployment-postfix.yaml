@@ -78,7 +78,7 @@ spec:
             name: mail-startup-a7a2479604c9
       initContainers:
         - name: init-postfix-queue-perms
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
           imagePullPolicy: IfNotPresent
           command:
             - /usr/bin/sh
@@ -99,7 +99,7 @@ spec:
                 - CHOWN
                 - FOWNER
         - name: wait-for-mail-dependencies
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
           imagePullPolicy: IfNotPresent
           command:
             - timeout
@@ -135,7 +135,7 @@ spec:
               readOnly: true
       containers:
         - name: postfix-mail
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 587
@@ -204,7 +204,7 @@ spec:
             limits:
               memory: 128Mi
         - name: queue-exporter
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
           command:
             - perl
             - /collector/postfix-queue-exporter.pl
