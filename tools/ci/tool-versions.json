@@ -11,7 +11,7 @@
   },
   "kubeconform": {
     "depName": "yannh/kubeconform",
-    "version": "v0.7.0",
-    "sha256": "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3"
+    "version": "v0.8.0",
+    "sha256": "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883"
   }
 }
