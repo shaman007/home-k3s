@@ -3423,3 +3423,47 @@ for AIY and its tests. Ruff undefined/unused-name checks and `git diff --check`
 pass. Python 3.12 runs the AIY tests successfully, but the full suite's existing
 AST-fingerprint check depends on Python 3.15 serialization; its sources were not
 changed or its guard weakened. No fresh remote scan has yet evaluated this diff.
+
+### 2026-11-16: Prevent the follow-up Pylint recurrence
+
+The next authenticated main-branch inventory contained **42 open findings**, rather
+than the owner's earlier UI count of 45: 30 C0411 import-order reports, four E1102
+callback reports, four W0212 protocol-test reports and one each of C0301, W0612,
+W0640 and R0801. The preceding remediation checked only its exported rule families;
+that missed other enabled Pylint rules. Replace that incomplete validation approach
+with a full native lint gate for the AIY implementation and associated tests.
+
+- Sort imports into standard-library, third-party and local groups. Correct the
+  LED callback's overly broad `object` annotation to its actual `Callable` contract;
+  do not suppress not-callable/type diagnostics.
+- Keep W0212 enabled generally and exempt only the white-box `BridgeProtocolTests`
+  class, with the reason next to that scoped directive. Those tests intentionally
+  call private session boundaries; renaming the methods to public would change the
+  production interface solely for the linter. Remove the unused gateway binding.
+- Bind each reviewed image version into its test callback's default argument and
+  wrap the long assertion. Replace four constant-key fixture `dict()` calls with
+  literals to satisfy the newly exercised full native rule set.
+- Add the full default-rule Pylint command to `validate-inputs`, using pinned
+  Pylint 4.1.3 and pylint-django 2.8.0 after installing real application dependencies.
+  Keep Codacy and all existing published rule families unchanged. Document the
+  identical local command in `docs/codacy-security-scan.md`.
+
+**R0801 alert 8960 remains unattributable, not proven fixed.** Original uploaded
+SARIF analysis 2177017486 at 73e3939a685106e999bd4311b796f8f9271b99c1
+contains only "Similar lines in 2 files" at line one of
+`aiy-voice/reminder_speech.py`; it has no paired blocks or related locations.
+Native full-repository Pylint finds 65 contextual duplicate blocks, none involving
+that module; the complete AIY lint gate finds none. These engines/configurations
+are not asserted identical. This repeats the previously documented adapter's
+loss of multiline duplicate context. Suppressing the named module would not
+reliably prevent reattribution, and disabling similarity globally would hide real
+findings. Keep similarity enabled and this finding open until attributable
+upstream evidence is available; no GitHub dismissal or SARIF filtering was made.
+The new native CI log provides full duplicate context for its checked source set.
+
+Validation: full default Pylint with the plugin and actual dependencies returns no
+diagnostics on both Python 3.12 and 3.15 for the gate's entire scope. All **840 unit
+tests pass on Python 3.15**, with 16 expected skips. Bandit reports zero findings
+and analysis errors; Ruff import/undefined-name checks and diff whitespace checks
+pass. Source changes and the CI gate remain local, uncommitted and unpublished.
+No image, running backend, Pi state, reminder data or network policy was changed.

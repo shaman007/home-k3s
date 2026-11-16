@@ -1,11 +1,12 @@
 """Independent daily reminder cycles, persisted on the appliance in local time."""
 
-from dataclasses import dataclass
-from datetime import datetime, time as wall_time, timedelta, date
-import re
 import hashlib
+import re
 import time
 import uuid
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
+from datetime import time as wall_time
 from zoneinfo import ZoneInfo
 
 ZONE = ZoneInfo("Europe/Prague")

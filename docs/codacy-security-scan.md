@@ -190,3 +190,30 @@ analyzer versions are absent from Codacy's JSON output, so the converted report
 uses ID-only descriptors and omits analyzer versions. The existing uploader
 computes source fingerprints. File errors, unexpected result types, malformed
 JSON and Python parser errors fail the scan rather than discard findings.
+
+
+## AIY lint regression gate
+
+`validate-inputs` runs all default Pylint rules for `aiy-voice/`, every
+`tests/test_aiy*.py`, the shared gateway fixture and `tests/test_dependency_batch.py`.
+Versions are pinned in `tools/ci/requirements-pylint.txt`; application dependencies
+are installed before linting so missing packages are not mistaken for source errors.
+This checks new rule families as well as previously reported findings, and keeps
+native duplicate diagnostics with paired source context in the CI log. Codacy
+continues to publish its independent code-scanning report without filtering.
+
+Reproduce in an isolated environment with the CI dependencies installed:
+
+```sh
+python -m pylint --load-plugins=pylint_django \
+  --disable=django-installed-checker,django-model-checker \
+  aiy-voice tests/test_aiy*.py tests/aiy_gateway_fixture.py \
+  tests/test_dependency_batch.py
+```
+
+The only `protected-access` exception is scoped inside `BridgeProtocolTests`:
+those tests intentionally exercise private protocol boundaries. Production modules
+and other tests keep that rule. Callable callbacks must use `Callable` annotations,
+not `object`, so Pylint can distinguish intended calls from genuine type errors.
+A clean local gate does not establish remote Codacy reconciliation or eliminate
+its historical multiline duplicate-attribution defect.

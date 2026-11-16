@@ -1,16 +1,16 @@
 """AIY button-held PCM streaming client; idle microphone samples are discarded."""
 
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import aiohttp
-from local_resources import LocalResources, AudioOutput
+from local_resources import AudioOutput, LocalResources
 
 RATE = 24000
 DEVICE = "plughw:CARD=aiyvoicebonnet,DEV=0"

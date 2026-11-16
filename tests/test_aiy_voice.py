@@ -1,19 +1,18 @@
 """Regression checks for Realtime session configuration and durable usage."""
 
-from aiy_gateway_fixture import gateway
-
 import asyncio
 import base64
-import json
-from aiohttp import web, WSMsgType
-
 import importlib.util
+import json
+import sys
 import tempfile
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
 from pathlib import Path
+from unittest.mock import AsyncMock, Mock, patch
 
-import sys
+from aiohttp import WSMsgType, web
+
+from aiy_gateway_fixture import gateway
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 
@@ -115,6 +114,9 @@ class CostTests(unittest.TestCase):
 class BridgeProtocolTests(unittest.IsolatedAsyncioTestCase):
     """Keep capture gates and credential-safe error boundaries intact after decomposition."""
 
+    # White-box protocol regressions intentionally exercise these private boundaries.
+    # pylint: disable=protected-access
+
     def setUp(self):
         """Create an isolated bridge with no provider connection or physical devices."""
         self.ledger = server.Ledger(":memory:")
@@ -200,7 +202,7 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     )
             return ws
 
-        async with gateway(server, provider) as (app, device):
+        async with gateway(server, provider) as (_app, device):
             for route in ("/v1/usage", "/v1/voice"):
                 self.assertEqual((await device.get(route)).status, 401)
             for route in ("/healthz", "/readyz"):

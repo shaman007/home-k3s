@@ -5,9 +5,9 @@ import json
 import os
 import re
 
-from mcp_transport import authenticated_http
 from mcp import Client
 from mcp.client.streamable_http import streamable_http_client
+from mcp_transport import authenticated_http
 
 
 def redact(text):

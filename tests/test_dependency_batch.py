@@ -48,9 +48,7 @@ class DependencyBatchTests(unittest.TestCase):
                 for path in (ROOT / folder).rglob("*.yaml")
             }
             inventory = BATCH.prepare(output, list(BATCH.PACKAGES))
-            self.assertTrue(
-                all(path.read_bytes() == contents for path, contents in active.items())
-            )
+            self.assertTrue(all(path.read_bytes() == contents for path, contents in active.items()))
             self.assertEqual(set(inventory), set(BATCH.PACKAGES))
             for package, entries in inventory.items():
                 for entry in entries:
@@ -76,9 +74,7 @@ class DependencyBatchTests(unittest.TestCase):
         self.assertEqual(len(catalogue), 31)
         identities = {(row["namespace"], row["name"]) for row in catalogue}
         self.assertEqual(len(identities), len(catalogue))
-        candidates = {
-            row["name"] for row in catalogue if row["preparation"] == "source-ready"
-        }
+        candidates = {row["name"] for row in catalogue if row["preparation"] == "source-ready"}
         self.assertEqual(
             candidates,
             {
@@ -111,14 +107,10 @@ class DependencyBatchTests(unittest.TestCase):
         result = BATCH.mail()
         for path, documents in result.items():
             expected = documents if isinstance(documents, list) else [documents]
-            self.assertEqual(
-                list(yaml.safe_load_all((ROOT / path).read_text())), expected
-            )
+            self.assertEqual(list(yaml.safe_load_all((ROOT / path).read_text())), expected)
         for app in ("rspamd", "postfix"):
             pod = result[f"mail/deployment-{app}.yaml"]["spec"]["template"]["spec"]
-            self.assertEqual(
-                pod["initContainers"][-1]["name"], "wait-for-mail-dependencies"
-            )
+            self.assertEqual(pod["initContainers"][-1]["name"], "wait-for-mail-dependencies")
             self.assertEqual(
                 pod["initContainers"][-1]["command"][-2:],
                 ["--wait", app + "-dependencies"],
@@ -132,9 +124,7 @@ class DependencyBatchTests(unittest.TestCase):
             result["mail/config-map-rspamd-cf.yaml"]["data"]["force_actions"],
         )
         provider = next(
-            d
-            for d in result["mail/stateful-set-valkey.yaml"]
-            if d["kind"] == "StatefulSet"
+            d for d in result["mail/stateful-set-valkey.yaml"] if d["kind"] == "StatefulSet"
         )
         self.assertNotIn("initContainers", provider["spec"]["template"]["spec"])
         self.assertNotIn("mail/deployment-dovecot.yaml", result)
@@ -144,9 +134,7 @@ class DependencyBatchTests(unittest.TestCase):
         original = document("nextcloud/cron-job-nextcloud.yaml")
         changed = BATCH.nextcloud_cron()["nextcloud/cron-job-nextcloud.yaml"]
         self.assertEqual(changed["spec"]["schedule"], original["spec"]["schedule"])
-        self.assertEqual(
-            changed["spec"]["jobTemplate"]["spec"]["activeDeadlineSeconds"], 1800
-        )
+        self.assertEqual(changed["spec"]["jobTemplate"]["spec"]["activeDeadlineSeconds"], 1800)
         before = original["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         after = changed["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         for key in ("affinity", "hostAliases", "automountServiceAccountToken"):
@@ -163,9 +151,7 @@ class DependencyBatchTests(unittest.TestCase):
             [v for v in before["volumes"] if v["name"] != "cron-gate"],
         )
         self.assertNotIn("initContainers", after)
-        self.assertIn(
-            "exec php /nextcloud/cron.php", BATCH.script("nextcloud_job_gate.sh")
-        )
+        self.assertIn("exec php /nextcloud/cron.php", BATCH.script("nextcloud_job_gate.sh"))
 
     def test_karakeep_gates_workers_not_web_or_browser(self):
         """Only the worker runner is changed; independent browser and web remain free to start."""
@@ -191,12 +177,14 @@ class DependencyBatchTests(unittest.TestCase):
         """New worker runners retain upstream hardening; unreviewed images fail closed."""
         original_read = BATCH.read
         for version in ("0.34.1", "0.35.0", "0.36.0"):
-            def read_version(path):
+
+            def read_version(path, reviewed_version=version):
                 """Substitute only the image under review in the real deployment."""
                 value = original_read(path)
                 if path == "karakeep/deployment-karakeep.yaml":
                     value["spec"]["template"]["spec"]["containers"][0]["image"] = (
-                        "harbor.andreybondarenko.com/github/karakeep-app/karakeep:" + version
+                        "harbor.andreybondarenko.com/github/karakeep-app/karakeep:"
+                        + reviewed_version
                     )
                 return value
 
@@ -207,7 +195,9 @@ class DependencyBatchTests(unittest.TestCase):
                     continue
                 runner = BATCH.karakeep()["karakeep/config-map-worker-startup.yaml"]["data"]["run"]
                 wrapper = "/etc/s6-overlay/scripts/drop-privileges " if version == "0.35.0" else ""
-                self.assertIn(f"exec {wrapper}node /worker-startup/karakeep_worker_gate.cjs", runner)
+                self.assertIn(
+                    f"exec {wrapper}node /worker-startup/karakeep_worker_gate.cjs", runner
+                )
 
     def test_every_script_reference_resolves_to_versioned_candidate_configmap(self):
         """Older running Jobs must not adopt a changed probe script via projection."""
@@ -220,9 +210,7 @@ class DependencyBatchTests(unittest.TestCase):
             configmaps = {
                 doc["metadata"]["name"]: doc
                 for doc in package.values()
-                if isinstance(doc, dict)
-                and doc["kind"] == "ConfigMap"
-                and doc.get("immutable")
+                if isinstance(doc, dict) and doc["kind"] == "ConfigMap" and doc.get("immutable")
             }
             for name, cm in configmaps.items():
                 digest = hashlib.sha256(
@@ -239,9 +227,7 @@ class DependencyBatchTests(unittest.TestCase):
                         pod = value["spec"]["jobTemplate"]["spec"]["template"]["spec"]
                     else:
                         continue
-                    references.extend(
-                        v.get("configMap", {}).get("name") for v in pod["volumes"]
-                    )
+                    references.extend(v.get("configMap", {}).get("name") for v in pod["volumes"])
                 self.assertIn(name, references)
 
     def test_mail_training_preserves_original_mailbox_work_and_mounts(self):
@@ -251,16 +237,10 @@ class DependencyBatchTests(unittest.TestCase):
         old = original["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         pod = candidate["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         self.assertNotIn("initContainers", pod)
-        self.assertEqual(
-            pod["containers"][0]["command"][2:], ["/bin/sh", "/config/train-spam.sh"]
-        )
+        self.assertEqual(pod["containers"][0]["command"][2:], ["/bin/sh", "/config/train-spam.sh"])
         self.assertEqual(
             pod["containers"][0]["volumeMounts"][:-1],
-            [
-                m
-                for m in old["containers"][0]["volumeMounts"]
-                if m["name"] != "mail-training"
-            ],
+            [m for m in old["containers"][0]["volumeMounts"] if m["name"] != "mail-training"],
         )
         for key in ("image", "securityContext", "resources"):
             self.assertEqual(pod["containers"][0][key], old["containers"][0][key])
@@ -313,17 +293,15 @@ class DependencyBatchTests(unittest.TestCase):
             set(before) | {"network-policy-monitoring-allow-egress-thanos-s3-internal.yaml"},
         )
         self.assertTrue(set(before).issubset(after))
-        app["spec"]["source"]["directory"]["include"] = (
-            original["spec"]["source"]["directory"]["include"]
-        )
+        app["spec"]["source"]["directory"]["include"] = original["spec"]["source"]["directory"][
+            "include"
+        ]
         self.assertEqual(app, original)
 
     def test_thanos_preserves_vault_reference_and_no_raw_provider_data_is_merged(self):
         """ESO produces exactly objstore.yml; the intermediate source key is private."""
         original = document("thanos/external-secret-thanos-objstore-secret.yaml")
-        changed = BATCH.observability()[
-            "thanos/external-secret-thanos-objstore-secret.yaml"
-        ]
+        changed = BATCH.observability()["thanos/external-secret-thanos-objstore-secret.yaml"]
         self.assertEqual(
             changed["spec"]["data"][0]["remoteRef"],
             original["spec"]["data"][0]["remoteRef"],
@@ -336,18 +314,17 @@ class DependencyBatchTests(unittest.TestCase):
 
     def test_internal_s3_policies_are_bidirectional_and_scoped(self):
         """No allow-all port/range or querier-to-S3 dependency is introduced."""
-        policies = [
-            doc
-            for doc in BATCH.observability().values()
-            if doc["kind"] == "NetworkPolicy"
-        ]
+        policies = [doc for doc in BATCH.observability().values() if doc["kind"] == "NetworkPolicy"]
         self.assertEqual(len(policies), 3)
         loki_policy = next(p for p in policies if p["metadata"]["namespace"] == "loki")
-        self.assertEqual(loki_policy["spec"]["podSelector"]["matchLabels"], {
-            "app.kubernetes.io/component": "single-binary",
-            "app.kubernetes.io/name": "loki",
-            "app.kubernetes.io/instance": "loki",
-        })
+        self.assertEqual(
+            loki_policy["spec"]["podSelector"]["matchLabels"],
+            {
+                "app.kubernetes.io/component": "single-binary",
+                "app.kubernetes.io/name": "loki",
+                "app.kubernetes.io/instance": "loki",
+            },
+        )
         for policy in policies:
             spec = policy["spec"]
             self.assertTrue(spec["podSelector"])
@@ -379,9 +356,7 @@ class DependencyBatchTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as directory:
             chart = Path(directory)
-            (chart / "Chart.yaml").write_text(
-                "apiVersion: v2\nname: fixture\nversion: 0.1.0\n"
-            )
+            (chart / "Chart.yaml").write_text("apiVersion: v2\nname: fixture\nversion: 0.1.0\n")
             (chart / "templates").mkdir()
             template = (
                 '{{- define "transform" -}}\n'
@@ -404,9 +379,7 @@ class DependencyBatchTests(unittest.TestCase):
             self.assertEqual(rendered.returncode, 0, rendered.stderr)
             result = yaml.safe_load(yaml.safe_load(rendered.stdout)["data"]["result"])
             expected = copy.deepcopy(fixture)
-            expected["config"].update(
-                endpoint="s3.seaweedfs.svc.cluster.local:8333", insecure=True
-            )
+            expected["config"].update(endpoint="s3.seaweedfs.svc.cluster.local:8333", insecure=True)
             self.assertEqual(result, expected)
             for invalid in (
                 {"type": "AZURE", "config": {}},

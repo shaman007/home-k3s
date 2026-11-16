@@ -1,10 +1,9 @@
 """Bounded voice tools for local resources; the model never sees shell/GPIO paths."""
 
-import json
-
 import asyncio
-import time
+import json
 import resource
+import time
 import uuid
 
 STARTED = time.monotonic()

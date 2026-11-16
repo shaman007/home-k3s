@@ -1,15 +1,15 @@
 """Pi-local persistent timers and bounded LED effects; no shell or generic GPIO RPC."""
 
-import re
-
 import asyncio
-from dataclasses import dataclass
 import base64
 import math
-from pathlib import Path
+import re
 import sqlite3
 import struct
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
 
 from reminders import Reminders, ReminderSpec
 
@@ -99,7 +99,7 @@ def alarm_pcm():
 class IndicatorState:
     """Keep the LED callback, base color and temporary effect together."""
 
-    set_led: object
+    set_led: Callable[[tuple[int, int, int]], None]
     base: tuple = (0, 16, 0)
     effect: asyncio.Task | None = None
 

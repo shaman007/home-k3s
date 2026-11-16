@@ -2,12 +2,13 @@
 
 import importlib
 import json
-import httpx2
 import secrets
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
+
+import httpx2
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 bridge = importlib.import_module("home_assistant")

@@ -3,16 +3,16 @@
 Writes JSON to stdout only; never contacts Kubernetes, Harbor or OpenBao.
 """
 
-import base64
 import argparse
+import base64
 import copy
 import gzip
 import hashlib
 import io
 import json
 import re
-from pathlib import Path
 import tarfile
+from pathlib import Path
 
 import yaml
 

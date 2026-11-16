@@ -1,19 +1,19 @@
 """Tool isolation and billing regressions; no paid API requests."""
 
-from decimal import Decimal
-import base64
-from aiohttp import web, WSMsgType
-import contextlib
-from types import SimpleNamespace
-
-from aiy_gateway_fixture import gateway, provider_events
-
 import asyncio
+import base64
+import contextlib
 import importlib
 import sys
 import unittest
+from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
+
+from aiohttp import WSMsgType, web
+
+from aiy_gateway_fixture import gateway, provider_events
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 search_web = importlib.import_module("web_search").search_web

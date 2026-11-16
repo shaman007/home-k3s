@@ -52,6 +52,14 @@ jobs:
           python -m pip install jsonschema regex -r tools/security/requirements.txt
           AIOHTTP_NO_EXTENSIONS=1 python -m pip install -r aiy-voice/requirements.txt
 
+      - name: Check all AIY Python lint rules
+        run: |
+          python -m pip install -r tools/ci/requirements-pylint.txt
+          python -m pylint --load-plugins=pylint_django \
+            --disable=django-installed-checker,django-model-checker \
+            aiy-voice tests/test_aiy*.py tests/aiy_gateway_fixture.py \
+            tests/test_dependency_batch.py
+
       - name: Install startup gate test runtimes
         run: |
           sudo apt-get update

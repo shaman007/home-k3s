@@ -1,15 +1,15 @@
 """Daily-cycle acceptance, early dismiss, quiet hours, catch-up and restart regressions."""
 
-import importlib
-from datetime import datetime
 import asyncio
 import base64
+import importlib
 import json
-from pathlib import Path
 import sqlite3
 import sys
 import tempfile
 import unittest
+from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -351,10 +351,13 @@ class SpeechTests(unittest.IsolatedAsyncioTestCase):
         """Feed deterministic Realtime events to the speech renderer."""
         pcm = b"\0\0" * 100
         events = [
-            dict(type="session.updated"),
-            dict(type="response.output_audio.delta", delta=base64.b64encode(pcm).decode()),
-            dict(type="response.output_audio_transcript.done", transcript=transcript),
-            dict(type="response.done", response={"id": "test", "status": "completed", "usage": {}}),
+            {"type": "session.updated"},
+            {"type": "response.output_audio.delta", "delta": base64.b64encode(pcm).decode()},
+            {"type": "response.output_audio_transcript.done", "transcript": transcript},
+            {
+                "type": "response.done",
+                "response": {"id": "test", "status": "completed", "usage": {}},
+            },
         ]
 
         class Socket:

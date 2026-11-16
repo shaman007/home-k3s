@@ -1,19 +1,19 @@
 """Durable appliance timers, bounded commands, and acknowledgements."""
 
-import importlib
-import base64
-from aiohttp import web, WSMsgType
-
-from aiy_gateway_fixture import gateway, provider_events
-
 import asyncio
+import base64
+import importlib
 import json
-from pathlib import Path
 import sqlite3
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock
+
+from aiohttp import WSMsgType, web
+
+from aiy_gateway_fixture import gateway, provider_events
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
 server = importlib.import_module("server")

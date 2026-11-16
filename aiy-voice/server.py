@@ -1,7 +1,6 @@
 """Authenticated PCM streaming bridge to OpenAI Realtime; no audio/transcript logs."""
 
 import asyncio
-from dataclasses import dataclass
 import base64
 import hmac
 import json
@@ -9,17 +8,19 @@ import logging
 import os
 import sqlite3
 import time
-from pathlib import Path
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from web_search import search_web
+from aiohttp import ClientError, ClientSession, ClientTimeout, WSMsgType, web
+from device_tools import ACTIONS, TOOLS, DeviceTools
+from home_assistant import NAMES as HA_NAMES
+from home_assistant import call_home_assistant
+from home_assistant import schemas as ha_schemas
 from memory_search import search_memory
-from device_tools import DeviceTools, TOOLS, ACTIONS
 from reminder_speech import synthesize as synthesize_reminder
-from home_assistant import schemas as ha_schemas, call_home_assistant, NAMES as HA_NAMES
-
-from aiohttp import web, ClientSession, WSMsgType, ClientTimeout, ClientError
+from web_search import search_web
 
 LOG = logging.getLogger("aiy")
 RATE = 24000
@@ -499,9 +500,10 @@ if __name__ == "__main__":
     if len(os.environ["AIY_BEARER_TOKEN"]) < 32:
         raise ValueError("Device token is too short")
     Path("/state").mkdir(exist_ok=True)
+    # Service/probes require the isolated Pod bind; application routes require bearer auth.
     web.run_app(
         create_app(),
-        host="0.0.0.0",  # nosec B104 -- isolated Pod; authenticated routes behind Traefik.
+        host="0.0.0.0",  # nosec B104
         port=8080,
         access_log=None,
     )

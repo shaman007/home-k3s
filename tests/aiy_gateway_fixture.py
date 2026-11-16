@@ -1,11 +1,11 @@
 """Isolated authenticated AIY gateway connected exclusively to a local provider."""
 
+import json
+import os
+import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 from types import SimpleNamespace
-import os
-import json
-import tempfile
 from unittest.mock import AsyncMock, patch
 
 from aiohttp import ClientSession, web

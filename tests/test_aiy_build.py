@@ -5,9 +5,9 @@ import base64
 import hashlib
 import importlib.util
 import io
-from pathlib import Path
 import tarfile
 import unittest
+from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location(
     "aiy_build", Path(__file__).resolve().parents[1] / "aiy-voice/prepare_build.py"
