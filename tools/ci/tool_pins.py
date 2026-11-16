@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 import re
+import subprocess  # nosec B404
 
 PINS = Path(__file__).with_name("tool-versions.json")
 REPOSITORIES = {
@@ -23,6 +24,18 @@ def load_pin(name, path=PINS):
     if not re.fullmatch(r"[0-9a-f]{64}", pin["sha256"]):
         raise ValueError("Invalid CI tool SHA256")
     return pin
+
+
+def require_kyverno_version(binary, path=PINS):
+    """Require the exact managed CLI version before any policy fixture execution."""
+    expected = load_pin("kyverno", path)["version"]
+    # The caller explicitly selects the CLI; pass only a literal read-only subcommand.
+    version = subprocess.check_output(  # nosec B603
+        [binary, "version"], text=True, timeout=15
+    )
+    if version.strip().splitlines()[:1] != ["Version: " + expected]:
+        raise ValueError("Tests require the pinned Kyverno CLI " + expected)
+    return version
 
 
 if __name__ == "__main__":

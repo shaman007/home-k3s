@@ -2,14 +2,17 @@
 """Regression: audit actual Helm output after native prepull admission, not before."""
 
 import argparse
+import sys
 import copy
 import importlib.util
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+pins = importlib.import_module("tools.ci.tool_pins")
 spec = importlib.util.spec_from_file_location(
     "audit", ROOT / "tools/kyverno/test_audit_policies.py"
 )
@@ -79,8 +82,7 @@ def main():
     parser.add_argument("--rendered", type=Path, required=True)
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
+    pins.require_kyverno_version(args.kyverno, pins.PINS)
     documents = [
         d
         for path in args.rendered.glob("*.yaml")

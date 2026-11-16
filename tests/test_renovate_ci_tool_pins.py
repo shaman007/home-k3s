@@ -13,6 +13,23 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 PIN_FILE = "tools/ci/tool-versions.json"
 
+GATES = (
+    ("tools/kyverno/test_audit_policies.py", "load_inputs", ["--rendered", "unused"]),
+    (
+        "tools/kyverno/benchmark_audit_policies.py",
+        "read_tests",
+        ["--baseline", "unused", "--optimized", "unused", "--output", "unused"],
+    ),
+    (
+        "tools/longhorn/test_manager_admission_audit.py",
+        "prepare_cases",
+        ["--rendered", "unused"],
+    ),
+    ("tools/longhorn/test_recurring_security_policy.py", "yaml.safe_load_all", []),
+    ("tools/longhorn/test_component_security_policy.py", "yaml.safe_load_all", []),
+    ("tools/security/test_infra_guard_policy.py", "yaml.safe_load_all", []),
+)
+
 
 def load_module(name, relative):
     """Load the actual CLI source so version-gate behavior is exercised directly."""
@@ -58,7 +75,8 @@ class CiToolPinTests(unittest.TestCase):
         ):
             with self.subTest(tool=tool):
                 self.assertIn(
-                    'tool_pins.py" ' + tool if tool == "kyverno" else "tool_pins.py " + tool, source
+                    'tool_pins.py" ' + tool if tool == "kyverno" else "tool_pins.py " + tool,
+                    source,
                 )
                 self.assertIn(variable + "_SHA256", source)
                 self.assertIn("sha256sum --check --strict", source)
@@ -80,30 +98,57 @@ class CiToolPinTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     loader.load_pin("kyverno", path)
 
-    def test_future_manifest_version_controls_both_real_kyverno_gates(self):
-        """A Renovate-only manifest edit updates both guards, which still reject other binaries."""
-        for script, stage, arguments in (
-            ("test_audit_policies.py", "load_inputs", ["--rendered", "unused"]),
-            (
-                "benchmark_audit_policies.py",
-                "read_tests",
-                ["--baseline", "unused", "--optimized", "unused", "--output", "unused"],
-            ),
-        ):
-            module = load_module("pin_gate_" + stage, "tools/kyverno/" + script)
-            self.assertEqual(module.CLI_PINS, ROOT / PIN_FILE)
+    def test_every_kyverno_version_gate_has_future_pin_coverage(self):
+        """New CLI entrypoints must join the manifest-version regression matrix."""
+        gates = {
+            str(path.relative_to(ROOT))
+            for path in (ROOT / "tools").rglob("*.py")
+            if '"--kyverno"' in path.read_text(encoding="utf-8")
+        }
+        self.assertEqual(gates, {script for script, _, _ in GATES})
+
+    def test_future_manifest_version_controls_all_real_kyverno_gates(self):
+        """A Renovate-only manifest edit updates all guards, which still reject other binaries."""
+        for script, stage, arguments in GATES:
+            module = load_module("pin_gate_" + Path(script).stem, script)
+            owner, attribute = (
+                (module.yaml, "safe_load_all") if stage.startswith("yaml.") else (module, stage)
+            )
+            self.assertEqual(module.pins.PINS, ROOT / PIN_FILE)
             with tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 (root / "tools/ci").mkdir(parents=True)
-                (root / PIN_FILE).write_text(json.dumps({"kyverno": {"version": "v9.8.7"}}))
-                for actual, accepted in (("v9.8.7", True), ("v9.8.70", False), ("v1.20.0", False)):
-                    with self.subTest(script=script, actual=actual), patch.object(
-                        module, "CLI_PINS", root / PIN_FILE
-                    ), patch.object(sys, "argv", [script, *arguments]), patch.object(
-                        module.subprocess, "check_output", return_value="Version: " + actual + "\n"
-                    ), patch.object(
-                        module, stage, side_effect=RuntimeError("gate accepted")
-                    ) as next_stage:
-                        with self.assertRaises(RuntimeError if accepted else SystemExit):
+                (root / PIN_FILE).write_text(
+                    json.dumps(
+                        {
+                            "kyverno": {
+                                "depName": "kyverno/kyverno",
+                                "version": "v9.8.7",
+                                "sha256": "a" * 64,
+                            }
+                        }
+                    )
+                )
+                for actual, accepted in (
+                    ("v9.8.7", True),
+                    ("v9.8.70", False),
+                    ("v1.20.0", False),
+                ):
+                    with (
+                        self.subTest(script=script, actual=actual),
+                        patch.object(module.pins, "PINS", root / PIN_FILE),
+                        patch.object(sys, "argv", [script, *arguments]),
+                        patch.object(
+                            module.subprocess,
+                            "check_output",
+                            return_value="Version: " + actual + "\n",
+                        ),
+                        patch.object(
+                            owner, attribute, side_effect=RuntimeError("gate accepted")
+                        ) as next_stage,
+                    ):
+                        with self.assertRaises(
+                            RuntimeError if accepted else (SystemExit, AssertionError, ValueError)
+                        ):
                             module.main()
                         self.assertEqual(next_stage.called, accepted)

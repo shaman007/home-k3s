@@ -6,6 +6,8 @@ Run outside CI; the normal validation workflow always executes the full suite.
 """
 
 import argparse
+import importlib
+import sys
 from collections import Counter
 import hashlib
 import json
@@ -16,7 +18,9 @@ import time
 
 import yaml
 
-CLI_PINS = Path(__file__).resolve().parents[1] / "ci/tool-versions.json"
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+pins = importlib.import_module("tools.ci.tool_pins")
 
 
 def read_tests(root):
@@ -138,10 +142,7 @@ def main():
     args = parser.parse_args()
     if args.sample_every < 1 or args.gomaxprocs < 1:
         parser.error("Sampling interval and CPU budget must be positive")
-    version = subprocess.check_output([args.kyverno, "version"], text=True)
-    expected_version = json.loads(CLI_PINS.read_text(encoding="utf-8"))["kyverno"]["version"]
-    if version.strip().splitlines()[:1] != ["Version: " + expected_version]:
-        parser.error("Benchmark requires the pinned Kyverno CLI " + expected_version)
+    version = pins.require_kyverno_version(args.kyverno, pins.PINS)
     tests = {
         name: read_tests(path)
         for name, path in [("baseline", args.baseline), ("optimized", args.optimized)]

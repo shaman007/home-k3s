@@ -2,6 +2,8 @@
 """Exercise actual rendered CEL policies/exceptions with the pinned Kyverno CLI."""
 
 import argparse
+import importlib
+import sys
 import copy
 import hashlib
 import json
@@ -11,9 +13,9 @@ import tempfile
 
 import yaml
 
-CLI_PINS = Path(__file__).resolve().parents[1] / "ci/tool-versions.json"
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+pins = importlib.import_module("tools.ci.tool_pins")
 EXPECTED_POLICIES = {
     "require-run-as-nonroot",
     "disallow-privilege-escalation",
@@ -706,10 +708,7 @@ def main():
     args = parser.parse_args()
     if args.max_cases_per_shard < 1:
         parser.error("--max-cases-per-shard must be positive")
-    version = subprocess.check_output([args.kyverno, "version"], text=True)
-    expected_version = json.loads(CLI_PINS.read_text(encoding="utf-8"))["kyverno"]["version"]
-    if version.strip().splitlines()[:1] != ["Version: " + expected_version]:
-        raise SystemExit("Tests require the pinned Kyverno CLI " + expected_version)
+    pins.require_kyverno_version(args.kyverno, pins.PINS)
     policies, exceptions, catalog, actual = load_inputs(args.rendered)
     count = 0
     with tempfile.TemporaryDirectory(prefix="kyverno-audit-tests-") as temporary:

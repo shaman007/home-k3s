@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Exercise the native component policy's CEL/JSONPatch through Kyverno 1.19.2."""
+"""Exercise the native component policy's CEL/JSONPatch through the pinned Kyverno CLI."""
 
 import argparse
+import sys
 import copy
 import importlib.util
 import json
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+pins = importlib.import_module("tools.ci.tool_pins")
 s = importlib.util.spec_from_file_location(
     "backfill", ROOT / "tools/longhorn/backfill_component_security.py"
 )
@@ -126,12 +129,11 @@ def check_component_cases(kyverno, policy_path, temp, cases):
 
 
 def main():
-    """Exercise the native component policy's CEL/JSONPatch through Kyverno 1.19.2."""
+    """Exercise the native component policy's CEL/JSONPatch through the pinned Kyverno CLI."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
+    pins.require_kyverno_version(args.kyverno, pins.PINS)
     policy, _ = list(
         yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
     )

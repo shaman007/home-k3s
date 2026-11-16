@@ -2,15 +2,18 @@
 """Exercise native guard CEL with the pinned Kyverno CLI, never against the cluster."""
 
 import argparse
+import sys
 import copy
 import importlib.util
 import json
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+pins = importlib.import_module("tools.ci.tool_pins")
 s = importlib.util.spec_from_file_location(
     "backfill", ROOT / "tools/security/infra_guard_backfill.py"
 )
@@ -120,8 +123,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
+    pins.require_kyverno_version(args.kyverno, pins.PINS)
     policy = next(
         d
         for d in yaml.safe_load_all((ROOT / "infra-guards/resources.yaml").read_text())

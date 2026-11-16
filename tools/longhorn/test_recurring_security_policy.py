@@ -6,14 +6,17 @@ is converted to MutatingPolicy. Native binding and API type checks are separate.
 """
 
 import argparse
+import sys
 import importlib.util
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+pins = importlib.import_module("tools.ci.tool_pins")
 spec = importlib.util.spec_from_file_location(
     "backfill", ROOT / "tools/longhorn/backfill_recurring_security.py"
 )
@@ -174,11 +177,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kyverno", default="kyverno")
     args = parser.parse_args()
-    if "1.19.2" not in subprocess.check_output([args.kyverno, "version"], text=True):
-        raise AssertionError
-    policy, _ = list(
-        yaml.safe_load_all((ROOT / "longhorn/policy-recurring-job-security.yaml").read_text())
+    pins.require_kyverno_version(args.kyverno, pins.PINS)
+    policy_documents = yaml.safe_load_all(
+        (ROOT / "longhorn/policy-recurring-job-security.yaml").read_text()
     )
+    policy, _ = list(policy_documents)
     names = policy["spec"]["matchConstraints"]["resourceRules"][0]["resourceNames"]
     policy["apiVersion"] = "policies.kyverno.io/v1"
     policy["kind"] = "MutatingPolicy"
