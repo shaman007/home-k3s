@@ -4,6 +4,7 @@ import asyncio
 import base64
 import importlib.util
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -173,6 +174,15 @@ class BridgeProtocolTests(unittest.IsolatedAsyncioTestCase):
             await self.bridge._command(upstream, {"type": "start"})
         upstream.send_json.assert_not_awaited()
 
+    async def test_invalid_prompt_update_cannot_start_recording(self):
+        """Reject a bad projected bundle before sending audio/control to the provider."""
+        upstream = AsyncMock()
+        with patch.object(server, "load_prompts", side_effect=RuntimeError("invalid secret")):
+            with self.assertRaises(RuntimeError):
+                await self.bridge._command(upstream, {"type": "start", "reminders": []})
+        upstream.send_json.assert_not_awaited()
+        self.assertFalse(self.bridge.state.recording)
+
     async def test_memory_sdk_errors_are_sanitized(self):
         """Arbitrary SDK errors reach neither tool results nor log messages verbatim."""
         with patch.object(
@@ -187,6 +197,65 @@ class BridgeProtocolTests(unittest.IsolatedAsyncioTestCase):
 
 class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
     """Verify authenticated PCM streaming through a local provider."""
+
+    async def test_prompt_rotation_updates_same_connection_before_next_turn(self):
+        """Update policy/tools together while preserving the open conversation and task state."""
+        updates = []
+        connections = []
+
+        async def provider(request):
+            """Acknowledge updates and complete two turns on one provider socket."""
+            ws = web.WebSocketResponse()
+            await ws.prepare(request)
+            connections.append(ws)
+            turn = 0
+            async for message in ws:
+                event = json.loads(message.data)
+                if event["type"] == "session.update":
+                    updates.append(event["session"])
+                    await ws.send_json({"type": "session.updated"})
+                elif event["type"] == "response.create":
+                    turn += 1
+                    await ws.send_json({
+                        "type": "response.done",
+                        "response": {"id": f"rotation-{turn}", "status": "completed",
+                                     "usage": {"input_tokens": 42}},
+                    })
+            return ws
+
+        bundle = json.loads(Path(os.environ["AIY_PROMPTS_FILE"]).read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "bundle.json")
+            path.write_text(json.dumps(bundle), encoding="utf-8")
+            with patch.dict(os.environ, {"AIY_PROMPTS_FILE": str(path)}):
+                async with gateway(server, provider) as (_app, device):
+                    async with device.ws_connect(
+                        "/v1/voice", headers={"Authorization": "Bearer " + "x" * 48}
+                    ) as ws:
+                        self.assertEqual((await ws.receive_json())["type"], "ready")
+                        task = {"id": "preserved-task", "text": "Synthetic task",
+                                "confirmation_phrase": "done", "acknowledged_today": False}
+                        for index in range(2):
+                            event = {"type": "start"}
+                            if index == 0:
+                                event["reminders"] = [task]
+                            else:
+                                bundle["voice"] = "Synthetic replacement policy"
+                                bundle["tools"]["search_web"]["/description"] = "New search text"
+                                path.write_text(json.dumps(bundle), encoding="utf-8")
+                            await ws.send_json(event)
+                            await ws.send_bytes(b"\x00\x00" * 6000)
+                            await ws.send_json({"type": "stop"})
+                            self.assertEqual((await ws.receive_json())["status"], "completed")
+        self.assertEqual(len(connections), 1)
+        self.assertEqual(len(updates), 3)
+        self.assertTrue(updates[-1]["instructions"].startswith("Synthetic replacement policy"))
+        self.assertIn("preserved-task", updates[-1]["instructions"])
+        before = {t["name"]: t for t in updates[-2]["tools"]}
+        after = {t["name"]: t for t in updates[-1]["tools"]}
+        self.assertEqual(before.keys(), after.keys())
+        self.assertEqual(after["search_web"]["description"], "New search text")
+        self.assertEqual(before["search_web"]["parameters"], after["search_web"]["parameters"])
 
     async def test_auth_stream_before_done_and_persist_usage(self):
         """Verify auth stream before done and persist usage."""

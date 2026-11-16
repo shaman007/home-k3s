@@ -110,11 +110,11 @@ and readiness with generic errors, without logging contents or using a fallback.
 To update texts, edit only the existing bundle through an authorized OpenBao
 consumer or UI; never print or commit it. Keep `version`, text keys, `{now}` in the
 web-search template, and the tool/path catalog intact. ESO refreshes every minute;
-Kubernetes Secret-volume projection adds its normal propagation delay. New voice
-sessions and subsequent search/speech calls reload the mounted bundle, without an
-image rebuild. An already connected voice session retains its original main
-profile and tool descriptions until reconnect; existing cached reminder audio
-is unchanged. Roll back wording using a retained OpenBao KV version through the
+Kubernetes Secret-volume projection adds its normal propagation delay. Before every push-to-talk turn, the existing provider connection reloads one
+coherent bundle and updates both instructions and tool descriptions in place.
+No reconnect, client restart or image rebuild is needed, and conversation history
+is preserved. Search/speech calls also reload the bundle; existing cached reminder
+audio is unchanged. Roll back wording using a retained OpenBao KV version through the
 same consumer. Back up/recover this KV path with OpenBao; Git alone cannot restore
 its contents. Runtime pod access remains a privileged way to read mounted texts.
 Earlier Git history/images may still contain historical texts; this migration

@@ -28,9 +28,9 @@ RATE = 24000
 MODEL = os.environ.get("AIY_MODEL", "gpt-realtime-2.1")
 
 
-def session_config():
+def session_config(bundle=None):
     """Explicit push-to-talk session; no automatic microphone-triggered responses."""
-    bundle = load_prompts()
+    bundle = load_prompts() if bundle is None else bundle
     config = {
         "type": "session.update",
         "session": {
@@ -93,7 +93,7 @@ def session_config():
     return config
 
 
-def reminder_context(items):
+def reminder_context(items, bundle=None):
     """Bounded live appliance facts override stale conversation history each turn."""
     if not isinstance(items, list) or len(items) > 16:
         raise ValueError("Invalid reminder snapshot")
@@ -122,7 +122,7 @@ def reminder_context(items):
         row["weekdays"] = days
         row["scheduled_today"] = scheduled
         facts.append(row)
-    bundle = load_prompts()
+    bundle = load_prompts() if bundle is None else bundle
     return (
         bundle["live_reminder_prefix"]
         + datetime.now(ZoneInfo("Europe/Prague")).isoformat(timespec="seconds")
@@ -190,6 +190,7 @@ class VoiceBridge:
     def __init__(self, app, device):
         self.app = app
         self.device = device
+        self.reminder_snapshot = None
         self.state = TurnState()
         self.initial_config = None
         self.tools = DeviceTools(device, app["ledger"].db, speech=self.reminder_audio)
@@ -292,20 +293,27 @@ class VoiceBridge:
         if command == "device_ack":
             self.tools.acknowledge(event)
         elif command == "start" and not self.state.recording and not self.state.responding:
-            self.state.recording, self.state.count = True, 0
+            # Read one coherent projected secret version for this entire turn.
+            bundle = load_prompts()
+            config = session_config(bundle)["session"]
+            snapshot = event.get("reminders", self.reminder_snapshot)
+            context = ""
             if "reminders" in event:
-                context = reminder_context(event["reminders"])
-                await upstream.send_json(
-                    {
-                        "type": "session.update",
-                        "session": {
-                            "type": "realtime",
-                            "instructions": (
-                                self.initial_config["session"]["instructions"] + context
-                            ),
-                        },
-                    }
-                )
+                context = reminder_context(snapshot, bundle)
+            elif snapshot is not None:
+                context = reminder_context(snapshot, bundle)
+            await upstream.send_json(
+                {
+                    "type": "session.update",
+                    "session": {
+                        "type": "realtime",
+                        "instructions": config["instructions"] + context,
+                        "tools": config["tools"],
+                    },
+                }
+            )
+            self.reminder_snapshot = snapshot
+            self.state.recording, self.state.count = True, 0
             await upstream.send_json({"type": "input_audio_buffer.clear"})
         elif command == "stop" and self.state.recording:
             await self._stop(upstream)
