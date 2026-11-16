@@ -34,6 +34,9 @@ spec:
       automountServiceAccountToken: false
       priorityClassName: homelab-standard
       volumes:
+        - name: confirmation-expiry
+          configMap:
+            name: postfix-confirmation-expiry
         - name: queue-exporter
           configMap:
             name: postfix-queue-exporter
@@ -134,6 +137,32 @@ spec:
               mountPath: /mail-startup
               readOnly: true
       containers:
+        - name: confirmation-expiry
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
+          command: [perl, /expiry/expire-mastodon-confirmations.pl]
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+              add: [DAC_OVERRIDE, SETUID, SETGID]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: confirmation-expiry
+              mountPath: /expiry
+              readOnly: true
+            - name: spool
+              mountPath: /var/spool/postfix
+            - name: main-cf
+              mountPath: /etc/postfix/main.cf
+              subPath: main.cf
+              readOnly: true
         - name: postfix-mail
           image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
           imagePullPolicy: IfNotPresent

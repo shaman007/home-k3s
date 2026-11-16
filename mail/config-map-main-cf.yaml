@@ -27,6 +27,8 @@ data:
     virtual_alias_maps = texthash:/etc/postfix/virtual
     mailbox_size_limit = 0
     message_size_limit = 134217728
+    # Avoid short queue-ID reuse while the confirmation expiry worker inspects mail.
+    enable_long_queue_ids = yes
     maillog_file = /var/log/mail.log
     smtputf8_enable = no
     strict_mailbox_ownership = no

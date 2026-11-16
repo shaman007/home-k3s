@@ -18,6 +18,43 @@ Postfix delivers all other addresses at `andreybondarenko.com` to the `me`
 mailbox. The explicit `spam@andreybondarenko.com` mapping takes precedence over
 that domain catch-all.
 
+## Mastodon confirmation expiry
+
+The Postfix `confirmation-expiry` sidecar checks deferred mail every minute.
+It deletes messages at least two hours after their initial queue arrival only
+when the envelope sender and sole From header are
+`notifications@andreybondarenko.com`, and the sole Subject is exactly
+`Mastodon: Confirmation instructions for mastodon.andreybondarenko.com`.
+Folded headers are supported. Password resets and other notifications retain
+the normal Postfix queue lifetime. This is queue retention, not token expiry.
+
+Deletion uses `postsuper -d ID deferred` and produces no delivery failure
+notification or Trash copy. Active deliveries and held mail are excluded; an
+active delivery can finish after two hours, or be removed after it returns to
+deferred. Thus this is an approximate two-hour limit, not a hard delivery
+deadline. Existing matching deferred messages are also eligible on startup.
+Permanent delivery failures before expiry still follow normal bounce handling.
+
+The worker rechecks queue identity and age before deletion. Long queue IDs
+prevent short-ID reuse between inspection and deletion. It needs root and
+DAC_OVERRIDE for header inspection and SETUID/SETGID so `postsuper` can drop to
+the Postfix user for queue maintenance, but no Kubernetes API access or
+credentials. It logs only queue IDs and outcomes, never headers or recipients.
+The exporter retains its read-only queue mount.
+
+Source: `tools/mail/expire_mastodon_confirmations.pl`; the identically named
+ConfigMap data is kept in `mail/config-map-postfix-confirmation-expiry.yaml`.
+Run `perl tests/postfix-confirmation-expiry.t` from the repository root.
+For read-only live inspection, pipe the script into
+`kubectl exec -i -n mail deploy/postfix -c postfix-mail -- perl /dev/stdin --dry-run`.
+
+Publish through GitOps: this changes the Recreate Postfix Deployment and will
+replace its pod. Preserve the queue PVC. Before publication, review the dry-run
+IDs: startup deletion is irreversible for matching queued mail. After rollout,
+verify the worker has no inspection/deletion failures, matching expired mail
+disappears, and unrelated delivery continues. Rollback by removing the worker;
+already deleted messages cannot be restored from the live queue.
+
 ## Rspamd Valkey
 
 Rspamd stores learned and operational Redis-protocol data in the
