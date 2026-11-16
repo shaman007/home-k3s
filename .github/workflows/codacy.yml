@@ -44,6 +44,8 @@ jobs:
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     name: Codacy Security Scan (${{ matrix.tool }})
     runs-on: ubuntu-26.04
+    # Three 20-minute attempts plus checkout, backoff, and SARIF upload.
+    timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
@@ -64,11 +66,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
-      - name: Run Codacy Analysis CLI
+      - name: Codacy attempt 1
+        id: attempt_1
+        continue-on-error: true
+        timeout-minutes: 20
         uses: ./.github/actions/codacy-scan
         with:
-          # Keep identical rules on pushes and fork pull requests.
+          tool: ${{ matrix.tool }}
+          output: ${{ env.SARIF_FILE }}
+
+      - name: Prepare retry 2
+        if: steps.attempt_1.outcome == 'failure'
+        env:
+          SCAN_OUTPUT: ${{ env.SARIF_FILE }}
+        run: |
+          # Discard only this scanner's incomplete report before retrying.
+          [[ "$SCAN_OUTPUT" == results-*.sarif && "$SCAN_OUTPUT" != */* ]]
+          rm -f -- "$SCAN_OUTPUT"
+          sleep 10
+
+      - name: Codacy attempt 2
+        id: attempt_2
+        if: steps.attempt_1.outcome == 'failure'
+        continue-on-error: true
+        timeout-minutes: 20
+        uses: ./.github/actions/codacy-scan
+        with:
+          tool: ${{ matrix.tool }}
+          output: ${{ env.SARIF_FILE }}
+
+      - name: Prepare retry 3
+        if: steps.attempt_2.outcome == 'failure'
+        env:
+          SCAN_OUTPUT: ${{ env.SARIF_FILE }}
+        run: |
+          # Discard only this scanner's incomplete report before retrying.
+          [[ "$SCAN_OUTPUT" == results-*.sarif && "$SCAN_OUTPUT" != */* ]]
+          rm -f -- "$SCAN_OUTPUT"
+          sleep 30
+
+      - name: Codacy attempt 3
+        id: attempt_3
+        if: steps.attempt_2.outcome == 'failure'
+        timeout-minutes: 20
+        uses: ./.github/actions/codacy-scan
+        with:
           tool: ${{ matrix.tool }}
           output: ${{ env.SARIF_FILE }}
 
