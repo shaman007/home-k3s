@@ -275,7 +275,6 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: '-1'
 spec:
-  refreshInterval: 900
   provider:
     vault:
       server: https://openbao-active.openbao.svc.cluster.local:8200
