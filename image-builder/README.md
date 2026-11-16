@@ -51,3 +51,17 @@ uses the namespace-bound `vault-auth` ServiceAccount and the
 policy is separate from Harbor credential access. Replace this shared
 credential with the scoped robot account described above before treating Harbor
 least privilege as complete.
+
+## One-off AIY build resources
+
+The AIY build-request generator produces a Job and immutable source ConfigMap
+named `aiy-voice-build-<16 lowercase hexadecimal source-hash characters>`.
+The applications AppProject excludes only these exact name shapes for batch/Job
+and core/ConfigMap from orphan warnings. `orphanedResources.warn` remains true;
+other resource kinds and names are still checked. These exceptions affect
+reporting only: the artifacts are not adopted into GitOps or pruned by Argo.
+
+Jobs inherit the builder's 86400-second post-completion TTL. Link the source
+ConfigMap to its created Job with the actual Job UID so garbage collection
+removes it too; the offline generator cannot know a server-assigned UID.
+The existing finished AIY build artifacts were checked and cleaned on 2026-11-16.

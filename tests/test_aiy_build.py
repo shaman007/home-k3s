@@ -2,11 +2,14 @@
 
 import ast
 import base64
+import fnmatch
 import hashlib
 import importlib.util
 import io
 import tarfile
 import unittest
+
+import yaml
 from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location(
@@ -56,6 +59,37 @@ class BuildRequestTests(unittest.TestCase):
                         self.assertIn(dependency, builder.FILES)
                         self.assertIn(dependency, dockerfile)
                         self.assertIn("!" + dependency, allowed)
+
+    def test_orphan_exceptions_only_match_generated_job_and_configmap_names(self):
+        """Retain orphan warnings for unrelated names, groups and resource kinds."""
+        project = yaml.safe_load((Path(__file__).resolve().parents[1] /
+            "argocd/application-project-applications.yaml").read_text())
+        orphaned = project["spec"]["orphanedResources"]
+        self.assertIs(orphaned["warn"], True)
+        exceptions = [item for item in orphaned["ignore"]
+                      if item["name"].startswith("aiy-voice-build-")]
+        self.assertEqual({(item["group"], item["kind"]) for item in exceptions},
+                         {("batch", "Job"), ("", "ConfigMap")})
+        self.assertEqual(len(exceptions), 2)
+
+        def ignored(group, kind, name):
+            return any(item["group"] == group and item["kind"] == kind
+                       and fnmatch.fnmatchcase(name, item["name"]) for item in exceptions)
+
+        for item in builder.render()["items"]:
+            group = item["apiVersion"].split("/")[0] if "/" in item["apiVersion"] else ""
+            self.assertTrue(ignored(group, item["kind"], item["metadata"]["name"]))
+        for name in ("aiy-voice-build-", "aiy-voice-build-debug", "unrelated-build-0123456789abcdef",
+                     "aiy-voice-build-0123456789abcde", "aiy-voice-build-0123456789abcdef0",
+                     "aiy-voice-build-0123456789abcdeg", "aiy-voice-build-0123456789ABCDEF"):
+            with self.subTest(name=name):
+                self.assertFalse(ignored("batch", "Job", name))
+                self.assertFalse(ignored("", "ConfigMap", name))
+        name = "aiy-voice-build-0123456789abcdef"
+        for group, kind in (("", "Secret"), ("", "PersistentVolumeClaim"),
+                            ("apps", "Deployment"), ("other.example", "Job")):
+            with self.subTest(group=group, kind=kind):
+                self.assertFalse(ignored(group, kind, name))
 
     def test_invalid_destination_tag_is_rejected(self):
         """Verify invalid destination tag is rejected."""

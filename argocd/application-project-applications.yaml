@@ -130,3 +130,11 @@ spec:
       - group: "networking.k8s.io"
         kind: NetworkPolicy
         name: "mastodon-allow-egress-ollama"
+      # One-off AIY build artifacts use exactly 16 lowercase source-hash digits.
+      # Jobs expire after 24h; source ConfigMaps are garbage-collected with them.
+      - group: batch
+        kind: Job
+        name: "aiy-voice-build-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]"
+      - group: ""
+        kind: ConfigMap
+        name: "aiy-voice-build-[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]"
