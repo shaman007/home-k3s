@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def load(name, filename):
+    "Load the reviewed converter and preparation modules directly."
     spec = importlib.util.spec_from_file_location(name, ROOT / filename)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -20,13 +21,17 @@ PREPARE = load("codacy_prepare", "tools/ci/prepare_codacy_sarif.py")
 
 
 class CodacyJsonTests(unittest.TestCase):
+    """Check finding preservation and rejection of incomplete analyzer output."""
+
     def issue(self, rule="Bandit_B101"):
+        "Build a Codacy issue with a Unicode diagnostic and wrapped location."
         return {"Issue": {"patternId": rule, "filename": "aiy-voice/server.py",
                           "message": {"text": "Unicode message: česky, русский"},
                           "level": "High", "category": "Security",
                           "location": {"LineLocation": {"line": 12}}}}
 
     def test_keeps_all_issues_without_reading_sources(self):
+        "Retain repeated findings, shared rules and original analyzer fields."
         records = [self.issue(), self.issue(), self.issue("Bandit_B102")]
         report = PREPARE.prepare(CONVERTER.convert(records, "bandit"), False)
         run = report["runs"][0]
@@ -36,6 +41,7 @@ class CodacyJsonTests(unittest.TestCase):
         self.assertEqual(run["results"][0]["level"], "error")
 
     def test_file_errors_unknown_records_and_bad_locations_fail(self):
+        "Reject incomplete scans and paths outside the checkout."
         for records in ([{"FileError": {"filename": "broken.py", "message": "decode"}}],
                         [{"FileMetrics": {}}], [{}], None):
             with self.subTest(records=records), self.assertRaises(ValueError):
@@ -46,11 +52,13 @@ class CodacyJsonTests(unittest.TestCase):
             CONVERTER.convert([record], "bandit")
 
     def test_parser_errors_remain_fatal_after_conversion(self):
+        "Keep the existing Python parser-error upload gate."
         report = CONVERTER.convert([self.issue("PyLintPython3_E0001")], "pylintpython3")
         with self.assertRaisesRegex(ValueError, "parser errors"):
             PREPARE.prepare(report, True)
 
     def test_empty_success_and_wrapped_fields(self):
+        "Accept empty complete scans and both supported Circe field variants."
         self.assertEqual(CONVERTER.convert([], "bandit")["runs"][0]["results"], [])
         record = copy.deepcopy(self.issue())
         record["Issue"]["patternId"] = {"value": "Bandit_B101"}
@@ -60,6 +68,7 @@ class CodacyJsonTests(unittest.TestCase):
         self.assertEqual(result["locations"][0]["physicalLocation"]["region"]["startLine"], 1)
 
     def test_official_serialized_severity_labels(self):
+        "Map the official enum labels without altering their original metadata."
         for label, expected in (("Error", "error"), ("High", "error"),
                                 ("Warning", "warning"), ("Info", "note")):
             with self.subTest(label=label):
