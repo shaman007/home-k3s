@@ -1,3 +1,3 @@
 # Full local/CI lint gate; Codacy remains the independent published scanner.
-pylint==4.1.3
+pylint==4.1.4
 pylint-django==2.8.0
