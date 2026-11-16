@@ -42,7 +42,14 @@ def run(args):
 def command(name):
     """Read the deployed mail container image and command from its manifest."""
     doc = yaml.safe_load((ROOT / ("mail/deployment-" + name + ".yaml")).read_text())
-    c = doc["spec"]["template"]["spec"]["containers"][0]
+    containers = [
+        container
+        for container in doc["spec"]["template"]["spec"]["containers"]
+        if container["name"] == name + "-mail"
+    ]
+    if len(containers) != 1:
+        raise AssertionError("Expected exactly one " + name + "-mail container")
+    c = containers[0]
     caps = CAPS if name == "dovecot" else [cap for cap in CAPS if cap != "SYS_CHROOT"]
     if not c["securityContext"]["capabilities"] == {"drop": ["ALL"], "add": caps}:
         raise AssertionError

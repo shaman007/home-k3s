@@ -1,5 +1,6 @@
 """Keep opt-in SMTP fault injection isolated from production routing and data."""
 
+import copy
 import importlib.util
 import sys
 import tempfile
@@ -24,6 +25,48 @@ RUNTIME_SPEC.loader.exec_module(runtime)
 
 class MailRuntimeFixtureTests(unittest.TestCase):
     """Prevent real domain rewriting and recursive duplicate-setting logging."""
+
+    def test_daemon_selection_is_independent_of_sidecar_order(self):
+        """Probe the named daemon even when another container uses the same image."""
+        for name in ("postfix", "dovecot"):
+            source = probe.yaml.safe_load(
+                (ROOT / ("mail/deployment-" + name + ".yaml")).read_text()
+            )
+            daemon = next(
+                item for item in source["spec"]["template"]["spec"]["containers"]
+                if item["name"] == name + "-mail"
+            )
+            sidecar = {
+                "name": "same-image-sidecar",
+                "image": daemon["image"],
+                "securityContext": {"capabilities": {"add": ["SYS_ADMIN"]}},
+            }
+            for containers in ([sidecar, daemon], [daemon, sidecar]):
+                with self.subTest(daemon=name, first=containers[0]["name"]):
+                    document = copy.deepcopy(source)
+                    document["spec"]["template"]["spec"]["containers"] = containers
+                    with patch.object(probe.yaml, "safe_load", return_value=document):
+                        args, selected = probe.command(name)
+                    self.assertIs(selected, daemon)
+                    self.assertIn("--cap-drop=ALL", args)
+                    self.assertNotIn("--cap-add=SYS_ADMIN", args)
+
+    def test_missing_or_duplicate_daemon_names_fail_closed(self):
+        """Never fall back to another container when the daemon identity is ambiguous."""
+        source = probe.yaml.safe_load(
+            (ROOT / "mail/deployment-postfix.yaml").read_text()
+        )
+        daemon = next(
+            item for item in source["spec"]["template"]["spec"]["containers"]
+            if item["name"] == "postfix-mail"
+        )
+        for containers in ([], [dict(daemon, name="other")], [daemon, daemon]):
+            with self.subTest(count=len(containers)):
+                document = copy.deepcopy(source)
+                document["spec"]["template"]["spec"]["containers"] = containers
+                with patch.object(probe.yaml, "safe_load", return_value=document), \
+                        self.assertRaisesRegex(AssertionError, "exactly one postfix-mail"):
+                    probe.command("postfix")
 
     def test_fixture_delivers_only_locally_without_duplicate_settings(self):
         """Rewriting a bare alias must never send mail to the production domain."""
