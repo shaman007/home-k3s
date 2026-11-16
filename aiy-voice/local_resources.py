@@ -111,6 +111,10 @@ class LocalResources:
         self.timers = TimerStore(state_path)
         self.volume = Volume(self.timers.db)
         self.reminders = Reminders(self.timers.db)
+        self.timers.db.execute(
+            "CREATE TABLE IF NOT EXISTS voice_notes (id TEXT PRIMARY KEY, text TEXT, created REAL)"
+        )
+        self.timers.db.commit()
         self.light = IndicatorState(set_led)
         self.play_alarm = play_alarm
         self.ringing = None
@@ -143,7 +147,23 @@ class LocalResources:
     async def command(self, event):
         """Validate and dispatch only the allowlisted appliance operations."""
         action = event.get("action")
+        if action == "save_note":
+            text = event.get("text")
+            if not isinstance(text, str) or not 1 <= len(text.strip()) <= 4000:
+                raise ValueError("Invalid note")
+            if self.timers.db.execute("SELECT count(*) FROM voice_notes").fetchone()[0] >= 100:
+                raise ValueError("Note storage full")
+            self.timers.db.execute(
+                "INSERT OR IGNORE INTO voice_notes VALUES (?, ?, ?)",
+                (event["id"], text.strip(), time.time()),
+            )
+            self.timers.db.commit()
+            return {"ok": True, "note_id": event["id"]}
+        if action == "list_notes":
+            return {"notes": [dict(zip(("id", "text", "created"), row)) for row in
+                              self.timers.db.execute("SELECT * FROM voice_notes ORDER BY created")]}
         if action in {
+            "update_reminder_interval",
             "create_daily_reminder",
             "list_daily_reminders",
             "acknowledge_reminder",
@@ -197,6 +217,8 @@ class LocalResources:
     def _reminder_command(self, event):
         """Apply only the four reminder operations accepted by command()."""
         action = event["action"]
+        if action == "update_reminder_interval":
+            return self.reminders.update_interval(event.get("reminder_id"), event.get("repeat_minutes"))
         if action == "create_daily_reminder":
             audio = base64.b64decode(event.get("audio", ""), validate=True)
             return self.reminders.create(

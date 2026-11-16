@@ -319,6 +319,25 @@ class Reminders:
                 )
         return result
 
+    def update_interval(self, identity, minutes, stamp=None):
+        """Persist a new interval without replaying old slots or losing completion facts."""
+        row = self.row(identity)
+        if (isinstance(minutes, bool) or not isinstance(minutes, int)
+                or not 1 <= minutes <= 720 or minutes <= 2 * row["jitter"]):
+            raise ValueError("Invalid repeat interval for configured jitter")
+        if minutes == row["repeat"]:
+            return {"ok": True, "reminder": self.describe(identity, stamp)}
+        now = self.now(stamp)
+        row["repeat"] = minutes
+        elapsed = [slot for slot, at in self.slots(row, now.date())
+                   if at.timestamp() <= now.timestamp()]
+        with self.db:
+            self.db.execute(
+                "UPDATE daily_reminders SET repeat=?, last_date=?, last_slot=? WHERE id=?",
+                (minutes, now.date().isoformat(), max(elapsed, default=-1), identity),
+            )
+        return {"ok": True, "reminder": self.describe(identity, stamp)}
+
     def delivered(self, event):
         """Mark a reminder slot as delivered for the current day."""
         self.db.execute(

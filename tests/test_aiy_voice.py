@@ -69,6 +69,9 @@ class VoiceTests(unittest.TestCase):
                 "list_daily_reminders",
                 "acknowledge_reminder",
                 "disable_daily_reminder",
+                "update_reminder_interval",
+                "save_note",
+                "list_notes",
             },
         )
 

@@ -331,3 +331,28 @@ the current database; disable affected tasks before any deliberate downgrade.
 passed, including weekdays, early weekly completion, jitter deadlines, stability,
 legacy state and recovery. Live API checks accepted the extended schema and
 identified free-form completions; unclear wording can still require clarification.
+
+## Persistent notes and changing reminder intervals
+
+`save_note` stores an explicitly requested user note in the Pi's existing
+`/var/lib/aiy-voice/timers.sqlite3`, in the additive `voice_notes` table.
+`list_notes` retrieves it after reconnects, backend container replacements and
+appliance restarts. This is explicit note storage, not automatic conversation
+history. The device acknowledges only after committing; preserve and back up
+this database during recovery. Notes and device command results are private
+runtime data; never put credentials in notes. Backend device-command audit rows
+on the existing PVC also contain successful `list_notes` results.
+
+`update_reminder_interval` changes an existing task's repeat interval without
+recreating the task, cached speech, weekday/jitter policy or completion records.
+Elapsed slots on the new grid are skipped so changing frequency does not play an
+extra catch-up signal. The default requested repeat interval is now60minutes;
+existing tasks require an explicit update. The existing ±10minute jitter remains,
+so an hourly nominal grid can produce actual gaps of40–80minutes.
+
+Both backend tool definitions and Pi `local_resources.py` / `reminders.py` must
+be updated together before these tools can work. The existing dotfiles installer
+already copies both Pi modules; no new packages or service configuration are
+required. These changes are prepared locally, not activated. All51 AIY tests passed, including two new persistence
+regressions and the19 existing reminder tests; a physical voice test and
+confirmation of the live hourly schedules remain necessary.
