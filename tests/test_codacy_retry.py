@@ -45,11 +45,19 @@ class CodacyRetryTests(unittest.TestCase):
                 '#!/bin/bash\n'
                 'if [[ "$1" == run ]]; then\n'
                 '  printf "%s\\n" "$@" > "$DOCKER_ARGS"\n'
+                '  previous=""\n'
+                '  for arg in "$@"; do\n'
+                '    if [[ "$previous" == --output ]]; then printf "[]" > "$arg"; fi\n'
+                '    previous="$arg"\n'
+                '  done\n'
                 '  exit "$SCAN_EXIT"\n'
                 'fi\n'
                 'printf "%s\\n" "$@" > "$CLEANUP_ARGS"\n'
             )
             docker.chmod(0o755)
+            converter = root / "tools/ci/codacy_json_to_sarif.py"
+            converter.parent.mkdir(parents=True)
+            converter.write_text((ROOT / "tools/ci/codacy_json_to_sarif.py").read_text())
             for exit_code in (0, 7):
                 with self.subTest(exit_code=exit_code):
                     result = subprocess.run(
@@ -67,7 +75,7 @@ class CodacyRetryTests(unittest.TestCase):
                     self.assertIn("JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8", args)
                     self.assertIn("--fail-if-incomplete", args)
                     self.assertEqual(args[args.index("--tool-timeout") + 1], "20minutes")
-                    self.assertEqual(args[args.index("--format") + 1], "sarif")
+                    self.assertEqual(args[args.index("--format") + 1], "json")
                     self.assertIn("@sha256:", next(a for a in args if a.startswith("codacy/")))
                     self.assertEqual((root / "cleanup").read_text().splitlines(),
                                      ["rm", "--force", "codacy-123-1-bandit"])

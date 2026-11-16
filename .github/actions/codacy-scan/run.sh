@@ -10,15 +10,17 @@ esac
 : "${GITHUB_WORKSPACE:?}"
 commit_sha="$(/usr/bin/git rev-parse --verify HEAD)"
 scan_container="codacy-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${CODACY_TOOL}"
+raw_output="$(mktemp /tmp/codacy-"${CODACY_TOOL}".XXXXXX.json)"
 cleanup() {
   docker rm --force "$scan_container" >/dev/null 2>&1 || true
+  rm -f -- "$raw_output"
 }
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # The upstream shell wrapper drops host JVM settings. Pass them explicitly to
-# the Java 8 CLI container so valid non-ASCII source can be read for SARIF hashes.
+# the Java 8 CLI container. JSON avoids its source-decoding SARIF formatter.
 docker run --rm --name "$scan_container" \
   --env JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8 \
   --env LANG=C.UTF-8 \
@@ -34,7 +36,10 @@ docker run --rm --name "$scan_container" \
   --tool "$CODACY_TOOL" \
   --tool-timeout 20minutes \
   --fail-if-incomplete \
-  --format sarif \
-  --output "$GITHUB_WORKSPACE/$CODACY_OUTPUT" \
+  --format json \
+  --output "$raw_output" \
   --gh-code-scanning-compat \
   --max-allowed-issues 2147483647
+
+python3 "$GITHUB_WORKSPACE/tools/ci/codacy_json_to_sarif.py" \
+  "$raw_output" "$GITHUB_WORKSPACE/$CODACY_OUTPUT" "$CODACY_TOOL"
