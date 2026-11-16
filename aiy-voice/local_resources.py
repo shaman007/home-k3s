@@ -1,5 +1,9 @@
 """Pi-local persistent timers and bounded LED effects; no shell or generic GPIO RPC."""
+
+import re
+
 import asyncio
+from dataclasses import dataclass
 import base64
 import math
 from pathlib import Path
@@ -7,47 +11,72 @@ import sqlite3
 import struct
 import time
 
-from reminders import Reminders
+from reminders import Reminders, ReminderSpec
 
-COLORS = {'red': (64, 0, 0), 'green': (0, 64, 0), 'blue': (0, 0, 64),
-          'yellow': (64, 32, 0), 'white': (32, 32, 32), 'off': (0, 0, 0)}
+COLORS = {
+    "red": (64, 0, 0),
+    "green": (0, 64, 0),
+    "blue": (0, 0, 64),
+    "yellow": (64, 32, 0),
+    "white": (32, 32, 32),
+    "off": (0, 0, 0),
+}
 
 
 class TimerStore:
     """Persist deadlines on the appliance; backend or network loss does not cancel them."""
+
     def __init__(self, path):
         self.db = sqlite3.connect(path)
-        self.db.execute('CREATE TABLE IF NOT EXISTS timers (id TEXT PRIMARY KEY, due REAL, label TEXT, state TEXT)')
+        self.db.execute(
+            "CREATE TABLE IF NOT EXISTS timers (id TEXT PRIMARY KEY, due REAL, label TEXT, state"
+            " TEXT)"
+        )
         self.db.commit()
 
     def create(self, timer_id, seconds, label, now=None):
-        if isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or not 1 <= seconds <= 604800:
-            raise ValueError('Timer duration must be between 1 second and 7 days')
+        """Create a new timer if it does not exist and limits allow, returning its state."""
+        if (
+            isinstance(seconds, bool)
+            or not isinstance(seconds, (int, float))
+            or not 1 <= seconds <= 604800
+        ):
+            raise ValueError("Timer duration must be between 1 second and 7 days")
         if not isinstance(label, str) or len(label) > 100:
-            raise ValueError('Timer label is too long')
-        existing = next((item for item in self.list_all() if item['id'] == timer_id), None)
+            raise ValueError("Timer label is too long")
+        existing = next((item for item in self.list_all() if item["id"] == timer_id), None)
         if existing:
             return existing
         if len(self.active()) >= 16:
-            raise ValueError('At most 16 active timers are supported')
+            raise ValueError("At most 16 active timers are supported")
         due = (time.time() if now is None else now) + seconds
-        self.db.execute('INSERT OR IGNORE INTO timers VALUES (?, ?, ?, ?)', (timer_id, due, label, 'pending'))
+        self.db.execute(
+            "INSERT OR IGNORE INTO timers VALUES (?, ?, ?, ?)", (timer_id, due, label, "pending")
+        )
         self.db.commit()
-        return next(item for item in self.list_all() if item['id'] == timer_id)
+        return next(item for item in self.list_all() if item["id"] == timer_id)
 
     def list_all(self):
-        return [{'id': row[0], 'due': row[1], 'label': row[2], 'state': row[3]}
-                for row in self.db.execute('SELECT * FROM timers ORDER BY due')]
+        """Return all stored timers ordered by their due time."""
+        return [
+            {"id": row[0], "due": row[1], "label": row[2], "state": row[3]}
+            for row in self.db.execute("SELECT * FROM timers ORDER BY due")
+        ]
 
     def active(self):
+        """Return pending or ringing timers with their remaining seconds calculated."""
         now = time.time()
-        return [dict(item, remaining_seconds=max(0, round(item['due'] - now, 1)))
-                for item in self.list_all() if item['state'] in ('pending', 'ringing')]
+        return [
+            dict(item, remaining_seconds=max(0, round(item["due"] - now, 1)))
+            for item in self.list_all()
+            if item["state"] in ("pending", "ringing")
+        ]
 
     def set_state(self, timer_id, state):
-        if state not in ('ringing', 'done', 'cancelled'):
-            raise ValueError('Invalid timer state')
-        self.db.execute('UPDATE timers SET state=? WHERE id=?', (state, timer_id))
+        """Update the state of a specific timer to ringing, done, or cancelled."""
+        if state not in ("ringing", "done", "cancelled"):
+            raise ValueError("Invalid timer state")
+        self.db.execute("UPDATE timers SET state=? WHERE id=?", (state, timer_id))
         self.db.commit()
 
 
@@ -57,115 +86,176 @@ def alarm_pcm():
     for _ in range(3):
         for sample in range(7200):
             envelope = min(1, sample / 240, (7200 - sample) / 240)
-            output.extend(struct.pack('<h', int(5000 * envelope * math.sin(2 * math.pi * 880 * sample / 24000))))
-        output.extend(b'\0\0' * 4800)
+            output.extend(
+                struct.pack(
+                    "<h", int(5000 * envelope * math.sin(2 * math.pi * 880 * sample / 24000))
+                )
+            )
+        output.extend(b"\0\0" * 4800)
     return bytes(output)
+
+
+@dataclass
+class IndicatorState:
+    """Keep the LED callback, base color and temporary effect together."""
+
+    set_led: object
+    base: tuple = (0, 16, 0)
+    effect: asyncio.Task | None = None
 
 
 class LocalResources:
     """Allowlisted appliance operations and a scheduler independent of the network."""
+
     def __init__(self, state_path, set_led, play_alarm):
         self.timers = TimerStore(state_path)
         self.volume = Volume(self.timers.db)
         self.reminders = Reminders(self.timers.db)
-        self.set_led = set_led
+        self.light = IndicatorState(set_led)
         self.play_alarm = play_alarm
-        self.base = (0, 16, 0)
-        self.effect = None
         self.ringing = None
         self.engaged = False
 
     def status(self, color):
-        self.base = color
-        if self.effect is None or self.effect.done():
-            self.set_led(color)
+        """Set the base LED color and apply it if no temporary effect is running."""
+        self.light.base = color
+        if self.light.effect is None or self.light.effect.done():
+            self.light.set_led(color)
 
     async def blink(self, color, seconds):
+        """Blink the LED with the specified color for the given duration."""
         try:
             end = time.monotonic() + seconds
             while time.monotonic() < end:
-                self.set_led(color)
+                self.light.set_led(color)
                 await asyncio.sleep(0.25)
-                self.set_led((0, 0, 0))
+                self.light.set_led((0, 0, 0))
                 await asyncio.sleep(0.25)
         finally:
-            self.set_led(self.base)
+            self.light.set_led(self.light.base)
 
     def start_effect(self, color, seconds):
-        if self.effect and not self.effect.done():
-            self.effect.cancel()
-        self.effect = asyncio.create_task(self.blink(color, seconds))
+        """Cancel any running LED effect and start a new blink task."""
+        if self.light.effect and not self.light.effect.done():
+            self.light.effect.cancel()
+        self.light.effect = asyncio.create_task(self.blink(color, seconds))
 
     async def command(self, event):
-        action = event.get('action')
-        if action == 'create_daily_reminder':
-            audio = base64.b64decode(event.get('audio', ''), validate=True)
-            return self.reminders.create(event['id'], event.get('text'), event.get('start_time'),
-                                         event.get('end_time'), event.get('repeat_minutes'),
-                                         event.get('confirmation_phrase'), audio, event.get('first_date'),
-                                         weekdays=event.get('weekdays'), jitter_minutes=event.get('jitter_minutes', 0))
-        if action == 'list_daily_reminders':
-            return {'reminders': self.reminders.list()}
-        if action == 'acknowledge_reminder':
-            return self.reminders.acknowledge(event.get('confirmation'), event.get('reminder_id'))
-        if action == 'disable_daily_reminder':
-            return self.reminders.disable(event.get('reminder_id'))
-        if action == 'blink':
-            color, seconds = event.get('color'), event.get('seconds')
-            if color not in COLORS or isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or not 1 <= seconds <= 30:
-                raise ValueError('Unsupported color/duration')
+        """Validate and dispatch only the allowlisted appliance operations."""
+        action = event.get("action")
+        if action in {
+            "create_daily_reminder",
+            "list_daily_reminders",
+            "acknowledge_reminder",
+            "disable_daily_reminder",
+        }:
+            return self._reminder_command(event)
+        if action == "blink":
+            color, seconds = event.get("color"), event.get("seconds")
+            if (
+                color not in COLORS
+                or isinstance(seconds, bool)
+                or not isinstance(seconds, (int, float))
+                or not 1 <= seconds <= 30
+            ):
+                raise ValueError("Unsupported color/duration")
             self.start_effect(COLORS[color], seconds)
-            return {'ok': True}
-        if action == 'set_timer':
-            return self.timers.create(event['id'], event.get('seconds'), event.get('label', ''))
-        if action == 'list_timers':
-            return {'timers': self.timers.active()}
-        if action == 'cancel_timer':
-            self.timers.set_state(event.get('timer_id'), 'cancelled')
-            return {'ok': True, 'timers': self.timers.active()}
-        if action == 'set_volume':
-            return await self.volume.set(event.get('level'))
-        if action == 'adjust_volume':
-            return await self.volume.adjust(event.get('delta'))
-        if action == 'status':
-            temp = Path('/sys/class/thermal/thermal_zone0/temp')
-            return {'volume_percent': await self.volume.get(), 'uptime_seconds': float(Path('/proc/uptime').read_text().split()[0]),
-                    'temperature_c': int(temp.read_text()) / 1000 if temp.exists() else None,
-                    'timers': self.timers.active(), 'reminders': self.reminders.list()}
-        raise ValueError('Unsupported device operation')
+            return {"ok": True}
+        if action in {"set_timer", "list_timers", "cancel_timer"}:
+            return self._timer_command(event)
+        if action == "set_volume":
+            return await self.volume.set(event.get("level"))
+        if action == "adjust_volume":
+            return await self.volume.adjust(event.get("delta"))
+        if action == "status":
+            temp = Path("/sys/class/thermal/thermal_zone0/temp")
+            return {
+                "volume_percent": await self.volume.get(),
+                "uptime_seconds": float(
+                    Path("/proc/uptime").read_text(encoding="utf-8").split()[0]
+                ),
+                "temperature_c": (
+                    int(temp.read_text(encoding="utf-8")) / 1000 if temp.exists() else None
+                ),
+                "timers": self.timers.active(),
+                "reminders": self.reminders.list(),
+            }
+        raise ValueError("Unsupported device operation")
+
+    def _timer_command(self, event):
+        """Apply an allowlisted timer operation and return its current state."""
+        action = event["action"]
+        if action == "set_timer":
+            return self.timers.create(event["id"], event.get("seconds"), event.get("label", ""))
+        if action == "list_timers":
+            return {"timers": self.timers.active()}
+        if action == "cancel_timer":
+            self.timers.set_state(event.get("timer_id"), "cancelled")
+            return {"ok": True, "timers": self.timers.active()}
+        raise ValueError("Unsupported timer operation")
+
+    def _reminder_command(self, event):
+        """Apply only the four reminder operations accepted by command()."""
+        action = event["action"]
+        if action == "create_daily_reminder":
+            audio = base64.b64decode(event.get("audio", ""), validate=True)
+            return self.reminders.create(
+                event["id"],
+                ReminderSpec(
+                    event.get("text"),
+                    event.get("start_time"),
+                    event.get("end_time"),
+                    event.get("repeat_minutes"),
+                    event.get("confirmation_phrase"),
+                    weekdays=event.get("weekdays"),
+                    jitter_minutes=event.get("jitter_minutes", 0),
+                ),
+                audio,
+                first_date=event.get("first_date"),
+            )
+        if action == "list_daily_reminders":
+            return {"reminders": self.reminders.list()}
+        if action == "acknowledge_reminder":
+            return self.reminders.acknowledge(event.get("confirmation"), event.get("reminder_id"))
+        if action == "disable_daily_reminder":
+            return self.reminders.disable(event.get("reminder_id"))
+        raise ValueError("Unsupported reminder operation")
 
     async def scheduler(self):
+        """Continuously check for due timers and reminders to trigger alarms and effects."""
         while True:
             for timer in self.timers.active():
                 if self.engaged:
                     break
-                if timer['due'] <= time.time() and timer['state'] in ('pending', 'ringing'):
-                    self.timers.set_state(timer['id'], 'ringing')
-                    self.ringing = timer['id']
-                    self.start_effect(COLORS['yellow'], 6)
+                if timer["due"] <= time.time() and timer["state"] in ("pending", "ringing"):
+                    self.timers.set_state(timer["id"], "ringing")
+                    self.ringing = timer["id"]
+                    self.start_effect(COLORS["yellow"], 6)
                     await self.play_alarm(alarm_pcm())
-                    self.timers.set_state(timer['id'], 'done')
+                    self.timers.set_state(timer["id"], "done")
                     self.ringing = None
             for reminder in self.reminders.due():
                 if self.engaged:
                     break
                 # A confirmation can arrive while an earlier reminder is playing.
-                if reminder['id'] not in {item['id'] for item in self.reminders.due()}:
+                if reminder["id"] not in {item["id"] for item in self.reminders.due()}:
                     continue
-                self.start_effect(COLORS['yellow'], 6)
-                await self.play_alarm(reminder['audio'])
+                self.start_effect(COLORS["yellow"], 6)
+                await self.play_alarm(reminder["audio"])
                 self.reminders.delivered(reminder)
             await asyncio.sleep(0.25)
 
     async def close(self):
-        if self.effect:
-            self.effect.cancel()
-            await asyncio.gather(self.effect, return_exceptions=True)
+        """Cancel active effects and close the timer database connection."""
+        if self.light.effect:
+            self.light.effect.cancel()
+            await asyncio.gather(self.light.effect, return_exceptions=True)
         self.timers.db.close()
 
 
 class AudioOutput:
     """Serialize local alarms and streamed speech through the same ALSA device."""
+
     def __init__(self, device):
         self.device = device
         self.process = None
@@ -173,12 +263,29 @@ class AudioOutput:
         self.interrupted = None
 
     async def play(self, pcm):
+        """Write PCM data to the ALSA playback process, starting it if necessary."""
         async with self.lock:
             if self.process is None or self.process.returncode is not None:
                 self.process = await asyncio.create_subprocess_exec(
-                    '/usr/bin/aplay', '-q', '-D', self.device, '-t', 'raw', '-f', 'S16_LE',
-                    '-r', '24000', '-c', '1', '-B', '100000', '-F', '20000',
-                    stdin=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+                    "/usr/bin/aplay",
+                    "-q",
+                    "-D",
+                    self.device,
+                    "-t",
+                    "raw",
+                    "-f",
+                    "S16_LE",
+                    "-r",
+                    "24000",
+                    "-c",
+                    "1",
+                    "-B",
+                    "100000",
+                    "-F",
+                    "20000",
+                    stdin=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
             process = self.process
             try:
                 process.stdin.write(pcm)
@@ -188,6 +295,7 @@ class AudioOutput:
                     raise
 
     async def finish(self):
+        """Close the ALSA input stream and wait for the playback process to complete."""
         async with self.lock:
             if self.process:
                 process = self.process
@@ -196,7 +304,7 @@ class AudioOutput:
                 code = process.returncode
                 self.process = None
                 if code and process is not self.interrupted:
-                    raise RuntimeError('ALSA playback failed')
+                    raise RuntimeError("ALSA playback failed")
 
     async def interrupt(self):
         """Stop an idle reminder/beep before capturing the user's confirmation."""
@@ -213,15 +321,22 @@ class AudioOutput:
 
 class Volume:
     """Control only the Voice Bonnet speaker mixer; persist the requested level."""
+
     def __init__(self, db):
         self.db = db
-        db.execute('CREATE TABLE IF NOT EXISTS preferences (name TEXT PRIMARY KEY, value INTEGER)')
+        db.execute("CREATE TABLE IF NOT EXISTS preferences (name TEXT PRIMARY KEY, value INTEGER)")
         db.commit()
 
     async def mixer(self, *arguments):
+        """Execute an amixer command and return its stdout output."""
         process = await asyncio.create_subprocess_exec(
-            '/usr/bin/amixer', '-c', 'aiyvoicebonnet', *arguments,
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL)
+            "/usr/bin/amixer",
+            "-c",
+            "aiyvoicebonnet",
+            *arguments,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL
+        )
         try:
             output, _error = await asyncio.wait_for(process.communicate(), 5)
         except TimeoutError:
@@ -229,31 +344,38 @@ class Volume:
             await process.wait()
             raise
         if process.returncode:
-            raise OSError('Speaker mixer command failed')
-        return output.decode('ascii')
+            raise OSError("Speaker mixer command failed")
+        return output.decode("ascii")
 
     async def get(self):
-        import re
-        matches = re.findall(r'\[(\d+)%\]', await self.mixer('sget', 'Speaker'))
+        """Read the current speaker volume percentage from the mixer."""
+        matches = re.findall(r"\[(\d+)%\]", await self.mixer("sget", "Speaker"))
         if not matches:
-            raise ValueError('Speaker mixer returned no level')
+            raise ValueError("Speaker mixer returned no level")
         return int(matches[0])
 
     async def set(self, level):
+        """Set the speaker volume to a specific percentage and persist it."""
         if isinstance(level, bool) or not isinstance(level, (int, float)) or not 0 <= level <= 100:
-            raise ValueError('Volume must be between 0 and 100 percent')
+            raise ValueError("Volume must be between 0 and 100 percent")
         level = round(level)
-        await self.mixer('sset', 'Speaker', str(level) + '%')
-        self.db.execute('INSERT OR REPLACE INTO preferences VALUES (?, ?)', ('volume', level))
+        await self.mixer("sset", "Speaker", str(level) + "%")
+        self.db.execute("INSERT OR REPLACE INTO preferences VALUES (?, ?)", ("volume", level))
         self.db.commit()
-        return {'ok': True, 'volume_percent': await self.get()}
+        return {"ok": True, "volume_percent": await self.get()}
 
     async def adjust(self, delta):
-        if isinstance(delta, bool) or not isinstance(delta, (int, float)) or not -100 <= delta <= 100:
-            raise ValueError('Invalid volume adjustment')
+        """Adjust the current speaker volume by a delta, clamping to 0-100."""
+        if (
+            isinstance(delta, bool)
+            or not isinstance(delta, (int, float))
+            or not -100 <= delta <= 100
+        ):
+            raise ValueError("Invalid volume adjustment")
         return await self.set(max(0, min(100, await self.get() + delta)))
 
     async def restore(self):
-        row = self.db.execute('SELECT value FROM preferences WHERE name=?', ('volume',)).fetchone()
+        """Apply the persisted volume setting from the database to the mixer."""
+        row = self.db.execute("SELECT value FROM preferences WHERE name=?", ("volume",)).fetchone()
         if row:
             await self.set(row[0])

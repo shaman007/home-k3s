@@ -3357,3 +3357,69 @@ No application, container or live-cluster changes are needed for this decision.
 
 Independent GitHub API reads confirm both dismissals and zero open code-scanning
 alerts. Documentation diff validation passes. No agent push occurred.
+
+### 2026-11-16: Remediate 405 new AIY findings locally
+
+An authenticated, paginated GitHub API export confirmed **405 open findings**:
+403 Pylint reports and two Bandit reports across the new AIY implementation,
+its tests and two ingress/certificate regressions. This is a fresh inventory;
+the earlier zero-open checkpoint does not describe this batch.
+
+Source remediation:
+
+- Reformat the 20 reported Python files at 100 columns, wrap ordinary strings and
+  regular expressions without changing their values, document public contracts,
+  move required imports to module scope and remove unused imports. The initial
+  formatting pass preserved every AST. The Realtime session configuration AST
+  and existing device-tool descriptions, reminder speech strings and web-search
+  payload strings remain unchanged after the subsequent refactors.
+- Replace the eleven-argument reminder creation interface with `ReminderSpec`,
+  extract content/recurrence validation and retain the existing SQLite schema,
+  duplicate detection, first-date behavior, weekday masks, jitter and independent
+  daily acknowledgements. Integer validation continues to reject booleans.
+- Decompose the WebSocket bridge into per-session turn state and bounded device,
+  provider and tool handlers. Retain setup acknowledgement, busy-lock lifetime,
+  PCM limits, immediate audio streaming, tool-round limits, usage accounting and
+  bounded completion after device disconnect. Group appliance LED state and
+  client timing state, and extract web-result parsing and device dispatch.
+- Share the verified, no-redirect, no-proxy-inheritance MCP HTTP transport and
+  local gateway test setup rather than suppress similarity checking. Package
+  `mcp_transport.py` through the explicit build archive, Docker COPY and ignore
+  allowlist; a regression checks all local Python imports reach the image.
+
+Reviewed precise exceptions:
+
+- Bandit **8477 / B104**: the container must listen on its Pod interfaces for the
+  Service and kubelet probes. The manifest does not request host networking;
+  ingress is limited to Traefik by NetworkPolicy. Audio and usage routes enforce
+  bearer authentication while health probes are public. Keep the required bind
+  and annotate that exact expression with `nosec B104`; do not change network
+  exposure or disable the rule globally. Local HTTP regressions verify unauthenticated
+  audio/usage requests fail and health probes remain available. This is not a live
+  network-policy enforcement test.
+- Bandit **8694 / B105**: the reported hardcoded value was a synthetic test token,
+  not an application credential. The test now generates its disposable fixture
+  with `secrets.token_urlsafe`, retaining the no-token-in-result assertion.
+- The two W0718 catches are deliberate boundaries around credential-bearing MCP
+  SDK exceptions. Keep each catch with an individual Pylint annotation and an
+  explanation; regressions verify arbitrary SDK errors return only sanitized
+  messages and do not log their original text. Narrowing the catches would allow
+  unexpected SDK exception types to escape this boundary.
+
+No workflow rules, global Pylint configuration, SARIF output or GitHub alert states
+were suppressed or modified. No image build/publication, application rollout,
+Pi installation, live reminder edits or push was performed. The owner subsequently
+authorized a local commit of this remediation. The running
+backend and Pi require separately authorized release/deployment after source
+publication; local source checks do not establish scanner closure or rollout.
+
+Validation: all **839 repository unit tests pass on Python 3.15**, with 16 expected
+skips; the focused AIY suite contains 48 passing tests. Pylint 4.1.3 reports no
+source diagnostics for every rule family in the 403-finding export, including
+similarity. Its standalone environment emits only the existing configuration
+warning for the absent Codacy Django plugin's `django-not-configured` setting;
+`.pylintrc` is unchanged. Bandit reports zero findings and zero analysis errors
+for AIY and its tests. Ruff undefined/unused-name checks and `git diff --check`
+pass. Python 3.12 runs the AIY tests successfully, but the full suite's existing
+AST-fingerprint check depends on Python 3.15 serialization; its sources were not
+changed or its guard weakened. No fresh remote scan has yet evaluated this diff.

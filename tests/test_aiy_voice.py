@@ -1,123 +1,237 @@
 """Regression checks for Realtime session configuration and durable usage."""
+
+from aiy_gateway_fixture import gateway
+
+import asyncio
+import base64
+import json
+from aiohttp import web, WSMsgType
+
 import importlib.util
 import tempfile
 import unittest
+from unittest.mock import AsyncMock, Mock, patch
 from pathlib import Path
 
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'aiy-voice'))
 
-SPEC = importlib.util.spec_from_file_location('voice_server', Path(__file__).resolve().parents[1] / 'aiy-voice/server.py')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "aiy-voice"))
+
+SPEC = importlib.util.spec_from_file_location(
+    "voice_server", Path(__file__).resolve().parents[1] / "aiy-voice/server.py"
+)
 server = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(server)
 
 
 class VoiceTests(unittest.TestCase):
+    """Verify push-to-talk sessions, live context and durable usage."""
+
     def test_live_reminder_context_is_bounded_and_data_only(self):
-        item={'id':'early','text':'Проверь задачу','confirmation_phrase':'сделал','acknowledged_today':False,'audio':'never forward'}
-        context=server.reminder_context([item])
-        self.assertIn('early',context)
-        self.assertNotIn('never forward',context)
-        for invalid in [None,[item]*17,[dict(item,acknowledged_today='false')],[dict(item,text='x'*121)]]:
-            with self.assertRaises(ValueError): server.reminder_context(invalid)
+        """Verify live reminder context is bounded and data only."""
+        item = {
+            "id": "early",
+            "text": "Проверь задачу",
+            "confirmation_phrase": "сделал",
+            "acknowledged_today": False,
+            "audio": "never forward",
+        }
+        context = server.reminder_context([item])
+        self.assertIn("early", context)
+        self.assertNotIn("never forward", context)
+        for invalid in [
+            None,
+            [item] * 17,
+            [dict(item, acknowledged_today="false")],
+            [dict(item, text="x" * 121)],
+        ]:
+            with self.assertRaises(ValueError):
+                server.reminder_context(invalid)
 
     def test_push_to_talk_and_native_audio(self):
-        config = server.session_config()['session']
-        self.assertIsNone(config['audio']['input']['turn_detection'])
-        self.assertEqual(config['audio']['output']['format']['rate'], 24000)
-        self.assertEqual(config['output_modalities'], ['audio'])
-        self.assertEqual({t['name'] for t in config['tools'] if not t['name'].startswith('ha_')}, {'search_web', 'search_memory', 'blink_light', 'set_timer', 'list_timers', 'cancel_timer', 'device_status', 'set_volume', 'adjust_volume', 'create_daily_reminder', 'list_daily_reminders', 'acknowledge_reminder', 'disable_daily_reminder'})
+        """Verify push to talk and native audio."""
+        config = server.session_config()["session"]
+        self.assertIsNone(config["audio"]["input"]["turn_detection"])
+        self.assertEqual(config["audio"]["output"]["format"]["rate"], 24000)
+        self.assertEqual(config["output_modalities"], ["audio"])
+        self.assertEqual(
+            {t["name"] for t in config["tools"] if not t["name"].startswith("ha_")},
+            {
+                "search_web",
+                "search_memory",
+                "blink_light",
+                "set_timer",
+                "list_timers",
+                "cancel_timer",
+                "device_status",
+                "set_volume",
+                "adjust_volume",
+                "create_daily_reminder",
+                "list_daily_reminders",
+                "acknowledge_reminder",
+                "disable_daily_reminder",
+            },
+        )
 
     def test_ledger_is_durable_and_deduplicated(self):
+        """Verify ledger is durable and deduplicated."""
         with tempfile.TemporaryDirectory() as directory:
-            path = str(Path(directory) / 'usage.sqlite3')
+            path = str(Path(directory) / "usage.sqlite3")
             ledger = server.Ledger(path)
-            response = {'id': 'r1', 'status': 'completed', 'usage': {'input_tokens': 100}}
+            response = {"id": "r1", "status": "completed", "usage": {"input_tokens": 100}}
             ledger.record(response, 900)
             ledger.record(response, 900)
             ledger.db.close()
             reopened = server.Ledger(path)
             rows = reopened.rows()
             self.assertEqual(len(rows), 1)
-            self.assertEqual(rows[0]['usage'], {'input_tokens': 100})
-            self.assertEqual(rows[0]['first_audio_ms'], 900)
+            self.assertEqual(rows[0]["usage"], {"input_tokens": 100})
+            self.assertEqual(rows[0]["first_audio_ms"], 900)
             reopened.db.close()
 
 
 class CostTests(unittest.TestCase):
+    """Verify cached and uncached token costs without double counting."""
+
     def test_cached_audio_and_text_are_not_double_counted(self):
-        spec = importlib.util.spec_from_file_location('usage_cost', Path(__file__).resolve().parents[1] / 'aiy-voice/usage_cost.py')
+        """Verify cached audio and text are not double counted."""
+        spec = importlib.util.spec_from_file_location(
+            "usage_cost", Path(__file__).resolve().parents[1] / "aiy-voice/usage_cost.py"
+        )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        usage = {'input_token_details': {'text_tokens': 100, 'audio_tokens': 200,
-                 'cached_tokens': 150, 'cached_tokens_details': {'text_tokens': 50, 'audio_tokens': 100}},
-                 'output_token_details': {'text_tokens': 20, 'audio_tokens': 40}}
-        self.assertEqual(str(module.cost(usage)), '0.0065')
+        usage = {
+            "input_token_details": {
+                "text_tokens": 100,
+                "audio_tokens": 200,
+                "cached_tokens": 150,
+                "cached_tokens_details": {"text_tokens": 50, "audio_tokens": 100},
+            },
+            "output_token_details": {"text_tokens": 20, "audio_tokens": 40},
+        }
+        self.assertEqual(str(module.cost(usage)), "0.0065")
+
+
+class BridgeProtocolTests(unittest.IsolatedAsyncioTestCase):
+    """Keep capture gates and credential-safe error boundaries intact after decomposition."""
+
+    def setUp(self):
+        """Create an isolated bridge with no provider connection or physical devices."""
+        self.ledger = server.Ledger(":memory:")
+        self.addCleanup(self.ledger.db.close)
+        self.device = AsyncMock()
+        self.bridge = server.VoiceBridge({"ledger": self.ledger}, self.device)
+
+    async def test_capture_minimum_and_turn_reset(self):
+        """A short turn is discarded; exactly 0.2 seconds commits and resets tool rounds."""
+        upstream = AsyncMock()
+        self.bridge.state.count = server.RATE * 2 // 5 - 1
+        await self.bridge._stop(upstream)
+        self.device.send_json.assert_awaited_once_with({"type": "done", "status": "empty"})
+        upstream.send_json.assert_awaited_once_with({"type": "input_audio_buffer.clear"})
+        upstream.reset_mock()
+        self.bridge.state.count += 1
+        self.bridge.state.tool_rounds = 4
+        await self.bridge._stop(upstream)
+        self.assertEqual(
+            [call.args[0]["type"] for call in upstream.send_json.await_args_list],
+            ["input_audio_buffer.commit", "response.create"],
+        )
+        self.assertTrue(self.bridge.state.responding)
+        self.assertEqual(self.bridge.state.tool_rounds, 0)
+
+    async def test_invalid_control_cannot_interrupt_a_response(self):
+        """A second start during a response is rejected without forwarding control events."""
+        upstream = AsyncMock()
+        self.bridge.state.responding = True
+        with self.assertRaises(ValueError):
+            await self.bridge._command(upstream, {"type": "start"})
+        upstream.send_json.assert_not_awaited()
+
+    async def test_memory_sdk_errors_are_sanitized(self):
+        """Arbitrary SDK errors reach neither tool results nor log messages verbatim."""
+        with patch.object(
+            server, "search_memory", side_effect=RuntimeError("private-marker")
+        ), patch.object(server, "LOG", Mock()) as log:
+            result = await self.bridge._call_tool(
+                {"name": "search_memory", "arguments": '{"query":"previous decision"}'}
+            )
+        self.assertNotIn("private-marker", json.dumps(result))
+        log.warning.assert_called_once_with("memory_lookup_failed")
+
 
 class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    """Verify authenticated PCM streaming through a local provider."""
+
     async def test_auth_stream_before_done_and_persist_usage(self):
-        import asyncio
-        import base64
-        import json
-        import os
-        from unittest.mock import patch
-        from aiohttp import web, ClientSession, WSMsgType
-        from aiohttp.test_utils import TestServer, TestClient
+        """Verify auth stream before done and persist usage."""
         released = asyncio.Event()
         received = bytearray()
         instructions = []
 
         async def provider(request):
+            """Serve the deterministic provider protocol without external network access."""
             ws = web.WebSocketResponse()
             await ws.prepare(request)
             async for message in ws:
                 event = json.loads(message.data)
-                if event['type'] == 'session.update':
-                    instructions.append(event['session']['instructions'])
-                    await ws.send_json({'type': 'session.updated'})
-                elif event['type'] == 'input_audio_buffer.append':
-                    received.extend(base64.b64decode(event['audio']))
-                elif event['type'] == 'response.create':
-                    await ws.send_json({'type': 'response.output_audio.delta', 'delta': base64.b64encode(b'\x01\x02' * 100).decode()})
+                if event["type"] == "session.update":
+                    instructions.append(event["session"]["instructions"])
+                    await ws.send_json({"type": "session.updated"})
+                elif event["type"] == "input_audio_buffer.append":
+                    received.extend(base64.b64decode(event["audio"]))
+                elif event["type"] == "response.create":
+                    await ws.send_json(
+                        {
+                            "type": "response.output_audio.delta",
+                            "delta": base64.b64encode(b"\x01\x02" * 100).decode(),
+                        }
+                    )
                     await released.wait()
-                    await ws.send_json({'type': 'response.done', 'response': {'id': 'integration-1', 'status': 'completed', 'usage': {'input_tokens': 42}}})
+                    await ws.send_json(
+                        {
+                            "type": "response.done",
+                            "response": {
+                                "id": "integration-1",
+                                "status": "completed",
+                                "usage": {"input_tokens": 42},
+                            },
+                        }
+                    )
             return ws
 
-        fake = web.Application()
-        fake.router.add_get('/realtime', provider)
-        async with TestServer(fake) as upstream, ClientSession() as transport:
-            class RedirectProvider:
-                def ws_connect(self, _url, **kwargs):
-                    return transport.ws_connect(upstream.make_url('/realtime'), **kwargs)
-                async def close(self):
-                    pass
-            with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'OPENAI_API_KEY': 'fake', 'AIY_BEARER_TOKEN': 'x' * 48}):
-                app = server.create_app(str(Path(directory) / 'usage.sqlite3'))
-                async with TestClient(TestServer(app)) as device:
-                    original = app['http']
-                    app['http'] = RedirectProvider()
-                    await original.close()
-                    response = await device.get('/v1/usage')
-                    self.assertEqual(response.status, 401)
-                    headers = {'Authorization': 'Bearer ' + 'x' * 48}
-                    async with device.ws_connect('/v1/voice', headers=headers) as ws:
-                        self.assertEqual((await ws.receive_json())['type'], 'ready')
-                        tasks=[{'id':'new-early-task-'+str(i),'text':'🐟'*120,'confirmation_phrase':'🐈'*100,'acknowledged_today':False} for i in range(16)]
-                        await ws.send_json({'type': 'start', 'reminders':tasks})
-                        pcm = b'\x00\x00' * 6000
-                        await ws.send_bytes(pcm)
-                        await ws.send_json({'type': 'stop'})
-                        first = await asyncio.wait_for(ws.receive(), 2)
-                        self.assertEqual(first.type, WSMsgType.BINARY)
-                        self.assertEqual(bytes(received), pcm)
-                        self.assertEqual(len(instructions),2)
-                        self.assertIn('new-early-task',instructions[-1])
-                        self.assertFalse(released.is_set())
-                        released.set()
-                        self.assertEqual((await ws.receive_json())['status'], 'completed')
-                    response = await device.get('/v1/usage', headers=headers)
-                    self.assertEqual((await response.json())['responses'][0]['usage']['input_tokens'], 42)
+        async with gateway(server, provider) as (app, device):
+            for route in ("/v1/usage", "/v1/voice"):
+                self.assertEqual((await device.get(route)).status, 401)
+            for route in ("/healthz", "/readyz"):
+                self.assertEqual((await device.get(route)).status, 200)
+            headers = {"Authorization": "Bearer " + "x" * 48}
+            async with device.ws_connect("/v1/voice", headers=headers) as ws:
+                self.assertEqual((await ws.receive_json())["type"], "ready")
+                tasks = [
+                    {
+                        "id": "new-early-task-" + str(i),
+                        "text": "🐟" * 120,
+                        "confirmation_phrase": "🐈" * 100,
+                        "acknowledged_today": False,
+                    }
+                    for i in range(16)
+                ]
+                await ws.send_json({"type": "start", "reminders": tasks})
+                pcm = b"\x00\x00" * 6000
+                await ws.send_bytes(pcm)
+                await ws.send_json({"type": "stop"})
+                first = await asyncio.wait_for(ws.receive(), 2)
+                self.assertEqual(first.type, WSMsgType.BINARY)
+                self.assertEqual(bytes(received), pcm)
+                self.assertEqual(len(instructions), 2)
+                self.assertIn("new-early-task", instructions[-1])
+                self.assertFalse(released.is_set())
+                released.set()
+                self.assertEqual((await ws.receive_json())["status"], "completed")
+            response = await device.get("/v1/usage", headers=headers)
+            self.assertEqual((await response.json())["responses"][0]["usage"]["input_tokens"], 42)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

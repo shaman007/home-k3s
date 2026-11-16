@@ -10,12 +10,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class LegacyIngressRetirementTest(unittest.TestCase):
     """Keep retired issuance sources disabled while preserving private certificate routes."""
+
     def test_legacy_sources_are_removed(self):
         """Verify legacy sources are removed."""
         resources = json.loads(
             (
                 ROOT / "docs/migrations/letsencrypt-internal/legacy-ingress-retirement.json"
-            ).read_text()
+            ).read_text(encoding="utf-8")
         )["resources"]
         self.assertEqual(17, sum(r["kind"] == "Ingress" for r in resources))
         self.assertEqual(18, sum(r["kind"] == "Certificate" for r in resources))
@@ -30,7 +31,7 @@ class LegacyIngressRetirementTest(unittest.TestCase):
         for p in ROOT.rglob("*.yaml"):
             if any(x in p.parts for x in ("docs", "DEPRECATED", "templates", ".git")):
                 continue
-            for d in yaml.safe_load_all(p.read_text()):
+            for d in yaml.safe_load_all(p.read_text(encoding="utf-8")):
                 if not isinstance(d, dict):
                     continue
                 if d.get("kind") == "Certificate":
@@ -43,10 +44,20 @@ class LegacyIngressRetirementTest(unittest.TestCase):
                             routes.append(d)
         self.assertEqual(18, len(routes))
         for route in routes:
-            device_route = (route["metadata"]["namespace"], route["metadata"]["name"]) == ("aiy-voice", "aiy-voice")
-            self.assertEqual("traefik" if device_route else "traefik-private", route["spec"]["ingressClassName"])
+            device_route = (route["metadata"]["namespace"], route["metadata"]["name"]) == (
+                "aiy-voice",
+                "aiy-voice",
+            )
+            self.assertEqual(
+                "traefik" if device_route else "traefik-private", route["spec"]["ingressClassName"]
+            )
             if device_route:
-                self.assertIn("aiy-voice-aiy-clients@kubernetescrd", route["metadata"]["annotations"]["traefik.ingress.kubernetes.io/router.middlewares"])
+                self.assertIn(
+                    "aiy-voice-aiy-clients@kubernetescrd",
+                    route["metadata"]["annotations"][
+                        "traefik.ingress.kubernetes.io/router.middlewares"
+                    ],
+                )
             for tls in route["spec"]["tls"]:
                 cert = certs[(route["metadata"]["namespace"], tls["secretName"])]
                 self.assertEqual("letsencrypt-internal-prod", cert["spec"]["issuerRef"]["name"])
@@ -54,7 +65,7 @@ class LegacyIngressRetirementTest(unittest.TestCase):
 
     def test_retired_bootstrap_cannot_reenable_issuance(self):
         """Verify retired bootstrap cannot reenable issuance."""
-        script = (ROOT / "vault/configure-pki-acme.sh").read_text()
+        script = (ROOT / "vault/configure-pki-acme.sh").read_text(encoding="utf-8")
         self.assertNotIn("vault write", script)
         self.assertIn("exit 1", script)
 
