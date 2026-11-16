@@ -8,6 +8,7 @@ metadata:
     app: mysql-wordpress
     tier: mysql
     recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-a: enabled
     recurring-job.longhorn.io/snapshot-daily-retain1: enabled
 spec:
   accessModes:

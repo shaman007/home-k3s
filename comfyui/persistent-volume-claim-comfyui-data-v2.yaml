@@ -4,6 +4,8 @@ metadata:
   name: comfyui-data-v2
   namespace: comfyui
   labels:
+    recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-c: enabled
     app: comfyui
     app.kubernetes.io/name: comfyui
     app.kubernetes.io/instance: comfyui

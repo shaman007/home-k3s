@@ -91,3 +91,28 @@ An empty backup timestamp means no completed backup is recorded on that volume; 
 | wordpress/data-valkey-0 | trim-daily-a | **none** | — |
 | wordpress/mariadb-wordpress-lh | trim-daily-a | **none** | — |
 | wordpress/wordpress-lh | trim-daily-a | backup-daily-retain31-a | 2026-11-16 02:05 |
+
+## User-approved follow-up
+
+The user requested review before changing the general backup policy, then
+explicitly approved these four additions only. The other previously unassigned
+PVCs were judged unimportant by the user; no policy was added to them.
+
+| PVC | Daily job | Schedule (Europe/Prague, winter) | Immediate backup |
+| --- | --- | --- | --- |
+| wordpress/mariadb-wordpress-lh | backup-daily-retain31-a | 02:05 | Completed 2026-11-16 18:52; backup-1655f50019354ae7 |
+| dawarich/storage | backup-daily-retain31-b | 03:05 | Not requested |
+| convertx/convertx-data | backup-daily-retain31-a | 02:05 | Not requested |
+| comfyui/comfyui-data-v2 | backup-daily-retain31-c | 04:05 | Not requested |
+
+All four retain 31 scheduled copies. Existing trim and snapshot assignments
+were preserved. PVC source labels and the corresponding Longhorn volume
+assignments were verified. The WordPress first backup used a temporary,
+single-volume RecurringJob; its definition, temporary selectors and execution
+Jobs were removed after completion. The completed backup remains in the
+backup target. That manual recovery point is separate from the scheduled
+job's retention set. This is a live database volume snapshot, not a tested
+application-consistent SQL restore. No database outage or restore drill was
+performed. Policies were also added to the owning manifests; source publication
+is a separate user action. The originally requested OpenBao immediate backups
+and alert-rule changes were cancelled before execution and remain unchanged.
