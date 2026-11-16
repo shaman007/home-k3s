@@ -1,3 +1,4 @@
 [mcp_servers.homeassistant]
-url = "https://ha.andreybondarenko.com/api/mcp"
-bearer_token_env_var = "HOME_ASSISTANT_TOKEN"
+command = "/home/shaman007/.local/bin/bao-desktop"
+args = ["mcp", "homeassistant"]
+startup_timeout_sec = 45
