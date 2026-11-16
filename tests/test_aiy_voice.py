@@ -13,12 +13,20 @@ SPEC.loader.exec_module(server)
 
 
 class VoiceTests(unittest.TestCase):
+    def test_live_reminder_context_is_bounded_and_data_only(self):
+        item={'id':'early','text':'Проверь задачу','confirmation_phrase':'сделал','acknowledged_today':False,'audio':'never forward'}
+        context=server.reminder_context([item])
+        self.assertIn('early',context)
+        self.assertNotIn('never forward',context)
+        for invalid in [None,[item]*17,[dict(item,acknowledged_today='false')],[dict(item,text='x'*121)]]:
+            with self.assertRaises(ValueError): server.reminder_context(invalid)
+
     def test_push_to_talk_and_native_audio(self):
         config = server.session_config()['session']
         self.assertIsNone(config['audio']['input']['turn_detection'])
         self.assertEqual(config['audio']['output']['format']['rate'], 24000)
         self.assertEqual(config['output_modalities'], ['audio'])
-        self.assertEqual({t['name'] for t in config['tools']}, {'search_web', 'search_memory'})
+        self.assertEqual({t['name'] for t in config['tools'] if not t['name'].startswith('ha_')}, {'search_web', 'search_memory', 'blink_light', 'set_timer', 'list_timers', 'cancel_timer', 'device_status', 'set_volume', 'adjust_volume', 'create_daily_reminder', 'list_daily_reminders', 'acknowledge_reminder', 'disable_daily_reminder'})
 
     def test_ledger_is_durable_and_deduplicated(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -57,6 +65,7 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
         from aiohttp.test_utils import TestServer, TestClient
         released = asyncio.Event()
         received = bytearray()
+        instructions = []
 
         async def provider(request):
             ws = web.WebSocketResponse()
@@ -64,6 +73,7 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
             async for message in ws:
                 event = json.loads(message.data)
                 if event['type'] == 'session.update':
+                    instructions.append(event['session']['instructions'])
                     await ws.send_json({'type': 'session.updated'})
                 elif event['type'] == 'input_audio_buffer.append':
                     received.extend(base64.b64decode(event['audio']))
@@ -92,13 +102,16 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     headers = {'Authorization': 'Bearer ' + 'x' * 48}
                     async with device.ws_connect('/v1/voice', headers=headers) as ws:
                         self.assertEqual((await ws.receive_json())['type'], 'ready')
-                        await ws.send_json({'type': 'start'})
+                        tasks=[{'id':'new-early-task-'+str(i),'text':'🐟'*120,'confirmation_phrase':'🐈'*100,'acknowledged_today':False} for i in range(16)]
+                        await ws.send_json({'type': 'start', 'reminders':tasks})
                         pcm = b'\x00\x00' * 6000
                         await ws.send_bytes(pcm)
                         await ws.send_json({'type': 'stop'})
                         first = await asyncio.wait_for(ws.receive(), 2)
                         self.assertEqual(first.type, WSMsgType.BINARY)
                         self.assertEqual(bytes(received), pcm)
+                        self.assertEqual(len(instructions),2)
+                        self.assertIn('new-early-task',instructions[-1])
                         self.assertFalse(released.is_set())
                         released.set()
                         self.assertEqual((await ws.receive_json())['status'], 'completed')

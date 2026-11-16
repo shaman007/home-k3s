@@ -804,6 +804,11 @@ data:
             middleware_ref = annotations.get("traefik.ingress.kubernetes.io/router.middlewares", "")
             has_robots_guard = "traefik-robots-disallow-all@kubernetescrd" in middleware_ref
             has_internal_guard = any(ref in middleware_ref for ref in internal_guard_refs)
+            # AIY uses a device-specific allowlist that also permits its Wi-Fi Pi.
+            if namespace == "aiy-voice" and ingress_name == "aiy-voice":
+                has_internal_guard = has_internal_guard or (
+                    "aiy-voice-aiy-clients@kubernetescrd" in middleware_ref.split(",")
+                )
             for host in public_hosts:
                 state = host_guard_state.setdefault((namespace, host), {"has_robots_guard": False})
                 state["has_robots_guard"] = state["has_robots_guard"] or has_robots_guard

@@ -41,9 +41,12 @@ class LegacyIngressRetirementTest(unittest.TestCase):
                         self.assertFalse(rule["host"].endswith(".w386.k8s.my.lan"))
                         if rule["host"].endswith(".int.andreybondarenko.com"):
                             routes.append(d)
-        self.assertEqual(17, len(routes))
+        self.assertEqual(18, len(routes))
         for route in routes:
-            self.assertEqual("traefik-private", route["spec"]["ingressClassName"])
+            device_route = (route["metadata"]["namespace"], route["metadata"]["name"]) == ("aiy-voice", "aiy-voice")
+            self.assertEqual("traefik" if device_route else "traefik-private", route["spec"]["ingressClassName"])
+            if device_route:
+                self.assertIn("aiy-voice-aiy-clients@kubernetescrd", route["metadata"]["annotations"]["traefik.ingress.kubernetes.io/router.middlewares"])
             for tls in route["spec"]["tls"]:
                 cert = certs[(route["metadata"]["namespace"], tls["secretName"])]
                 self.assertEqual("letsencrypt-internal-prod", cert["spec"]["issuerRef"]["name"])
