@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-import subprocess
+import subprocess  # nosec B404
 import tempfile
 import unittest
 
@@ -11,18 +11,26 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 ACTION = yaml.safe_load((ROOT / ".github/actions/codacy-scan/action.yml").read_text())
 
+WORKFLOW = yaml.safe_load((ROOT / ".github/workflows/codacy.yml").read_text())
+STEPS = WORKFLOW["jobs"]["codacy-security-scan"]["steps"]
+
 
 class CodacyRetryTests(unittest.TestCase):
     """Keep persistent failures fatal and prevent stale reports or broad deletion."""
 
     def test_attempts_preserve_rules_and_final_failure_is_fatal(self):
         """Every retry scans identically, and the final attempt cannot mask failure."""
-        attempts = [step for step in ACTION["runs"]["steps"] if "uses" in step]
+        attempts = [step for step in STEPS if step.get("id", "").startswith("attempt_")]
         self.assertEqual(len(attempts), 3)
         self.assertTrue(all(step["with"] == attempts[0]["with"] for step in attempts))
         self.assertTrue(all(step["uses"] == attempts[0]["uses"] for step in attempts))
-        self.assertIs(attempts[0]["with"]["fail-if-incomplete"], True)
-        self.assertEqual(attempts[0]["with"]["format"], "sarif")
+        scanner = ACTION["runs"]["steps"][0]
+        self.assertIs(scanner["with"]["fail-if-incomplete"], True)
+        self.assertEqual(scanner["with"]["format"], "sarif")
+        self.assertEqual(scanner["with"]["tool-timeout"], "20minutes")
+        self.assertNotIn("continue-on-error", scanner)
+        self.assertTrue(all(step["timeout-minutes"] == 20 for step in attempts))
+        self.assertGreater(WORKFLOW["jobs"]["codacy-security-scan"]["timeout-minutes"], 60)
         self.assertTrue(attempts[0]["continue-on-error"])
         self.assertTrue(attempts[1]["continue-on-error"])
         self.assertFalse(attempts[2].get("continue-on-error", False))
@@ -31,8 +39,8 @@ class CodacyRetryTests(unittest.TestCase):
 
     def test_retry_removes_stale_report_and_preserves_other_files(self):
         """Execute each real retry shell fragment with a disposable stale scan report."""
-        for step in ACTION["runs"]["steps"]:
-            if "run" not in step:
+        for step in STEPS:
+            if not step["name"].startswith("Prepare retry"):
                 continue
             with self.subTest(step=step["name"]), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
@@ -63,7 +71,7 @@ class CodacyRetryTests(unittest.TestCase):
 
     def test_retry_rejects_paths_outside_scanner_basename(self):
         """Unsafe output paths fail before removal or waiting."""
-        cleanup = next(step["run"] for step in ACTION["runs"]["steps"] if "run" in step)
+        cleanup = next(step["run"] for step in STEPS if step["name"].startswith("Prepare retry"))
         with tempfile.TemporaryDirectory() as directory:
             protected = Path(directory) / "retained.sarif"
             protected.write_text("retained")
