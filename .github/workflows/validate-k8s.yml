@@ -30,10 +30,9 @@ jobs:
           python-version: "3.x"
 
       - name: Install hostname inventory dependency
-        env:
-          RIPGREP_VERSION: "15.2.0"
-          RIPGREP_SHA256: "33e15bcf1624b25cdd2a55813a47a2f95dbe126268203e76aa6a585d1e7b149c"
         run: |
+          pin="$(python tools/ci/tool_pins.py ripgrep)"
+          read -r RIPGREP_VERSION RIPGREP_SHA256 <<< "$pin"
           download_dir=$(mktemp -d)
           trap 'rm -rf "$download_dir"' EXIT
           archive="ripgrep-${RIPGREP_VERSION}-x86_64-unknown-linux-musl"
@@ -84,12 +83,12 @@ jobs:
           done < <(git ls-files --cached --others --exclude-standard -z -- '*.rb')
 
       - name: Install kubeconform
-        env:
-          KUBECONFORM_VERSION: v0.7.0
         run: |
+          pin="$(python tools/ci/tool_pins.py kubeconform)"
+          read -r KUBECONFORM_VERSION KUBECONFORM_SHA256 <<< "$pin"
           curl -fsSL -o kubeconform.tar.gz \
             "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
-          echo "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3  kubeconform.tar.gz" | sha256sum --check --strict
+          echo "$KUBECONFORM_SHA256  kubeconform.tar.gz" | sha256sum --check --strict
           tar -xzf kubeconform.tar.gz kubeconform
           sudo mv kubeconform /usr/local/bin/kubeconform
           rm -f kubeconform.tar.gz

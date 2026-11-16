@@ -91,3 +91,44 @@ merge does not force every queued PR through another rebase/CI cycle. All 13 CI
 checks and signed commits remain required. CI validates each PR's tested revision;
 it does not necessarily cover integration with the latest `main`. No
 branch-protection bypass is needed.
+
+## Checksum-pinned CI tools
+
+`tools/ci/tool-versions.json` owns each GitHub release version and archive SHA256
+for Kyverno CLI, ripgrep and kubeconform. These were previously hidden in shell
+variables and download commands. Helm/kubectl/Cosign installer inputs already use
+the supported GitHub Actions manager and do not need duplicate custom rules.
+
+The regex custom manager extracts the version and digest as one dependency using
+Renovate's [github-release-attachments datasource](https://docs.renovatebot.com/modules/datasource/github-release-attachments/).
+It identifies the current release asset by its checksum and maps that asset to
+the new release. Both replacements belong to the same dependency/PR; major/minor
+splitting is disabled for these three entries. Different tools retain separate
+PRs. Existing automerge, major-update review and required CI checks are unchanged.
+
+Every installer reads its pin through `tools/ci/tool_pins.py`, validates the known
+repository, version and SHA256 syntax, and still runs `sha256sum --check --strict`
+before extracting/installing the archive. Missing assets or a wrong digest must
+fail CI, never bypass verification. Do not replace the digest with one fetched at
+install time: the reviewed, Renovate-managed value is the trust pin.
+
+Both Kyverno audit and benchmark version guards read the same manifest and compare
+the exact CLI version header. A Renovate PR therefore changes the installed and
+required version together; no Python string substitutions or post-upgrade command
+permissions are needed. Cluster controller/chart versions and the separate custom
+provider-cache build remain independent dependencies.
+
+Local validation with Renovate 44.245.0 confirmed native extraction of all three
+pins and a read-only lookup from Kyverno v1.19.2 to v1.20.0, including the official
+new SHA256 on one `renovate/kyverno-kyverno-1.x` branch plan. The same lookup found
+kubeconform v0.8.0 with its replacement digest. This setup does not itself upgrade
+those tool pins, publish a branch or open a PR; publication and a later Renovate
+run are required. Unit regressions exercise both real Kyverno gates with a future
+manifest version and reject mismatched/prefix-only versions.
+
+Validation of this setup: 848 repository unit tests pass (16 expected skips),
+strict native Renovate configuration validation passes, all changed Python modules
+pass full Pylint, and the changed workflow/composite shell blocks parse with Bash.
+The actual Kyverno audit command also accepts the manifest's installed v1.20.0
+and prepares the unchanged 2236 CEL assertions. Policies were not changed by this
+Renovate configuration task; the prior full real CEL run remains the policy check.

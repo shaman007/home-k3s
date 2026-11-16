@@ -1,6 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "registryAliases": {
     "harbor.andreybondarenko.com/dockerhub": "index.docker.io",
     "harbor.andreybondarenko.com/google": "gcr.io",
@@ -11,21 +13,31 @@
   "automergeType": "pr",
   "platformAutomerge": true,
   "prHourlyLimit": 0,
-  "ignorePaths": ["DEPRECATED/**"],
+  "ignorePaths": [
+    "DEPRECATED/**"
+  ],
   "argocd": {
-    "managerFilePatterns": ["/^argocd\\/application-.*\\.ya?ml$/"]
+    "managerFilePatterns": [
+      "/^argocd\\/application-.*\\.ya?ml$/"
+    ]
   },
   "helm-values": {
-    "managerFilePatterns": ["/^mastodon\\/mastodon-values\\.ya?ml$/"]
+    "managerFilePatterns": [
+      "/^mastodon\\/mastodon-values\\.ya?ml$/"
+    ]
   },
   "kubernetes": {
-    "managerFilePatterns": ["/\\.yaml$/"]
+    "managerFilePatterns": [
+      "/\\.yaml$/"
+    ]
   },
   "customManagers": [
     {
       "customType": "regex",
       "description": "Update the private Traefik image embedded in Argo Helm values",
-      "managerFilePatterns": ["/^argocd\\/application-traefik-private\\.yaml$/"],
+      "managerFilePatterns": [
+        "/^argocd\\/application-traefik-private\\.yaml$/"
+      ],
       "matchStrings": [
         "image:\\s+registry: docker\\.io\\s+repository: traefik\\s+tag: (?<currentValue>[^\\s]+)"
       ],
@@ -35,18 +47,36 @@
     {
       "customType": "regex",
       "description": "Update full image references embedded in Mastodon Helm values",
-      "managerFilePatterns": ["/^mastodon\\/mastodon-values\\.ya?ml$/"],
+      "managerFilePatterns": [
+        "/^mastodon\\/mastodon-values\\.ya?ml$/"
+      ],
       "matchStrings": [
         "image:\\s+(?<depName>[^\\s:]+(?:/[^\\s:]+)+):(?<currentValue>[^\\s]+)"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Update CI release versions and their archive SHA256 together",
+      "managerFilePatterns": [
+        "/^tools\\/ci\\/tool-versions\\.json$/"
+      ],
+      "matchStrings": [
+        "\"depName\":\\s*\"(?<depName>[^\"\\s]+)\",\\s*\"version\":\\s*\"(?<currentValue>[^\"\\s]+)\",\\s*\"sha256\":\\s*\"(?<currentDigest>[a-f0-9]{64})\""
+      ],
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver-coerced"
     }
   ],
   "packageRules": [
     {
       "description": "Update both private Traefik image declarations in the same PR",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["docker.io/traefik"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/traefik"
+      ],
       "matchFileNames": [
         "argocd/application-traefik-private.yaml",
         "traefik-private/values.yaml"
@@ -56,39 +86,70 @@
     },
     {
       "description": "Keep Mastodon Helm tags valid for chart version labels",
-      "matchManagers": ["helm-values"],
-      "matchFileNames": ["mastodon/mastodon-values.yaml"],
-      "matchPackageNames": ["harbor.andreybondarenko.com/library/mastodon"],
+      "matchManagers": [
+        "helm-values"
+      ],
+      "matchFileNames": [
+        "mastodon/mastodon-values.yaml"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/library/mastodon"
+      ],
       "pinDigests": false
     },
     {
       "description": "Keep GitHub Actions pinned to immutable commit SHAs",
-      "matchManagers": ["github-actions"],
-      "matchDepTypes": ["action", "workflow"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action",
+        "workflow"
+      ],
       "pinDigests": true
     },
     {
       "description": "Use calendar versioning for locally built images",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["harbor.andreybondarenko.com/library/**"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/library/**"
+      ],
       "versioning": "regex:^(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})-(?<build>\\d{6})$"
     },
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "automerge": true
     },
     {
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
-      "labels": ["major-update"]
+      "labels": [
+        "major-update"
+      ]
     },
     {
       "description": "Require review for Argo CD minor and major upgrades",
-      "matchManagers": ["kustomize"],
-      "matchFileNames": ["argocd-install/kustomization.yaml"],
-      "matchUpdateTypes": ["minor", "major"],
+      "matchManagers": [
+        "kustomize"
+      ],
+      "matchFileNames": [
+        "argocd-install/kustomization.yaml"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "major"
+      ],
       "automerge": false,
-      "labels": ["argocd-upgrade"]
+      "labels": [
+        "argocd-upgrade"
+      ]
     },
     {
       "description": "Keep Firefox Sync MariaDB on the validated 12.3 LTS series",
@@ -103,6 +164,18 @@
       ],
       "allowedVersions": "/^12\\.3\\./",
       "pinDigests": true
+    },
+    {
+      "description": "Keep each CI tool version and archive digest in one PR, including major updates",
+      "matchDatasources": [
+        "github-release-attachments"
+      ],
+      "matchFileNames": [
+        "tools/ci/tool-versions.json"
+      ],
+      "pinDigests": true,
+      "separateMajorMinor": false,
+      "separateMinorPatch": false
     }
   ]
 }

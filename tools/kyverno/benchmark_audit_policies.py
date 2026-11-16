@@ -16,6 +16,8 @@ import time
 
 import yaml
 
+CLI_PINS = Path(__file__).resolve().parents[1] / "ci/tool-versions.json"
+
 
 def read_tests(root):
     """Load fixture assertions and reject ambiguous or missing resource matches."""
@@ -137,8 +139,9 @@ def main():
     if args.sample_every < 1 or args.gomaxprocs < 1:
         parser.error("Sampling interval and CPU budget must be positive")
     version = subprocess.check_output([args.kyverno, "version"], text=True)
-    if "1.20.0" not in version:
-        parser.error("Benchmark requires the pinned Kyverno CLI 1.20.0")
+    expected_version = json.loads(CLI_PINS.read_text(encoding="utf-8"))["kyverno"]["version"]
+    if version.strip().splitlines()[:1] != ["Version: " + expected_version]:
+        parser.error("Benchmark requires the pinned Kyverno CLI " + expected_version)
     tests = {
         name: read_tests(path)
         for name, path in [("baseline", args.baseline), ("optimized", args.optimized)]

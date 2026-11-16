@@ -4,14 +4,14 @@ runs:
   using: composite
   steps:
     - shell: bash
-      env:
-        KYVERNO_CLI_VERSION: v1.20.0
       run: |
+        pin="$(python3 "$GITHUB_WORKSPACE/tools/ci/tool_pins.py" kyverno)"
+        read -r KYVERNO_CLI_VERSION KYVERNO_CLI_SHA256 <<< "$pin"
         install_dir="$(mktemp -d)"
         trap 'rm -rf "$install_dir"' EXIT
         curl -fsSL -o kyverno-cli.tar.gz \
           "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_CLI_VERSION}/kyverno-cli_${KYVERNO_CLI_VERSION}_linux_x86_64.tar.gz"
-        echo "06b8f3ca7b5626473be8fb4d343ad54ab84e317142766f72420e7d44b80942e2  kyverno-cli.tar.gz" | sha256sum --check --strict
+        echo "$KYVERNO_CLI_SHA256  kyverno-cli.tar.gz" | sha256sum --check --strict
         tar -xzf kyverno-cli.tar.gz -C "$install_dir" kyverno
         sudo mv "$install_dir/kyverno" /usr/local/bin/kyverno
         rm -f kyverno-cli.tar.gz

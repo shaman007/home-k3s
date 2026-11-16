@@ -1,0 +1,17 @@
+{
+  "kyverno": {
+    "depName": "kyverno/kyverno",
+    "version": "v1.20.0",
+    "sha256": "06b8f3ca7b5626473be8fb4d343ad54ab84e317142766f72420e7d44b80942e2"
+  },
+  "ripgrep": {
+    "depName": "BurntSushi/ripgrep",
+    "version": "15.2.0",
+    "sha256": "33e15bcf1624b25cdd2a55813a47a2f95dbe126268203e76aa6a585d1e7b149c"
+  },
+  "kubeconform": {
+    "depName": "yannh/kubeconform",
+    "version": "v0.7.0",
+    "sha256": "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3"
+  }
+}
