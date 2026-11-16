@@ -357,9 +357,14 @@ required. On2026-11-16 the Pi modules were installed and all four enabled remind
 changed in place to60minutes; all six existing completion records were preserved,
 and SQLite integrity was verified. A coherent code/database backup is at
 `/var/lib/aiy-voice/backup-hourly-notes-20261116`. The Pi passed a save/reopen/read
-note test in an isolated temporary database; no production note was created.
+note test in an isolated temporary database; no user note was created.
 All52 AIY tests pass, including stale-playback protection during interval changes.
-The backend image pin is prepared for GitOps publication; live activation and
-physical voice acceptance remain pending. The Python base stays at the deployed
-3.12.16: the earlier unactivated3.15 base cannot build pinned aiohttp without gcc.
+Backend release `3d148120` is installed: Argo CD verified Synced/Healthy at the
+exact revision, runtime readiness returned200, all three new tools and the hourly
+default are present, and the physical Pi reconnected. The signed image digest and
+source label were independently checked with skopeo. A neutral test note in the
+actual Pi database survived a client service restart and was then removed without
+changing user notes. New commands still need a physical voice acceptance test.
+The Python base stays at the deployed 3.12.16: the earlier unactivated 3.15 base
+cannot build pinned aiohttp without gcc.
 Home Assistant's Shopping list is independent and is preserved.
