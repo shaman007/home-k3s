@@ -37,7 +37,7 @@ spec:
           priorityClassName: homelab-batch
           containers:
           - name: previews
-            image: harbor.andreybondarenko.com/library/php:2026-11-09-022903
+            image: harbor.andreybondarenko.com/library/php:2026-11-16-022913
             imagePullPolicy: IfNotPresent
             securityContext:
               runAsUser: 33

@@ -32,7 +32,7 @@ spec:
       # Avoid public SMTP hairpinning while retaining the mail certificate hostname.
       initContainers:
         - name: wait-for-sql
-          image: harbor.andreybondarenko.com/library/php:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/php:2026-11-16-022913
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -65,7 +65,7 @@ spec:
               mountPath: /nextcloud
               readOnly: true
         - name: wait-for-valkey
-          image: harbor.andreybondarenko.com/library/php:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/php:2026-11-16-022913
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -168,7 +168,7 @@ spec:
             name: nextcloud-startup-gate
       containers:
         - name: php-nextcloud
-          image: harbor.andreybondarenko.com/library/php:2026-11-09-022903
+          image: harbor.andreybondarenko.com/library/php:2026-11-16-022913
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: phpini
