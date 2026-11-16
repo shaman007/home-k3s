@@ -36,7 +36,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: voice
-        image: harbor.andreybondarenko.com/library/aiy-voice:src-dd1d6aef3d9b21df@sha256:3a67d88be08e7be2ea288022f5e4c2061457a53337a14a7a9af87508180cd8c9
+        image: harbor.andreybondarenko.com/library/aiy-voice:src-94b3495b530401c2@sha256:3df5d6317ae981be49d207f7a2e3bbaed5d0faecf500d1b2b33494cbd67c4b4a
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
