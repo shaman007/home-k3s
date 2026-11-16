@@ -8,9 +8,9 @@ import importlib.util
 import io
 import tarfile
 import unittest
+from pathlib import Path
 
 import yaml
-from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location(
     "aiy_build", Path(__file__).resolve().parents[1] / "aiy-voice/prepare_build.py"
@@ -71,17 +71,24 @@ class BuildRequestTests(unittest.TestCase):
         self.assertEqual({(item["group"], item["kind"]) for item in exceptions},
                          {("batch", "Job"), ("", "ConfigMap")})
         self.assertEqual(len(exceptions), 2)
+        # Argo's glob parser rejects combined ranges such as [0-9a-f].
+        self.assertEqual({item["name"] for item in exceptions},
+                         {"aiy-voice-build-" + "[0123456789abcdef]" * 16})
 
         def ignored(group, kind, name):
             return any(item["group"] == group and item["kind"] == kind
                        and fnmatch.fnmatchcase(name, item["name"]) for item in exceptions)
 
         for item in builder.render()["items"]:
-            group = item["apiVersion"].split("/")[0] if "/" in item["apiVersion"] else ""
+            group = (
+                item["apiVersion"].split("/")[0] if "/" in item["apiVersion"] else ""
+            )
             self.assertTrue(ignored(group, item["kind"], item["metadata"]["name"]))
-        for name in ("aiy-voice-build-", "aiy-voice-build-debug", "unrelated-build-0123456789abcdef",
-                     "aiy-voice-build-0123456789abcde", "aiy-voice-build-0123456789abcdef0",
-                     "aiy-voice-build-0123456789abcdeg", "aiy-voice-build-0123456789ABCDEF"):
+        for name in (
+            "aiy-voice-build-", "aiy-voice-build-debug", "unrelated-build-0123456789abcdef",
+            "aiy-voice-build-0123456789abcde", "aiy-voice-build-0123456789abcdef0",
+            "aiy-voice-build-0123456789abcdeg", "aiy-voice-build-0123456789ABCDEF",
+        ):
             with self.subTest(name=name):
                 self.assertFalse(ignored("batch", "Job", name))
                 self.assertFalse(ignored("", "ConfigMap", name))
