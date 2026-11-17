@@ -358,7 +358,7 @@ spec:
         cpu: 10m
         memory: 32Mi
       max:
-        memory: 8Gi
+        memory: 10Gi
 ---
 apiVersion: v1
 kind: LimitRange
