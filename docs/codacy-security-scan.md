@@ -1,5 +1,8 @@
 # Codacy security scan
 
+For the project/version-scoped rationale for Pylint's FOSSA license findings,
+see [FOSSA license review](fossa-license-review.md).
+
 The Codacy workflow selects three source scanners explicitly: Bandit for Python
 security checks, Opengrep for supported source languages, and ShellCheck for shell
 scripts. Each runs independently with default rules, its own SARIF file, and a
