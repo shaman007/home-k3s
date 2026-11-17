@@ -229,9 +229,10 @@ spec:
           resources:
             requests:
               cpu: 20m
-              memory: 64Mi
-            limits:
               memory: 128Mi
+            limits:
+              # Allow SMTP worker bursts during Alertmanager notification storms.
+              memory: 512Mi
         - name: queue-exporter
           image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
           command:

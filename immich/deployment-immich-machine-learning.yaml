@@ -130,9 +130,10 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 2304Mi
+              memory: 4Gi
             limits:
-              memory: 6Gi
+              # TensorRT OCR model preparation exceeded the previous 6Gi limit.
+              memory: 10Gi
               nvidia.com/gpu: 1
       volumes:
         - name: cache
