@@ -45,3 +45,21 @@ Application access. Issue reasons appear in text and HTML; application issue
 metrics use stable application names. The text email lists the first five review
 items per check; HTML includes all affected applications. Sync-window scheduling
 is not evaluated. Verify a newly scheduled report after GitOps deployment.
+
+# Retained OpenBao trim exception
+
+The three legacy `openbao/data-openbao-{0,1,2}` PVCs retain sealed Raft data
+following the 2026-11-16 recovery. The trim guard and coverage report exempt only
+the original, explicitly listed Longhorn bindings while their volumes are
+`detached` and the PVC has `openbao-recovery-generation: legacy-20261116`.
+Backup assignments remain unchanged. The report lists these as retained recovery
+exceptions, not as successfully trimmed PVCs. Attached volumes, replacement
+bindings and the active `data-openbao-20261116-*` PVCs require normal trim coverage.
+
+Publish both `longhorn/trim-coverage-guard.yaml` and
+`metrics/config-map-platform-health-report-scripts.yaml` through GitOps. After
+Argo sync, remove any trim labels restored by the old guard from the three legacy
+PVCs, let Longhorn propagate the labels, and verify a new guard run leaves them
+absent. Keep the legacy StatefulSet at zero replicas; its immutable claim template
+still contains historical labels and must be reviewed before recovery/recreation.
+Do not remove its PVCs or backup assignments.

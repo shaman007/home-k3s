@@ -296,6 +296,27 @@ data:
     }
 
 
+    # Retained sealed Raft data, approved 2026-11-17; never trim while detached.
+    RETAINED_OPENBAO_PVCS = {
+        "data-openbao-0": "pvc-93f9b3cd-840c-4d87-8b73-cda2f540f369",
+        "data-openbao-1": "pvc-734eb6f0-c74b-41c8-a035-47032cc90fd0",
+        "data-openbao-2": "pvc-9207474c-802e-42b4-a223-d8e2cb7ed282",
+    }
+
+
+    def retained_openbao(pvc, volume):
+        meta, spec = pvc.get("metadata", {}), pvc.get("spec", {})
+        expected = RETAINED_OPENBAO_PVCS.get(meta.get("name"))
+        return (expected is not None and meta.get("namespace") == "openbao"
+                and meta.get("labels", {}).get("openbao-recovery-generation") == "legacy-20261116"
+                and spec.get("storageClassName") == "longhorn"
+                and spec.get("volumeMode", "Filesystem") == "Filesystem"
+                and spec.get("volumeName") == expected
+                and volume.get("metadata", {}).get("name") == expected
+                and not volume.get("metadata", {}).get("deletionTimestamp")
+                and volume.get("status", {}).get("state") == "detached")
+
+
     def pvc_trim_coverage_check(pvcs, volumes, recurring):
         """Check every PVC; unsupported storage must remain visible for explicit review."""
         jobs = [j for j in recurring if j.get("spec", {}).get("task") == "filesystem-trim"
@@ -303,6 +324,7 @@ data:
         by_name = {v["metadata"]["name"]: v for v in volumes}
         details, issues = [], []
         unsupported = 0
+        retained = 0
         for pvc in pvcs:
             spec = pvc.get("spec", {})
             meta = pvc["metadata"]
@@ -324,6 +346,12 @@ data:
                 issues.append(detail)
                 continue
             volume = by_name.get(spec.get("volumeName"), {})
+            if retained_openbao(pvc, volume):
+                retained += 1
+                details.append({"namespace": meta["namespace"], "item": meta["name"],
+                                "value": 1, "value_name": "pvc_trim_retained_exception",
+                                "message": "Approved exception: detached legacy OpenBao Raft data retained for recovery"})
+                continue
             labels = volume.get("metadata", {}).get("labels", {})
             covered = bool(volume) and not volume["metadata"].get("deletionTimestamp") and any(
                 labels.get("recurring-job.longhorn.io/" + j["metadata"]["name"]) == "enabled"
@@ -335,8 +363,8 @@ data:
             if not covered:
                 issues.append(dict(detail, message="Missing Longhorn volume or filesystem-trim assignment"))
         return check("pvc_trim_coverage", bool(details) and not issues,
-                     f"Trim coverage: {len(details) - len(issues) - unsupported}/{len(details) - unsupported} PVC(s) have configured filesystem trim; "
-                     f"{unsupported} explicitly approved unsupported PVC(s).",
+                     f"Trim coverage: {len(details) - len(issues) - unsupported - retained}/{len(details) - unsupported - retained} PVC(s) have configured filesystem trim; "
+                     f"{unsupported} explicitly approved unsupported PVC(s); {retained} retained recovery PVC(s).",
                      details, issues)
 
 

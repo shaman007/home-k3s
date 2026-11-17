@@ -215,6 +215,61 @@ class TrimCoverageTest(unittest.TestCase):
 
         self.guard["repair_volume"](api, self.volume, [self.job])
 
+    def test_retained_openbao_is_skipped_by_guard_and_visible_in_report(self):
+        """Retained bindings are exempt; active or replacement data remains covered."""
+        self.assertEqual(self.guard["RETAINED_OPENBAO_PVCS"], self.report["RETAINED_OPENBAO_PVCS"])
+        for name, binding in self.guard["RETAINED_OPENBAO_PVCS"].items():
+            pvc = {"metadata": {"namespace": "openbao", "name": name, "resourceVersion": "2",
+                                "labels": {"openbao-recovery-generation": "legacy-20261116",
+                                           "recurring-job.longhorn.io/source": "enabled",
+                                           "recurring-job.longhorn.io/backup-daily-retain31-c": "enabled"}},
+                   "spec": {"storageClassName": "longhorn", "volumeName": binding}}
+            volume = {"metadata": {"name": binding, "resourceVersion": "1"},
+                      "status": {"state": "detached", "kubernetesStatus": {
+                          "namespace": "openbao", "pvcName": name}}}
+            original = copy.deepcopy(pvc)
+
+            def api(_path, patch=None):
+                self.assertIsNone(patch, "retained PVC or volume must never be patched")
+                return pvc
+
+            self.guard["repair_volume"](api, volume, [self.job])
+            self.assertEqual(original, pvc)
+            result = self.check(pvcs=[pvc], volumes=[volume])
+            self.assertTrue(result["passed"])
+            self.assertEqual("pvc_trim_retained_exception", result["details"][0]["value_name"])
+            for fault in ("attached", "binding", "generation", "namespace", "storage", "name", "missing"):
+                with self.subTest(name=name, fault=fault):
+                    changed, disk = copy.deepcopy(pvc), copy.deepcopy(volume)
+                    if fault == "attached":
+                        disk["status"]["state"] = "attached"
+                    elif fault == "binding":
+                        changed["spec"]["volumeName"] = "replacement"
+                    elif fault == "generation":
+                        changed["metadata"]["labels"].pop("openbao-recovery-generation")
+                    elif fault == "namespace":
+                        changed["metadata"]["namespace"] = "other"
+                    elif fault == "storage":
+                        changed["spec"]["storageClassName"] = "other"
+                    elif fault == "name":
+                        changed["metadata"]["name"] = "data-openbao-20261116-0"
+                    else:
+                        disk = {}
+                    for code in (self.guard, self.report):
+                        self.assertFalse(code["retained_openbao"](changed, disk))
+                    self.assertFalse(self.check(pvcs=[changed], volumes=[disk] if disk else [])["passed"])
+            volume["status"]["state"] = "attached"
+            writes = []
+
+            def active_api(path, patch=None):
+                if patch is not None:
+                    writes.append(path)
+                    return {}
+                return pvc
+
+            self.guard["repair_volume"](active_api, volume, [self.job])
+            self.assertEqual(2, len(writes))
+
     def test_guard_monitor_detects_missing_suspended_stale_and_deleted_definitions(self):
         """Verify guard monitor detects missing suspended stale and deleted definitions."""
 

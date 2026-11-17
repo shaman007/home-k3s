@@ -84,6 +84,27 @@ data:
     LABEL = 'recurring-job.longhorn.io/trim-daily-a'
 
 
+    # Retained sealed Raft data, approved 2026-11-17; never trim while detached.
+    RETAINED_OPENBAO_PVCS = {
+        "data-openbao-0": "pvc-93f9b3cd-840c-4d87-8b73-cda2f540f369",
+        "data-openbao-1": "pvc-734eb6f0-c74b-41c8-a035-47032cc90fd0",
+        "data-openbao-2": "pvc-9207474c-802e-42b4-a223-d8e2cb7ed282",
+    }
+
+
+    def retained_openbao(pvc, volume):
+        meta, spec = pvc.get("metadata", {}), pvc.get("spec", {})
+        expected = RETAINED_OPENBAO_PVCS.get(meta.get("name"))
+        return (expected is not None and meta.get("namespace") == "openbao"
+                and meta.get("labels", {}).get("openbao-recovery-generation") == "legacy-20261116"
+                and spec.get("storageClassName") == "longhorn"
+                and spec.get("volumeMode", "Filesystem") == "Filesystem"
+                and spec.get("volumeName") == expected
+                and volume.get("metadata", {}).get("name") == expected
+                and not volume.get("metadata", {}).get("deletionTimestamp")
+                and volume.get("status", {}).get("state") == "detached")
+
+
     def assignments(labels, jobs):
         keys = {'recurring-job.longhorn.io/' + j['metadata']['name'] for j in jobs}
         keys.update('recurring-job-group.longhorn.io/' + g
@@ -110,6 +131,9 @@ data:
             if (pvc.get('spec', {}).get('volumeName') == meta['name']
                     and not pvc['metadata'].get('deletionTimestamp')):
                 if pvc.get('spec', {}).get('volumeMode', 'Filesystem') != 'Filesystem':
+                    return
+                if retained_openbao(pvc, volume):
+                    print('Retained OpenBao trim exception:', meta['name'])
                     return
                 labels = pvc['metadata'].get('labels', {})
                 if not existing and labels.get('recurring-job.longhorn.io/source') == 'enabled':
