@@ -100,34 +100,101 @@ tests:
     exp_samples:
     - labels: '{__name__="homelab_expected_scrape_job",job="test-expected"}'
       value: 1
-- name: TraefikHigh5xx
+- name: TraefikHigh5xx-low-volume
   interval: 1m
   input_series:
   - series: traefik_service_requests_total{service="web",code="200"}
-    values: 0+1x20
+    values: 0+1x60
   - series: traefik_service_requests_total{service="web",code="500"}
-    values: 0+1x20
+    values: 0+1x60
   promql_expr_test:
   - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
-      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.05) and (sum
-      by(service) (increase(traefik_service_requests_total[10m])) >= 100)
-    eval_time: 20m
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.20) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100) and (sum
+      by(service) (increase(traefik_service_requests_total{code=~"5.."}[10m])) >=
+      30)
+    eval_time: 60m
     exp_samples: []
-- name: TraefikHigh5xx
+- name: TraefikHigh5xx-below-ratio
   interval: 1m
   input_series:
   - series: traefik_service_requests_total{service="web",code="200"}
-    values: 0+90x20
+    values: 0+90x60
   - series: traefik_service_requests_total{service="web",code="500"}
-    values: 0+10x20
+    values: 0+10x60
   promql_expr_test:
   - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
-      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.05) and (sum
-      by(service) (increase(traefik_service_requests_total[10m])) >= 100)
-    eval_time: 20m
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.20) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100) and (sum
+      by(service) (increase(traefik_service_requests_total{code=~"5.."}[10m])) >=
+      30)
+    eval_time: 60m
+    exp_samples: []
+- name: TraefikHigh5xx-below-error-count
+  interval: 1m
+  input_series:
+  - series: traefik_service_requests_total{service="web",code="200"}
+    values: 0+8x60
+  - series: traefik_service_requests_total{service="web",code="500"}
+    values: 0+2.1x60
+  promql_expr_test:
+  - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.20) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100) and (sum
+      by(service) (increase(traefik_service_requests_total{code=~"5.."}[10m])) >=
+      30)
+    eval_time: 60m
+    exp_samples: []
+- name: TraefikHigh5xx-at-ratio-boundary
+  interval: 1m
+  input_series:
+  - series: traefik_service_requests_total{service="web",code="200"}
+    values: 0+80x60
+  - series: traefik_service_requests_total{service="web",code="500"}
+    values: 0+20x60
+  promql_expr_test:
+  - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.20) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100) and (sum
+      by(service) (increase(traefik_service_requests_total{code=~"5.."}[10m])) >=
+      30)
+    eval_time: 60m
+    exp_samples: []
+- name: TraefikHigh5xx-sustained-errors
+  interval: 1m
+  input_series:
+  - series: traefik_service_requests_total{service="web",code="200"}
+    values: 0+7x60
+  - series: traefik_service_requests_total{service="web",code="500"}
+    values: 0+4x60
+  promql_expr_test:
+  - expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m]))
+      / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.20) and (sum
+      by(service) (increase(traefik_service_requests_total[10m])) >= 100) and (sum
+      by(service) (increase(traefik_service_requests_total{code=~"5.."}[10m])) >=
+      30)
+    eval_time: 60m
     exp_samples:
     - labels: '{service="web"}'
-      value: 0.1
+      value: 0.36363636363636365
+  alert_rule_test:
+  - eval_time: 29m
+    alertname: TraefikHigh5xx
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: TraefikHigh5xx
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        service: web
+      exp_annotations:
+        summary: Ingress service returns over 20% server errors for thirty minutes
+          with at least 30 server errors and 100 requests per ten minutes.
+        description: 'Affected resource: {service="web"}; observed value: 0.36363636363636365.
+          See runbook for checks and thresholds.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
 - name: LonghornBackupStale
   interval: 1m
   input_series:

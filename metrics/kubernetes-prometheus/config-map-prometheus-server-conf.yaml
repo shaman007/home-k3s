@@ -965,15 +965,15 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: TraefikHigh5xx
-        expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m])) / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.05) and (sum by(service) (increase(traefik_service_requests_total[10m]))
-          >= 100)
-        for: 10m
+        expr: (sum by(service) (rate(traefik_service_requests_total{code=~"5.."}[10m])) / sum by(service) (rate(traefik_service_requests_total[10m])) > 0.20) and (sum by(service) (increase(traefik_service_requests_total[10m]))
+          >= 100) and (sum by(service) (increase(traefik_service_requests_total{code=~"5.."}[10m])) >= 30)
+        for: 30m
         labels:
           severity: mail
           priority: warning
           owner: homelab
         annotations:
-          summary: Ingress service returns over 5% server errors with at least 100 requests per ten minutes.
+          summary: Ingress service returns over 20% server errors for thirty minutes with at least 30 server errors and 100 requests per ten minutes.
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: TraefikHighLatency
