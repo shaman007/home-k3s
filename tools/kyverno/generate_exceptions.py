@@ -22,8 +22,16 @@ POLICIES = {
 
 
 # Reviewed application roles only; permission-init exceptions retain their smaller
-# allowlist. No SYS_ADMIN, privileged containers or arbitrary main roles.
+# allowlist. The separately validated FRR routing declaration below is the only
+# non-privileged SYS_ADMIN exception; application contracts cannot grant it.
 APPLICATION_CAPABILITIES = {
+    ("metallb-system", "metallb-frr-k8s", "controller"): ({"NET_RAW"}, 0, False),
+    ("metallb-system", "metallb-frr-k8s", "reloader"): ({"DAC_OVERRIDE"}, 0, False),
+    ("mail", "rspamd-spam-trainer", "trainer"): (
+        {"CHOWN", "DAC_OVERRIDE", "KILL", "SETGID", "SETUID", "SYS_CHROOT"},
+        0,
+        False,
+    ),
     ("backup-rsync", "backup-rsync", "sshd"): (
         {"CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID", "SYS_CHROOT", "NET_BIND_SERVICE"},
         0,
@@ -313,7 +321,9 @@ def approved(policy, allowed):
                     "(0)) == 0"
                 )
             )
-        if policy == "require-drop-all-capabilities" and not rule.get("requirePrivileged"):
+        if policy == "require-drop-all-capabilities" and rule.get("requireFrrRouting"):
+            fields.extend(guard_terms("c", FRR_ROUTING_GUARDS))
+        elif policy == "require-drop-all-capabilities" and not rule.get("requirePrivileged"):
             add_capability_fields(fields, rule)
         if policy in ("require-drop-all-capabilities", "restrict-seccomp-strict") and rule.get(
             "requirePrivileged"
@@ -458,6 +468,18 @@ def validate_init_capability_rule(entry, name, rule):
         raise AssertionError
 
 
+FRR_ROUTING_GUARDS = {
+    "runAsUser": 0,
+    "runAsGroup": 0,
+    "runAsNonRoot": False,
+    "privileged": False,
+    "allowPrivilegeEscalation": False,
+    "readOnlyRootFilesystem": True,
+    "seccompProfile": {"type": "RuntimeDefault"},
+    "capabilities": {"add": ["NET_ADMIN", "NET_RAW", "SYS_ADMIN", "NET_BIND_SERVICE"]},
+}
+
+
 def validate_main_capability_rule(entry, name, rule):
     """Require the exact reviewed speaker or application capability contract."""
     if is_speaker(entry):
@@ -475,9 +497,30 @@ def validate_main_capability_rule(entry, name, rule):
         if rule["allowPrivilegeEscalation"] is not False:
             raise AssertionError
         return
-    if not entry["kind"] == "Deployment":
-        raise AssertionError
     key = (entry["namespace"], entry["name"], name)
+    if rule.get("requireFrrRouting"):
+        if not (key == ("metallb-system", "metallb-frr-k8s", "frr")):
+            raise AssertionError
+        if not (entry["kind"] == "DaemonSet"):
+            raise AssertionError
+        if not (set(rule) == {"image", "requireFrrRouting"}):
+            raise AssertionError
+        if not (rule["requireFrrRouting"] is True):
+            raise AssertionError
+        if not (entry["requiredGuards"]["containers"][name] == FRR_ROUTING_GUARDS):
+            raise AssertionError
+        if not (entry["policies"]["require-run-as-nonroot"]["containers"][name]["image"] == rule["image"]):
+            raise AssertionError
+        if not (image_repository(rule["image"]) == "quay.io/frrouting/frr"):
+            raise AssertionError
+        return
+    expected_kind = "Deployment"
+    if key[:2] == ("metallb-system", "metallb-frr-k8s"):
+        expected_kind = "DaemonSet"
+    elif key[:2] == ("mail", "rspamd-spam-trainer"):
+        expected_kind = "CronJob"
+    if not entry["kind"] == expected_kind:
+        raise AssertionError
     if key not in APPLICATION_CAPABILITIES:
         raise AssertionError
     caps, uid, escalation = APPLICATION_CAPABILITIES[key]

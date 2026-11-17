@@ -1,19 +1,17 @@
 # Reviewed infrastructure guards
 
-The current catalog selects five roles across four Pods: GPU Operator, Longhorn
+The original catalog selected five roles across four controller identities: GPU Operator, Longhorn
 CSI driver deployer and its wait init, and the GPU feature-discovery/device-plugin
 config-manager init containers. The latter complete as UID/GID 1000 with drop ALL,
 no escalation and RuntimeDefault. Their privileged companion processes retain
 separately reviewed audit exceptions.
 
-The unused FRR DaemonSet and statuscleaner have been removed from the catalog,
-native mutation rules, backfill ConfigMap and generated namespaced RBAC. The
-AppProject no longer needs the metallb-system destination after Argo pruned the
-old guard Role/RoleBinding; there are no remaining MetalLB mutation targets. See
-[staged FRR retirement](../docs/metallb-l2-retirement.md) for deployment sequencing,
-verification and the retained CRDs. Historical compatibility evidence remains in
-[GPU/FRR helper hardening](../docs/gpu-frr-helper-hardening.md); isolated FRR probe
-scripts remain available for rollback investigation, but are not active targets.
+The active BGP FRR DaemonSet and statuscleaner are restored as reviewed targets
+in the local [warning follow-up](../docs/kyverno-warning-review.md). Their ten
+selected roles bring the catalog to fifteen roles across six controller identities.
+Current FRR images are pinned separately from the earlier L2-only retirement.
+Publication replaces routing Pods and requires the maintenance verification in
+that review; no deployed clearance is claimed here.
 
 ## Requirements and compatibility
 
@@ -46,9 +44,9 @@ securityContext fields and the reviewed deployer Pod context change. Runtime
 image pins intentionally require review on upgrades; audit exceptions separately
 match exact repositories across versions.
 
-The hook can GET/PATCH exactly four named controllers. It can list Longhorn
+The hook can GET/PATCH exactly six named controllers. It can list Longhorn
 volume/node health and GET only the known GPU node for capacity checks. It has no
-Secret access, namespace-wide patch access or MetalLB permissions. GPU node Ready,
+Secret access, namespace-wide patch access or broad MetalLB permissions; GET/PATCH access there is limited to the two named FRR controllers. GPU node Ready,
 capacity and allocatable must remain eight. Longhorn volumes/nodes/disks must be
 healthy before and between writes.
 

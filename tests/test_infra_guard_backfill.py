@@ -63,6 +63,8 @@ class InfrastructureGuardTests(unittest.TestCase):
             {(e["namespace"], e["name"]) for e in self.entries},
             {
                 ("gpu-operator", "gpu-operator"),
+                ("metallb-system", "metallb-frr-k8s"),
+                ("metallb-system", "metallb-frr-k8s-statuscleaner"),
                 ("longhorn-system", "longhorn-driver-deployer"),
                 ("gpu-operator", "gpu-feature-discovery"),
                 ("gpu-operator", "nvidia-device-plugin-daemonset"),
@@ -75,9 +77,12 @@ class InfrastructureGuardTests(unittest.TestCase):
                 "longhorn-driver-deployer",
                 "wait-longhorn-manager",
                 "config-manager-init",
+                "frr-k8s-statuscleaner", "controller", "frr", "reloader",
+                "frr-metrics", "frr-status", "cp-frr-files", "cp-reloader",
+                "cp-metrics", "cp-frr-status",
             },
         )
-        self.assertEqual(sum(len(e["targets"]) for e in self.entries), 5)
+        self.assertEqual(sum(len(e["targets"]) for e in self.entries), 15)
         docs = g.generate(self.catalog)
         for role in [d for d in docs if d["kind"] == "Role"]:
             for rule in role["rules"]:
@@ -317,13 +322,17 @@ class InfrastructureGuardTests(unittest.TestCase):
 
     def test_new_helpers_preserve_required_privilege_boundaries(self):
         """Verify new helpers preserve required privilege boundaries."""
-        self.assertFalse(any(e["namespace"] == "metallb-system" for e in self.entries))
-        self.assertFalse(
-            any(
-                d.get("metadata", {}).get("namespace") == "metallb-system"
-                for d in g.generate(self.catalog)
-            )
-        )
+        frr = next(e for e in self.entries if e["name"] == "metallb-frr-k8s")
+        targets = {t["name"]: t["guards"] for t in frr["targets"]}
+        for name in ("frr-metrics", "frr-status"):
+            self.assertEqual(targets[name]["runAsUser"], 100)
+            self.assertEqual(targets[name]["runAsGroup"], 102)
+            self.assertEqual(targets[name]["capabilities"], {"drop": ["ALL"]})
+        self.assertEqual(targets["reloader"]["capabilities"],
+                         {"drop": ["ALL"], "add": ["DAC_OVERRIDE"]})
+        self.assertEqual(targets["frr"]["capabilities"],
+                         {"add": ["NET_ADMIN", "NET_RAW", "SYS_ADMIN", "NET_BIND_SERVICE"]})
+        self.assertEqual(frr["fixture"]["spec"]["updateStrategy"]["rollingUpdate"]["maxUnavailable"], 1)
         gpu = [
             e
             for e in self.entries

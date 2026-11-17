@@ -40,6 +40,13 @@ spec:
             - /bin/sh
             - /config/train-spam.sh
             securityContext:
+              runAsUser: 0
+              runAsGroup: 0
+              runAsNonRoot: false
+              privileged: false
+              capabilities:
+                drop: [ALL]
+                add: [CHOWN, DAC_OVERRIDE, KILL, SETGID, SETUID, SYS_CHROOT]
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
             resources:

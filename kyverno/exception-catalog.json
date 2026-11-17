@@ -3460,12 +3460,30 @@
         "tier": "mail"
       },
       "reason": "Current trainer starts a private Dovecot master/auth service with separate users.",
-      "evidence": "docs/security-exception-follow-up.md",
+      "evidence": "docs/kyverno-warning-review.md",
       "policies": {
         "require-run-as-nonroot": {
           "containers": {
             "trainer": {
               "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "trainer": {
+              "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root",
+              "capabilities": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "KILL",
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
             }
           },
           "initContainers": {}
@@ -3484,7 +3502,24 @@
             "image": "harbor.andreybondarenko.com/dockerhub/dovecot/dovecot:2.4.5-root",
             "securityContext": {
               "allowPrivilegeEscalation": false,
-              "readOnlyRootFilesystem": true
+              "readOnlyRootFilesystem": true,
+              "runAsUser": 0,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "privileged": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "CHOWN",
+                  "DAC_OVERRIDE",
+                  "KILL",
+                  "SETGID",
+                  "SETUID",
+                  "SYS_CHROOT"
+                ]
+              }
             }
           }
         ],
@@ -3495,9 +3530,22 @@
           "trainer": {
             "allowPrivilegeEscalation": false,
             "readOnlyRootFilesystem": true,
+            "runAsUser": 0,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
             "privileged": false,
-            "seccompProfile": {
-              "type": "RuntimeDefault"
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ],
+              "add": [
+                "CHOWN",
+                "DAC_OVERRIDE",
+                "KILL",
+                "SETGID",
+                "SETUID",
+                "SYS_CHROOT"
+              ]
             }
           }
         }
@@ -6121,6 +6169,575 @@
           }
         ],
         "initContainers": []
+      }
+    },
+    {
+      "namespace": "metallb-system",
+      "kind": "DaemonSet",
+      "name": "metallb-frr-k8s",
+      "serviceAccount": "metallb-frr-k8s-controller",
+      "labels": {
+        "app": "frr-k8s",
+        "app.kubernetes.io/component": "frr-k8s",
+        "app.kubernetes.io/instance": "metallb",
+        "app.kubernetes.io/name": "frr-k8s"
+      },
+      "reason": "Active FRR BGP routing and root reload/controller roles; copy init and metrics/status helpers are non-root.",
+      "evidence": "docs/kyverno-warning-review.md",
+      "guardReview": "docs/kyverno-warning-review.md",
+      "policies": {
+        "require-run-as-nonroot": {
+          "containers": {
+            "controller": {
+              "image": "quay.io/metallb/frr-k8s:v0.0.27"
+            },
+            "frr": {
+              "image": "quay.io/frrouting/frr:10.6.2"
+            },
+            "reloader": {
+              "image": "quay.io/frrouting/frr:10.6.2"
+            }
+          },
+          "initContainers": {}
+        },
+        "require-drop-all-capabilities": {
+          "containers": {
+            "controller": {
+              "image": "quay.io/metallb/frr-k8s:v0.0.27",
+              "capabilities": [
+                "NET_RAW"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
+            },
+            "frr": {
+              "image": "quay.io/frrouting/frr:10.6.2",
+              "requireFrrRouting": true
+            },
+            "reloader": {
+              "image": "quay.io/frrouting/frr:10.6.2",
+              "capabilities": [
+                "DAC_OVERRIDE"
+              ],
+              "runAsUser": 0,
+              "allowPrivilegeEscalation": false
+            }
+          },
+          "initContainers": {}
+        }
+      },
+      "snapshot": {
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "controller",
+            "image": "quay.io/metallb/frr-k8s:v0.0.27",
+            "command": [
+              "/frr-k8s"
+            ],
+            "args": [
+              "--node-name=$(NODE_NAME)",
+              "--namespace=$(NAMESPACE)",
+              "--metrics-bind-address=0.0.0.0:9140",
+              "--log-level=info"
+            ],
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "add": [
+                  "NET_RAW"
+                ],
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "readOnlyRootFilesystem": true,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              },
+              "runAsUser": 0,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "privileged": false
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/frr_reloader",
+                "name": "reloader"
+              }
+            ]
+          },
+          {
+            "name": "frr",
+            "image": "quay.io/frrouting/frr:10.6.2",
+            "command": [
+              "/sbin/tini",
+              "--",
+              "/usr/lib/frr/docker-start"
+            ],
+            "securityContext": {
+              "runAsUser": 0,
+              "runAsGroup": 0,
+              "runAsNonRoot": false,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              },
+              "capabilities": {
+                "add": [
+                  "NET_ADMIN",
+                  "NET_RAW",
+                  "SYS_ADMIN",
+                  "NET_BIND_SERVICE"
+                ]
+              }
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/var/run/frr",
+                "name": "frr-sockets"
+              },
+              {
+                "mountPath": "/etc/frr",
+                "name": "frr-conf"
+              },
+              {
+                "mountPath": "/var/lib/frr",
+                "name": "frr-lib"
+              },
+              {
+                "mountPath": "/var/tmp/frr",
+                "name": "frr-tmp"
+              }
+            ]
+          },
+          {
+            "name": "reloader",
+            "image": "quay.io/frrouting/frr:10.6.2",
+            "command": [
+              "/etc/frr_reloader/frr-reloader.sh"
+            ],
+            "volumeMounts": [
+              {
+                "mountPath": "/var/run/frr",
+                "name": "frr-sockets"
+              },
+              {
+                "mountPath": "/etc/frr",
+                "name": "frr-conf"
+              },
+              {
+                "mountPath": "/etc/frr_reloader",
+                "name": "reloader"
+              }
+            ],
+            "securityContext": {
+              "runAsUser": 0,
+              "runAsGroup": 102,
+              "runAsNonRoot": false,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ],
+                "add": [
+                  "DAC_OVERRIDE"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "frr-metrics",
+            "image": "quay.io/frrouting/frr:10.6.2",
+            "command": [
+              "/etc/frr_metrics/frr-metrics"
+            ],
+            "args": [
+              "--metrics-port=9141",
+              "--metrics-bind-address=0.0.0.0"
+            ],
+            "volumeMounts": [
+              {
+                "mountPath": "/var/run/frr",
+                "name": "frr-sockets"
+              },
+              {
+                "mountPath": "/etc/frr",
+                "name": "frr-conf"
+              },
+              {
+                "mountPath": "/etc/frr_metrics",
+                "name": "metrics"
+              }
+            ],
+            "securityContext": {
+              "runAsUser": 100,
+              "runAsGroup": 102,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "frr-status",
+            "image": "quay.io/frrouting/frr:10.6.2",
+            "command": [
+              "/etc/frr_status/frr-status"
+            ],
+            "args": [
+              "--node-name=$(NODE_NAME)",
+              "--namespace=$(NAMESPACE)",
+              "--pod-name=$(POD_NAME)",
+              "--log-level=info",
+              "--poll-interval=2m"
+            ],
+            "volumeMounts": [
+              {
+                "mountPath": "/var/run/frr",
+                "name": "frr-sockets"
+              },
+              {
+                "mountPath": "/etc/frr",
+                "name": "frr-conf"
+              },
+              {
+                "mountPath": "/etc/frr_status",
+                "name": "frr-status"
+              }
+            ],
+            "securityContext": {
+              "runAsUser": 100,
+              "runAsGroup": 102,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "cp-frr-files",
+            "image": "quay.io/frrouting/frr:10.6.2",
+            "command": [
+              "/bin/sh",
+              "-c",
+              "cp -rLf /tmp/frr/* /etc/frr/"
+            ],
+            "securityContext": {
+              "runAsGroup": 101,
+              "runAsUser": 100,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/tmp/frr",
+                "name": "frr-startup"
+              },
+              {
+                "mountPath": "/etc/frr",
+                "name": "frr-conf"
+              }
+            ]
+          },
+          {
+            "name": "cp-reloader",
+            "image": "quay.io/metallb/frr-k8s:v0.0.27",
+            "command": [
+              "/bin/sh",
+              "-c",
+              "cp -f /frr-reloader.sh /etc/frr_reloader/"
+            ],
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/frr_reloader",
+                "name": "reloader"
+              }
+            ],
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "cp-metrics",
+            "image": "quay.io/metallb/frr-k8s:v0.0.27",
+            "command": [
+              "/bin/sh",
+              "-c",
+              "cp -f /frr-metrics /etc/frr_metrics/"
+            ],
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/frr_metrics",
+                "name": "metrics"
+              }
+            ],
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          },
+          {
+            "name": "cp-frr-status",
+            "image": "quay.io/metallb/frr-k8s:v0.0.27",
+            "command": [
+              "/bin/sh",
+              "-c",
+              "cp -f /frr-status /etc/frr_status/"
+            ],
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/frr_status",
+                "name": "frr-status"
+              }
+            ],
+            "securityContext": {
+              "runAsUser": 1000,
+              "runAsGroup": 1000,
+              "runAsNonRoot": true,
+              "privileged": false,
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            }
+          }
+        ]
+      },
+      "requiredGuards": {
+        "containers": {
+          "controller": {
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "add": [
+                "NET_RAW"
+              ],
+              "drop": [
+                "ALL"
+              ]
+            },
+            "readOnlyRootFilesystem": true,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "runAsUser": 0,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "privileged": false
+          },
+          "frr": {
+            "runAsUser": 0,
+            "runAsGroup": 0,
+            "runAsNonRoot": false,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "readOnlyRootFilesystem": true,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            },
+            "capabilities": {
+              "add": [
+                "NET_ADMIN",
+                "NET_RAW",
+                "SYS_ADMIN",
+                "NET_BIND_SERVICE"
+              ]
+            }
+          },
+          "reloader": {
+            "runAsUser": 0,
+            "runAsGroup": 102,
+            "runAsNonRoot": false,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ],
+              "add": [
+                "DAC_OVERRIDE"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "frr-metrics": {
+            "runAsUser": 100,
+            "runAsGroup": 102,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "frr-status": {
+            "runAsUser": 100,
+            "runAsGroup": 102,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        },
+        "initContainers": {
+          "cp-frr-files": {
+            "runAsGroup": 101,
+            "runAsUser": 100,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "cp-reloader": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "cp-metrics": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "cp-frr-status": {
+            "runAsUser": 1000,
+            "runAsGroup": 1000,
+            "runAsNonRoot": true,
+            "privileged": false,
+            "allowPrivilegeEscalation": false,
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          }
+        }
+      },
+      "reviewedCompanions": {
+        "containers": {
+          "frr-metrics": {
+            "image": "quay.io/frrouting/frr:10.6.2"
+          },
+          "frr-status": {
+            "image": "quay.io/frrouting/frr:10.6.2"
+          }
+        },
+        "initContainers": {
+          "cp-frr-files": {
+            "image": "quay.io/frrouting/frr:10.6.2"
+          },
+          "cp-reloader": {
+            "image": "quay.io/metallb/frr-k8s:v0.0.27"
+          },
+          "cp-metrics": {
+            "image": "quay.io/metallb/frr-k8s:v0.0.27"
+          },
+          "cp-frr-status": {
+            "image": "quay.io/metallb/frr-k8s:v0.0.27"
+          }
+        }
       }
     }
   ]

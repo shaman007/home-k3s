@@ -49,8 +49,8 @@ Git for normal parent-Application reconciliation; do not apply it manually.
 
 ## Reviewed exceptions and additional audits
 
-The reviewed [catalog](exception-catalog.json) contains 91 policy-specific
-exceptions for 48 workload identities. Each entry records its reason, evidence,
+The reviewed [catalog](exception-catalog.json) contains 136 policy-specific
+exceptions for 54 workload identities. Each entry records its reason, evidence,
 service account, stable labels, approved container role/name and exact declared
 image reference. These are explicit reviewed entries, not an import of every
 current failure. Mutable image references remain string matches; they are not
@@ -113,8 +113,8 @@ contracts require owner review under the existing RBAC/GitOps trust boundary. Ex
 exclusions remain `kyverno` and `kube-system`. This change does not mutate or
 restart application workloads and does not enable denial.
 
-Existing reviewed exceptions also pin the live companion guards for 52 workload
-identities and 72 container roles; weakening a reviewed guard invalidates the
+Existing reviewed exceptions also pin the reviewed companion guards for 54 workload
+identities and 83 container roles; weakening a reviewed guard invalidates the
 exception. This does not grant new roles or change application privileges. See
 [guard contract review](../docs/exception-guard-contract-review.md).
 
@@ -199,3 +199,12 @@ for compatible application changes, runtime evidence, and remaining chart gaps.
 
 The GPU init follow-up adds strictly guarded, compliant companion checks; these
 do not grant exception roles. See [GPU/FRR requirements](../docs/gpu-frr-helper-hardening.md).
+
+## 2026-11-17 warning follow-up
+
+The [42-event review](../docs/kyverno-warning-review.md) prepares actual FRR helper
+guards and narrow root/capability exceptions after BGP was restored, plus an
+explicit six-capability Dovecot trainer contract. Escalation/seccomp remain real
+checks. The routing daemon retains its reviewed upstream capability declaration;
+this special exception cannot be reused for other containers. This follow-up is
+local preparation and requires BGP rollout verification after publication.

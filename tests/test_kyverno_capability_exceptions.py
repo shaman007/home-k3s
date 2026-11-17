@@ -191,9 +191,9 @@ class CompanionGuardContractTests(unittest.TestCase):
 
     def test_reviewed_scope_and_role_counts(self):
         """Verify reviewed scope and role counts."""
-        self.assertEqual(len(self.entries), 53)
+        self.assertEqual(len(self.entries), 54)
         self.assertEqual(
-            sum(len(v) for e in self.entries for v in e["requiredGuards"].values()), 74
+            sum(len(v) for e in self.entries for v in e["requiredGuards"].values()), 83
         )
         list(gen.generate({**self.catalog, "entries": self.entries}))
 
@@ -212,7 +212,7 @@ class CompanionGuardContractTests(unittest.TestCase):
 
     def test_reviewed_gpu_companions_are_constraints_not_exception_roles(self):
         """Keep reviewed GPU companion constraints outside the exception-role inventory."""
-        entries = [e for e in self.entries if e.get("reviewedCompanions")]
+        entries = [e for e in self.entries if e.get("reviewedCompanions") and e["namespace"] == "gpu-operator"]
         self.assertEqual(len(entries), 2)
         for e in entries:
             helper = "config-manager-init"
@@ -326,5 +326,29 @@ class SpeakerRootCapabilityExceptionTests(unittest.TestCase):
                 e["requiredGuards"]["containers"]["speaker"].pop("readOnlyRootFilesystem")
             if mutation == "policy":
                 e["policies"].pop(CAP)
+            with self.subTest(mutation=mutation), self.assertRaises((AssertionError, KeyError)):
+                list(gen.generate({**catalog, "entries": [e]}))
+
+
+class RoutingCapabilityExceptionTests(unittest.TestCase):
+    """Keep routing exceptions bound to the exact reviewed daemon and guarded companions."""
+
+    def test_reject_unreviewed_routing_contracts(self):
+        catalog = json.loads((ROOT / "kyverno/exception-catalog.json").read_text())
+        original = next(e for e in catalog["entries"] if e["name"] == "metallb-frr-k8s")
+        list(gen.generate({**catalog, "entries": [original]}))
+        for mutation in ("namespace", "name", "kind", "image", "role", "guards", "flag"):
+            e = copy.deepcopy(original)
+            rule = e["policies"][CAP]["containers"]["frr"]
+            if mutation in ("namespace", "name", "kind"):
+                e[mutation] = "unreviewed"
+            elif mutation == "image":
+                rule["image"] = "registry.invalid/routing:1"
+            elif mutation == "role":
+                e["policies"][CAP]["containers"]["other"] = e["policies"][CAP]["containers"].pop("frr")
+            elif mutation == "guards":
+                e["requiredGuards"]["containers"]["frr"]["allowPrivilegeEscalation"] = True
+            else:
+                rule["requireFrrRouting"] = "true"
             with self.subTest(mutation=mutation), self.assertRaises((AssertionError, KeyError)):
                 list(gen.generate({**catalog, "entries": [e]}))

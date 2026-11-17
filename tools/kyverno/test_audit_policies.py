@@ -134,18 +134,31 @@ def noncompliant_container(policy, name):
 
 
 def admitted_longhorn_manager(document, kyverno):
-    """Audit the chart after its real native prepull mutation, as in admission."""
-    if (
-        document.get("kind"),
-        document.get("metadata", {}).get("namespace"),
-        document.get("metadata", {}).get("name"),
-    ) != ("DaemonSet", "longhorn-system", "longhorn-manager"):
+    """Audit chart output after reviewed native mutations and Kubernetes defaults."""
+    identity = (document.get("kind"), document.get("metadata", {}).get("namespace"),
+                document.get("metadata", {}).get("name"))
+    if identity == ("DaemonSet", "longhorn-system", "longhorn-manager"):
+        source = ROOT / "longhorn/policy-component-security.yaml"
+    elif identity in (("DaemonSet", "metallb-system", "metallb-frr-k8s"),
+                      ("Deployment", "metallb-system", "metallb-frr-k8s-statuscleaner")):
+        source = ROOT / "infra-guards/resources.yaml"
+        document = copy.deepcopy(document)
+        # Native admission sees API-defaulted objects. The offline CLI does not
+        # default DaemonSet rollout fields or volume modes; preserve explicit values.
+        if document["kind"] == "DaemonSet":
+            strategy = document["spec"].setdefault("updateStrategy", {"type": "RollingUpdate"})
+            if strategy.get("type", "RollingUpdate") == "RollingUpdate":
+                rolling = strategy.setdefault("rollingUpdate", {})
+                rolling.setdefault("maxUnavailable", 1)
+                rolling.setdefault("maxSurge", 0)
+        for volume in document["spec"]["template"]["spec"].get("volumes", []):
+            for kind in ("configMap", "secret"):
+                if kind in volume:
+                    volume[kind].setdefault("defaultMode", 420)
+    else:
         return copy.deepcopy(document)
-    policy = next(
-        d
-        for d in yaml.safe_load_all((ROOT / "longhorn/policy-component-security.yaml").read_text())
-        if d and d["kind"] == "MutatingAdmissionPolicy"
-    )
+    policy = next(d for d in yaml.safe_load_all(source.read_text())
+                  if d and d["kind"] == "MutatingAdmissionPolicy")
     policy["apiVersion"] = "policies.kyverno.io/v1"
     policy["kind"] = "MutatingPolicy"
     policy["spec"].pop("reinvocationPolicy")
@@ -458,6 +471,8 @@ def mutate_capabilities(changed, section, role, rule, mutation):
         sc["capabilities"]["add"].append("SYS_ADMIN")
     if mutation == "missing-drop":
         sc["capabilities"].pop("drop")
+    if mutation == "routing-declaration":
+        sc["capabilities"]["add"].remove("SYS_ADMIN")
     if mutation == "escalation":
         sc["allowPrivilegeEscalation"] = not rule.get("allowPrivilegeEscalation", False)
     if mutation == "privileged":
@@ -494,6 +509,8 @@ def capability_variants(case, entry, positive, policy, approval):
                 "missing-escalation-guard",
                 "reordered",
             ]
+            if rule.get("requireFrrRouting"):
+                mutations[mutations.index("missing-drop")] = "routing-declaration"
             for mutation in mutations:
                 changed = copy.deepcopy(positive)
                 variant_name(changed, policy + role + mutation, entry)

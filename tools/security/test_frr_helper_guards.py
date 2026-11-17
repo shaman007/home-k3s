@@ -7,8 +7,8 @@ import time
 
 from probe_commands import run_command
 
-FRR = "quay.io/frrouting/frr:10.4.3"
-HELPERS = "quay.io/metallb/frr-k8s:v0.0.25"
+FRR = "quay.io/frrouting/frr:10.6.2"
+HELPERS = "quay.io/metallb/frr-k8s:v0.0.27"
 
 
 def run(*args, check=True):
@@ -427,6 +427,19 @@ def check_exporters(d, mounts, daemon, containers):
     check_exporter_guards([metrics, status_exporter])
 
 
+def check_statuscleaner():
+    """Execute the actual standalone cleaner binary without root or capabilities."""
+    run("run", "--rm", "--network=none", "--user=1000:1000", "--cap-drop=ALL",
+        "--security-opt=no-new-privileges", "--read-only", "--read-only-tmpfs=false",
+        "--tmpfs=/fixture:rw,mode=0777", "--entrypoint=/bin/sh", HELPERS, "-ec",
+        "cp -f /frr-reloader.sh /frr-metrics /frr-status /fixture/; "
+        "test -x /fixture/frr-metrics; test -x /fixture/frr-status; "
+        "test -r /fixture/frr-reloader.sh")
+    run("run", "--rm", "--network=none", "--user=1000:1000", "--cap-drop=ALL",
+        "--security-opt=no-new-privileges", "--read-only", "--read-only-tmpfs=false",
+        "--entrypoint=/statuscleaner", HELPERS, "--help")
+
+
 def main():
     """Real FRR VTY/reload/metrics on disposable files and an isolated network."""
     containers = []
@@ -435,6 +448,7 @@ def main():
         config = prepare_fixture(d)
         try:
             copy_helpers(d, containers)
+            check_statuscleaner()
             mounts = [
                 "-v",
                 str(d / "conf") + ":/etc/frr:z",
