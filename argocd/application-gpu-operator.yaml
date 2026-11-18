@@ -10,7 +10,7 @@ spec:
   project: platform
   source:
     repoURL: https://helm.ngc.nvidia.com/nvidia
-    targetRevision: v26.7.2
+    targetRevision: v26.7.3
     chart: gpu-operator
     helm:
       values: |
