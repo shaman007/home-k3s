@@ -53,7 +53,10 @@ def init_container(web, mode, allow_pending="false"):
         },
         "envFrom": copy.deepcopy(web["envFrom"]),
         "env": [
-            copy.deepcopy(e) for e in web["env"] if migration or e["name"] in ENV_NAMES
+            copy.deepcopy(e)
+            for e in web["env"]
+            if (migration or e["name"] in ENV_NAMES)
+            and not e["name"].startswith("OTEL_")
         ],
         "volumeMounts": [copy.deepcopy(SCRIPT_MOUNT)],
     }

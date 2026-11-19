@@ -45,6 +45,24 @@ def remote_write():
     }
 
 
+def receive_tracing_args():
+    """Preserve the querier's exporter settings while naming the receiver itself."""
+    container = next(
+        c for c in read(QUERIER)["spec"]["template"]["spec"]["containers"]
+        if c["name"] == "thanos"
+    )
+    args = [a for a in container.get("args", []) if a.startswith("--tracing.config=")]
+    if not args:
+        return []
+    if len(args) != 1:
+        raise ValueError("Expected at most one inline Thanos tracing configuration")
+    config = yaml.safe_load(args[0].split("=", 1)[1])
+    config["config"]["service_name"] = "thanos-receive"
+    return ["--tracing.config=" + yaml.safe_dump(
+        config, default_flow_style=True, sort_keys=False, width=10000
+    ).strip()]
+
+
 def receive_statefulset():
     """Single ingestor owns a NEW PVC; never shares the Prometheus TSDB."""
     image = next(
@@ -110,6 +128,7 @@ def receive_statefulset():
                             "args": [
                                 "receive",
                                 "--log.level=info",
+                                *receive_tracing_args(),
                                 "--enable-auto-gomemlimit",
                                 "--auto-gomemlimit.ratio=0.7",
                                 "--tsdb.path=/data",

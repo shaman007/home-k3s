@@ -80,6 +80,7 @@ spec:
           mode: SingleBinary
           image:
             registry: harbor.andreybondarenko.com/dockerhub
+            tag: 3.7.10
           auth_enabled: false
           server:
             grpc_server_max_recv_msg_size: 16777216
