@@ -30,7 +30,7 @@ spec:
               type: RuntimeDefault
           containers:
           - name: sync
-            image: harbor.andreybondarenko.com/library/mastodon:2026-11-16-022913@sha256:ee235351bb9d0426060f01dbb3e0c2c4d9dd2a134f178b74e8bd5f108083693d
+            image: harbor.andreybondarenko.com/library/mastodon:2026-11-19-121459@sha256:d30b7ecb04f053173c5cd6f7d2036b6708ce71a5631ba32d0a0f94f8cae8c68b
             workingDir: /opt/mastodon
             command:
             - /bin/sh
