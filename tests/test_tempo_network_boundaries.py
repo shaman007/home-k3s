@@ -59,6 +59,15 @@ class TempoNetworkBoundariesTest(unittest.TestCase):
         for port in doc["spec"]["ports"]:
             self.assertNotIn("nodePort", port)
 
+    def test_coredns_exporter_matches_pinned_service_ip(self):
+        """CoreDNS must not depend on its node resolver knowing cluster services."""
+        service = yaml.safe_load((ROOT / "tempo/service-tempo.yaml").read_text())
+        config = yaml.safe_load(
+            (ROOT / "kube-system/coredns-custom/config-map-coredns.yaml").read_text()
+        )
+        endpoint = f"http://{service['spec']['clusterIP']}:9411/api/v2/spans"
+        self.assertIn(f"trace zipkin {endpoint}", config["data"]["Corefile"])
+
 
 if __name__ == "__main__":
     unittest.main()

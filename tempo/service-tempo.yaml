@@ -4,6 +4,9 @@ metadata:
   name: tempo
   namespace: monitoring
 spec:
+  # CoreDNS uses the node resolver, so its exporter cannot bootstrap via service DNS.
+  # Preserve the current allocation and use it explicitly in the CoreDNS Corefile.
+  clusterIP: 10.43.163.168
   selector:
     app: tempo
   ports:

@@ -9,7 +9,7 @@ data:
   Corefile: |
     .:53 {
         errors
-        trace zipkin http://tempo.monitoring.svc.cluster.local:9411/api/v2/spans {
+        trace zipkin http://10.43.163.168:9411/api/v2/spans {
             every 1000
             service coredns
         }

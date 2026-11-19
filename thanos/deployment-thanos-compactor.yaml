@@ -67,7 +67,7 @@ spec:
           args:
             - "compact"
             - "--log.level=info"
-            - '--tracing.config={type: OTLP, config: {client_type: http, service_name: thanos-compactor, endpoint: ''tempo.monitoring.svc.cluster.local:4318'', insecure: true, sampler_type: parentbasedtraceidratiobased, sampler_param: ''0.01''}}'
+            - '--tracing.config={type: OTLP, config: {client_type: http, service_name: thanos-compactor, endpoint: ''tempo.monitoring.svc.cluster.local:4318'', insecure: true, sampler_type: parentbasedtraceidratiobased, sampler_param: ''1.0''}}'
             - "--data-dir=/data"
             - "--objstore.config-file=/etc/thanos/objstore.yml"
             - --retention.resolution-raw=14d

@@ -72,6 +72,8 @@ spec:
             repository: harbor.andreybondarenko.com/dockerhub/kiwigrid/k8s-sidecar
 
         loki:
+          tracing:
+            enabled: true
           podSecurityContext:
             seccompProfile:
               type: RuntimeDefault

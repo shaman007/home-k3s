@@ -15,7 +15,8 @@ verification. A rendered exporter configuration is not proof of received spans.
 | Argo server/repo-server/application-controller | OTLP gRPC 4317 | parent based 10% | cmd parameters ConfigMap |
 | Grafana | OTLP gRPC 4317 | 10% | server env; operational endpoints filtered |
 | Prometheus | OTLP HTTP 4318 | 1% | `tracing` in prometheus.yaml |
-| Thanos querier/store-gateway/receive/compactor | OTLP HTTP 4318 | parent based 1% | non-secret inline tracing config |
+| Thanos querier/store-gateway/receive | OTLP HTTP 4318 | parent based 1% | non-secret inline tracing config |
+| Thanos compactor | OTLP HTTP 4318 | 100% | infrequent background iterations; non-secret inline config |
 | Loki single binary | Jaeger compact UDP 6831 | 1% | legacy Jaeger env supported by bundled dskit |
 | Kyverno admission/reports | OTLP gRPC 4317 | all | chart tracing values; existing controllers only |
 | CoreDNS | Zipkin HTTP 9411 | one request per 1,000 | built-in trace plugin, Corefile reload |
@@ -31,6 +32,15 @@ Jaeger UDP has no end-to-end delivery acknowledgement; confirm stored traces.
 The installed Loki dskit explicitly supplies an always-on sampler on its generic
 OTEL path. Merely setting `OTEL_TRACES_SAMPLER_ARG` there would not bound traffic.
 Its Jaeger path supports probabilistic sampling and is used instead.
+The chart's `loki.tracing.enabled` switch must also be true; exporter environment
+variables alone do not enable tracing.
+
+CoreDNS intentionally uses the node resolver and forwards external DNS through
+its unchanged `/etc/resolv.conf`. That resolver cannot resolve cluster Service
+names. Its Zipkin endpoint therefore uses Tempo's existing ClusterIP
+`10.43.163.168`, now explicitly pinned in `tempo/service-tempo.yaml`. Keep those
+two declarations aligned; do not change CoreDNS to resolve upstream DNS through
+itself. The regression test checks the endpoint against the Service allocation.
 
 CoreDNS, Argo and Kyverno currently have no egress isolation. Adding an Egress
 policy solely for Tempo would newly isolate those pods and break unrelated
