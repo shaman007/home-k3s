@@ -1261,7 +1261,7 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: GPUHot
-        expr: max by(UUID,modelName) (DCGM_FI_DEV_GPU_TEMP) > 85
+        expr: max by(UUID,modelName) (DCGM_FI_DEV_GPU_TEMP_CELSIUS or DCGM_FI_DEV_GPU_TEMP) > 85
         for: 10m
         labels:
           severity: mail
@@ -1272,7 +1272,7 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: GPURemapFailure
-        expr: max by(UUID,modelName) (DCGM_FI_DEV_ROW_REMAP_FAILURE) > 0 or max by(UUID,modelName) (DCGM_FI_DEV_UNCORRECTABLE_REMAPPED_ROWS) > 0
+        expr: max by(UUID,modelName) (DCGM_FI_DEV_ROW_REMAP_FAILED or DCGM_FI_DEV_ROW_REMAP_FAILURE) > 0 or max by(UUID,modelName) (DCGM_FI_DEV_ROW_REMAP_UNCORRECTABLE_TOTAL or DCGM_FI_DEV_UNCORRECTABLE_REMAPPED_ROWS) > 0
         for: 10m
         labels:
           severity: mail
@@ -1283,7 +1283,7 @@ data:
           description: 'Affected resource: {{ $labels }}; observed value: {{ $value }}. See runbook for checks and thresholds.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
       - alert: GPUExporterMissing
-        expr: absent(DCGM_FI_DEV_GPU_TEMP)
+        expr: absent(DCGM_FI_DEV_GPU_TEMP_CELSIUS or DCGM_FI_DEV_GPU_TEMP)
         for: 10m
         labels:
           severity: mail

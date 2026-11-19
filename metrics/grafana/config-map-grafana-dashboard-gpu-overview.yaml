@@ -68,7 +68,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_GPU_UTIL",
+              "expr": "(DCGM_FI_DEV_GPU_UTIL_RATIO * 100) or DCGM_FI_DEV_GPU_UTIL",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -118,7 +118,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_FB_USED * 1024 * 1024",
+              "expr": "DCGM_FI_DEV_FB_USED_BYTES or (DCGM_FI_DEV_FB_USED * 1024 * 1024)",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -168,7 +168,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_FB_FREE * 1024 * 1024",
+              "expr": "DCGM_FI_DEV_FB_FREE_BYTES or (DCGM_FI_DEV_FB_FREE * 1024 * 1024)",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -218,7 +218,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_GPU_TEMP",
+              "expr": "DCGM_FI_DEV_GPU_TEMP_CELSIUS or DCGM_FI_DEV_GPU_TEMP",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -268,7 +268,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_POWER_USAGE",
+              "expr": "DCGM_FI_DEV_BOARD_POWER_WATTS or DCGM_FI_DEV_POWER_USAGE",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -318,7 +318,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_ENC_UTIL",
+              "expr": "(DCGM_FI_DEV_ENC_UTIL_RATIO * 100) or DCGM_FI_DEV_ENC_UTIL",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -368,7 +368,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_DEC_UTIL",
+              "expr": "(DCGM_FI_DEV_DEC_UTIL_RATIO * 100) or DCGM_FI_DEV_DEC_UTIL",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
@@ -418,7 +418,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "DCGM_FI_DEV_UNCORRECTABLE_REMAPPED_ROWS",
+              "expr": "DCGM_FI_DEV_ROW_REMAP_UNCORRECTABLE_TOTAL or DCGM_FI_DEV_UNCORRECTABLE_REMAPPED_ROWS",
               "legendFormat": "{{Hostname}} / {{gpu}}",
               "range": true
             }
