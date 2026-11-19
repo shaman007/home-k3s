@@ -132,7 +132,7 @@ spec:
               readOnly: true
       containers:
         - name: immich-server
-          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.4.1
+          image: harbor.andreybondarenko.com/github/immich-app/immich-server:v3.4.2
           imagePullPolicy: IfNotPresent
           env:
             - name: IMMICH_TELEMETRY_INCLUDE
