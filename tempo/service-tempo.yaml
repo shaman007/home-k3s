@@ -10,6 +10,16 @@ spec:
     - name: http
       port: 3200
       targetPort: http
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: zipkin
+      port: 9411
+      targetPort: zipkin
+    - name: jaeger-compact
+      port: 6831
+      targetPort: jaeger-compact
+      protocol: UDP
     - name: otlp-http
       port: 4318
       targetPort: otlp-http

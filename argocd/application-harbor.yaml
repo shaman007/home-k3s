@@ -12,6 +12,16 @@ spec:
     chart: harbor
     helm:
       values: |
+        trace:
+          enabled: true
+          provider: otel
+          sample_rate: 0.1
+          namespace: harbor
+          otel:
+            endpoint: tempo.monitoring.svc.cluster.local:4318
+            url_path: /v1/traces
+            insecure: true
+            timeout: 10
         core:
           priorityClassName: homelab-essential
           resources:

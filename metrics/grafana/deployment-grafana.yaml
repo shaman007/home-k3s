@@ -75,6 +75,18 @@ spec:
             limits:
               memory: 704Mi
           env:
+            - name: GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS
+              value: "tempo.monitoring.svc.cluster.local:4317"
+            - name: GF_TRACING_OPENTELEMETRY_OTLP_INSECURE
+              value: "true"
+            - name: GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION
+              value: "w3c"
+            - name: GF_TRACING_OPENTELEMETRY_SAMPLER_TYPE
+              value: "probabilistic"
+            - name: GF_TRACING_OPENTELEMETRY_SAMPLER_PARAM
+              value: "0.1"
+            - name: GF_TRACING_OPENTELEMETRY_FILTER_OPERATIONAL_ENDPOINTS
+              value: "true"
             - name: GF_SMTP_ENABLED
               value: "true"
             - name: GF_SMTP_HOST

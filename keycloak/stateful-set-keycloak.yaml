@@ -87,7 +87,7 @@ spec:
                 - ALL
             runAsUser: 1000
             runAsNonRoot: true
-          args: ["start", "--metrics-enabled=true", "--event-metrics-user-enabled=true", "--event-metrics-user-events=login,logout,refresh_token"]
+          args: ["start", "--tracing-enabled=true", "--metrics-enabled=true", "--event-metrics-user-enabled=true", "--event-metrics-user-events=login,logout,refresh_token"]
           env:
             # the client or Keycloak, or to encrypt the traffic between your proxy and Keycloak.
 
@@ -96,6 +96,14 @@ spec:
             # In a production environment, verify which proxy type you are using, and restrict access to Keycloak
 
             # from other sources than your proxy if you continue to use proxy headers.
+            - name: KC_TRACING_ENDPOINT
+              value: "http://tempo.monitoring.svc.cluster.local:4317"
+            - name: KC_TELEMETRY_SERVICE_NAME
+              value: "keycloak"
+            - name: KC_TRACING_SAMPLER_TYPE
+              value: "parentbased_traceidratio"
+            - name: KC_TRACING_SAMPLER_RATIO
+              value: "0.1"
             - name: KC_PROXY_HEADERS
               # In a production environment, add a TLS certificate to Keycloak to either end-to-end encrypt the traffic between
 

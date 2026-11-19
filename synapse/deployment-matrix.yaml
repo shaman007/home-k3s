@@ -92,6 +92,8 @@ spec:
             - name: tmp
               mountPath: /tmp
           env:
+            - name: JAEGER_SERVICE_NAME
+              value: "synapse"
             - name: SYNAPSE_CONFIG_PATH
               value: /data/config.yaml
           resources:

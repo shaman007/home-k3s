@@ -40,6 +40,10 @@ spec:
             backgroundScanInterval: 1h
             backgroundScanWorkers: 2
         admissionController:
+          tracing:
+            enabled: true
+            address: tempo.monitoring.svc.cluster.local
+            port: 4317
           replicas: 3
           podDisruptionBudget:
             enabled: true
@@ -76,6 +80,10 @@ spec:
                 matchLabels:
                   kubernetes.io/metadata.name: monitoring
         reportsController:
+          tracing:
+            enabled: true
+            address: tempo.monitoring.svc.cluster.local
+            port: 4317
           replicas: 2
           extraArgs:
             autoMemLimitRatio: "0.7"

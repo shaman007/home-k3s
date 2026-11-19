@@ -36,6 +36,17 @@ spec:
           #registration_shared_secret: "{{ .registration_shared_secret }}"
           allow_public_rooms_over_federation: true
           enable_metrics: true
+          opentracing:
+            enabled: true
+            homeserver_whitelist: []
+            jaeger_config:
+              sampler:
+                type: probabilistic
+                param: 0.1
+              local_agent:
+                reporting_host: tempo.monitoring.svc.cluster.local
+                reporting_port: 6831
+              logging: false
           threepid_behaviour_email: local
 
           email:

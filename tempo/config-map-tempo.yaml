@@ -15,6 +15,14 @@ data:
           protocols:
             http:
               endpoint: 0.0.0.0:4318
+            grpc:
+              endpoint: 0.0.0.0:4317
+        zipkin:
+          endpoint: 0.0.0.0:9411
+        jaeger:
+          protocols:
+            thrift_compact:
+              endpoint: 0.0.0.0:6831
     storage:
       trace:
         backend: local

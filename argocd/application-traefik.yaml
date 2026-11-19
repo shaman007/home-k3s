@@ -80,6 +80,14 @@ spec:
         ingressRoute:
           dashboard:
             enabled: true
+        tracing:
+          serviceName: traefik
+          sampleRate: 0.1
+          otlp:
+            enabled: true
+            http:
+              enabled: true
+              endpoint: http://tempo.monitoring.svc.cluster.local:4318/v1/traces
         additionalArguments:
         - --entryPoints.websecure.http.middlewares=traefik-crowdsec-bouncer@kubernetescrd
         - --entryPoints.web.allowACMEByPass=true

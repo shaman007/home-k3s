@@ -134,6 +134,16 @@ spec:
           priorityClassName: homelab-essential
           replicas: 1
           extraEnv:
+            # The bundled dskit explicitly overrides the generic OTEL sampler;
+            # Jaeger configuration is required for probabilistic sampling here.
+            - name: JAEGER_AGENT_HOST
+              value: tempo.monitoring.svc.cluster.local
+            - name: JAEGER_AGENT_PORT
+              value: "6831"
+            - name: JAEGER_SAMPLER_TYPE
+              value: probabilistic
+            - name: JAEGER_SAMPLER_PARAM
+              value: "0.01"
             # Prevent fallback to EC2 IMDS when S3 credentials are missing.
             - name: AWS_EC2_METADATA_DISABLED
               value: "true"

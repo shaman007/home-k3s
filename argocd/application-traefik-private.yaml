@@ -66,6 +66,14 @@ spec:
             http:
               tls:
                 enabled: true
+        tracing:
+          serviceName: traefik-private
+          sampleRate: 0.1
+          otlp:
+            enabled: true
+            http:
+              enabled: true
+              endpoint: http://tempo.monitoring.svc.cluster.local:4318/v1/traces
         additionalArguments:
         - --entryPoints.web.allowACMEByPass=true
         - --entryPoints.web.http.redirections.entryPoint.to=websecure

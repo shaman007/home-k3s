@@ -9,7 +9,7 @@ data:
     {
       "uid": "open-webui-metrics",
       "title": "Open WebUI Metrics",
-      "description": "Native OTLP metrics only: HTTP throughput/latency and aggregate user counts. Tracing and OTLP logs are disabled. OTLP is push-based and therefore has no scrape up metric; sample age shows export freshness.",
+      "description": "Native OTLP metrics: HTTP throughput/latency and aggregate user counts. Traces are sent separately to Tempo; OTLP logs are disabled. OTLP is push-based and therefore has no scrape up metric; sample age shows export freshness.",
       "tags": [
         "homelab",
         "monitoring-audit"

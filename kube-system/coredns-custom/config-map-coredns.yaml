@@ -9,6 +9,10 @@ data:
   Corefile: |
     .:53 {
         errors
+        trace zipkin http://tempo.monitoring.svc.cluster.local:9411/api/v2/spans {
+            every 1000
+            service coredns
+        }
         health {
             lameduck 5s
         }

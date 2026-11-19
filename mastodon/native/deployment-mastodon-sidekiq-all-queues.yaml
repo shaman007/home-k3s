@@ -80,6 +80,16 @@ spec:
         - -q
         - scheduler
         env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://tempo.monitoring.svc.cluster.local:4318"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "http/protobuf"
+        - name: OTEL_SERVICE_NAME_PREFIX
+          value: "mastodon"
+        - name: OTEL_TRACES_SAMPLER
+          value: "parentbased_traceidratio"
+        - name: OTEL_TRACES_SAMPLER_ARG
+          value: "0.1"
         - name: SECRET_KEY_BASE
           valueFrom:
             secretKeyRef:

@@ -91,6 +91,14 @@ spec:
             timeoutSeconds: 2
             failureThreshold: 3
           env:
+            - name: OTEL_TRACING_ENABLED
+              value: "true"
+            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: "http://tempo.monitoring.svc.cluster.local:4318/v1/traces"
+            - name: OTEL_SERVICE_NAME
+              value: "karakeep"
+            - name: OTEL_SAMPLE_RATE
+              value: "0.1"
             - name: CRAWLER_STORE_PDF
               value: "true"
           envFrom:

@@ -8,22 +8,174 @@ spec:
     matchLabels:
       app: tempo
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: open-webui
-          podSelector:
-            matchLabels:
-              app: open-webui
-      ports:
-        - protocol: TCP
-          port: 4318
-    - from:
-        - podSelector:
-            matchLabels:
-              app: grafana
-      ports:
-        - protocol: TCP
-          port: 3200
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: open-webui
+      podSelector:
+        matchLabels:
+          app: open-webui
+    ports:
+    - protocol: TCP
+      port: 4318
+  - from:
+    - podSelector:
+        matchLabels:
+          app: grafana
+    ports:
+    - protocol: TCP
+      port: 3200
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: karakeep
+      podSelector:
+        matchLabels:
+          app: karakeep
+    ports:
+    - protocol: TCP
+      port: 4318
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: mastodon
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: mastodon
+        matchExpressions:
+        - key: app.kubernetes.io/component
+          operator: In
+          values:
+          - web
+          - sidekiq-all-queues
+    ports:
+    - protocol: TCP
+      port: 4318
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: keycloak
+      podSelector:
+        matchLabels:
+          app: keycloak
+    ports:
+    - protocol: TCP
+      port: 4317
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: harbor
+      podSelector:
+        matchLabels:
+          app: harbor
+        matchExpressions:
+        - key: component
+          operator: In
+          values:
+          - core
+          - jobservice
+          - registry
+    ports:
+    - protocol: TCP
+      port: 4318
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traefik
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: traefik
+    ports:
+    - protocol: TCP
+      port: 4318
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: argocd
+      podSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - argocd-server
+          - argocd-repo-server
+          - argocd-application-controller
+    ports:
+    - protocol: TCP
+      port: 4317
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kyverno
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/part-of: kyverno
+        matchExpressions:
+        - key: app.kubernetes.io/component
+          operator: In
+          values:
+          - admission-controller
+          - reports-controller
+    ports:
+    - protocol: TCP
+      port: 4317
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: TCP
+      port: 9411
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: matrix
+      podSelector:
+        matchLabels:
+          app: matrix
+    ports:
+    - protocol: UDP
+      port: 6831
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: loki
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: loki
+          app.kubernetes.io/component: single-binary
+    ports:
+    - protocol: UDP
+      port: 6831
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: grafana
+    ports:
+    - protocol: TCP
+      port: 4317
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - prometheus-server
+          - thanos-querier
+          - thanos-store-gateway
+          - thanos-compactor
+          - thanos-receive
+    ports:
+    - protocol: TCP
+      port: 4318

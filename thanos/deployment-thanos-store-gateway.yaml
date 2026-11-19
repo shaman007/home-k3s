@@ -68,6 +68,7 @@ spec:
           args:
             - "store"
             - "--log.level=info"
+            - '--tracing.config={type: OTLP, config: {client_type: http, service_name: thanos-store-gateway, endpoint: ''tempo.monitoring.svc.cluster.local:4318'', insecure: true, sampler_type: parentbasedtraceidratiobased, sampler_param: ''0.01''}}'
             - "--data-dir=/data"
             - "--objstore.config-file=/etc/thanos/objstore.yml"
             - "--index-cache-size=500MB"

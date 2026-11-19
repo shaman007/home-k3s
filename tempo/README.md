@@ -12,7 +12,9 @@ sampled for the pilot; `/health` probes are excluded. OTEL logs remain disabled.
 Grafana provisions the `Tempo` datasource with stable UID `tempo` and URL
 `http://tempo.monitoring.svc.cluster.local:3200`.
 
-The Tempo ingress policy admits only Open WebUI on 4318 and Grafana on 3200.
+The original pilot admitted Open WebUI on 4318 and Grafana on 3200. The prepared
+[native-source expansion](SOURCES.md) adds explicitly selected exporter pods on
+OTLP gRPC 4317, OTLP HTTP 4318, Zipkin HTTP 9411 and Jaeger compact UDP 6831.
 The broad monitoring intra-namespace ingress/egress policies exclude Tempo;
 namespace DNS access remains available. Tempo's internal components communicate
 in the same process. Do not expose its unauthenticated API through an ingress.

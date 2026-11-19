@@ -45,6 +45,13 @@ spec:
           ports:
             - name: http
               containerPort: 3200
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: zipkin
+              containerPort: 9411
+            - name: jaeger-compact
+              containerPort: 6831
+              protocol: UDP
             - name: otlp-http
               containerPort: 4318
           startupProbe:

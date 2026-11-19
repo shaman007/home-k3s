@@ -51,6 +51,7 @@ spec:
         args:
         - receive
         - --log.level=info
+        - '--tracing.config={type: OTLP, config: {client_type: http, service_name: thanos-receive, endpoint: ''tempo.monitoring.svc.cluster.local:4318'', insecure: true, sampler_type: parentbasedtraceidratiobased, sampler_param: ''0.01''}}'
         - --enable-auto-gomemlimit
         - --auto-gomemlimit.ratio=0.7
         - --tsdb.path=/data
