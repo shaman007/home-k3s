@@ -137,6 +137,9 @@ spec:
           env:
             - name: IMMICH_TELEMETRY_INCLUDE
               value: all
+            # OpenTelemetry 0.300.0 builds an invalid metrics base URL from ::.
+            - name: IMMICH_HOST
+              value: 0.0.0.0
             - name: DB_HOSTNAME
               value: immich-postgres
             - name: DB_USERNAME
