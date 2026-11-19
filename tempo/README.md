@@ -62,5 +62,43 @@ accepts the embedded configuration with `-config.verify=true`. Kubernetes
 manifests pass strict kubeconform validation for Kubernetes 1.37.1. The Argo
 Application is checked against the installed Application CRD schema.
 
-Live rollout and trace acceptance results are recorded after execution; these
-local checks do not establish ingestion or Grafana rendering.
+These local checks alone do not establish ingestion or Grafana rendering.
+
+## Pilot acceptance: 2026-11-19
+
+Deployed revision `883a5f1f095989e03bdcb14355bfbf2a73f8b343`. The `tempo`,
+`open-webui`, `grafana`, and `monitoring-network-policy` applications passed
+`tools/ops/verify.py argocd` with that exact revision: Healthy, Synced, unpaused,
+and normal automation enabled. Tempo was Ready with its 5 GiB PVC Bound;
+the running process reported `target: all` and 24-hour retention. Its observed
+pilot footprint was about 80 MiB memory and 6 millicores, not a sizing guarantee.
+
+An authenticated request from the Open WebUI browser UI, in a temporary chat,
+used local model `qwen2.5:1.5b` and returned the requested `TEMPO_OK` response.
+The successful `/api/chat/completions` request has trace ID
+`da30d429ac35a7ec5e15e59c021f06c9`. Tempo returned 31 spans with
+`service.name=open-webui`, including 24 SQLite connection spans and two HTTP 200
+calls to `ollama-small` `/api/chat` (about 3.30 s and 327 ms).
+
+Grafana's provisioned datasource health returned `Data source is working`.
+The exact trace rendered in Grafana Explore with the span waterfall and a total
+duration of 3.74 s. Its default span pruning grouped the 24 connection spans,
+displaying eight rows; this does not mean the original spans were lost.
+
+The streaming endpoint's server span lasted only 16.49 ms, while its child
+Ollama calls continued afterward. This is an instrumentation boundary: use the
+whole trace and HTTP client spans for this workflow, not the server span alone
+as the model response duration. No internal model/GPU spans were established.
+
+Existing HTTP and user-count OTLP metrics had samples about 27 seconds old
+with the configured 30-second export interval. No trace-export errors were found
+in the inspected post-rollout logs. A metrics-view conflict warning was observed;
+the existing dashboard metrics still arrived. Startup branding-file warnings
+from the read-only root filesystem are unrelated to trace delivery.
+
+The two narrowly scoped maintenance silences were explicitly expired after
+verification: `d9a94ceb-4b26-4a4a-a85b-23d4c77423e3` (Open WebUI) and
+`4453336b-1a20-41bf-b8de-9b49ebba0243` (Grafana). Their initial expiry was
+2026-11-19 12:35 Europe/Prague. No relevant active unsilenced alerts remained.
+Reconciliation was never paused. Persistence across a Tempo restart and actual
+24-hour retention expiry have not been tested by this acceptance run.
