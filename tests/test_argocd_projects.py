@@ -110,6 +110,7 @@ PROJECT_OBSERVABILITY = {
     "monitoring-network-policy",
     "opensearch",
     "platform-health",
+    "tempo",
     "thanos",
     "unifi-exporter",
 }

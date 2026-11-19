@@ -134,9 +134,18 @@ spec:
             - name: ENABLE_OTEL_METRICS
               value: "true"
             - name: ENABLE_OTEL_TRACES
-              value: "false"
+              value: "true"
             - name: ENABLE_OTEL_LOGS
               value: "false"
+            - name: OTEL_OTLP_SPAN_EXPORTER
+              value: http
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://tempo.monitoring.svc.cluster.local:4318/v1/traces
+            # Pilot: retain every application request, excluding probe traffic.
+            - name: OTEL_TRACES_SAMPLER
+              value: always_on
+            - name: OTEL_PYTHON_FASTAPI_EXCLUDED_URLS
+              value: /health$
             - name: OTEL_METRICS_OTLP_SPAN_EXPORTER
               value: http
             - name: OTEL_METRICS_EXPORTER_OTLP_ENDPOINT

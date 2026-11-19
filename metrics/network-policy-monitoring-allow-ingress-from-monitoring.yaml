@@ -14,6 +14,7 @@ spec:
       - thanos-store-gateway
       - thanos-compactor
       - thanos-receive
+      - tempo
   policyTypes:
   - Ingress
   ingress:

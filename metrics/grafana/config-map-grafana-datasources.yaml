@@ -23,3 +23,11 @@ data:
           cacheLevel: Medium
           customQueryParameters: max_source_resolution=1h
           incrementalQuerying: true
+      - name: Tempo
+        uid: tempo
+        type: tempo
+        access: proxy
+        url: http://tempo.monitoring.svc.cluster.local:3200
+        editable: false
+        jsonData:
+          httpMethod: GET
