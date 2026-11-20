@@ -804,8 +804,8 @@ names.append(
         "open-webui-metrics",
         "Open WebUI Metrics",
         (
-            "Native OTLP metrics only: HTTP throughput/latency and aggreg"
-            "ate user counts. Tracing and OTLP logs are disabled. OTLP is"
+            "Native OTLP metrics: HTTP throughput/latency and aggreg"
+            "ate user counts. Traces are sent separately to Tempo; OTLP logs are disabled. Latency uses WebUI's own instrumentation scope. OTLP is"
             " push-based and therefore has no scrape up metric; sample ag"
             "e shows export freshness."
         ),
@@ -823,7 +823,7 @@ names.append(
                 "HTTP p95 duration",
                 (
                     "histogram_quantile(0.95, sum by (le) (rate(http_server_durat"
-                    'ion_milliseconds_bucket{job="open-webui"}[$__rate_interval])'
+                    'ion_milliseconds_bucket{job="open-webui",otel_scope_name="open_webui.utils.telemetry.metrics"}[$__rate_interval])'
                     ")) / 1000"
                 ),
                 "s",
@@ -833,8 +833,8 @@ names.append(
                 "HTTP mean duration",
                 (
                     'sum(rate(http_server_duration_milliseconds_sum{job="open-web'
-                    'ui"}[$__rate_interval])) / sum(rate(http_server_duration_mil'
-                    'liseconds_count{job="open-webui"}[$__rate_interval])) / 1000'
+                    'ui",otel_scope_name="open_webui.utils.telemetry.metrics"}[$__rate_interval])) / sum(rate(http_server_duration_mil'
+                    'liseconds_count{job="open-webui",otel_scope_name="open_webui.utils.telemetry.metrics"}[$__rate_interval])) / 1000'
                 ),
                 "s",
                 "mean",

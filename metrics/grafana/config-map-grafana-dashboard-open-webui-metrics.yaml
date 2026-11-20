@@ -9,7 +9,7 @@ data:
     {
       "uid": "open-webui-metrics",
       "title": "Open WebUI Metrics",
-      "description": "Native OTLP metrics: HTTP throughput/latency and aggregate user counts. Traces are sent separately to Tempo; OTLP logs are disabled. OTLP is push-based and therefore has no scrape up metric; sample age shows export freshness.",
+      "description": "Native OTLP metrics: HTTP throughput/latency and aggregate user counts. Traces are sent separately to Tempo; OTLP logs are disabled. Latency uses WebUI's own instrumentation scope. OTLP is push-based and therefore has no scrape up metric; sample age shows export freshness.",
       "tags": [
         "homelab",
         "monitoring-audit"
@@ -118,7 +118,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket{job=\"open-webui\"}[$__rate_interval]))) / 1000",
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket{job=\"open-webui\",otel_scope_name=\"open_webui.utils.telemetry.metrics\"}[$__rate_interval]))) / 1000",
               "legendFormat": "p95",
               "range": true
             }
@@ -168,7 +168,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum(rate(http_server_duration_milliseconds_sum{job=\"open-webui\"}[$__rate_interval])) / sum(rate(http_server_duration_milliseconds_count{job=\"open-webui\"}[$__rate_interval])) / 1000",
+              "expr": "sum(rate(http_server_duration_milliseconds_sum{job=\"open-webui\",otel_scope_name=\"open_webui.utils.telemetry.metrics\"}[$__rate_interval])) / sum(rate(http_server_duration_milliseconds_count{job=\"open-webui\",otel_scope_name=\"open_webui.utils.telemetry.metrics\"}[$__rate_interval])) / 1000",
               "legendFormat": "mean",
               "range": true
             }
