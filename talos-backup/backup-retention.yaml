@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: talos-backup-retention
+  namespace: talos-backup
+data:
+  retention.sh: "#!/bin/bash\n# Count-based retention for this cluster's encrypted etcd objects only.\nset -euo\
+    \ pipefail\numask 077\nexport AWS_PAGER=\"\" AWS_EC2_METADATA_DISABLED=true\nexport AWS_REQUEST_CHECKSUM_CALCULATION=when_required\n\
+    export AWS_RESPONSE_CHECKSUM_VALIDATION=when_required\nendpoint=http://s3.seaweedfs.svc.cluster.local:8333\n\
+    bucket=talos-etcd\nprefix=home-k8s/\ntmp=$(mktemp -d)\ntrap 'rm -rf \"$tmp\"' EXIT\n# Text mode concatenates\
+    \ the per-page rows; sort only after all pages succeed.\naws --endpoint-url \"$endpoint\" s3api list-objects-v2\
+    \ --bucket \"$bucket\" --prefix \"$prefix\" \\\n  --query 'Contents[?ends_with(Key, `.snap.zst.age`) || ends_with(Key,\
+    \ `.snap.age`)].[LastModified,Key,ETag,Size]' \\\n  --output text > \"$tmp/list\"\nsort -r \"$tmp/list\" > \"\
+    $tmp/sorted\"\ncount=0\nlatest=0\nwhile IFS=$'\\t' read -r modified key etag size extra; do\n  [[ -z \"$modified\"\
+    \ ]] && continue\n  [[ -z \"${extra:-}\" && \"$key\" =~ ^home-k8s/[a-zA-Z0-9_./:-]+\\.snap(\\.zst)?\\.age$ &&\
+    \ \"$size\" =~ ^[0-9]+$ && \"$size\" -gt 0 ]]\n  [[ -n \"$etag\" ]]\n  epoch=$(date -d \"$modified\" +%s)\n\
+    \  now=$(date +%s)\n  [[ \"$epoch\" -le \"$now\" ]]\n  (( epoch > latest )) && latest=$epoch\n  count=$((count\
+    \ + 1))\ndone < \"$tmp/sorted\"\n# Do not prune a stale or empty destination while backup delivery is broken.\n\
+    [[ \"$count\" -gt 0 && $(( $(date +%s) - latest )) -lt 7200 ]]\necho \"Talos backups=$count keep=20 apply=${RETENTION_APPLY:-false}\"\
+    \ntail -n +21 \"$tmp/sorted\" > \"$tmp/expired\"\nwhile IFS=$'\\t' read -r modified key etag size; do\n  [[\
+    \ -z \"$modified\" ]] && continue\n  if [[ \"${RETENTION_APPLY:-false}\" == true ]]; then\n    # Conditional\
+    \ deletion protects an object changed since this inventory.\n    aws --endpoint-url \"$endpoint\" s3api delete-object\
+    \ --bucket \"$bucket\" --key \"$key\" --if-match \"$etag\" --output json > /dev/null\n    echo \"Deleted $key\"\
+    \n  else\n    echo \"Would delete $key\"\n  fi\ndone < \"$tmp/expired\"\n"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: talos-backup-retention
+  namespace: talos-backup
+spec:
+  schedule: '*/15 * * * *'
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: talos-backup
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: retention
+            image: public.ecr.aws/aws-cli/aws-cli@sha256:7a77ccb39e3272191adbf905c50db8c127db88fd79454911a41a6b1c0e419e9b
+            command:
+            - /bin/bash
+            - /config/retention.sh
+            env:
+            - name: RETENTION_APPLY
+              value: 'true'
+            - name: PYTHONDONTWRITEBYTECODE
+              value: '1'
+            - name: AWS_REGION
+              value: us-east-1
+            - name: HOME
+              value: /tmp
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            envFrom:
+            - secretRef:
+                name: talos-backup-config
+          volumes:
+          - name: config
+            configMap:
+              name: talos-backup-retention
+          - name: tmp
+            emptyDir:
+              sizeLimit: 32Mi

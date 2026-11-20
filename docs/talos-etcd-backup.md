@@ -4,9 +4,11 @@
 
 Hourly at minute 17 UTC, `talos-backup/talos-backup` takes an etcd snapshot,
 compresses it with zstd, encrypts it with age and uploads to SeaweedFS bucket
-`talos-etcd`, prefix `home-k8s/`. The CronJob is enabled. A 30-day lifecycle rule
-was configured and read back from S3; its long-term expiry behavior has not yet
-been observed.
+`talos-etcd`, prefix `home-k8s/`. The CronJob is enabled. The count-based
+[backup retention policy](backup-retention.md) keeps the newest 20 completed
+encrypted snapshots using a separate 15-minute consumer. Remove the previous
+30-day bucket lifecycle when activating this policy. Twenty hourly snapshots
+cover about 20 hours; this is not a 20-day retention window.
 
 The dedicated S3 identity has `Write` and `List` scoped to `talos-etcd`, not the
 administrative credentials. SeaweedFS's coarse Write permission also covers

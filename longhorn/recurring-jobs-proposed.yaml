@@ -94,7 +94,7 @@ spec:
   labels: {}
   name: backup-daily-retain31-a
   parameters: {}
-  retain: 31
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -110,7 +110,7 @@ spec:
   labels: {}
   name: backup-daily-retain31-b
   parameters: {}
-  retain: 31
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -126,7 +126,7 @@ spec:
   labels: {}
   name: backup-daily-retain31-c
   parameters: {}
-  retain: 31
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -142,7 +142,7 @@ spec:
   labels: {}
   name: backup-monthly-retain60-mempalace
   parameters: {}
-  retain: 60
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -158,7 +158,7 @@ spec:
   labels: {}
   name: backup-monthly-retain60-hister
   parameters: {}
-  retain: 60
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -174,7 +174,7 @@ spec:
   labels: {}
   name: backup-daily-retain30
   parameters: {}
-  retain: 30
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -190,7 +190,7 @@ spec:
   labels: {}
   name: backup-daily-retain11
   parameters: {}
-  retain: 11
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
@@ -206,7 +206,7 @@ spec:
   labels: {}
   name: backup-daily-retain1
   parameters: {}
-  retain: 1
+  retain: 20
   task: backup
 ---
 apiVersion: longhorn.io/v1beta2
