@@ -63,7 +63,7 @@ spec:
               memory: 32Mi
       containers:
         - name: postgres
-          image: harbor.andreybondarenko.com/dockerhub/postgres:18
+          image: harbor.andreybondarenko.com/dockerhub/postgres:19.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -142,4 +142,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data-mastodon-postgres-v2
+            claimName: data-mastodon-postgres19-lh

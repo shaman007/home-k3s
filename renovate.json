@@ -176,6 +176,107 @@
       "pinDigests": true,
       "separateMajorMinor": false,
       "separateMinorPatch": false
+    },
+    {
+      "description": "Keycloak supports PostgreSQL18; major upgrades require a tested migration",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "keycloak/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/dockerhub/postgres"
+      ],
+      "allowedVersions": "/^18(?:\\.|$)/",
+      "ignoreUnstable": true
+    },
+    {
+      "description": "bitwarden: PostgreSQL19 data-volume migration is verified; later majors require a new migration",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "bitwarden/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/dockerhub/postgres"
+      ],
+      "allowedVersions": "/^19(?:\\.|$)/",
+      "ignoreUnstable": true
+    },
+    {
+      "description": "mastodon: PostgreSQL19 data-volume migration is verified; later majors require a new migration",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "mastodon/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/dockerhub/postgres"
+      ],
+      "allowedVersions": "/^19(?:\\.|$)/",
+      "ignoreUnstable": true
+    },
+    {
+      "description": "Hold Dawarich PostgreSQL17 until its separate stable18/PostGIS migration is verified",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "dawarich/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/github/cloudnative-pg/postgis",
+        "harbor.andreybondarenko.com/dockerhub/postgis/postgis"
+      ],
+      "allowedVersions": "/^17(?:[.-]|$)/",
+      "ignoreUnstable": true
+    },
+    {
+      "description": "Hold Immich PostgreSQL16 until its separate supported18/VectorChord migration is verified",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "immich/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/github/immich-app/postgres"
+      ],
+      "allowedVersions": "/^16-vectorchord/",
+      "ignoreUnstable": true
+    },
+    {
+      "description": "DocumentDB currently supports PostgreSQL17; keep its major and review paired FerretDB upgrades",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "your-spotify/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb"
+      ],
+      "allowedVersions": "/^17-/",
+      "ignoreUnstable": true,
+      "automerge": false
+    },
+    {
+      "description": "Review FerretDB and DocumentDB together to preserve their compatibility pair",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "your-spotify/**"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/github/ferretdb/ferretdb",
+        "harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb"
+      ],
+      "groupName": "FerretDB and DocumentDB compatibility",
+      "automerge": false
     }
   ]
 }

@@ -63,7 +63,7 @@ spec:
               memory: 32Mi
       containers:
         - name: postgres
-          image: harbor.andreybondarenko.com/dockerhub/postgres:18
+          image: harbor.andreybondarenko.com/dockerhub/postgres:19.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -142,4 +142,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data-bitwarden-postgres-lh
+            claimName: data-bitwarden-postgres19-lh

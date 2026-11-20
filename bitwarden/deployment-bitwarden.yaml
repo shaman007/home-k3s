@@ -70,7 +70,7 @@ spec:
             - mountPath: /keys
               name: keys-lh
         - name: wait-for-postgres
-          image: harbor.andreybondarenko.com/dockerhub/postgres:18
+          image: harbor.andreybondarenko.com/dockerhub/postgres:19.0
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
