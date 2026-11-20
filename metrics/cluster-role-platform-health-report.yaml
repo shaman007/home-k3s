@@ -8,7 +8,6 @@ rules:
     resources:
       - pods
       - persistentvolumeclaims
-      - secrets
       - services
     verbs: ["get", "list"]
   - apiGroups: ["networking.k8s.io"]

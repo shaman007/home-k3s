@@ -68,8 +68,23 @@ spec:
             limits:
               memory: 1229Mi
         sidecar:
+          rules:
+            resource: configmap
           image:
             repository: harbor.andreybondarenko.com/dockerhub/kiwigrid/k8s-sidecar
+
+        # Keep the existing role identity while removing the chart's Secret access.
+        rbac:
+          useExistingRole: loki-clusterrole
+        extraObjects:
+          - apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRole
+            metadata:
+              name: loki-clusterrole
+            rules:
+              - apiGroups: [""]
+                resources: ["configmaps"]
+                verbs: ["get", "watch", "list"]
 
         loki:
           tracing:

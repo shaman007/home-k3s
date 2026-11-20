@@ -1,0 +1,11 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: platform-health-report-mail-tls
+  namespace: mail
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["mail-tls"]
+    verbs: ["get"]
