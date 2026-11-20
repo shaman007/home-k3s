@@ -102,7 +102,7 @@ spec:
           value: /openbao/userconfig/openbao-server-letsencrypt-tls/ca.crt
         - name: BAO_TLS_SERVER_NAME
           value: openbao-api.int.andreybondarenko.com
-        image: harbor.andreybondarenko.com/quay/openbao/openbao:2.7.2
+        image: harbor.andreybondarenko.com/quay/openbao/openbao:2.7.3
         imagePullPolicy: IfNotPresent
         lifecycle:
           preStop:
