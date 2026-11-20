@@ -35,7 +35,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: clamd
-          image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.4-debian13-slim
+          image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.5-debian13-slim
           imagePullPolicy: IfNotPresent
           command:
             - clamd
@@ -88,7 +88,7 @@ spec:
                 - ALL
             readOnlyRootFilesystem: true
         - name: freshclam
-          image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.4-debian13-slim
+          image: harbor.andreybondarenko.com/dockerhub/clamav/clamav:1.5.5-debian13-slim
           imagePullPolicy: IfNotPresent
           command:
             - freshclam
