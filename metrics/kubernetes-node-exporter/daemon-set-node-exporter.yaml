@@ -42,7 +42,7 @@ spec:
             - --collector.netclass.ignored-devices=^(veth.*|lxc.*)$
             - --collector.netdev.device-exclude=^(veth.*|lxc.*)$
           name: node-exporter
-          image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
+          image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.13.1
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

@@ -1,6 +1,6 @@
 services:
   node-exporter:
-    image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.12.1
+    image: harbor.andreybondarenko.com/dockerhub/prom/node-exporter:v1.13.1
     container_name: node-exporter
     restart: unless-stopped
     network_mode: host
