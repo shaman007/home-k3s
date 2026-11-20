@@ -220,7 +220,7 @@
       "ignoreUnstable": true
     },
     {
-      "description": "Hold Dawarich PostgreSQL17 until its separate stable18/PostGIS migration is verified",
+      "description": "Dawarich uses verified PostgreSQL18/PostGIS; PostgreSQL19 requires a separate supported migration",
       "matchDatasources": [
         "docker"
       ],
@@ -231,11 +231,11 @@
         "harbor.andreybondarenko.com/github/cloudnative-pg/postgis",
         "harbor.andreybondarenko.com/dockerhub/postgis/postgis"
       ],
-      "allowedVersions": "/^17(?:[.-]|$)/",
+      "allowedVersions": "/^18(?:[.-]|$)/",
       "ignoreUnstable": true
     },
     {
-      "description": "Hold Immich PostgreSQL16 until its separate supported18/VectorChord migration is verified",
+      "description": "Immich uses verified PostgreSQL18/VectorChord; PostgreSQL19 images and extension support are not yet available",
       "matchDatasources": [
         "docker"
       ],
@@ -245,7 +245,7 @@
       "matchPackageNames": [
         "harbor.andreybondarenko.com/github/immich-app/postgres"
       ],
-      "allowedVersions": "/^16-vectorchord/",
+      "allowedVersions": "/^18-vectorchord/",
       "ignoreUnstable": true
     },
     {

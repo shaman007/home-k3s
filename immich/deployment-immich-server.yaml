@@ -60,7 +60,7 @@ spec:
             - name: library
               mountPath: /data
         - name: wait-for-postgres
-          image: harbor.andreybondarenko.com/github/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
+          image: harbor.andreybondarenko.com/github/immich-app/postgres:18-vectorchord1.1.1-pgvector0.8.7
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh

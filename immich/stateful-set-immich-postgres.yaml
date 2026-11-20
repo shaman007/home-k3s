@@ -66,7 +66,7 @@ spec:
               memory: 32Mi
       containers:
         - name: postgres
-          image: harbor.andreybondarenko.com/github/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
+          image: harbor.andreybondarenko.com/github/immich-app/postgres:18-vectorchord1.1.1-pgvector0.8.7
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -115,4 +115,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data-immich-postgres16-lh
+            claimName: data-immich-postgres18-lh

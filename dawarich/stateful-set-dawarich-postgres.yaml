@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: dawarich-postgres
     app.kubernetes.io/instance: dawarich-postgres
     app.kubernetes.io/part-of: dawarich
-    app.kubernetes.io/version: "17"
+    app.kubernetes.io/version: "18"
     app.kubernetes.io/managed-by: argoCD
 spec:
   serviceName: dawarich-postgres
@@ -63,7 +63,7 @@ spec:
               memory: 32Mi
       containers:
         - name: postgres
-          image: harbor.andreybondarenko.com/github/cloudnative-pg/postgis:17
+          image: harbor.andreybondarenko.com/dockerhub/postgis/postgis:18-3.7
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -142,4 +142,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data-dawarich-postgres-lh
+            claimName: data-dawarich-postgres18-lh

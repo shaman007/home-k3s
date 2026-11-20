@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/name: mastodon-postgres
     app.kubernetes.io/instance: mastodon-postgres
     app.kubernetes.io/part-of: mastodon
-    app.kubernetes.io/version: "18"
+    app.kubernetes.io/version: "19"
     app.kubernetes.io/managed-by: helm
 spec:
   serviceName: mastodon-postgres
