@@ -63,7 +63,7 @@ spec:
               memory: 32Mi
       containers:
         - name: postgres
-          image: harbor.andreybondarenko.com/dockerhub/postgres:19
+          image: harbor.andreybondarenko.com/dockerhub/postgres:18
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

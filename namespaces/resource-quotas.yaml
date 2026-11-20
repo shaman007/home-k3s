@@ -67,7 +67,8 @@ spec:
     secrets: "30"
     configmaps: "20"
     persistentvolumeclaims: "6"
-    requests.storage: 12Gi
+    # Keep the prior PostgreSQL PVC available during major-version migration.
+    requests.storage: 20Gi
 ---
 apiVersion: v1
 kind: ResourceQuota
@@ -290,7 +291,8 @@ spec:
     secrets: "30"
     configmaps: "30"
     persistentvolumeclaims: "4"
-    requests.storage: 15Gi
+    # Keep the prior PostgreSQL PVC available during major-version migration.
+    requests.storage: 23Gi
 ---
 apiVersion: v1
 kind: ResourceQuota
