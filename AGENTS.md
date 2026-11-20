@@ -27,6 +27,8 @@ Keep Docker usage scoped to diagnostics/read-only operations. General Git and Do
 
 ## GitOps working conventions
 
+- `lenka` is a personal sandbox. When it has zero Pods, exclude it from general cluster audits, security findings and remediation recommendations; do not flag its inactive configuration as outstanding work. Recheck Pod count when relevant. Inspect or change the inactive sandbox only when explicitly requested.
+
 - Set every container's memory request to at least `32Mi`, including sidecars and init containers. Never use `16Mi`: namespace LimitRanges reject it and prevent pods from being created. Honor a higher namespace minimum when configured.
 
 - Before authorized live maintenance, create time-limited Alertmanager silences only for the alerts and resource labels affected by that work. Record the reason, expiry and silence IDs; remove them after verification or rollback. Renew only while work continues. Do not disable alert rules, silence unrelated resources or hide unexpected failures. Local preparation/read-only diagnosis does not require a silence. Creating and removing these narrowly scoped maintenance silences is included in authorization for the live maintenance itself.
