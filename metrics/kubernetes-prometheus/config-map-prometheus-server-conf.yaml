@@ -1512,6 +1512,9 @@ data:
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/startup/prometheus-receive/README.md#limits-and-rollback
           description: Investigate ingestion failure and assess recovery from retained local blocks; do not reset TSDB.
   prometheus.yaml: |-
+    otlp:
+      # Preserve instrument identity: WebUI and ASGI both emit http.server.duration.
+      promote_scope_metadata: true
     tracing:
       client_type: http
       endpoint: tempo.monitoring.svc.cluster.local:4318
