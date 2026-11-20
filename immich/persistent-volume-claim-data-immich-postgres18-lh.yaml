@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/instance: immich-postgres
     app.kubernetes.io/part-of: immich
     app.kubernetes.io/managed-by: argoCD
+    recurring-job.longhorn.io/source: enabled
+    recurring-job.longhorn.io/backup-daily-retain31-a: enabled
+    recurring-job.longhorn.io/trim-daily-c: enabled
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
