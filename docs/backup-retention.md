@@ -17,7 +17,10 @@ their retention and schedules are unchanged.
 Longhorn Backup objects in `longhorn-system`. It validates every completed
 backup's identity, timestamp and deletion preconditions before issuing any
 delete; incomplete copies never displace completed copies. Kubernetes UID and
-resource-version preconditions reject concurrent changes. Deleting a Backup CR
+resource-version preconditions reject concurrent changes. Existing pending
+deletions block new requests. Each run deletes at most 25 copies sequentially,
+waiting up to 60 seconds for each remote deletion; a stall fails the Job instead
+of queuing more work. Deleting a Backup CR
 asks Longhorn to remove the remote backup; it does not delete a PVC or live data.
 
 `talos-backup/backup-retention.yaml` uses the existing OpenBao-sourced

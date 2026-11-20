@@ -41,37 +41,45 @@ metadata:
 data:
   retention.py: "\"\"\"Keep the newest completed backups per target/volume across all job labels.\"\"\"\n\nfrom\
     \ collections import defaultdict\nfrom datetime import datetime, timezone\nimport json\nimport os\nfrom pathlib\
-    \ import Path\nimport ssl\nfrom urllib.parse import quote\nimport urllib.request\n\nPREFIX = '/apis/longhorn.io/v1beta2/namespaces/longhorn-system/backups'\n\
-    KEEP = 20\n\n\ndef plan(items, now):\n    \"\"\"Validate the entire inventory before permitting any destructive\
-    \ request.\"\"\"\n    groups = defaultdict(list)\n    for item in items:\n        meta, status = item['metadata'],\
-    \ item.get('status', {})\n        if meta.get('deletionTimestamp') or status.get('state') != 'Completed':\n\
-    \            continue\n        labels = meta.get('labels', {})\n        target, volume = labels.get('backup-target'),\
-    \ labels.get('backup-volume')\n        if not target or not volume or status.get('error'):\n            raise\
-    \ ValueError('Completed backup lacks unambiguous target/volume or has errors')\n        if status.get('volumeName')\
-    \ != volume:\n            raise ValueError('Backup volume identity disagrees with its label')\n        created\
-    \ = datetime.fromisoformat(status['backupCreatedAt'].replace('Z', '+00:00'))\n        if created.tzinfo is None\
-    \ or created > now:\n            raise ValueError('Invalid or future backup timestamp')\n        if not meta.get('uid')\
-    \ or not meta.get('resourceVersion'):\n            raise ValueError('Missing deletion preconditions')\n    \
-    \    groups[target, volume].append((created, meta['name'], item))\n    if not groups:\n        raise ValueError('No\
-    \ completed backup sources; refusing an empty inventory')\n    result = []\n    for key, backups in sorted(groups.items()):\n\
-    \        ordered = sorted(backups, key=lambda value: (value[0], value[1]), reverse=True)\n        result.extend(entry[2]\
-    \ for entry in ordered[KEEP:])\n    return result, len(groups)\n\n\ndef run(api, apply=False):\n    items, token\
-    \ = [], ''\n    while True:\n        page = api(PREFIX + '?limit=500&continue=' + quote(token, safe=''))\n \
-    \       items.extend(page['items'])\n        token = page.get('metadata', {}).get('continue', '')\n        if\
-    \ not token:\n            break\n    expired, groups = plan(items, datetime.now(timezone.utc))\n    print(json.dumps({'sources':\
-    \ groups, 'completed_inventory': len(items),\n                      'keep': KEEP, 'expired': len(expired), 'apply':\
-    \ apply}), flush=True)\n    for item in expired:\n        meta = item['metadata']\n        print(('Deleting\
-    \ ' if apply else 'Would delete ') + meta['name'], flush=True)\n        if apply:\n            api(PREFIX +\
-    \ '/' + quote(meta['name'], safe=''), {\n                'apiVersion': 'v1', 'kind': 'DeleteOptions',\n    \
-    \            'preconditions': {'uid': meta['uid'], 'resourceVersion': meta['resourceVersion']}})\n\n\ndef main():\n\
-    \    sa = Path('/var/run/secrets/kubernetes.io/serviceaccount')\n    context = ssl.create_default_context(cafile=str(sa\
-    \ / 'ca.crt'))\n    host = 'https://' + os.environ['KUBERNETES_SERVICE_HOST'] + ':' + os.environ['KUBERNETES_SERVICE_PORT']\n\
-    \n    def api(path, delete=None):\n        headers = {'Authorization': 'Bearer ' + (sa / 'token').read_text().strip()}\n\
-    \        if delete is not None:\n            headers['Content-Type'] = 'application/json'\n        request =\
-    \ urllib.request.Request(host + path, headers=headers,\n            data=json.dumps(delete).encode() if delete\
-    \ is not None else None,\n            method='DELETE' if delete is not None else 'GET')\n        with urllib.request.urlopen(request,\
-    \ context=context, timeout=30) as response:\n            return json.load(response)\n\n    run(api, os.environ.get('RETENTION_APPLY')\
-    \ == 'true')\n\n\nif __name__ == '__main__':\n    main()\n"
+    \ import Path\nimport ssl\nimport time\nimport urllib.error\nfrom urllib.parse import quote\nimport urllib.request\n\
+    \nPREFIX = '/apis/longhorn.io/v1beta2/namespaces/longhorn-system/backups'\nKEEP = 20\nMAX_DELETES = 25\n\n\n\
+    def plan(items, now):\n    \"\"\"Validate the entire inventory before permitting any destructive request.\"\"\
+    \"\n    groups = defaultdict(list)\n    for item in items:\n        meta, status = item['metadata'], item.get('status',\
+    \ {})\n        if meta.get('deletionTimestamp') or status.get('state') != 'Completed':\n            continue\n\
+    \        labels = meta.get('labels', {})\n        target, volume = labels.get('backup-target'), labels.get('backup-volume')\n\
+    \        if not target or not volume or status.get('error'):\n            raise ValueError('Completed backup\
+    \ lacks unambiguous target/volume or has errors')\n        if status.get('volumeName') != volume:\n        \
+    \    raise ValueError('Backup volume identity disagrees with its label')\n        created = datetime.fromisoformat(status['backupCreatedAt'].replace('Z',\
+    \ '+00:00'))\n        if created.tzinfo is None or created > now:\n            raise ValueError('Invalid or\
+    \ future backup timestamp')\n        if not meta.get('uid') or not meta.get('resourceVersion'):\n          \
+    \  raise ValueError('Missing deletion preconditions')\n        groups[target, volume].append((created, meta['name'],\
+    \ item))\n    if not groups:\n        raise ValueError('No completed backup sources; refusing an empty inventory')\n\
+    \    result = []\n    for key, backups in sorted(groups.items()):\n        ordered = sorted(backups, key=lambda\
+    \ value: (value[0], value[1]), reverse=True)\n        result.extend(entry[2] for entry in ordered[KEEP:])\n\
+    \    return result, len(groups)\n\n\ndef run(api, apply=False):\n    items, token = [], ''\n    while True:\n\
+    \        page = api(PREFIX + '?limit=500&continue=' + quote(token, safe=''))\n        items.extend(page['items'])\n\
+    \        token = page.get('metadata', {}).get('continue', '')\n        if not token:\n            break\n  \
+    \  expired, groups = plan(items, datetime.now(timezone.utc))\n    pending = sum(bool(item['metadata'].get('deletionTimestamp'))\
+    \ for item in items)\n    print(json.dumps({'sources': groups, 'completed_inventory': len(items),\n        \
+    \              'keep': KEEP, 'expired': len(expired), 'apply': apply}), flush=True)\n    if apply and pending:\n\
+    \        print(f'Waiting for {pending} existing remote deletions; no new requests', flush=True)\n        return\n\
+    \    for item in expired[:MAX_DELETES] if apply else expired:\n        meta = item['metadata']\n        print(('Deleting\
+    \ ' if apply else 'Would delete ') + meta['name'], flush=True)\n        if apply:\n            path = PREFIX\
+    \ + '/' + quote(meta['name'], safe='')\n            api(path, {\n                'apiVersion': 'v1', 'kind':\
+    \ 'DeleteOptions',\n                'preconditions': {'uid': meta['uid'], 'resourceVersion': meta['resourceVersion']}})\n\
+    \            deadline = time.monotonic() + 60\n            while api(path) is not None:\n                if\
+    \ time.monotonic() >= deadline:\n                    raise TimeoutError('Remote deletion still pending; refusing\
+    \ to grow the queue')\n                time.sleep(2)\n\n\ndef main():\n    sa = Path('/var/run/secrets/kubernetes.io/serviceaccount')\n\
+    \    context = ssl.create_default_context(cafile=str(sa / 'ca.crt'))\n    host = 'https://' + os.environ['KUBERNETES_SERVICE_HOST']\
+    \ + ':' + os.environ['KUBERNETES_SERVICE_PORT']\n\n    def api(path, delete=None):\n        headers = {'Authorization':\
+    \ 'Bearer ' + (sa / 'token').read_text().strip()}\n        if delete is not None:\n            headers['Content-Type']\
+    \ = 'application/json'\n        request = urllib.request.Request(host + path, headers=headers,\n           \
+    \ data=json.dumps(delete).encode() if delete is not None else None,\n            method='DELETE' if delete is\
+    \ not None else 'GET')\n        try:\n            with urllib.request.urlopen(request, context=context, timeout=30)\
+    \ as response:\n                return json.load(response)\n        except urllib.error.HTTPError as error:\n\
+    \            if error.code == 404 and delete is None and '?' not in path:\n                return None\n   \
+    \         raise\n\n    run(api, os.environ.get('RETENTION_APPLY') == 'true')\n\n\nif __name__ == '__main__':\n\
+    \    main()\n"
 ---
 apiVersion: batch/v1
 kind: CronJob

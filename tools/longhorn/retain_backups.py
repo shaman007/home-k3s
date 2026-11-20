@@ -6,11 +6,14 @@ import json
 import os
 from pathlib import Path
 import ssl
+import time
+import urllib.error
 from urllib.parse import quote
 import urllib.request
 
 PREFIX = '/apis/longhorn.io/v1beta2/namespaces/longhorn-system/backups'
 KEEP = 20
+MAX_DELETES = 25
 
 
 def plan(items, now):
@@ -50,15 +53,25 @@ def run(api, apply=False):
         if not token:
             break
     expired, groups = plan(items, datetime.now(timezone.utc))
+    pending = sum(bool(item['metadata'].get('deletionTimestamp')) for item in items)
     print(json.dumps({'sources': groups, 'completed_inventory': len(items),
                       'keep': KEEP, 'expired': len(expired), 'apply': apply}), flush=True)
-    for item in expired:
+    if apply and pending:
+        print(f'Waiting for {pending} existing remote deletions; no new requests', flush=True)
+        return
+    for item in expired[:MAX_DELETES] if apply else expired:
         meta = item['metadata']
         print(('Deleting ' if apply else 'Would delete ') + meta['name'], flush=True)
         if apply:
-            api(PREFIX + '/' + quote(meta['name'], safe=''), {
+            path = PREFIX + '/' + quote(meta['name'], safe='')
+            api(path, {
                 'apiVersion': 'v1', 'kind': 'DeleteOptions',
                 'preconditions': {'uid': meta['uid'], 'resourceVersion': meta['resourceVersion']}})
+            deadline = time.monotonic() + 60
+            while api(path) is not None:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('Remote deletion still pending; refusing to grow the queue')
+                time.sleep(2)
 
 
 def main():
@@ -73,8 +86,13 @@ def main():
         request = urllib.request.Request(host + path, headers=headers,
             data=json.dumps(delete).encode() if delete is not None else None,
             method='DELETE' if delete is not None else 'GET')
-        with urllib.request.urlopen(request, context=context, timeout=30) as response:
-            return json.load(response)
+        try:
+            with urllib.request.urlopen(request, context=context, timeout=30) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code == 404 and delete is None and '?' not in path:
+                return None
+            raise
 
     run(api, os.environ.get('RETENTION_APPLY') == 'true')
 

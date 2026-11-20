@@ -69,11 +69,23 @@ class BackupRetentionTests(unittest.TestCase):
             if delete:
                 self.assertEqual(delete['preconditions'], {'uid': '20', 'resourceVersion': '10'})
                 return {}
+            if path.endswith('/b-one-default-020'):
+                return None
             if 'continue=next' in path:
                 return {'items': [backup(20)], 'metadata': {}}
             return {'items': [backup(i) for i in range(20)], 'metadata': {'continue': 'next'}}
         r.run(api, True)
-        self.assertEqual(len(calls), 3)
+        self.assertEqual(len(calls), 4)
+
+    def test_existing_pending_remote_deletions_block_more_requests(self):
+        items = [backup(i) for i in range(30)]
+        items[-1]['metadata']['deletionTimestamp'] = NOW.isoformat()
+        calls = []
+        def api(path, delete=None):
+            calls.append(delete)
+            return {'items': items, 'metadata': {}}
+        r.run(api, True)
+        self.assertEqual(calls, [None])
 
     def test_generated_manifests_and_native_backup_retention_match(self):
         for path, documents in g.documents().items():
