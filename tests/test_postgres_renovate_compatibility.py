@@ -29,7 +29,7 @@ def policy(path, package):
 def permits(rule, tag):
     expression = rule["allowedVersions"]
     if not (expression.startswith("/") and expression.endswith("/")):
-        raise AssertionError("Expected an explicit Docker tag compatibility regex")
+        raise AssertionError("Expected an explicit compatibility regex")
     return re.search(expression[1:-1], tag) is not None
 
 
@@ -88,6 +88,15 @@ class PostgreSQLCompatibilityTests(unittest.TestCase):
         self.assertIn(package, paired[0]["matchPackageNames"])
         self.assertIn("harbor.andreybondarenko.com/github/ferretdb/ferretdb", paired[0]["matchPackageNames"])
         self.assertFalse(paired[0]["automerge"])
+
+    def test_harbor_bundled_database_stays_on_the_reviewed_chart_series(self):
+        """The vendor DB must not be upgraded as an independent postgres image."""
+        rule = policy("argocd/application-harbor.yaml", "harbor")
+        self.assertEqual(rule["matchManagers"], ["argocd"])
+        self.assertEqual(rule["matchDatasources"], ["helm"])
+        self.assertTrue(permits(rule, "1.19.5"))
+        self.assertFalse(permits(rule, "1.20.0"))
+        self.assertFalse(permits(rule, "2.0.0"))
 
 
 if __name__ == "__main__":

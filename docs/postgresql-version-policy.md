@@ -14,6 +14,7 @@ The November 2026 migration targets are:
 | Dawarich | 18 | Stable PostGIS image and successful spatial-data restore. |
 | Immich | 18 | Published stable Immich image with compatible VectorChord and pgvector. |
 | FerretDB | 17 | Published DocumentDB image paired with the FerretDB release. |
+| Harbor bundled database | 18 | Updated through the reviewed Harbor chart/vendor image, never a standalone postgres substitution. |
 
 These are compatibility ceilings, not claims that every running database has
 already reached them. The scoped rules in `renovate.json` are authoritative for
@@ -22,6 +23,16 @@ change as its rehearsed migration and new data volume; supported but not yet
 migrated majors remain blocked. Patch updates
 within an approved major remain eligible; prereleases are excluded. FerretDB and
 DocumentDB updates are grouped for review instead of automatically merged.
+Harbor is held on the reviewed 1.19 chart series because the chart controls its
+bundled PostgreSQL binaries and vendor upgrade script; patch releases remain
+eligible. A newer chart series needs a review of its database transition first.
+
+The 2026-11-20 inventory also checked vendor-managed databases explicitly:
+Harbor 2.15.4 runs PostgreSQL18.6, and isolated binary probes of the stable
+2.15.5 and 2.16.0 database images also reported 18.6. Upgrading Harbor would not
+advance PostgreSQL at this point. FerretDB's latest published stable pair is
+2.7.0/DocumentDB0.107 with PostgreSQL17.6; a newer community PostgreSQL minor
+alone does not establish availability of a supported replacement vendor image.
 
 For a major migration, use a new PVC, restore a complete logical backup, verify
 indexes and application behavior, quiesce every writer, take the final dump, and
@@ -44,3 +55,4 @@ Primary references:
 - [Immich PostgreSQL requirements](https://docs.immich.app/administration/postgres-standalone/)
 - [PostGIS image releases](https://github.com/postgis/docker-postgis)
 - [FerretDB DocumentDB images](https://docs.ferretdb.io/installation/documentdb/docker/)
+- [Harbor releases and bundled database upgrades](https://github.com/goharbor/harbor/releases)

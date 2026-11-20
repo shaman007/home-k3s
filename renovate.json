@@ -277,6 +277,23 @@
       ],
       "groupName": "FerretDB and DocumentDB compatibility",
       "automerge": false
+    },
+    {
+      "description": "Keep Harbor on its verified chart series; bundled PostgreSQL changes require vendor migration review",
+      "matchManagers": [
+        "argocd"
+      ],
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchFileNames": [
+        "argocd/application-harbor.yaml"
+      ],
+      "matchPackageNames": [
+        "harbor"
+      ],
+      "allowedVersions": "/^1\\.19\\./",
+      "ignoreUnstable": true
     }
   ]
 }
