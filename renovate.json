@@ -171,7 +171,7 @@
       "matchFileNames": [
         "firefox-sync/deployment-mariadb.yaml"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/dockerhub/mariadb"
       ],
       "allowedVersions": "/^12\\.3\\./",
@@ -197,7 +197,7 @@
       "matchFileNames": [
         "keycloak/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/dockerhub/postgres"
       ],
       "allowedVersions": "/^18(?:\\.|$)/",
@@ -211,7 +211,7 @@
       "matchFileNames": [
         "bitwarden/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/dockerhub/postgres"
       ],
       "allowedVersions": "/^19(?:\\.|$)/",
@@ -225,7 +225,7 @@
       "matchFileNames": [
         "mastodon/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/dockerhub/postgres"
       ],
       "allowedVersions": "/^19(?:\\.|$)/",
@@ -239,7 +239,7 @@
       "matchFileNames": [
         "dawarich/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/github/cloudnative-pg/postgis",
         "harbor.andreybondarenko.com/dockerhub/postgis/postgis"
       ],
@@ -254,7 +254,7 @@
       "matchFileNames": [
         "immich/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/github/immich-app/postgres"
       ],
       "allowedVersions": "/^18-vectorchord/",
@@ -268,7 +268,7 @@
       "matchFileNames": [
         "your-spotify/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb"
       ],
       "allowedVersions": "/^17-/",
@@ -283,7 +283,7 @@
       "matchFileNames": [
         "your-spotify/**"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/github/ferretdb/ferretdb",
         "harbor.andreybondarenko.com/github/ferretdb/postgres-documentdb"
       ],

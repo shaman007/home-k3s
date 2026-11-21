@@ -16,7 +16,7 @@ def policy(path, package):
     for rule in json.loads((ROOT / "renovate.json").read_text())["packageRules"]:
         if "allowedVersions" not in rule:
             continue
-        if package not in rule.get("matchPackageNames", []):
+        if package not in rule.get("matchDepNames", rule.get("matchPackageNames", [])):
             continue
         if not any(fnmatch.fnmatchcase(path, p) for p in rule.get("matchFileNames", [])):
             continue
@@ -34,6 +34,15 @@ def permits(rule, tag):
 
 
 class PostgreSQLCompatibilityTests(unittest.TestCase):
+    def test_aliased_images_match_dependency_names(self):
+        """Registry aliases change packageName; Harbor selectors must use depName."""
+        config = json.loads((ROOT / "renovate.json").read_text())
+        for rule in config["packageRules"]:
+            for package in rule.get("matchPackageNames", []):
+                for alias in config["registryAliases"]:
+                    self.assertFalse(package.startswith(alias + "/"),
+                                     f"Aliased image must use matchDepNames: {package}")
+
     def test_keycloak_keeps_supported_major_and_security_patch_updates(self):
         """A generic PostgreSQL19 proposal must not roll SSO forward again."""
         rule = policy("keycloak/stateful-set-keycloak-postgres.yaml", PLAIN)
@@ -85,8 +94,8 @@ class PostgreSQLCompatibilityTests(unittest.TestCase):
         rules = json.loads((ROOT / "renovate.json").read_text())["packageRules"]
         paired = [r for r in rules if r.get("groupName") == "FerretDB and DocumentDB compatibility"]
         self.assertEqual(len(paired), 1)
-        self.assertIn(package, paired[0]["matchPackageNames"])
-        self.assertIn("harbor.andreybondarenko.com/github/ferretdb/ferretdb", paired[0]["matchPackageNames"])
+        self.assertIn(package, paired[0]["matchDepNames"])
+        self.assertIn("harbor.andreybondarenko.com/github/ferretdb/ferretdb", paired[0]["matchDepNames"])
         self.assertFalse(paired[0]["automerge"])
 
     def test_harbor_bundled_database_stays_on_the_reviewed_chart_series(self):
