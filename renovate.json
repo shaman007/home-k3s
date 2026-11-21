@@ -66,6 +66,18 @@
       ],
       "datasourceTemplate": "github-release-attachments",
       "versioningTemplate": "semver-coerced"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the backup retention generator image digest aligned with its generated manifest",
+      "managerFilePatterns": [
+        "/^tools\\/generate_backup_retention\\.py$/"
+      ],
+      "matchStrings": [
+        "'(?<depName>harbor\\.andreybondarenko\\.com/dockerhub/amazon/aws-cli)@(?<currentDigest>sha256:[a-f0-9]{64})'"
+      ],
+      "datasourceTemplate": "docker",
+      "currentValueTemplate": "latest"
     }
   ],
   "packageRules": [
