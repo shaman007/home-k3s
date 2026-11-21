@@ -164,18 +164,21 @@
       ]
     },
     {
-      "description": "Keep Firefox Sync MariaDB on the validated 12.3 LTS series",
+      "description": "Keep MariaDB on major 13; allow minor and patch updates, require a separate major-version migration",
       "matchManagers": [
         "kubernetes"
       ],
       "matchFileNames": [
-        "firefox-sync/deployment-mariadb.yaml"
+        "firefox-sync/**",
+        "nextcloud/**",
+        "wordpress/**"
       ],
       "matchDepNames": [
         "harbor.andreybondarenko.com/dockerhub/mariadb"
       ],
-      "allowedVersions": "/^12\\.3\\./",
-      "pinDigests": true
+      "allowedVersions": "/^13(?:\\.|$)/",
+      "pinDigests": true,
+      "ignoreUnstable": true
     },
     {
       "description": "Keep each CI tool version and archive digest in one PR, including major updates",

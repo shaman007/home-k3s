@@ -43,6 +43,25 @@ class PostgreSQLCompatibilityTests(unittest.TestCase):
                     self.assertFalse(package.startswith(alias + "/"),
                                      f"Aliased image must use matchDepNames: {package}")
 
+    def test_mariadb_allows_minor_and_patch_updates_within_current_major(self):
+        """Keep 13.0.2 and allow 13.Y.Z for the database and its clients."""
+        package = "harbor.andreybondarenko.com/dockerhub/mariadb"
+        for path in (
+            "firefox-sync/deployment-mariadb.yaml",
+            "firefox-sync/deployment-firefox-sync.yaml",
+            "nextcloud/deployment-mysql-nextcloud.yaml",
+            "wordpress/deployment-mysql-wordpress.yaml",
+        ):
+            with self.subTest(path=path):
+                rule = policy(path, package)
+                major = int(re.search(r"dockerhub/mariadb:(\d+)", (ROOT / path).read_text())[1])
+                self.assertEqual(major, 13)
+                for tag in ("13.0.2", "13.0.99", "13.1.0", "13.99.99"):
+                    self.assertTrue(permits(rule, tag))
+                for tag in ("12.3.99", "14.0.0", "130.0.0"):
+                    self.assertFalse(permits(rule, tag))
+                self.assertTrue(rule["ignoreUnstable"])
+
     def test_keycloak_keeps_supported_major_and_security_patch_updates(self):
         """A generic PostgreSQL19 proposal must not roll SSO forward again."""
         rule = policy("keycloak/stateful-set-keycloak-postgres.yaml", PLAIN)

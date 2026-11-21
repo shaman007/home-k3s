@@ -19,7 +19,10 @@ const cases = [
   ['dawarich/stateful-set-dawarich-postgres.yaml', '18-3.7', '19-3.7'],
   ['immich/stateful-set-immich-postgres.yaml', '18-vectorchord1.1.1', '19-vectorchord1.1.1'],
   ['your-spotify/stateful-set-ferretdb-postgres.yaml', '17-0.107.0', '18-0.107.0'],
-  ['firefox-sync/deployment-mariadb.yaml', '12.3.99', '13.0.2'],
+  ['firefox-sync/deployment-mariadb.yaml', '13.1.7', '14.0.0'],
+  ['firefox-sync/deployment-firefox-sync.yaml', '13.1.7', '14.0.0'],
+  ['nextcloud/deployment-mysql-nextcloud.yaml', '13.1.7', '14.0.0'],
+  ['wordpress/deployment-mysql-wordpress.yaml', '13.1.7', '14.0.0'],
 ];
 for (const [file, allowed, denied] of cases) {
   const source = await readFile(new URL(file, root), 'utf8');
@@ -33,6 +36,7 @@ for (const [file, allowed, denied] of cases) {
     });
     assert(result.allowedVersions, `${file}: missing version restriction for ${dep.depName}`);
     const pattern = new RegExp(result.allowedVersions.slice(1, -1));
+    assert(pattern.test(dep.currentValue), `${file}: rejected current tag ${dep.currentValue}`);
     assert(pattern.test(allowed), `${file}: rejected ${allowed}`);
     assert(!pattern.test(denied), `${file}: permitted ${denied}`);
   }
