@@ -16,6 +16,8 @@ spec:
           repository: ghcr.io/stakater/reloader
         reloader:
           autoReloadAll: false
+          ignoreJobs: true
+          ignoreCronJobs: true
           reloadStrategy: annotations
           readOnlyRootFileSystem: true
           deployment:

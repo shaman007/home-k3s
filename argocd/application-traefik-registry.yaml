@@ -22,6 +22,11 @@ spec:
           enabled: true
           name: traefik-registry
           isDefaultClass: false
+        # Custom RBAC keeps IngressClass/Node informers enabled. Namespaced data
+        # access is granted separately by harbor-custom in the harbor namespace.
+        rbac:
+          enabled: false
+          namespaced: false
         providers:
           kubernetesIngress:
             enabled: true
@@ -88,6 +93,30 @@ spec:
         - --providers.kubernetesingress.ingressendpoint.ip=192.168.30.212
         - --entryPoints.websecure.http.aliasHeadersStrategy=reject
         extraObjects:
+        # Preserve the existing identities so there is no obsolete broad binding.
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: traefik-registry-traefik
+          rules:
+          - apiGroups: [networking.k8s.io]
+            resources: [ingressclasses]
+            verbs: [get, list, watch]
+          - apiGroups: [""]
+            resources: [nodes]
+            verbs: [get, list, watch]
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: traefik-registry-traefik
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: traefik-registry-traefik
+          subjects:
+          - kind: ServiceAccount
+            name: traefik-registry
+            namespace: traefik
         - apiVersion: networking.k8s.io/v1
           kind: NetworkPolicy
           metadata:
