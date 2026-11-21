@@ -158,6 +158,14 @@ Usage snapshot at 2026-11-15T16:26:35.832865+00:00: $0.819531300 across 36 recor
 
 ## Local appliance resources
 
+Button lighting follows `Europe/Prague` time, including daylight saving:
+06:00–23:30 uses 18.75% of the original RGB levels; 23:30–00:00 uses the
+minimum nonzero level (1) on the dominant color channels; 00:00–06:00 is
+completely dark, including recording, playback, errors and reminder effects.
+The Pi client refreshes idle lighting every second without a backend request.
+Audio and reminder scheduling are unaffected. The existing dotfiles
+`hosts/aiy/install-voice-client.sh` installs this policy with `pi_client.py`.
+
 Voice functions: `blink_light`, `set_timer`, `list_timers`, `cancel_timer`,
 `device_status`, `set_volume`, and `adjust_volume`. Only the built-in Voice Bonnet button RGB LED is exposed; no
 arbitrary GPIO numbers, shell commands, paths, containers or infrastructure

@@ -6,8 +6,10 @@ import logging
 import os
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo
 
 import aiohttp
 from local_resources import AudioOutput, LocalResources
@@ -15,6 +17,43 @@ from local_resources import AudioOutput, LocalResources
 RATE = 24000
 DEVICE = "plughw:CARD=aiyvoicebonnet,DEV=0"
 LOG = logging.getLogger("aiy-client")
+
+
+def scheduled_color(rgb, now=None):
+    """Apply the Prague night schedule to every button indicator state."""
+    now = now or datetime.now(ZoneInfo("Europe/Prague"))
+    minute = now.hour * 60 + now.minute
+    if minute < 360:
+        return (0, 0, 0)
+    if minute >= 1410:
+        peak = max(rgb)
+        return tuple(round(value / peak) for value in rgb) if peak else (0, 0, 0)
+    return tuple(round(value * 0.1875) for value in rgb)
+
+
+class ScheduledIndicator:
+    """Remember the requested color and refresh it across quiet-hour boundaries."""
+
+    def __init__(self):
+        self.rgb = (0, 0, 0)
+        self.applied = None
+
+    def __call__(self, rgb):
+        self.rgb = rgb
+        self.refresh()
+
+    def refresh(self):
+        """Write only when the effective color changes."""
+        color = scheduled_color(self.rgb)
+        if color != self.applied:
+            led(color)
+            self.applied = color
+
+    async def run(self):
+        """Update idle lighting within one second of a schedule boundary."""
+        while True:
+            self.refresh()
+            await asyncio.sleep(1)
 
 
 def led(rgb):
@@ -242,16 +281,20 @@ async def main():
         await audio.play(pcm)
         await audio.finish()
 
+    indicator = ScheduledIndicator()
     resources = LocalResources(
-        os.environ.get("AIY_TIMER_DB", "/var/lib/aiy-voice/timers.sqlite3"), led, alarm
+        os.environ.get("AIY_TIMER_DB", "/var/lib/aiy-voice/timers.sqlite3"), indicator, alarm
     )
     await resources.volume.restore()
     scheduler = asyncio.create_task(resources.scheduler())
+    lighting = asyncio.create_task(indicator.run())
     try:
         async with aiohttp.ClientSession(trust_env=False) as http:
             while True:
                 if scheduler.done():
                     scheduler.result()
+                if lighting.done():
+                    lighting.result()
                 try:
                     await connection(http, resources, audio)
                 except (
@@ -266,7 +309,8 @@ async def main():
                     await asyncio.sleep(5)
     finally:
         scheduler.cancel()
-        await asyncio.gather(scheduler, return_exceptions=True)
+        lighting.cancel()
+        await asyncio.gather(scheduler, lighting, return_exceptions=True)
         await resources.close()
         await audio.finish()
 

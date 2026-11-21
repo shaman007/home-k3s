@@ -4,6 +4,7 @@ import asyncio
 import importlib.util
 import sys
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -18,6 +19,42 @@ SPEC.loader.exec_module(client)
 
 class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
     """Verify physical-button control and idle-microphone privacy."""
+
+    def test_indicator_schedule_boundaries(self):
+        """Cover dusk, midnight and morning for status and effect colors."""
+        for hour, minute, expected in [
+            (23, 29, (12, 3, 0)),
+            (23, 30, (1, 0, 0)),
+            (23, 59, (1, 0, 0)),
+            (0, 0, (0, 0, 0)),
+            (5, 59, (0, 0, 0)),
+            (6, 0, (12, 3, 0)),
+        ]:
+            with self.subTest(hour=hour, minute=minute):
+                now = datetime(2026, 11, 21, hour, minute)
+                self.assertEqual(client.scheduled_color((64, 16, 0), now), expected)
+                self.assertEqual(client.scheduled_color((0, 0, 0), now), (0, 0, 0))
+        self.assertEqual(
+            client.scheduled_color((0, 16, 0), datetime(2026, 11, 21, 23, 30)),
+            (0, 1, 0),
+        )
+
+    def test_idle_indicator_refreshes_without_a_status_event(self):
+        """A clock transition updates idle light and preserves the requested color."""
+        colors = [(0, 3, 0), (0, 1, 0), (0, 0, 0), (0, 3, 0)]
+        with (
+            patch.object(client, "led") as write,
+            patch.object(client, "scheduled_color", side_effect=colors),
+        ):
+            indicator = client.ScheduledIndicator()
+            indicator((0, 16, 0))
+            for _ in range(3):
+                indicator.refresh()
+            self.assertEqual(
+                [call.args[0] for call in write.call_args_list],
+                colors,
+            )
+            self.assertEqual(indicator.rgb, (0, 16, 0))
 
     async def test_each_press_sends_fresh_reminders_even_before_first_alert(self):
         """Verify each press sends fresh reminders even before first alert."""
