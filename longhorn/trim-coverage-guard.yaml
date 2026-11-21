@@ -92,6 +92,29 @@ data:
     }
 
 
+    # Exact retained bindings approved 2026-11-21; resume coverage if attached.
+    RETAINED_DETACHED_PVCS = {
+        ("bitwarden", "data-bitwarden-postgres-lh"): "pvc-2eff94a4-7422-4c84-8136-ef64d8743d96",
+        ("dawarich", "data-dawarich-postgres-lh"): "pvc-40698ded-bda2-4bde-8441-6657969d2728",
+        ("mastodon", "data-mastodon-postgres-v2"): "pvc-54c36429-14fa-4347-b61b-2641d9889ec6",
+        ("immich", "data-immich-postgres16-lh"): "pvc-b59be461-c7cc-4b3f-87fe-c7c3167bb743",
+        ("lenka", "mysql-pv-claim"): "pvc-e7c4e741-be84-4280-a57a-7919bac73894",
+    }
+
+
+    def retained_detached(pvc, volume):
+        meta, spec = pvc.get("metadata", {}), pvc.get("spec", {})
+        expected = RETAINED_DETACHED_PVCS.get((meta.get("namespace"), meta.get("name")))
+        return (expected is not None
+                and spec.get("storageClassName") == "longhorn"
+                and spec.get("volumeMode", "Filesystem") == "Filesystem"
+                and spec.get("volumeName") == expected
+                and volume.get("metadata", {}).get("name") == expected
+                and not meta.get("deletionTimestamp")
+                and not volume.get("metadata", {}).get("deletionTimestamp")
+                and volume.get("status", {}).get("state") == "detached")
+
+
     def retained_openbao(pvc, volume):
         meta, spec = pvc.get("metadata", {}), pvc.get("spec", {})
         expected = RETAINED_OPENBAO_PVCS.get(meta.get("name"))
@@ -132,8 +155,8 @@ data:
                     and not pvc['metadata'].get('deletionTimestamp')):
                 if pvc.get('spec', {}).get('volumeMode', 'Filesystem') != 'Filesystem':
                     return
-                if retained_openbao(pvc, volume):
-                    print('Retained OpenBao trim exception:', meta['name'])
+                if retained_openbao(pvc, volume) or retained_detached(pvc, volume):
+                    print('Retained detached trim exception:', meta['name'])
                     return
                 labels = pvc['metadata'].get('labels', {})
                 if not existing and labels.get('recurring-job.longhorn.io/source') == 'enabled':

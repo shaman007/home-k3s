@@ -215,6 +215,37 @@ class TrimCoverageTest(unittest.TestCase):
 
         self.guard["repair_volume"](api, self.volume, [self.job])
 
+    def test_retained_detached_bindings(self):
+        """Exact detached bindings skip writes; replacements and attachments do not."""
+        self.assertEqual(self.guard["RETAINED_DETACHED_PVCS"], self.report["RETAINED_DETACHED_PVCS"])
+        for (namespace, name), binding in self.guard["RETAINED_DETACHED_PVCS"].items():
+            pvc = {"metadata": {"namespace": namespace, "name": name},
+                   "spec": {"storageClassName": "longhorn", "volumeName": binding}}
+            volume = {"metadata": {"name": binding}, "status": {"state": "detached",
+                      "kubernetesStatus": {"namespace": namespace, "pvcName": name}}}
+
+            def api(path, patch=None):
+                self.assertIsNone(patch)
+                return pvc
+
+            self.guard["repair_volume"](api, volume, [self.job])
+            self.assertTrue(self.check(pvcs=[pvc], volumes=[volume])["passed"])
+            for fault in ("attached", "binding", "namespace", "storage", "deleting"):
+                changed, disk = copy.deepcopy(pvc), copy.deepcopy(volume)
+                if fault == "attached":
+                    disk["status"]["state"] = "attached"
+                elif fault == "binding":
+                    changed["spec"]["volumeName"] = "replacement"
+                elif fault == "namespace":
+                    changed["metadata"]["namespace"] = "other"
+                elif fault == "storage":
+                    changed["spec"]["storageClassName"] = "other"
+                else:
+                    disk["metadata"]["deletionTimestamp"] = "now"
+                for code in (self.guard, self.report):
+                    self.assertFalse(code["retained_detached"](changed, disk))
+                self.assertFalse(self.check(pvcs=[changed], volumes=[disk])["passed"])
+
     def test_retained_openbao_is_skipped_by_guard_and_visible_in_report(self):
         """Retained bindings are exempt; active or replacement data remains covered."""
         self.assertEqual(self.guard["RETAINED_OPENBAO_PVCS"], self.report["RETAINED_OPENBAO_PVCS"])

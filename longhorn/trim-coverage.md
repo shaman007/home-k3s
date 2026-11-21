@@ -66,3 +66,30 @@ The platform report checks that this attachment job exists, is enabled at the
 expected UTC schedule, and mounts the correct PVC. The existing Longhorn
 maintenance check monitors successful trim execution itself. The OONI PVC's
 trim label is also explicit in its source manifest.
+
+## Retained detached data
+
+The guard and health report exempt exact detached PVC/PV bindings for legacy
+OpenBao data and, as approved on 2026-11-21, old PostgreSQL PVCs in Bitwarden,
+Dawarich, Mastodon and Immich plus `lenka/mysql-pv-claim`. See
+`RETAINED_DETACHED_PVCS` in both scripts for the binding inventory. Remove only
+filesystem-trim assignments; preserve PVCs, replica data and backup assignments.
+These exceptions stop matching when a volume attaches or a binding changes, so
+normal trim coverage resumes. Removing labels without these exceptions lets the
+coverage guard restore them.
+
+During the authorized 2026-11-21 live repair, `longhorn-custom` and
+`mastodon-custom` kept automated self-healing, with temporary `ignoreDifferences`
+entries limited to `/data/guard.py` on `longhorn-system/trim-coverage-guard` and
+`/metadata/labels/recurring-job.longhorn.io~1trim-daily-b` on the old Mastodon PVC,
+plus `RespectIgnoreDifferences=true`. After publishing this fix, verify the live
+script matches that revision, remove these exact temporary entries, and restore
+prior sync options while preserving unrelated settings. The platform-health
+script change remains pending GitOps publication: its parent reconciles that
+Application and reverted a temporary field exception. This repository prohibits
+pushes; the local changes must be published separately.
+
+Before this repair, `longhorn-custom` had no `ignoreDifferences` or sync options;
+`mastodon-custom` had no `ignoreDifferences` and only `CreateNamespace=true`.
+Use those baselines when removing the temporary repair protections, checking for
+unrelated changes made since the repair first.

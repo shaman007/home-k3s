@@ -304,6 +304,29 @@ data:
     }
 
 
+    # Exact retained bindings approved 2026-11-21; resume coverage if attached.
+    RETAINED_DETACHED_PVCS = {
+        ("bitwarden", "data-bitwarden-postgres-lh"): "pvc-2eff94a4-7422-4c84-8136-ef64d8743d96",
+        ("dawarich", "data-dawarich-postgres-lh"): "pvc-40698ded-bda2-4bde-8441-6657969d2728",
+        ("mastodon", "data-mastodon-postgres-v2"): "pvc-54c36429-14fa-4347-b61b-2641d9889ec6",
+        ("immich", "data-immich-postgres16-lh"): "pvc-b59be461-c7cc-4b3f-87fe-c7c3167bb743",
+        ("lenka", "mysql-pv-claim"): "pvc-e7c4e741-be84-4280-a57a-7919bac73894",
+    }
+
+
+    def retained_detached(pvc, volume):
+        meta, spec = pvc.get("metadata", {}), pvc.get("spec", {})
+        expected = RETAINED_DETACHED_PVCS.get((meta.get("namespace"), meta.get("name")))
+        return (expected is not None
+                and spec.get("storageClassName") == "longhorn"
+                and spec.get("volumeMode", "Filesystem") == "Filesystem"
+                and spec.get("volumeName") == expected
+                and volume.get("metadata", {}).get("name") == expected
+                and not meta.get("deletionTimestamp")
+                and not volume.get("metadata", {}).get("deletionTimestamp")
+                and volume.get("status", {}).get("state") == "detached")
+
+
     def retained_openbao(pvc, volume):
         meta, spec = pvc.get("metadata", {}), pvc.get("spec", {})
         expected = RETAINED_OPENBAO_PVCS.get(meta.get("name"))
@@ -346,11 +369,11 @@ data:
                 issues.append(detail)
                 continue
             volume = by_name.get(spec.get("volumeName"), {})
-            if retained_openbao(pvc, volume):
+            if retained_openbao(pvc, volume) or retained_detached(pvc, volume):
                 retained += 1
                 details.append({"namespace": meta["namespace"], "item": meta["name"],
                                 "value": 1, "value_name": "pvc_trim_retained_exception",
-                                "message": "Approved exception: detached legacy OpenBao Raft data retained for recovery"})
+                                "message": "Approved exception: exact detached PVC binding retained without filesystem trim"})
                 continue
             labels = volume.get("metadata", {}).get("labels", {})
             covered = bool(volume) and not volume["metadata"].get("deletionTimestamp") and any(
