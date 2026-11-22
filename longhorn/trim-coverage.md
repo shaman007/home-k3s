@@ -93,3 +93,33 @@ Before this repair, `longhorn-custom` had no `ignoreDifferences` or sync options
 `mastodon-custom` had no `ignoreDifferences` and only `CreateNamespace=true`.
 Use those baselines when removing the temporary repair protections, checking for
 unrelated changes made since the repair first.
+
+## One-off trim repair Jobs
+
+After approval for the specific live repair, use the helper instead of manually
+cloning a CronJob with a day-long success retention:
+
+```sh
+# Read-only plan; does not contact Kubernetes.
+python3 tools/longhorn/repair_job.py trim-daily-a
+# Creates one Job in longhorn-system and waits for its terminal condition.
+python3 tools/longhorn/repair_job.py trim-daily-a --execute
+```
+
+Repeat for `trim-daily-b` and `trim-daily-c` only when those reruns are authorized.
+The default context is `admin@home-k8s`; override with `--context` when needed.
+The helper copies the live CronJob workload, preserves its security/resource
+configuration and backup behavior, and starts with a 24-hour diagnostic TTL.
+Only after `Complete=True` does it set `ttlSecondsAfterFinished: 60`, guarded by
+the Job UID and resource version. Kubernetes deletes the Job and its Pods about
+one minute after completion, subject to controller delays. Argo's next
+reconciliation then clears any transient orphan warning; no orphan exclusions
+are added. Failed Jobs keep the 24-hour TTL for diagnosis.
+
+Keep the helper running until it exits. A timeout (default one hour), interrupted
+helper, or API error leaves the 24-hour fallback TTL; inspect the named Job and
+finish cleanup under the repair's authorization. This helper governs new Jobs
+created through this command, not arbitrary manually created repair Jobs or
+scheduled CronJobs. Successful cleanup removes Pod logs too; inspect necessary
+results before the retention expires. No new live trim is needed merely to
+install or validate the helper.
