@@ -174,6 +174,10 @@ class Reminders:
         )
         db.commit()
 
+        db.execute("CREATE TABLE IF NOT EXISTS reminder_suspensions "
+                   "(id TEXT PRIMARY KEY, until_date TEXT NOT NULL)")
+        db.commit()
+
     def now(self, stamp=None):
         """Convert the supplied timestamp, or the current clock, to Prague local time."""
         return datetime.fromtimestamp(time.time() if stamp is None else stamp, ZONE)
@@ -259,7 +263,73 @@ class Reminders:
 
     def active_day(self, row, day):
         """Check if a reminder is scheduled for a specific date based on first date and weekdays."""
-        return day.isoformat() >= row["first_date"] and bool(row["weekdays"] & (1 << day.weekday()))
+        paused = self.pause_until(row["id"])
+        return (day.isoformat() >= max(row["first_date"], paused or row["first_date"])
+                and bool(row["weekdays"] & (1 << day.weekday())))
+
+    def pause_until(self, identity):
+        """Return the exclusive end of a persistent pause, including expired history."""
+        row = self.db.execute("SELECT until_date FROM reminder_suspensions WHERE id=?",
+                              (identity,)).fetchone()
+        return row[0] if row else None
+
+    def suspend(self, identity, until_date, stamp=None):
+        """Pause until midnight on a local date without completing or disabling the task."""
+        self.row(identity)
+        if not isinstance(until_date, str):
+            raise ValueError("Resume date must be YYYY-MM-DD")
+        target = date.fromisoformat(until_date)
+        if not 1 <= (target - self.now(stamp).date()).days <= 366:
+            raise ValueError("Resume date must be within the next 366 days")
+        with self.db:
+            self.db.execute("INSERT OR REPLACE INTO reminder_suspensions VALUES (?, ?)",
+                            (identity, target.isoformat()))
+        return {"ok": True, "reminder": self.describe(identity, stamp)}
+
+    def resume(self, identity, stamp=None):
+        """Resume early, preserving acknowledgements and skipping elapsed slots."""
+        row = self.row(identity)
+        now = self.now(stamp)
+        with self.db:
+            self.db.execute("DELETE FROM reminder_suspensions WHERE id=?", (identity,))
+            self.db.execute("UPDATE daily_reminders SET last_date=?,last_slot=? WHERE id=?",
+                            (now.date().isoformat(), self.elapsed_slot(row, now), identity))
+        return {"ok": True, "reminder": self.describe(identity, stamp)}
+
+    def elapsed_slot(self, row, now):
+        """Identify the most recent elapsed slot on the current schedule."""
+        return max((slot for slot, at in self.slots(row, now.date()) if at <= now), default=-1)
+
+    def update(self, identity, changes, audio=None, stamp=None):
+        """Validate an additive edit before replacing schedule/content; retain task history."""
+        row = self.row(identity)
+        fields = {"text", "start_time", "end_time", "repeat_minutes", "confirmation_phrase",
+                  "weekdays", "jitter_minutes", "first_date"}
+        if not isinstance(changes, dict) or not changes or set(changes) - fields:
+            raise ValueError("Invalid reminder changes")
+        values = {**self.describe(identity, stamp), **changes}
+        spec = ReminderSpec(*(values[k] for k in
+                              ("text", "start_time", "end_time", "repeat_minutes",
+                               "confirmation_phrase", "weekdays", "jitter_minutes")))
+        if values["text"] != row["text"] and audio is None:
+            raise ValueError("Updated reminder text requires updated speech")
+        audio = row["audio"] if audio is None else audio
+        _validate_content(spec, audio)
+        start, end, mask = _recurrence(spec)
+        first = date.fromisoformat(values["first_date"])
+        now = self.now(stamp)
+        if "first_date" in changes and first < now.date():
+            raise ValueError("First date cannot be in the past")
+        row.update(start=start, end=end, repeat=spec.repeat_minutes, jitter=spec.jitter_minutes)
+        with self.db:
+            self.db.execute("UPDATE daily_reminders SET text=?, start=?, end=?, repeat=?, phrase=?,"
+                            "first_date=?, audio=?, last_date=?, last_slot=? WHERE id=?",
+                            (spec.text.strip(), start, end, spec.repeat_minutes,
+                             spec.confirmation_phrase.strip(), first.isoformat(), audio,
+                             now.date().isoformat(), self.elapsed_slot(row, now), identity))
+            self.db.execute("INSERT OR REPLACE INTO reminder_recurrence VALUES (?, ?, ?, ?)",
+                            (identity, mask, spec.jitter_minutes, row["seed"]))
+        return {"ok": True, "reminder": self.describe(identity, stamp)}
 
     def slots(self, row, day):
         """Stable random offsets per task/date/nominal slot; never redraw while polling."""
@@ -357,7 +427,9 @@ class Reminders:
         now = self.now(stamp)
         day = now.date()
         ack = self.acknowledged(identity, day.isoformat())
-        target_day = max(day, date.fromisoformat(row["first_date"]))
+        paused_until = self.pause_until(identity)
+        target_day = max(day, date.fromisoformat(row["first_date"]),
+                         date.fromisoformat(paused_until) if paused_until else day)
         due_at = None
         for _ in range(8):
             if self.active_day(row, target_day) and not (
@@ -387,6 +459,8 @@ class Reminders:
             "repeat_minutes": row["repeat"],
             "confirmation_phrase": row["phrase"],
             "enabled": bool(row["enabled"]),
+            "paused_until": paused_until,
+            "paused": bool(paused_until and day.isoformat() < paused_until),
             "first_date": row["first_date"],
             "acknowledged_today": bool(ack),
             "acknowledged_at": ack[0] if ack else None,

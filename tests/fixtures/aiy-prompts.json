@@ -133,6 +133,16 @@
       "/description": "Test-only description",
       "/parameters/properties/key/description": "Test-only description",
       "/parameters/properties/content/description": "Test-only description"
+    },
+    "update_daily_reminder": {
+      "/description": "Test-only description"
+    },
+    "suspend_daily_reminder": {
+      "/description": "Test-only description",
+      "/parameters/properties/until_date/description": "Test-only date description"
+    },
+    "resume_daily_reminder": {
+      "/description": "Test-only description"
     }
   },
   "memory_summary": "Test-only summary instructions",

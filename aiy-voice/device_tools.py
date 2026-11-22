@@ -176,6 +176,32 @@ def appliance_tool(name, description, properties, required):
 
 TOOLS.extend([
     appliance_tool(
+        "update_daily_reminder", "",
+        {"reminder_id": {"type": "string"}, "changes": {
+            "type": "object", "minProperties": 1, "additionalProperties": False,
+            "properties": {
+                "text": {"type": "string", "minLength": 1, "maxLength": 120},
+                "start_time": {"type": "string"}, "end_time": {"type": "string"},
+                "repeat_minutes": {"type": "integer", "minimum": 1, "maximum": 720},
+                "confirmation_phrase": {"type": "string", "minLength": 1, "maxLength": 100},
+                "weekdays": {"type": "array", "minItems": 1, "maxItems": 7,
+                             "uniqueItems": True, "items": {"type": "integer",
+                                                            "minimum": 0, "maximum": 6}},
+                "jitter_minutes": {"type": "integer", "minimum": 0, "maximum": 10},
+                "first_date": {"type": "string"},
+            }}}, ["reminder_id", "changes"],
+    ),
+    appliance_tool(
+        "suspend_daily_reminder", "",
+        {"reminder_id": {"type": "string"},
+         "until_date": {"type": "string", "description": ""}},
+        ["reminder_id", "until_date"],
+    ),
+    appliance_tool(
+        "resume_daily_reminder", "",
+        {"reminder_id": {"type": "string"}}, ["reminder_id"],
+    ),
+    appliance_tool(
         "update_reminder_interval",
         "",
         {
@@ -198,6 +224,9 @@ TOOLS.extend([
 ])
 
 ACTIONS = {
+    "update_daily_reminder": "update_daily_reminder",
+    "suspend_daily_reminder": "suspend_daily_reminder",
+    "resume_daily_reminder": "resume_daily_reminder",
     "update_reminder_interval": "update_reminder_interval",
     "save_note": "save_note",
     "list_notes": "list_notes",
@@ -239,6 +268,10 @@ class DeviceTools:
             if self.speech is None:
                 return {"error": "Reminder speech is unavailable"}
             event["audio"] = await self.speech(arguments.get("text"))
+        elif name == "update_daily_reminder" and "text" in arguments.get("changes", {}):
+            if self.speech is None:
+                return {"error": "Reminder speech is unavailable"}
+            event["audio"] = await self.speech(arguments["changes"]["text"])
         future = asyncio.get_running_loop().create_future()
         self.pending[command_id] = future
         try:

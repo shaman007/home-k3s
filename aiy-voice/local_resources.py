@@ -151,6 +151,9 @@ class LocalResources:
             return self._note_command(event)
         if action in {
             "update_reminder_interval",
+            "update_daily_reminder",
+            "suspend_daily_reminder",
+            "resume_daily_reminder",
             "create_daily_reminder",
             "list_daily_reminders",
             "acknowledge_reminder",
@@ -228,12 +231,14 @@ class LocalResources:
         raise ValueError("Unsupported timer operation")
 
     def _reminder_command(self, event):
-        """Apply only the four reminder operations accepted by command()."""
+        """Apply the reminder operations accepted by command()."""
         action = event["action"]
-        if action == "update_reminder_interval":
-            return self.reminders.update_interval(
-                event.get("reminder_id"), event.get("repeat_minutes")
-            )
+        if action in {"update_daily_reminder", "update_reminder_interval"}:
+            return self._edit_reminder(event)
+        if action in {"suspend_daily_reminder", "resume_daily_reminder"}:
+            return (self.reminders.suspend(event.get("reminder_id"), event.get("until_date"))
+                    if action == "suspend_daily_reminder"
+                    else self.reminders.resume(event.get("reminder_id")))
         if action == "create_daily_reminder":
             audio = base64.b64decode(event.get("audio", ""), validate=True)
             return self.reminders.create(
@@ -257,6 +262,14 @@ class LocalResources:
         if action == "disable_daily_reminder":
             return self.reminders.disable(event.get("reminder_id"))
         raise ValueError("Unsupported reminder operation")
+
+    def _edit_reminder(self, event):
+        """Regenerate speech only for text edits; keep the legacy interval operation."""
+        if event["action"] == "update_reminder_interval":
+            return self.reminders.update_interval(
+                event.get("reminder_id"), event.get("repeat_minutes"))
+        audio = (base64.b64decode(event["audio"], validate=True) if "audio" in event else None)
+        return self.reminders.update(event.get("reminder_id"), event.get("changes"), audio)
 
     async def scheduler(self):
         """Continuously check for due timers and reminders to trigger alarms and effects."""

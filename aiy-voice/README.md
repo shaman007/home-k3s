@@ -15,6 +15,10 @@ profile and can search MemPalace; it does not inherit the full Codex or ChatGPT 
 The live persistent-memory implementation, validation and rollback procedure are
 described in [conversation memory](../docs/aiy-conversation-memory.md).
 
+Prepared support for multiple actions in one voice turn, editable reminders and
+temporary pauses is described in [multiple actions](../docs/aiy-multiple-actions.md).
+It requires a coordinated backend, prompt catalog and Pi module update.
+
 ## Deployment and recovery
 
 - GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-c8b9b0797ffbdbd0@sha256:4ebfd2dafd7183295e7497995fa318ace53908163b3e89cecf7632a107cd7829`.

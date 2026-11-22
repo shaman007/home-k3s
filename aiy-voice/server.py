@@ -10,7 +10,7 @@ import sqlite3
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -124,6 +124,12 @@ def reminder_context(items, bundle=None):
             raise ValueError("Invalid reminder occurrence")
         row["weekdays"] = days
         row["scheduled_today"] = scheduled
+        paused_until = item.get("paused_until")
+        if paused_until is not None:
+            if not isinstance(paused_until, str):
+                raise ValueError("Invalid reminder suspension date")
+            date.fromisoformat(paused_until)
+            row["paused_until"] = paused_until
         facts.append(row)
     bundle = load_prompts() if bundle is None else bundle
     return (
@@ -185,6 +191,7 @@ class TurnState:
     count: int = 0
     responding: bool = False
     tool_rounds: int = 0
+    tool_calls: int = 0
 
 
 class VoiceBridge:
@@ -275,8 +282,10 @@ class VoiceBridge:
         calls = [item for item in response.get("output", []) if item.get("type") == "function_call"]
         if calls:
             self.state.tool_rounds += 1
-            for call in calls[:2]:
-                result = await self._call_tool(call)
+            for call in calls:
+                self.state.tool_calls += 1
+                result = (await self._call_tool(call) if self.state.tool_calls <= 32
+                          else {"error": "Turn action budget exhausted; operation not executed"})
                 await upstream.send_json(
                     {
                         "type": "conversation.item.create",
@@ -287,14 +296,13 @@ class VoiceBridge:
                         },
                     }
                 )
-            # A list plus up to sixteen explicit interval updates must fit one voice turn.
-            interval_updates = all(call.get("name") == "update_reminder_interval" for call in calls)
-            limit = 18 if interval_updates else 2
+            # A lookup, multiple household/shopping actions and memory must fit one turn.
             await upstream.send_json(
                 {
                     "type": "response.create",
                     "response": {
-                        "tool_choice": "auto" if self.state.tool_rounds < limit else "none"
+                        "tool_choice": "auto" if (self.state.tool_rounds < 18
+                                                  and self.state.tool_calls < 32) else "none"
                     },
                 }
             )
@@ -388,6 +396,7 @@ class VoiceBridge:
             return
         self.state.started = time.monotonic()
         self.state.latency, self.state.responding, self.state.tool_rounds = None, True, 0
+        self.state.tool_calls = 0
         await upstream.send_json({"type": "input_audio_buffer.commit"})
         await upstream.send_json({"type": "response.create"})
 
