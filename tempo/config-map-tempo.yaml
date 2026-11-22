@@ -9,6 +9,9 @@ data:
     stream_over_http_enabled: true
     server:
       http_listen_port: 3200
+    querier:
+      # Bound parallel trace reads in the shared single-process memory budget.
+      max_concurrent_queries: 4
     distributor:
       receivers:
         otlp:

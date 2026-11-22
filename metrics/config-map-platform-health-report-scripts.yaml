@@ -1013,7 +1013,10 @@ data:
                 pod_issues.append({"namespace": pod["metadata"]["namespace"], "item": pod["metadata"]["name"], "value": 0})
         checks.append(check("pods", not pod_issues, f"{len(pod_issues)} pod(s) are not healthy by phase/readiness.", pod_issues[:20]))
 
-        oom = [item for item in series('max by (namespace, pod, container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[24h]))', "oom_killed_24h") if item["value"] > 0]
+        # The reason gauge stays set until the next termination. Retain the
+        # timestamp only while the matching termination is an OOM, including
+        # historical samples for deleted pods, then enforce the actual 24h cutoff.
+        oom = [item for item in series('max by (namespace, pod, container) (max_over_time((kube_pod_container_status_last_terminated_timestamp and on (namespace, pod, container, uid) (kube_pod_container_status_last_terminated_reason{reason="OOMKilled"} == 1))[24h:1m])) > bool (time() - 86400)', "oom_killed_24h") if item["value"] > 0]
         throttle = [item for item in series('sum by (namespace, pod, container) (increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) / clamp_min(sum by (namespace, pod, container) (increase(container_cpu_cfs_periods_total{container!=""}[5m])), 1)', "throttled_ratio") if item["value"] > 0.25]
         checks.append(check("oom_and_throttle", not oom and not throttle, f"OOM offenders={len(oom)}, throttled offenders={len(throttle)}.", (oom + throttle)[:20]))
 

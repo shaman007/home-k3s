@@ -41,7 +41,7 @@ spec:
               drop: [ALL]
           env:
             - name: GOMEMLIMIT
-              value: 800MiB
+              value: 1400MiB
           ports:
             - name: http
               containerPort: 3200
@@ -72,9 +72,9 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 512Mi
             limits:
-              memory: 1Gi
+              memory: 2Gi
           volumeMounts:
             - name: config
               mountPath: /etc/tempo
