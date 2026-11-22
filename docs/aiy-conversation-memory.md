@@ -30,7 +30,7 @@ exclude secrets and private material not intended for memory.
 
 ## Prompt upgrade and release
 
-The source changes are not a live rollout. The new runtime requires two additional
+The live runtime requires two additional
 prompt fields and the `remember_memory` tool's three description slots. Existing
 pods require the old strict catalog, so **do not overwrite the active `bundle`**.
 
@@ -83,4 +83,28 @@ responses; they do not write test records into the real palace or make paid call
 
 The implementation was also checked against real MCP: it restored the explicitly
 requested name, then saved `assistant_name` through the new bounded writer with a
-confirmed `saved: true` response. The running speaker has not yet been upgraded.
+confirmed `saved: true` response. The speaker was upgraded on 2026-11-22 at GitOps revision
+`ab50515f9fecce6e0fbbfed919b4d0f2d674dfa7`. Argo was Synced/Healthy with
+expected automation, no orphan warnings and the exact verified image digest.
+The Pi automatically reconnected at 13:53:08 Europe/Prague.
+
+Two independent new Realtime connections exercised the deployed `VoiceBridge`
+with a synthetic Russian audio question asking its name, without mentioning the
+name in the question. Both produced the audio response “Ульяна”; the provider
+transcripts confirmed the name. Both silent summaries were saved through MCP
+and the retry queue was empty. These were programmatic voice-bridge checks;
+physical microphone/button/playback acceptance was not tested by the user.
+The old profile remains available for rollback; the new profile is the separate
+`bundle_memory` field projected by `aiy-voice-memory-prompts`.
+
+Maintenance silence `e6371ed4-4816-4787-a1f8-b71aeb6e963a` matched only the
+three rollout alerts in namespace `aiy-voice`, originally for 20 minutes, and was
+explicitly expired at 13:54:47 Europe/Prague after functional verification.
+No Argo application was paused. The completed isolated preflight Job was removed.
+
+The first build exposed a stale lockfile containing aiohttp 3.13.2 against the
+Python 3.15 base. Regenerating the lock from the existing pinned requirements
+(aiohttp 3.14.5, mcp 2.3.0) resolved the build; the final builder completed,
+published and verified the image with Cosign. The runtime-contract CI exception
+for one-minute prompt refresh also covers the exact new Secret name, path and
+namespace, without exempting credentials or other applications.

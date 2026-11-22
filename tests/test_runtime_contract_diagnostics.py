@@ -29,10 +29,14 @@ class RuntimeContractDiagnosticsTest(unittest.TestCase):
             "metadata": {"namespace": "aiy-voice", "name": "aiy-voice-prompts"},
             "spec": {"refreshInterval": "1m"},
         }
-        self.assertEqual(contracts.check_secret_refresh_intervals(path, 1, document), [])
+        for name in ("aiy-voice-prompts", "aiy-voice-memory-prompts"):
+            document["metadata"]["name"] = name
+            self.assertEqual(contracts.check_secret_refresh_intervals(path, 1, document), [])
         for other_path, namespace, name in (
             (Path("other.yaml"), "aiy-voice", "aiy-voice-prompts"),
             (path, "other", "aiy-voice-prompts"),
+            (Path("other.yaml"), "aiy-voice", "aiy-voice-memory-prompts"),
+            (path, "other", "aiy-voice-memory-prompts"),
             (path, "aiy-voice", "aiy-voice-auth"),
         ):
             candidate = dict(document, metadata={"namespace": namespace, "name": name})

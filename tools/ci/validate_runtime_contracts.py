@@ -43,6 +43,7 @@ EXPECTED_EXTERNAL_SECRET_REFRESH_INTERVAL = "15m"
 # the normal cadence. Scope by source, namespace and resource name, not namespace alone.
 EXTERNAL_SECRET_REFRESH_OVERRIDES = {
     ("aiy-voice/kubernetes/resources.yaml", "aiy-voice", "aiy-voice-prompts"): "1m",
+    ("aiy-voice/kubernetes/resources.yaml", "aiy-voice", "aiy-voice-memory-prompts"): "1m",
 }
 EXPECTED_SECRET_STORE_REFRESH_INTERVAL = 900
 

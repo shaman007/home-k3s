@@ -8,18 +8,18 @@ The backend runs in namespace `aiy-voice`, using **GPT-Realtime-2.1**, voice Mar
 Hold the big button while speaking, then release. Green: ready; red: recording;
 amber: waiting; blue: speaking. Idle microphone samples are discarded immediately
 and never sent. A turn is limited to 30 seconds. Presses during a reply are ignored.
-Conversation context lasts for the current connection, up to 50 minutes; reconnects
-start a fresh conversation. It receives a curated profile and can search MemPalace; it does not inherit the full Codex or ChatGPT history.
+Connections last up to 50 minutes. Compact conversation context and lasting facts
+are saved through MemPalace MCP and restored on reconnect. It receives a curated
+profile and can search MemPalace; it does not inherit the full Codex or ChatGPT history.
 
-The prepared persistent-memory implementation and its separate prompt/release
-procedure are described in [conversation memory](../docs/aiy-conversation-memory.md).
-It requires a new image and prompt bundle before becoming active on the speaker.
+The live persistent-memory implementation, validation and rollback procedure are
+described in [conversation memory](../docs/aiy-conversation-memory.md).
 
 ## Deployment and recovery
 
-- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7`.
-- Source archive SHA256: `a0828776d63799a738a13150429517c2c17d49e7a796e691a7d08fc18e7ae23d`.
-- Builder Job `image-builder/aiy-voice-build-a0828776d63799a7` completed;
+- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-c8b9b0797ffbdbd0@sha256:4ebfd2dafd7183295e7497995fa318ace53908163b3e89cecf7632a107cd7829`.
+- Source archive SHA256: `c8b9b0797ffbdbd02c1b2a94a93c0ce8a5a5ae17d9e9e0de9a81ecf399b6fc8d`.
+- Builder Job `image-builder/aiy-voice-build-c8b9b0797ffbdbd0` completed;
   Cosign sign and verification succeeded in the managed builder.
 - `prepare_build.py` renders a deterministic source ConfigMap and one-off Job
   using the established privileged Podman/Cosign builder. It does not contact
