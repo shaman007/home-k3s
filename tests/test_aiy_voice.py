@@ -79,6 +79,7 @@ class VoiceTests(unittest.TestCase):
             {
                 "search_web",
                 "search_memory",
+                "remember_memory",
                 "blink_light",
                 "set_timer",
                 "list_timers",
@@ -223,7 +224,7 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     })
             return ws
 
-        bundle = json.loads(Path(os.environ["AIY_PROMPTS_FILE"]).read_text())
+        bundle = json.loads(Path(os.environ["AIY_PROMPTS_FILE"]).read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory, "bundle.json")
             path.write_text(json.dumps(bundle), encoding="utf-8")

@@ -8,6 +8,7 @@ from pathlib import Path
 TEXT_KEYS = (
     "voice", "session_time_prefix", "live_reminder_prefix", "task_data_prefix",
     "web_search", "reminder_speech", "memory_notice",
+    "memory_summary", "memory_context_prefix",
 )
 MAX_BYTES = 131072
 

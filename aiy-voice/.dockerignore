@@ -4,6 +4,7 @@
 !server.py
 !web_search.py
 !memory_search.py
+!conversation_memory.py
 !prompts.py
 !device_tools.py
 !home_assistant.py

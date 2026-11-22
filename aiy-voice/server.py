@@ -8,12 +8,14 @@ import logging
 import os
 import sqlite3
 import time
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from aiohttp import ClientError, ClientSession, ClientTimeout, WSMsgType, web
+from conversation_memory import ConversationMemory, TOOLS as MEMORY_TOOLS
 from device_tools import ACTIONS, TOOLS, DeviceTools
 from home_assistant import NAMES as HA_NAMES
 from home_assistant import call_home_assistant
@@ -88,6 +90,7 @@ def session_config(bundle=None):
         },
     }
     config["session"]["tools"].extend(TOOLS)
+    config["session"]["tools"].extend(MEMORY_TOOLS)
     config["session"]["tools"].extend(ha_schemas())
     config["session"]["tools"] = describe_tools(config["session"]["tools"], bundle)
     return config
@@ -187,12 +190,20 @@ class TurnState:
 class VoiceBridge:
     """Keep device and provider events within the authenticated session lifetime."""
 
+    # The connection owns independent provider, device, timing and memory state.
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, app, device):
         self.app = app
         self.device = device
         self.reminder_snapshot = None
         self.state = TurnState()
         self.initial_config = None
+        self.memory = app.get("memory")
+        self.memory_context = ""
+        self.memory_session = uuid.uuid4().hex
+        self.summary_pending = False
+        self.summary_dirty = False
         self.tools = DeviceTools(device, app["ledger"].db, speech=self.reminder_audio)
 
     async def reminder_audio(self, text):
@@ -222,6 +233,14 @@ class VoiceBridge:
         return await self._call_action(call)
 
     async def _call_action(self, call):
+        # Each allowlisted consumer returns its own bounded, sanitized failure.
+        # pylint: disable=too-many-return-statements
+        if call.get("name") == "remember_memory" and self.memory is not None:
+            try:
+                arguments = json.loads(call["arguments"])
+                return await self.memory.remember(arguments.get("key"), arguments.get("content"))
+            except (ValueError, TypeError, AttributeError):
+                return {"error": "Invalid memory arguments"}
         if call.get("name") in HA_NAMES:
             try:
                 return await call_home_assistant(call["name"], json.loads(call["arguments"]))
@@ -235,7 +254,24 @@ class VoiceBridge:
         return {"error": "Unsupported tool"}
 
     async def _response_done(self, upstream, response):
-        self.app["ledger"].record(response, self.state.latency)
+        summary = (response.get("metadata") or {}).get("purpose") == "memory_context"
+        self.app["ledger"].record(response, None if summary else self.state.latency)
+        if summary:
+            self.summary_pending = False
+            if response.get("status") == "completed" and self.memory is not None:
+                text = "".join(part.get("text", "")
+                               for item in response.get("output", [])
+                               if item.get("type") == "message"
+                               for part in item.get("content", [])
+                               if part.get("type") == "output_text")
+                try:
+                    self.memory.queue(self.memory_session, "conversations", text)
+                    self.memory.queue("latest_context", "continuity", text)
+                except ValueError:
+                    LOG.warning("memory_summary_invalid")
+            if self.summary_dirty:
+                await self._summarize(upstream)
+            return
         calls = [item for item in response.get("output", []) if item.get("type") == "function_call"]
         if calls:
             self.state.tool_rounds += 1
@@ -267,6 +303,26 @@ class VoiceBridge:
             await self.device.send_json(
                 {"type": "done", "status": response["status"], "first_audio_ms": self.state.latency}
             )
+            if response.get("status") == "completed":
+                await self._summarize(upstream)
+
+    async def _summarize(self, upstream):
+        """Request a silent context snapshot without adding it to the spoken conversation."""
+        if self.memory is None:
+            return
+        if self.summary_pending:
+            self.summary_dirty = True
+            return
+        self.summary_dirty = False
+        self.summary_pending = True
+        await upstream.send_json({
+            "type": "response.create", "event_id": "memory_summary", "response": {
+                "conversation": "none", "metadata": {"purpose": "memory_context"},
+                "output_modalities": ["text"], "tools": [], "tool_choice": "none",
+                "max_output_tokens": 800,
+                "instructions": load_prompts()["memory_summary"],
+            },
+        })
 
     async def receive_provider(self, upstream):
         """Forward audio immediately and record every completed response before tool dispatch."""
@@ -282,6 +338,10 @@ class VoiceBridge:
             elif kind == "response.done":
                 await self._response_done(upstream, event["response"])
             elif kind == "error":
+                if event.get("error", {}).get("event_id") == "memory_summary":
+                    self.summary_pending = False
+                    LOG.warning("memory_summary_failed")
+                    continue
                 LOG.warning("provider_error code=%s", event.get("error", {}).get("code"))
                 await self.device.send_json({"type": "error"})
                 await self.device.close()
@@ -307,7 +367,7 @@ class VoiceBridge:
                     "type": "session.update",
                     "session": {
                         "type": "realtime",
-                        "instructions": config["instructions"] + context,
+                        "instructions": config["instructions"] + context + self.memory_context,
                         "tools": config["tools"],
                     },
                 }
@@ -355,6 +415,10 @@ class VoiceBridge:
     async def run(self, upstream):
         """Gate recording on provider setup and finish billed usage on disconnect."""
         self.initial_config = session_config()
+        if self.memory is not None:
+            data = await self.memory.restore()
+            self.memory_context = load_prompts()["memory_context_prefix"] + data
+            self.initial_config["session"]["instructions"] += self.memory_context
         await upstream.send_json(self.initial_config)
         await _wait_for_session(upstream)
         await self.device.send_json({"type": "ready", "model": MODEL, "rate": RATE})
@@ -362,7 +426,7 @@ class VoiceBridge:
         try:
             await self.receive_device(upstream)
         finally:
-            if self.state.responding and not receiver.done():
+            if (self.state.responding or self.summary_pending) and not receiver.done():
                 try:
                     await asyncio.wait_for(asyncio.shield(receiver), 5)
                 except (TimeoutError, ConnectionError):
@@ -424,7 +488,10 @@ async def authenticate(request, handler):
 async def resources(app):
     """Manage the lifecycle of the HTTP client session and database connection."""
     app["http"] = ClientSession(timeout=ClientTimeout(total=None, sock_connect=15), trust_env=True)
+    memory_worker = asyncio.create_task(app["memory"].worker())
     yield
+    memory_worker.cancel()
+    await asyncio.gather(memory_worker, return_exceptions=True)
     await app["http"].close()
     app["ledger"].db.close()
 
@@ -435,6 +502,7 @@ def create_app(path=None):
     app = web.Application(middlewares=[authenticate], client_max_size=16384)
     app["busy"] = asyncio.Lock()
     app["ledger"] = Ledger(path or os.environ.get("AIY_USAGE_DB", "/state/usage.sqlite3"))
+    app["memory"] = ConversationMemory(app["ledger"].db)
     app.cleanup_ctx.append(resources)
 
     async def health(_request):

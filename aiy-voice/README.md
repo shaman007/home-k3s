@@ -11,6 +11,10 @@ and never sent. A turn is limited to 30 seconds. Presses during a reply are igno
 Conversation context lasts for the current connection, up to 50 minutes; reconnects
 start a fresh conversation. It receives a curated profile and can search MemPalace; it does not inherit the full Codex or ChatGPT history.
 
+The prepared persistent-memory implementation and its separate prompt/release
+procedure are described in [conversation memory](../docs/aiy-conversation-memory.md).
+It requires a new image and prompt bundle before becoming active on the speaker.
+
 ## Deployment and recovery
 
 - GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-a0828776d63799a7@sha256:917d219a0070d31b59e508eed87aae6170318ba281dd370c691d54d14a4e7ed7`.

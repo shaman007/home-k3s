@@ -22,6 +22,7 @@ FILES = (
     "server.py",
     "web_search.py",
     "memory_search.py",
+    "conversation_memory.py",
     "mcp_transport.py",
     "device_tools.py",
     "reminder_speech.py",
