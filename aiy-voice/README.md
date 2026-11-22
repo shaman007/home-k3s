@@ -15,15 +15,15 @@ profile and can search MemPalace; it does not inherit the full Codex or ChatGPT 
 The live persistent-memory implementation, validation and rollback procedure are
 described in [conversation memory](../docs/aiy-conversation-memory.md).
 
-Prepared support for multiple actions in one voice turn, editable reminders and
-temporary pauses is described in [multiple actions](../docs/aiy-multiple-actions.md).
-It requires a coordinated backend, prompt catalog and Pi module update.
+Multiple actions in one voice turn, editable reminders and temporary pauses are
+described in [multiple actions](../docs/aiy-multiple-actions.md). The backend, prompt
+catalog and Pi modules must remain on compatible versions.
 
 ## Deployment and recovery
 
-- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-c8b9b0797ffbdbd0@sha256:4ebfd2dafd7183295e7497995fa318ace53908163b3e89cecf7632a107cd7829`.
-- Source archive SHA256: `c8b9b0797ffbdbd02c1b2a94a93c0ce8a5a5ae17d9e9e0de9a81ecf399b6fc8d`.
-- Builder Job `image-builder/aiy-voice-build-c8b9b0797ffbdbd0` completed;
+- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-d4095451522a37f8@sha256:b8aef0db6c4353be363dca4c559223ed67665f16094258542f31f6f4c00f6d36`.
+- Source archive SHA256: `d4095451522a37f8b2ec911253efdc2761128a6a1e836132c7d2434ed92210be`.
+- Builder Job `image-builder/aiy-voice-build-d4095451522a37f8` completed;
   Cosign sign and verification succeeded in the managed builder.
 - `prepare_build.py` renders a deterministic source ConfigMap and one-off Job
   using the established privileged Podman/Cosign builder. It does not contact

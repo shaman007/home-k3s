@@ -36,7 +36,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: voice
-        image: harbor.andreybondarenko.com/library/aiy-voice:src-c8b9b0797ffbdbd0@sha256:4ebfd2dafd7183295e7497995fa318ace53908163b3e89cecf7632a107cd7829
+        image: harbor.andreybondarenko.com/library/aiy-voice:src-d4095451522a37f8@sha256:b8aef0db6c4353be363dca4c559223ed67665f16094258542f31f6f4c00f6d36
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -110,7 +110,7 @@ spec:
           sizeLimit: 16Mi
       - name: prompts
         secret:
-          secretName: aiy-voice-memory-prompts
+          secretName: aiy-voice-action-prompts
           defaultMode: 0440
           items:
           - key: bundle
@@ -397,3 +397,24 @@ spec:
     remoteRef:
       key: aiy-voice/prompts
       property: bundle_memory
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: aiy-voice-action-prompts
+  namespace: aiy-voice
+  annotations:
+    argocd.argoproj.io/sync-wave: '-1'
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: vault-secret-store
+    kind: SecretStore
+  target:
+    name: aiy-voice-action-prompts
+    creationPolicy: Owner
+  data:
+  - secretKey: bundle
+    remoteRef:
+      key: aiy-voice/prompts
+      property: bundle_actions

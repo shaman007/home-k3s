@@ -1,8 +1,8 @@
 # Multiple voice actions and editable reminders
 
-## Prepared behavior
+## Behavior
 
-These source changes are not deployed yet. The voice bridge allows up to 18 tool
+The voice bridge allows up to 18 tool
 rounds and 32 actual calls per spoken turn, including lookups and memory writes.
 Actions remain sequential so later operations can use earlier results. Every
 returned function call receives an individual result; excess calls receive an
@@ -69,3 +69,31 @@ creation, an in-place edit, absence with known/unknown dates, automatic resume
 and partial consumer failure. Never complete real shopping entries or household
 tasks merely to test the feature. Local tool-dispatch tests do not establish
 that the deployed voice model selects the right tasks.
+
+## Release evidence, 2026-11-22
+
+The release image is `src-d4095451522a37f8` at digest
+`sha256:b8aef0db6c4353be363dca4c559223ed67665f16094258542f31f6f4c00f6d36`;
+the builder completed publication and Cosign verification. The separate
+`bundle_actions` field is projected by `aiy-voice-action-prompts`; both older
+profiles remain available for rollback. Its exact one-minute refresh exception
+is covered by the runtime-contract tests. The acknowledgement tool description
+explicitly permits only a verbatim positive fragment when another clause is
+negative, preserving the Pi's conservative completion guard.
+
+Pi backup: `/var/lib/aiy-voice/backup-multi-actions-20261122T194853Z`.
+The installed modules match the reviewed source hashes. All nine stored reminder
+records, 24 acknowledgement rows and recurrence records were preserved; SQLite
+integrity remained `ok`. Only delivery progress may advance normally. The client
+restarted and reconnected. The installed modules passed separate RAM-database
+checks for pause/reopen/automatic expiry, editing cached speech and early resume.
+No working task was acknowledged or paused by these tests.
+
+The published image/profile also passed nine isolated model scenarios: two
+shopping completions, two feeding completions, mixed negation, creation, in-place
+editing, a three-day pause with automatic return, missing-date clarification,
+early return and partial consumer failure. Requests for these checks were text;
+responses were real model audio. Separate synthetic audio checks cover shopping
+and feeding. Test consumers have no working HA credentials, Pi state volume or
+MemPalace token, and use disposable databases. These checks do not establish
+manual physical microphone/button/playback acceptance.
