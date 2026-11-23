@@ -6,8 +6,8 @@
   },
   "ripgrep": {
     "depName": "BurntSushi/ripgrep",
-    "version": "15.2.0",
-    "sha256": "33e15bcf1624b25cdd2a55813a47a2f95dbe126268203e76aa6a585d1e7b149c"
+    "version": "16.0.0",
+    "sha256": "54268ab4643c00a290a29b0086066d64b3f56236dd805ec64629a86f9bd29fd0"
   },
   "kubeconform": {
     "depName": "yannh/kubeconform",
