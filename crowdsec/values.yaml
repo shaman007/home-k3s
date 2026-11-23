@@ -1,6 +1,6 @@
 image:
   repository: harbor.andreybondarenko.com/library/crowdsec-rootless
-  tag: 2026-11-16-022913@sha256:09d110861d688ce912bfaf3a03c5725034983a0d582d03179cbb08e33d8d80e4
+  tag: 2026-11-23-022908@sha256:09d110861d688ce912bfaf3a03c5725034983a0d582d03179cbb08e33d8d80e4
 container_runtime: containerd
 secrets:
   externalSecret:
@@ -53,7 +53,7 @@ lapi:
     type: Recreate
   extraInitContainers:
   - name: prepare-rootless-database
-    image: harbor.andreybondarenko.com/library/crowdsec-rootless:2026-11-16-022913@sha256:09d110861d688ce912bfaf3a03c5725034983a0d582d03179cbb08e33d8d80e4
+    image: harbor.andreybondarenko.com/library/crowdsec-rootless:2026-11-23-022908@sha256:09d110861d688ce912bfaf3a03c5725034983a0d582d03179cbb08e33d8d80e4
     imagePullPolicy: IfNotPresent
     command:
     - /usr/local/bin/crowdsec-rootless-prepare-database
