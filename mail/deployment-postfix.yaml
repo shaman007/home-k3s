@@ -81,7 +81,7 @@ spec:
             name: mail-startup-a7a2479604c9
       initContainers:
         - name: init-postfix-queue-perms
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-23-022908
           imagePullPolicy: IfNotPresent
           command:
             - /usr/bin/sh
@@ -102,7 +102,7 @@ spec:
                 - CHOWN
                 - FOWNER
         - name: wait-for-mail-dependencies
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-23-022908
           imagePullPolicy: IfNotPresent
           command:
             - timeout
@@ -138,7 +138,7 @@ spec:
               readOnly: true
       containers:
         - name: confirmation-expiry
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-23-022908
           command: [perl, /expiry/expire-mastodon-confirmations.pl]
           securityContext:
             runAsUser: 0
@@ -164,7 +164,7 @@ spec:
               subPath: main.cf
               readOnly: true
         - name: postfix-mail
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-23-022908
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 587
@@ -234,7 +234,7 @@ spec:
               # Allow SMTP worker bursts during Alertmanager notification storms.
               memory: 512Mi
         - name: queue-exporter
-          image: harbor.andreybondarenko.com/library/postfix:2026-11-16-022913
+          image: harbor.andreybondarenko.com/library/postfix:2026-11-23-022908
           command:
             - perl
             - /collector/postfix-queue-exporter.pl
