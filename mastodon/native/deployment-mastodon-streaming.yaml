@@ -143,7 +143,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
       - name: wait-for-data-services
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-19-121459@sha256:d30b7ecb04f053173c5cd6f7d2036b6708ce71a5631ba32d0a0f94f8cae8c68b
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-23-022908@sha256:45d8086936947d041a26f7528a3d7008271d2964b6d9d6b1b4c7077e447ea53d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
@@ -188,7 +188,7 @@ spec:
           mountPath: /startup-gate
           readOnly: true
       - name: wait-for-schema
-        image: harbor.andreybondarenko.com/library/mastodon:2026-11-19-121459@sha256:d30b7ecb04f053173c5cd6f7d2036b6708ce71a5631ba32d0a0f94f8cae8c68b
+        image: harbor.andreybondarenko.com/library/mastodon:2026-11-23-022908@sha256:45d8086936947d041a26f7528a3d7008271d2964b6d9d6b1b4c7077e447ea53d
         imagePullPolicy: Always
         workingDir: /opt/mastodon
         command:
