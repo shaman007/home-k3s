@@ -29,7 +29,7 @@ spec:
       annotations:
         rollme: '1'
         checksum/config-configmap: 078166d4ca0c98354f5687013569e5a1da02fa4e6bddcfdf13b8c451d0d4a661
-        checksum/mastodon-startup: 1e7de92555facdcf33d3e923e518a2bbde1ffa40f7dc50dfe5e4befde84ef1e9
+        checksum/mastodon-startup: 6e4f4d2132111c4c69c5495c915a0d69dc7bb2802d0ba53664542e9578f10ee0
     spec:
       serviceAccountName: mastodon
       hostAliases:

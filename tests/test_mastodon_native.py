@@ -8,6 +8,7 @@ import subprocess  # nosec B404
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 
@@ -284,6 +285,30 @@ class MastodonNativeSourceTests(unittest.TestCase):
         )
         self.assertFalse(custom["spec"]["source"]["directory"]["recurse"])
         self.assertNotIn("native", custom["spec"]["source"]["directory"]["include"])
+
+    def test_image_updates_do_not_invalidate_config_checksum(self):
+        """Renovate image edits already roll Pods and need no config regeneration."""
+        documents = NATIVE.sources()
+        before = NATIVE.candidates()
+        web = documents["deployment-mastodon-web.yaml"]["spec"]["template"]["spec"][
+            "containers"
+        ][0]
+        web["image"] = "example.invalid/mastodon:new-version"
+        with patch.object(NATIVE, "sources", return_value=documents):
+            after = NATIVE.candidates()
+        for name, document in after.items():
+            if document["kind"] != "Deployment":
+                continue
+            self.assertEqual(
+                before[name]["spec"]["template"]["metadata"]["annotations"][
+                    "checksum/mastodon-startup"
+                ],
+                document["spec"]["template"]["metadata"]["annotations"][
+                    "checksum/mastodon-startup"
+                ],
+            )
+            for gate in document["spec"]["template"]["spec"]["initContainers"]:
+                self.assertEqual(gate["image"], web["image"])
 
     def test_source_is_current_and_only_web_has_migration_permission(self):
         """All roles share the desired schema image; only web contains a writer init."""

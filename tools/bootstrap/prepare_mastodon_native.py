@@ -99,7 +99,7 @@ def candidates():
     script = SCRIPT.read_text()
     environment = documents["config-map-mastodon-env.yaml"]["data"]
     checksum = hashlib.sha256(
-        (script + json.dumps(environment, sort_keys=True) + web["image"]).encode()
+        (script + json.dumps(environment, sort_keys=True)).encode()
     ).hexdigest()
     documents["config-map-startup-gate.yaml"] = {
         "apiVersion": "v1",
