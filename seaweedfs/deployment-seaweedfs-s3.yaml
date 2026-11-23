@@ -67,7 +67,7 @@ spec:
       containers:
         # MASTER
         - name: master
-          image: docker.io/chrislusf/seaweedfs:4.54@sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15
+          image: docker.io/chrislusf/seaweedfs:4.55@sha256:7ca46aeae2f223b37e5d91593c17ab37738eec6df6ab69b48a0487f7643342b9
           imagePullPolicy: IfNotPresent
           args:
             - "master"
@@ -129,7 +129,7 @@ spec:
               memory: 192Mi
         # VOLUME
         - name: volume
-          image: docker.io/chrislusf/seaweedfs:4.54@sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15
+          image: docker.io/chrislusf/seaweedfs:4.55@sha256:7ca46aeae2f223b37e5d91593c17ab37738eec6df6ab69b48a0487f7643342b9
           imagePullPolicy: IfNotPresent
           args:
             - "volume"
@@ -192,7 +192,7 @@ spec:
               memory: 3Gi
         # FILER
         - name: filer
-          image: docker.io/chrislusf/seaweedfs:4.54@sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15
+          image: docker.io/chrislusf/seaweedfs:4.55@sha256:7ca46aeae2f223b37e5d91593c17ab37738eec6df6ab69b48a0487f7643342b9
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
@@ -274,7 +274,7 @@ spec:
               memory: 1600Mi
         # S3 GATEWAY
         - name: s3
-          image: docker.io/chrislusf/seaweedfs:4.54@sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15
+          image: docker.io/chrislusf/seaweedfs:4.55@sha256:7ca46aeae2f223b37e5d91593c17ab37738eec6df6ab69b48a0487f7643342b9
           imagePullPolicy: IfNotPresent
           command:
             - /bin/sh
