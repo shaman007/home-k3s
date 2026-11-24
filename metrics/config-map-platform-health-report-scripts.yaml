@@ -920,7 +920,8 @@ data:
         ))
 
         pvc_limit = env_num("PVC_USAGE_WARNING_PERCENT", 90.0)
-        pvc_usage = series("100 * (longhorn_volume_actual_size_bytes / longhorn_volume_capacity_bytes)", "pvc_usage_percent")
+        # Filesystem utilization excludes Longhorn snapshots and retained blocks.
+        pvc_usage = series("100 * max by (namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes)", "pvc_usage_percent")
         pvc_issues = [item for item in pvc_usage if item["value"] > pvc_limit]
         checks.append(check("pvc_usage", not pvc_issues, f"{len(pvc_issues)} PVC(s) are above {int(pvc_limit)}% utilization.", pvc_usage[:20]))
 
