@@ -9,8 +9,8 @@
   "images": [
     {
       "namespace": "cri",
-      "reference": "docker.io/chrislusf/seaweedfs:4.54@sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15",
-      "digest": "sha256:4b42c212543a0acd4c0e675215ecdcaf62a186ef98def76c7e12701871222d15",
+      "reference": "docker.io/chrislusf/seaweedfs:4.55@sha256:7ca46aeae2f223b37e5d91593c17ab37738eec6df6ab69b48a0487f7643342b9",
+      "digest": "sha256:7ca46aeae2f223b37e5d91593c17ab37738eec6df6ab69b48a0487f7643342b9",
       "consumers": [
         "seaweedfs/master",
         "seaweedfs/volume",

@@ -7,7 +7,7 @@ CoreDNS, Longhorn engine/CSI/share-manager, MetalLB/FRR, OpenBao/ESO,
 cert-manager + GoDaddy webhook, SeaweedFS core, Harbor and registry ingress,
 and ArgoCD. Optional monitoring jobs/media-cache are not S3 bootstrap providers.
 
-SeaweedFS was updated to 4.54 on 2026-11-16; its pinned digest was checked
+SeaweedFS was updated to 4.55 on 2026-11-24; its pinned digest was checked
 against the registry. Node cache presence and recovery bundles still require
 revalidation after publication.
 
