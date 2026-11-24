@@ -4,6 +4,13 @@ The Renovate workflow uses a GitHub App installation token and GitHub API commit
 (`RENOVATE_PLATFORM_COMMIT=enabled`) so GitHub signs the generated commits. Do not
 set `gitAuthor` or `RENOVATE_GIT_AUTHOR`, or fall back to a personal access token.
 
+## Schedule
+
+The workflow runs daily at 01:17 in `Europe/Prague`, following local daylight
+saving time. GitHub Actions evaluates this explicit timezone independently of
+the runner's timezone. The off-hour minute avoids the busiest hourly scheduling
+boundary; GitHub can still delay scheduled runs. Manual dispatch remains available.
+
 ## Required setup
 
 Use a GitHub App that you own and install it only on `shaman007/home-k3s`.
