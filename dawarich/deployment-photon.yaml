@@ -44,7 +44,7 @@ spec:
               type: RuntimeDefault
           env:
             - name: UPDATE_STRATEGY
-              value: SEQUENTIAL
+              value: PARALLEL
             - name: UPDATE_INTERVAL
               value: 720h
             - name: JAVA_PARAMS
