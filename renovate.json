@@ -97,6 +97,21 @@
       "groupSlug": "private-traefik-image"
     },
     {
+      "description": "Update the backup retention generator and generated AWS CLI image together",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "harbor.andreybondarenko.com/dockerhub/amazon/aws-cli"
+      ],
+      "matchFileNames": [
+        "tools/generate_backup_retention.py",
+        "talos-backup/backup-retention.yaml"
+      ],
+      "groupName": "backup retention AWS CLI image",
+      "groupSlug": "backup-retention-aws-cli-image"
+    },
+    {
       "description": "Keep Mastodon Helm tags valid for chart version labels",
       "matchManagers": [
         "helm-values"
