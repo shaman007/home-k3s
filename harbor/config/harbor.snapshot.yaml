@@ -132,6 +132,13 @@ projects:
       daysSinceLastPull: 7
       includeUntagged: false
 
+garbageCollection:
+  # Harbor cron uses UTC: 02:00 Europe/Prague in winter, 03:00 in summer.
+  cron: "0 0 1 * * *"
+  workers: 1
+  deleteUntagged: false
+  deleteTag: false
+
 scanner:
   name: Trivy
   url: http://harbor-trivy:8080
