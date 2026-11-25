@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -90,16 +90,26 @@ class TurnTiming:
     deadline: asyncio.TimerHandle | None = None
 
 
+@dataclass
 class ReplyAudio:
     """One bounded turn shared by independent receiving and playback tasks."""
 
-    def __init__(self):
-        self.pcm = bytearray()
-        self.changed = asyncio.Event()
-        self.done = False
-        self.failed = False
-        self.queued = False
-        self.total = 0
+    pcm: bytearray = field(default_factory=bytearray)
+    changed: asyncio.Event = field(default_factory=asyncio.Event)
+    done: bool = False
+    failed: bool = False
+    queued: bool = False
+    total: int = 0
+
+
+@dataclass
+class PlaybackState:
+    """Keep audio output, reserve and per-turn queues together."""
+
+    audio: AudioOutput
+    reply: ReplyAudio = field(default_factory=ReplyAudio)
+    buffer_seconds: float = 3.0
+    replies: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=1))
 
 
 class Client:
@@ -111,11 +121,8 @@ class Client:
         self.busy = False
         self.count = 0
         self.resources = resources
-        self.audio = audio
         self.timing = TurnTiming()
-        self.reply = ReplyAudio()
-        self.buffer_seconds = 3.0
-        self.replies = asyncio.Queue(maxsize=1)
+        self.player = PlaybackState(audio)
 
     def status(self, rgb):
         """Update the LED status via resources or direct LED control."""
@@ -130,8 +137,8 @@ class Client:
             return
         if self.resources:
             self.resources.engaged = True
-        if self.audio:
-            await self.audio.interrupt()
+        if self.player.audio:
+            await self.player.audio.interrupt()
         event = {"type": "start"}
         if self.resources:
             event["reminders"] = self.resources.reminders.list()
@@ -150,7 +157,7 @@ class Client:
         self.timing.deadline.cancel()
         self.timing.released, self.timing.first_audio = time.monotonic(), None
         self.timing.last_audio_received = None
-        self.reply = ReplyAudio()
+        self.player.reply = ReplyAudio()
         await self.ws.send_json({"type": "stop"})
         self.status((32, 16, 0))
 
@@ -192,16 +199,16 @@ class Client:
                     )
                 self.timing.last_audio_received = received
                 # Five minutes of PCM16 mono at 24 kHz, held only in RAM.
-                if self.reply.total + len(message.data) > RATE * 2 * 300:
+                if self.player.reply.total + len(message.data) > RATE * 2 * 300:
                     raise RuntimeError("Voice reply exceeds five minutes")
-                self.reply.total += len(message.data)
-                self.reply.pcm.extend(message.data)
+                self.player.reply.total += len(message.data)
+                self.player.reply.pcm.extend(message.data)
                 self.queue_reply()
             elif message.type == aiohttp.WSMsgType.TEXT:
                 event = json.loads(message.data)
                 if event["type"] == "done":
-                    self.reply.done = True
-                    self.reply.failed = event.get("status") != "completed"
+                    self.player.reply.done = True
+                    self.player.reply.failed = event.get("status") != "completed"
                     self.queue_reply()
                 elif event["type"] == "device_command":
                     try:
@@ -219,10 +226,10 @@ class Client:
 
     def queue_reply(self):
         """Wake playback without blocking receipt or WebSocket heartbeats."""
-        if not self.reply.queued:
-            self.replies.put_nowait(self.reply)
-            self.reply.queued = True
-        self.reply.changed.set()
+        if not self.player.reply.queued:
+            self.player.replies.put_nowait(self.player.reply)
+            self.player.reply.queued = True
+        self.player.reply.changed.set()
 
     async def play_reply(self, reply):
         """Drain before starvation, then refill a larger reserve instead of stuttering."""
@@ -231,25 +238,25 @@ class Client:
             reply.changed.clear()
             if reply.failed:
                 reply.pcm.clear()
-                await self.audio.interrupt()
-                await self.audio.finish()
+                await self.player.audio.interrupt()
+                await self.player.audio.finish()
                 return
-            ready = len(reply.pcm) >= round(RATE * 2 * self.buffer_seconds)
+            ready = len(reply.pcm) >= round(RATE * 2 * self.player.buffer_seconds)
             if reply.pcm and (playing or ready or reply.done):
                 pcm = bytes(reply.pcm)
                 reply.pcm.clear()
                 if not playing:
                     self.status((0, 0, 64))
                     LOG.info("playback_start reserve_ms=%d target_ms=%d",
-                             len(pcm) * 1000 // (RATE * 2), self.buffer_seconds * 1000)
+                             len(pcm) * 1000 // (RATE * 2), self.player.buffer_seconds * 1000)
                 end = max(end, time.monotonic()) + len(pcm) / (RATE * 2)
                 playing = True
-                await self.audio.play(pcm)
+                await self.player.audio.play(pcm)
                 continue
             if reply.done:
-                await self.audio.finish()
+                await self.player.audio.finish()
                 if not stalls and reply.total >= RATE * 2 * 10:
-                    self.buffer_seconds = max(1.5, self.buffer_seconds - 0.5)
+                    self.player.buffer_seconds = max(1.5, self.player.buffer_seconds - 0.5)
                 return
             if playing:
                 try:
@@ -258,19 +265,19 @@ class Client:
                         reply.changed.wait(), max(0, end - time.monotonic() - 0.15)
                     )
                 except TimeoutError:
-                    await self.audio.finish()
+                    await self.player.audio.finish()
                     playing, end = False, 0.0
                     stalls += 1
-                    self.buffer_seconds = min(8.0, self.buffer_seconds + 1.0)
+                    self.player.buffer_seconds = min(8.0, self.player.buffer_seconds + 1.0)
                     self.status((32, 16, 0))
-                    LOG.warning("audio_rebuffer target_ms=%d", self.buffer_seconds * 1000)
+                    LOG.warning("audio_rebuffer target_ms=%d", self.player.buffer_seconds * 1000)
             else:
                 await reply.changed.wait()
 
     async def playback(self):
         """Keep receiver active while waiting for reserves or draining ALSA."""
         while True:
-            await self.play_reply(await self.replies.get())
+            await self.play_reply(await self.player.replies.get())
             self.busy = False
             self.resources.engaged = False
             self.status((0, 16, 0))

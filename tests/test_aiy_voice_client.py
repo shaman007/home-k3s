@@ -5,6 +5,7 @@ import importlib.util
 import json
 import sys
 import unittest
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -34,7 +35,12 @@ class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
 
         audio.play.side_effect = play
 
+        @dataclass
         class Socket:
+            """Feed delayed chunks and observe receipt during playback."""
+
+            received_while_playing: bool = False
+
             async def __aiter__(self):
                 for chunk in (b"a" * 4800, b"b" * 48000):
                     yield SimpleNamespace(type=client.aiohttp.WSMsgType.BINARY, data=chunk)
@@ -67,9 +73,11 @@ class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
     async def test_incomplete_short_and_oversized_replies_never_play(self):
         """A short incomplete reply waits; an oversized chunk fails before playback."""
         for size in (100, client.RATE * 2 * 300 + 2):
+            @dataclass
             class Socket:
-                def __init__(self, payload_size):
-                    self.payload_size = payload_size
+                """Feed a single bounded or oversized audio message."""
+
+                payload_size: int
 
                 async def __aiter__(self):
                     yield SimpleNamespace(type=client.aiohttp.WSMsgType.BINARY,
@@ -81,7 +89,7 @@ class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(RuntimeError):
                 await instance.receive()
             audio.play.assert_not_awaited()
-            self.assertFalse(instance.reply.done)
+            self.assertFalse(instance.player.reply.done)
 
     async def test_three_second_reserve_starts_before_done(self):
         """Initial playback begins at three seconds without waiting for completion."""
@@ -92,16 +100,16 @@ class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
             reply.pcm.extend(bytes(client.RATE * 2 * 2))
             reply.changed.set()
             await asyncio.sleep(0)
-            instance.audio.play.assert_not_awaited()
+            instance.player.audio.play.assert_not_awaited()
             reply.pcm.extend(bytes(client.RATE * 2))
             reply.changed.set()
             await asyncio.sleep(0)
-            instance.audio.play.assert_awaited_once_with(bytes(client.RATE * 2 * 3))
+            instance.player.audio.play.assert_awaited_once_with(bytes(client.RATE * 2 * 3))
             self.assertFalse(reply.done)
             reply.done = True
             reply.changed.set()
             await task
-            instance.audio.finish.assert_awaited_once()
+            instance.player.audio.finish.assert_awaited_once()
         finally:
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
@@ -119,19 +127,19 @@ class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
             task = asyncio.create_task(instance.play_reply(reply))
             try:
                 await asyncio.sleep(0)
-                self.assertEqual(instance.buffer_seconds, 4)
-                instance.audio.finish.assert_awaited_once()
+                self.assertEqual(instance.player.buffer_seconds, 4)
+                instance.player.audio.finish.assert_awaited_once()
                 reply.pcm.extend(b"b" * (client.RATE * 2 * 3))
                 reply.changed.set()
                 await asyncio.sleep(0)
-                self.assertEqual(instance.audio.play.await_count, 1)
+                self.assertEqual(instance.player.audio.play.await_count, 1)
                 reply.pcm.extend(b"c" * (client.RATE * 2))
                 reply.done = True
                 reply.changed.set()
                 await task
-                self.assertEqual(instance.audio.play.await_args_list[1].args[0],
+                self.assertEqual(instance.player.audio.play.await_args_list[1].args[0],
                                  b"b" * (client.RATE * 2 * 3) + b"c" * (client.RATE * 2))
-                self.assertEqual(instance.buffer_seconds, 4)
+                self.assertEqual(instance.player.buffer_seconds, 4)
             finally:
                 task.cancel()
                 await asyncio.gather(task, return_exceptions=True)
@@ -145,7 +153,7 @@ class VoiceClientTests(unittest.IsolatedAsyncioTestCase):
             reply.pcm.extend(bytes(reply.total))
             reply.done = True
             await instance.play_reply(reply)
-            self.assertEqual(instance.buffer_seconds, expected)
+            self.assertEqual(instance.player.buffer_seconds, expected)
 
     def test_indicator_schedule_boundaries(self):
         """Cover dusk, midnight and morning for status and effect colors."""
