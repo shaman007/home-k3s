@@ -11,7 +11,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 from aiy_gateway_fixture import prompt_environment
 
@@ -350,6 +350,26 @@ class PlaybackTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait_for(output.interrupt(), 0.1)
         process.terminate.assert_called_once()
         self.assertIs(output.interrupted, process)
+
+    async def test_audio_prefill_short_reply_and_interrupt(self):
+        """Prefill streaming speech, flush short replies and discard interrupted audio."""
+        output = AudioOutput("unused")
+        process = Mock(returncode=None)
+        process.stdin.drain = AsyncMock()
+        process.wait = AsyncMock()
+        with patch("asyncio.create_subprocess_exec", new=AsyncMock(return_value=process)) as start:
+            await output.play(b"a" * 4800)
+            start.assert_not_awaited()
+            await output.play(b"b" * 19200)
+            process.stdin.write.assert_called_once_with(b"a" * 4800 + b"b" * 19200)
+            process.returncode = 0
+            await output.finish()
+            await output.play(b"short")
+            await output.finish()
+            self.assertEqual(process.stdin.write.call_args.args[0], b"short")
+            await output.play(b"discard")
+            await output.interrupt()
+            self.assertEqual(output.pending, b"")
 
 
 class SpeechTests(unittest.IsolatedAsyncioTestCase):
