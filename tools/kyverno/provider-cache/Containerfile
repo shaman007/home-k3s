@@ -1,3 +1,3 @@
-FROM reg.kyverno.io/kyverno/reports-controller@sha256:6963aa88c515a371db7ea336e8b3925f5f5d539aa64f250f70a79118e66b5eb4
+FROM reg.kyverno.io/kyverno/reports-controller@sha256:b0ad0c259623559ff3ddee7f06db053e9743ae832b832779f59dc95cc104af82
 COPY --chown=65532:65532 --chmod=0555 reports-controller /ko-app/reports-controller
 LABEL org.opencontainers.image.version="v1.19.2-provider-cache.3" org.opencontainers.image.source="https://github.com/kyverno/kyverno" org.opencontainers.image.description="Kyverno v1.19.2 reports-controller with bounded ValidatingPolicy provider cache"
