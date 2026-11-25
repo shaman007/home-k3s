@@ -86,11 +86,24 @@ class TurnTiming:
 
     released: float | None = None
     first_audio: float | None = None
+    last_audio_received: float | None = None
     deadline: asyncio.TimerHandle | None = None
 
 
+class ReplyAudio:
+    """One bounded turn shared by independent receiving and playback tasks."""
+
+    def __init__(self):
+        self.pcm = bytearray()
+        self.changed = asyncio.Event()
+        self.done = False
+        self.failed = False
+        self.queued = False
+        self.total = 0
+
+
 class Client:
-    """Keep capture warm, stream button-held samples, play replies as they arrive."""
+    """Keep capture warm and adapt the playback reserve to network starvation."""
 
     def __init__(self, websocket, resources=None, audio=None):
         self.ws = websocket
@@ -100,6 +113,9 @@ class Client:
         self.resources = resources
         self.audio = audio
         self.timing = TurnTiming()
+        self.reply = ReplyAudio()
+        self.buffer_seconds = 3.0
+        self.replies = asyncio.Queue(maxsize=1)
 
     def status(self, rgb):
         """Update the LED status via resources or direct LED control."""
@@ -133,6 +149,8 @@ class Client:
         self.recording, self.busy = False, True
         self.timing.deadline.cancel()
         self.timing.released, self.timing.first_audio = time.monotonic(), None
+        self.timing.last_audio_received = None
+        self.reply = ReplyAudio()
         await self.ws.send_json({"type": "stop"})
         self.status((32, 16, 0))
 
@@ -157,23 +175,34 @@ class Client:
         raise RuntimeError("Button monitor stopped")
 
     async def receive(self):
-        """Start ALSA at the first chunk instead of waiting for a complete reply."""
+        """Receive independently of playback, keeping all audio in bounded RAM."""
         async for message in self.ws:
             if message.type == aiohttp.WSMsgType.BINARY:
+                received = time.monotonic()
+                previous = self.timing.last_audio_received
+                if previous is not None and received - previous > 0.25:
+                    LOG.warning(
+                        "audio_receive_gap_ms=%d chunk_ms=%d",
+                        (received - previous) * 1000, len(message.data) * 1000 // (RATE * 2),
+                    )
                 if self.timing.first_audio is None:
                     self.timing.first_audio = time.monotonic()
-                    self.status((0, 0, 64))
                     LOG.info(
                         "first_audio_ms=%d", (self.timing.first_audio - self.timing.released) * 1000
                     )
-                await self.audio.play(message.data)
+                self.timing.last_audio_received = received
+                # Five minutes of PCM16 mono at 24 kHz, held only in RAM.
+                if self.reply.total + len(message.data) > RATE * 2 * 300:
+                    raise RuntimeError("Voice reply exceeds five minutes")
+                self.reply.total += len(message.data)
+                self.reply.pcm.extend(message.data)
+                self.queue_reply()
             elif message.type == aiohttp.WSMsgType.TEXT:
                 event = json.loads(message.data)
                 if event["type"] == "done":
-                    await self.audio.finish()
-                    self.busy = False
-                    self.resources.engaged = False
-                    self.status((0, 16, 0))
+                    self.reply.done = True
+                    self.reply.failed = event.get("status") != "completed"
+                    self.queue_reply()
                 elif event["type"] == "device_command":
                     try:
                         result = await self.resources.command(event)
@@ -187,6 +216,64 @@ class Client:
             else:
                 break
         raise RuntimeError("Voice connection closed")
+
+    def queue_reply(self):
+        """Wake playback without blocking receipt or WebSocket heartbeats."""
+        if not self.reply.queued:
+            self.replies.put_nowait(self.reply)
+            self.reply.queued = True
+        self.reply.changed.set()
+
+    async def play_reply(self, reply):
+        """Drain before starvation, then refill a larger reserve instead of stuttering."""
+        playing, end, stalls = False, 0.0, 0
+        while True:
+            reply.changed.clear()
+            if reply.failed:
+                reply.pcm.clear()
+                await self.audio.interrupt()
+                await self.audio.finish()
+                return
+            ready = len(reply.pcm) >= round(RATE * 2 * self.buffer_seconds)
+            if reply.pcm and (playing or ready or reply.done):
+                pcm = bytes(reply.pcm)
+                reply.pcm.clear()
+                if not playing:
+                    self.status((0, 0, 64))
+                    LOG.info("playback_start reserve_ms=%d target_ms=%d",
+                             len(pcm) * 1000 // (RATE * 2), self.buffer_seconds * 1000)
+                end = max(end, time.monotonic()) + len(pcm) / (RATE * 2)
+                playing = True
+                await self.audio.play(pcm)
+                continue
+            if reply.done:
+                await self.audio.finish()
+                if not stalls and reply.total >= RATE * 2 * 10:
+                    self.buffer_seconds = max(1.5, self.buffer_seconds - 0.5)
+                return
+            if playing:
+                try:
+                    # Close and drain ALSA before it runs out of samples.
+                    await asyncio.wait_for(
+                        reply.changed.wait(), max(0, end - time.monotonic() - 0.15)
+                    )
+                except TimeoutError:
+                    await self.audio.finish()
+                    playing, end = False, 0.0
+                    stalls += 1
+                    self.buffer_seconds = min(8.0, self.buffer_seconds + 1.0)
+                    self.status((32, 16, 0))
+                    LOG.warning("audio_rebuffer target_ms=%d", self.buffer_seconds * 1000)
+            else:
+                await reply.changed.wait()
+
+    async def playback(self):
+        """Keep receiver active while waiting for reserves or draining ALSA."""
+        while True:
+            await self.play_reply(await self.replies.get())
+            self.busy = False
+            self.resources.engaged = False
+            self.status((0, 16, 0))
 
 
 async def connection(http, resources, audio):
@@ -253,6 +340,7 @@ async def connection(http, resources, audio):
                 asyncio.create_task(client.capture(capture.stdout)),
                 asyncio.create_task(client.buttons(button.stdout)),
                 asyncio.create_task(client.receive()),
+                asyncio.create_task(client.playback()),
             ]
             done, _pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             for task in done:

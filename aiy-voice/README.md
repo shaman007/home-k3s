@@ -8,6 +8,15 @@ The backend runs in namespace `aiy-voice`, using **GPT-Realtime-2.1**, voice Mar
 Hold the big button while speaking, then release. Green: ready; red: recording;
 amber: waiting; blue: speaking. Idle microphone samples are discarded immediately
 and never sent. A turn is limited to 30 seconds. Presses during a reply are ignored.
+Playback starts with three seconds of audio held in Pi RAM. Shorter replies start
+as soon as they finish downloading. Before starvation, playback drains cleanly and
+refills a larger reserve: one extra second per stall, up to eight seconds. After a
+stable reply of at least ten seconds, the reserve decreases by half a second,
+down to 1.5 seconds. Adaptation lasts for the connection; reconnects start at three.
+Amber indicates buffering; blue indicates playback. Audio is not written to disk;
+each turn is limited to five minutes of PCM, including already played audio.
+Failed responses stop playback and discard remaining audio. The independent
+WebSocket receiver stays active during playback to handle heartbeats and commands.
 Connections last up to 50 minutes. Compact conversation context and lasting facts
 are saved through MemPalace MCP and restored on reconnect. It receives a curated
 profile and can search MemPalace; it does not inherit the full Codex or ChatGPT history.
@@ -95,6 +104,34 @@ balance if available after free credits expire or are exhausted.
 
 ## Validation
 
+### Slow delivery to the Pi
+
+On 2026-11-25 a 29-second reply took 42.2 seconds to arrive, starving streamed
+playback. Direct SSH transfers were also slow: 512 KiB took 22.5 seconds including
+SSH startup. Disabling Wi-Fi power saving did not help and was reverted. Reconnecting
+the existing `aiy-wifi` NetworkManager profile restored the receive link rate during
+traffic from 1 to 72.2 Mbit/s; the same SSH transfer took 7.4 seconds. After restarting
+the voice client, a comparable 29.25-second reply arrived in 8.6 seconds.
+This isolates the observed bottleneck to the Pi Wi-Fi connection; the precise
+driver/access-point cause and recurrence are not established.
+
+If this recurs, compare `audio_receive_gap_ms` and `reply_ready` in the client
+journal, TCP statistics (`ss -tin dst 192.168.30.210`) and Wi-Fi rate during an
+active transfer (`/usr/sbin/iw dev wlan0 link`). An idle rate alone is inconclusive.
+For authorized recovery, schedule both disconnect and reconnect on the Pi so loss
+of SSH cannot prevent reconnection:
+
+```sh
+sudo systemd-run --unit=aiy-wifi-reconnect --collect --on-active=2s \
+  /bin/sh -c 'nmcli connection down aiy-wifi; nmcli connection up aiy-wifi'
+```
+
+Reconnect over SSH, restart `aiy-voice.service` to refresh its TCP connection, and
+verify the ready log and a physical spoken reply. This changes no saved Wi-Fi
+settings. Adaptive buffering is independent of this Wi-Fi recovery procedure.
+
+### Automated checks
+
 Run `/tmp/aiy-voice-venv/bin/python -m unittest discover -s tests -p 'test_aiy*.py' -v`
 with aiohttp and PyYAML installed (the integration test needs loopback sockets).
 Checks cover authentication, audio forwarded before response completion, durable
@@ -146,7 +183,7 @@ speaks the grounded result. Normal pages require citations; hosted `weather:`
 results can have no URL annotation and are identified as weather-feed provenance
 without fabricating a link. Tool results are bounded; each voice turn permits one
 lookup round with at most two calls per round and two rounds per voice turn. Failed lookups are reported honestly.
-Lookups add latency; ordinary conversation retains streaming speech-to-speech.
+Lookups add latency; spoken replies use adaptive buffering on the Pi.
 
 The usage ledger also records the lookup model, actual search-call count and
 cache writes. GPT-6 Luna short-context Standard rates per million tokens: input
