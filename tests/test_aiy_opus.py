@@ -98,9 +98,12 @@ class OpusGatewayTests(unittest.IsolatedAsyncioTestCase):
     async def test_negotiated_opus_stream_and_final_tail(self):
         """The real bridge emits decodable frames before done, then flushes its tail."""
         async def provider(request):
+            """Serve synthetic audio only for text control frames."""
             ws = web.WebSocketResponse()
             await ws.prepare(request)
             async for message in ws:
+                if message.type != WSMsgType.TEXT:
+                    break
                 event = json.loads(message.data)
                 if event["type"] == "session.update":
                     await ws.send_json({"type": "session.updated"})
