@@ -20,6 +20,7 @@ FILES = (
     "Dockerfile",
     "requirements.lock",
     "server.py",
+    "opus_audio.py",
     "web_search.py",
     "memory_search.py",
     "conversation_memory.py",

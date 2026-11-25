@@ -2,7 +2,8 @@
 
 Live on the Raspberry Pi Zero W at `192.168.1.179`, with Voice Bonnet V2.
 The backend runs in namespace `aiy-voice`, using **GPT-Realtime-2.1**, voice Marin,
-24 kHz mono PCM16 over WebSockets. The user confirmed a fast spoken reply on
+24 kHz mono PCM16 to/from OpenAI. The Pi requests an Opus mono 24 kbit/s CBR
+downlink (`opus-24k-v1`); microphone upload remains PCM16. A fast reply was confirmed on
 2026-11-15. This supersedes the earlier local Whisper/Codex/Piper prototype.
 
 Hold the big button while speaking, then release. Green: ready; red: recording;
@@ -17,6 +18,15 @@ Amber indicates buffering; blue indicates playback. Audio is not written to disk
 each turn is limited to five minutes of PCM, including already played audio.
 Failed responses stop playback and discard remaining audio. The independent
 WebSocket receiver stays active during playback to handle heartbeats and commands.
+Opus uses 20 ms frames grouped in WebSocket messages, each prefixed by a two-byte
+big-endian packet length. The server encodes in-process with `libopus0`; the Pi
+decodes to PCM before the adaptive reserve. Final padding preserves codec lookahead.
+A synthetic 30-second stream used 93,062 bytes instead of 1,440,000 PCM bytes
+(15.5x smaller); Pi Zero W decoding took 2.39 seconds (about 8% of one core at real
+time). Both codec states reset at the next turn. No extra audio is stored.
+Old clients retain PCM; new clients accept PCM from old servers, allowing either
+side to be rolled back independently. The dotfiles client installer installs
+`libopus0` and copies `opus_audio.py`; the server image and CI install the library too.
 Connections last up to 50 minutes. Compact conversation context and lasting facts
 are saved through MemPalace MCP and restored on reconnect. It receives a curated
 profile and can search MemPalace; it does not inherit the full Codex or ChatGPT history.
@@ -30,9 +40,9 @@ catalog and Pi modules must remain on compatible versions.
 
 ## Deployment and recovery
 
-- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-d4095451522a37f8@sha256:b8aef0db6c4353be363dca4c559223ed67665f16094258542f31f6f4c00f6d36`.
-- Source archive SHA256: `d4095451522a37f8b2ec911253efdc2761128a6a1e836132c7d2434ed92210be`.
-- Builder Job `image-builder/aiy-voice-build-d4095451522a37f8` completed;
+- GitOps image pin: `harbor.andreybondarenko.com/library/aiy-voice:src-1a721740cb4c2558@sha256:be57ca6cc57f9d4b320635cc14656cffb384bc073331787466eeb949898828a1`.
+- Source archive SHA256: `1a721740cb4c25585abad35a4ef913c96097ee2ee71e50d8eecc69be439d30ad`.
+- Builder Job `image-builder/aiy-voice-build-1a721740cb4c2558` completed;
   Cosign sign and verification succeeded in the managed builder.
 - `prepare_build.py` renders a deterministic source ConfigMap and one-off Job
   using the established privileged Podman/Cosign builder. It does not contact

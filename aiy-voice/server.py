@@ -15,12 +15,14 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from aiohttp import ClientError, ClientSession, ClientTimeout, WSMsgType, web
-from conversation_memory import ConversationMemory, TOOLS as MEMORY_TOOLS
+from conversation_memory import TOOLS as MEMORY_TOOLS
+from conversation_memory import ConversationMemory
 from device_tools import ACTIONS, TOOLS, DeviceTools
 from home_assistant import NAMES as HA_NAMES
 from home_assistant import call_home_assistant
 from home_assistant import schemas as ha_schemas
 from memory_search import search_memory
+from opus_audio import OpusEncoder
 from prompts import describe_tools, load_prompts
 from reminder_speech import synthesize as synthesize_reminder
 from web_search import search_web
@@ -206,6 +208,7 @@ class VoiceBridge:
         self.reminder_snapshot = None
         self.state = TurnState()
         self.initial_config = None
+        self.codec = None
         self.memory = app.get("memory")
         self.memory_context = ""
         self.memory_session = uuid.uuid4().hex
@@ -308,6 +311,10 @@ class VoiceBridge:
             )
         else:
             self.state.responding = False
+            if self.codec and response.get("status") == "completed":
+                tail = self.codec.finish()
+                if tail:
+                    await self.device.send_bytes(tail)
             await self.device.send_json(
                 {"type": "done", "status": response["status"], "first_audio_ms": self.state.latency}
             )
@@ -342,7 +349,10 @@ class VoiceBridge:
             if kind == "response.output_audio.delta":
                 if self.state.latency is None and self.state.started:
                     self.state.latency = round((time.monotonic() - self.state.started) * 1000, 1)
-                await self.device.send_bytes(base64.b64decode(event["delta"]))
+                pcm = base64.b64decode(event["delta"])
+                wire = self.codec.feed(pcm) if self.codec else pcm
+                if wire:
+                    await self.device.send_bytes(wire)
             elif kind == "response.done":
                 await self._response_done(upstream, event["response"])
             elif kind == "error":
@@ -361,14 +371,14 @@ class VoiceBridge:
         if command == "device_ack":
             self.tools.acknowledge(event)
         elif command == "start" and not self.state.recording and not self.state.responding:
+            if self.codec:
+                self.codec.reset()
             # Read one coherent projected secret version for this entire turn.
             bundle = load_prompts()
             config = session_config(bundle)["session"]
             snapshot = event.get("reminders", self.reminder_snapshot)
             context = ""
-            if "reminders" in event:
-                context = reminder_context(snapshot, bundle)
-            elif snapshot is not None:
+            if "reminders" in event or snapshot is not None:
                 context = reminder_context(snapshot, bundle)
             await upstream.send_json(
                 {
@@ -430,7 +440,10 @@ class VoiceBridge:
             self.initial_config["session"]["instructions"] += self.memory_context
         await upstream.send_json(self.initial_config)
         await _wait_for_session(upstream)
-        await self.device.send_json({"type": "ready", "model": MODEL, "rate": RATE})
+        await self.device.send_json({
+            "type": "ready", "model": MODEL, "rate": RATE,
+            "audio_format": "opus-24k-v1" if self.codec else "pcm16",
+        })
         receiver = asyncio.create_task(self.receive_provider(upstream))
         try:
             await self.receive_device(upstream)
@@ -468,6 +481,8 @@ async def bridge(request):
         await device.prepare(request)
         session = VoiceBridge(app, device)
         try:
+            if request.query.get("audio") == "opus":
+                session.codec = OpusEncoder()
             async with app["http"].ws_connect(
                 "wss://api.openai.com/v1/realtime?model=" + MODEL,
                 headers={"Authorization": "Bearer " + os.environ["OPENAI_API_KEY"]},
@@ -480,6 +495,8 @@ async def bridge(request):
             if not device.closed:
                 await device.send_json({"type": "error"})
         finally:
+            if session.codec:
+                session.codec.close()
             await device.close()
         return device
 

@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 
 import aiohttp
 from local_resources import AudioOutput, LocalResources
+from opus_audio import OpusDecoder
 
 RATE = 24000
 DEVICE = "plughw:CARD=aiyvoicebonnet,DEV=0"
@@ -107,6 +108,7 @@ class PlaybackState:
     """Keep audio output, reserve and per-turn queues together."""
 
     audio: AudioOutput
+    decoder: OpusDecoder | None = None
     reply: ReplyAudio = field(default_factory=ReplyAudio)
     buffer_seconds: float = 3.0
     replies: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=1))
@@ -130,6 +132,13 @@ class Client:
             self.resources.status(rgb)
         else:
             led(rgb)
+
+    def configure_audio(self, audio_format):
+        """Enable only an explicitly negotiated supported output format."""
+        if audio_format not in ("pcm16", "opus-24k-v1"):
+            raise RuntimeError("Unsupported voice audio format")
+        if audio_format == "opus-24k-v1":
+            self.player.decoder = OpusDecoder()
 
     async def start(self):
         """Start a turn only when the preceding reply has finished playing."""
@@ -158,6 +167,8 @@ class Client:
         self.timing.released, self.timing.first_audio = time.monotonic(), None
         self.timing.last_audio_received = None
         self.player.reply = ReplyAudio()
+        if self.player.decoder:
+            self.player.decoder.reset()
         await self.ws.send_json({"type": "stop"})
         self.status((32, 16, 0))
 
@@ -185,12 +196,14 @@ class Client:
         """Receive independently of playback, keeping all audio in bounded RAM."""
         async for message in self.ws:
             if message.type == aiohttp.WSMsgType.BINARY:
+                pcm = (self.player.decoder.decode(message.data)
+                       if self.player.decoder else message.data)
                 received = time.monotonic()
                 previous = self.timing.last_audio_received
                 if previous is not None and received - previous > 0.25:
                     LOG.warning(
                         "audio_receive_gap_ms=%d chunk_ms=%d",
-                        (received - previous) * 1000, len(message.data) * 1000 // (RATE * 2),
+                        (received - previous) * 1000, len(pcm) * 1000 // (RATE * 2),
                     )
                 if self.timing.first_audio is None:
                     self.timing.first_audio = time.monotonic()
@@ -199,10 +212,10 @@ class Client:
                     )
                 self.timing.last_audio_received = received
                 # Five minutes of PCM16 mono at 24 kHz, held only in RAM.
-                if self.player.reply.total + len(message.data) > RATE * 2 * 300:
+                if self.player.reply.total + len(pcm) > RATE * 2 * 300:
                     raise RuntimeError("Voice reply exceeds five minutes")
-                self.player.reply.total += len(message.data)
-                self.player.reply.pcm.extend(message.data)
+                self.player.reply.total += len(pcm)
+                self.player.reply.pcm.extend(pcm)
                 self.queue_reply()
             elif message.type == aiohttp.WSMsgType.TEXT:
                 event = json.loads(message.data)
@@ -291,6 +304,7 @@ async def connection(http, resources, audio):
     processes, tasks = [], []
     async with http.ws_connect(
         voice_url(os.environ["AIY_BACKEND_URL"]),
+        params={"audio": "opus"},
         headers={"Authorization": "Bearer " + token},
         heartbeat=30,
         max_msg_size=1024 * 1024,
@@ -300,6 +314,7 @@ async def connection(http, resources, audio):
         if message.get("type") != "ready" or message.get("rate") != RATE:
             raise RuntimeError("Backend not ready")
         client = Client(ws, resources, audio)
+        client.configure_audio(message.get("audio_format", "pcm16"))
         try:
             capture = await asyncio.create_subprocess_exec(
                 "/usr/bin/arecord",
@@ -342,7 +357,8 @@ async def connection(http, resources, audio):
             )
             processes.append(button)
             resources.status((0, 16, 0))
-            LOG.info("ready model=%s", message.get("model"))
+            LOG.info("ready model=%s audio_format=%s",
+                     message.get("model"), message.get("audio_format", "pcm16"))
             tasks = [
                 asyncio.create_task(client.capture(capture.stdout)),
                 asyncio.create_task(client.buttons(button.stdout)),
@@ -359,6 +375,8 @@ async def connection(http, resources, audio):
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+            if client.player.decoder:
+                client.player.decoder.close()
             await audio.finish()
             for process in processes:
                 if process.returncode is None:
