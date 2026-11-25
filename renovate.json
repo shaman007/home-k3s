@@ -101,7 +101,7 @@
       "matchDatasources": [
         "docker"
       ],
-      "matchPackageNames": [
+      "matchDepNames": [
         "harbor.andreybondarenko.com/dockerhub/amazon/aws-cli"
       ],
       "matchFileNames": [
