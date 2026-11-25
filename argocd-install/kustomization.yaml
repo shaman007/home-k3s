@@ -4,7 +4,7 @@ namespace: argocd
 resources:
   - network-policy-argocd-allow-prometheus-metrics.yaml
   # Large GitHub fetches can exceed Kustomize's default 27-second deadline.
-  - github.com/argoproj/argo-cd//manifests/cluster-install?ref=v3.6.2&timeout=120s
+  - github.com/argoproj/argo-cd//manifests/cluster-install?ref=v3.6.3&timeout=120s
 patches:
   # Keep controller memory explicit rather than inheriting namespace defaults.
   - target:
