@@ -311,11 +311,18 @@ class AudioOutput:
         self.process = None
         self.lock = asyncio.Lock()
         self.interrupted = None
+        self.pending = bytearray()
 
-    async def play(self, pcm):
+    async def play(self, pcm, *, flush=False):
         """Write PCM data to the ALSA playback process, starting it if necessary."""
         async with self.lock:
             if self.process is None or self.process.returncode is not None:
+                self.pending.extend(pcm)
+                # PCM16 mono at 24 kHz: prefill 500 ms before starting playback.
+                if not self.pending or (len(self.pending) < 24000 and not flush):
+                    return
+                pcm = bytes(self.pending)
+                self.pending.clear()
                 self.process = await asyncio.create_subprocess_exec(
                     "/usr/bin/aplay",
                     "-q",
@@ -329,12 +336,14 @@ class AudioOutput:
                     "24000",
                     "-c",
                     "1",
+                    # Absorb short network stalls before ALSA runs out of samples.
                     "-B",
-                    "100000",
+                    "500000",
                     "-F",
                     "20000",
                     stdin=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.DEVNULL,
+                    # Keep ALSA underruns visible in the service journal.
+                    stderr=None,
                 )
             process = self.process
             try:
@@ -346,6 +355,7 @@ class AudioOutput:
 
     async def finish(self):
         """Close the ALSA input stream and wait for the playback process to complete."""
+        await self.play(b"", flush=True)
         async with self.lock:
             if self.process:
                 process = self.process
@@ -358,6 +368,7 @@ class AudioOutput:
 
     async def interrupt(self):
         """Stop an idle reminder/beep before capturing the user's confirmation."""
+        self.pending.clear()
         process = self.process
         if process and process.returncode is None:
             self.interrupted = process

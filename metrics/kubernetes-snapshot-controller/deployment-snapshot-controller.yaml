@@ -46,7 +46,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: snapshot-controller
-          image: harbor.andreybondarenko.com/k8s/sig-storage/snapshot-controller:v8.7.0
+          image: harbor.andreybondarenko.com/k8s/sig-storage/snapshot-controller:v8.7.1
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

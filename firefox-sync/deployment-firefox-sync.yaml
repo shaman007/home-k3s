@@ -113,7 +113,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: syncserver
-        image: harbor.andreybondarenko.com/github/mozilla-services/syncstorage-rs/syncserver-mysql:0.25.1@sha256:ac1cf7ee29e972a35bc2f081c9ddb4af4e2654f65c3446cfa284771b0497884b
+        image: harbor.andreybondarenko.com/github/mozilla-services/syncstorage-rs/syncserver-mysql:0.25.2@sha256:1d69e48ed8dbd111c6e206313c25b24a1f74029e4aa443da32c7d6f3766c26d8
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
