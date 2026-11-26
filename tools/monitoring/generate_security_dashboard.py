@@ -75,8 +75,8 @@ def build():
         p = panel(title, expr, i*6, 1, 6, 4, "stat",
                   description="Global coverage, independent of event filters. Scrape availability alone does not prove ingestion. Current cluster baseline: " + str(expected) + ".")
         p["fieldConfig"]["defaults"].update(color={"mode": "thresholds"}, thresholds={"mode": "absolute", "steps": [{"color": "red", "value": None}, {"color": "green", "value": expected}]})
-    panel("Активные правила · сгруппированы по API-серверу", 'ALERTS{category="security",alertstate=~"pending|firing"}', 0, 5, 24, 7, "table",
-          description="Строка — группа событий, а не отдельная атака. Кто и что сделал — в таблице ниже. node обозначает API-сервер, namespace коллектора скрыт. Falco отправляет события напрямую в Alertmanager и показан отдельно.")
+    panel("Active rules · grouped by API server", 'ALERTS{category="security",alertstate=~"pending|firing"}', 0, 5, 24, 7, "table",
+          description="Each row groups events, rather than representing one attack. See actors, actions and targets in the table below. Node identifies the receiving API server; the collector namespace is hidden. Falco sends events directly to Alertmanager and is shown separately.")
     panel("Security alert history · Prometheus", 'max by (alertname,alertstate) (ALERTS{category="security"})', 0, 12, 24, 6,
           legend="{{alertname}} / {{alertstate}}", description="Alert state samples, not an event count. Falco has a separate Loki event history.")
     row("CrowdSec · exploit attempts and sustained scanning", 18)
@@ -131,41 +131,41 @@ def build():
                   '| __error__="" | label_format action="{{.verb}} {{.resource}}{{if .subresource}}/{{.subresource}}{{end}}", '
                   'target_namespace="{{if .target_namespace}}{{.target_namespace}}{{else}}(cluster){{end}}", '
                   'target_name="{{if .target_name}}{{.target_name}}{{else}}(collection){{end}}" [15m]))')
-    details = panel("Кто, что и где сделал · audit за последние 15 минут", event_expr,
+    details = panel("Who did what and where · audit events in the last 15 minutes", event_expr,
                     0, 12, 24, 10, "table", LOKI,
-                    description="Причины активных audit-алертов. События сгруппированы по участнику, действию и цели; число — количество событий. allowed = запрос разрешён, denied = отказ, dry-run = проверка без изменения. API-сервер не обязательно является источником. IP источника доступен для новых событий. get = чтение объекта, list = список, watch = наблюдение. Кто — аутентифицированный субъект запроса, не доказанная личность или процесс. IP может быть адресом узла после NAT. Это запрос к журналам, не увеличение кардинальности Prometheus.")
+                    description="Events behind active audit alerts, grouped by actor, action and target; the value is the event count. Allowed means API permitted, denied means API rejected, and dry-run means validation without changes. The receiving API server is not necessarily the request source. Source IP is available for new events and may identify a node after NAT. Get reads one object, list retrieves a collection, and watch subscribes to changes. Actor is the authenticated identity, not a proven person or process. These fields are queried from logs without adding Prometheus metric labels.")
     PANELS.insert(6, PANELS.pop())
-    groups = next(p for p in PANELS if p['title'] == "Активные правила · сгруппированы по API-серверу")
+    groups = next(p for p in PANELS if p['title'] == "Active rules · grouped by API server")
     for table, order, excluded, aliases in [
         (groups, ["alertname","alertstate","node","outcome","name","destination"],
          ["Time","__name__","category","cluster","job","namespace","owner","priority","severity","Value","Value #A"],
-         {"alertname":"Детект", "alertstate":"Состояние", "node":"API-сервер / узел датчика", "outcome":"Результат", "name":"Сценарий", "destination":"Получатель"}),
+         {"alertname":"Detection", "alertstate":"State", "node":"API server / sensor node", "outcome":"Outcome", "name":"Scenario", "destination":"Destination"}),
         (details, ["actor","action","target_namespace","target_name","outcome","detection","node","source_ip","Value #A"], ["Time"],
-         {"actor":"Кто", "action":"Действие", "target_namespace":"Namespace цели", "target_name":"Объект / коллекция", "outcome":"Результат", "detection":"Детект", "node":"API-сервер", "source_ip":"IP источника", "Value #A":"Событий", "Value":"Событий"}),
+         {"actor":"Actor", "action":"Action", "target_namespace":"Target namespace", "target_name":"Object / collection", "outcome":"Outcome", "detection":"Detection", "node":"API server", "source_ip":"Source IP", "Value #A":"Events", "Value":"Events"}),
     ]:
         table['transformations'] = [{"id":"organize", "options":{
             "excludeByName": {name:True for name in excluded},
             "indexByName": {name:i for i,name in enumerate(order)}, "renameByName":aliases}}]
         table['options']['sortBy'] = []
-    outcomes = {"allowed":{"text":"Разрешено API"}, "denied":{"text":"Отказ API"},
-                "failed":{"text":"Ошибка запроса"}, "dry-run":{"text":"Проверка без изменения"}}
-    detections = {"secret_read":{"text":"Чтение Secrets вне исключений"},
-                  "dangerous_rbac":{"text":"Выдача прав / опасная роль"},
+    outcomes = {"allowed":{"text":"API allowed"}, "denied":{"text":"API denied"},
+                "failed":{"text":"Request failed"}, "dry-run":{"text":"Dry-run only"}}
+    detections = {"secret_read":{"text":"Secret access outside reviewed exceptions"},
+                  "dangerous_rbac":{"text":"Permission grant / dangerous role"},
                   "sensitive_exec":{"text":"Exec / attach / port-forward"},
                   "privileged_pod":{"text":"Privileged Pod"}}
     for table in [groups, details]:
         table['fieldConfig']['overrides'] = [
-            {"matcher":{"id":"byName","options":"Результат"},"properties":[{"id":"mappings","value":[{"type":"value","options":outcomes}]}]},
+            {"matcher":{"id":"byName","options":"Outcome"},"properties":[{"id":"mappings","value":[{"type":"value","options":outcomes}]}]},
         ]
     details['fieldConfig']['overrides'] += [
-        {"matcher":{"id":"byName","options":"Кто"},"properties":[{"id":"custom.width","value":320},{"id":"custom.wrapText","value":True}]},
-        {"matcher":{"id":"byName","options":"Детект"},"properties":[{"id":"mappings","value":[{"type":"value","options":detections}]}]},
+        {"matcher":{"id":"byName","options":"Actor"},"properties":[{"id":"custom.width","value":320},{"id":"custom.wrapText","value":True}]},
+        {"matcher":{"id":"byName","options":"Detection"},"properties":[{"id":"mappings","value":[{"type":"value","options":detections}]}]},
     ]
     groups['fieldConfig']['overrides'] += [
-        {"matcher":{"id":"byName","options":"Детект"},"properties":[{"id":"mappings","value":[{"type":"value","options":{
-            "KubernetesUnexpectedSecretRead":{"text":"Чтение Secrets вне исключений"},
+        {"matcher":{"id":"byName","options":"Detection"},"properties":[{"id":"mappings","value":[{"type":"value","options":{
+            "KubernetesUnexpectedSecretRead":{"text":"Secret access outside reviewed exceptions"},
             "KubernetesSensitivePodExec":{"text":"Exec / attach / port-forward"},
-            "KubernetesDangerousRBAC":{"text":"Выдача прав / опасная роль"},
+            "KubernetesDangerousRBAC":{"text":"Permission grant / dangerous role"},
             "KubernetesPrivilegedPod":{"text":"Privileged Pod"},
         }}]}]},
     ]
