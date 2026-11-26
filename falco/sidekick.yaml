@@ -18,6 +18,14 @@ data:
       # Keep per-event time in Loki/output annotations, not in alert identity.
       extralabels:
         evt_time: ""
+        # Preserve redirect diagnostics in output/Loki without splitting identity.
+        proc_pid: ""
+        thread_tid: ""
+        evt_type: ""
+        evt_rawres: ""
+        fd_num: ""
+        fd_type: ""
+        fd_name: ""
         job: falco
         category: security
         owner: homelab

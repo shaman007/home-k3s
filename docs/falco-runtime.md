@@ -21,6 +21,23 @@ are excluded. Talos host processes identified by the CRI sentinel
 container alerts with missing Kubernetes metadata. Actual CRI container IDs
 remain covered. There are no namespace-wide exclusions.
 
+## Safe redirect diagnostics
+
+The redirect rule additionally emits `proc.pid`, `thread.tid`, `evt.type`,
+`evt.rawres`, `fd.num`, `fd.type` and `fd.name`. The socket name contains the
+connection endpoints; the syscall result identifies the resulting descriptor
+(0/1/2 for this rule). Missing process metadata can still appear as `<NA>`.
+No command arguments, environment or generic syscall argument dump is emitted.
+Detection conditions, enabled rules, priority and exclusions are unchanged;
+there is no Argo CD exception.
+
+Sidekick retains every field in Loki JSON and the event text in notification
+annotations. These per-event diagnostic fields have empty Alertmanager label
+overrides, like the timestamp, so changing PID/TID, syscall result, descriptor
+or connection does not create a new fingerprint. Rule, executable, parent,
+container/Pod and UID still distinguish events. All detailed events remain
+available for comparing repeated Git launches against suspected redirections.
+
 ## Talos compatibility and permissions
 
 Verified on 2026-11-26: Talos 1.14.7, Kubernetes 1.37.1, kernel
