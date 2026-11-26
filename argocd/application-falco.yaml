@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: falco
+  namespace: argocd
+spec:
+  project: observability
+  sources:
+  - repoURL: https://falcosecurity.github.io/charts
+    chart: falco
+    targetRevision: 9.2.2
+    helm:
+      releaseName: falco
+      valueFiles:
+      - $values/falco/values.yaml
+  - repoURL: https://github.com/shaman007/home-k3s.git
+    targetRevision: main
+    ref: values
+  - repoURL: https://github.com/shaman007/home-k3s.git
+    targetRevision: main
+    path: falco
+    directory:
+      include: '{network-policy-*.yaml,service-accounts.yaml,sidekick.yaml}'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

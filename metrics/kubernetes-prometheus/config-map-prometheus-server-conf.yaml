@@ -318,6 +318,14 @@ data:
         labels:
           job: argocd-notifications
       - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "falco", "", "")
+        labels:
+          job: falco
+      - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "falcosidekick", "", "")
+        labels:
+          job: falcosidekick
+      - record: homelab_expected_scrape_job
         expr: label_replace(vector(1), "job", "kubernetes-audit", "", "")
         labels:
           job: kubernetes-audit
@@ -1654,6 +1662,69 @@ data:
           description: Check the kubernetes-audit DaemonSet scheduling and scrape discovery.
             Another healthy node does not cover this node audit file.
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+    - name: falco-health
+      rules:
+      - alert: FalcoNodeMissing
+        expr: max by (node) (kube_node_info) unless on (node) (up{job="falco"} == 1)
+        for: 5m
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+        annotations:
+          summary: No healthy Falco sensor on {{ $labels.node }}
+          description: A ready sibling sensor does not cover this node. Inspect the DaemonSet,
+            probe startup and scrape discovery.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+      - alert: FalcoSyscallDrops
+        expr: rate(falcosecurity_scap_n_drops_total{job="falco"}[5m]) > 1
+        for: 5m
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+        annotations:
+          summary: Falco is losing syscall events on {{ $labels.node }}
+          description: Sustained loss above one event per second reduces runtime visibility.
+            Inspect CPU load and ring-buffer metrics; do not treat a Ready Pod as complete
+            coverage.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+      - alert: FalcoOutputDrops
+        expr: increase(falcosecurity_falco_outputs_queue_num_drops_total{job="falco"}[5m])
+          > 0
+        for: 1m
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+        annotations:
+          summary: Falco output queue lost events on {{ $labels.node }}
+          description: Inspect Falco output errors and Sidekick availability. Log capture
+            alone does not prove alert delivery.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+      - alert: FalcosidekickDeliveryErrors
+        expr: sum by (destination) ((increase(falcosecurity_falcosidekick_outputs_total{job="falcosidekick",status="error"}[5m])
+          > 0) or ((falcosecurity_falcosidekick_outputs_total{job="falcosidekick",status="error"}
+          > 0) unless falcosecurity_falcosidekick_outputs_total{job="falcosidekick",status="error"}
+          offset 5m)) > 0
+        for: 2m
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+        annotations:
+          summary: Falcosidekick delivery errors to {{ $labels.destination }}
+          description: Inspect Sidekick logs and network policies. Confirm delivery to
+            Alertmanager and Loki independently.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
     - name: remote-write-recovery
       rules:
       - alert: PrometheusRemoteWriteLag
@@ -1998,6 +2069,62 @@ data:
         static_configs:
           - targets:
               - argocd-notifications-controller-metrics.argocd.svc.cluster.local:9001
+      - job_name: falco
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - kube-system
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_name
+          action: keep
+          regex: falco
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_name
+          action: keep
+          regex: falco
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_name
+          action: keep
+          regex: web
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
+      - job_name: falcosidekick
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - kube-system
+        relabel_configs:
+        - source_labels:
+          - __meta_kubernetes_pod_label_app
+          action: keep
+          regex: falcosidekick
+        - source_labels:
+          - __meta_kubernetes_pod_phase
+          action: keep
+          regex: Running
+        - source_labels:
+          - __meta_kubernetes_pod_container_name
+          action: keep
+          regex: falcosidekick
+        - source_labels:
+          - __meta_kubernetes_pod_container_port_name
+          action: keep
+          regex: http
+        - source_labels:
+          - __meta_kubernetes_pod_node_name
+          target_label: node
       - job_name: kubernetes-audit
         honor_labels: true
         scrape_interval: 15s

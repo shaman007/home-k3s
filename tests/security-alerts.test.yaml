@@ -597,3 +597,133 @@ tests:
   - eval_time: 10m
     alertname: KubernetesAuditTelemetryStale
     exp_alerts: []
+- name: falco missing sibling
+  interval: 1m
+  input_series:
+  - series: kube_node_info{node="a"}
+    values: 1+0x20
+  - series: kube_node_info{node="b"}
+    values: 1+0x20
+  - series: up{job="falco",node="a"}
+    values: 1+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcoNodeMissing
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        node: b
+      exp_annotations:
+        summary: No healthy Falco sensor on b
+        description: A ready sibling sensor does not cover this node. Inspect the
+          DaemonSet, probe startup and scrape discovery.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+- name: falco healthy capture
+  interval: 1m
+  input_series:
+  - series: falcosecurity_scap_n_drops_total{job="falco",node="a"}
+    values: 0+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcoSyscallDrops
+    exp_alerts: []
+- name: falco sustained capture loss
+  interval: 1m
+  input_series:
+  - series: falcosecurity_scap_n_drops_total{job="falco",node="a"}
+    values: 0+120x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcoSyscallDrops
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: falco
+        node: a
+      exp_annotations:
+        summary: Falco is losing syscall events on a
+        description: Sustained loss above one event per second reduces runtime visibility.
+          Inspect CPU load and ring-buffer metrics; do not treat a Ready Pod as complete
+          coverage.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+- name: sidekick delivery errors
+  interval: 1m
+  input_series:
+  - series: falcosecurity_falcosidekick_outputs_total{job="falcosidekick",destination="alertmanager",status="error"}
+    values: 0+1x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcosidekickDeliveryErrors
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        destination: alertmanager
+      exp_annotations:
+        summary: Falcosidekick delivery errors to alertmanager
+        description: Inspect Sidekick logs and network policies. Confirm delivery
+          to Alertmanager and Loki independently.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+- name: sidekick successes are not failures
+  interval: 1m
+  input_series:
+  - series: falcosecurity_falcosidekick_outputs_total{job="falcosidekick",destination="loki",status="ok"}
+    values: 0+10x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcosidekickDeliveryErrors
+    exp_alerts: []
+- name: sidekick first lazy error counter fires
+  interval: 1m
+  input_series:
+  - series: falcosecurity_falcosidekick_outputs_total{job="falcosidekick",destination="loki",status="error"}
+    values: _ _ _ _ _ _ 1+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcosidekickDeliveryErrors
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        destination: loki
+      exp_annotations:
+        summary: Falcosidekick delivery errors to loki
+        description: Inspect Sidekick logs and network policies. Confirm delivery
+          to Alertmanager and Loki independently.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md
+- name: falco output drops are visible
+  interval: 1m
+  input_series:
+  - series: falcosecurity_falco_outputs_queue_num_drops_total{job="falco",node="a"}
+    values: 0+1x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: FalcoOutputDrops
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: falco
+        node: a
+      exp_annotations:
+        summary: Falco output queue lost events on a
+        description: Inspect Falco output errors and Sidekick availability. Log capture
+          alone does not prove alert delivery.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/falco-runtime.md

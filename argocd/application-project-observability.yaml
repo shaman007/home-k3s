@@ -15,6 +15,7 @@ metadata:
 spec:
   description: Metrics, logs, dashboards, health checks, and telemetry exporters
   sourceRepos:
+    - https://falcosecurity.github.io/charts
     - https://github.com/shaman007/home-k3s.git
     - https://grafana.github.io/helm-charts
   destinations:

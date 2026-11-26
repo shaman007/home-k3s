@@ -93,6 +93,7 @@ PROJECT_STORAGE = {
 }
 
 PROJECT_OBSERVABILITY = {
+    "falco",
     "kubernetes-audit",
     "alloy",
     "connectivity-exporter-core",

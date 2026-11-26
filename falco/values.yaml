@@ -1,0 +1,174 @@
+image:
+  registry: harbor.andreybondarenko.com/dockerhub
+  repository: falcosecurity/falco
+  tag: 0.45.2
+serviceAccount:
+  create: false
+  name: falco
+rbac:
+  create: false
+scc:
+  create: false
+driver:
+  kind: modern_ebpf
+  modernEbpf:
+    leastPrivileged: true
+    sysfsMount: true
+containerSecurityContext:
+  runAsUser: 0
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+    - ALL
+    add:
+    - BPF
+    - PERFMON
+    - SYS_RESOURCE
+    - SYS_PTRACE
+  seccompProfile:
+    type: Unconfined
+podSecurityContext:
+  fsGroup: 1000
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+    cpu: null
+collectors:
+  containerEngine:
+    pluginRef: ghcr.io/falcosecurity/plugins/plugin/container:0.7.6
+    engines:
+      docker:
+        enabled: false
+      podman:
+        enabled: false
+      containerd:
+        enabled: true
+        sockets:
+        - /run/containerd/containerd.sock
+      cri:
+        enabled: true
+        sockets:
+        - /run/containerd/containerd.sock
+      lxc:
+        enabled: false
+      libvirt_lxc:
+        enabled: false
+      bpm:
+        enabled: false
+  kubernetes:
+    enabled: false
+falcoctl:
+  image:
+    registry: harbor.andreybondarenko.com/dockerhub
+    repository: falcosecurity/falcoctl
+    tag: 0.14.3
+  artifact:
+    follow:
+      enabled: false
+    install:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+      securityContext:
+        runAsUser: 1000
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+          - ALL
+        seccompProfile:
+          type: RuntimeDefault
+      mounts:
+        volumeMounts:
+        - name: falco-tmp
+          mountPath: /tmp
+  config:
+    indexes: []
+    artifact:
+      install:
+        resolveDeps: false
+        refs:
+        - ghcr.io/falcosecurity/rules/falco-rules:5.2.0
+mounts:
+  volumes:
+  - name: falco-tmp
+    emptyDir: {}
+  volumeMounts:
+  - name: falco-tmp
+    mountPath: /tmp
+metrics:
+  enabled: true
+  interval: 15s
+  outputRule: false
+  libbpfStatsEnabled: false
+falco:
+  rules:
+  - disable:
+      rule: '*'
+  - enable:
+      rule: Terminal shell in container
+  - enable:
+      rule: Drop and execute new binary in container
+  - enable:
+      rule: Redirect STDOUT/STDIN to Network Connection in Container
+  json_output: true
+  json_include_message_property: false
+  append_output: []
+  priority: notice
+  syslog_output:
+    enabled: false
+  stdout_output:
+    enabled: true
+  http_output:
+    enabled: true
+    url: http://falcosidekick.kube-system.svc.cluster.local:2801/
+  syscall_event_drops:
+    actions:
+    - log
+    rate: 0.03333
+    max_burst: 1
+customRules:
+  runtime-safe-output.yaml: |
+    - rule: Terminal shell in container
+      output: Terminal shell in container | process=%proc.name executable=%proc.exepath
+        parent=%proc.pname container_id=%container.id container=%container.name image=%container.image.repository
+        namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
+      priority: WARNING
+      override:
+        output: replace
+        priority: replace
+        condition: append
+      condition: and container.id != "runtime"
+    - rule: Drop and execute new binary in container
+      output: Drop and execute new binary in container | process=%proc.name executable=%proc.exepath
+        parent=%proc.pname container_id=%container.id container=%container.name image=%container.image.repository
+        namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
+      priority: WARNING
+      override:
+        output: replace
+        priority: replace
+        condition: append
+      condition: and container.id != "runtime"
+    - rule: Redirect STDOUT/STDIN to Network Connection in Container
+      output: Redirect STDOUT/STDIN to Network Connection in Container | process=%proc.name
+        executable=%proc.exepath parent=%proc.pname container_id=%container.id container=%container.name
+        image=%container.image.repository namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
+      priority: WARNING
+      override:
+        output: replace
+        priority: replace
+        condition: append
+      condition: and container.id != "runtime"
+falcosidekick:
+  enabled: false
+responseActions:
+  enabled: false
