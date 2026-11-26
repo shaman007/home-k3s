@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: monitoring-allow-alertmanager-api
+  namespace: monitoring
+spec:
+  endpointSelector:
+    matchLabels:
+      app: alertmanager
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+        # Talos API proxy connections can retain node identities. All current
+        # nodes are control-plane nodes; review before adding worker nodes.
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9093"
+              protocol: TCP

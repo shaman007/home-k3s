@@ -51,3 +51,16 @@ Keep Docker usage scoped to diagnostics/read-only operations. General Git and Do
 
 - grafana-operator: Use for Grafana health, datasource/dashboard/folder/alert inventories and targeted troubleshooting or changes. (file: /home/shaman007/.codex/skills/grafana-operator/SKILL.md)
 - k8s-readonly-ops: Use for read-only Kubernetes and Helm diagnostics and approval boundaries for live changes. (file: /home/shaman007/.codex/skills/k8s-readonly-ops/SKILL.md)
+
+## Quiet monitoring diagnostics
+
+- Use `python3 tools/ops/monitoring_api.py alertmanager` for all-replica read-only
+  Alertmanager checks through Kubernetes API proxy. Do not use Pod exec or
+  port-forward for ordinary monitoring diagnostics.
+- Use `bao-desktop exec grafana -- python3 tools/ops/monitoring_api.py grafana /api/health`
+  and the same consumer for dashboard/datasource queries. The dedicated Viewer
+  token lives only in OpenBao `kv/desktop/grafana`, field `token`; do not read
+  `monitoring/logs-check-grafana-token` with an administrative Kubernetes context
+  to authenticate diagnostics. See `docs/monitoring-diagnostics.md`.
+- Preserve audit detection for `admin`; do not whitelist broad administrative
+  reads or execs to hide diagnostic noise.
