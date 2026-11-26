@@ -20,6 +20,13 @@ and storage redundancy are separate outcomes.
 - Discover current node names, addresses, roles, scheduling state, running Talos
   and Kubernetes versions. Verify etcd membership, leader, applied indexes and
   health. Keep a working Kubernetes/Talos endpoint on another node during reboot.
+- Plan memory headroom for restoring GPU workloads. CPU services rescheduled
+  during drains can fill the only GPU node even while GPU consumers are stopped.
+  Preserve their aggregate requests in the capacity plan; if necessary, move
+  selected movable CPU caches/services to non-GPU nodes with graceful targeted
+  eviction, respecting their data placement. Restore scheduling immediately after
+  assignment; do not drain the whole GPU node again or change application limits
+  merely to make Pending pods fit.
 - Verify fresh completed etcd/PVC backups and access to recovery material. Confirm
   the user can unseal each restarted OpenBao pod before starting the next node;
   do not print, request in chat or persist an unseal key. Use the existing desktop
@@ -62,6 +69,11 @@ Stop these groups, preserving exact original counts:
 | GPU consumers | Inspect requests/limits, runtime class, placement and actual GPU use, including Jobs and other controllers. Current consumers include Immich server/ML, Ollama variants, NLLB and Plex; rediscover rather than relying only on names. |
 | Nextcloud | Suspend its scheduled/active work, stop web/Collabora consumers, wait for termination, then stop its database/cache. Retain PVCs. |
 | Photon | Scale `dawarich/photon` to zero and wait for its large data volume to detach, avoiding repeated relocation/rebuilds. |
+
+Stop Photon before the first node reboot, while its redundant copies are healthy.
+If it is stopped during an incomplete rebuild, Longhorn can discard the incomplete
+replica and leave the detached volume with a single surviving copy. Do not assume
+that stopping a large workload automatically preserves its storage redundancy.
 
 ComfyUI configured with `--cpu` is not a GPU consumer. Do not change its execution
 mode as part of an OS upgrade. Leave other applications and infrastructure running.
@@ -144,6 +156,27 @@ timestamps and engine state. `robustness: degraded` alone neither proves safety 
 proves that a different node cannot be rebooted. Existing unrelated rebuilds may
 continue only if the next node cannot remove the last usable copy. Prefer waiting
 for full healthy redundancy; stop if any affected volume has no healthy outside copy.
+
+Include detached volumes in this gate. Check surviving healthy replica records,
+their data-owning nodes/disks and protection by another instance-manager PDB even
+though engines are stopped and robustness may be unknown. With offline rebuilding
+disabled, an incomplete second copy will not automatically recover while the
+workload stays at zero. A sole detached copy on the target must block maintenance
+by default. Do not force eviction or manually delete its PDB. Prepare a scoped
+per-volume offline rebuild, preserve its
+original `offlineRebuilding` setting and restore it afterward. Obtain a decision
+when the extra copy materially changes time/cost or conflicts with the user's
+instruction to avoid moving a large dataset; keep the workload stopped. Do not
+enable rebuilding globally for all detached volumes as a workaround.
+
+An explicit user-approved exception can accept a sole stopped copy without an
+extra rebuild: verify the exact replica is both desired/stored `stopped`, has no
+engine, and its data disk is preserved by the OS upgrade; verify every other volume
+has a healthy outside copy. Save the original drain policy, temporarily use the
+supported `allow-if-replica-is-stopped` policy, let Longhorn itself release the PDB,
+and restore the original policy immediately after completed drain, before reboot.
+Do not use `always-allow`, manually remove PDBs, or treat accepted workload downtime
+as implicit acceptance of the single-copy risk. Record the scope and user decision.
 
 Use normal Kubernetes eviction with PDB enforcement, for example:
 
