@@ -352,6 +352,7 @@ data:
                         )
                         or "0"
                     ),
+                    "service": payload.get("ServiceName", ""),
                     "router": first_non_empty(
                         [
                             payload.get("RouterName", ""),
@@ -755,6 +756,118 @@ data:
         lines.append("")
 
 
+    # Source fragment inserted into the existing daily report.
+    CROWDSEC_EVENT_RE = re.compile(
+        r"Ip (?P<ip>\S+) performed '(?P<scenario>crowdsecurity/[^']+)' "
+        r"\((?P<events>\d+) events over (?P<duration>[^)]+)\)"
+    )
+    BLACKHOLE_ROUTER_RE = re.compile(
+        r"^traefik-block-external-env-probes(?:-[a-z0-9]+)?@kubernetescrd$"
+    )
+
+
+    def is_blackhole_request(entry):
+        # Status alone is never sufficient: ordinary app 403/404s remain visible.
+        return (entry.get("service") == "noop@internal" or bool(
+            BLACKHOLE_ROUTER_RE.fullmatch(entry.get("router", ""))
+        ))
+
+
+    def collect_security_stats(loki_base_url, start_ns, end_ns):
+        detections = []
+        windows = defaultdict(list)
+        seen = set()
+        query = '{namespace="crowdsec",container="crowdsec-agent"} |= "performed"'
+        for _, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
+            match = CROWDSEC_EVENT_RE.search(line)
+            if not match or line in seen:
+                continue
+            seen.add(line)
+            event = match.groupdict()
+            event["ip"] = normalize_ip(event["ip"])
+            event["events"] = int(event["events"])
+            clock = re.search(r'time="([^"]+)"', line)
+            duration = event["duration"]
+            parts = re.findall(r"([0-9.]+)(ms|us|µs|ns|h|m|s)", duration)
+            if clock and parts and "".join(number + unit for number, unit in parts) == duration:
+                units = {"h": 3600, "m": 60, "s": 1, "ms": .001, "us": .000001, "µs": .000001, "ns": .000000001}
+                try:
+                    stop = datetime.fromisoformat(clock[1].replace("Z", "+00:00")).timestamp()
+                    seconds = sum(float(number) * units[unit] for number, unit in parts)
+                    windows[event["ip"]].append((int((stop-seconds-2)*1e9), int((stop+2)*1e9)))
+                except ValueError:
+                    pass  # Unknown timestamps retain detections without HTTP attribution.
+            detections.append(event)
+        ips = {event["ip"] for event in detections}
+        traffic = defaultdict(lambda: {"requests": 0, "blackhole": 0,
+                                       "statuses": Counter(), "targets": Counter(), "observed_windows": set()})
+        if ips:
+            ip_filter = "|".join(re.escape(ip) for ip in sorted(ips))
+            query = '{namespace="traefik",app="traefik",container="traefik"} |~ ' + json.dumps(ip_filter)
+            for timestamp_ns, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
+                entry = parse_traefik_line(line)
+                if not entry:
+                    continue
+                ip = normalize_ip(entry.get("client_ip", ""))
+                if ip not in ips or not any(start <= int(timestamp_ns) <= stop for start, stop in windows[ip]):
+                    continue
+                current = traffic[ip]
+                current["observed_windows"].update(i for i, (start, stop) in enumerate(windows[ip]) if start <= int(timestamp_ns) <= stop)
+                current["requests"] += 1
+                if is_blackhole_request(entry):
+                    current["blackhole"] += 1
+                    continue
+                current["statuses"][str(entry["status"])] += 1
+                target = entry.get("request_host") or entry.get("router") or "unknown host"
+                target = (entry.get("method") or "?") + " " + target + strip_query(entry.get("path", "/")) + " -> " + str(entry["status"])
+                current["targets"][target] += 1
+        scenarios, sources = Counter(), Counter()
+        rows, ignored = [], 0
+        expected_windows = Counter(event["ip"] for event in detections)
+        for event in detections:
+            current = traffic[event["ip"]]
+            # Conservative exclusion: every observed request for this IP in the
+            # scenario windows must have hit a known blackhole. Missing logs are kept.
+            if (current["requests"] and current["requests"] == current["blackhole"]
+                    and len(current["observed_windows"]) == len(windows[event["ip"]]) == expected_windows[event["ip"]]):
+                ignored += 1
+                continue
+            scenarios[event["scenario"]] += 1
+            sources[event["ip"]] += 1
+        for ip, count in sources.most_common(20):
+            current = traffic[ip]
+            statuses = current["statuses"]
+            if not statuses:
+                assessment = "No matching non-blackhole access logs; outcome unknown."
+            elif any(status.startswith(("2", "3", "5")) for status in statuses):
+                assessment = "Review application responses (2xx/3xx/5xx); not proof of exploitation."
+            else:
+                assessment = "Only rejected/error responses observed; no evidence of exploitation here."
+            rows.append({"ip": ip, "detections": count, "statuses": statuses,
+                         "targets": current["targets"], "assessment": assessment})
+        return {"scenarios": scenarios, "sources": sources, "rows": rows,
+                "ignored_blackhole_detections": ignored}
+
+
+    def render_security_section(stats):
+        lines = ["CrowdSec daily security review", "",
+                 "Background scanning is reported here, without immediate notifications.",
+                 "Counts are scenario detections, not unique requests or compromises.",
+                 "HTTP context covers the same IP and scenario time windows; this is not exact per-request attribution.",
+                 "Raw logs, dashboard counters and CrowdSec enforcement are retained.",
+                 f"Known blackhole-only detections omitted: {stats['ignored_blackhole_detections']}",
+                 "Scenarios:"]
+        lines.extend(format_counter(stats["scenarios"], limit=20))
+        for row in stats["rows"]:
+            lines.extend(["", f"Source {row['ip']}: {row['detections']} detections",
+                          row["assessment"], "HTTP statuses:"])
+            lines.extend(format_counter(row["statuses"], limit=10))
+            lines.append("Top targets (query strings removed):")
+            lines.extend(format_counter(row["targets"], limit=5))
+        lines.append("")
+        return lines
+
+
     def collect_ingress_stats(loki_base_url, start_ns, end_ns, hosts, fragments, harbor_host):
         host_set = set(hosts)
         stats = defaultdict(
@@ -784,7 +897,7 @@ data:
         query = '{namespace="traefik", app="traefik", container="traefik"}'
         for _, line, _ in loki_query_iter(loki_base_url, query, start_ns, end_ns):
             entry = parse_traefik_line(line)
-            if not entry:
+            if not entry or is_blackhole_request(entry):
                 continue
 
             host = (entry.get("request_host") or "").strip().lower()
@@ -1458,6 +1571,7 @@ data:
             fragments,
             harbor_host,
         )
+        security_stats = collect_security_stats(loki_base_url, start_ns, end_ns)
         postfix_stats = collect_postfix_stats(loki_base_url, start_ns, end_ns)
         dovecot_stats = collect_dovecot_stats(loki_base_url, start_ns, end_ns)
         subject = (
@@ -1472,6 +1586,7 @@ data:
             f"Public hosts discovered: {', '.join(hosts)}",
             "",
         ]
+        lines.extend(render_security_section(security_stats))
         lines.extend(render_ingress_section(hosts, ingress_stats))
         lines.extend(render_harbor_section(harbor_host, harbor_stats))
         lines.extend(render_mail_section(postfix_stats, dovecot_stats))
@@ -1487,6 +1602,8 @@ data:
             postfix_stats=postfix_stats,
             dovecot_stats=dovecot_stats,
         )
+        security_html = "<section><h2>CrowdSec daily security review</h2><pre style=\"white-space:pre-wrap\">" + html.escape("\n".join(render_security_section(security_stats))) + "</pre></section>"
+        html_report = html_report.replace("</body>", security_html + "</body>")
         metrics = render_metrics(
             report_timestamp=report_timestamp,
             start_local=start_local,

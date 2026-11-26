@@ -753,8 +753,8 @@ data:
         },
         {
           "id": 11,
-          "title": "Exploit and scanning thresholds",
-          "description": "Rolling 10-minute context. Exact exploit alert uses 15 minutes and handles first lazy counters; sustained scan threshold is 5 overflows / 10m for 2m. See active alerts for actual rule state.",
+          "title": "Exploit and scanning activity",
+          "description": "Rolling 10-minute detection counts. Routine scans are reviewed in the daily external-access email, without immediate alerts. Attempts do not prove exploitation; counters retain raw detection context.",
           "type": "timeseries",
           "datasource": {
             "type": "prometheus",

@@ -190,18 +190,17 @@ scrapes. No new exporter, Secret, access permission, or automatic ban is added.
 The existing Alertmanager receiver delivers warnings to email and Telegram,
 grouped by alertname/priority/namespace/job, with four-hour repeats.
 
-- `CrowdSecExploitAttempt`: a CVE/backdoor scenario overflow in the last fifteen
-  minutes. Uses `cs_bucket_overflowed_total` from the agent, not the LAPI retained
-  alert gauge. A newly appearing positive scenario counter also triggers once
-  the agent has been running for fifteen minutes, so a first isolated detection
-  is not lost to lazy counter creation. During that startup window, an initial
-  counter value alone is deliberately ignored; subsequent increments still count.
-  This prevents replaying restored counters as fresh attacks. The counter name
-  is retained as an alert label. An attempt does not prove exploitation or a ban.
-- `CrowdSecPersistentScanning`: at least five overflows of one probing, sensitive
-  file, or admin-interface scenario in ten minutes, sustained for two minutes.
-  Counts scenario detections, not raw HTTP requests or unique attackers. Isolated
-  scans remain visible in CrowdSec without generating this notification.
+Routine CrowdSec exploit probes and sustained scans no longer create Prometheus
+alerts. Raw logs, scenario metrics, dashboard graphs and existing bans remain.
+The 06:20 Europe/Prague external-access email reviews the previous calendar day:
+scenarios, source IPs, response codes, top targets and conservative triage.
+Only traffic identified by `noop@internal` or the configured `.env` blackhole
+router is excluded; an ordinary 403/404 is still counted. A CrowdSec detection is
+omitted only when every observed request from its IP in its scenario time windows hit a known
+blackhole. Missing HTTP evidence stays visible as unknown. IP/time-window correlation
+is context, not proof that any particular request caused a detection or compromise.
+See [daily security review](crowdsec-daily-review.md).
+
 - `KeycloakLoginFailureBurst`: at least ten login failures in five minutes,
   sustained for one minute, aggregated per realm. Selects `event="login"` with
   `invalid_user_credentials`, `user_not_found`, `user_disabled`, or

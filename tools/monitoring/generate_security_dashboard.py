@@ -84,8 +84,8 @@ def build():
           legend="{{name}}", description="All scenarios for context. Overflows are detections, not requests, unique attackers or successful exploitation.")
     panel("Retained CrowdSec alerts by scenario", 'sum by (reason) (cs_alerts{job="crowdsec"})', 12, 19,
           legend="{{reason}}", description="Current retained alert inventory; not a counter and not new alerts in the selected time range.")
-    panel("Exploit and scanning thresholds", 'sum by (name) (increase(cs_bucket_overflowed_total{job="crowdsec",name=~"crowdsecurity/(http-cve-probing|http-backdoors-attempts|.*[Cc][Vv][Ee].*|http-probing|http-sensitive-files|http-admin-interface-probing)"}[10m]))', 0, 27,
-          legend="{{name}}", description="Rolling 10-minute context. Exact exploit alert uses 15 minutes and handles first lazy counters; sustained scan threshold is 5 overflows / 10m for 2m. See active alerts for actual rule state.")
+    panel("Exploit and scanning activity", 'sum by (name) (increase(cs_bucket_overflowed_total{job="crowdsec",name=~"crowdsecurity/(http-cve-probing|http-backdoors-attempts|.*[Cc][Vv][Ee].*|http-probing|http-sensitive-files|http-admin-interface-probing)"}[10m]))', 0, 27,
+          legend="{{name}}", description="Rolling 10-minute detection counts. Routine scans are reviewed in the daily external-access email, without immediate alerts. Attempts do not prove exploitation; counters retain raw detection context.")
     panel("CrowdSec parsing activity", 'sum by (source) (rate(cs_kubernetessource_hits_total{job="crowdsec"}[$__rate_interval]))', 12, 27,
           legend="{{source}}", unit="ops", description="Useful collection activity, not confirmation that a particular request was classified correctly.")
     row("Keycloak · credential failure bursts", 35)
