@@ -95,6 +95,12 @@ Before its host is rebooted:
    restore their original counts. Do not scale a single-writer database or RWO
    registry to multiple independent writers. A single-instance dependency can have
    a brief migration interruption; report it honestly.
+   For large PVCs, prefer a destination that already has a healthy replica and
+   inspect data-locality behavior before migration. Scheduling registry on a node
+   without a local copy can trigger another full rebuild and occupy its rebuild
+   slot ahead of small recovery-critical volumes. Record any temporary placement
+   control and restore it afterward; do not repeatedly move the volume or bypass
+   replica protection to undo an in-progress copy.
 3. Wait for Harbor pods, their engines/attachments and all required ingress/auth
    dependencies to work on nodes that will remain online. Confirm no required
    Harbor pod or storage engine is still on the target.
