@@ -229,3 +229,6 @@ Publish through the normal GitOps flow; the Prometheus ConfigMap is owned by
 `kubernetes-prometheus` and its reloader watches ConfigMap changes. After sync,
 verify the three loaded rules and their health in Prometheus, scrape freshness,
 and actual Alertmanager delivery. A local fixture pass does not prove delivery.
+
+Kubernetes audit detections, sanitization, native admission annotations and per-node
+collection health are described in [kubernetes-audit.md](kubernetes-audit.md).

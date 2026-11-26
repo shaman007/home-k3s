@@ -212,3 +212,388 @@ tests:
   - eval_time: 25m
     alertname: CrowdSecPersistentScanning
     exp_alerts: []
+- name: secret_read single event allowed
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="allowed",detection="secret_read"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesUnexpectedSecretRead
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: allowed
+      exp_annotations:
+        summary: Unexpected Secret access on node-a (allowed)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: secret_read single event denied
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="denied",detection="secret_read"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesUnexpectedSecretRead
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: denied
+      exp_annotations:
+        summary: Unexpected Secret access on node-a (denied)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: secret_read single event dry-run
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="secret_read"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesUnexpectedSecretRead
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: dry-run
+      exp_annotations:
+        summary: Unexpected Secret access on node-a (dry-run)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: secret_read historical event ages out
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="secret_read"}
+    values: -400+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesUnexpectedSecretRead
+    exp_alerts: []
+- name: dangerous_rbac single event allowed
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="allowed",detection="dangerous_rbac"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesDangerousRBAC
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: allowed
+      exp_annotations:
+        summary: RBAC grant or dangerous role change on node-a (allowed)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: dangerous_rbac single event denied
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="denied",detection="dangerous_rbac"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesDangerousRBAC
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: denied
+      exp_annotations:
+        summary: RBAC grant or dangerous role change on node-a (denied)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: dangerous_rbac single event dry-run
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="dangerous_rbac"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesDangerousRBAC
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: dry-run
+      exp_annotations:
+        summary: RBAC grant or dangerous role change on node-a (dry-run)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: dangerous_rbac historical event ages out
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="dangerous_rbac"}
+    values: -400+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesDangerousRBAC
+    exp_alerts: []
+- name: sensitive_exec single event allowed
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="allowed",detection="sensitive_exec"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesSensitivePodExec
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: allowed
+      exp_annotations:
+        summary: Exec, attach or port-forward to a sensitive Pod on node-a (allowed)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: sensitive_exec single event denied
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="denied",detection="sensitive_exec"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesSensitivePodExec
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: denied
+      exp_annotations:
+        summary: Exec, attach or port-forward to a sensitive Pod on node-a (denied)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: sensitive_exec single event dry-run
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="sensitive_exec"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesSensitivePodExec
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: dry-run
+      exp_annotations:
+        summary: Exec, attach or port-forward to a sensitive Pod on node-a (dry-run)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: sensitive_exec historical event ages out
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="sensitive_exec"}
+    values: -400+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesSensitivePodExec
+    exp_alerts: []
+- name: privileged_pod single event allowed
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="allowed",detection="privileged_pod"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesPrivilegedPod
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: allowed
+      exp_annotations:
+        summary: Privileged Pod creation or update attempt on node-a (allowed)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: privileged_pod single event denied
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="denied",detection="privileged_pod"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesPrivilegedPod
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: denied
+      exp_annotations:
+        summary: Privileged Pod creation or update attempt on node-a (denied)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: privileged_pod single event dry-run
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="privileged_pod"}
+    values: 300+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesPrivilegedPod
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-a
+        outcome: dry-run
+      exp_annotations:
+        summary: Privileged Pod creation or update attempt on node-a (dry-run)
+        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
+          for actor, target and response code. Allowed, denied, failed and dry-run events
+          are separate; an attempt does not prove compromise.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: privileged_pod historical event ages out
+  interval: 1m
+  input_series:
+  - series: homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",node="node-a",outcome="dry-run",detection="privileged_pod"}
+    values: -400+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesPrivilegedPod
+    exp_alerts: []
+- name: one missing node is not hidden by healthy sibling
+  interval: 1m
+  input_series:
+  - series: kube_node_role{node="node-a",role="control-plane"}
+    values: 1+0x20
+  - series: kube_node_role{node="node-b",role="control-plane"}
+    values: 1+0x20
+  - series: up{job="kubernetes-audit",instance="a",node="node-a"}
+    values: 1+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesAuditNodeMissing
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        job: kubernetes-audit
+        node: node-b
+      exp_annotations:
+        summary: No healthy audit collector for control-plane node-b
+        description: Check the kubernetes-audit DaemonSet scheduling and scrape discovery.
+          Another healthy node does not cover this node audit file.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: reachable collector without audit file data
+  interval: 1m
+  input_series:
+  - series: up{job="kubernetes-audit",instance="a",node="node-a"}
+    values: 1+0x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesAuditTelemetryStale
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        owner: homelab
+        priority: warning
+        category: security
+        namespace: kube-system
+        node: node-a
+        instance: a
+        job: kubernetes-audit
+      exp_annotations:
+        summary: Kubernetes audit collection is stale on node-a
+        description: Audit events have stopped arriving or the source metric is absent
+          despite a reachable collector. Inspect file permissions, file tailer and
+          positions. Scrape health alone does not prove audit coverage.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+- name: fresh audit heartbeat
+  interval: 1m
+  input_series:
+  - series: up{job="kubernetes-audit",instance="a",node="node-a"}
+    values: 1+0x20
+  - series: homelab_audit_last_received_timestamp_seconds{job="kubernetes-audit",instance="a",node="node-a"}
+    values: 0+60x20
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubernetesAuditTelemetryStale
+    exp_alerts: []

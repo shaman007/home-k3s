@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-audit
+  namespace: argocd
+spec:
+  project: observability
+  source:
+    repoURL: https://github.com/shaman007/home-k3s.git
+    path: kubernetes-audit
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

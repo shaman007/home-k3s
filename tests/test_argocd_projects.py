@@ -93,6 +93,7 @@ PROJECT_STORAGE = {
 }
 
 PROJECT_OBSERVABILITY = {
+    "kubernetes-audit",
     "alloy",
     "connectivity-exporter-core",
     "connectivity-exporter-network-policy",
@@ -215,6 +216,8 @@ EXPECTED_CLUSTER_PERMISSIONS = {
         ("scheduling.k8s.io", "PriorityClass"),
     },
     "observability": {
+        ("admissionregistration.k8s.io", "ValidatingAdmissionPolicy"),
+        ("admissionregistration.k8s.io", "ValidatingAdmissionPolicyBinding"),
         ("admissionregistration.k8s.io", "ValidatingWebhookConfiguration"),
         ("apiextensions.k8s.io", "CustomResourceDefinition"),
         ("rbac.authorization.k8s.io", "ClusterRole"),
@@ -251,6 +254,8 @@ EXPECTED_RESTRICTED_NAMESPACE_PERMISSIONS = {
 }
 
 CLUSTER_SCOPED_KINDS = {
+    "ValidatingAdmissionPolicy",
+    "ValidatingAdmissionPolicyBinding",
     "APIService",
     "CSIDriver",
     "ClusterRole",

@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kubernetes-audit
+  namespace: kube-system
+  annotations:
+    configmap.reloader.stakater.com/auto: 'true'
+spec:
+  selector:
+    matchLabels:
+      app: kubernetes-audit
+  template:
+    metadata:
+      labels:
+        app: kubernetes-audit
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ''
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: alloy
+        image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.22.0
+        args:
+        - run
+        - /etc/alloy/config.alloy
+        - --storage.path=/var/lib/alloy
+        - --server.http.listen-addr=0.0.0.0:12345
+        env:
+        - name: AUDIT_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - name: http
+          containerPort: 12345
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 192Mi
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: http
+          initialDelaySeconds: 30
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alloy
+          readOnly: true
+        - name: audit
+          mountPath: /audit
+          readOnly: true
+        - name: positions
+          mountPath: /var/lib/alloy
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: kubernetes-audit-alloy
+      - name: audit
+        hostPath:
+          path: /var/log/audit/kube
+          type: Directory
+      - name: positions
+        hostPath:
+          path: /var/mnt/kubernetes-audit-positions
+          type: DirectoryOrCreate
+      - name: tmp
+        emptyDir: {}

@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubernetes-audit-alloy
+  namespace: kube-system
+data:
+  config.alloy: |
+    logging { level = "warn" }
+    loki.source.file "audit" {
+      targets = [{__path__ = "/audit/kube-apiserver.log", job = "kubernetes-audit", node = sys.env("AUDIT_NODE_NAME")}]
+      forward_to = [loki.process.audit.receiver]
+      tail_from_end = true
+      on_positions_file_error = "skip"
+    }
+    loki.process "audit" {
+      forward_to = [loki.write.audit.receiver]
+      stage.json {
+        drop_malformed = true
+        expressions = {
+          audit_id = "auditID",
+          timestamp = "stageTimestamp",
+          stage = "stage",
+          actor = "user.username",
+          impersonated = "impersonatedUser.username",
+          resource = "objectRef.resource",
+          subresource = "objectRef.subresource",
+          target_namespace = "objectRef.namespace",
+          target_name = "objectRef.name",
+          verb = "verb",
+          code = "responseStatus.code",
+          grant = "annotations.\"homelab-audit-bindings/grant\"",
+          dangerous = "annotations.\"homelab-audit-roles/dangerous\"",
+          privileged = "annotations.\"homelab-audit-pods/privileged\"",
+          psa = "annotations.\"pod-security.kubernetes.io/audit-violations\"",
+          dry_run = "contains(requestURI || '', 'dryRun=All')",
+        }
+      }
+      stage.label_drop { values = ["filename"] }
+      stage.template {
+        source = "event_epoch"
+        template = `{{ toDate "2006-01-02T15:04:05.999999999Z07:00" .timestamp | unixEpoch }}`
+      }
+      stage.metrics {
+        metric.gauge {
+          name = "audit_last_received_timestamp_seconds"
+          prefix = "homelab_"
+          description = "Timestamp of last audit event read from the file"
+          source = "event_epoch"
+          action = "set"
+          max_idle_duration = "24h"
+        }
+      }
+      // Select exactly one lifecycle stage, including still-open watches/exec.
+      stage.template {
+        source = "keep"
+        template = `{{ if or (and (eq .stage "ResponseStarted") (or (eq .verb "watch") (eq .subresource "exec") (eq .subresource "attach") (eq .subresource "portforward"))) (and (eq .stage "ResponseComplete") (or (ge (int .code) 400) (and (ne .verb "watch") (ne .subresource "exec") (ne .subresource "attach") (ne .subresource "portforward")))) }}yes{{ end }}`
+      }
+      stage.drop {
+        source = "keep"
+        expression = "^$"
+      }
+      stage.template {
+        source = "outcome"
+        template = `{{ if and (eq (toString .dry_run) "true") (or (eq .verb "create") (eq .verb "update") (eq .verb "patch") (eq .verb "delete")) (ne .subresource "exec") (ne .subresource "attach") (ne .subresource "portforward") }}dry-run{{ else if or (eq (int .code) 401) (eq (int .code) 403) }}denied{{ else if ge (int .code) 400 }}failed{{ else }}allowed{{ end }}`
+      }
+      // Every human/admin read is visible. Exceptions apply only to successful reads.
+      // These are exact controller identities + namespace + verb, not all system users.
+      stage.template {
+        source = "expected_secret_reader"
+        template = `{{ if and (not .impersonated) (lt (int .code) 400) (or
+          (and (eq .actor "system:serviceaccount:kyverno:kyverno-admission-controller") (eq .target_namespace "kyverno") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets-cert-controller") (eq .target_namespace "external-secrets") (eq .verb "get"))
+          (and (eq .actor "system:serviceaccount:longhorn-system:longhorn-service-account") (eq .target_namespace "longhorn-system") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (or (eq .actor "system:serviceaccount:cert-manager:cert-manager") (eq .actor "system:serviceaccount:cert-manager:cert-manager-cainjector") (eq .actor "system:serviceaccount:argocd:argocd-application-controller") (eq .actor "system:serviceaccount:traefik:traefik-private") (eq .actor "system:serviceaccount:traefik:traefik")) (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-notifications-controller") (eq .target_namespace "argocd") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:metallb-system:metallb-speaker") (eq .target_namespace "metallb-system") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:cert-manager:cert-manager-webhook") (eq .target_namespace "cert-manager") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:kube-system:cilium") (eq .target_namespace "cilium-secrets") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (or (eq .actor "system:node:w386") (eq .actor "system:node:talos-qlw-pbh") (eq .actor "system:node:talos-d4h-k5m")) .target_namespace (or (eq .verb "get") (eq .verb "watch")))
+          (and (eq .actor "system:apiserver") (not .target_namespace) (eq .verb "watch"))
+        ) }}yes{{ end }}`
+      }
+      stage.template {
+        source = "detection"
+        template = `{{ if and (eq .resource "secrets") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")) (ne .expected_secret_reader "yes") }}secret_read{{ else if or .grant .dangerous }}dangerous_rbac{{ else if and (eq .resource "pods") (or (eq .subresource "exec") (eq .subresource "attach") (eq .subresource "portforward")) (or (eq .target_namespace "openbao") (eq .target_namespace "keycloak") (eq .target_namespace "argocd") (eq .target_namespace "harbor") (eq .target_namespace "bitwarden") (eq .target_namespace "mail") (eq .target_namespace "monitoring") (regexMatch "(^|[-])(postgres|postgresql|mysql|mariadb|redis|valkey)([-]|$)" (default "" .target_name))) }}sensitive_exec{{ else if and (eq .resource "pods") (or (eq .privileged "privileged") (contains "privileged" (default "" .psa))) }}privileged_pod{{ end }}`
+      }
+      // Drop non-detections. Selected records are reconstructed from an allowlist.
+      stage.drop {
+        source = "detection"
+        expression = "^$"
+      }
+      stage.labels { values = { detection = "", outcome = "" } }
+      // No usernames, object names, namespaces or URIs in metric labels.
+      stage.label_drop { values = ["filename"] }
+      stage.metrics {
+        metric.counter {
+          name = "audit_detections_total"
+          prefix = "homelab_"
+          description = "Selected Kubernetes audit events"
+          match_all = true
+          action = "inc"
+          max_idle_duration = "24h"
+        }
+        metric.gauge {
+          name = "audit_last_detection_timestamp_seconds"
+          prefix = "homelab_"
+          description = "Audit timestamp of latest selected event"
+          source = "event_epoch"
+          action = "set"
+          max_idle_duration = "24h"
+        }
+      }
+      stage.template {
+        source = "safe_record"
+        template = `{{ dict "audit_id" .audit_id "timestamp" .timestamp "detection" .detection "outcome" .outcome "actor" .actor "impersonated" .impersonated "resource" .resource "subresource" .subresource "namespace" .target_namespace "name" .target_name "verb" .verb "code" .code "role_ref" .grant | toJson }}`
+      }
+      stage.output { source = "safe_record" }
+    }
+    loki.write "audit" {
+      endpoint { url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push" }
+    }

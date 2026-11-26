@@ -318,6 +318,10 @@ data:
         labels:
           job: argocd-notifications
       - record: homelab_expected_scrape_job
+        expr: label_replace(vector(1), "job", "kubernetes-audit", "", "")
+        labels:
+          job: kubernetes-audit
+      - record: homelab_expected_scrape_job
         expr: label_replace(vector(1), "job", "alloy", "", "")
         labels:
           job: alloy
@@ -1548,6 +1552,108 @@ data:
           summary: 'Keycloak possible password guessing in realm {{ $labels.realm }}'
           description: 'At least ten credential/account login failures in five minutes, sustained for one minute. Aggregated across the realm: this is a possible guessing burst, not attribution to an IP or user. Inspect Keycloak login events; do not count refresh-token errors as password guessing.'
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+    - name: kubernetes-audit
+      rules:
+      - alert: KubernetesUnexpectedSecretRead
+        expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="secret_read"})
+          < 900
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+          job: kubernetes-audit
+        annotations:
+          summary: Unexpected Secret access on {{ $labels.node }} ({{ $labels.outcome
+            }})
+          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="{{
+            $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
+            dry-run events are separate; an attempt does not prove compromise.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+      - alert: KubernetesDangerousRBAC
+        expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="dangerous_rbac"})
+          < 900
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+          job: kubernetes-audit
+        annotations:
+          summary: RBAC grant or dangerous role change on {{ $labels.node }} ({{ $labels.outcome
+            }})
+          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="{{
+            $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
+            dry-run events are separate; an attempt does not prove compromise.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+      - alert: KubernetesSensitivePodExec
+        expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="sensitive_exec"})
+          < 900
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+          job: kubernetes-audit
+        annotations:
+          summary: Exec, attach or port-forward to a sensitive Pod on {{ $labels.node
+            }} ({{ $labels.outcome }})
+          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="{{
+            $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
+            dry-run events are separate; an attempt does not prove compromise.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+      - alert: KubernetesPrivilegedPod
+        expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="privileged_pod"})
+          < 900
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+          job: kubernetes-audit
+        annotations:
+          summary: Privileged Pod creation or update attempt on {{ $labels.node }} ({{
+            $labels.outcome }})
+          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="{{
+            $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
+            dry-run events are separate; an attempt does not prove compromise.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+      - alert: KubernetesAuditTelemetryStale
+        expr: (time() - homelab_audit_last_received_timestamp_seconds{job="kubernetes-audit"}
+          > 300) or (up{job="kubernetes-audit"} == 1 unless on (job, instance) homelab_audit_last_received_timestamp_seconds{job="kubernetes-audit"})
+        for: 5m
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+        annotations:
+          summary: Kubernetes audit collection is stale on {{ $labels.node }}
+          description: Audit events have stopped arriving or the source metric is absent
+            despite a reachable collector. Inspect file permissions, file tailer and positions.
+            Scrape health alone does not prove audit coverage.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
+      - alert: KubernetesAuditNodeMissing
+        expr: max by (node) (kube_node_role{role="control-plane"} == 1) unless on (node) (up{job="kubernetes-audit"}
+          == 1)
+        for: 5m
+        labels:
+          severity: mail
+          owner: homelab
+          priority: warning
+          category: security
+          namespace: kube-system
+          job: kubernetes-audit
+        annotations:
+          summary: No healthy audit collector for control-plane {{ $labels.node }}
+          description: Check the kubernetes-audit DaemonSet scheduling and scrape discovery.
+            Another healthy node does not cover this node audit file.
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
     - name: remote-write-recovery
       rules:
       - alert: PrometheusRemoteWriteLag
@@ -1892,6 +1998,26 @@ data:
         static_configs:
           - targets:
               - argocd-notifications-controller-metrics.argocd.svc.cluster.local:9001
+      - job_name: kubernetes-audit
+        honor_labels: true
+        scrape_interval: 15s
+        scrape_timeout: 10s
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names: [kube-system]
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          action: keep
+          regex: kubernetes-audit
+        - source_labels: [__meta_kubernetes_pod_phase]
+          action: keep
+          regex: Running
+        - source_labels: [__meta_kubernetes_pod_container_port_name]
+          action: keep
+          regex: http
+        - source_labels: [__meta_kubernetes_pod_node_name]
+          target_label: node
       - job_name: alloy
         scrape_interval: 45s
         scrape_timeout: 15s

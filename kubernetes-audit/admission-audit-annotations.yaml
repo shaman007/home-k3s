@@ -1,0 +1,110 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: homelab-audit-bindings
+spec:
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - rbac.authorization.k8s.io
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - rolebindings
+      - clusterrolebindings
+  validations:
+  - expression: 'true'
+  auditAnnotations:
+  - key: grant
+    valueExpression: '(oldObject == null || object.roleRef != oldObject.roleRef ||
+      (has(object.subjects) ? object.subjects : []) != (has(oldObject.subjects) ?
+      oldObject.subjects : [])) ? object.roleRef.kind + '':'' + object.roleRef.name
+      : '''''
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: homelab-audit-bindings
+spec:
+  policyName: homelab-audit-bindings
+  validationActions:
+  - Audit
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: homelab-audit-roles
+spec:
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - rbac.authorization.k8s.io
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - roles
+      - clusterroles
+  validations:
+  - expression: 'true'
+  auditAnnotations:
+  - key: dangerous
+    valueExpression: '(oldObject == null || (has(object.rules) ? object.rules : [])
+      != (has(oldObject.rules) ? oldObject.rules : [])) && has(object.rules) && object.rules.exists(r,
+      r.verbs.exists(v, v in [''*'',''bind'',''escalate'',''impersonate'']) || (has(r.resources)
+      && ''*'' in r.resources) || (has(r.apiGroups) && ''*'' in r.apiGroups)) ? ''wildcard-or-escalation''
+      : '''''
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: homelab-audit-roles
+spec:
+  policyName: homelab-audit-roles
+  validationActions:
+  - Audit
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: homelab-audit-pods
+spec:
+  failurePolicy: Ignore
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+  validations:
+  - expression: 'true'
+  auditAnnotations:
+  - key: privileged
+    valueExpression: '(object.spec.containers.exists(c, has(c.securityContext) &&
+      has(c.securityContext.privileged) && c.securityContext.privileged) || (has(object.spec.initContainers)
+      && object.spec.initContainers.exists(c, has(c.securityContext) && has(c.securityContext.privileged)
+      && c.securityContext.privileged)) || (has(object.spec.ephemeralContainers) &&
+      object.spec.ephemeralContainers.exists(c, has(c.securityContext) && has(c.securityContext.privileged)
+      && c.securityContext.privileged))) ? ''privileged'' : '''''
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: homelab-audit-pods
+spec:
+  policyName: homelab-audit-pods
+  validationActions:
+  - Audit
