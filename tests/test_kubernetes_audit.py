@@ -216,6 +216,14 @@ class AlloyPipelineTests(unittest.TestCase):
                         changed[field] = value
                         events.append(changed)
                         boundary_ids.add(changed['auditID'])
+                    for identity, namespace, verb, stage in [
+                        ('metallb-wrong-namespace', 'openbao', 'watch', 'ResponseStarted'),
+                        ('metallb-direct-get', 'metallb-system', 'get', 'ResponseComplete'),
+                    ]:
+                        changed = event(identity, namespace=namespace, verb=verb, stage=stage)
+                        changed['user']['username'] = 'system:serviceaccount:metallb-system:metallb-controller'
+                        events.append(changed)
+                        boundary_ids.add(identity)
                     unknown = event('eso-unknown-secret', namespace='monitoring', name='unreviewed-secret')
                     unknown['user']['username'] = 'system:serviceaccount:external-secrets:external-secrets'
                     events.append(unknown)
