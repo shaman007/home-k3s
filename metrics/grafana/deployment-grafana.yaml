@@ -220,3 +220,5 @@ spec:
                   name: grafana-dashboard-spotify-metrics
               - configMap:
                   name: grafana-dashboard-mail-queues
+              - configMap:
+                  name: grafana-dashboard-security-overview

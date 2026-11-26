@@ -1,0 +1,1474 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-security-overview
+  namespace: monitoring
+data:
+  security-overview.json: |-
+    {
+      "uid": "security-overview",
+      "title": "Security Overview",
+      "description": "CrowdSec, Keycloak, Kubernetes audit and Falco detections with collection and delivery health. Events indicate activity or attempts, not proof of compromise.",
+      "schemaVersion": 41,
+      "version": 1,
+      "editable": true,
+      "tags": [
+        "homelab",
+        "security"
+      ],
+      "refresh": "1m",
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "type": "row",
+          "title": "Security overview · collection health",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 2,
+          "title": "CrowdSec endpoints · expected 2",
+          "description": "Global coverage, independent of event filters. Scrape availability alone does not prove ingestion. Current cluster baseline: 2.",
+          "type": "stat",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 1,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(up{job=\"crowdsec\"}) or vector(0)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "instant": true,
+              "range": false,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 2
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Keycloak endpoints · expected 1",
+          "description": "Global coverage, independent of event filters. Scrape availability alone does not prove ingestion. Current cluster baseline: 1.",
+          "type": "stat",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 6,
+            "y": 1,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(up{job=\"keycloak\"}) or vector(0)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "instant": true,
+              "range": false,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          }
+        },
+        {
+          "id": 4,
+          "title": "Audit nodes · expected all control planes",
+          "description": "Global coverage, independent of event filters. Scrape availability alone does not prove ingestion. Current cluster baseline: 3.",
+          "type": "stat",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 1,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(up{job=\"kubernetes-audit\"}) or vector(0)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "instant": true,
+              "range": false,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 3
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          }
+        },
+        {
+          "id": 5,
+          "title": "Falco nodes · expected all nodes",
+          "description": "Global coverage, independent of event filters. Scrape availability alone does not prove ingestion. Current cluster baseline: 3.",
+          "type": "stat",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 18,
+            "y": 1,
+            "w": 6,
+            "h": 4
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(up{job=\"falco\"}) or vector(0)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "instant": true,
+              "range": false,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 3
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          }
+        },
+        {
+          "id": 6,
+          "title": "Active security alerts · Prometheus",
+          "description": "Current Prometheus detection and collector-health alerts. Falco events go directly to Alertmanager; their event history is in the Falco row below.",
+          "type": "table",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 5,
+            "w": 24,
+            "h": 7
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "ALERTS{category=\"security\",alertstate=~\"pending|firing\"}",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "instant": true,
+              "range": false,
+              "format": "table",
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": [
+              {
+                "displayName": "alertname",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": 7,
+          "title": "Security alert history · Prometheus",
+          "description": "Alert state samples, not an event count. Falco has a separate Loki event history.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 12,
+            "w": 24,
+            "h": 6
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by (alertname,alertstate) (ALERTS{category=\"security\"})",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{alertname}} / {{alertstate}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 8,
+          "type": "row",
+          "title": "CrowdSec · exploit attempts and sustained scanning",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 18,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 9,
+          "title": "Scenario overflows · selected range",
+          "description": "All scenarios for context. Overflows are detections, not requests, unique attackers or successful exploitation.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 19,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (increase(cs_bucket_overflowed_total{job=\"crowdsec\"}[$__range]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 10,
+          "title": "Retained CrowdSec alerts by scenario",
+          "description": "Current retained alert inventory; not a counter and not new alerts in the selected time range.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 19,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (reason) (cs_alerts{job=\"crowdsec\"})",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{reason}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 11,
+          "title": "Exploit and scanning thresholds",
+          "description": "Rolling 10-minute context. Exact exploit alert uses 15 minutes and handles first lazy counters; sustained scan threshold is 5 overflows / 10m for 2m. See active alerts for actual rule state.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 27,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (increase(cs_bucket_overflowed_total{job=\"crowdsec\",name=~\"crowdsecurity/(http-cve-probing|http-backdoors-attempts|.*[Cc][Vv][Ee].*|http-probing|http-sensitive-files|http-admin-interface-probing)\"}[10m]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 12,
+          "title": "CrowdSec parsing activity",
+          "description": "Useful collection activity, not confirmation that a particular request was classified correctly.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 27,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (source) (rate(cs_kubernetessource_hits_total{job=\"crowdsec\"}[$__rate_interval]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{source}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 13,
+          "type": "row",
+          "title": "Keycloak · credential failure bursts",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 35,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 14,
+          "title": "Credential failures · selected range",
+          "description": "Credential/account errors only. Refresh-token failures are excluded; realm totals do not identify a user or attacker.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 36,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (realm,error) (increase(keycloak_user_events_total{job=\"keycloak\",realm=~\"${realm:regex}\",event=\"login\",error=~\"invalid_user_credentials|user_not_found|user_disabled|user_temporarily_disabled\"}[$__range]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{realm}} / {{error}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 15,
+          "title": "Guessing threshold · failures / 5 minutes",
+          "description": "Alert threshold: at least 10 failures / 5m, sustained for 1m.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 36,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (realm) (increase(keycloak_user_events_total{job=\"keycloak\",realm=~\"${realm:regex}\",event=\"login\",error=~\"invalid_user_credentials|user_not_found|user_disabled|user_temporarily_disabled\"}[5m]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{realm}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 16,
+          "type": "row",
+          "title": "Kubernetes audit · Secrets, dangerous RBAC, sensitive exec, privileged Pods",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 44,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 17,
+          "title": "Audit detections · event count / interval",
+          "description": "Counts persisted sanitized Loki records. Denied, failed and dry-run attempts are not successful changes.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (detection,outcome) (count_over_time({job=\"kubernetes-audit\",node=~\"${node:regex}\",detection=~\"${audit_detection:regex}\",outcome=~\"${outcome:regex}\"}[$__interval]))",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "range": true,
+              "queryType": "range",
+              "maxLines": 200,
+              "legendFormat": "{{detection}} / {{outcome}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 18,
+          "title": "Audit events · selected range",
+          "description": "No data can mean no matching events; check collector health above and below.",
+          "type": "table",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (detection,outcome) (count_over_time({job=\"kubernetes-audit\",node=~\"${node:regex}\",detection=~\"${audit_detection:regex}\",outcome=~\"${outcome:regex}\"}[$__range]))",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "instant": true,
+              "range": false,
+              "queryType": "instant",
+              "maxLines": 200,
+              "format": "table",
+              "legendFormat": "{{detection}} / {{outcome}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": []
+          }
+        },
+        {
+          "id": 19,
+          "title": "Audit event details · latest 200",
+          "description": "Allowlisted audit metadata only; no Secret contents, request/response bodies or exec command arguments. Expand a line for structured fields.",
+          "type": "logs",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 53,
+            "w": 24,
+            "h": 10
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "{job=\"kubernetes-audit\",node=~\"${node:regex}\",detection=~\"${audit_detection:regex}\",outcome=~\"${outcome:regex}\"} | json | line_format \"{{.timestamp}} {{.detection}} {{.outcome}} actor={{.actor}} impersonated={{.impersonated}} {{.verb}} {{.resource}}/{{.subresource}} namespace={{.namespace}} name={{.name}} code={{.code}} role={{.role_ref}} audit_id={{.audit_id}}\"",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "range": true,
+              "queryType": "range",
+              "maxLines": 200,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none"
+          }
+        },
+        {
+          "id": 20,
+          "type": "row",
+          "title": "Falco · terminal shell, new binary, reverse-shell signature",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 63,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 21,
+          "title": "Falco detections · event count / interval",
+          "description": "Persisted events survive sensor restarts. Shell means a terminal shell; new binary means overlay upper-layer execution; socket redirection is one reverse-shell signature.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 64,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (rule) (count_over_time({job=\"falco\",hostname=~\"${node:regex}\",rule=~\"${falco_rule:regex}\"}[$__interval]))",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "range": true,
+              "queryType": "range",
+              "maxLines": 200,
+              "legendFormat": "{{rule}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 22,
+          "title": "Falco events · selected range",
+          "description": "No events is different from a missing sensor. Node filter applies to event history, not the global coverage counters.",
+          "type": "table",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 64,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (rule) (count_over_time({job=\"falco\",hostname=~\"${node:regex}\",rule=~\"${falco_rule:regex}\"}[$__range]))",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "instant": true,
+              "range": false,
+              "queryType": "instant",
+              "maxLines": 200,
+              "format": "table",
+              "legendFormat": "{{rule}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": []
+          }
+        },
+        {
+          "id": 23,
+          "title": "Falco event details · latest 200",
+          "description": "Sanitized Falco output with Pod, executable and container identity; no process command line or environment. Open log details for JSON fields.",
+          "type": "logs",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 72,
+            "w": 24,
+            "h": 10
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "{job=\"falco\",hostname=~\"${node:regex}\",rule=~\"${falco_rule:regex}\"} | json | line_format \"{{.hostname}} {{.output}}\"",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "range": true,
+              "queryType": "range",
+              "maxLines": 200,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "showTime": true,
+            "showLabels": false,
+            "showCommonLabels": false,
+            "wrapLogMessage": true,
+            "enableLogDetails": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none"
+          }
+        },
+        {
+          "id": 24,
+          "type": "row",
+          "title": "Collection freshness, drops and notification delivery",
+          "collapsed": false,
+          "panels": [],
+          "gridPos": {
+            "x": 0,
+            "y": 82,
+            "w": 24,
+            "h": 1
+          }
+        },
+        {
+          "id": 25,
+          "title": "Audit ingestion age by node",
+          "description": "Last raw audit record received; sustained age over 300s raises a health alert. This is not the age of the last detection.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 83,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "time() - max by (node) (homelab_audit_last_received_timestamp_seconds{job=\"kubernetes-audit\",node=~\"${node:regex}\"})",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{node}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 26,
+          "title": "Falco syscall activity",
+          "description": "",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 83,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node) (rate(falcosecurity_scap_n_evts_total{job=\"falco\",node=~\"${node:regex}\"}[$__rate_interval]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{node}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 27,
+          "title": "Falco lost events / second",
+          "description": "",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 91,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node) (rate(falcosecurity_scap_n_drops_total{job=\"falco\",node=~\"${node:regex}\"}[$__rate_interval]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{node}} / syscall"
+            },
+            {
+              "refId": "B",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "expr": "sum by (node) (rate(falcosecurity_falco_outputs_queue_num_drops_total{job=\"falco\",node=~\"${node:regex}\"}[$__rate_interval]))",
+              "legendFormat": "{{node}} / output queue",
+              "range": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ops",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 28,
+          "title": "Sidekick deliveries · selected range",
+          "description": "Output counters are lazy. Alertmanager acceptance and Loki persistence are separate from recipient delivery; health alerts handle first error samples.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 12,
+            "y": 91,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (destination,status) (increase(falcosecurity_falcosidekick_outputs_total{job=\"falcosidekick\"}[$__range]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{destination}} / {{status}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        },
+        {
+          "id": 29,
+          "title": "Sidekick endpoints · expected 2",
+          "description": "",
+          "type": "stat",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 99,
+            "w": 6,
+            "h": 5
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(up{job=\"falcosidekick\"}) or vector(0)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "instant": true,
+              "range": false,
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            }
+          }
+        },
+        {
+          "id": 30,
+          "title": "Alertmanager delivery errors · selected range",
+          "description": "Shared notification transport for all alerts, not security-only delivery attribution.",
+          "type": "timeseries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+          },
+          "gridPos": {
+            "x": 6,
+            "y": 99,
+            "w": 18,
+            "h": 5
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (integration) (increase(alertmanager_notifications_failed_total{integration=~\"telegram|email\"}[$__range]))",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+              },
+              "range": true,
+              "legendFormat": "{{integration}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": [
+                "lastNotNull"
+              ]
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          }
+        }
+      ],
+      "links": [
+        {
+          "title": "CrowdSec details",
+          "type": "link",
+          "url": "/d/crowdsec-overview/crowdsec",
+          "keepTime": true
+        },
+        {
+          "title": "Keycloak details",
+          "type": "link",
+          "url": "/d/keycloak-events-only2/keycloak-events",
+          "keepTime": true
+        },
+        {
+          "title": "Alertmanager",
+          "type": "link",
+          "url": "https://alerts.int.andreybondarenko.com",
+          "targetBlank": true
+        }
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "node",
+            "label": "Node",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+            },
+            "query": {
+              "query": "label_values(kube_node_info, node)",
+              "refId": "StandardVariableQuery"
+            },
+            "refresh": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "options": []
+          },
+          {
+            "name": "realm",
+            "label": "Realm",
+            "type": "query",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "ed6c70f1-51fe-45d9-9fd0-74971e3d2fd4"
+            },
+            "query": {
+              "query": "label_values(keycloak_user_events_total{job=\"keycloak\"}, realm)",
+              "refId": "StandardVariableQuery"
+            },
+            "refresh": 1,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "options": []
+          },
+          {
+            "name": "audit_detection",
+            "label": "Audit Detection",
+            "type": "custom",
+            "query": "secret_read,dangerous_rbac,sensitive_exec,privileged_pod",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "options": []
+          },
+          {
+            "name": "outcome",
+            "label": "Outcome",
+            "type": "custom",
+            "query": "allowed,denied,failed,dry-run",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "options": []
+          },
+          {
+            "name": "falco_rule",
+            "label": "Falco Rule",
+            "type": "custom",
+            "query": "Terminal shell in container,Drop and execute new binary in container,Redirect STDOUT/STDIN to Network Connection in Container",
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": {
+              "text": "All",
+              "value": "$__all"
+            },
+            "options": []
+          }
+        ]
+      }
+    }
