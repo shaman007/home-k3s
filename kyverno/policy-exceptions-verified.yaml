@@ -3458,62 +3458,6 @@ spec:
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
-  name: verified-root-mastodon-bookmarked-media-sync
-  namespace: kyverno
-spec:
-  policyRefs:
-  - name: require-run-as-nonroot
-    kind: ValidatingPolicy
-  expiresAt: '2027-02-01T00:00:00Z'
-  reportResult: skip
-  properties:
-    reason: The current images install system/global tooling at runtime; no escalation exemption is required.
-    evidence: docs/security-exception-follow-up.md
-    reviewed-on: '2026-11-03'
-    review-trigger: repository/guard/startup/chart or ownership change
-    image-scope: exact registry/repository; tags and sha256 digests may change
-  matchConditions:
-  - name: exact-workload-and-approved-deviations
-    expression: "[object].exists(workload,\nworkload.metadata.namespace == \"mastodon\" &&\n((workload.kind == \"CronJob\"\
-      \ && workload.metadata.name == \"bookmarked-media-sync\") || (workload.kind == \"Job\" && workload.metadata.name.matches(\"\
-      ^bookmarked\\\\-media\\\\-sync-[0-9]{8,12}$\") && workload.metadata.?ownerReferences.orValue([]).exists(o, o.kind ==\
-      \ \"CronJob\" && o.name == \"bookmarked-media-sync\" && o.?controller.orValue(false) == true)) || (workload.kind ==\
-      \ \"Pod\" && workload.metadata.?ownerReferences.orValue([]).exists(o, o.kind == \"Job\" && o.?controller.orValue(false)\
-      \ == true && o.name.matches(\"^bookmarked\\\\-media\\\\-sync-[0-9]{8,12}$\") && workload.metadata.name.startsWith(o.name\
-      \ + \"-\")))) &&\n[(workload.kind == \"Pod\" ? workload : workload.kind == \"CronJob\" ? workload.spec.jobTemplate.spec.template\
-      \ : workload.spec.template)].exists(p,\n  has(p.metadata.labels) && \"app.kubernetes.io/name\" in p.metadata.labels\
-      \ && p.metadata.labels[\"app.kubernetes.io/name\"] == \"bookmarked-media-sync\" &&\n  has(p.metadata.labels) && \"app.kubernetes.io/instance\"\
-      \ in p.metadata.labels && p.metadata.labels[\"app.kubernetes.io/instance\"] == \"bookmarked-media-sync\" &&\n  p.spec.?serviceAccountName.orValue(\"\
-      default\") == \"bookmarked-media-sync\" &&\n  p.spec.?containers.orValue([]).all(c, (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
-      \ == true) || ((c.name == \"immich-upload\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/node(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
-      ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))) &&\n  p.spec.?initContainers.orValue([]).all(c,\
-      \ (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) || ((c.name\
-      \ == \"fetch-bookmarked-media\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/alpine(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
-      ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))) &&\n  p.spec.?ephemeralContainers.orValue([]).all(c,\
-      \ (c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) || false)\
-      \ &&\n  (p.spec.?containers.orValue([]).exists(c, !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false))\
-      \ == true) && ((c.name == \"immich-upload\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/node(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
-      ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0))) || p.spec.?initContainers.orValue([]).exists(c,\
-      \ !(c.?securityContext.?runAsNonRoot.orValue(p.spec.?securityContext.?runAsNonRoot.orValue(false)) == true) && ((c.name\
-      \ == \"fetch-bookmarked-media\" && c.image.matches(\"^harbor\\\\.andreybondarenko\\\\.com/dockerhub/alpine(?::[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?(?:@sha256:[a-fA-F0-9]{64})?$\"\
-      ) && c.?securityContext.?runAsUser.orValue(p.spec.?securityContext.?runAsUser.orValue(0)) == 0)))) &&\n  p.spec.?containers.orValue([]).exists(c,\
-      \ c.name == \"immich-upload\" && c.?securityContext.?allowPrivilegeEscalation.orValue(null) == false && c.?securityContext.?capabilities.?add.orValue([]).size()\
-      \ == 0 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in []) && [].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))\
-      \ && c.?securityContext.?capabilities.?drop.orValue([]).size() == 1 && c.?securityContext.?capabilities.?drop.orValue([]).all(cap,\
-      \ cap in [\"ALL\"]) && [\"ALL\"].all(cap, cap in c.?securityContext.?capabilities.?drop.orValue([])) && c.?securityContext.?privileged.orValue(false)\
-      \ == false && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null)) == {\"\
-      type\": \"RuntimeDefault\"}) &&\n  p.spec.?initContainers.orValue([]).exists(c, c.name == \"fetch-bookmarked-media\"\
-      \ && c.?securityContext.?allowPrivilegeEscalation.orValue(null) == false && c.?securityContext.?capabilities.?add.orValue([]).size()\
-      \ == 0 && c.?securityContext.?capabilities.?add.orValue([]).all(cap, cap in []) && [].all(cap, cap in c.?securityContext.?capabilities.?add.orValue([]))\
-      \ && c.?securityContext.?capabilities.?drop.orValue([]).size() == 1 && c.?securityContext.?capabilities.?drop.orValue([]).all(cap,\
-      \ cap in [\"ALL\"]) && [\"ALL\"].all(cap, cap in c.?securityContext.?capabilities.?drop.orValue([])) && c.?securityContext.?privileged.orValue(false)\
-      \ == false && c.?securityContext.?seccompProfile.orValue(p.spec.?securityContext.?seccompProfile.orValue(null)) == {\"\
-      type\": \"RuntimeDefault\"}) &&\n  p.spec.?securityContext.?seccompProfile.orValue(null) == {\"type\": \"RuntimeDefault\"\
-      }\n)\n)"
----
-apiVersion: policies.kyverno.io/v1
-kind: PolicyException
-metadata:
   name: verified-escalation-nextcloud-collabora-collabora-online
   namespace: kyverno
 spec:

@@ -15,7 +15,7 @@ namespace exemptions, policy suppression or enforcement-mode changes are added.
 | Workload | Prepared change | Finding expected after publication |
 | --- | --- | --- |
 | Plex | Set allowPrivilegeEscalation=false | Escalation finding should clear; root s6 startup remains |
-| Mastodon bookmarked-media-sync | Set allowPrivilegeEscalation=false on fetch init and upload container | Escalation finding should clear; runtime package installation still uses root |
+| Mastodon bookmarked-media-sync | Preinstall runtime tools; run both containers as UID/GID 65534 with fsGroup and writable HOME | Runtime package installation and the root-policy exception are retired |
 | CrowdSec agent, registration init and LAPI | Drop ALL capabilities, removing the previous six-capability allowlist | Existing escalation/privileged checks stay compliant; root finding remains |
 | Collabora | Drop ALL, retaining only CHOWN, FOWNER and SYS_CHROOT; explicitly document required escalation | Escalation finding remains because the document sandbox uses file capabilities |
 | RIPE Atlas | Drop ALL, retaining nine capabilities for bootstrap, signal handling, identity transitions and raw measurements | Escalation/root findings remain because the upstream helper requires a setuid transition |

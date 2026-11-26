@@ -94,6 +94,9 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         """Normal jobs must not create upper-layer tools that trigger Falco."""
         job = yaml.safe_load((ROOT / 'mastodon/cron-job-bookmarked-media-sync.yaml').read_text())
         pod = job['spec']['jobTemplate']['spec']['template']['spec']
+        self.assertTrue(pod['securityContext']['runAsNonRoot'])
+        self.assertEqual(65534, pod['securityContext']['runAsUser'])
+        self.assertEqual(65534, pod['securityContext']['fsGroup'])
         for container in pod['initContainers'] + pod['containers']:
             self.assertIn('/library/bookmarked-media-sync:', container['image'])
             self.assertNotIn('apk add', container['command'][-1])

@@ -191,9 +191,9 @@ class CompanionGuardContractTests(unittest.TestCase):
 
     def test_reviewed_scope_and_role_counts(self):
         """Verify reviewed scope and role counts."""
-        self.assertEqual(len(self.entries), 54)
+        self.assertEqual(len(self.entries), 53)
         self.assertEqual(
-            sum(len(v) for e in self.entries for v in e["requiredGuards"].values()), 83
+            sum(len(v) for e in self.entries for v in e["requiredGuards"].values()), 81
         )
         list(gen.generate({**self.catalog, "entries": self.entries}))
 

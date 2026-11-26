@@ -28,6 +28,10 @@ spec:
           securityContext:
             seccompProfile:
               type: RuntimeDefault
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            fsGroup: 65534
           priorityClassName: homelab-batch
           enableServiceLinks: false
           serviceAccountName: bookmarked-media-sync
@@ -56,6 +60,8 @@ spec:
               value: '3'
             - name: BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS
               value: '15'
+            - name: HOME
+              value: /tmp
             - name: IMMICH_INSTANCE_URL
               value: https://immich.andreybondarenko.com/api
             - name: IMMICH_API_KEY
@@ -103,6 +109,8 @@ spec:
               value: 'false'
             - name: NO_COLOR
               value: '1'
+            - name: HOME
+              value: /tmp
             resources:
               requests:
                 cpu: 10m

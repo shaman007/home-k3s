@@ -91,7 +91,6 @@ removed to force rescan. Prior six application capability findings remain separa
 | `mail` | CronJob | `rspamd-spam-trainer` |
 | `plex` | Deployment | `plex` |
 | `ripe-atlas` | Deployment | `ripe-atlas` |
-| `mastodon` | CronJob | `bookmarked-media-sync` |
 | `nextcloud` | Deployment | `collabora-collabora-online` |
 | `gpu-operator` | DaemonSet | `gpu-feature-discovery` |
 | `gpu-operator` | DaemonSet | `nvidia-dcgm-exporter` |
@@ -111,3 +110,5 @@ removed to force rescan. Prior six application capability findings remain separa
 | `longhorn-system` | Deployment | `csi-provisioner` |
 | `longhorn-system` | Deployment | `csi-resizer` |
 | `longhorn-system` | Deployment | `csi-snapshotter` |
+
+The bookmarked-media-sync root exception was retired after preinstalling its tools and switching both containers to UID/GID 65534.
