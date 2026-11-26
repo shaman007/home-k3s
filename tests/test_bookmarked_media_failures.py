@@ -24,6 +24,7 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
             "PATH": str(self.bin) + ":/usr/bin:/bin",
             "IMMICH_INSTANCE_URL": "https://example.invalid/api",
             "IMMICH_API_KEY": "dummy",
+            "IMMICH_JOB_API_KEY": "dummy-jobs",
             "BOOKMARKED_MEDIA_DOWNLOAD_MAX_ATTEMPTS": "2",
             "BOOKMARKED_MEDIA_DOWNLOAD_RETRY_DELAY_SECONDS": "0",
         }
@@ -105,6 +106,24 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         for executable in ['apk', 'npm']:
             self.stub(executable, 'exit 97')
         self.assertEqual(0, self.execute(source).returncode)
+
+    def test_face_detection_uses_separate_job_key(self):
+        """Queue credentials cannot leak into downloads or replace the upload key."""
+        job = yaml.safe_load((ROOT / "mastodon/cron-job-bookmarked-media-sync.yaml").read_text())
+        pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+        for container in pod["initContainers"]:
+            self.assertNotIn("IMMICH_JOB_API_KEY", [e["name"] for e in container["env"]])
+        env = {e["name"]: e for e in pod["containers"][0]["env"]}
+        self.assertEqual("IMMICH_JOB_API_KEY", env["IMMICH_JOB_API_KEY"]["valueFrom"]["secretKeyRef"]["key"])
+        self.assertEqual("IMMICH_API_KEY", env["IMMICH_API_KEY"]["valueFrom"]["secretKeyRef"]["key"])
+        source = self.upload_script()
+        captured = self.root / "queue-request"
+        self.stub("curl", 'printf "%s\\n" "$@" > "' + str(captured) + '"')
+        self.assertEqual(0, self.execute(source).returncode)
+        request = captured.read_text()
+        self.assertIn("x-api-key: dummy-jobs", request)
+        self.assertIn('"force":false', request)
+        self.assertIn("/jobs/faceDetection", request)
 
     def test_face_detection_remains_best_effort(self):
         """Verify face detection remains best effort."""
