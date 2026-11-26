@@ -20,6 +20,13 @@ data:
         matchers: ['priority="critical"']
         repeat_interval: 30m
 
+      - receiver: alert-emailer
+        matchers: ['job="falco"']
+        group_by: ['alertname', 'priority', 'k8s_ns_name', 'k8s_pod_name']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+
     receivers:
     - name: alert-emailer
       email_configs:

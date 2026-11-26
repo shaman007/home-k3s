@@ -15,7 +15,9 @@ data:
       endpoint: /api/v2/alerts
       expiresafter: 900
       minimumpriority: warning
+      # Keep per-event time in Loki/output annotations, not in alert identity.
       extralabels:
+        evt_time: ""
         job: falco
         category: security
         owner: homelab

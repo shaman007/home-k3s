@@ -98,16 +98,16 @@ class CustomCronTests(unittest.TestCase):
         )
 
     def test_media_upload_guard_precedes_all_work(self):
-        """An init skip cannot release npm, login, upload or description work."""
+        """An init skip cannot release login, upload or description work."""
         job = CUSTOM.mastodon(True)["mastodon/cron-job-bookmarked-media-sync.yaml"]
         pod = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]
         init, work = pod["initContainers"][0], pod["containers"][0]
         command = work["command"][-1]
         self.assertLess(
-            command.index(".dependencies-skipped"), command.index("npm install")
+            command.index(".dependencies-skipped"), command.index("immich -d /config login-key")
         )
         self.assertLess(
-            command.index("bookmarked_upload_probe.cjs"), command.index("npm install")
+            command.index("bookmarked_upload_probe.cjs"), command.index("immich -d /config login-key")
         )
         self.assertIn("75) exit 0", command)
         self.assertIn('exit "$status"', command)

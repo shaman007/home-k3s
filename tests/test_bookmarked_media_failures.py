@@ -77,11 +77,10 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(called.exists())
 
-    def test_install_login_upload_and_description_failures_fail_job(self):
-        """Verify install login upload and description failures fail job."""
+    def test_login_upload_and_description_failures_fail_job(self):
+        """Verify login upload and description failures still fail the job."""
         source = self.upload_script()
         for command, body in [
-            ("npm", "exit 1"),
             ("immich", "exit 1"),
             ("immich", 'case "$*" in *upload*) exit 1;; esac'),
             ("descriptions", "exit 1"),
@@ -90,6 +89,19 @@ class BookmarkedMediaFailureTest(unittest.TestCase):
                 self.stub(command, body)
                 self.assertNotEqual(0, self.execute(source).returncode)
                 self.stub(command, "exit 0")
+
+    def test_runtime_does_not_install_executables(self):
+        """Normal jobs must not create upper-layer tools that trigger Falco."""
+        job = yaml.safe_load((ROOT / 'mastodon/cron-job-bookmarked-media-sync.yaml').read_text())
+        pod = job['spec']['jobTemplate']['spec']['template']['spec']
+        for container in pod['initContainers'] + pod['containers']:
+            self.assertIn('/library/bookmarked-media-sync:', container['image'])
+            self.assertNotIn('apk add', container['command'][-1])
+            self.assertNotIn('npm install', container['command'][-1])
+        source = self.upload_script()
+        for executable in ['apk', 'npm']:
+            self.stub(executable, 'exit 97')
+        self.assertEqual(0, self.execute(source).returncode)
 
     def test_face_detection_remains_best_effort(self):
         """Verify face detection remains best effort."""

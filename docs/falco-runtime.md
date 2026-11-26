@@ -114,3 +114,49 @@ For delivery errors check both sides of namespace policies and receiver logs.
 If rolling back, revert the Falco Application/configuration and related policy
 and Prometheus changes through GitOps. Removing only live objects while
 self-heal is enabled is temporary. Do not remove shared Alertmanager/Loki routes.
+
+## Stable alert identity and runtime package noise
+
+Falcosidekick's Alertmanager-only `extralabels.evt_time` is an empty string.
+This overrides the automatically copied per-event timestamp label, so repeated
+instances of the same rule/container/process/user share a fingerprint. Pod,
+container, image, executable, parent and UID labels are retained: a different
+executable or identity still produces a distinct alert. Only Alertmanager label
+identity is changed; event time, full sanitized output and every separate event
+remain in Loki and in the latest alert annotations.
+
+The Falco-specific Alertmanager route groups notifications by alertname,
+priority, actual Kubernetes namespace and Pod, with a 30-second group wait.
+Other jobs and the existing critical-priority route keep their current routing.
+These controls aggregate repeat events; they do not exclude a namespace, image
+or process from any of the three detection rules.
+
+`mastodon/bookmarked-media-sync` now uses a shared, signed runtime image with
+ca-certificates, coreutils, curl, jq, kubectl and Immich CLI 3.0.2 installed during
+build. Runtime `apk add` and `npm install` were removed. Dependencies are in the
+image's lower layer, so ordinary utility execution no longer resembles dropped
+binaries. A genuinely copied executable in the writable layer still alerts.
+
+Image source is `bookmarked-media-sync/Dockerfile` in the sibling Dockerfiles
+repository. The existing weekly builder discovers it automatically. To prepare
+an isolated signed build with the current local source:
+
+```sh
+python3 tools/bookmarked-media-sync/prepare_build.py --source ../Dockerfiles > /tmp/bookmarked-build.json
+```
+
+The renderer writes an inert Job only. Review it, then submit through the
+repository's authorized build workflow. It inherits the existing builder's
+credentials/signing references, privileges, architecture, resource limits and
+network policy. The small source archive is embedded in the Job to avoid
+requiring another ConfigMap; its hash names the build and immutable image tag.
+Pin the verified published digest in both CronJob containers.
+
+Publish source changes in both repositories. Argo must apply the CronJob,
+Falcosidekick configuration and Alertmanager route. Existing Jobs retain their
+old Pod specifications; do not modify a running import to test the new image.
+After rollout check a newly scheduled Job and query Loki for its Pod. Historical
+alerts remain until expiry. A native Sidekick fixture test confirms deduplication
+across event times, distinct alerts for distinct executables, and lossless Loki
+forwarding; an isolated tokenless Pod can test normal utilities and a harmless
+copied `true` executable without touching Mastodon/Immich data.
