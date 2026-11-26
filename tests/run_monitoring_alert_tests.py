@@ -5,7 +5,7 @@ Requires PyYAML; does not access the cluster.
 """
 
 import pathlib
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 import yaml
@@ -49,4 +49,10 @@ with tempfile.TemporaryDirectory() as directory:
     queues = yaml.safe_load((root / "tests/queue-alerts.test.yaml").read_text())
     queues["rule_files"] = [str(full)]
     test.write_text(yaml.safe_dump(queues, sort_keys=False))
+    subprocess.run([sys.argv[1], "test", "rules", str(test)], check=True)
+
+    # Security fixtures cover actual counter labels, resets and noise boundaries.
+    security = yaml.safe_load((root / "tests/security-alerts.test.yaml").read_text())
+    security["rule_files"] = [str(full)]
+    test.write_text(yaml.safe_dump(security, sort_keys=False))
     subprocess.run([sys.argv[1], "test", "rules", str(test)], check=True)

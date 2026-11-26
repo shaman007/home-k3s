@@ -1,0 +1,214 @@
+evaluation_interval: 1m
+tests:
+- name: single exploit overflow triggers
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-cve-probing"}
+    values: 0+0x19 1+0x15
+  - series: process_start_time_seconds{job="crowdsec",instance="agent"}
+    values: 0+0x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        category: security
+        namespace: crowdsec
+        job: crowdsec
+        name: crowdsecurity/http-cve-probing
+      exp_annotations:
+        summary: 'CrowdSec detected an exploit attempt: crowdsecurity/http-cve-probing'
+        description: Scenario triggered within the last 15 minutes. This indicates
+          an attempt, not a successful compromise. Inspect cscli alerts list and Traefik
+          logs; verify the decision separately because simulation and enforcement
+          differ.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+- name: first lazy scenario counter is detected
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-cve-probing"}
+    values: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 1+0x15
+  - series: process_start_time_seconds{job="crowdsec",instance="agent"}
+    values: 0+0x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        category: security
+        namespace: crowdsec
+        job: crowdsec
+        name: crowdsecurity/http-cve-probing
+      exp_annotations:
+        summary: 'CrowdSec detected an exploit attempt: crowdsecurity/http-cve-probing'
+        description: Scenario triggered within the last 15 minutes. This indicates
+          an attempt, not a successful compromise. Inspect cscli alerts list and Traefik
+          logs; verify the decision separately because simulation and enforcement
+          differ.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+- name: historical counters do not page
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-cve-probing"}
+    values: 9+0x35
+  - series: process_start_time_seconds{job="crowdsec",instance="agent"}
+    values: 0+0x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts: []
+- name: counter reset alone is not an exploit
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-cve-probing"}
+    values: 9+0x19 0+0x15
+  - series: process_start_time_seconds{job="crowdsec",instance="agent"}
+    values: 0+0x19 1200+0x15
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts: []
+- name: restored nonzero counter after startup is not a fresh exploit
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-cve-probing"}
+    values: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 9+0x15
+  - series: process_start_time_seconds{job="crowdsec",instance="agent"}
+    values: 1200+0x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts: []
+- name: persistent scanning triggers
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-probing"}
+    values: 0+1x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecPersistentScanning
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        category: security
+        namespace: crowdsec
+        job: crowdsec
+        name: crowdsecurity/http-probing
+      exp_annotations:
+        summary: 'CrowdSec detected sustained scanning: crowdsecurity/http-probing'
+        description: At least five scenario overflows in ten minutes, sustained for
+          two minutes. This counts detections, not individual requests or unique attackers.
+          Inspect cscli alerts list and the affected host/path in Traefik logs.
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts: []
+- name: isolated scan is quiet
+  interval: 1m
+  input_series:
+  - series: cs_bucket_overflowed_total{job="crowdsec",instance="agent",name="crowdsecurity/http-probing"}
+    values: 0+0x19 1+0x15
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: CrowdSecPersistentScanning
+    exp_alerts: []
+- name: credential failures trigger
+  interval: 1m
+  input_series:
+  - series: keycloak_user_events_total{job="keycloak",realm="master",event="login",error="invalid_user_credentials"}
+    values: 0+3x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: KeycloakLoginFailureBurst
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        category: security
+        namespace: keycloak
+        job: keycloak
+        realm: master
+      exp_annotations:
+        summary: Keycloak possible password guessing in realm master
+        description: 'At least ten credential/account login failures in five minutes,
+          sustained for one minute. Aggregated across the realm: this is a possible
+          guessing burst, not attribution to an IP or user. Inspect Keycloak login
+          events; do not count refresh-token errors as password guessing.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+- name: occasional bad passwords are quiet
+  interval: 1m
+  input_series:
+  - series: keycloak_user_events_total{job="keycloak",realm="master",event="login",error="invalid_user_credentials"}
+    values: 0+1x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: KeycloakLoginFailureBurst
+    exp_alerts: []
+- name: successful logins and refresh failures do not trigger
+  interval: 1m
+  input_series:
+  - series: keycloak_user_events_total{job="keycloak",realm="master",event="login",error=""}
+    values: 0+20x35
+  - series: keycloak_user_events_total{job="keycloak",realm="master",event="refresh_token",error="invalid_user_credentials"}
+    values: 0+20x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: KeycloakLoginFailureBurst
+    exp_alerts: []
+- name: keycloak reset is not an attack
+  interval: 1m
+  input_series:
+  - series: keycloak_user_events_total{job="keycloak",realm="master",event="login",error="invalid_user_credentials"}
+    values: 90+0x19 0+0x15
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: KeycloakLoginFailureBurst
+    exp_alerts: []
+- name: failure counters summed across instances
+  interval: 1m
+  input_series:
+  - series: keycloak_user_events_total{job="keycloak",realm="master",instance="a",event="login",error="invalid_user_credentials"}
+    values: 0+1.5x35
+  - series: keycloak_user_events_total{job="keycloak",realm="master",instance="b",event="login",error="invalid_user_credentials"}
+    values: 0+1.5x35
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: KeycloakLoginFailureBurst
+    exp_alerts:
+    - exp_labels:
+        severity: mail
+        priority: warning
+        owner: homelab
+        category: security
+        namespace: keycloak
+        job: keycloak
+        realm: master
+      exp_annotations:
+        summary: Keycloak possible password guessing in realm master
+        description: 'At least ten credential/account login failures in five minutes,
+          sustained for one minute. Aggregated across the realm: this is a possible
+          guessing burst, not attribution to an IP or user. Inspect Keycloak login
+          events; do not count refresh-token errors as password guessing.'
+        runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+- name: missing lazy error series is quiet
+  interval: 1m
+  input_series: []
+  alert_rule_test:
+  - eval_time: 25m
+    alertname: KeycloakLoginFailureBurst
+    exp_alerts: []
+  - eval_time: 25m
+    alertname: CrowdSecExploitAttempt
+    exp_alerts: []
+  - eval_time: 25m
+    alertname: CrowdSecPersistentScanning
+    exp_alerts: []

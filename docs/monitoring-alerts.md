@@ -182,3 +182,50 @@ Run `python tests/run_monitoring_alert_tests.py /path/to/promtool` with PyYAML a
 Loki rules use the canonical `job="loki"` scrape. The same single-binary Loki is also scraped as `loki-headless`; including both duplicates alerts and counts. Update these selectors if scrape naming changes. Counts from `increase()` are estimates and may be fractional.
 
 For triage, inspect `loki_discarded_samples_total` grouped by `reason` with `job="loki"`, Alloy final-drop counters and write errors, and the effective Loki limits. Confirm whether the sender recovered and drained its backlog before raising limits. Do not infer permanent log loss from HTTP 429 alone. See [Loki request validation and rate limits](https://grafana.com/docs/loki/latest/operations/request-validation-rate-limits/).
+
+## Security detections
+
+The `security-detections` group uses the existing CrowdSec agent and Keycloak
+scrapes. No new exporter, Secret, access permission, or automatic ban is added.
+The existing Alertmanager receiver delivers warnings to email and Telegram,
+grouped by alertname/priority/namespace/job, with four-hour repeats.
+
+- `CrowdSecExploitAttempt`: a CVE/backdoor scenario overflow in the last fifteen
+  minutes. Uses `cs_bucket_overflowed_total` from the agent, not the LAPI retained
+  alert gauge. A newly appearing positive scenario counter also triggers once
+  the agent has been running for fifteen minutes, so a first isolated detection
+  is not lost to lazy counter creation. During that startup window, an initial
+  counter value alone is deliberately ignored; subsequent increments still count.
+  This prevents replaying restored counters as fresh attacks. The counter name
+  is retained as an alert label. An attempt does not prove exploitation or a ban.
+- `CrowdSecPersistentScanning`: at least five overflows of one probing, sensitive
+  file, or admin-interface scenario in ten minutes, sustained for two minutes.
+  Counts scenario detections, not raw HTTP requests or unique attackers. Isolated
+  scans remain visible in CrowdSec without generating this notification.
+- `KeycloakLoginFailureBurst`: at least ten login failures in five minutes,
+  sustained for one minute, aggregated per realm. Selects `event="login"` with
+  `invalid_user_credentials`, `user_not_found`, `user_disabled`, or
+  `user_temporarily_disabled` errors. Successful logins, token refresh errors and
+  client configuration errors are excluded. This is a possible password-guessing
+  burst, not per-user or per-IP attribution. Normal `increase()` warm-up applies
+  to newly created failure counters; the initial value is not counted as a delta.
+
+Triage CrowdSec with `kubectl exec -n crowdsec deployment/crowdsec-lapi -- cscli
+alerts list`, then inspect a specific alert and correlate with public Traefik
+access logs. Check simulation/decision state separately: detection and enforcement
+are different. HTTP metrics do not carry attacker IPs or host/path. Avoid treating
+a scenario named for an application as proof that that application is installed.
+
+For Keycloak inspect realm login events around the alert time; correlate errors,
+client and source IP before blocking anything. Usernames and IP addresses are
+not added as Prometheus labels. A disabled user may also produce failures.
+Scrape absence/down is covered by existing inventory/target alerts; an absent
+error counter is normal until that error first occurs.
+
+Validation: run `python3 tests/run_monitoring_alert_tests.py /path/to/promtool`
+with the production Prometheus version. Security fixtures cover lazy counters,
+restart/reset behavior, noise, successes, refresh failures and instance aggregation.
+Publish through the normal GitOps flow; the Prometheus ConfigMap is owned by
+`kubernetes-prometheus` and its reloader watches ConfigMap changes. After sync,
+verify the three loaded rules and their health in Prometheus, scrape freshness,
+and actual Alertmanager delivery. A local fixture pass does not prove delivery.

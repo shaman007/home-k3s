@@ -176,7 +176,7 @@ tests:
     eval_time: 60m
     exp_samples:
     - labels: '{service="web"}'
-      value: 0.36363636363636365
+      value: 0.3636363636363636
   alert_rule_test:
   - eval_time: 29m
     alertname: TraefikHigh5xx
@@ -192,7 +192,7 @@ tests:
       exp_annotations:
         summary: Ingress service returns over 20% server errors for thirty minutes
           with at least 30 server errors and 100 requests per ten minutes.
-        description: 'Affected resource: {service="web"}; observed value: 0.36363636363636365.
+        description: 'Affected resource: map[service:web]; observed value: 0.3636363636363636.
           See runbook for checks and thresholds.'
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#triage
 - name: LonghornBackupStale

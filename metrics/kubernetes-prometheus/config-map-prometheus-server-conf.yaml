@@ -1494,6 +1494,60 @@ data:
           summary: Immich queue {{ $labels.queue }} retains failed jobs.
           description: This is a retained failure count, not a rate of new failures. Review the Immich admin job view; do not automatically retry or delete jobs.
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#application-queues
+    - name: security-detections
+      rules:
+      - alert: CrowdSecExploitAttempt
+        expr: |
+          sum by (name) (
+            (increase(cs_bucket_overflowed_total{job="crowdsec",name=~"crowdsecurity/(http-cve-probing|http-backdoors-attempts|.*[Cc][Vv][Ee].*)"}[15m]) >= 1)
+            or
+            (
+              (cs_bucket_overflowed_total{job="crowdsec",name=~"crowdsecurity/(http-cve-probing|http-backdoors-attempts|.*[Cc][Vv][Ee].*)"} >= 1
+               unless cs_bucket_overflowed_total{job="crowdsec"} offset 15m)
+              and on (job, instance) (time() - process_start_time_seconds{job="crowdsec"} > 900)
+            )
+          ) > 0
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          category: security
+          namespace: crowdsec
+          job: crowdsec
+        annotations:
+          summary: 'CrowdSec detected an exploit attempt: {{ $labels.name }}'
+          description: 'Scenario triggered within the last 15 minutes. This indicates an attempt, not a successful compromise. Inspect cscli alerts list and Traefik logs; verify the decision separately because simulation and enforcement differ.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+      - alert: CrowdSecPersistentScanning
+        expr: |
+          sum by (name) (increase(cs_bucket_overflowed_total{job="crowdsec",name=~"crowdsecurity/http-(probing|sensitive-files|admin-interface-probing)"}[10m])) >= 5
+        for: 2m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          category: security
+          namespace: crowdsec
+          job: crowdsec
+        annotations:
+          summary: 'CrowdSec detected sustained scanning: {{ $labels.name }}'
+          description: 'At least five scenario overflows in ten minutes, sustained for two minutes. This counts detections, not individual requests or unique attackers. Inspect cscli alerts list and the affected host/path in Traefik logs.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
+      - alert: KeycloakLoginFailureBurst
+        expr: |
+          sum by (realm) (increase(keycloak_user_events_total{job="keycloak",event="login",error=~"invalid_user_credentials|user_not_found|user_disabled|user_temporarily_disabled"}[5m])) >= 10
+        for: 1m
+        labels:
+          severity: mail
+          priority: warning
+          owner: homelab
+          category: security
+          namespace: keycloak
+          job: keycloak
+        annotations:
+          summary: 'Keycloak possible password guessing in realm {{ $labels.realm }}'
+          description: 'At least ten credential/account login failures in five minutes, sustained for one minute. Aggregated across the realm: this is a possible guessing burst, not attribution to an IP or user. Inspect Keycloak login events; do not count refresh-token errors as password guessing.'
+          runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/monitoring-alerts.md#security-detections
     - name: remote-write-recovery
       rules:
       - alert: PrometheusRemoteWriteLag
