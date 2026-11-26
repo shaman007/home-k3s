@@ -231,10 +231,11 @@ tests:
         node: node-a
         outcome: allowed
       exp_annotations:
-        summary: Unexpected Secret access on node-a (allowed)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
+        summary: Secret access outside reviewed reader exceptions via API server node-a (allowed)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: secret_read single event denied
   interval: 1m
@@ -255,10 +256,11 @@ tests:
         node: node-a
         outcome: denied
       exp_annotations:
-        summary: Unexpected Secret access on node-a (denied)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
+        summary: Secret access outside reviewed reader exceptions via API server node-a (denied)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: secret_read single event dry-run
   interval: 1m
@@ -279,10 +281,11 @@ tests:
         node: node-a
         outcome: dry-run
       exp_annotations:
-        summary: Unexpected Secret access on node-a (dry-run)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
+        summary: Secret access outside reviewed reader exceptions via API server node-a (dry-run)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="secret_read",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: secret_read historical event ages out
   interval: 1m
@@ -312,10 +315,11 @@ tests:
         node: node-a
         outcome: allowed
       exp_annotations:
-        summary: RBAC grant or dangerous role change on node-a (allowed)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
+        summary: RBAC grant or dangerous role change via API server node-a (allowed)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: dangerous_rbac single event denied
   interval: 1m
@@ -336,10 +340,11 @@ tests:
         node: node-a
         outcome: denied
       exp_annotations:
-        summary: RBAC grant or dangerous role change on node-a (denied)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
+        summary: RBAC grant or dangerous role change via API server node-a (denied)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: dangerous_rbac single event dry-run
   interval: 1m
@@ -360,10 +365,11 @@ tests:
         node: node-a
         outcome: dry-run
       exp_annotations:
-        summary: RBAC grant or dangerous role change on node-a (dry-run)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
+        summary: RBAC grant or dangerous role change via API server node-a (dry-run)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: dangerous_rbac historical event ages out
   interval: 1m
@@ -393,10 +399,11 @@ tests:
         node: node-a
         outcome: allowed
       exp_annotations:
-        summary: Exec, attach or port-forward to a sensitive Pod on node-a (allowed)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
+        summary: Exec, attach or port-forward to a sensitive Pod via API server node-a (allowed)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: sensitive_exec single event denied
   interval: 1m
@@ -417,10 +424,11 @@ tests:
         node: node-a
         outcome: denied
       exp_annotations:
-        summary: Exec, attach or port-forward to a sensitive Pod on node-a (denied)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
+        summary: Exec, attach or port-forward to a sensitive Pod via API server node-a (denied)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: sensitive_exec single event dry-run
   interval: 1m
@@ -441,10 +449,11 @@ tests:
         node: node-a
         outcome: dry-run
       exp_annotations:
-        summary: Exec, attach or port-forward to a sensitive Pod on node-a (dry-run)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
+        summary: Exec, attach or port-forward to a sensitive Pod via API server node-a (dry-run)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: sensitive_exec historical event ages out
   interval: 1m
@@ -474,10 +483,11 @@ tests:
         node: node-a
         outcome: allowed
       exp_annotations:
-        summary: Privileged Pod creation or update attempt on node-a (allowed)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
+        summary: Privileged Pod creation or update attempt via API server node-a (allowed)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: privileged_pod single event denied
   interval: 1m
@@ -498,10 +508,11 @@ tests:
         node: node-a
         outcome: denied
       exp_annotations:
-        summary: Privileged Pod creation or update attempt on node-a (denied)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
+        summary: Privileged Pod creation or update attempt via API server node-a (denied)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: privileged_pod single event dry-run
   interval: 1m
@@ -522,10 +533,11 @@ tests:
         node: node-a
         outcome: dry-run
       exp_annotations:
-        summary: Privileged Pod creation or update attempt on node-a (dry-run)
-        description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
+        summary: Privileged Pod creation or update attempt via API server node-a (dry-run)
+        description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="node-a"}
           for actor, target and response code. Allowed, denied, failed and dry-run events
           are separate; an attempt does not prove compromise.
+        dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node=node-a
         runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
 - name: privileged_pod historical event ages out
   interval: 1m

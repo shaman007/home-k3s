@@ -75,8 +75,8 @@ def build():
         p = panel(title, expr, i*6, 1, 6, 4, "stat",
                   description="Global coverage, independent of event filters. Scrape availability alone does not prove ingestion. Current cluster baseline: " + str(expected) + ".")
         p["fieldConfig"]["defaults"].update(color={"mode": "thresholds"}, thresholds={"mode": "absolute", "steps": [{"color": "red", "value": None}, {"color": "green", "value": expected}]})
-    panel("Active security alerts · Prometheus", 'ALERTS{category="security",alertstate=~"pending|firing"}', 0, 5, 24, 7, "table",
-          description="Current Prometheus detection and collector-health alerts. Falco events go directly to Alertmanager; their event history is in the Falco row below.")
+    panel("Активные правила · сгруппированы по API-серверу", 'ALERTS{category="security",alertstate=~"pending|firing"}', 0, 5, 24, 7, "table",
+          description="Строка — группа событий, а не отдельная атака. Кто и что сделал — в таблице ниже. node обозначает API-сервер, namespace коллектора скрыт. Falco отправляет события напрямую в Alertmanager и показан отдельно.")
     panel("Security alert history · Prometheus", 'max by (alertname,alertstate) (ALERTS{category="security"})', 0, 12, 24, 6,
           legend="{{alertname}} / {{alertstate}}", description="Alert state samples, not an event count. Falco has a separate Loki event history.")
     row("CrowdSec · exploit attempts and sustained scanning", 18)
@@ -99,7 +99,7 @@ def build():
           ds=LOKI, legend="{{detection}} / {{outcome}}", description="Counts persisted sanitized Loki records. Denied, failed and dry-run attempts are not successful changes.")
     panel("Audit events · selected range", 'sum by (detection,outcome) (count_over_time(' + AUDIT + '[$__range]))', 12, 45,
           kind="table", ds=LOKI, legend="{{detection}} / {{outcome}}", description="No data can mean no matching events; check collector health above and below.")
-    panel("Audit event details · latest 200", AUDIT + ' | json | line_format "{{.timestamp}} {{.detection}} {{.outcome}} actor={{.actor}} impersonated={{.impersonated}} {{.verb}} {{.resource}}/{{.subresource}} namespace={{.namespace}} name={{.name}} code={{.code}} role={{.role_ref}} audit_id={{.audit_id}}"', 0, 53, 24, 10, "logs", LOKI,
+    panel("Audit event details · latest 200", AUDIT + ' | json | line_format "{{.timestamp}} {{.detection}} {{.outcome}} apiserver={{.node}} source_ip={{.source_ip}} actor={{.actor}} impersonated={{.impersonated}} {{.verb}} {{.resource}}/{{.subresource}} namespace={{.namespace}} name={{.name}} code={{.code}} role={{.role_ref}} audit_id={{.audit_id}}"', 0, 53, 24, 10, "logs", LOKI,
           description="Allowlisted audit metadata only; no Secret contents, request/response bodies or exec command arguments. Expand a line for structured fields.")
     row("Falco · terminal shell, new binary, reverse-shell signature", 63)
     panel("Falco detections · event count / interval", 'sum by (rule) (count_over_time(' + FALCO + '[$__interval]))', 0, 64,
@@ -121,6 +121,54 @@ def build():
     panel("Sidekick endpoints · expected 2", 'sum(up{job="falcosidekick"}) or vector(0)', 0, 99, 6, 5, "stat")
     panel("Alertmanager delivery errors · selected range", 'sum by (integration) (increase(alertmanager_notifications_failed_total{integration=~"telegram|email"}[$__range]))', 6, 99, 18, 5,
           legend="{{integration}}", description="Shared notification transport for all alerts, not security-only delivery attribution.")
+    # Reserve space for an actionable audit table immediately below rule groups.
+    for existing in PANELS:
+        if existing['gridPos']['y'] >= 12:
+            existing['gridPos']['y'] += 10
+    event_expr = ('sum by (node,detection,actor,action,target_namespace,target_name,outcome,source_ip) '
+                  '(count_over_time(' + AUDIT + ' | json actor="actor", verb="verb", resource="resource", '
+                  'subresource="subresource", target_namespace="namespace", target_name="name", source_ip="source_ip" '
+                  '| __error__="" | label_format action="{{.verb}} {{.resource}}{{if .subresource}}/{{.subresource}}{{end}}", '
+                  'target_namespace="{{if .target_namespace}}{{.target_namespace}}{{else}}(cluster){{end}}", '
+                  'target_name="{{if .target_name}}{{.target_name}}{{else}}(collection){{end}}" [15m]))')
+    details = panel("Кто, что и где сделал · audit за последние 15 минут", event_expr,
+                    0, 12, 24, 10, "table", LOKI,
+                    description="Причины активных audit-алертов. События сгруппированы по участнику, действию и цели; число — количество событий. allowed = запрос разрешён, denied = отказ, dry-run = проверка без изменения. API-сервер не обязательно является источником. IP источника доступен для новых событий. get = чтение объекта, list = список, watch = наблюдение. Кто — аутентифицированный субъект запроса, не доказанная личность или процесс. IP может быть адресом узла после NAT. Это запрос к журналам, не увеличение кардинальности Prometheus.")
+    PANELS.insert(6, PANELS.pop())
+    groups = next(p for p in PANELS if p['title'] == "Активные правила · сгруппированы по API-серверу")
+    for table, order, excluded, aliases in [
+        (groups, ["alertname","alertstate","node","outcome","name","destination"],
+         ["Time","__name__","category","cluster","job","namespace","owner","priority","severity","Value","Value #A"],
+         {"alertname":"Детект", "alertstate":"Состояние", "node":"API-сервер / узел датчика", "outcome":"Результат", "name":"Сценарий", "destination":"Получатель"}),
+        (details, ["actor","action","target_namespace","target_name","outcome","detection","node","source_ip","Value #A"], ["Time"],
+         {"actor":"Кто", "action":"Действие", "target_namespace":"Namespace цели", "target_name":"Объект / коллекция", "outcome":"Результат", "detection":"Детект", "node":"API-сервер", "source_ip":"IP источника", "Value #A":"Событий", "Value":"Событий"}),
+    ]:
+        table['transformations'] = [{"id":"organize", "options":{
+            "excludeByName": {name:True for name in excluded},
+            "indexByName": {name:i for i,name in enumerate(order)}, "renameByName":aliases}}]
+        table['options']['sortBy'] = []
+    outcomes = {"allowed":{"text":"Разрешено API"}, "denied":{"text":"Отказ API"},
+                "failed":{"text":"Ошибка запроса"}, "dry-run":{"text":"Проверка без изменения"}}
+    detections = {"secret_read":{"text":"Чтение Secrets вне исключений"},
+                  "dangerous_rbac":{"text":"Выдача прав / опасная роль"},
+                  "sensitive_exec":{"text":"Exec / attach / port-forward"},
+                  "privileged_pod":{"text":"Privileged Pod"}}
+    for table in [groups, details]:
+        table['fieldConfig']['overrides'] = [
+            {"matcher":{"id":"byName","options":"Результат"},"properties":[{"id":"mappings","value":[{"type":"value","options":outcomes}]}]},
+        ]
+    details['fieldConfig']['overrides'] += [
+        {"matcher":{"id":"byName","options":"Кто"},"properties":[{"id":"custom.width","value":320},{"id":"custom.wrapText","value":True}]},
+        {"matcher":{"id":"byName","options":"Детект"},"properties":[{"id":"mappings","value":[{"type":"value","options":detections}]}]},
+    ]
+    groups['fieldConfig']['overrides'] += [
+        {"matcher":{"id":"byName","options":"Детект"},"properties":[{"id":"mappings","value":[{"type":"value","options":{
+            "KubernetesUnexpectedSecretRead":{"text":"Чтение Secrets вне исключений"},
+            "KubernetesSensitivePodExec":{"text":"Exec / attach / port-forward"},
+            "KubernetesDangerousRBAC":{"text":"Выдача прав / опасная роль"},
+            "KubernetesPrivilegedPod":{"text":"Privileged Pod"},
+        }}]}]},
+    ]
     return {"uid":"security-overview","title":"Security Overview","description":"CrowdSec, Keycloak, Kubernetes audit and Falco detections with collection and delivery health. Events indicate activity or attempts, not proof of compromise.",
             "schemaVersion":41,"version":1,"editable":True,"tags":["homelab","security"],"refresh":"1m",
             "time":{"from":"now-6h","to":"now"},"timezone":"browser","panels":PANELS,

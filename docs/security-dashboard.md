@@ -8,7 +8,15 @@ It uses the existing Thanos and Loki data sources; no new exporter, permissions
 or notification route is required.
 
 The top section shows global endpoint coverage, active Prometheus security
-alerts and their history. Falco sends events directly to Alertmanager, so its
+rule groups, a 15-minute table of actual audit actors/actions/targets/results,
+and alert history. The rule table hides the misleading collector namespace and
+identifies the receiving API server. The event table displays the real target
+namespace/name, source IP (new events), and grouped event count. `get` reads one
+object, `list` retrieves a collection, and `watch` subscribes to changes. The
+actor is the authenticated identity, not a proven human or process. Source IP
+can be translated by node networking; do not assume the API server initiated
+the request. Outcomes are translated into API allowed/denied/error/dry-run.
+A retained 15-minute group is not a continuing attack or one incident. Falco sends events directly to Alertmanager, so its
 history is shown in the Falco section using persisted Loki records, rather than
 Prometheus ALERTS. Coverage cards are global and do not change with event filters.
 

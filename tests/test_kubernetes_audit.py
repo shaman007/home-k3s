@@ -54,6 +54,29 @@ def event(identity, *, resource='secrets', verb='get', namespace='openbao',
 class AuditPolicyBoundaryTests(unittest.TestCase):
     """Safety boundaries which protect the live API and host."""
 
+    def test_reviewed_exceptions_match_generated_config(self):
+        """CI must catch policy drift even without the optional Alloy binary."""
+        from tools.monitoring.generate_audit_exceptions import START, END, render, condition
+        rules = json.loads((ROOT / 'tools/monitoring/audit_secret_readers.json').read_text())['rules']
+        text = (ROOT / 'kubernetes-audit/config-map-audit-alloy.yaml').read_text()
+        block = text[text.index(START):text.index(END) + len(END)]
+        self.assertEqual(render(rules), block)
+        for rule in rules:
+            self.assertNotIn('*', rule['actor'])
+            if rule['actor'] == 'talos:admin':
+                self.assertTrue(rule['source_ips'])
+                self.assertEqual('Go-http-client/2.0', rule['user_agent'])
+                if 'get' in rule['verbs']:
+                    self.assertEqual('talos-backup', rule['namespace'])
+                    self.assertEqual(['talos-backup-secrets'], rule['names'])
+            if rule['actor'] == 'system:serviceaccount:external-secrets:external-secrets' and 'get' in rule['verbs']:
+                self.assertTrue(rule['namespace'])
+                self.assertTrue(rule['names'])
+        with self.assertRaises(ValueError):
+            condition({'actor':'talos:admin','namespace':None,'verbs':['get']})
+        with self.assertRaises(ValueError):
+            condition({'actor':'system:*','namespace':'monitoring','verbs':['get']})
+
     def test_admission_policies_are_observation_only(self):
         docs = list(yaml.safe_load_all((ROOT / 'kubernetes-audit/admission-audit-annotations.yaml').read_text()))
         for doc in docs:
@@ -150,6 +173,53 @@ class AlloyPipelineTests(unittest.TestCase):
                     fake_dry = event('get-dry-query')
                     fake_dry['requestURI'] += '&dryRun=All'
                     events.append(fake_dry)
+                    # Exercise every reviewed exception through actual Alloy, not a Python mirror.
+                    policy = json.loads((ROOT / 'tools/monitoring/audit_secret_readers.json').read_text())['rules']
+                    boundary_ids = set()
+                    for i, rule in enumerate(policy):
+                        verb = rule['verbs'][0]
+                        namespace = rule['namespace']
+                        if namespace == '*namespaced*':
+                            namespace = 'fixture-namespace'
+                        trusted_event = event('expected-' + str(i), verb=verb, namespace=namespace,
+                                              name=rule.get('names', ['example'])[0],
+                                              stage='ResponseStarted' if verb == 'watch' else 'ResponseComplete')
+                        trusted_event['user']['username'] = rule['actor']
+                        if rule.get('source_ips'):
+                            trusted_event['sourceIPs'] = [rule['source_ips'][0]]
+                            trusted_event['userAgent'] = rule['user_agent']
+                        events.append(trusted_event)
+                        # Exceptions never suppress denials, impersonation, or other identities.
+                        for suffix in ['denied', 'failed', 'impersonated', 'human']:
+                            changed = json.loads(json.dumps(trusted_event))
+                            identity = 'boundary-' + str(i) + '-' + suffix
+                            changed['auditID'] = identity
+                            if suffix == 'denied':
+                                changed['responseStatus']['code'] = 403
+                                changed['stage'] = 'ResponseComplete'
+                            elif suffix == 'failed':
+                                changed['responseStatus']['code'] = 404
+                                changed['stage'] = 'ResponseComplete'
+                            elif suffix == 'impersonated':
+                                changed['impersonatedUser'] = {'username':'human'}
+                            else:
+                                changed['user']['username'] = 'human'
+                            events.append(changed)
+                            boundary_ids.add(identity)
+                    talos = next(e for e in events if e['auditID'].startswith('expected-') and e['user']['username'] == 'talos:admin')
+                    for suffix, field, value in [('wrong-ip','sourceIPs',['203.0.113.5']),
+                                                 ('wrong-agent','userAgent','kubectl/test'),
+                                                 ('wrong-secret','objectRef',dict(talos['objectRef'], name='other')),
+                                                 ('wrong-namespace','objectRef',dict(talos['objectRef'], namespace='openbao'))]:
+                        changed = json.loads(json.dumps(talos))
+                        changed['auditID'] = 'talos-' + suffix
+                        changed[field] = value
+                        events.append(changed)
+                        boundary_ids.add(changed['auditID'])
+                    unknown = event('eso-unknown-secret', namespace='monitoring', name='unreviewed-secret')
+                    unknown['user']['username'] = 'system:serviceaccount:external-secrets:external-secrets'
+                    events.append(unknown)
+                    boundary_ids.add('eso-unknown-secret')
                     with logfile.open('a') as stream:
                         for item in events:
                             stream.write(json.dumps(item) + '\n')
@@ -200,6 +270,7 @@ class AlloyPipelineTests(unittest.TestCase):
                                     records.append(record)
                     actual = {r['audit_id'] for r in records}
                     expected = {'secret','secret-denied','secret-missing','list','watch','exec','db-exec','rbac','role','privileged','psa-denied','wrong-namespace','impersonated','dry','get-dry-query'}
+                    expected |= boundary_ids
                     self.assertEqual(expected, actual)
                     self.assertEqual(len(expected), len(records))
                     by_id = {r['audit_id']: r for r in records}

@@ -45,7 +45,7 @@ started a host process; runtime detection remains a separate task.
 Do **not** enable Request/RequestResponse auditing for Secrets or Pod bodies.
 Only the following fields leave the collector: audit ID, audit timestamp,
 detection, outcome, original/impersonated identity, resource/subresource,
-namespace/name, verb, response code, and role reference. Raw request/response
+namespace/name, verb, response code, first source IP, and role reference. Raw request/response
 objects, request URI, exec arguments, user agent and annotation contents are not
 forwarded. Existing node audit files still contain the original Metadata events,
 including request URIs; this collector does not expand their contents or copy
@@ -76,15 +76,47 @@ records still in the active file can be resumed; rotated-away backlog may be los
 | KubernetesSensitivePodExec | `sensitive_exec` | exec/attach/portforward in openbao, keycloak, argocd, harbor, bitwarden, mail, monitoring; also Pod names matching postgres/postgresql/mysql/mariadb/redis/valkey components |
 | KubernetesPrivilegedPod | `privileged_pod` | privileged containers reported by admission audit facts or PodSecurity violations |
 
-Secrets exceptions are explicit identity + namespace + verb conditions in
-`config-map-audit-alloy.yaml`. They cover observed controller caches and node
-get/watch operations, not all `system:` identities. Cluster-wide controller
-exceptions apply to list/watch only; direct gets remain visible. Namespace-scoped
-exceptions do not apply across namespaces. Human administrators are not excluded.
-Impersonated requests and failures never inherit these exceptions. Review changes
-against actual audit metadata and RBAC; do not silence whole namespaces to remove
-noise. These exceptions identify expected access, not protection from a compromised
-controller abusing its existing cache.
+Secrets exceptions are reviewed entries in
+`tools/monitoring/audit_secret_readers.json`, rendered into the actual Alloy
+pipeline by `python3 tools/monitoring/generate_audit_exceptions.py`.
+Do not edit the generated block or automatically learn exceptions from traffic.
+
+- Every entry fixes an authenticated identity, namespace/scope and read verbs.
+  Cluster informer exceptions cover only list/watch, not direct gets. Their
+  required cluster-wide scope cannot distinguish abuse of that same informer.
+- External Secrets direct gets are restricted to the exact namespace/name pairs
+  of the reviewed ExternalSecret targets; namespace-local lists and the global
+  list/watch informer are separate entries. New targets require an explicit
+  source update. No resource permission is granted by an audit exception.
+- Argo own-namespace informers, Kyverno reports, FRR, Traefik registry and Cilium
+  operator use their exact deployed ServiceAccounts and observed scopes. Argo
+  direct reads of the three Cilium/Hubble TLS Secrets are individually named.
+- Denied/failed reads, impersonation, unknown identities and other direct target
+  names remain visible. Ordinary human/admin reads are not excluded.
+
+### Attribution of `talos:admin` backup reads
+
+On 2026-11-26, audit showed a successful GET of
+`talos-backup/talos-backup-secrets` every minute, followed by an update of the
+same-named `talos.dev/v1alpha1 ServiceAccount`. Source
+`fd74:67a:1fcf:4202::5a97` is the Cilium internal address of `talos-d4h-k5m`;
+`w386` was the receiving API server, not the originating node.
+Talos controller-runtime on `.242` logged `kubeaccess.CRDController` successfully
+syncing that exact object at the same timestamps. The deployed Talos 1.14.7
+[source](https://github.com/siderolabs/talos/blob/v1.14.7/internal/app/machined/pkg/controllers/kubeaccess/serviceaccount/crd_controller.go)
+uses a one-minute informer resync and reads the Secret from the live API in
+`syncHandler`. This is the OS controller maintaining the backup service account,
+not a backup Pod running every minute. The backup CronJob runs hourly at :17.
+
+The Talos direct-read exception fixes actor `talos:admin`, namespace, Secret name,
+GET, successful response, no impersonation, observed Go HTTP client user agent
+and an explicit set of Talos node source addresses. The same controller's global
+list/watch informer has a separate exception with the same actor/source/client
+constraints and no direct GET. The user agent is an additional constraint, not
+an authentication credential. Review node IP changes rather than broadening to
+an entire subnet. Other Talos identities/targets, off-node requests, kubectl
+clients, impersonation and failures still alert. This does not protect against
+an attacker already holding that identity and using the same expected path.
 
 Open watches and streaming exec use ResponseStarted; other requests and errors
 use ResponseComplete. This avoids double-counting each request when it finishes.
@@ -96,7 +128,11 @@ actual grants or running privileged Pods.
 Each detection sets `homelab_audit_last_detection_timestamp_seconds` with its
 actual audit timestamp. Prometheus alerts for fifteen minutes after a single event,
 including a first-ever event; it does not rely on a lazily-created counter delta.
-Related events are grouped into existing Alertmanager notifications. Counters are
+Related events are grouped into existing Alertmanager notifications.
+The alert summary now explicitly names the receiving API server, not an affected
+host. `namespace=kube-system` is a routing/collector label, not the target
+namespace. The dashboard links to the 15-minute who/action/target table from Loki;
+participant/target labels are not added to Prometheus metrics. Counters are
 also exported for volume. Metric labels contain detection/outcome/node/job, not
 users, object names, namespaces or command arguments. Collector restart resets
 its in-memory metrics; already stored Loki records remain available.

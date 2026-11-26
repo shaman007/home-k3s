@@ -21,6 +21,8 @@ data:
           timestamp = "stageTimestamp",
           stage = "stage",
           actor = "user.username",
+          source_ip = "sourceIPs[0]",
+          user_agent = "userAgent",
           impersonated = "impersonatedUser.username",
           resource = "objectRef.resource",
           subresource = "objectRef.subresource",
@@ -63,23 +65,103 @@ data:
         source = "outcome"
         template = `{{ if and (eq (toString .dry_run) "true") (or (eq .verb "create") (eq .verb "update") (eq .verb "patch") (eq .verb "delete")) (ne .subresource "exec") (ne .subresource "attach") (ne .subresource "portforward") }}dry-run{{ else if or (eq (int .code) 401) (eq (int .code) 403) }}denied{{ else if ge (int .code) 400 }}failed{{ else }}allowed{{ end }}`
       }
-      // Every human/admin read is visible. Exceptions apply only to successful reads.
-      // These are exact controller identities + namespace + verb, not all system users.
+      // BEGIN generated expected Secret readers
+      // Source: tools/monitoring/audit_secret_readers.json; do not edit this block.
       stage.template {
         source = "expected_secret_reader"
-        template = `{{ if and (not .impersonated) (lt (int .code) 400) (or
+        template = `{{ if and (not .impersonated) (ge (int .code) 200) (lt (int .code) 300) (or
           (and (eq .actor "system:serviceaccount:kyverno:kyverno-admission-controller") (eq .target_namespace "kyverno") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
-          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets-cert-controller") (eq .target_namespace "external-secrets") (eq .verb "get"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets-cert-controller") (eq .target_namespace "external-secrets") (eq .verb "get") (eq .target_name "external-secrets-webhook"))
           (and (eq .actor "system:serviceaccount:longhorn-system:longhorn-service-account") (eq .target_namespace "longhorn-system") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
-          (and (or (eq .actor "system:serviceaccount:cert-manager:cert-manager") (eq .actor "system:serviceaccount:cert-manager:cert-manager-cainjector") (eq .actor "system:serviceaccount:argocd:argocd-application-controller") (eq .actor "system:serviceaccount:traefik:traefik-private") (eq .actor "system:serviceaccount:traefik:traefik")) (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
-          (and (eq .actor "system:serviceaccount:argocd:argocd-notifications-controller") (eq .target_namespace "argocd") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
-          (and (eq .actor "system:serviceaccount:metallb-system:metallb-speaker") (eq .target_namespace "metallb-system") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
-          (and (eq .actor "system:serviceaccount:cert-manager:cert-manager-webhook") (eq .target_namespace "cert-manager") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:cert-manager:cert-manager") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:cert-manager:cert-manager-cainjector") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-application-controller") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:traefik:traefik-private") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:traefik:traefik") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:reloader-reloader") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:kube-system:cilium-operator") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:kube-controller-manager") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:apiserver") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-application-controller") (eq .target_namespace "argocd") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-applicationset-controller") (eq .target_namespace "argocd") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-server") (eq .target_namespace "argocd") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-dex-server") (eq .target_namespace "argocd") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-notifications-controller") (eq .target_namespace "argocd") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-notifications-controller") (eq .target_namespace "argocd") (eq .verb "get") (or (eq .target_name "argocd-notifications-secret") (eq .target_name "argocd-secret")))
+          (and (eq .actor "system:serviceaccount:argocd:argocd-application-controller") (eq .target_namespace "kube-system") (eq .verb "get") (or (eq .target_name "cilium-ca") (eq .target_name "hubble-server-certs") (eq .target_name "hubble-relay-client-certs")))
+          (and (eq .actor "system:serviceaccount:metallb-system:metallb-speaker") (eq .target_namespace "metallb-system") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:metallb-system:metallb-frr-k8s-controller") (eq .target_namespace "metallb-system") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:cert-manager:cert-manager-webhook") (eq .target_namespace "cert-manager") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")) (eq .target_name "cert-manager-webhook-ca"))
           (and (eq .actor "system:serviceaccount:kube-system:cilium") (eq .target_namespace "cilium-secrets") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")))
-          (and (or (eq .actor "system:node:w386") (eq .actor "system:node:talos-qlw-pbh") (eq .actor "system:node:talos-d4h-k5m")) .target_namespace (or (eq .verb "get") (eq .verb "watch")))
-          (and (eq .actor "system:apiserver") (not .target_namespace) (eq .verb "watch"))
+          (and (eq .actor "system:serviceaccount:kyverno:kyverno-reports-controller") (eq .target_namespace "kyverno") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:traefik:traefik-registry") (eq .target_namespace "harbor") (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "system:node:w386") .target_namespace (or (eq .verb "get") (eq .verb "watch")))
+          (and (eq .actor "system:node:talos-qlw-pbh") .target_namespace (or (eq .verb "get") (eq .verb "watch")))
+          (and (eq .actor "system:node:talos-d4h-k5m") .target_namespace (or (eq .verb "get") (eq .verb "watch")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "aiy-voice") (eq .verb "get") (or (eq .target_name "aiy-voice-action-prompts") (eq .target_name "aiy-voice-auth") (eq .target_name "aiy-voice-memory-prompts") (eq .target_name "aiy-voice-prompts")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "aiy-voice") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "argocd") (eq .verb "get") (eq .target_name "argocd-oidc-secret"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "argocd") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "bitwarden") (eq .verb "get") (or (eq .target_name "id") (eq .target_name "key") (eq .target_name "postgres-pass") (eq .target_name "yubico-client-id") (eq .target_name "yubico-secret-key")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "bitwarden") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "cert-manager") (eq .verb "get") (eq .target_name "godaddy-dns-token"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "cert-manager") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "convertx") (eq .verb "get") (eq .target_name "convertx-env"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "convertx") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "crowdsec") (eq .verb "get") (eq .target_name "crowdsec-bootstrap"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "crowdsec") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "dawarich") (eq .verb "get") (or (eq .target_name "oidc-client-secret") (eq .target_name "postgres-password")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "dawarich") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "firefox-sync") (eq .verb "get") (eq .target_name "firefox-sync-env"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "firefox-sync") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "headlamp") (eq .verb "get") (eq .target_name "headlamp-oidc-secret"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "headlamp") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "hister") (eq .verb "get") (eq .target_name "hister-access-token"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "hister") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "image-builder") (eq .verb "get") (or (eq .target_name "podman-builder-harbor") (eq .target_name "podman-builder-signing")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "image-builder") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "immich") (eq .verb "get") (eq .target_name "immich-env"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "immich") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "karakeep") (eq .verb "get") (eq .target_name "karakeep-secret-env"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "karakeep") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "keycloak") (eq .verb "get") (or (eq .target_name "keycloak-admin") (eq .target_name "postgres-password")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "keycloak") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "loki") (eq .verb "get") (eq .target_name "loki-objstore-secret"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "loki") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "mail") (eq .verb "get") (or (eq .target_name "andreybondarenko.key") (eq .target_name "passwd") (eq .target_name "workercontroller")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "mail") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "mastodon") (eq .verb "get") (or (eq .target_name "bookmarked-media-sync") (eq .target_name "elasticsearch-password") (eq .target_name "mail") (eq .target_name "mastodon") (eq .target_name "mastodon-oidc-secret") (eq .target_name "mastodon-redis") (eq .target_name "postgres-password")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "mastodon") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "matrix") (eq .verb "get") (eq .target_name "config-synapse"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "matrix") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "mempalace") (eq .verb "get") (eq .target_name "mempalace-mcp-auth"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "mempalace") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "minecraft") (eq .verb "get") (eq .target_name "password"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "minecraft") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "monitoring") (eq .verb "get") (or (eq .target_name "alertmanager-telegram") (eq .target_name "grafana-oauth-secret") (eq .target_name "logs-check-grafana-token") (eq .target_name "prometheus-hister-metrics") (eq .target_name "prometheus-meilisearch-metrics") (eq .target_name "prometheus-spotify-metrics") (eq .target_name "thanos-compactor-objstore-internal") (eq .target_name "thanos-objstore-secret") (eq .target_name "thanos-receive-objstore-internal") (eq .target_name "thanos-store-objstore-internal")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "monitoring") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "nextcloud") (eq .verb "get") (eq .target_name "mysql-nextcloud-auth"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "nextcloud") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "open-terminal") (eq .verb "get") (eq .target_name "open-terminal-api-key"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "open-terminal") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "open-webui") (eq .verb "get") (eq .target_name "open-webui-terminal-server-connections"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "open-webui") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "spotify") (eq .verb "get") (or (eq .target_name "ferretdb-credentials") (eq .target_name "spotify")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "spotify") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "talos-backup") (eq .verb "get") (eq .target_name "talos-backup-config"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "talos-backup") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "traefik") (eq .verb "get") (or (eq .target_name "crowdsec-bouncer") (eq .target_name "traefik-oidc")))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "traefik") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "unifi") (eq .verb "get") (eq .target_name "unifi-password"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "unifi") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "wordpress") (eq .verb "get") (eq .target_name "mysql-wordpress-auth"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (eq .target_namespace "wordpress") (eq .verb "list"))
+          (and (eq .actor "system:serviceaccount:external-secrets:external-secrets") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")))
+          (and (eq .actor "talos:admin") (eq .target_namespace "talos-backup") (eq .verb "get") (eq .target_name "talos-backup-secrets") (or (eq .source_ip "192.168.30.209") (eq .source_ip "192.168.30.100") (eq .source_ip "192.168.30.242") (eq .source_ip "10.42.0.196") (eq .source_ip "10.42.1.189") (eq .source_ip "10.42.2.105") (eq .source_ip "2a02:e98:c0:181e:ce28:aaff:fe47:715") (eq .source_ip "2a02:e98:c0:181e:a2ad:9fff:fe5e:3376") (eq .source_ip "2a02:e98:c0:181e:32c5:99ff:fea9:5f84") (eq .source_ip "fd74:67a:1fcf:4200::ae16") (eq .source_ip "fd74:67a:1fcf:4201::160e") (eq .source_ip "fd74:67a:1fcf:4202::5a97")) (eq .user_agent "Go-http-client/2.0"))
+          (and (eq .actor "talos:admin") (not .target_namespace) (or (eq .verb "list") (eq .verb "watch")) (or (eq .source_ip "192.168.30.209") (eq .source_ip "192.168.30.100") (eq .source_ip "192.168.30.242") (eq .source_ip "10.42.0.196") (eq .source_ip "10.42.1.189") (eq .source_ip "10.42.2.105") (eq .source_ip "2a02:e98:c0:181e:ce28:aaff:fe47:715") (eq .source_ip "2a02:e98:c0:181e:a2ad:9fff:fe5e:3376") (eq .source_ip "2a02:e98:c0:181e:32c5:99ff:fea9:5f84") (eq .source_ip "fd74:67a:1fcf:4200::ae16") (eq .source_ip "fd74:67a:1fcf:4201::160e") (eq .source_ip "fd74:67a:1fcf:4202::5a97")) (eq .user_agent "Go-http-client/2.0"))
         ) }}yes{{ end }}`
       }
+      // END generated expected Secret readers
       stage.template {
         source = "detection"
         template = `{{ if and (eq .resource "secrets") (or (eq .verb "get") (eq .verb "list") (eq .verb "watch")) (ne .expected_secret_reader "yes") }}secret_read{{ else if or .grant .dangerous }}dangerous_rbac{{ else if and (eq .resource "pods") (or (eq .subresource "exec") (eq .subresource "attach") (eq .subresource "portforward")) (or (eq .target_namespace "openbao") (eq .target_namespace "keycloak") (eq .target_namespace "argocd") (eq .target_namespace "harbor") (eq .target_namespace "bitwarden") (eq .target_namespace "mail") (eq .target_namespace "monitoring") (regexMatch "(^|[-])(postgres|postgresql|mysql|mariadb|redis|valkey)([-]|$)" (default "" .target_name))) }}sensitive_exec{{ else if and (eq .resource "pods") (or (eq .privileged "privileged") (contains "privileged" (default "" .psa))) }}privileged_pod{{ end }}`
@@ -112,7 +194,7 @@ data:
       }
       stage.template {
         source = "safe_record"
-        template = `{{ dict "audit_id" .audit_id "timestamp" .timestamp "detection" .detection "outcome" .outcome "actor" .actor "impersonated" .impersonated "resource" .resource "subresource" .subresource "namespace" .target_namespace "name" .target_name "verb" .verb "code" .code "role_ref" .grant | toJson }}`
+        template = `{{ dict "audit_id" .audit_id "timestamp" .timestamp "detection" .detection "outcome" .outcome "actor" .actor "source_ip" .source_ip "impersonated" .impersonated "resource" .resource "subresource" .subresource "namespace" .target_namespace "name" .target_name "verb" .verb "code" .code "role_ref" .grant | toJson }}`
       }
       stage.output { source = "safe_record" }
     }

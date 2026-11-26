@@ -1573,11 +1573,12 @@ data:
           namespace: kube-system
           job: kubernetes-audit
         annotations:
-          summary: Unexpected Secret access on {{ $labels.node }} ({{ $labels.outcome
+          summary: Secret access outside reviewed reader exceptions via API server {{ $labels.node }} ({{ $labels.outcome
             }})
-          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="secret_read",node="{{
+          description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="secret_read",node="{{
             $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
             dry-run events are separate; an attempt does not prove compromise.
+          dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node={{ $labels.node }}
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
       - alert: KubernetesDangerousRBAC
         expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="dangerous_rbac"})
@@ -1590,11 +1591,12 @@ data:
           namespace: kube-system
           job: kubernetes-audit
         annotations:
-          summary: RBAC grant or dangerous role change on {{ $labels.node }} ({{ $labels.outcome
+          summary: RBAC grant or dangerous role change via API server {{ $labels.node }} ({{ $labels.outcome
             }})
-          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="{{
+          description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="dangerous_rbac",node="{{
             $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
             dry-run events are separate; an attempt does not prove compromise.
+          dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node={{ $labels.node }}
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
       - alert: KubernetesSensitivePodExec
         expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="sensitive_exec"})
@@ -1607,11 +1609,12 @@ data:
           namespace: kube-system
           job: kubernetes-audit
         annotations:
-          summary: Exec, attach or port-forward to a sensitive Pod on {{ $labels.node
+          summary: Exec, attach or port-forward to a sensitive Pod via API server {{ $labels.node
             }} ({{ $labels.outcome }})
-          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="{{
+          description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="sensitive_exec",node="{{
             $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
             dry-run events are separate; an attempt does not prove compromise.
+          dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node={{ $labels.node }}
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
       - alert: KubernetesPrivilegedPod
         expr: time() - max by (node, outcome) (homelab_audit_last_detection_timestamp_seconds{job="kubernetes-audit",detection="privileged_pod"})
@@ -1624,11 +1627,12 @@ data:
           namespace: kube-system
           job: kubernetes-audit
         annotations:
-          summary: Privileged Pod creation or update attempt on {{ $labels.node }} ({{
+          summary: Privileged Pod creation or update attempt via API server {{ $labels.node }} ({{
             $labels.outcome }})
-          description: An audit event occurred within 15 minutes. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="{{
+          description: One or more matching events occurred within 15 minutes; this alert groups events by API server and outcome, not by attacker. See the who/action/target table in Security Overview. Query Loki {job="kubernetes-audit",detection="privileged_pod",node="{{
             $labels.node }}"} for actor, target and response code. Allowed, denied, failed and
             dry-run events are separate; an attempt does not prove compromise.
+          dashboard_url: https://grafana.int.andreybondarenko.com/d/security-overview/security-overview?var-node={{ $labels.node }}
           runbook_url: https://github.com/shaman007/home-k3s/blob/main/docs/kubernetes-audit.md
       - alert: KubernetesAuditTelemetryStale
         expr: (time() - homelab_audit_last_received_timestamp_seconds{job="kubernetes-audit"}

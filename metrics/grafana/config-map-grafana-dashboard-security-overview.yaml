@@ -291,8 +291,8 @@ data:
         },
         {
           "id": 6,
-          "title": "Active security alerts · Prometheus",
-          "description": "Current Prometheus detection and collector-health alerts. Falco events go directly to Alertmanager; their event history is in the Falco row below.",
+          "title": "Активные правила · сгруппированы по API-серверу",
+          "description": "Строка — группа событий, а не отдельная атака. Кто и что сделал — в таблице ниже. node обозначает API-сервер, namespace коллектора скрыт. Falco отправляет события напрямую в Alertmanager и показан отдельно.",
           "type": "table",
           "datasource": {
             "type": "prometheus",
@@ -326,18 +326,267 @@ data:
                 "mode": "palette-classic"
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Результат"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "allowed": {
+                            "text": "Разрешено API"
+                          },
+                          "denied": {
+                            "text": "Отказ API"
+                          },
+                          "failed": {
+                            "text": "Ошибка запроса"
+                          },
+                          "dry-run": {
+                            "text": "Проверка без изменения"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Детект"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "KubernetesUnexpectedSecretRead": {
+                            "text": "Чтение Secrets вне исключений"
+                          },
+                          "KubernetesSensitivePodExec": {
+                            "text": "Exec / attach / port-forward"
+                          },
+                          "KubernetesDangerousRBAC": {
+                            "text": "Выдача прав / опасная роль"
+                          },
+                          "KubernetesPrivilegedPod": {
+                            "text": "Privileged Pod"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           },
           "options": {
             "showHeader": true,
             "cellHeight": "sm",
-            "sortBy": [
+            "sortBy": []
+          },
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "__name__": true,
+                  "category": true,
+                  "cluster": true,
+                  "job": true,
+                  "namespace": true,
+                  "owner": true,
+                  "priority": true,
+                  "severity": true,
+                  "Value": true,
+                  "Value #A": true
+                },
+                "indexByName": {
+                  "alertname": 0,
+                  "alertstate": 1,
+                  "node": 2,
+                  "outcome": 3,
+                  "name": 4,
+                  "destination": 5
+                },
+                "renameByName": {
+                  "alertname": "Детект",
+                  "alertstate": "Состояние",
+                  "node": "API-сервер / узел датчика",
+                  "outcome": "Результат",
+                  "name": "Сценарий",
+                  "destination": "Получатель"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 31,
+          "title": "Кто, что и где сделал · audit за последние 15 минут",
+          "description": "Причины активных audit-алертов. События сгруппированы по участнику, действию и цели; число — количество событий. allowed = запрос разрешён, denied = отказ, dry-run = проверка без изменения. API-сервер не обязательно является источником. IP источника доступен для новых событий. get = чтение объекта, list = список, watch = наблюдение. Кто — аутентифицированный субъект запроса, не доказанная личность или процесс. IP может быть адресом узла после NAT. Это запрос к журналам, не увеличение кардинальности Prometheus.",
+          "type": "table",
+          "datasource": {
+            "type": "loki",
+            "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 12,
+            "w": 24,
+            "h": 10
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node,detection,actor,action,target_namespace,target_name,outcome,source_ip) (count_over_time({job=\"kubernetes-audit\",node=~\"${node:regex}\",detection=~\"${audit_detection:regex}\",outcome=~\"${outcome:regex}\"} | json actor=\"actor\", verb=\"verb\", resource=\"resource\", subresource=\"subresource\", target_namespace=\"namespace\", target_name=\"name\", source_ip=\"source_ip\" | __error__=\"\" | label_format action=\"{{.verb}} {{.resource}}{{if .subresource}}/{{.subresource}}{{end}}\", target_namespace=\"{{if .target_namespace}}{{.target_namespace}}{{else}}(cluster){{end}}\", target_name=\"{{if .target_name}}{{.target_name}}{{else}}(collection){{end}}\" [15m]))",
+              "datasource": {
+                "type": "loki",
+                "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
+              },
+              "instant": true,
+              "range": false,
+              "queryType": "instant",
+              "maxLines": 200,
+              "format": "table",
+              "legendFormat": ""
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "noValue": "No data",
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": [
               {
-                "displayName": "alertname",
-                "desc": false
+                "matcher": {
+                  "id": "byName",
+                  "options": "Результат"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "allowed": {
+                            "text": "Разрешено API"
+                          },
+                          "denied": {
+                            "text": "Отказ API"
+                          },
+                          "failed": {
+                            "text": "Ошибка запроса"
+                          },
+                          "dry-run": {
+                            "text": "Проверка без изменения"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Кто"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 320
+                  },
+                  {
+                    "id": "custom.wrapText",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Детект"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "secret_read": {
+                            "text": "Чтение Secrets вне исключений"
+                          },
+                          "dangerous_rbac": {
+                            "text": "Выдача прав / опасная роль"
+                          },
+                          "sensitive_exec": {
+                            "text": "Exec / attach / port-forward"
+                          },
+                          "privileged_pod": {
+                            "text": "Privileged Pod"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             ]
-          }
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "sortBy": []
+          },
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "indexByName": {
+                  "actor": 0,
+                  "action": 1,
+                  "target_namespace": 2,
+                  "target_name": 3,
+                  "outcome": 4,
+                  "detection": 5,
+                  "node": 6,
+                  "source_ip": 7,
+                  "Value #A": 8
+                },
+                "renameByName": {
+                  "actor": "Кто",
+                  "action": "Действие",
+                  "target_namespace": "Namespace цели",
+                  "target_name": "Объект / коллекция",
+                  "outcome": "Результат",
+                  "detection": "Детект",
+                  "node": "API-сервер",
+                  "source_ip": "IP источника",
+                  "Value #A": "Событий",
+                  "Value": "Событий"
+                }
+              }
+            }
+          ]
         },
         {
           "id": 7,
@@ -350,7 +599,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 12,
+            "y": 22,
             "w": 24,
             "h": 6
           },
@@ -397,7 +646,7 @@ data:
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 18,
+            "y": 28,
             "w": 24,
             "h": 1
           }
@@ -413,7 +662,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 19,
+            "y": 29,
             "w": 12,
             "h": 8
           },
@@ -463,7 +712,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 19,
+            "y": 29,
             "w": 12,
             "h": 8
           },
@@ -513,7 +762,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 27,
+            "y": 37,
             "w": 12,
             "h": 8
           },
@@ -563,7 +812,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 27,
+            "y": 37,
             "w": 12,
             "h": 8
           },
@@ -610,7 +859,7 @@ data:
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 35,
+            "y": 45,
             "w": 24,
             "h": 1
           }
@@ -626,7 +875,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 36,
+            "y": 46,
             "w": 12,
             "h": 8
           },
@@ -676,7 +925,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 36,
+            "y": 46,
             "w": 12,
             "h": 8
           },
@@ -723,7 +972,7 @@ data:
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 44,
+            "y": 54,
             "w": 24,
             "h": 1
           }
@@ -739,7 +988,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 45,
+            "y": 55,
             "w": 12,
             "h": 8
           },
@@ -791,7 +1040,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 45,
+            "y": 55,
             "w": 12,
             "h": 8
           },
@@ -838,14 +1087,14 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 53,
+            "y": 63,
             "w": 24,
             "h": 10
           },
           "targets": [
             {
               "refId": "A",
-              "expr": "{job=\"kubernetes-audit\",node=~\"${node:regex}\",detection=~\"${audit_detection:regex}\",outcome=~\"${outcome:regex}\"} | json | line_format \"{{.timestamp}} {{.detection}} {{.outcome}} actor={{.actor}} impersonated={{.impersonated}} {{.verb}} {{.resource}}/{{.subresource}} namespace={{.namespace}} name={{.name}} code={{.code}} role={{.role_ref}} audit_id={{.audit_id}}\"",
+              "expr": "{job=\"kubernetes-audit\",node=~\"${node:regex}\",detection=~\"${audit_detection:regex}\",outcome=~\"${outcome:regex}\"} | json | line_format \"{{.timestamp}} {{.detection}} {{.outcome}} apiserver={{.node}} source_ip={{.source_ip}} actor={{.actor}} impersonated={{.impersonated}} {{.verb}} {{.resource}}/{{.subresource}} namespace={{.namespace}} name={{.name}} code={{.code}} role={{.role_ref}} audit_id={{.audit_id}}\"",
               "datasource": {
                 "type": "loki",
                 "uid": "db1b23ef-7ce7-4bb2-b0b6-998c13754cfd"
@@ -884,7 +1133,7 @@ data:
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 63,
+            "y": 73,
             "w": 24,
             "h": 1
           }
@@ -900,7 +1149,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 64,
+            "y": 74,
             "w": 12,
             "h": 8
           },
@@ -952,7 +1201,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 64,
+            "y": 74,
             "w": 12,
             "h": 8
           },
@@ -999,7 +1248,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 72,
+            "y": 82,
             "w": 24,
             "h": 10
           },
@@ -1045,7 +1294,7 @@ data:
           "panels": [],
           "gridPos": {
             "x": 0,
-            "y": 82,
+            "y": 92,
             "w": 24,
             "h": 1
           }
@@ -1061,7 +1310,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 83,
+            "y": 93,
             "w": 12,
             "h": 8
           },
@@ -1111,7 +1360,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 83,
+            "y": 93,
             "w": 12,
             "h": 8
           },
@@ -1161,7 +1410,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 91,
+            "y": 101,
             "w": 12,
             "h": 8
           },
@@ -1221,7 +1470,7 @@ data:
           },
           "gridPos": {
             "x": 12,
-            "y": 91,
+            "y": 101,
             "w": 12,
             "h": 8
           },
@@ -1271,7 +1520,7 @@ data:
           },
           "gridPos": {
             "x": 0,
-            "y": 99,
+            "y": 109,
             "w": 6,
             "h": 5
           },
@@ -1321,7 +1570,7 @@ data:
           },
           "gridPos": {
             "x": 6,
-            "y": 99,
+            "y": 109,
             "w": 18,
             "h": 5
           },
