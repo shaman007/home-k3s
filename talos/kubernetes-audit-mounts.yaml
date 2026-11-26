@@ -1,0 +1,17 @@
+# Legacy v1alpha1 kubelet mount addition; merge preserves existing mounts.
+# Apply to one control-plane at a time with --mode=no-reboot.
+machine:
+  kubelet:
+    extraMounts:
+      - destination: /var/log/audit/kube
+        type: bind
+        source: /var/log/audit/kube
+        options:
+          - bind
+          - ro
+---
+# Directory on existing EPHEMERAL: no disk selection, repartitioning or formatting.
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: kubernetes-audit-positions
+volumeType: directory

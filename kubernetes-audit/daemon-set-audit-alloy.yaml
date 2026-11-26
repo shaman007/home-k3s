@@ -41,12 +41,14 @@ spec:
         - name: http
           containerPort: 12345
         securityContext:
-          runAsUser: 0
+          runAsUser: 65534
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
           capabilities:
             drop:
             - ALL
+          runAsGroup: 65534
+          runAsNonRoot: true
         resources:
           requests:
             cpu: 10m
@@ -87,3 +89,31 @@ spec:
           type: DirectoryOrCreate
       - name: tmp
         emptyDir: {}
+      initContainers:
+      - name: prepare-offsets-owner
+        image: harbor.andreybondarenko.com/dockerhub/grafana/alloy:v1.22.0
+        command:
+        - /usr/bin/chown
+        - -R
+        - --no-dereference
+        - 65534:65534
+        - /var/lib/alloy
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - CHOWN
+            - DAC_OVERRIDE
+        resources:
+          requests:
+            cpu: 5m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        volumeMounts:
+        - name: positions
+          mountPath: /var/lib/alloy

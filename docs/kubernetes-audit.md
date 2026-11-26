@@ -4,8 +4,9 @@ The `kubernetes-audit` Argo application runs one dedicated Grafana Alloy collect
 per control-plane node in `kube-system`. It tails the existing Talos audit file,
 exports bounded metrics to Prometheus, and sends selected, reconstructed records
 to Loki. The four detection alerts use the existing email/Telegram receiver.
-No Falco kernel probe, admission webhook server, Kubernetes API token, new Secret,
-Talos machine-config change or API-server restart is required.
+No Falco kernel probe, admission webhook server, Kubernetes API token or new Secret
+is required. Talos kubelet mounts and the offsets directory-volume must be provisioned
+using `talos/kubernetes-audit-mounts.yaml` on each control-plane before collection.
 
 ## Data and admission boundaries
 
@@ -24,6 +25,12 @@ All validations are literal `true`, bindings use only `Audit`, and failures are
 ignored. They do not block, mutate, or grant access. PATCH requests are evaluated
 against the resulting object, so strategic/merge/JSON patch formats do not need
 separate body parsing. Unchanged RBAC role/subjects/rules do not generate facts.
+Apply the Talos patch one node at a time with `talosctl patch machineconfig
+--nodes NODE --mode=no-reboot --patch @talos/kubernetes-audit-mounts.yaml`, verifying
+node readiness and the ready directory-volume before proceeding. Existing kubelet
+mounts are merged and must be preserved. This may restart kubelet, not the node.
+Use scoped expiring maintenance silences and remove them after verification.
+
 The API server must support `admissionregistration.k8s.io/v1` native policies;
 the deployed Kubernetes 1.37 API accepted the manifests in server dry-run.
 
@@ -45,9 +52,15 @@ including request URIs; this collector does not expand their contents or copy
 them into a second raw archive. Keep the node files restricted to root.
 
 The collector mounts only `/var/log/audit/kube` read-only and a dedicated writable
-cursor directory `/var/mnt/kubernetes-audit-positions`. It runs as UID 0 to read
-root-owned audit files, with all capabilities dropped, no privilege escalation,
-read-only root filesystem, RuntimeDefault seccomp, and no ServiceAccount token.
+cursor directory `/var/mnt/kubernetes-audit-positions`. Talos writes the audit files
+as UID/GID 65534 with mode 0600, so the collector runs as that non-root identity,
+with all capabilities dropped, no privilege escalation, read-only root filesystem,
+RuntimeDefault seccomp and no ServiceAccount token. A root init container mounts
+only the offsets volume and uses CHOWN/DAC_OVERRIDE to prepare its owner; it never
+mounts audit or any other host directory. It does not follow symlinks. The Talos
+patch exposes audit read-only to kubelet and provisions offsets as a directory-type
+UserVolume on existing EPHEMERAL, without repartitioning or formatting disks.
+Do not create arbitrary directories beneath the read-only `/var/mnt` mountpoint.
 The cursor directory contains positions, not audit bodies. First installation
 starts at EOF rather than paging on old history. Positions survive Pod recreation.
 Corrupt positions are skipped instead of replaying the full audit history; the
