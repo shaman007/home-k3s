@@ -138,7 +138,8 @@ rollout verifier. It does not inventory Jobs, CronJobs, HPAs, all custom control
 Longhorn disks/replicas, etcd quorum or Talos machine configuration. Ready counts
 alone do not establish functional readiness or a running target release.
 
-For authorized Talos maintenance, use these distinct stop/go gates in the
+For authorized Talos maintenance, follow the
+[rolling cluster upgrade runbook](cluster-upgrade.md) and the
 `cluster-reboot-upgrade` skill at
 `/home/shaman007/.codex/skills/cluster-reboot-upgrade/SKILL.md`:
 
@@ -147,11 +148,14 @@ For authorized Talos maintenance, use these distinct stop/go gates in the
    identities, schematics/extensions and storage paths. Save the complete non-secret
    restoration state required by the skill, outside Git; the baseline alone is
    insufficient.
-2. **Before the first reboot:** confirm GitOps/other reconcilers paused, Jobs and
-   CronJobs suspended with originals recorded, application consumers stopped,
-   volumes detached and engine/replica processes stopped. Detached/unknown is
-   expected here; attached/healthy is not the shutdown criterion. The baseline is
-   designed for before/after normal operation and is not this quiescence gate.
+2. **Before each reboot:** mute Alertmanager notifications with a recorded,
+   time-limited upgrade silence; pause relevant reconcilers; stop GPU consumers,
+   Nextcloud and Photon, preserving their original controls. Keep other services
+   running and use normal drain/PDB enforcement. Verify healthy usable volume
+   copies outside the target node, Harbor functionality on remaining nodes and
+   Atlas continuity. Upgrade the Atlas host last and verify its single graceful
+   migration before reboot. Full shutdown/detachment is only an explicitly chosen
+   alternative, not the default gate.
 3. **Per-node return:** verify running target Talos version, Ready state, etcd
    quorum, extensions, physical disks and storage mounts. Stop on a failed gate;
    do not confuse successful image staging with activation.
