@@ -219,10 +219,7 @@ data:
     {{ define "homelab.email.subject" -}}
     {{ template "homelab.email.importance" . }} · {{ with index .Alerts 0 }}{{ template "homelab.email.title" . }}{{ end }}{{ with .CommonLabels.application }} · {{ . }}{{ else }}{{ with .CommonLabels.k8s_ns_name }} · {{ . }}{{ else }}{{ if ne .CommonLabels.job "kubernetes-audit" }}{{ with .CommonLabels.namespace }} · {{ . }}{{ end }}{{ end }}{{ end }}{{ end }}{{ with .CommonLabels.persistentvolumeclaim }} · {{ . }}{{ else }}{{ with .CommonLabels.job_name }} · {{ . }}{{ else }}{{ with .CommonLabels.service }} · {{ . }}{{ else }}{{ with .CommonLabels.k8s_pod_name }} · {{ . }}{{ else }}{{ with .CommonLabels.pod }} · {{ . }}{{ end }}{{ end }}{{ end }}{{ end }}{{ end }}{{ with .CommonLabels.node }} · {{ . }}{{ end }}{{ if eq .CommonLabels.alertname "TargetDown" }}{{ with .CommonLabels.job }} · {{ . }}{{ end }}{{ end }}{{ if gt (len .Alerts) 1 }} · targets: {{ len .Alerts }}{{ end }}
     {{- end }}
-    {{ define "homelab.email.text" }}{{ template "homelab.email.subject" . }}
-    {{ range .Alerts }}
-    ────────────────────────
-    {{ template "homelab.email.title" . }}
+    {{ define "homelab.email.details" }}
     Started: {{ .StartsAt | tz "Europe/Prague" | date "02.01.2006 15:04:05 MST" }}
     {{ if eq .Status "resolved" }}Status: resolved
     {{ else }}Status: firing
@@ -245,7 +242,7 @@ data:
     {{ end }}{{ end }}{{ end }}{{ with .Labels.k8s_pod_name }}Pod: {{ . }}
     {{ else }}{{ with .Labels.pod }}Pod: {{ . }}
     {{ end }}{{ end }}{{ with .Labels.container }}Container: {{ . }}
-    {{ end }}{{ with .Labels.node }}{{ if eq $.CommonLabels.job "kubernetes-audit" }}API server{{ else }}Node{{ end }}: {{ . }}
+    {{ end }}{{ with .Labels.node }}{{ if eq $.Labels.job "kubernetes-audit" }}API server{{ else }}Node{{ end }}: {{ . }}
     {{ end }}{{ with .Labels.job_name }}Job: {{ . }}
     {{ end }}{{ with .Labels.persistentvolumeclaim }}PVC: {{ . }}
     {{ end }}{{ with .Labels.volume }}Volume: {{ . }}
@@ -259,5 +256,36 @@ data:
     {{ end }}{{ with .Labels.ip }}Service IP: {{ . }}
     {{ end }}{{ if ne .Labels.job "kubernetes-audit" }}{{ with .Labels.job }}Source: {{ . }}
     {{ end }}{{ end }}Rule: {{ .Labels.alertname }}
-    {{ end }}{{ end }}
-    {{ define "homelab.email.html" }}<!doctype html><html lang="en"><meta charset="utf-8"><body style="margin:24px;color:#202124;background:#fff;font:15px/1.55 system-ui,sans-serif"><pre style="white-space:pre-wrap;font:inherit">{{ template "homelab.email.text" . }}</pre></body></html>{{ end }}
+    {{ end }}
+    {{ define "homelab.email.text" }}{{ template "homelab.email.subject" . }}
+    {{ range .Alerts }}
+    ────────────────────────
+    {{ template "homelab.email.title" . }}
+    {{ template "homelab.email.details" . }}
+    {{ end }}
+    View in Alertmanager: {{ .ExternalURL }}/#/alerts
+    {{ end }}
+    {{ define "homelab.email.html" }}
+    <!doctype html>
+    <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+    <body style="margin:0;padding:0;background-color:#f1f5f9;color:#0f172a;font-family:Arial,Helvetica,sans-serif">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9"><tr><td align="center" style="padding:28px 12px">
+    <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:100%;max-width:640px">
+    <tr><td style="padding:28px;background-color:#0f172a;border-radius:12px 12px 0 0">
+    <div style="color:#94a3b8;font-size:12px;font-weight:bold;letter-spacing:2px">HOMELAB MONITORING</div>
+    <div style="margin-top:18px"><span style="display:inline-block;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:bold;{{ if eq .Status "resolved" }}background-color:#dcfce7;color:#166534{{ else if or (eq .CommonLabels.priority "critical") (eq .CommonLabels.severity "critical") }}background-color:#fee2e2;color:#991b1b{{ else if eq .CommonLabels.priority "info" }}background-color:#dbeafe;color:#1e40af{{ else }}background-color:#fef3c7;color:#92400e{{ end }}">{{ template "homelab.email.importance" . }}</span></div>
+    <h1 style="margin:14px 0 0;color:#f8fafc;font-size:23px;font-weight:600;line-height:1.35;overflow-wrap:anywhere">{{ with index .Alerts 0 }}{{ template "homelab.email.title" . }}{{ end }}</h1>
+    <div style="margin-top:10px;color:#cbd5e1;font-size:13px">{{ len .Alerts }} alert{{ if ne (len .Alerts) 1 }}s{{ end }} in this notification</div>
+    </td></tr>
+    <tr><td style="padding:22px;background-color:#ffffff;border:1px solid #e2e8f0;border-top:0;border-radius:0 0 12px 12px">
+    {{ range .Alerts }}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;border:1px solid #e2e8f0;border-left:4px solid {{ if eq .Status "resolved" }}#16a34a{{ else if eq .Labels.priority "critical" }}#dc2626{{ else }}#d97706{{ end }};border-radius:6px;background-color:#f8fafc"><tr><td style="padding:18px">
+    <h2 style="margin:0 0 12px;font-size:16px;line-height:1.4;color:#0f172a">{{ template "homelab.email.title" . }}</h2>
+    <div style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.65;color:#334155">{{ template "homelab.email.details" . }}</div>
+    </td></tr></table>
+    {{ end }}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr><td bgcolor="#2563eb" style="border-radius:6px;text-align:center"><a href="{{ .ExternalURL }}/#/alerts" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold">View in Alertmanager</a></td></tr></table>
+    </td></tr></table>
+    </td></tr></table>
+    </body></html>
+    {{ end }}

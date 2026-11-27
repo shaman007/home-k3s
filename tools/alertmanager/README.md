@@ -26,8 +26,9 @@ policy change has been performed as part of preparing these manifests.
 Email uses `homelab.email.subject/text/html` from `alertmanager-templates`.
 All authored email copy is English. Priority is first, followed by a readable event title and affected application,
 namespace or node. Each grouped alert has its own outcome, local Prague timestamp
-and ordered target fields. Routing metadata and links are omitted. HTML uses the
-same content as text with automatic escaping; Telegram and routing are unchanged.
+and ordered target fields. Routing metadata and source/runbook links are omitted. A single View in
+Alertmanager action is included. HTML uses a priority badge, event cards and a
+button, with the same escaped details as text; Telegram and routing are unchanged.
 Audit notifications contain node/outcome aggregates, not event actors or Secret
 names. The email states this limit explicitly rather than inventing attribution.
 Other alerts retain their description and rule name; URLs are removed.

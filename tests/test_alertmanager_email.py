@@ -68,7 +68,7 @@ class EmailRenderingTests(unittest.TestCase):
         self.assertIn('Actor, target and event count', text)
         self.assertIn('API server: w386', text)
         self.assertIn('11:18:35 CET', text)
-        for noise in ['https://', 'kube-system', 'owner', 'prometheus', 'Labels:', 'Annotations:']:
+        for noise in ['kube-system', 'owner', 'prometheus', 'Labels:', 'Annotations:']:
             self.assertNotIn(noise, text)
         self.assertEqual('Review · Secret read outside exceptions · w386',
                          self.render(data, 'subject'))
@@ -90,6 +90,18 @@ class EmailRenderingTests(unittest.TestCase):
         self.assertNotIn('<script>', html)
         self.assertIn('&lt;script&gt;', html)
 
+    def test_html_has_one_action_button_and_separate_event_cards(self):
+        data = fixture('KubeJobFailed', namespace='longhorn-system', job_name='trim-example')
+        html = self.render(data, 'html')
+        self.assertIn('href="https://example.invalid/#/alerts"', html)
+        self.assertEqual(1, html.count('View in Alertmanager'))
+        self.assertNotIn('https://example.invalid/runbook', html)
+        self.assertIn('trim-example', html)
+        self.assertIn('role="presentation"', html)
+        self.assertIn('background-color:#fef3c7', html)
+        data['commonLabels']['priority'] = 'critical'
+        self.assertIn('background-color:#fee2e2', self.render(data, 'html'))
+
     def test_target_down_subject_identifies_the_source(self):
         data = fixture('TargetDown', job='alertmanager')
         self.assertEqual('Review · Monitoring target unreachable · alertmanager',
@@ -103,7 +115,8 @@ class EmailRenderingTests(unittest.TestCase):
         text = self.render(data)
         for expected in ['Details', 'Endpoint: mail:9090', 'Device: disk-a', 'Rule: SomeFutureRule']:
             self.assertIn(expected, text)
-        self.assertNotIn('https://', text)
+        self.assertEqual(1, text.count('https://'))
+        self.assertIn('View in Alertmanager: https://example.invalid/#/alerts', text)
         data['status'] = 'resolved'
         data['alerts'][0]['status'] = 'resolved'
         self.assertTrue(self.render(data, 'subject').startswith('Resolved'))
