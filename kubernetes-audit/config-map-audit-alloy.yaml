@@ -162,6 +162,7 @@ data:
           (and (eq .actor "system:serviceaccount:metallb-system:metallb-controller") (eq .target_namespace "metallb-system") (or (eq .verb "list") (eq .verb "watch")))
           (and (eq .actor "system:serviceaccount:cert-manager:cert-manager-cainjector") (eq .target_namespace "cert-manager") (eq .verb "get") (eq .target_name "cert-manager-webhook-ca"))
           (and (eq .actor "system:serviceaccount:monitoring:platform-health-report") (eq .target_namespace "mail") (eq .verb "get") (eq .target_name "mail-tls"))
+          (and (eq .actor "system:serviceaccount:cert-manager:cert-manager-cainjector") (eq .target_namespace "cert-manager") (eq .verb "get") (eq .target_name "godaddy-webhook-serving"))
         ) }}yes{{ end }}`
       }
       // END generated expected Secret readers

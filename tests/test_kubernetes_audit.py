@@ -262,10 +262,11 @@ class AlloyPipelineTests(unittest.TestCase):
                     # Direct-read exceptions are constrained to one Secret in one namespace.
                     for actor, namespace, name in [
                         ('cert-manager:cert-manager-cainjector', 'cert-manager', 'cert-manager-webhook-ca'),
+                        ('cert-manager:cert-manager-cainjector', 'cert-manager', 'godaddy-webhook-serving'),
                         ('monitoring:platform-health-report', 'mail', 'mail-tls'),
                     ]:
                         for field in ['namespace', 'name']:
-                            changed = event('secret-scope-' + actor + '-' + field,
+                            changed = event('secret-scope-' + actor + '-' + name + '-' + field,
                                             namespace=namespace, name=name)
                             changed['user']['username'] = 'system:serviceaccount:' + actor
                             changed['objectRef'][field] = 'other'
