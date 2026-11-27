@@ -90,6 +90,11 @@ class EmailRenderingTests(unittest.TestCase):
         self.assertNotIn('<script>', html)
         self.assertIn('&lt;script&gt;', html)
 
+    def test_target_down_subject_identifies_the_source(self):
+        data = fixture('TargetDown', job='alertmanager')
+        self.assertEqual('Review · Monitoring target unreachable · alertmanager',
+                         self.render(data, 'subject'))
+
     def test_critical_and_unknown_rules_keep_useful_context(self):
         data = fixture('SomeFutureRule', job='exporter', namespace='mail',
                        instance='mail:9090', device='disk-a')
