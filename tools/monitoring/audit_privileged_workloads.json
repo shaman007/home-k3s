@@ -112,7 +112,12 @@
             },
             "name": "longhorn"
           }
-        ]
+        ],
+        "hostNetwork": false,
+        "hostPID": false,
+        "hostIPC": false,
+        "shareProcessNamespace": false,
+        "automountServiceAccountToken": true
       },
       "metadataUpdateActor": "system:serviceaccount:longhorn-system:longhorn-service-account",
       "revisionHash": "6f8f56fb7b"
@@ -230,7 +235,12 @@
             },
             "name": "run-nvidia"
           }
-        ]
+        ],
+        "hostNetwork": false,
+        "hostPID": false,
+        "hostIPC": false,
+        "shareProcessNamespace": true,
+        "automountServiceAccountToken": true
       },
       "revisionHash": "bbbb5cf58"
     },
@@ -270,7 +280,12 @@
             "volumeMounts": []
           }
         ],
-        "volumes": []
+        "volumes": [],
+        "hostNetwork": false,
+        "hostPID": false,
+        "hostIPC": false,
+        "shareProcessNamespace": false,
+        "automountServiceAccountToken": true
       }
     },
     {
@@ -337,7 +352,11 @@
             },
             "name": "run-nvidia"
           }
-        ]
+        ],
+        "hostNetwork": false,
+        "hostPID": false,
+        "hostIPC": false,
+        "shareProcessNamespace": false
       },
       "revisionHash": "5576bd7f94"
     },
@@ -510,7 +529,12 @@
             },
             "name": "mps-shm"
           }
-        ]
+        ],
+        "hostNetwork": false,
+        "hostPID": false,
+        "hostIPC": false,
+        "shareProcessNamespace": true,
+        "automountServiceAccountToken": true
       },
       "revisionHash": "79dd488887"
     },
@@ -655,7 +679,12 @@
             },
             "name": "host-dev-char"
           }
-        ]
+        ],
+        "hostNetwork": false,
+        "hostPID": false,
+        "hostIPC": false,
+        "shareProcessNamespace": false,
+        "automountServiceAccountToken": true
       },
       "revisionHash": "5f566b6db"
     }

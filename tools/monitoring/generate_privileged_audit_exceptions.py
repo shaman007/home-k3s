@@ -87,6 +87,15 @@ def profile_expression(entry):
     """Identity plus exact container/image/security/mount/host-path boundaries."""
     spec = entry["spec"]
     owner = entry["owner"]
+    required_flags = {
+        "hostNetwork",
+        "hostPID",
+        "hostIPC",
+        "shareProcessNamespace",
+        "automountServiceAccountToken",
+    }
+    if not required_flags <= spec.keys():
+        raise ValueError("All reviewed Pod namespace/token flags must be explicit")
     terms = [
         f"object.metadata.namespace == {literal(entry['namespace'])}",
         f'"app" in object.metadata.?labels.orValue({{}}) && object.metadata.labels["app"] == {literal(entry["app"])}',

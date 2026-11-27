@@ -163,7 +163,7 @@ spec:
 
       (object.spec.?hostIPC.orValue(false) == false) &&
 
-      (object.spec.?shareProcessNamespace.orValue(false) == false) &&
+      (object.spec.?shareProcessNamespace.orValue(false) == true) &&
 
       (object.spec.?securityContext.?runAsNonRoot.orValue(null) == null) &&
 
@@ -494,7 +494,7 @@ spec:
 
       (object.spec.?hostIPC.orValue(false) == false) &&
 
-      (object.spec.?shareProcessNamespace.orValue(false) == false) &&
+      (object.spec.?shareProcessNamespace.orValue(false) == true) &&
 
       (object.spec.?securityContext.?runAsNonRoot.orValue(null) == null) &&
 

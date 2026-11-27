@@ -146,6 +146,7 @@ class PrivilegedAuditCELTests(unittest.TestCase):
                     "privileged-init",
                     "ephemeral",
                     "host-pid",
+                    "share-process",
                     "hostpath",
                     "security",
                     "mount",
@@ -203,6 +204,8 @@ class PrivilegedAuditCELTests(unittest.TestCase):
                         ]
                     elif mutation == "host-pid":
                         s["hostPID"] = not s.get("hostPID", False)
+                    elif mutation == "share-process":
+                        s["shareProcessNamespace"] = not s["shareProcessNamespace"]
                     elif mutation == "hostpath":
                         s.setdefault("volumes", []).append(
                             {"name": "host-root", "hostPath": {"path": "/"}}
