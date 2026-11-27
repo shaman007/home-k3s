@@ -50,13 +50,40 @@ class FalcoRuntimeTest(unittest.TestCase):
                     'container.image.repository', 'k8s.ns.name', 'k8s.pod.name', 'user.uid'}
         self.assertEqual(existing | diagnostic, set(re.findall(r'%([a-zA-Z0-9_.]+)', redirect['output'])))
         self.assertEqual('and container.id != "runtime"', redirect['condition'])
-        self.assertEqual({'rule', 'output', 'priority', 'override', 'condition'}, set(redirect))
+        self.assertEqual({'rule', 'output', 'priority', 'override', 'condition', 'exceptions'}, set(redirect))
         self.assertEqual('WARNING', redirect['priority'])
         self.assertNotIn('argocd', redirect['condition'])
         docs = list(yaml.safe_load_all((ROOT / 'falco/sidekick.yaml').read_text()))
         config = yaml.safe_load(next(d for d in docs if d['kind'] == 'ConfigMap')['data']['config.yaml'])
         for field in diagnostic:
             self.assertEqual('', config['alertmanager']['extralabels'][field.replace('.', '_')])
+
+    def test_backup_ssh_exception_is_limited_to_reviewed_inbound_socket(self):
+        values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
+        rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
+        redirect = next(r for r in rules if r['rule'].startswith('Redirect STDOUT'))
+        self.assertEqual('append', redirect['override']['exceptions'])
+        self.assertEqual(1, len(redirect['exceptions']))
+        exception = redirect['exceptions'][0]
+        self.assertEqual(['='] * len(exception['fields']), exception['comps'])
+        self.assertEqual(2, len(exception['values']))
+        processes = set()
+        for row in exception['values']:
+            self.assertEqual(len(exception['fields']), len(row))
+            scope = dict(zip(exception['fields'], row))
+            processes.add((scope.pop('proc.name'), scope.pop('proc.exepath'), scope.pop('proc.pname')))
+            self.assertEqual({
+                'k8s.ns.name': 'backup-rsync', 'container.name': 'sshd',
+                'container.image.repository': 'harbor.andreybondarenko.com/quay/panubo/sshd',
+                'container.image.tag': '1.10.0', 'user.uid': 0, 'evt.type': 'dup2',
+                'fd.num': 1, 'fd.type': 'ipv4', 'fd.l4proto': 'tcp',
+                'fd.is_server': 'true', 'fd.cip': '192.168.30.79', 'fd.sport': 22,
+            }, scope)
+        self.assertEqual({('sshd', '/usr/sbin/sshd', 'sshd'),
+                          ('sshd-session', '/usr/lib/ssh/sshd-session', 'sshd-session')}, processes)
+        for rule in rules:
+            if rule is not redirect:
+                self.assertNotIn('exceptions', rule)
 
     def test_no_kubernetes_credentials_or_host_mounts_in_forwarder(self):
         for account in yaml.safe_load_all((ROOT / 'falco/service-accounts.yaml').read_text()):
