@@ -224,6 +224,53 @@ class AlloyPipelineTests(unittest.TestCase):
                         changed['user']['username'] = 'system:serviceaccount:metallb-system:metallb-controller'
                         events.append(changed)
                         boundary_ids.add(identity)
+                    # A retry of an existing NVIDIA binding must not hide a real grant.
+                    for resource, kind, names in [
+                        ('rolebindings', 'Role', ['nvidia-dcgm-exporter', 'nvidia-device-plugin',
+                         'nvidia-device-plugin-mps-control-daemon', 'nvidia-gpu-feature-discovery',
+                         'nvidia-mig-manager', 'nvidia-operator-validator']),
+                        ('clusterrolebindings', 'ClusterRole', ['nvidia-device-plugin',
+                         'nvidia-device-plugin-mps-control-daemon', 'nvidia-gpu-feature-discovery',
+                         'nvidia-mig-manager', 'nvidia-operator-validator']),
+                    ]:
+                        for name in names:
+                            base = event('noop-' + resource + '-' + name, resource=resource,
+                                         namespace='gpu-operator', name=name, verb='create', code=409,
+                                         annotations={'homelab-audit-bindings/grant': kind + ':' + name})
+                            base['user']['username'] = 'system:serviceaccount:gpu-operator:gpu-operator'
+                            events.append(base)
+                            for suffix in ['success', 'denied', 'human', 'impersonated', 'namespace',
+                                           'name', 'role', 'verb', 'dangerous']:
+                                changed = json.loads(json.dumps(base))
+                                changed['auditID'] += '-' + suffix
+                                if suffix in ['success', 'denied']:
+                                    changed['responseStatus']['code'] = 201 if suffix == 'success' else 403
+                                elif suffix == 'human':
+                                    changed['user']['username'] = 'human'
+                                elif suffix == 'impersonated':
+                                    changed['impersonatedUser'] = {'username': 'human'}
+                                elif suffix in ['namespace', 'name']:
+                                    changed['objectRef'][suffix] = 'other'
+                                elif suffix == 'role':
+                                    changed['annotations']['homelab-audit-bindings/grant'] = 'ClusterRole:admin'
+                                elif suffix == 'verb':
+                                    changed['verb'] = 'patch'
+                                else:
+                                    changed['annotations']['homelab-audit-roles/dangerous'] = 'escalation'
+                                events.append(changed)
+                                boundary_ids.add(changed['auditID'])
+                    # Direct-read exceptions are constrained to one Secret in one namespace.
+                    for actor, namespace, name in [
+                        ('cert-manager:cert-manager-cainjector', 'cert-manager', 'cert-manager-webhook-ca'),
+                        ('monitoring:platform-health-report', 'mail', 'mail-tls'),
+                    ]:
+                        for field in ['namespace', 'name']:
+                            changed = event('secret-scope-' + actor + '-' + field,
+                                            namespace=namespace, name=name)
+                            changed['user']['username'] = 'system:serviceaccount:' + actor
+                            changed['objectRef'][field] = 'other'
+                            events.append(changed)
+                            boundary_ids.add(changed['auditID'])
                     unknown = event('eso-unknown-secret', namespace='monitoring', name='unreviewed-secret')
                     unknown['user']['username'] = 'system:serviceaccount:external-secrets:external-secrets'
                     events.append(unknown)

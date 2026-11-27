@@ -200,3 +200,18 @@ collector/scrape/alerts and the two narrowly scoped network allowances together.
 Leave the original Talos audit policy and existing monitoring components intact.
 The cursor directory may be retained for a later re-enable; no raw logs are added
 there. Removing audit-only policies changes visibility, not admission decisions.
+
+### Reviewed controller noise (2026-11-27)
+
+Successful direct `get` is excluded only for cainjector reading
+`cert-manager/cert-manager-webhook-ca` and platform-health-report reading
+`mail/mail-tls` to inspect the public certificate. Other Secrets, namespaces,
+identities, impersonation and failed reads remain detected.
+
+GPU Operator's `create`/HTTP 409 retries are excluded only in `gpu-operator`,
+for the reviewed NVIDIA RoleBinding/ClusterRoleBinding name and matching roleRef
+pairs in the Alloy configuration. Successful grants, denied requests, changes,
+other roles and impersonation remain detected. These no-op events remain in the
+source Kubernetes audit files but are not forwarded as selected Loki detections.
+Falco has no new exception. The overnight BGP outage coincided with a router
+update confirmed by the operator; no permanent network-alert suppression was added.
