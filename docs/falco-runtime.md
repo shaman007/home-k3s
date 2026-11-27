@@ -28,7 +28,7 @@ The redirect rule additionally emits `proc.pid`, `thread.tid`, `evt.type`,
 connection endpoints; the syscall result identifies the resulting descriptor
 (0/1/2 for this rule). Missing process metadata can still appear as `<NA>`.
 No command arguments, environment or generic syscall argument dump is emitted.
-Detection conditions, enabled rules, priority and exclusions are unchanged;
+The three security detection conditions, priorities and exclusions are unchanged;
 there is no Argo CD exception.
 
 Sidekick retains every field in Loki JSON and the event text in notification
@@ -37,6 +37,49 @@ overrides, like the timestamp, so changing PID/TID, syscall result, descriptor
 or connection does not create a new fingerprint. Rule, executable, parent,
 container/Pod and UID still distinguish events. All detailed events remain
 available for comparing repeated Git launches against suspected redirections.
+
+## Automatic repo-server fd context
+
+`Argo repo-server safe process lifecycle` is an additional **Notice** diagnostic
+rule, scoped to namespace `argocd`, Pod prefix `argocd-repo-server-` and image
+repository `quay.io/argoproj/argocd`. It records clone/fork, dup/dup2/dup3, exec
+and process-exit events continuously, so the next Warning can be compared with
+its preceding fd setup and the executable that follows. This is diagnostic
+context, not proof that an incoming RPC socket is benign; no Argo exception is
+added. Unknown Kubernetes/image metadata can cause context to be absent.
+
+Both the Warning and diagnostic context include host PID/TID, parent PID,
+container PID/TID, process age in nanoseconds and the numeric `oldfd` syscall
+argument. Context also includes clone/dup flags. These are explicit field
+allowlists: no command arguments, environment, generic syscall argument dump,
+I/O buffers or payloads are collected in the output. Fields unavailable for a
+particular syscall can be `<NA>`; the failed ten-minute reproduction is not
+evidence that the original network descriptor was harmless.
+
+Sidekick sends Notice to Loki only; Alertmanager remains at Warning. Only the
+scoped diagnostic rule has Notice priority. Additional Warning fields are
+removed from Alertmanager identity, preserving grouping. There is no additional
+BPF process, host mount, credential, or automatic refresh. Scope this temporary
+investigation rule back out once the cause is established; check event volume
+and sensor/Sidekick drops after deployment. Loki's existing retention applies.
+
+When the next redirect arrives, use its node, container ID, host PID/TID and
+event time to query context in the same time window (including after the alert):
+
+```logql
+{job="falco"} | json | rule="Argo repo-server safe process lifecycle"
+```
+
+Compare `oldfd` with the resulting fd (`evt.rawres`), clone/parent lineage and
+subsequent exec for that PID. Use process age/time to avoid PID reuse; do not
+infer the child command from the parent process name. Compare the Warning's
+socket endpoints with this sequence and Argo RPC logs. If context is missing or
+contradictory, keep the security event visible rather than broadening exceptions.
+
+Native routing tests verify Notice reaches only Loki, Warning annotations retain
+safe details, and changed parent/PID/fd fields do not split alert fingerprints.
+Local validation does not prove runtime collection: after publication, verify
+Argo sync, rule loading, actual Notice records in Loki, and no delivery drops.
 
 ## Talos compatibility and permissions
 

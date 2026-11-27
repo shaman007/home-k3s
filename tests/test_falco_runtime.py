@@ -28,14 +28,15 @@ class FalcoRuntimeTest(unittest.TestCase):
         selected = {control['enable']['rule'] for control in controls[1:]}
         overrides = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
         self.assertEqual(selected, {rule['rule'] for rule in overrides})
-        self.assertEqual(3, len(selected))
+        self.assertEqual(4, len(selected))
         forbidden = ('proc.cmdline', 'proc.args', 'proc.env', 'evt.args', 'user.name')
         for rule in overrides:
             for field in forbidden:
                 self.assertNotIn(field, rule['output'])
             self.assertIn('%container.id', rule['output'])
             self.assertIn('%k8s.pod.name', rule['output'])
-            self.assertEqual('replace', rule['override']['output'])
+            if 'override' in rule:
+                self.assertEqual('replace', rule['override']['output'])
         self.assertFalse(values['falco']['json_include_message_property'])
         self.assertEqual([], values['falco']['append_output'])
         self.assertFalse(values['falcoctl']['artifact']['follow']['enabled'])
@@ -46,7 +47,8 @@ class FalcoRuntimeTest(unittest.TestCase):
         rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
         redirect = next(r for r in rules if r['rule'] == 'Redirect STDOUT/STDIN to Network Connection in Container')
         diagnostic = {'proc.pid', 'thread.tid', 'evt.type', 'evt.rawres', 'fd.num', 'fd.type', 'fd.name',
-                      'container.image.tag', 'fd.is_server', 'fd.l4proto', 'fd.cip', 'fd.sport'}
+                      'container.image.tag', 'fd.is_server', 'fd.l4proto', 'fd.cip', 'fd.sport',
+                      'proc.ppid', 'proc.vpid', 'thread.vtid', 'proc.duration', 'evt.rawarg.oldfd'}
         existing = {'proc.name', 'proc.exepath', 'proc.pname', 'container.id', 'container.name',
                     'container.image.repository', 'k8s.ns.name', 'k8s.pod.name', 'user.uid'}
         self.assertEqual(existing | diagnostic, set(re.findall(r'%([a-zA-Z0-9_.]+)', redirect['output'])))
@@ -58,6 +60,28 @@ class FalcoRuntimeTest(unittest.TestCase):
         config = yaml.safe_load(next(d for d in docs if d['kind'] == 'ConfigMap')['data']['config.yaml'])
         for field in diagnostic:
             self.assertEqual('', config['alertmanager']['extralabels'][field.replace('.', '_')])
+
+    def test_repo_lifecycle_context_is_scoped_and_cannot_page(self):
+        values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
+        rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
+        diagnostic = next(r for r in rules if r['rule'] == 'Argo repo-server safe process lifecycle')
+        self.assertEqual('NOTICE', diagnostic['priority'])
+        self.assertEqual({'proc.name', 'proc.exepath', 'proc.pname', 'proc.pid', 'thread.tid',
+                          'proc.ppid', 'proc.vpid', 'thread.vtid', 'proc.duration', 'evt.type',
+                          'evt.rawres', 'evt.rawarg.oldfd', 'evt.rawarg.flags', 'fd.num',
+                          'fd.type', 'fd.name', 'container.id', 'container.image.repository',
+                          'container.image.tag', 'k8s.ns.name', 'k8s.pod.name', 'user.uid'},
+                         set(re.findall(r'%([a-zA-Z0-9_.]+)', diagnostic['output'])))
+        self.assertEqual('evt.type in (clone, clone3, fork, vfork, dup, dup2, dup3, execve, execveat, procexit) '
+                         'and k8s.ns.name = argocd and k8s.pod.name startswith argocd-repo-server- '
+                         'and container.image.repository = quay.io/argoproj/argocd',
+                         ' '.join(diagnostic['condition'].split()))
+        self.assertNotIn('exceptions', diagnostic)
+        self.assertEqual(3, sum(r['priority'] == 'WARNING' for r in rules))
+        docs = list(yaml.safe_load_all((ROOT / 'falco/sidekick.yaml').read_text()))
+        config = yaml.safe_load(next(d for d in docs if d['kind'] == 'ConfigMap')['data']['config.yaml'])
+        self.assertEqual('warning', config['alertmanager']['minimumpriority'])
+        self.assertEqual('notice', config['loki']['minimumpriority'])
 
     def test_backup_ssh_exception_is_limited_to_reviewed_inbound_socket(self):
         values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
@@ -176,24 +200,36 @@ class FalcosidekickGroupingTest(unittest.TestCase):
                             number = index - 3
                             payload['output_fields'].update({
                                 'proc.pid':1000+number, 'thread.tid':2000+number,
+                                'proc.ppid':900+number, 'proc.vpid':100+number,
+                                'thread.vtid':200+number, 'proc.duration':10000+number,
+                                'evt.rawarg.oldfd':16+number,
                                 'evt.type':'dup3', 'evt.rawres':number,
                                 'fd.num':30+number, 'fd.type':'ipv4',
                                 'fd.name':f'127.0.0.1:{40000+number}->127.0.0.1:9000',
                             })
-                            payload['output'] += f' | pid={1000+number} tid={2000+number} syscall=dup3 result={number} fd={30+number} fd_type=ipv4 connection=127.0.0.1:{40000+number}->127.0.0.1:9000'
+                            payload['output'] += f' | pid={1000+number} tid={2000+number} syscall=dup3 result={number} fd={30+number} fd_type=ipv4 connection=127.0.0.1:{40000+number}->127.0.0.1:9000 ppid={900+number} oldfd={16+number}'
                         request = urllib.request.Request(f'http://127.0.0.1:{port}/',
                             data=json.dumps(payload).encode(), headers={'Content-Type':'application/json'})
                         with urllib.request.urlopen(request, timeout=5) as response:
                             self.assertEqual(200, response.status)
+                    context = json.loads(json.dumps(payload))
+                    context.update(rule='Argo repo-server safe process lifecycle', priority='Notice',
+                                   output='fixture-lifecycle | pid=1002 oldfd=18 executable=/usr/bin/git')
+                    request = urllib.request.Request(f'http://127.0.0.1:{port}/',
+                        data=json.dumps(context).encode(), headers={'Content-Type':'application/json'})
+                    with urllib.request.urlopen(request, timeout=5) as response:
+                        self.assertEqual(200, response.status)
                     for _ in range(100):
                         alerts = [a for url, body in received if url == '/api/v2/alerts' for a in body]
                         records = [entry for url, body in received if url == '/loki/api/v1/push'
                                    for stream in body['streams'] for entry in stream['values']]
-                        if len(alerts) == 6 and len(records) == 6:
+                        if len(alerts) == 6 and len(records) == 7:
                             break
                         time.sleep(.1)
                     self.assertEqual(6, len(alerts))
-                    self.assertEqual(6, len(records), 'Every detailed event must still reach Loki')
+                    self.assertEqual(7, len(records), 'Warning and Notice context must reach Loki')
+                    self.assertFalse(any(a['labels'].get('rule') == context['rule'] for a in alerts))
+                    self.assertEqual(1, sum(json.loads(line)['rule'] == context['rule'] for _, line in records))
                     by_event = {a['annotations']['description'].split(' | ')[0]:a for a in alerts}
                     self.assertEqual(by_event['fixture-event-0']['labels'], by_event['fixture-event-1']['labels'])
                     self.assertNotEqual(by_event['fixture-event-0']['labels'], by_event['fixture-event-2']['labels'])
@@ -203,10 +239,13 @@ class FalcosidekickGroupingTest(unittest.TestCase):
                     self.assertNotEqual(by_event['fixture-event-3']['labels'], by_event['fixture-event-5']['labels'])
                     self.assertIn('pid=1000 tid=2000 syscall=dup3', by_event['fixture-event-3']['annotations']['description'])
                     self.assertIn('connection=127.0.0.1:40000->127.0.0.1:9000', by_event['fixture-event-3']['annotations']['description'])
+                    self.assertIn('ppid=900 oldfd=16', by_event['fixture-event-3']['annotations']['description'])
                     events = [json.loads(line) for _, line in records
                               if json.loads(line)['rule'] == 'Redirect STDOUT/STDIN to Network Connection in Container']
                     self.assertEqual({1000, 1001, 1002}, {e['output_fields']['proc.pid'] for e in events})
                     self.assertEqual({2000, 2001, 2002}, {e['output_fields']['thread.tid'] for e in events})
+                    self.assertEqual({16, 17, 18}, {e['output_fields']['evt.rawarg.oldfd'] for e in events})
+                    self.assertEqual({900, 901, 902}, {e['output_fields']['proc.ppid'] for e in events})
                     self.assertEqual(3, len({e['output_fields']['fd.name'] for e in events}))
                     self.assertTrue(all(e['output_fields']['evt.type'] == 'dup3' for e in events))
                 finally:

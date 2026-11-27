@@ -120,6 +120,8 @@ falco:
       rule: Drop and execute new binary in container
   - enable:
       rule: Redirect STDOUT/STDIN to Network Connection in Container
+  - enable:
+      rule: Argo repo-server safe process lifecycle
   json_output: true
   json_include_message_property: false
   append_output: []
@@ -161,7 +163,9 @@ customRules:
     - rule: Redirect STDOUT/STDIN to Network Connection in Container
       output: Redirect STDOUT/STDIN to Network Connection in Container | process=%proc.name
         executable=%proc.exepath parent=%proc.pname pid=%proc.pid tid=%thread.tid
-        syscall=%evt.type result=%evt.rawres fd=%fd.num fd_type=%fd.type connection=%fd.name
+        ppid=%proc.ppid vpid=%proc.vpid vtid=%thread.vtid process_age_ns=%proc.duration
+        syscall=%evt.type result=%evt.rawres oldfd=%evt.rawarg.oldfd
+        fd=%fd.num fd_type=%fd.type connection=%fd.name
         image_tag=%container.image.tag socket_is_server=%fd.is_server protocol=%fd.l4proto
         client_ip=%fd.cip server_port=%fd.sport
         container_id=%container.id container=%container.name image=%container.image.repository
@@ -191,6 +195,23 @@ customRules:
         - [backup-rsync, backup-rsync-, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
            sshd-session, /usr/lib/ssh/sshd-session, sshd-session, 0, dup2, 0, ipv4, tcp,
            "true", 192.168.30.79, 22]
+    # Correlate the next redirect with pre-exec fd setup and the executable that follows.
+    # Notice reaches Loki only; this is context, not an additional security alert.
+    - rule: Argo repo-server safe process lifecycle
+      desc: Sanitized fork/descriptor/exec context for investigating repo-server redirects.
+      condition: >
+        evt.type in (clone, clone3, fork, vfork, dup, dup2, dup3, execve, execveat, procexit)
+        and k8s.ns.name = argocd and k8s.pod.name startswith argocd-repo-server-
+        and container.image.repository = quay.io/argoproj/argocd
+      output: Argo repo-server safe process lifecycle | process=%proc.name
+        executable=%proc.exepath parent=%proc.pname pid=%proc.pid tid=%thread.tid
+        ppid=%proc.ppid vpid=%proc.vpid vtid=%thread.vtid process_age_ns=%proc.duration
+        syscall=%evt.type result=%evt.rawres oldfd=%evt.rawarg.oldfd flags=%evt.rawarg.flags
+        fd=%fd.num fd_type=%fd.type connection=%fd.name
+        container_id=%container.id image=%container.image.repository image_tag=%container.image.tag
+        namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
+      priority: NOTICE
+      tags: [diagnostic, argocd_fd_context]
 falcosidekick:
   enabled: false
 responseActions:

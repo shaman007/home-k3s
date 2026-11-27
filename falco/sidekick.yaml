@@ -20,6 +20,11 @@ data:
         evt_time: ""
         # Preserve redirect diagnostics in output/Loki without splitting identity.
         proc_pid: ""
+        proc_ppid: ""
+        proc_vpid: ""
+        thread_vtid: ""
+        proc_duration: ""
+        evt_rawarg_oldfd: ""
         thread_tid: ""
         evt_type: ""
         evt_rawres: ""
@@ -40,7 +45,8 @@ data:
     loki:
       hostport: http://loki-gateway.loki.svc.cluster.local
       format: json
-      minimumpriority: warning
+      # Notice is reserved for the scoped repo-server lifecycle diagnostic.
+      minimumpriority: notice
 ---
 apiVersion: apps/v1
 kind: Deployment
