@@ -181,7 +181,7 @@ copied `true` executable without touching Mastodon/Immich data.
 ### Backup SSH stdout exception
 
 The redirect rule excludes only the confirmed OpenSSH `dup2` stdin/stdout events
-for `backup-rsync`/container `sshd`, image
+for namespace `backup-rsync`, Pod prefix `backup-rsync-`, image
 `harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0`, UID 0, matching sshd or
 sshd-session executable/parent pairs, IPv4 TCP server socket on port 22 and
 client `192.168.30.79`. Review this tuple when the client address or image changes.
@@ -200,3 +200,10 @@ also includes image tag, socket server role, L4 protocol, client IP and server
 port to identify the mismatching runtime constraint before changing scope. These
 fields are excluded from Alertmanager identity, like the existing PID/fd details.
 No exception constraint was removed or widened for this diagnostic change.
+
+The failed early probe showed `container.name` equal to the container ID instead
+of `sshd` immediately after sensor restart. Use the Deployment Pod prefix with
+the exact namespace/image/process/socket constraints instead of this transient
+container name. Do not whitelist a container ID or remove the workload scope.
+Four later read-only probes emitted no events; the prefix correction protects
+the same scope when container name metadata is incomplete.

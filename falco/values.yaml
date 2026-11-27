@@ -176,19 +176,19 @@ customRules:
       # Confirmed backup SSH client; no blanket sshd or namespace exception.
       exceptions:
       - name: backup_rsync_incoming_ssh
-        fields: [k8s.ns.name, container.name, container.image.repository, container.image.tag,
+        fields: [k8s.ns.name, k8s.pod.name, container.image.repository, container.image.tag,
           proc.name, proc.exepath, proc.pname, user.uid, evt.type, fd.num, fd.type,
           fd.l4proto, fd.is_server, fd.cip, fd.sport]
-        comps: ["=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "="]
+        comps: ["=", startswith, "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "=", "="]
         values:
-        - [backup-rsync, sshd, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
+        - [backup-rsync, backup-rsync-, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
            sshd, /usr/sbin/sshd, sshd, 0, dup2, 1, ipv4, tcp, "true", 192.168.30.79, 22]
-        - [backup-rsync, sshd, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
+        - [backup-rsync, backup-rsync-, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
            sshd-session, /usr/lib/ssh/sshd-session, sshd-session, 0, dup2, 1, ipv4, tcp,
            "true", 192.168.30.79, 22]
-        - [backup-rsync, sshd, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
+        - [backup-rsync, backup-rsync-, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
            sshd, /usr/sbin/sshd, sshd, 0, dup2, 0, ipv4, tcp, "true", 192.168.30.79, 22]
-        - [backup-rsync, sshd, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
+        - [backup-rsync, backup-rsync-, harbor.andreybondarenko.com/quay/panubo/sshd, "1.10.0",
            sshd-session, /usr/lib/ssh/sshd-session, sshd-session, 0, dup2, 0, ipv4, tcp,
            "true", 192.168.30.79, 22]
 falcosidekick:

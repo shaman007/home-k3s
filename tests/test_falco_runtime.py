@@ -66,7 +66,7 @@ class FalcoRuntimeTest(unittest.TestCase):
         self.assertEqual('append', redirect['override']['exceptions'])
         self.assertEqual(1, len(redirect['exceptions']))
         exception = redirect['exceptions'][0]
-        self.assertEqual(['='] * len(exception['fields']), exception['comps'])
+        self.assertEqual(['=', 'startswith'] + ['='] * (len(exception['fields']) - 2), exception['comps'])
         self.assertEqual(4, len(exception['values']))
         processes = set()
         descriptors = set()
@@ -76,7 +76,7 @@ class FalcoRuntimeTest(unittest.TestCase):
             descriptors.add(scope.pop('fd.num'))
             processes.add((scope.pop('proc.name'), scope.pop('proc.exepath'), scope.pop('proc.pname')))
             self.assertEqual({
-                'k8s.ns.name': 'backup-rsync', 'container.name': 'sshd',
+                'k8s.ns.name': 'backup-rsync', 'k8s.pod.name': 'backup-rsync-',
                 'container.image.repository': 'harbor.andreybondarenko.com/quay/panubo/sshd',
                 'container.image.tag': '1.10.0', 'user.uid': 0, 'evt.type': 'dup2',
                 'fd.type': 'ipv4', 'fd.l4proto': 'tcp',
