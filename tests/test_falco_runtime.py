@@ -66,19 +66,22 @@ class FalcoRuntimeTest(unittest.TestCase):
         self.assertEqual(1, len(redirect['exceptions']))
         exception = redirect['exceptions'][0]
         self.assertEqual(['='] * len(exception['fields']), exception['comps'])
-        self.assertEqual(2, len(exception['values']))
+        self.assertEqual(4, len(exception['values']))
         processes = set()
+        descriptors = set()
         for row in exception['values']:
             self.assertEqual(len(exception['fields']), len(row))
             scope = dict(zip(exception['fields'], row))
+            descriptors.add(scope.pop('fd.num'))
             processes.add((scope.pop('proc.name'), scope.pop('proc.exepath'), scope.pop('proc.pname')))
             self.assertEqual({
                 'k8s.ns.name': 'backup-rsync', 'container.name': 'sshd',
                 'container.image.repository': 'harbor.andreybondarenko.com/quay/panubo/sshd',
                 'container.image.tag': '1.10.0', 'user.uid': 0, 'evt.type': 'dup2',
-                'fd.num': 1, 'fd.type': 'ipv4', 'fd.l4proto': 'tcp',
+                'fd.type': 'ipv4', 'fd.l4proto': 'tcp',
                 'fd.is_server': 'true', 'fd.cip': '192.168.30.79', 'fd.sport': 22,
             }, scope)
+        self.assertEqual({0, 1}, descriptors)
         self.assertEqual({('sshd', '/usr/sbin/sshd', 'sshd'),
                           ('sshd-session', '/usr/lib/ssh/sshd-session', 'sshd-session')}, processes)
         for rule in rules:

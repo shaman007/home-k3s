@@ -180,12 +180,13 @@ copied `true` executable without touching Mastodon/Immich data.
 
 ### Backup SSH stdout exception
 
-The redirect rule excludes only the two confirmed OpenSSH `dup2` stdout events
+The redirect rule excludes only the confirmed OpenSSH `dup2` stdin/stdout events
 for `backup-rsync`/container `sshd`, image
 `harbor.andreybondarenko.com/quay/panubo/sshd:1.10.0`, UID 0, matching sshd or
 sshd-session executable/parent pairs, IPv4 TCP server socket on port 22 and
 client `192.168.30.79`. Review this tuple when the client address or image changes.
-Other clients, outbound sockets, processes, descriptors and namespaces remain
+Only descriptors 0 and 1 are excluded; stderr and other descriptors stay visible.
+Other clients, outbound sockets, processes and namespaces remain
 covered. Shell/new-binary rules are unchanged. This exception suppresses these
 Falco events before forwarding, so they no longer reach Loki or notifications;
 SSH authentication logs remain available from the backup server.
