@@ -97,6 +97,9 @@ class EmailRenderingTests(unittest.TestCase):
         self.assertEqual(1, html.count('View in Alertmanager'))
         self.assertNotIn('https://example.invalid/runbook', html)
         self.assertIn('trim-example', html)
+        for field in ['Started', 'Status', 'Namespace', 'Job', 'Rule']:
+            self.assertIn('<strong>' + field + ':</strong>', html)
+        self.assertNotIn('<strong>', self.render(data))
         self.assertIn('role="presentation"', html)
         self.assertIn('background-color:#fef3c7', html)
         data['commonLabels']['priority'] = 'critical'

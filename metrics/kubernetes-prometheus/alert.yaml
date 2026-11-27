@@ -257,6 +257,44 @@ data:
     {{ end }}{{ if ne .Labels.job "kubernetes-audit" }}{{ with .Labels.job }}Source: {{ . }}
     {{ end }}{{ end }}Rule: {{ .Labels.alertname }}
     {{ end }}
+    {{ define "homelab.email.details.html" }}
+    <strong>Started:</strong> {{ .StartsAt | tz "Europe/Prague" | date "02.01.2006 15:04:05 MST" }}
+    {{ if eq .Status "resolved" }}<strong>Status:</strong> resolved
+    {{ else }}<strong>Status:</strong> firing
+    {{ end }}{{ with .Labels.outcome }}<strong>Outcome:</strong> {{ if eq . "allowed" }}request allowed{{ else if eq . "denied" }}request denied{{ else if eq . "failed" }}request failed{{ else if eq . "dry-run" }}dry run; no changes applied{{ else }}{{ . }}{{ end }}
+    {{ end }}{{ if eq .Labels.job "kubernetes-audit" }}{{ if eq .Labels.alertname "KubernetesUnexpectedSecretRead" }}Secret access outside reviewed exceptions occurred within the last 15 minutes.
+    {{ else if eq .Labels.alertname "KubernetesDangerousRBAC" }}A permission grant or dangerous role change was attempted within the last 15 minutes.
+    {{ else if eq .Labels.alertname "KubernetesSensitivePodExec" }}An exec, attach or port-forward targeted a sensitive Pod within the last 15 minutes.
+    {{ else if eq .Labels.alertname "KubernetesPrivilegedPod" }}Privileged Pod creation was attempted within the last 15 minutes.
+    {{ end }}This alert groups events by API server. Actor, target and event count are not included in the alert. Detection alone does not establish compromise.
+    {{ else if eq .Labels.alertname "TargetDown" }}Over 10% of targets in this monitoring source have been unreachable for at least one minute. The service or metrics collection path may be unavailable.
+    {{ else if eq .Labels.alertname "KubeJobFailed" }}Kubernetes marked this Job as failed. An expired notification does not mean a retry succeeded.
+    {{ else if eq .Labels.alertname "PVC is full!" }}Over 95% of volume capacity is used. Check free space before writes fail.
+    {{ else if eq .Labels.alertname "KeycloakLoginFailureBurst" }}At least 10 login failures in 5 minutes, sustained for one minute. Possible password guessing; user and source IP are not included in the alert.
+    {{ else }}{{ with .Annotations.description }}{{ if ne . "Inspect this resource and its recent events; see the linked runbook before making changes." }}{{ reReplaceAll "https?://[^[:space:]]+" "" . }}{{ end }}
+    {{ else }}{{ with .Annotations.message }}{{ reReplaceAll "https?://[^[:space:]]+" "" . }}
+    {{ end }}{{ end }}{{ end }}
+    {{ with .Labels.application }}<strong>Application:</strong> {{ . }}
+    {{ end }}{{ with .Labels.k8s_ns_name }}<strong>Namespace:</strong> {{ . }}
+    {{ else }}{{ if ne .Labels.job "kubernetes-audit" }}{{ with .Labels.namespace }}<strong>Namespace:</strong> {{ . }}
+    {{ end }}{{ end }}{{ end }}{{ with .Labels.k8s_pod_name }}<strong>Pod:</strong> {{ . }}
+    {{ else }}{{ with .Labels.pod }}<strong>Pod:</strong> {{ . }}
+    {{ end }}{{ end }}{{ with .Labels.container }}<strong>Container:</strong> {{ . }}
+    {{ end }}{{ with .Labels.node }}<strong>{{ if eq $.Labels.job "kubernetes-audit" }}API server{{ else }}Node{{ end }}:</strong> {{ . }}
+    {{ end }}{{ with .Labels.job_name }}<strong>Job:</strong> {{ . }}
+    {{ end }}{{ with .Labels.persistentvolumeclaim }}<strong>PVC:</strong> {{ . }}
+    {{ end }}{{ with .Labels.volume }}<strong>Volume:</strong> {{ . }}
+    {{ end }}{{ with .Labels.service }}<strong>Service:</strong> {{ . }}
+    {{ end }}{{ with .Labels.instance }}<strong>Endpoint:</strong> {{ . }}
+    {{ end }}{{ with .Labels.peer }}<strong>BGP peer:</strong> {{ . }}
+    {{ end }}{{ with .Labels.realm }}<strong>Realm:</strong> {{ . }}
+    {{ end }}{{ with .Labels.queue }}<strong>Queue:</strong> {{ . }}
+    {{ end }}{{ with .Labels.device }}<strong>Device:</strong> {{ . }}
+    {{ end }}{{ with .Labels.mountpoint }}<strong>Mount:</strong> {{ . }}
+    {{ end }}{{ with .Labels.ip }}<strong>Service IP:</strong> {{ . }}
+    {{ end }}{{ if ne .Labels.job "kubernetes-audit" }}{{ with .Labels.job }}<strong>Source:</strong> {{ . }}
+    {{ end }}{{ end }}<strong>Rule:</strong> {{ .Labels.alertname }}
+    {{ end }}
     {{ define "homelab.email.text" }}{{ template "homelab.email.subject" . }}
     {{ range .Alerts }}
     ────────────────────────
@@ -281,7 +319,7 @@ data:
     {{ range .Alerts }}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;border:1px solid #e2e8f0;border-left:4px solid {{ if eq .Status "resolved" }}#16a34a{{ else if eq .Labels.priority "critical" }}#dc2626{{ else }}#d97706{{ end }};border-radius:6px;background-color:#f8fafc"><tr><td style="padding:18px">
     <h2 style="margin:0 0 12px;font-size:16px;line-height:1.4;color:#0f172a">{{ template "homelab.email.title" . }}</h2>
-    <div style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.65;color:#334155">{{ template "homelab.email.details" . }}</div>
+    <div style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.65;color:#334155">{{ template "homelab.email.details.html" . }}</div>
     </td></tr></table>
     {{ end }}
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px"><tr><td bgcolor="#2563eb" style="border-radius:6px;text-align:center"><a href="{{ .ExternalURL }}/#/alerts" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold">View in Alertmanager</a></td></tr></table>
