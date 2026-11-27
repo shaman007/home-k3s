@@ -16,6 +16,12 @@ data:
       group_interval: 5m
       repeat_interval: 4h
       routes:
+      - receiver: email-format-test
+        matchers: ['alertname="NotificationEmailTest"', 'notification_test="true"']
+        group_by: ['alertname', 'test_id']
+        group_wait: 0s
+        repeat_interval: 24h
+
       - receiver: alert-emailer
         matchers: ['priority="critical"']
         repeat_interval: 30m
@@ -30,14 +36,21 @@ data:
     receivers:
     - name: alert-emailer
       email_configs:
-      - to: me@andreybondarenko.com
+      - &personal-email
+        to: me@andreybondarenko.com
         send_resolved: false
         from: alert@andreybondarenko.com
         smarthost: traefik.traefik.svc.cluster.local:587
         require_tls: false
-        text: '{{ template "email.default.text" . }}'
+        headers:
+          Subject: '{{ template "homelab.email.subject" . }}'
+        text: '{{ template "homelab.email.text" . }}'
+        html: '{{ template "homelab.email.html" . }}'
       telegram_configs:
       - bot_token_file: /etc/alertmanager-telegram/token
         chat_id_file: /etc/alertmanager-telegram/chat_id
         send_resolved: false
         parse_mode: HTML
+    - name: email-format-test
+      email_configs:
+      - *personal-email

@@ -189,3 +189,75 @@ data:
     {{range .Alerts}}{{.Annotations.DESCRIPTION}}
     {{end}}
     {{ end }}
+  homelab-email.tmpl: |
+    {{ define "homelab.email.title" -}}
+    {{- if eq .Labels.alertname "KubernetesUnexpectedSecretRead" -}}Secret read outside exceptions
+    {{- else if eq .Labels.alertname "KubernetesDangerousRBAC" -}}Kubernetes permission change
+    {{- else if eq .Labels.alertname "KubernetesSensitivePodExec" -}}Access to a sensitive Pod
+    {{- else if eq .Labels.alertname "KubernetesPrivilegedPod" -}}Privileged Pod creation
+    {{- else if eq .Labels.alertname "KeycloakLoginFailureBurst" -}}Keycloak login failure burst
+    {{- else if eq .Labels.alertname "KubeJobFailed" -}}Job failed
+    {{- else if eq .Labels.alertname "TargetDown" -}}Monitoring target unreachable
+    {{- else if eq .Labels.alertname "BGPNeighborUnavailable" -}}BGP session lost
+    {{- else if eq .Labels.alertname "BGPServiceRouteUnavailable" -}}Service BGP route unavailable
+    {{- else if eq .Labels.alertname "UDMBGPCollectionUnavailable" -}}Router BGP data unavailable
+    {{- else if eq .Labels.alertname "Terminal shell in container" -}}Interactive shell in container
+    {{- else if eq .Labels.alertname "Drop and execute new binary in container" -}}New binary executed in container
+    {{- else if eq .Labels.alertname "Redirect STDOUT/STDIN to Network Connection in Container" -}}Process input/output redirected to network
+    {{- else if eq .Labels.alertname "PVC is full!" -}}Volume over 95% full
+    {{- else if eq .Labels.alertname "KubePodNotReady" -}}Pod not ready
+    {{- else if eq .Labels.job "falco" -}}Falco: {{ .Labels.alertname }}
+    {{- else if .Annotations.summary -}}{{ reReplaceAll "https?://[^[:space:]]+" "" .Annotations.summary }}
+    {{- else -}}{{ .Labels.alertname }}{{- end -}}
+    {{- end }}
+    {{ define "homelab.email.importance" -}}
+    {{- if eq .Status "resolved" -}}Resolved
+    {{- else if or (eq .CommonLabels.priority "critical") (eq .CommonLabels.severity "critical") -}}Urgent
+    {{- else if eq .CommonLabels.priority "info" -}}Info
+    {{- else -}}Review{{- end -}}
+    {{- end }}
+    {{ define "homelab.email.subject" -}}
+    {{ template "homelab.email.importance" . }} · {{ with index .Alerts 0 }}{{ template "homelab.email.title" . }}{{ end }}{{ with .CommonLabels.application }} · {{ . }}{{ else }}{{ with .CommonLabels.k8s_ns_name }} · {{ . }}{{ else }}{{ if ne .CommonLabels.job "kubernetes-audit" }}{{ with .CommonLabels.namespace }} · {{ . }}{{ end }}{{ end }}{{ end }}{{ end }}{{ with .CommonLabels.persistentvolumeclaim }} · {{ . }}{{ else }}{{ with .CommonLabels.job_name }} · {{ . }}{{ else }}{{ with .CommonLabels.service }} · {{ . }}{{ else }}{{ with .CommonLabels.k8s_pod_name }} · {{ . }}{{ else }}{{ with .CommonLabels.pod }} · {{ . }}{{ end }}{{ end }}{{ end }}{{ end }}{{ end }}{{ with .CommonLabels.node }} · {{ . }}{{ end }}{{ if gt (len .Alerts) 1 }} · targets: {{ len .Alerts }}{{ end }}
+    {{- end }}
+    {{ define "homelab.email.text" }}{{ template "homelab.email.subject" . }}
+    {{ range .Alerts }}
+    ────────────────────────
+    {{ template "homelab.email.title" . }}
+    Started: {{ .StartsAt | tz "Europe/Prague" | date "02.01.2006 15:04:05 MST" }}
+    {{ if eq .Status "resolved" }}Status: resolved
+    {{ else }}Status: firing
+    {{ end }}{{ with .Labels.outcome }}Outcome: {{ if eq . "allowed" }}request allowed{{ else if eq . "denied" }}request denied{{ else if eq . "failed" }}request failed{{ else if eq . "dry-run" }}dry run; no changes applied{{ else }}{{ . }}{{ end }}
+    {{ end }}{{ if eq .Labels.job "kubernetes-audit" }}{{ if eq .Labels.alertname "KubernetesUnexpectedSecretRead" }}Secret access outside reviewed exceptions occurred within the last 15 minutes.
+    {{ else if eq .Labels.alertname "KubernetesDangerousRBAC" }}A permission grant or dangerous role change was attempted within the last 15 minutes.
+    {{ else if eq .Labels.alertname "KubernetesSensitivePodExec" }}An exec, attach or port-forward targeted a sensitive Pod within the last 15 minutes.
+    {{ else if eq .Labels.alertname "KubernetesPrivilegedPod" }}Privileged Pod creation was attempted within the last 15 minutes.
+    {{ end }}This alert groups events by API server. Actor, target and event count are not included in the alert. Detection alone does not establish compromise.
+    {{ else if eq .Labels.alertname "TargetDown" }}Over 10% of targets in this monitoring source have been unreachable for at least one minute. The service or metrics collection path may be unavailable.
+    {{ else if eq .Labels.alertname "KubeJobFailed" }}Kubernetes marked this Job as failed. An expired notification does not mean a retry succeeded.
+    {{ else if eq .Labels.alertname "PVC is full!" }}Over 95% of volume capacity is used. Check free space before writes fail.
+    {{ else if eq .Labels.alertname "KeycloakLoginFailureBurst" }}At least 10 login failures in 5 minutes, sustained for one minute. Possible password guessing; user and source IP are not included in the alert.
+    {{ else }}{{ with .Annotations.description }}{{ if ne . "Inspect this resource and its recent events; see the linked runbook before making changes." }}{{ reReplaceAll "https?://[^[:space:]]+" "" . }}{{ end }}
+    {{ else }}{{ with .Annotations.message }}{{ reReplaceAll "https?://[^[:space:]]+" "" . }}
+    {{ end }}{{ end }}{{ end }}
+    {{ with .Labels.application }}Application: {{ . }}
+    {{ end }}{{ with .Labels.k8s_ns_name }}Namespace: {{ . }}
+    {{ else }}{{ if ne .Labels.job "kubernetes-audit" }}{{ with .Labels.namespace }}Namespace: {{ . }}
+    {{ end }}{{ end }}{{ end }}{{ with .Labels.k8s_pod_name }}Pod: {{ . }}
+    {{ else }}{{ with .Labels.pod }}Pod: {{ . }}
+    {{ end }}{{ end }}{{ with .Labels.container }}Container: {{ . }}
+    {{ end }}{{ with .Labels.node }}{{ if eq $.CommonLabels.job "kubernetes-audit" }}API server{{ else }}Node{{ end }}: {{ . }}
+    {{ end }}{{ with .Labels.job_name }}Job: {{ . }}
+    {{ end }}{{ with .Labels.persistentvolumeclaim }}PVC: {{ . }}
+    {{ end }}{{ with .Labels.volume }}Volume: {{ . }}
+    {{ end }}{{ with .Labels.service }}Service: {{ . }}
+    {{ end }}{{ with .Labels.instance }}Endpoint: {{ . }}
+    {{ end }}{{ with .Labels.peer }}BGP peer: {{ . }}
+    {{ end }}{{ with .Labels.realm }}Realm: {{ . }}
+    {{ end }}{{ with .Labels.queue }}Queue: {{ . }}
+    {{ end }}{{ with .Labels.device }}Device: {{ . }}
+    {{ end }}{{ with .Labels.mountpoint }}Mount: {{ . }}
+    {{ end }}{{ with .Labels.ip }}Service IP: {{ . }}
+    {{ end }}{{ if ne .Labels.job "kubernetes-audit" }}{{ with .Labels.job }}Source: {{ . }}
+    {{ end }}{{ end }}Rule: {{ .Labels.alertname }}
+    {{ end }}{{ end }}
+    {{ define "homelab.email.html" }}<!doctype html><html lang="en"><meta charset="utf-8"><body style="margin:24px;color:#202124;background:#fff;font:15px/1.55 system-ui,sans-serif"><pre style="white-space:pre-wrap;font:inherit">{{ template "homelab.email.text" . }}</pre></body></html>{{ end }}
