@@ -1,0 +1,663 @@
+{
+  "description": "Manually reviewed Pod security shapes, controller owner UIDs and actors. No automatic refresh from traffic. New owner UID, image or shape requires review. Pod command arguments/environment are not recorded.",
+  "entries": [
+    {
+      "id": "longhorn-manager",
+      "namespace": "longhorn-system",
+      "podPrefix": "longhorn-manager-",
+      "owner": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "name": "longhorn-manager",
+        "uid": "8ad78cbf-49d6-40df-ad04-e86cb368dddd"
+      },
+      "app": "longhorn-manager",
+      "createActor": "system:serviceaccount:kube-system:daemon-set-controller",
+      "spec": {
+        "serviceAccountName": "longhorn-service-account",
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "longhorn-manager",
+            "image": "docker.io/longhornio/longhorn-manager:v1.13.0",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/host/boot/",
+                "name": "boot",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/host/dev/",
+                "name": "dev"
+              },
+              {
+                "mountPath": "/host/proc/",
+                "name": "proc",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/host/etc/",
+                "name": "etc",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/var/lib/longhorn/",
+                "mountPropagation": "Bidirectional",
+                "name": "longhorn"
+              },
+              {
+                "mountPath": "/tls-files/",
+                "name": "longhorn-grpc-tls"
+              }
+            ]
+          },
+          {
+            "name": "pre-pull-share-manager-image",
+            "image": "docker.io/longhornio/longhorn-share-manager:v1.13.0",
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "capabilities": {
+                "drop": [
+                  "ALL"
+                ]
+              },
+              "privileged": false,
+              "runAsGroup": 65534,
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "volumeMounts": []
+          }
+        ],
+        "initContainers": [],
+        "volumes": [
+          {
+            "hostPath": {
+              "path": "/boot/",
+              "type": ""
+            },
+            "name": "boot"
+          },
+          {
+            "hostPath": {
+              "path": "/dev/",
+              "type": ""
+            },
+            "name": "dev"
+          },
+          {
+            "hostPath": {
+              "path": "/proc/",
+              "type": ""
+            },
+            "name": "proc"
+          },
+          {
+            "hostPath": {
+              "path": "/etc/",
+              "type": ""
+            },
+            "name": "etc"
+          },
+          {
+            "hostPath": {
+              "path": "/var/lib/longhorn/",
+              "type": ""
+            },
+            "name": "longhorn"
+          }
+        ]
+      },
+      "metadataUpdateActor": "system:serviceaccount:longhorn-system:longhorn-service-account",
+      "revisionHash": "6f8f56fb7b"
+    },
+    {
+      "id": "gpu-feature-discovery",
+      "namespace": "gpu-operator",
+      "podPrefix": "gpu-feature-discovery-",
+      "owner": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "name": "gpu-feature-discovery",
+        "uid": "7c021d41-bc06-409c-a419-8a38748152f3"
+      },
+      "app": "gpu-feature-discovery",
+      "createActor": "system:serviceaccount:kube-system:daemon-set-controller",
+      "spec": {
+        "serviceAccountName": "nvidia-gpu-feature-discovery",
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "gpu-feature-discovery",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.2",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/kubernetes/node-feature-discovery/features.d",
+                "name": "output-dir"
+              },
+              {
+                "mountPath": "/sys",
+                "name": "host-sys",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/config",
+                "name": "config"
+              },
+              {
+                "mountPath": "/available-configs",
+                "name": "nvidia-device-plugin-config"
+              }
+            ]
+          },
+          {
+            "name": "config-manager",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.2",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/config",
+                "name": "config"
+              },
+              {
+                "mountPath": "/available-configs",
+                "name": "nvidia-device-plugin-config"
+              }
+            ]
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia",
+                "mountPropagation": "HostToContainer",
+                "name": "run-nvidia"
+              }
+            ]
+          },
+          {
+            "name": "config-manager-init",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.2",
+            "volumeMounts": [
+              {
+                "mountPath": "/config",
+                "name": "config"
+              },
+              {
+                "mountPath": "/available-configs",
+                "name": "nvidia-device-plugin-config"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "hostPath": {
+              "path": "/etc/kubernetes/node-feature-discovery/features.d",
+              "type": ""
+            },
+            "name": "output-dir"
+          },
+          {
+            "hostPath": {
+              "path": "/sys",
+              "type": ""
+            },
+            "name": "host-sys"
+          },
+          {
+            "hostPath": {
+              "path": "/run/nvidia",
+              "type": "Directory"
+            },
+            "name": "run-nvidia"
+          }
+        ]
+      },
+      "revisionHash": "bbbb5cf58"
+    },
+    {
+      "id": "nvidia-cuda-validator",
+      "namespace": "gpu-operator",
+      "podPrefix": "nvidia-cuda-validator-",
+      "owner": {
+        "apiVersion": "nvidia.com/v1",
+        "kind": "ClusterPolicy",
+        "name": "cluster-policy",
+        "uid": "d75ea72b-ee21-4cc7-a7ee-f0dee3fbee5d"
+      },
+      "app": "nvidia-cuda-validator",
+      "createActor": "system:serviceaccount:gpu-operator:nvidia-operator-validator",
+      "spec": {
+        "serviceAccountName": "nvidia-operator-validator",
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-cuda-validator",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "readOnlyRootFilesystem": true
+            },
+            "volumeMounts": []
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "cuda-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": []
+          }
+        ],
+        "volumes": []
+      }
+    },
+    {
+      "id": "nvidia-dcgm-exporter",
+      "namespace": "gpu-operator",
+      "podPrefix": "nvidia-dcgm-exporter-",
+      "owner": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "name": "nvidia-dcgm-exporter",
+        "uid": "068159d6-7491-4e7b-a131-38500db5f971"
+      },
+      "app": "nvidia-dcgm-exporter",
+      "createActor": "system:serviceaccount:kube-system:daemon-set-controller",
+      "spec": {
+        "serviceAccountName": "nvidia-dcgm-exporter",
+        "securityContext": {},
+        "automountServiceAccountToken": false,
+        "containers": [
+          {
+            "name": "nvidia-dcgm-exporter",
+            "image": "nvcr.io/nvidia/k8s/dcgm-exporter:4.7.0-4.9.0-distroless",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/var/lib/kubelet/pod-resources",
+                "name": "pod-gpu-resources",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia",
+                "mountPropagation": "HostToContainer",
+                "name": "run-nvidia"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "hostPath": {
+              "path": "/var/lib/kubelet/pod-resources",
+              "type": ""
+            },
+            "name": "pod-gpu-resources"
+          },
+          {
+            "hostPath": {
+              "path": "/run/nvidia",
+              "type": ""
+            },
+            "name": "run-nvidia"
+          }
+        ]
+      },
+      "revisionHash": "5576bd7f94"
+    },
+    {
+      "id": "nvidia-device-plugin-daemonset",
+      "namespace": "gpu-operator",
+      "podPrefix": "nvidia-device-plugin-daemonset-",
+      "owner": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "name": "nvidia-device-plugin-daemonset",
+        "uid": "95c0105a-1501-4c47-90e7-ea4ca320aa93"
+      },
+      "app": "nvidia-device-plugin-daemonset",
+      "createActor": "system:serviceaccount:kube-system:daemon-set-controller",
+      "spec": {
+        "serviceAccountName": "nvidia-device-plugin",
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-device-plugin",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.2",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/bin/entrypoint.sh",
+                "name": "nvidia-device-plugin-entrypoint",
+                "readOnly": true,
+                "subPath": "entrypoint.sh"
+              },
+              {
+                "mountPath": "/var/lib/kubelet/device-plugins",
+                "name": "device-plugin"
+              },
+              {
+                "mountPath": "/run/nvidia/validations",
+                "name": "run-nvidia-validations"
+              },
+              {
+                "mountPath": "/driver-root",
+                "mountPropagation": "HostToContainer",
+                "name": "driver-install-dir"
+              },
+              {
+                "mountPath": "/host",
+                "mountPropagation": "HostToContainer",
+                "name": "host-root",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/var/run/cdi",
+                "name": "cdi-root"
+              },
+              {
+                "mountPath": "/dev/shm",
+                "name": "mps-shm"
+              },
+              {
+                "mountPath": "/mps",
+                "name": "mps-root"
+              },
+              {
+                "mountPath": "/config",
+                "name": "config"
+              },
+              {
+                "mountPath": "/available-configs",
+                "name": "nvidia-device-plugin-config"
+              }
+            ]
+          },
+          {
+            "name": "config-manager",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.2",
+            "securityContext": {
+              "privileged": true
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/config",
+                "name": "config"
+              },
+              {
+                "mountPath": "/available-configs",
+                "name": "nvidia-device-plugin-config"
+              }
+            ]
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia/validations",
+                "mountPropagation": "HostToContainer",
+                "name": "run-nvidia-validations"
+              }
+            ]
+          },
+          {
+            "name": "config-manager-init",
+            "image": "nvcr.io/nvidia/k8s-device-plugin:v0.20.2",
+            "volumeMounts": [
+              {
+                "mountPath": "/config",
+                "name": "config"
+              },
+              {
+                "mountPath": "/available-configs",
+                "name": "nvidia-device-plugin-config"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "hostPath": {
+              "path": "/var/lib/kubelet/device-plugins",
+              "type": ""
+            },
+            "name": "device-plugin"
+          },
+          {
+            "hostPath": {
+              "path": "/run/nvidia/validations",
+              "type": "DirectoryOrCreate"
+            },
+            "name": "run-nvidia-validations"
+          },
+          {
+            "hostPath": {
+              "path": "/usr/local",
+              "type": "DirectoryOrCreate"
+            },
+            "name": "driver-install-dir"
+          },
+          {
+            "hostPath": {
+              "path": "/",
+              "type": ""
+            },
+            "name": "host-root"
+          },
+          {
+            "hostPath": {
+              "path": "/var/run/cdi",
+              "type": "DirectoryOrCreate"
+            },
+            "name": "cdi-root"
+          },
+          {
+            "hostPath": {
+              "path": "/run/nvidia/mps",
+              "type": "DirectoryOrCreate"
+            },
+            "name": "mps-root"
+          },
+          {
+            "hostPath": {
+              "path": "/run/nvidia/mps/shm",
+              "type": ""
+            },
+            "name": "mps-shm"
+          }
+        ]
+      },
+      "revisionHash": "79dd488887"
+    },
+    {
+      "id": "nvidia-operator-validator",
+      "namespace": "gpu-operator",
+      "podPrefix": "nvidia-operator-validator-",
+      "owner": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "name": "nvidia-operator-validator",
+        "uid": "181e96c7-5de2-49e5-b9ae-5c18a884a53f"
+      },
+      "app": "nvidia-operator-validator",
+      "createActor": "system:serviceaccount:kube-system:daemon-set-controller",
+      "spec": {
+        "serviceAccountName": "nvidia-operator-validator",
+        "securityContext": {},
+        "containers": [
+          {
+            "name": "nvidia-operator-validator",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia/validations",
+                "mountPropagation": "Bidirectional",
+                "name": "run-nvidia-validations"
+              }
+            ]
+          }
+        ],
+        "initContainers": [
+          {
+            "name": "driver-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0,
+              "seLinuxOptions": {
+                "level": "s0"
+              }
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/host",
+                "mountPropagation": "HostToContainer",
+                "name": "host-root",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/usr/local",
+                "mountPropagation": "HostToContainer",
+                "name": "driver-install-dir"
+              },
+              {
+                "mountPath": "/run/nvidia/validations",
+                "mountPropagation": "Bidirectional",
+                "name": "run-nvidia-validations"
+              },
+              {
+                "mountPath": "/host-dev-char",
+                "name": "host-dev-char"
+              }
+            ]
+          },
+          {
+            "name": "toolkit-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia/validations",
+                "mountPropagation": "Bidirectional",
+                "name": "run-nvidia-validations"
+              }
+            ]
+          },
+          {
+            "name": "cuda-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia/validations",
+                "mountPropagation": "Bidirectional",
+                "name": "run-nvidia-validations"
+              }
+            ]
+          },
+          {
+            "name": "plugin-validation",
+            "image": "nvcr.io/nvidia/gpu-operator:v26.7.3",
+            "securityContext": {
+              "privileged": true,
+              "runAsUser": 0
+            },
+            "volumeMounts": [
+              {
+                "mountPath": "/run/nvidia/validations",
+                "mountPropagation": "Bidirectional",
+                "name": "run-nvidia-validations"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "hostPath": {
+              "path": "/run/nvidia/validations",
+              "type": "DirectoryOrCreate"
+            },
+            "name": "run-nvidia-validations"
+          },
+          {
+            "hostPath": {
+              "path": "/usr/local",
+              "type": ""
+            },
+            "name": "driver-install-dir"
+          },
+          {
+            "hostPath": {
+              "path": "/",
+              "type": ""
+            },
+            "name": "host-root"
+          },
+          {
+            "hostPath": {
+              "path": "/dev/char",
+              "type": ""
+            },
+            "name": "host-dev-char"
+          }
+        ]
+      },
+      "revisionHash": "5f566b6db"
+    }
+  ]
+}

@@ -259,6 +259,45 @@ class AlloyPipelineTests(unittest.TestCase):
                                     changed['annotations']['homelab-audit-roles/dangerous'] = 'escalation'
                                 events.append(changed)
                                 boundary_ids.add(changed['auditID'])
+                    # Admission marks reviewed security shapes; Alloy still checks actor/status/scope.
+                    profiles = json.loads((ROOT / 'tools/monitoring/audit_privileged_workloads.json').read_text())['entries']
+                    for profile in profiles:
+                        actors = [(profile['createActor'], 'create')]
+                        if profile.get('metadataUpdateActor'):
+                            actors += [(profile['metadataUpdateActor'], 'update'),
+                                       (profile['metadataUpdateActor'], 'patch')]
+                        for actor, verb in actors:
+                            base = event('priv-reviewed-' + profile['id'] + '-' + verb,
+                                         namespace=profile['namespace'], name=profile['podPrefix'] + 'fixture',
+                                         resource='pods', verb=verb,
+                                         annotations={'homelab-audit-pods/privileged': 'privileged',
+                                                      'homelab-audit-reviewed-privileged/expected': profile['id']})
+                            base['user']['username'] = actor
+                            events.append(base)
+                            conflict = json.loads(json.dumps(base))
+                            conflict['auditID'] += '-conflict'
+                            conflict['responseStatus']['code'] = 409
+                            events.append(conflict)
+                            for suffix in ['human', 'impersonated', 'namespace', 'marker', 'denied',
+                                           'error', 'subresource', 'verb']:
+                                changed = json.loads(json.dumps(base))
+                                changed['auditID'] += '-' + suffix
+                                if suffix == 'human':
+                                    changed['user']['username'] = 'admin'
+                                elif suffix == 'impersonated':
+                                    changed['impersonatedUser'] = {'username': 'human'}
+                                elif suffix == 'namespace':
+                                    changed['objectRef']['namespace'] = 'other'
+                                elif suffix == 'marker':
+                                    changed['annotations']['homelab-audit-reviewed-privileged/expected'] = 'other'
+                                elif suffix in ['denied', 'error']:
+                                    changed['responseStatus']['code'] = 403 if suffix == 'denied' else 500
+                                elif suffix == 'subresource':
+                                    changed['objectRef']['subresource'] = 'ephemeralcontainers'
+                                else:
+                                    changed['verb'] = 'delete'
+                                events.append(changed)
+                                boundary_ids.add(changed['auditID'])
                     # Direct-read exceptions are constrained to one Secret in one namespace.
                     for actor, namespace, name in [
                         ('cert-manager:cert-manager-cainjector', 'cert-manager', 'cert-manager-webhook-ca'),

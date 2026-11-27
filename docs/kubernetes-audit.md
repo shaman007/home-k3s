@@ -215,3 +215,37 @@ other roles and impersonation remain detected. These no-op events remain in the
 source Kubernetes audit files but are not forwarded as selected Loki detections.
 Falco has no new exception. The overnight BGP outage coincided with a router
 update confirmed by the operator; no permanent network-alert suppression was added.
+
+### Reviewed privileged controller Pods
+
+`tools/monitoring/audit_privileged_workloads.json` contains six manually reviewed
+profiles: Longhorn manager; GPU feature discovery, device plugin, DCGM exporter,
+operator validator; and CUDA validator. The generated observation-only
+`homelab-audit-reviewed-privileged` policy emits a profile ID only when the exact
+namespace, controller owner UID, app label, ServiceAccount, container/init set,
+image versions, security contexts, mounts and host paths match. DaemonSet profiles
+also require the reviewed controller revision hash, binding suppression to the
+approved Pod template. Ephemeral containers and extra containers are excluded.
+New image versions, owner UIDs or template hashes require explicit catalog review.
+The catalog never records environment values or command arguments.
+
+Creation is matched only for the DaemonSet controller or CUDA validator identity.
+Longhorn manager updates are matched only for its ServiceAccount when old/new
+Pod specs are identical. Alloy independently checks the profile, namespace,
+actor, operation, absence of impersonation/subresource, and successful status or
+HTTP 409. Denials, other errors, spec changes, unknown Pods, admin and
+image-builder events stay visible. Missing annotations and policy evaluation
+errors fail open for detection: they do not suppress the alert.
+
+These exceptions only reduce the selected detection stream. Kubernetes source
+audit logs remain unchanged. Admission remains `Ignore`/`Audit` with an always
+true validation; the annotation grants no permissions and blocks no requests.
+
+Regenerate with `python3 tools/monitoring/generate_privileged_audit_exceptions.py`.
+Run `python3 -m unittest tests.test_privileged_audit` with Kyverno CLI installed,
+and `ALLOY_BINARY=~/.local/bin/alloy python3 -m unittest tests.test_kubernetes_audit`
+for the real pipeline. Tests mutate actor, ownership, template hash, image,
+ServiceAccount, namespace, security contexts, host paths, mounts, init/ephemeral
+containers, HTTP outcome and impersonation. No live Pod is created by the tests.
+After publication, verify admission policy status and all three audit collectors
+before judging the next real controller rollout; existing alerts expire normally.
