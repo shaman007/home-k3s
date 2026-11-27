@@ -94,8 +94,6 @@ data:
 
     # Exact retained bindings approved 2026-11-21; resume coverage if attached.
     RETAINED_DETACHED_PVCS = {
-        ("bitwarden", "data-bitwarden-postgres-lh"): "pvc-2eff94a4-7422-4c84-8136-ef64d8743d96",
-        ("dawarich", "data-dawarich-postgres-lh"): "pvc-40698ded-bda2-4bde-8441-6657969d2728",
         ("mastodon", "data-mastodon-postgres-v2"): "pvc-54c36429-14fa-4347-b61b-2641d9889ec6",
         ("immich", "data-immich-postgres16-lh"): "pvc-b59be461-c7cc-4b3f-87fe-c7c3167bb743",
         ("lenka", "mysql-pv-claim"): "pvc-e7c4e741-be84-4280-a57a-7919bac73894",
