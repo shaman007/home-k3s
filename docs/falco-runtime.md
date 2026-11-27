@@ -190,3 +190,13 @@ Other clients, outbound sockets, processes and namespaces remain
 covered. Shell/new-binary rules are unchanged. This exception suppresses these
 Falco events before forwarding, so they no longer reach Loki or notifications;
 SSH authentication logs remain available from the backup server.
+
+### SSH exception verification status
+
+A real read-only rsync probe after revision `10e182a8` still emitted both
+stdin/stdout redirects despite the compiled exception. Do not consider the
+exception effective based on syntax validation alone. The redirect output now
+also includes image tag, socket server role, L4 protocol, client IP and server
+port to identify the mismatching runtime constraint before changing scope. These
+fields are excluded from Alertmanager identity, like the existing PID/fd details.
+No exception constraint was removed or widened for this diagnostic change.

@@ -26,6 +26,11 @@ data:
         fd_num: ""
         fd_type: ""
         fd_name: ""
+        container_image_tag: ""
+        fd_is_server: ""
+        fd_l4proto: ""
+        fd_cip: ""
+        fd_sport: ""
         job: falco
         category: security
         owner: homelab

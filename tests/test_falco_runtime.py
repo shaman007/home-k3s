@@ -45,7 +45,8 @@ class FalcoRuntimeTest(unittest.TestCase):
         values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
         rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
         redirect = next(r for r in rules if r['rule'] == 'Redirect STDOUT/STDIN to Network Connection in Container')
-        diagnostic = {'proc.pid', 'thread.tid', 'evt.type', 'evt.rawres', 'fd.num', 'fd.type', 'fd.name'}
+        diagnostic = {'proc.pid', 'thread.tid', 'evt.type', 'evt.rawres', 'fd.num', 'fd.type', 'fd.name',
+                      'container.image.tag', 'fd.is_server', 'fd.l4proto', 'fd.cip', 'fd.sport'}
         existing = {'proc.name', 'proc.exepath', 'proc.pname', 'container.id', 'container.name',
                     'container.image.repository', 'k8s.ns.name', 'k8s.pod.name', 'user.uid'}
         self.assertEqual(existing | diagnostic, set(re.findall(r'%([a-zA-Z0-9_.]+)', redirect['output'])))

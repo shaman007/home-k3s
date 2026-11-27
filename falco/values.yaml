@@ -162,6 +162,8 @@ customRules:
       output: Redirect STDOUT/STDIN to Network Connection in Container | process=%proc.name
         executable=%proc.exepath parent=%proc.pname pid=%proc.pid tid=%thread.tid
         syscall=%evt.type result=%evt.rawres fd=%fd.num fd_type=%fd.type connection=%fd.name
+        image_tag=%container.image.tag socket_is_server=%fd.is_server protocol=%fd.l4proto
+        client_ip=%fd.cip server_port=%fd.sport
         container_id=%container.id container=%container.name image=%container.image.repository
         namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
       priority: WARNING
