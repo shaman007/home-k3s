@@ -59,7 +59,7 @@ def documents():
         ['python3', '/config/retention.py'],
         {'retention.py': (ROOT / 'tools/longhorn/retain_backups.py').read_text()}, '*/15 * * * *', True)
     talos = cron('talos-backup', 'talos-backup-retention',
-        'harbor.andreybondarenko.com/dockerhub/amazon/aws-cli@sha256:4a1a668837d5f97ced202e03827da1bc0b48cda946be89909cd7a02023f62921',
+        'harbor.andreybondarenko.com/dockerhub/amazon/aws-cli@sha256:4e569d37c0b93893f660946f9b00a442b1172b1c4ba86338a3a1af3937ed62b5',
         ['/bin/bash', '/config/retention.sh'],
         {'retention.sh': (ROOT / 'tools/talos_retain_backups.sh').read_text()}, '*/15 * * * *')
     return {'longhorn/backup-retention.yaml': longhorn,

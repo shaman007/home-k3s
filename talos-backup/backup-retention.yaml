@@ -55,7 +55,7 @@ spec:
               type: RuntimeDefault
           containers:
           - name: retention
-            image: harbor.andreybondarenko.com/dockerhub/amazon/aws-cli@sha256:4a1a668837d5f97ced202e03827da1bc0b48cda946be89909cd7a02023f62921
+            image: harbor.andreybondarenko.com/dockerhub/amazon/aws-cli@sha256:4e569d37c0b93893f660946f9b00a442b1172b1c4ba86338a3a1af3937ed62b5
             command:
             - /bin/bash
             - /config/retention.sh
