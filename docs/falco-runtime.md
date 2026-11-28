@@ -124,12 +124,19 @@ process name, source fd, socket direction, client/server IP and server port:
 | same | same | 17 | `127.0.0.1 -> 127.0.0.1:8081` | server |
 | same | same | 16 | `10.42.0.193 -> 140.82.121.4:443` | client |
 | `metallb-system/metallb-frr-k8s-*` | `quay.io/frrouting/frr:10.6.2`, 100, `frr-metrics` | 11 | `192.168.30.100 -> 192.168.30.100:9141` | client |
+| same | same | 11 | `192.168.30.209 -> 192.168.30.209:9141` | client |
 | same | same | 11 | `192.168.30.242 -> 192.168.30.242:9141` | client |
+
+The post-publication check caught the third-node event at 2026-11-28
+09:35:50 UTC on `w386`. Its PID 52612 executed `/usr/bin/vtysh` 189 microseconds
+after the Warning and exited normally about 17 ms later. Only the exact
+`192.168.30.209 -> 192.168.30.209:9141` pair was added for that verified shape;
+the common pre-exec and all other FRR constraints remain mandatory.
 
 GitHub's published Git service ranges included the single observed
 `140.82.121.4` address during review. The rule uses that exact IP, **not** a
-GitHub CIDR or all HTTPS. Only the two observed FRR node pairs are excluded; a
-third node, new Pod IP, changed image, new oldfd, different port/client/server,
+GitHub CIDR or all HTTPS. Only the three individually reviewed FRR node pairs are excluded; a
+new node, new Pod IP, changed image, new oldfd, different port/client/server,
 stdout/stderr, another process or any non-empty executable remains alertable.
 IP and image drift deliberately requires a new review instead of widening scope.
 The existing backup SSH exception is unchanged.
@@ -145,7 +152,7 @@ rule before either diagnostic rule.
 
 Validation distinguishes native compilation, boundary contracts and runtime
 verification. Native Falco validates supported fields/operators. Unit boundary
-contracts evaluate the reviewed predicate subset against the five observed
+contracts evaluate the reviewed predicate subset against the six observed
 shapes, single-field mutations and missing metadata; their small test-only
 predicate evaluator is **not** the Falco engine and does not prove live matching.
 Native Sidekick tests prove Notice goes to Loki only and Warning fingerprinting

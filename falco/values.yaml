@@ -171,6 +171,7 @@ customRules:
         and evt.rawarg.oldfd = 11 and fd.is_server = false and fd.sport = 9141
         and (
           (fd.cip = 192.168.30.100 and fd.sip = 192.168.30.100)
+          or (fd.cip = 192.168.30.209 and fd.sip = 192.168.30.209)
           or (fd.cip = 192.168.30.242 and fd.sip = 192.168.30.242)
         )
     - rule: Terminal shell in container

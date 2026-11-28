@@ -172,7 +172,7 @@ class FalcoRuntimeTest(unittest.TestCase):
                      (17, True, '127.0.0.1', '127.0.0.1', 8081),
                      (16, False, '10.42.0.193', '140.82.121.4', 443)]]
         cases += [dict(frr, **{'fd.cip': address, 'fd.sip': address})
-                  for address in ('192.168.30.100', '192.168.30.242')]
+                  for address in ('192.168.30.100', '192.168.30.209', '192.168.30.242')]
 
         def excluded(event):
             return any(reviewed_macro_matches(macros, name, event) for name in
