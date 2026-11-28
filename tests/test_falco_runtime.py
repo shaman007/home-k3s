@@ -18,6 +18,69 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def reviewed_macro_matches(macros, name, event):
+    """Evaluate the reviewed predicate subset for boundary contracts, not BPF proof.
+
+    No production code uses this helper. Falco's native validator separately checks
+    field/operator support; these cases protect the intended truth table on edits.
+    """
+    tokens = re.findall(r'"[^"\\]*(?:\\.[^"\\]*)*"|[()]|[=<>]|[\w./:-]+', macros[name])
+    position = 0
+
+    def atom():
+        nonlocal position
+        token = tokens[position]
+        position += 1
+        if token == '(':
+            value = expression()
+            if tokens[position] != ')':
+                raise AssertionError('unbalanced reviewed predicate')
+            position += 1
+            return value
+        if token in macros:
+            return reviewed_macro_matches(macros, token, event)
+        operator, raw = tokens[position:position + 2]
+        position += 2
+        expected = (json.loads(raw) if raw.startswith('"') else
+                    int(raw) if raw.isdigit() else
+                    {'true': True, 'false': False}.get(raw, raw))
+        actual = event.get(token)
+        if actual is None:
+            return False
+        if operator == '=':
+            return actual == expected
+        if operator == 'startswith':
+            return isinstance(actual, str) and actual.startswith(expected)
+        if operator == '<':
+            return actual < expected
+        if operator == '>':
+            return actual > expected
+        raise AssertionError('unsupported reviewed predicate operator: ' + operator)
+
+    def conjunction():
+        nonlocal position
+        value = atom()
+        while position < len(tokens) and tokens[position] == 'and':
+            position += 1
+            right = atom()
+            value = value and right
+        return value
+
+    def expression():
+        nonlocal position
+        value = conjunction()
+        while position < len(tokens) and tokens[position] == 'or':
+            position += 1
+            right = conjunction()
+            value = value or right
+        return value
+
+    result = expression()
+    if position != len(tokens):
+        raise AssertionError('unparsed reviewed predicate tokens')
+    return result
+
+
 class FalcoRuntimeTest(unittest.TestCase):
     """These are security/coverage contracts, not proof of actual BPF attachment."""
 
@@ -26,9 +89,9 @@ class FalcoRuntimeTest(unittest.TestCase):
         controls = values['falco']['rules']
         self.assertEqual({'disable': {'rule': '*'}}, controls[0])
         selected = {control['enable']['rule'] for control in controls[1:]}
-        overrides = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
+        overrides = [r for r in yaml.safe_load(values['customRules']['runtime-safe-output.yaml']) if 'rule' in r]
         self.assertEqual(selected, {rule['rule'] for rule in overrides})
-        self.assertEqual(4, len(selected))
+        self.assertEqual(5, len(selected))
         forbidden = ('proc.cmdline', 'proc.args', 'proc.env', 'evt.args', 'user.name')
         for rule in overrides:
             for field in forbidden:
@@ -45,17 +108,17 @@ class FalcoRuntimeTest(unittest.TestCase):
         """Retain numeric/socket context without argv, env or exception widening."""
         values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
         rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
-        redirect = next(r for r in rules if r['rule'] == 'Redirect STDOUT/STDIN to Network Connection in Container')
+        redirect = next(r for r in rules if r.get('rule', '') == 'Redirect STDOUT/STDIN to Network Connection in Container')
         diagnostic = {'proc.pid', 'thread.tid', 'evt.type', 'evt.rawres', 'fd.num', 'fd.type', 'fd.name',
                       'container.image.tag', 'fd.is_server', 'fd.l4proto', 'fd.cip', 'fd.sport',
                       'proc.ppid', 'proc.vpid', 'thread.vtid', 'proc.duration', 'evt.rawarg.oldfd'}
         existing = {'proc.name', 'proc.exepath', 'proc.pname', 'container.id', 'container.name',
                     'container.image.repository', 'k8s.ns.name', 'k8s.pod.name', 'user.uid'}
         self.assertEqual(existing | diagnostic, set(re.findall(r'%([a-zA-Z0-9_.]+)', redirect['output'])))
-        self.assertEqual('and container.id != "runtime"', redirect['condition'])
+        self.assertEqual('and container.id != "runtime" and not (argocd_reviewed_preexec_stdin or metallb_reviewed_preexec_stdin)',
+                         ' '.join(redirect['condition'].split()))
         self.assertEqual({'rule', 'output', 'priority', 'override', 'condition', 'exceptions'}, set(redirect))
         self.assertEqual('WARNING', redirect['priority'])
-        self.assertNotIn('argocd', redirect['condition'])
         docs = list(yaml.safe_load_all((ROOT / 'falco/sidekick.yaml').read_text()))
         config = yaml.safe_load(next(d for d in docs if d['kind'] == 'ConfigMap')['data']['config.yaml'])
         for field in diagnostic:
@@ -64,7 +127,7 @@ class FalcoRuntimeTest(unittest.TestCase):
     def test_repo_lifecycle_context_is_scoped_and_cannot_page(self):
         values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
         rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
-        diagnostic = next(r for r in rules if r['rule'] == 'Argo repo-server safe process lifecycle')
+        diagnostic = next(r for r in rules if r.get('rule', '') == 'Argo repo-server safe process lifecycle')
         self.assertEqual('NOTICE', diagnostic['priority'])
         self.assertEqual({'proc.name', 'proc.exepath', 'proc.pname', 'proc.pid', 'thread.tid',
                           'proc.ppid', 'proc.vpid', 'thread.vtid', 'proc.duration', 'evt.type',
@@ -77,16 +140,84 @@ class FalcoRuntimeTest(unittest.TestCase):
                          'and container.image.repository = quay.io/argoproj/argocd',
                          ' '.join(diagnostic['condition'].split()))
         self.assertNotIn('exceptions', diagnostic)
-        self.assertEqual(3, sum(r['priority'] == 'WARNING' for r in rules))
+        self.assertEqual(3, sum(r.get('priority') == 'WARNING' for r in rules))
         docs = list(yaml.safe_load_all((ROOT / 'falco/sidekick.yaml').read_text()))
         config = yaml.safe_load(next(d for d in docs if d['kind'] == 'ConfigMap')['data']['config.yaml'])
         self.assertEqual('warning', config['alertmanager']['minimumpriority'])
         self.assertEqual('notice', config['loki']['minimumpriority'])
 
+    def test_go_preexec_exclusions_preserve_unreviewed_connections(self):
+        values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
+        rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
+        macros = {r['macro']: r['condition'] for r in rules if 'macro' in r}
+        self.assertEqual({'reviewed_go_preexec_stdin_setup', 'argocd_reviewed_preexec_stdin',
+                          'metallb_reviewed_preexec_stdin'}, set(macros))
+        common = {'evt.type': 'dup3', 'evt.rawres': 0, 'fd.num': 0, 'fd.type': 'ipv4',
+                  'fd.l4proto': 'tcp', 'proc.exepath': '', 'proc.duration': 90000}
+        argo = dict(common, **{'k8s.ns.name': 'argocd',
+                    'k8s.pod.name': 'argocd-repo-server-fixture',
+                    'container.image.repository': 'quay.io/argoproj/argocd',
+                    'container.image.tag': 'v3.6.3', 'user.uid': 999,
+                    'proc.name': 'argocd-repo-ser'})
+        frr = dict(common, **{'k8s.ns.name': 'metallb-system',
+                   'k8s.pod.name': 'metallb-frr-k8s-fixture',
+                   'container.image.repository': 'quay.io/frrouting/frr',
+                   'container.image.tag': '10.6.2', 'user.uid': 100,
+                   'proc.name': 'frr-metrics', 'evt.rawarg.oldfd': 11,
+                   'fd.is_server': False, 'fd.sport': 9141})
+        cases = [dict(argo, **{'evt.rawarg.oldfd': oldfd, 'fd.is_server': role,
+                              'fd.cip': client, 'fd.sip': server, 'fd.sport': port})
+                 for oldfd, role, client, server, port in [
+                     (17, True, '10.42.1.220', '10.42.0.193', 8081),
+                     (17, True, '127.0.0.1', '127.0.0.1', 8081),
+                     (16, False, '10.42.0.193', '140.82.121.4', 443)]]
+        cases += [dict(frr, **{'fd.cip': address, 'fd.sip': address})
+                  for address in ('192.168.30.100', '192.168.30.242')]
+
+        def excluded(event):
+            return any(reviewed_macro_matches(macros, name, event) for name in
+                       ('argocd_reviewed_preexec_stdin', 'metallb_reviewed_preexec_stdin'))
+
+        for event in cases:
+            self.assertTrue(excluded(event), event)
+            mutations = {'k8s.ns.name': 'other', 'k8s.pod.name': 'other-pod',
+                         'container.image.repository': 'other/image', 'container.image.tag': 'next',
+                         'user.uid': 0, 'proc.name': 'sh', 'proc.exepath': '/bin/sh',
+                         'evt.type': 'dup2', 'evt.rawres': 1, 'evt.rawarg.oldfd': 99,
+                         'fd.num': 1, 'fd.type': 'ipv6', 'fd.l4proto': 'udp',
+                         'fd.is_server': not event['fd.is_server'],
+                         'fd.cip': '203.0.113.9', 'fd.sip': '203.0.113.10', 'fd.sport': 4444}
+            for field, value in mutations.items():
+                with self.subTest(scope=event['k8s.ns.name'], field=field):
+                    self.assertFalse(excluded(dict(event, **{field: value})))
+            for age in (0, 1000000, 1000001, None):
+                self.assertFalse(excluded(dict(event, **{'proc.duration': age})))
+            for field in event:
+                incomplete = event.copy()
+                incomplete.pop(field)
+                self.assertFalse(excluded(incomplete), field)
+        self.assertFalse(excluded(dict(cases[-1], **{'fd.cip': '192.168.30.100'})))
+        self.assertFalse(excluded(dict(cases[2], **{'fd.sip': '140.82.121.5'})))
+        self.assertFalse(excluded(dict(cases[2], **{'proc.exepath': '/usr/bin/git'})))
+
+    def test_frr_context_keeps_reviewed_events_in_loki_only(self):
+        values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
+        rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
+        rule = next(r for r in rules if r.get('rule') == 'FRR metrics safe process lifecycle')
+        self.assertEqual('NOTICE', rule['priority'])
+        self.assertEqual('evt.type in (clone, clone3, fork, vfork, dup, dup2, dup3, execve, execveat, procexit) '
+                         'and k8s.ns.name = metallb-system and k8s.pod.name startswith metallb-frr-k8s- '
+                         'and container.image.repository = quay.io/frrouting/frr '
+                         'and (proc.name = frr-metrics or proc.name = vtysh)',
+                         ' '.join(rule['condition'].split()))
+        self.assertNotIn('reviewed_go_preexec_stdin_setup', rule['condition'])
+        self.assertIn('%evt.rawarg.oldfd', rule['output'])
+        self.assertIn('%proc.exepath', rule['output'])
+
     def test_backup_ssh_exception_is_limited_to_reviewed_inbound_socket(self):
         values = yaml.safe_load((ROOT / 'falco/values.yaml').read_text())
         rules = yaml.safe_load(values['customRules']['runtime-safe-output.yaml'])
-        redirect = next(r for r in rules if r['rule'].startswith('Redirect STDOUT'))
+        redirect = next(r for r in rules if r.get('rule', '').startswith('Redirect STDOUT'))
         self.assertEqual('append', redirect['override']['exceptions'])
         self.assertEqual(1, len(redirect['exceptions']))
         exception = redirect['exceptions'][0]

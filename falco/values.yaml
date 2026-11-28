@@ -122,6 +122,8 @@ falco:
       rule: Redirect STDOUT/STDIN to Network Connection in Container
   - enable:
       rule: Argo repo-server safe process lifecycle
+  - enable:
+      rule: FRR metrics safe process lifecycle
   json_output: true
   json_include_message_property: false
   append_output: []
@@ -140,6 +142,37 @@ falco:
     max_burst: 1
 customRules:
   runtime-safe-output.yaml: |
+    # These are pre-exec descriptor-attribution exceptions, not Git/vtysh allowlists.
+    - macro: reviewed_go_preexec_stdin_setup
+      condition: >
+        evt.type = dup3 and evt.rawres = 0 and fd.num = 0
+        and fd.type = ipv4 and fd.l4proto = tcp
+        and proc.exepath = "" and proc.duration > 0 and proc.duration < 1000000
+    - macro: argocd_reviewed_preexec_stdin
+      condition: >
+        reviewed_go_preexec_stdin_setup
+        and k8s.ns.name = argocd and k8s.pod.name startswith argocd-repo-server-
+        and container.image.repository = quay.io/argoproj/argocd
+        and container.image.tag = v3.6.3 and user.uid = 999 and proc.name = argocd-repo-ser
+        and (
+          (evt.rawarg.oldfd = 17 and fd.is_server = true
+           and fd.cip = 10.42.1.220 and fd.sip = 10.42.0.193 and fd.sport = 8081)
+          or (evt.rawarg.oldfd = 17 and fd.is_server = true
+              and fd.cip = 127.0.0.1 and fd.sip = 127.0.0.1 and fd.sport = 8081)
+          or (evt.rawarg.oldfd = 16 and fd.is_server = false
+              and fd.cip = 10.42.0.193 and fd.sip = 140.82.121.4 and fd.sport = 443)
+        )
+    - macro: metallb_reviewed_preexec_stdin
+      condition: >
+        reviewed_go_preexec_stdin_setup
+        and k8s.ns.name = metallb-system and k8s.pod.name startswith metallb-frr-k8s-
+        and container.image.repository = quay.io/frrouting/frr
+        and container.image.tag = 10.6.2 and user.uid = 100 and proc.name = frr-metrics
+        and evt.rawarg.oldfd = 11 and fd.is_server = false and fd.sport = 9141
+        and (
+          (fd.cip = 192.168.30.100 and fd.sip = 192.168.30.100)
+          or (fd.cip = 192.168.30.242 and fd.sip = 192.168.30.242)
+        )
     - rule: Terminal shell in container
       output: Terminal shell in container | process=%proc.name executable=%proc.exepath
         parent=%proc.pname container_id=%container.id container=%container.name image=%container.image.repository
@@ -176,7 +209,9 @@ customRules:
         priority: replace
         condition: append
         exceptions: append
-      condition: and container.id != "runtime"
+      condition: >
+        and container.id != "runtime"
+        and not (argocd_reviewed_preexec_stdin or metallb_reviewed_preexec_stdin)
       # Confirmed backup SSH client; no blanket sshd or namespace exception.
       exceptions:
       - name: backup_rsync_incoming_ssh
@@ -212,6 +247,22 @@ customRules:
         namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
       priority: NOTICE
       tags: [diagnostic, argocd_fd_context]
+    - rule: FRR metrics safe process lifecycle
+      desc: Sanitized fork/descriptor/exec context for reviewed FRR metrics stdin setup.
+      condition: >
+        evt.type in (clone, clone3, fork, vfork, dup, dup2, dup3, execve, execveat, procexit)
+        and k8s.ns.name = metallb-system and k8s.pod.name startswith metallb-frr-k8s-
+        and container.image.repository = quay.io/frrouting/frr
+        and (proc.name = frr-metrics or proc.name = vtysh)
+      output: FRR metrics safe process lifecycle | process=%proc.name
+        executable=%proc.exepath parent=%proc.pname pid=%proc.pid tid=%thread.tid
+        ppid=%proc.ppid vpid=%proc.vpid vtid=%thread.vtid process_age_ns=%proc.duration
+        syscall=%evt.type result=%evt.rawres oldfd=%evt.rawarg.oldfd flags=%evt.rawarg.flags
+        fd=%fd.num fd_type=%fd.type connection=%fd.name
+        container_id=%container.id image=%container.image.repository image_tag=%container.image.tag
+        namespace=%k8s.ns.name pod=%k8s.pod.name uid=%user.uid
+      priority: NOTICE
+      tags: [diagnostic, frr_fd_context]
 falcosidekick:
   enabled: false
 responseActions:

@@ -28,8 +28,8 @@ The redirect rule additionally emits `proc.pid`, `thread.tid`, `evt.type`,
 connection endpoints; the syscall result identifies the resulting descriptor
 (0/1/2 for this rule). Missing process metadata can still appear as `<NA>`.
 No command arguments, environment or generic syscall argument dump is emitted.
-The three security detection conditions, priorities and exclusions are unchanged;
-there is no Argo CD exception.
+The three security detections retain Warning priority. Reviewed pre-exec stdin
+exceptions are described below; neither shell nor new-binary detection is excluded.
 
 Sidekick retains every field in Loki JSON and the event text in notification
 annotations. These per-event diagnostic fields have empty Alertmanager label
@@ -45,8 +45,9 @@ rule, scoped to namespace `argocd`, Pod prefix `argocd-repo-server-` and image
 repository `quay.io/argoproj/argocd`. It records clone/fork, dup/dup2/dup3, exec
 and process-exit events continuously, so the next Warning can be compared with
 its preceding fd setup and the executable that follows. This is diagnostic
-context, not proof that an incoming RPC socket is benign; no Argo exception is
-added. Unknown Kubernetes/image metadata can cause context to be absent.
+context, not proof that every incoming RPC socket is benign. Only the reviewed
+pre-exec tuples below are excluded from Warning. Unknown Kubernetes/image metadata
+can cause context to be absent.
 
 Both the Warning and diagnostic context include host PID/TID, parent PID,
 container PID/TID, process age in nanoseconds and the numeric `oldfd` syscall
@@ -57,7 +58,7 @@ particular syscall can be `<NA>`; the failed ten-minute reproduction is not
 evidence that the original network descriptor was harmless.
 
 Sidekick sends Notice to Loki only; Alertmanager remains at Warning. Only the
-scoped diagnostic rule has Notice priority. Additional Warning fields are
+scoped Argo and FRR lifecycle diagnostic rules have Notice priority. Additional Warning fields are
 removed from Alertmanager identity, preserving grouping. There is no additional
 BPF process, host mount, credential, or automatic refresh. Scope this temporary
 investigation rule back out once the cause is established; check event volume
@@ -80,6 +81,77 @@ Native routing tests verify Notice reaches only Loki, Warning annotations retain
 safe details, and changed parent/PID/fd fields do not split alert fingerprints.
 Local validation does not prove runtime collection: after publication, verify
 Argo sync, rule loading, actual Notice records in Loki, and no delivery drops.
+
+## Reviewed Go pre-exec stdin exceptions
+
+The 2026-11-28 investigation found the same Go child-start pattern in Argo CD
+and MetalLB: a new child still has the parent's short process name, no resolved
+executable, and sets up fd 0/1/2 before `execve`. All three captured Argo Warning
+PIDs executed `/usr/bin/git` 0.21–0.35 ms after the Warning and exited within a
+few milliseconds; nearby Argo logs contain ordinary Git repository operations.
+A separate authorized 60-second FRR trace captured 12 complete
+`frr-metrics -> /usr/bin/vtysh` launches, including `oldfd=11 -> stdin=/dev/null`
+and stdout/stderr pipes, with zero reported drops. The deployed exporter uses
+Go `exec.Command(...).CombinedOutput()` without an explicit stdin, whose default
+is `/dev/null`:
+
+- [FRR metrics vtysh runner, v0.0.27](https://github.com/metallb/frr-k8s/blob/v0.0.27/cmd/metrics/vtysh/vtysh.go)
+- [Argo command output setup, v3.6.3](https://github.com/argoproj/argo-cd/blob/v3.6.3/util/exec/exec.go)
+- [Go child stdin setup](https://github.com/golang/go/blob/go1.27.3/src/os/exec/exec.go)
+
+The normal process-launch paths are confirmed. The rare network type is
+consistent with incorrect/incomplete descriptor attribution during that pre-exec
+window; the specific internal Falco defect has **not** been isolated. No claim is
+made that a particular upstream patch fixes these events. The exception is an
+explicitly reviewed noise classification, not authentication or proof that every
+connection from these workloads is safe.
+
+The redirect condition excludes only `argocd_reviewed_preexec_stdin` and
+`metallb_reviewed_preexec_stdin`, using the common guard
+`reviewed_go_preexec_stdin_setup`: successful **dup3 to stdin (fd/result 0)**,
+IPv4 TCP, **empty executable path**, process age **greater than 0 and less than
+1,000,000 ns**. Missing metadata and an older process do not match. The duration
+bound constrains the observed pre-exec shape; it does not predict the executable
+that will run next. Parent name and container name are intentionally not trusted
+because their metadata was absent/transient in the original events.
+
+Every row also pins namespace, Pod prefix, image repository/tag, UID, short
+process name, source fd, socket direction, client/server IP and server port:
+
+| Workload | Image / UID / process | oldfd | Client -> server | Socket role |
+| --- | --- | --- | --- | --- |
+| `argocd/argocd-repo-server-*` | `quay.io/argoproj/argocd:v3.6.3`, 999, `argocd-repo-ser` | 17 | `10.42.1.220 -> 10.42.0.193:8081` | server |
+| same | same | 17 | `127.0.0.1 -> 127.0.0.1:8081` | server |
+| same | same | 16 | `10.42.0.193 -> 140.82.121.4:443` | client |
+| `metallb-system/metallb-frr-k8s-*` | `quay.io/frrouting/frr:10.6.2`, 100, `frr-metrics` | 11 | `192.168.30.100 -> 192.168.30.100:9141` | client |
+| same | same | 11 | `192.168.30.242 -> 192.168.30.242:9141` | client |
+
+GitHub's published Git service ranges included the single observed
+`140.82.121.4` address during review. The rule uses that exact IP, **not** a
+GitHub CIDR or all HTTPS. Only the two observed FRR node pairs are excluded; a
+third node, new Pod IP, changed image, new oldfd, different port/client/server,
+stdout/stderr, another process or any non-empty executable remains alertable.
+IP and image drift deliberately requires a new review instead of widening scope.
+The existing backup SSH exception is unchanged.
+
+Falco normally emits the first matching rule for an event. An excluded Argo
+stdin event now falls through to `Argo repo-server safe process lifecycle`, and
+an excluded FRR event to `FRR metrics safe process lifecycle`. Both are Notice,
+Loki-only, without argv/env/buffer output. FRR diagnostics also keep clone/dup/
+exec/exit context scoped to the FRR image/Pod/namespace and process names
+`frr-metrics` or `vtysh`; do not discard this context before checking real
+post-deployment events. Unexpected connections still hit the original Warning
+rule before either diagnostic rule.
+
+Validation distinguishes native compilation, boundary contracts and runtime
+verification. Native Falco validates supported fields/operators. Unit boundary
+contracts evaluate the reviewed predicate subset against the five observed
+shapes, single-field mutations and missing metadata; their small test-only
+predicate evaluator is **not** the Falco engine and does not prove live matching.
+Native Sidekick tests prove Notice goes to Loki only and Warning fingerprinting
+is unchanged. After publication, verify the exact Argo revision, loaded macros,
+Loki Notice preservation and actual Warning suppression on ordinary activity.
+A quiet interval alone is not proof that a rare event matched the exception.
 
 ## Talos compatibility and permissions
 
